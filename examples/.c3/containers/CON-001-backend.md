@@ -80,7 +80,7 @@ JWT token validation:
 - Injects `req.user` context
 - Supports public routes via allowlist
 
-**Component**: See implementation details in a future COM-002-auth-middleware document.
+**Component**: See [COM-002-auth-middleware](../components/backend/COM-002-auth-middleware.md) for implementation details.
 
 ## Component Organization {#con-001-components}
 <!--
@@ -121,8 +121,9 @@ graph TD
 | Component | Location | Description |
 |-----------|----------|-------------|
 | [COM-001-db-pool](../components/backend/COM-001-db-pool.md) | `src/db/pool.ts` | Database connection pooling |
+| [COM-002-auth-middleware](../components/backend/COM-002-auth-middleware.md) | `src/middleware/auth/` | JWT authentication middleware |
+| [COM-003-task-service](../components/backend/COM-003-task-service.md) | `src/services/task/` | Task business logic |
 | Routes | `src/routes/` | Express route definitions |
-| Services | `src/services/` | Business logic |
 | Repositories | `src/repositories/` | Data access patterns |
 
 ## API Endpoints {#con-001-api-endpoints}
@@ -231,4 +232,8 @@ CMD ["node", "dist/index.js"]
 
 - [CTX-001: System Overview](../CTX-001-system-overview.md)
 - [COM-001: DB Connection Pool](../components/backend/COM-001-db-pool.md)
+- [COM-002: Auth Middleware](../components/backend/COM-002-auth-middleware.md)
+- [COM-003: Task Service](../components/backend/COM-003-task-service.md)
 - [ADR-001: REST API Choice](../adr/ADR-001-rest-api.md)
+- [ADR-002: PostgreSQL Database](../adr/ADR-002-postgresql.md)
+- [ADR-004: JWT Authentication](../adr/ADR-004-jwt-auth.md)

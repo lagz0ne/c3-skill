@@ -68,7 +68,7 @@ If `.c3/` doesn't exist AND user didn't force mode via `/c3-from-scratch`:
 
 **Output:** Clear understanding of current state + user's goal
 
-### Phase 2: Analyze & Confirm Intention (⚠️ Socratic Required)
+### Phase 2: Analyze & Confirm Intention (REQUIRED: Socratic)
 
 **Goal:** Validate understanding before proceeding
 

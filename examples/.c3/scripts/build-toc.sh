@@ -14,7 +14,7 @@ echo "Building C3 Table of Contents..."
 cat > "$TEMP_FILE" << 'EOF'
 # C3 Documentation Table of Contents
 
-> **⚠️ AUTO-GENERATED** - Do not edit manually. Regenerate with: `.c3/scripts/build-toc.sh`
+> **AUTO-GENERATED** - Do not edit manually. Regenerate with: `.c3/scripts/build-toc.sh`
 >
 EOF
 
@@ -243,4 +243,4 @@ echo "**Contexts**: $ctx_count | **Containers**: $con_count | **Components**: $c
 # Move to final location
 mv "$TEMP_FILE" "$TOC_FILE"
 
-echo "✓ TOC generated: $TOC_FILE"
+echo "Done. TOC generated: $TOC_FILE"

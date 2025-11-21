@@ -62,7 +62,7 @@ to specific container details.
 | Container | Description | Technology |
 |-----------|-------------|------------|
 | [CON-001-backend](./containers/CON-001-backend.md) | REST API handling business logic | Node.js + Express |
-| CON-002-frontend | Web user interface | React + TypeScript |
+| [CON-002-frontend](./containers/CON-002-frontend.md) | Web user interface | React + TypeScript |
 | CON-003-database | Data persistence | PostgreSQL 15 |
 
 ## Protocols & Communication {#ctx-001-protocols}
@@ -168,4 +168,7 @@ graph LR
 ## Related {#ctx-001-related}
 
 - [ADR-001: REST API Choice](./adr/ADR-001-rest-api.md)
+- [ADR-002: PostgreSQL Database](./adr/ADR-002-postgresql.md)
+- [ADR-004: JWT Authentication](./adr/ADR-004-jwt-auth.md)
 - [CON-001: Backend Container](./containers/CON-001-backend.md)
+- [CON-002: Frontend Container](./containers/CON-002-frontend.md)

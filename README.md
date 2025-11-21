@@ -12,14 +12,14 @@ C3-Skill provides a structured approach to documenting system architecture throu
 
 ## Features
 
-- 🧠 **Intelligent State Detection**: Reads existing `.c3/` docs to understand current architecture
-- 🎯 **Phased Workflow**: Guides through Understand → Confirm → Scope → Document phases
-- 🔍 **Targeted Socratic Questioning**: Asks only when clarification needed
-- 📝 **ADR Generation**: Documents decisions with progressive detail across C3 levels
-- 🔗 **Unique IDs**: Every document and heading uniquely identified for precise navigation
-- 📚 **Auto-Generated TOC**: Build table of contents from frontmatter summaries
-- 🎨 **VitePress Integration**: Beautiful rendered documentation with search and navigation
-- 📊 **Mermaid Diagrams**: Embedded diagrams at appropriate abstraction levels
+- **Intelligent State Detection**: Reads existing `.c3/` docs to understand current architecture
+- **Phased Workflow**: Guides through Understand, Confirm, Scope, Document phases
+- **Targeted Socratic Questioning**: Asks only when clarification needed
+- **ADR Generation**: Documents decisions with progressive detail across C3 levels
+- **Unique IDs**: Every document and heading uniquely identified for precise navigation
+- **Auto-Generated TOC**: Build table of contents from frontmatter summaries
+- **VitePress Integration**: Beautiful rendered documentation with search and navigation
+- **Mermaid Diagrams**: Embedded diagrams at appropriate abstraction levels
 
 ## Installation
 

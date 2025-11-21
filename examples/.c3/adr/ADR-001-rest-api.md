@@ -7,18 +7,20 @@ summary: >
   reasoning, trade-offs, and when this decision might be revisited.
 status: accepted
 date: 2025-01-21
-related-components: [CTX-001-system-overview, CON-001-backend]
 ---
 
 # [ADR-001] Use REST API for Client-Server Communication
 
 ## Status {#adr-001-status}
+<!--
+Current status of this decision.
+-->
 
 **Accepted** - 2025-01-21
 
-## Context {#adr-001-context}
+## Problem/Requirement {#adr-001-problem}
 <!--
-Current situation and why change/decision is needed.
+Starting point - what user asked for, why change is needed.
 -->
 
 TaskFlow needs a communication protocol between the web frontend and backend API. The application is a task management system with standard CRUD operations on tasks, users, and related entities.
@@ -36,14 +38,38 @@ TaskFlow needs a communication protocol between the web frontend and backend API
 - Some experience with GraphQL
 - Limited experience with gRPC
 
-## Decision {#adr-001-decision}
+## Exploration Journey {#adr-001-exploration}
 <!--
-High-level approach with reasoning.
+How understanding developed through scoping.
+-->
+
+**Initial hypothesis:** This is a Context-level decision affecting system-wide communication patterns between Frontend (CON-002) and Backend (CON-001).
+
+**Explored:**
+- **Isolated**: What communication protocol best fits our CRUD-based task management domain
+- **Upstream**: External client requirements (browsers), team skills, industry standards
+- **Adjacent**: Authentication mechanism (JWT), error handling patterns, API versioning
+- **Downstream**: Impact on Backend container API design, Frontend API client implementation
+
+**Discovered:**
+- REST's resource-oriented model maps naturally to our domain (tasks, users, tags)
+- Team has immediate productivity with REST vs learning curve with GraphQL/gRPC
+- Browser native support eliminates additional client library dependencies
+- Standard HTTP caching can be leveraged for performance
+
+**Confirmed:**
+- Stakeholders prioritize developer velocity over API flexibility
+- No complex nested data fetching requirements that would benefit from GraphQL
+- No high-performance requirements that would justify gRPC complexity
+
+## Solution {#adr-001-solution}
+<!--
+Formed through exploration above.
 -->
 
 We will use **REST API with JSON** as the communication protocol between frontend and backend.
 
-### High-Level Approach (Context Level) {#adr-001-context-level}
+### High-Level Approach
 
 ```mermaid
 graph LR
@@ -61,11 +87,8 @@ The REST API provides:
 - Stateless request/response pattern
 - Native browser support without additional libraries
 
-### Container-Level Details {#adr-001-container-level}
+### API Design Principles
 
-**Affected Container:** [CON-001-backend](../containers/CON-001-backend.md)
-
-**API Design Principles:**
 - Resource-oriented URLs (`/api/v1/tasks`, `/api/v1/users`)
 - HTTP methods indicate operations
 - JSON request and response bodies
@@ -79,39 +102,9 @@ The REST API provides:
 /api/v1/tasks/:id/complete   POST (action)
 ```
 
-### Component-Level Impact {#adr-001-component-level}
+### Alternatives Considered {#adr-001-alternatives}
 
-**Routing Layer:**
-- Express.js router with versioned prefixes
-- Route parameter validation via middleware
-- Request body parsing for JSON
-
-**Service Layer:**
-- Services receive validated request data
-- Return domain objects (not HTTP responses)
-- No knowledge of HTTP protocol
-
-**Example Route Handler:**
-
-```typescript
-// src/routes/tasks.ts
-router.get('/api/v1/tasks', authenticate, async (req, res) => {
-  const tasks = await taskService.listTasks(req.user.id, req.query);
-  res.json({ data: tasks });
-});
-
-router.post('/api/v1/tasks', authenticate, validate(createTaskSchema), async (req, res) => {
-  const task = await taskService.createTask(req.user.id, req.body);
-  res.status(201).json({ data: task });
-});
-```
-
-## Alternatives Considered {#adr-001-alternatives}
-<!--
-What else was considered and why rejected.
--->
-
-### GraphQL {#adr-001-graphql}
+#### GraphQL
 
 **Pros:**
 - Single endpoint
@@ -127,7 +120,7 @@ What else was considered and why rejected.
 
 **Why rejected:** Overhead not justified for straightforward CRUD operations. Team would need significant upskilling.
 
-### gRPC {#adr-001-grpc}
+#### gRPC
 
 **Pros:**
 - High performance (binary protocol)
@@ -143,7 +136,7 @@ What else was considered and why rejected.
 
 **Why rejected:** Browser support requires additional infrastructure. Performance benefits not needed at current scale.
 
-### Comparison Matrix {#adr-001-comparison}
+#### Comparison Matrix
 
 | Factor | REST | GraphQL | gRPC |
 |--------|------|---------|------|
@@ -154,47 +147,30 @@ What else was considered and why rejected.
 | Flexibility | Medium | High | Medium |
 | Tooling | Excellent | Good | Good |
 
-## Consequences {#adr-001-consequences}
+## Changes Across Layers {#adr-001-changes}
 <!--
-Positive, negative, and mitigation strategies.
+Specific changes to each affected document.
 -->
 
-### Positive {#adr-001-positive}
+### Context Level
+- [CTX-001-system-overview]: Define REST as the protocol in Protocols & Communication section
 
-- **Fast development**: Team can start immediately with familiar technology
-- **Easy debugging**: Browser dev tools, curl, Postman all work natively
-- **Wide tooling support**: Documentation (OpenAPI), testing, mocking
-- **Simple caching**: HTTP caching headers work out of the box
-- **Clear mental model**: Resource-based thinking aligns with domain
+### Container Level
+- [CON-001-backend]: Implement Express.js REST routing with versioned prefixes
+- [CON-002-frontend]: Implement Axios-based API client for REST consumption
 
-### Negative {#adr-001-negative}
+### Component Level
+- [COM-003-task-service]: Services receive validated request data, return domain objects
+- [COM-004-api-client]: Configure REST endpoints, handle JSON serialization
 
-- **Overfetching**: May return more data than client needs
-- **Multiple roundtrips**: Complex views may need multiple requests
-- **No real-time**: Need separate mechanism for live updates
+### Cross-Cutting Concerns
 
-### Mitigation Strategies {#adr-001-mitigation}
-
-| Issue | Mitigation |
-|-------|------------|
-| Overfetching | Add `fields` query parameter for sparse fieldsets |
-| Multiple roundtrips | Add compound endpoints for common view patterns |
-| No real-time | Use WebSocket for task notifications (future) |
-
-## Cross-Cutting Concerns {#adr-001-cross-cutting}
-<!--
-Impacts that span multiple levels.
--->
-
-### Authentication {#adr-001-auth}
-
-REST API will use JWT tokens:
+**Authentication:**
 - Access token in `Authorization` header
 - Refresh token in httpOnly cookie
 - Standard 401 Unauthorized for auth failures
 
-### Error Handling {#adr-001-errors}
-
+**Error Handling:**
 Consistent error response format across all endpoints:
 
 ```json
@@ -210,44 +186,25 @@ Consistent error response format across all endpoints:
 }
 ```
 
-### Rate Limiting {#adr-001-rate-limiting}
-
-HTTP-based rate limiting:
+**Rate Limiting:**
 - `X-RateLimit-Limit` header
 - `X-RateLimit-Remaining` header
 - `429 Too Many Requests` response
 
-## Implementation Notes {#adr-001-implementation}
+## Verification {#adr-001-verification}
 <!--
-Ordered steps for implementation.
+Checklist derived from scoping - what to inspect when implementing.
 -->
 
-1. **Set up Express.js with versioned routes**
-   - Configure router prefix `/api/v1`
-   - Add JSON body parser
-   - Add CORS middleware
+- [ ] Is REST the appropriate abstraction for all current endpoints?
+- [ ] Are URL patterns consistent and resource-oriented?
+- [ ] Is API versioning correctly implemented?
+- [ ] Do all endpoints return consistent JSON structure?
+- [ ] Is error handling uniform across endpoints?
+- [ ] Are HTTP status codes correctly applied?
+- [ ] Does the frontend API client handle all response patterns?
 
-2. **Implement authentication middleware**
-   - JWT validation
-   - User context injection
-
-3. **Create resource routes**
-   - Tasks CRUD endpoints
-   - Users endpoints
-   - Auth endpoints
-
-4. **Add documentation**
-   - OpenAPI/Swagger spec
-   - Endpoint documentation
-
-5. **Implement error handling**
-   - Global error handler
-   - Consistent error format
-
-## Revisit Triggers {#adr-001-revisit}
-<!--
-When should this decision be reconsidered?
--->
+### Revisit Triggers
 
 Consider revisiting this decision if:
 - API becomes complex with many nested relationships
@@ -260,3 +217,5 @@ Consider revisiting this decision if:
 
 - [CTX-001: System Overview](../CTX-001-system-overview.md#ctx-001-protocols)
 - [CON-001: Backend Container](../containers/CON-001-backend.md#con-001-api-endpoints)
+- [COM-003: Task Service](../components/backend/COM-003-task-service.md)
+- [COM-004: API Client](../components/frontend/COM-004-api-client.md)

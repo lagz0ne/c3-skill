@@ -7,18 +7,20 @@ summary: >
   cache invalidation approach, and implementation plan.
 status: proposed
 date: 2025-01-28
-related-components: [CTX-001-system-overview, CON-001-backend]
 ---
 
 # [ADR-003] Implement Redis Caching for Performance
 
 ## Status {#adr-003-status}
+<!--
+Current status of this decision.
+-->
 
 **Proposed** - 2025-01-28
 
-## Context {#adr-003-context}
+## Problem/Requirement {#adr-003-problem}
 <!--
-Current situation and why change/decision is needed.
+Starting point - what user asked for, why change is needed.
 -->
 
 As TaskFlow usage grows, we're observing increased database load and response times for frequently accessed data:
@@ -41,14 +43,39 @@ As TaskFlow usage grows, we're observing increased database load and response ti
 - Decrease database load by 40%
 - Persist rate limit state across restarts
 
-## Decision {#adr-003-decision}
+## Exploration Journey {#adr-003-exploration}
 <!--
-High-level approach with reasoning.
+How understanding developed through scoping.
 -->
 
-We propose adding **Redis** as a caching layer with the following caching strategy:
+**Initial hypothesis:** This is primarily a Container-level change to CON-001-backend, adding a caching layer between services and database.
 
-### Cache Architecture {#adr-003-architecture}
+**Explored:**
+- **Isolated**: What caching strategy best reduces database load without consistency issues
+- **Upstream**: Infrastructure requirements, operational complexity, cost implications
+- **Adjacent**: Impact on rate limiting (currently in-memory), session handling
+- **Downstream**: Changes needed in service layer, cache invalidation on writes
+
+**Discovered:**
+- Task list is fetched ~20 times/day per user but changes infrequently
+- Rate limiting needs persistence across server restarts
+- In-memory cache won't work with multiple backend instances
+- Redis provides both caching and rate limiting primitives
+
+**Confirmed:**
+- Short TTLs (5 min for tasks) acceptable for eventual consistency
+- Cache-aside pattern is simplest to implement correctly
+- Managed Redis reduces operational burden
+- Graceful degradation to database on cache failure is acceptable
+
+## Solution {#adr-003-solution}
+<!--
+Formed through exploration above.
+-->
+
+We propose adding **Redis** as a caching layer with cache-aside pattern.
+
+### Cache Architecture
 
 ```mermaid
 graph LR
@@ -60,7 +87,7 @@ graph LR
     DB -.->|Cache Fill| R
 ```
 
-### What to Cache {#adr-003-what-to-cache}
+### What to Cache
 
 | Data | TTL | Invalidation | Rationale |
 |------|-----|--------------|-----------|
@@ -69,18 +96,13 @@ graph LR
 | Rate limit counters | N/A | Time-based expiry | Must persist |
 | Session tokens | 15 min | On logout | Reduce DB lookups |
 
-### What NOT to Cache {#adr-003-not-to-cache}
+### What NOT to Cache
 
 - Individual task details (low hit rate)
 - Search results (too variable)
 - Write operations (always to DB)
 
-## Cache Patterns {#adr-003-patterns}
-<!--
-How caching will be implemented.
--->
-
-### Cache-Aside Pattern {#adr-003-cache-aside}
+### Cache-Aside Pattern
 
 ```mermaid
 sequenceDiagram
@@ -103,7 +125,7 @@ sequenceDiagram
     end
 ```
 
-### Cache Key Schema {#adr-003-key-schema}
+### Cache Key Schema
 
 ```
 tasks:user:{userId}           # User's task list
@@ -113,25 +135,9 @@ ratelimit:{userId}:{window}   # Rate limit counter
 session:{tokenHash}           # Session validation
 ```
 
-### Invalidation Strategy {#adr-003-invalidation}
+### Alternatives Considered {#adr-003-alternatives}
 
-```typescript
-// On task change
-async function invalidateTaskCache(userId: string): Promise<void> {
-  const pattern = `tasks:user:${userId}*`;
-  const keys = await redis.keys(pattern);
-  if (keys.length > 0) {
-    await redis.del(...keys);
-  }
-}
-```
-
-## Alternatives Considered {#adr-003-alternatives}
-<!--
-What else was considered and why rejected.
--->
-
-### In-Memory Cache (Node.js) {#adr-003-in-memory}
+#### In-Memory Cache (Node.js)
 
 **Pros:**
 - No additional infrastructure
@@ -145,7 +151,7 @@ What else was considered and why rejected.
 
 **Why rejected:** We run multiple backend instances; need shared cache.
 
-### Memcached {#adr-003-memcached}
+#### Memcached
 
 **Pros:**
 - Simple key-value caching
@@ -159,7 +165,7 @@ What else was considered and why rejected.
 
 **Why rejected:** Redis offers more features (persistence, pub/sub) at similar complexity.
 
-### Database Query Cache {#adr-003-db-cache}
+#### Database Query Cache
 
 **Pros:**
 - No additional infrastructure
@@ -172,62 +178,59 @@ What else was considered and why rejected.
 
 **Why rejected:** Need more control over caching behavior.
 
-## Consequences {#adr-003-consequences}
+## Changes Across Layers {#adr-003-changes}
 <!--
-Positive, negative, and mitigation strategies.
+Specific changes to each affected document.
 -->
 
-### Positive {#adr-003-positive}
+### Context Level
+- [CTX-001-system-overview]: Add Redis to Architecture diagram as caching layer
 
-- **Faster responses**: Cache hits return in <10ms
-- **Reduced DB load**: 40%+ fewer database queries
-- **Persistent rate limits**: Survives restarts
-- **Scalability**: Offloads read traffic from database
+### Container Level
+- [CON-001-backend]: Add Redis client configuration, update middleware pipeline for cached auth
 
-### Negative {#adr-003-negative}
+### Component Level
+- New component needed: COM-005-cache-service for cache operations
+- [COM-001-db-pool]: No changes, cache is additive
+- [COM-003-task-service]: Add cache read/write/invalidation calls
 
-- **Operational complexity**: Another service to manage
-- **Cache invalidation**: Risk of stale data
-- **Memory cost**: Additional infrastructure cost
-- **Consistency lag**: Brief window of stale data
+### Implementation Plan
 
-### Mitigation Strategies {#adr-003-mitigation}
-
-| Issue | Mitigation |
-|-------|------------|
-| Operational complexity | Use managed Redis (ElastiCache, Upstash) |
-| Stale data | Short TTLs + immediate invalidation on writes |
-| Memory cost | Start small (256MB), monitor and scale |
-| Single point of failure | Cache misses fall through to database |
-
-## Implementation Plan {#adr-003-implementation}
-<!--
-Ordered steps for implementation.
--->
-
-### Phase 1: Infrastructure (Week 1)
+**Phase 1: Infrastructure (Week 1)**
 1. Set up Redis instance (ElastiCache or Upstash)
 2. Add Redis client to backend (`ioredis`)
 3. Add health check for Redis connection
 4. Update deployment configuration
 
-### Phase 2: Rate Limiting (Week 2)
+**Phase 2: Rate Limiting (Week 2)**
 1. Migrate rate limit counters to Redis
 2. Test rate limiting across server restarts
 3. Monitor rate limit accuracy
 
-### Phase 3: Task List Caching (Week 3)
+**Phase 3: Task List Caching (Week 3)**
 1. Implement cache-aside for task list
 2. Add cache invalidation on task mutations
 3. Monitor cache hit rate and latency
 4. Tune TTL based on metrics
 
-### Phase 4: Session Caching (Week 4)
+**Phase 4: Session Caching (Week 4)**
 1. Cache session token validation
 2. Implement cache invalidation on logout
 3. Monitor authentication performance
 
-## Success Metrics {#adr-003-metrics}
+## Verification {#adr-003-verification}
+<!--
+Checklist derived from scoping - what to inspect when implementing.
+-->
+
+- [ ] Is Redis correctly configured with appropriate memory limits?
+- [ ] Does cache-aside pattern handle cache misses gracefully?
+- [ ] Are cache invalidation points identified for all write operations?
+- [ ] Is graceful degradation to database working on Redis failure?
+- [ ] Are rate limits correctly persisted across restarts?
+- [ ] Is cache hit rate being monitored?
+
+### Success Metrics
 
 | Metric | Current | Target |
 |--------|---------|--------|
@@ -236,7 +239,7 @@ Ordered steps for implementation.
 | Cache hit rate | N/A | >80% |
 | Task list latency | 150ms | <20ms |
 
-## Risk Assessment {#adr-003-risks}
+### Risk Assessment
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|------------|--------|------------|
@@ -245,7 +248,7 @@ Ordered steps for implementation.
 | Memory exhaustion | Low | Medium | Eviction policy, monitoring |
 | Data inconsistency | Medium | Low | Short TTLs, immediate invalidation |
 
-## Revisit Triggers {#adr-003-revisit}
+### Revisit Triggers
 
 Consider revisiting this decision if:
 - Cache hit rate drops below 50%

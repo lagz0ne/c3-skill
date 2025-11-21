@@ -7,18 +7,20 @@ summary: >
   refresh flow, and security considerations.
 status: accepted
 date: 2025-01-18
-related-components: [CTX-001-system-overview, CON-001-backend, COM-002-auth-middleware]
 ---
 
 # [ADR-004] Use JWT for API Authentication
 
 ## Status {#adr-004-status}
+<!--
+Current status of this decision.
+-->
 
 **Accepted** - 2025-01-18
 
-## Context {#adr-004-context}
+## Problem/Requirement {#adr-004-problem}
 <!--
-Current situation and why change/decision is needed.
+Starting point - what user asked for, why change is needed.
 -->
 
 TaskFlow needs an authentication mechanism for the REST API. The system must:
@@ -34,9 +36,33 @@ TaskFlow needs an authentication mechanism for the REST API. The system must:
 - REST API consumed by React frontend
 - Need for offline-capable future mobile apps
 
-## Decision {#adr-004-decision}
+## Exploration Journey {#adr-004-exploration}
 <!--
-High-level approach with reasoning.
+How understanding developed through scoping.
+-->
+
+**Initial hypothesis:** This is a cross-cutting Context-level decision affecting authentication across all containers.
+
+**Explored:**
+- **Isolated**: What authentication mechanism works without shared session state
+- **Upstream**: Security requirements, compliance needs, user experience expectations
+- **Adjacent**: Integration with REST API (ADR-001), rate limiting, authorization patterns
+- **Downstream**: Impact on Backend middleware (COM-002), Frontend API client (COM-004)
+
+**Discovered:**
+- Stateless authentication required for horizontal scaling of backend
+- JWT's self-contained nature reduces database lookups per request
+- Dual-token pattern (access + refresh) balances security and UX
+- httpOnly cookies for refresh token prevent XSS access
+
+**Confirmed:**
+- Short access token TTL (15 min) acceptable for security posture
+- Token refresh flow transparent to users
+- Team comfortable with JWT implementation patterns
+
+## Solution {#adr-004-solution}
+<!--
+Formed through exploration above.
 -->
 
 We will use **JWT (JSON Web Tokens)** with a dual-token approach:
@@ -44,7 +70,7 @@ We will use **JWT (JSON Web Tokens)** with a dual-token approach:
 - **Access Token**: Short-lived (15 minutes), sent in Authorization header
 - **Refresh Token**: Long-lived (7 days), stored in httpOnly cookie
 
-### Token Flow {#adr-004-token-flow}
+### Token Flow
 
 ```mermaid
 sequenceDiagram
@@ -72,7 +98,7 @@ sequenceDiagram
     B-->>F: New access token
 ```
 
-### Token Structure {#adr-004-token-structure}
+### Token Structure
 
 **Access Token Payload:**
 ```json
@@ -97,12 +123,9 @@ sequenceDiagram
 }
 ```
 
-## Alternatives Considered {#adr-004-alternatives}
-<!--
-What else was considered and why rejected.
--->
+### Alternatives Considered {#adr-004-alternatives}
 
-### Session-Based Auth {#adr-004-sessions}
+#### Session-Based Auth
 
 **Pros:**
 - Simple to implement
@@ -116,7 +139,7 @@ What else was considered and why rejected.
 
 **Why rejected:** Our multi-instance backend needs stateless authentication.
 
-### OAuth 2.0 / OpenID Connect {#adr-004-oauth}
+#### OAuth 2.0 / OpenID Connect
 
 **Pros:**
 - Industry standard
@@ -130,7 +153,7 @@ What else was considered and why rejected.
 
 **Why rejected:** We only need first-party authentication. JWT gives us what we need without OAuth complexity. Can add OAuth later for social login.
 
-### API Keys {#adr-004-api-keys}
+#### API Keys
 
 **Pros:**
 - Simple to implement
@@ -143,12 +166,9 @@ What else was considered and why rejected.
 
 **Why rejected:** API keys are for services, not users.
 
-## Token Security {#adr-004-security}
-<!--
-Security measures for token handling.
--->
+### Token Security
 
-### Access Token {#adr-004-access-security}
+#### Access Token Security
 
 | Aspect | Implementation |
 |--------|----------------|
@@ -157,7 +177,7 @@ Security measures for token handling.
 | Lifetime | 15 minutes |
 | Signature | HS256 (dev) / RS256 (prod) |
 
-### Refresh Token {#adr-004-refresh-security}
+#### Refresh Token Security
 
 | Aspect | Implementation |
 |--------|----------------|
@@ -167,7 +187,7 @@ Security measures for token handling.
 | Rotation | New refresh token on use |
 | Revocation | Stored in DB, can be invalidated |
 
-### Security Measures {#adr-004-measures}
+### Security Measures
 
 ```mermaid
 graph TD
@@ -184,12 +204,25 @@ graph TD
     F --> F1[Prevents interception]
 ```
 
-## Implementation Details {#adr-004-implementation-details}
+## Changes Across Layers {#adr-004-changes}
 <!--
-Technical implementation specifics.
+Specific changes to each affected document.
 -->
 
-### Token Generation {#adr-004-generation}
+### Context Level
+- [CTX-001-system-overview]: Document JWT in Cross-Cutting Concerns authentication section
+
+### Container Level
+- [CON-001-backend]: Add auth middleware to pipeline, implement auth endpoints
+- [CON-002-frontend]: Store access token in memory, handle refresh flow
+
+### Component Level
+- [COM-002-auth-middleware]: Implement JWT validation, user context injection
+- [COM-004-api-client]: Add Authorization header interceptor, handle 401 with refresh
+
+### Implementation Details
+
+**Token Generation:**
 
 ```typescript
 // src/services/auth/tokens.ts
@@ -230,124 +263,20 @@ export function generateRefreshToken(user: User): string {
 }
 ```
 
-### Refresh Flow {#adr-004-refresh-flow}
-
-```typescript
-// src/routes/auth.ts
-router.post('/auth/refresh', async (req, res) => {
-  const refreshToken = req.cookies.refresh_token;
-
-  if (!refreshToken) {
-    return res.status(401).json({ error: 'No refresh token' });
-  }
-
-  try {
-    // Verify refresh token
-    const payload = jwt.verify(refreshToken, config.jwt.refreshSecret);
-
-    // Check if token is revoked
-    const isRevoked = await tokenService.isRevoked(payload.jti);
-    if (isRevoked) {
-      return res.status(401).json({ error: 'Token revoked' });
-    }
-
-    // Get user
-    const user = await userService.findById(payload.sub);
-    if (!user) {
-      return res.status(401).json({ error: 'User not found' });
-    }
-
-    // Rotate refresh token (revoke old, issue new)
-    await tokenService.revoke(payload.jti);
-    const newRefreshToken = generateRefreshToken(user);
-    await tokenService.store(newRefreshToken);
-
-    // Issue new access token
-    const accessToken = generateAccessToken(user);
-
-    // Set new refresh token cookie
-    res.cookie('refresh_token', newRefreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
-
-    res.json({ accessToken });
-  } catch (error) {
-    res.status(401).json({ error: 'Invalid refresh token' });
-  }
-});
-```
-
-### Logout {#adr-004-logout}
-
-```typescript
-router.post('/auth/logout', authenticate, async (req, res) => {
-  // Revoke refresh token
-  const refreshToken = req.cookies.refresh_token;
-  if (refreshToken) {
-    const payload = jwt.decode(refreshToken);
-    if (payload?.jti) {
-      await tokenService.revoke(payload.jti);
-    }
-  }
-
-  // Clear cookie
-  res.clearCookie('refresh_token');
-
-  res.json({ message: 'Logged out' });
-});
-```
-
-## Consequences {#adr-004-consequences}
+## Verification {#adr-004-verification}
 <!--
-Positive, negative, and mitigation strategies.
+Checklist derived from scoping - what to inspect when implementing.
 -->
 
-### Positive {#adr-004-positive}
+- [ ] Are access tokens stored only in memory (not localStorage)?
+- [ ] Are refresh tokens stored in httpOnly, Secure, SameSite cookies?
+- [ ] Is token refresh flow transparent to users?
+- [ ] Does logout invalidate refresh tokens in database?
+- [ ] Is HTTPS enforced in production?
+- [ ] Does the frontend handle 401 responses with automatic refresh?
+- [ ] Are JWT secrets stored securely and rotatable?
 
-- **Stateless**: No session store needed, easy scaling
-- **Self-contained**: User info in token, fewer DB lookups
-- **Portable**: Works across services and mobile apps
-- **Standard**: Well-understood, library support
-
-### Negative {#adr-004-negative}
-
-- **No immediate revocation**: Access tokens valid until expiry
-- **Token size**: Larger than session IDs
-- **Complexity**: Two tokens, refresh flow
-- **Secret management**: Must secure signing keys
-
-### Mitigation Strategies {#adr-004-mitigation}
-
-| Issue | Mitigation |
-|-------|------------|
-| No immediate revocation | Short TTL (15 min), refresh token revocation |
-| Token theft | httpOnly cookies, HTTPS, short TTL |
-| Secret exposure | Rotate secrets, use RS256 in production |
-| Complexity | Well-documented implementation |
-
-## Cross-Cutting Concerns {#adr-004-cross-cutting}
-<!--
-Impacts that span multiple levels.
--->
-
-### Frontend Integration {#adr-004-frontend}
-
-- Store access token in memory (React state/context)
-- Refresh token handled automatically via cookies
-- Use interceptors for automatic refresh
-- See [COM-004-api-client](../components/frontend/COM-004-api-client.md)
-
-### Backend Middleware {#adr-004-backend}
-
-- Validate JWT on every authenticated request
-- Extract user context from token
-- Handle expired tokens gracefully
-- See [COM-002-auth-middleware](../components/backend/COM-002-auth-middleware.md)
-
-## Revisit Triggers {#adr-004-revisit}
+### Revisit Triggers
 
 Consider revisiting this decision if:
 - Need for real-time token revocation (consider token blacklist)

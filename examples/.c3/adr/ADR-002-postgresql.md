@@ -7,18 +7,20 @@ summary: >
   the database choice rationale and operational considerations.
 status: accepted
 date: 2025-01-15
-related-components: [CTX-001-system-overview, CON-001-backend, COM-001-db-pool]
 ---
 
 # [ADR-002] Use PostgreSQL for Primary Data Storage
 
 ## Status {#adr-002-status}
+<!--
+Current status of this decision.
+-->
 
 **Accepted** - 2025-01-15
 
-## Context {#adr-002-context}
+## Problem/Requirement {#adr-002-problem}
 <!--
-Current situation and why change/decision is needed.
+Starting point - what user asked for, why change is needed.
 -->
 
 TaskFlow needs a database for persisting user accounts, tasks, and related data. The application requires:
@@ -35,14 +37,38 @@ TaskFlow needs a database for persisting user accounts, tasks, and related data.
 - Read-heavy workload (80% reads)
 - Need for complex queries (filtering, sorting, aggregation)
 
-## Decision {#adr-002-decision}
+## Exploration Journey {#adr-002-exploration}
 <!--
-High-level approach with reasoning.
+How understanding developed through scoping.
+-->
+
+**Initial hypothesis:** This is a Context-level infrastructure decision affecting how all containers persist and query data.
+
+**Explored:**
+- **Isolated**: What database best fits relational user-task-tag data model
+- **Upstream**: Hosting requirements, operational complexity, team expertise
+- **Adjacent**: Connection pooling strategy, backup/recovery needs, search requirements
+- **Downstream**: Impact on Backend container's data layer, ORM selection
+
+**Discovered:**
+- Data model is inherently relational (users -> tasks -> tags)
+- PostgreSQL's JSONB provides flexibility for task metadata without sacrificing relational integrity
+- Built-in full-text search avoids need for separate search infrastructure
+- Team has strong PostgreSQL experience, reducing ramp-up time
+
+**Confirmed:**
+- ACID compliance is required for task state transitions
+- Vertical scaling is sufficient for projected load (first 2 years)
+- Managed PostgreSQL services (RDS, Supabase) reduce operational burden
+
+## Solution {#adr-002-solution}
+<!--
+Formed through exploration above.
 -->
 
 We will use **PostgreSQL 15+** as the primary database.
 
-### Why PostgreSQL {#adr-002-why}
+### Why PostgreSQL
 
 - **Relational model**: Perfect fit for users, tasks, tags relationships
 - **ACID compliance**: Strong guarantees for data integrity
@@ -51,7 +77,7 @@ We will use **PostgreSQL 15+** as the primary database.
 - **Mature ecosystem**: Excellent tooling, hosting, and community
 - **Team familiarity**: Team has strong PostgreSQL experience
 
-### Schema Overview {#adr-002-schema}
+### Schema Overview
 
 ```mermaid
 erDiagram
@@ -94,12 +120,9 @@ erDiagram
     }
 ```
 
-## Alternatives Considered {#adr-002-alternatives}
-<!--
-What else was considered and why rejected.
--->
+### Alternatives Considered {#adr-002-alternatives}
 
-### MySQL {#adr-002-mysql}
+#### MySQL
 
 **Pros:**
 - Similar relational model
@@ -113,7 +136,7 @@ What else was considered and why rejected.
 
 **Why rejected:** PostgreSQL has better JSON support and full-text search, which we need for task search.
 
-### MongoDB {#adr-002-mongodb}
+#### MongoDB
 
 **Pros:**
 - Flexible schema
@@ -127,7 +150,7 @@ What else was considered and why rejected.
 
 **Why rejected:** Our data is inherently relational. Document model would require denormalization and complicate queries.
 
-### SQLite {#adr-002-sqlite}
+#### SQLite
 
 **Pros:**
 - Zero configuration
@@ -141,7 +164,7 @@ What else was considered and why rejected.
 
 **Why rejected:** Not suitable for a multi-user web application.
 
-### Comparison Matrix {#adr-002-comparison}
+#### Comparison Matrix
 
 | Factor | PostgreSQL | MySQL | MongoDB | SQLite |
 |--------|------------|-------|---------|--------|
@@ -152,82 +175,51 @@ What else was considered and why rejected.
 | Scalability | Vertical/Read | Vertical/Read | Horizontal | Single-user |
 | Team Experience | High | Medium | Low | High |
 
-## Consequences {#adr-002-consequences}
+## Changes Across Layers {#adr-002-changes}
 <!--
-Positive, negative, and mitigation strategies.
+Specific changes to each affected document.
 -->
 
-### Positive {#adr-002-positive}
+### Context Level
+- [CTX-001-system-overview]: Document PostgreSQL as database in Architecture and Protocols sections
 
-- **Strong data integrity**: ACID transactions prevent corruption
-- **Flexible querying**: Complex queries without application-level joins
-- **Built-in search**: No separate search infrastructure needed initially
-- **Mature tooling**: pgAdmin, psql, excellent ORM support
-- **Hosting options**: AWS RDS, Supabase, Railway, self-hosted
+### Container Level
+- [CON-001-backend]: Configure Prisma ORM for PostgreSQL, implement data layer
 
-### Negative {#adr-002-negative}
+### Component Level
+- [COM-001-db-pool]: Implement PostgreSQL connection pooling with pg-pool
 
-- **Vertical scaling**: Limited horizontal scaling options
-- **Operational overhead**: Requires database administration
-- **Connection limits**: Must manage connection pooling
+### Cross-Cutting Concerns
 
-### Mitigation Strategies {#adr-002-mitigation}
-
-| Issue | Mitigation |
-|-------|------------|
-| Vertical scaling | Use read replicas for read scaling |
-| Connection limits | Implement connection pooling ([COM-001-db-pool](../components/backend/COM-001-db-pool.md)) |
-| Operational overhead | Use managed PostgreSQL (RDS, Supabase) |
-| Search performance | Add dedicated search service if needed later |
-
-## Implementation Notes {#adr-002-implementation}
-<!--
-Ordered steps for implementation.
--->
-
-1. **Set up PostgreSQL instance**
-   - Development: Docker container
-   - Production: AWS RDS or Supabase
-
-2. **Configure connection pooling**
-   - See [COM-001-db-pool](../components/backend/COM-001-db-pool.md)
-
-3. **Create initial schema**
-   - Migration files for users, tasks, tags tables
-   - Indexes for common query patterns
-
-4. **Set up ORM**
-   - Prisma for type-safe database access
-   - Generate types from schema
-
-5. **Enable full-text search**
-   - Add `tsvector` column to tasks
-   - Create GIN index for search
-
-## Cross-Cutting Concerns {#adr-002-cross-cutting}
-<!--
-Impacts that span multiple levels.
--->
-
-### Backup Strategy {#adr-002-backup}
-
+**Backup Strategy:**
 - Daily automated backups (pg_dump)
 - Point-in-time recovery via WAL archiving
 - 30-day retention
 
-### Security {#adr-002-security}
-
+**Security:**
 - SSL/TLS connections in production
 - Dedicated application user with minimal privileges
 - Password stored in secrets manager
 
-### Monitoring {#adr-002-monitoring}
-
+**Monitoring:**
 - Connection pool metrics
 - Query performance (pg_stat_statements)
 - Disk usage and growth
 
-## Revisit Triggers {#adr-002-revisit}
+## Verification {#adr-002-verification}
+<!--
+Checklist derived from scoping - what to inspect when implementing.
+-->
+
+- [ ] Is PostgreSQL correctly configured for the application's data model?
+- [ ] Are indexes created for common query patterns?
+- [ ] Is connection pooling properly configured (COM-001-db-pool)?
+- [ ] Are backup and recovery procedures documented and tested?
+- [ ] Is SSL/TLS enabled for production connections?
+- [ ] Are database credentials stored securely?
+- [ ] Is full-text search index created for task search?
+
+### Revisit Triggers
 
 Consider revisiting this decision if:
 - Write throughput exceeds vertical scaling limits

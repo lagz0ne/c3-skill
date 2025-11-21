@@ -27,7 +27,8 @@ Transform requirements into structured C3 (Context-Container-Component) architec
 
 If `.c3/` doesn't exist:
 - Stop and inform user to initialize structure first
-- Suggest: "Create `.c3/` directory to start, or use `/c3-init` to initialize"
+- Suggest: "Use the `c3-adopt` skill to initialize C3 documentation for this project"
+- The `c3-adopt` skill will discover the project structure and create initial documents
 
 ## The Process
 
@@ -226,6 +227,8 @@ Use the Skill tool to invoke during exploration:
 
 | Skill | When to Use |
 |-------|-------------|
+| `c3-adopt` | Initialize C3 documentation for existing project (if `.c3/` doesn't exist) |
+| `c3-toc` | Manage TOC, inspect document tree, rebuild index |
 | `c3-locate` | Retrieve content by document/heading ID |
 | `c3-context-design` | Explore Context-level impact |
 | `c3-container-design` | Explore Container-level impact |

@@ -2,7 +2,7 @@
 
 > **AUTO-GENERATED** - Do not edit manually. Regenerate with: `.c3/scripts/build-toc.sh`
 >
-> Last generated: 2025-11-21 10:31:42
+> Last generated: 2025-11-21 11:46:19
 
 ## Context Level
 
@@ -79,17 +79,20 @@ High-level description of container purpose and responsibilities.
 - [Technology Stack](#con-002-technology-stack) - 
 Lists languages, frameworks, and key libraries used. Read to understand
 the technical foundation.
+- [Middleware Pipeline](#con-002-middleware) - 
+Describes the request/response processing pipeline for frontend data flow.
+Read this to understand how data flows through the application layers.
 - [Component Organization](#con-002-components) - 
 Shows how components are structured inside the container.
-- [State Management](#con-002-state) - 
-How application state is organized and managed.
-- [Routing](#con-002-routing) - 
-Client-side routing configuration.
+- [API Endpoints](#con-002-api-endpoints) - 
+Documents the API endpoints consumed by this container.
 - [Communication Patterns](#con-002-communication) - 
 How this container communicates with backend.
+- [Data Responsibilities](#con-002-data) - 
+What data this container owns and manages.
 - [Configuration](#con-002-configuration) - 
 Environment-based configuration for this container.
-- [Build & Deployment](#con-002-deployment) - 
+- [Deployment](#con-002-deployment) - 
 Container-specific deployment characteristics.
 - [Related](#con-002-related)
 
@@ -235,22 +238,18 @@ refresh flow, and security considerations.
 **Status**: Accepted
 
 **Sections**:
-- [Status](#adr-004-status)
-- [Context](#adr-004-context) - 
-Current situation and why change/decision is needed.
-- [Decision](#adr-004-decision) - 
-High-level approach with reasoning.
-- [Alternatives Considered](#adr-004-alternatives) - 
-What else was considered and why rejected.
-- [Token Security](#adr-004-security) - 
-Security measures for token handling.
-- [Implementation Details](#adr-004-implementation-details) - 
-Technical implementation specifics.
-- [Consequences](#adr-004-consequences) - 
-Positive, negative, and mitigation strategies.
-- [Cross-Cutting Concerns](#adr-004-cross-cutting) - 
-Impacts that span multiple levels.
-- [Revisit Triggers](#adr-004-revisit)
+- [Status](#adr-004-status) - 
+Current status of this decision.
+- [Problem/Requirement](#adr-004-problem) - 
+Starting point - what user asked for, why change is needed.
+- [Exploration Journey](#adr-004-exploration) - 
+How understanding developed through scoping.
+- [Solution](#adr-004-solution) - 
+Formed through exploration above.
+- [Changes Across Layers](#adr-004-changes) - 
+Specific changes to each affected document.
+- [Verification](#adr-004-verification) - 
+Checklist derived from scoping - what to inspect when implementing.
 - [Related](#adr-004-related)
 
 ---
@@ -263,22 +262,18 @@ cache invalidation approach, and implementation plan.
 **Status**: Proposed
 
 **Sections**:
-- [Status](#adr-003-status)
-- [Context](#adr-003-context) - 
-Current situation and why change/decision is needed.
-- [Decision](#adr-003-decision) - 
-High-level approach with reasoning.
-- [Cache Patterns](#adr-003-patterns) - 
-How caching will be implemented.
-- [Alternatives Considered](#adr-003-alternatives) - 
-What else was considered and why rejected.
-- [Consequences](#adr-003-consequences) - 
-Positive, negative, and mitigation strategies.
-- [Implementation Plan](#adr-003-implementation) - 
-Ordered steps for implementation.
-- [Success Metrics](#adr-003-metrics)
-- [Risk Assessment](#adr-003-risks)
-- [Revisit Triggers](#adr-003-revisit)
+- [Status](#adr-003-status) - 
+Current status of this decision.
+- [Problem/Requirement](#adr-003-problem) - 
+Starting point - what user asked for, why change is needed.
+- [Exploration Journey](#adr-003-exploration) - 
+How understanding developed through scoping.
+- [Solution](#adr-003-solution) - 
+Formed through exploration above.
+- [Changes Across Layers](#adr-003-changes) - 
+Specific changes to each affected document.
+- [Verification](#adr-003-verification) - 
+Checklist derived from scoping - what to inspect when implementing.
 - [Related](#adr-003-related)
 
 ---
@@ -291,20 +286,18 @@ the database choice rationale and operational considerations.
 **Status**: Accepted
 
 **Sections**:
-- [Status](#adr-002-status)
-- [Context](#adr-002-context) - 
-Current situation and why change/decision is needed.
-- [Decision](#adr-002-decision) - 
-High-level approach with reasoning.
-- [Alternatives Considered](#adr-002-alternatives) - 
-What else was considered and why rejected.
-- [Consequences](#adr-002-consequences) - 
-Positive, negative, and mitigation strategies.
-- [Implementation Notes](#adr-002-implementation) - 
-Ordered steps for implementation.
-- [Cross-Cutting Concerns](#adr-002-cross-cutting) - 
-Impacts that span multiple levels.
-- [Revisit Triggers](#adr-002-revisit)
+- [Status](#adr-002-status) - 
+Current status of this decision.
+- [Problem/Requirement](#adr-002-problem) - 
+Starting point - what user asked for, why change is needed.
+- [Exploration Journey](#adr-002-exploration) - 
+How understanding developed through scoping.
+- [Solution](#adr-002-solution) - 
+Formed through exploration above.
+- [Changes Across Layers](#adr-002-changes) - 
+Specific changes to each affected document.
+- [Verification](#adr-002-verification) - 
+Checklist derived from scoping - what to inspect when implementing.
 - [Related](#adr-002-related)
 
 ---
@@ -317,21 +310,18 @@ reasoning, trade-offs, and when this decision might be revisited.
 **Status**: Accepted
 
 **Sections**:
-- [Status](#adr-001-status)
-- [Context](#adr-001-context) - 
-Current situation and why change/decision is needed.
-- [Decision](#adr-001-decision) - 
-High-level approach with reasoning.
-- [Alternatives Considered](#adr-001-alternatives) - 
-What else was considered and why rejected.
-- [Consequences](#adr-001-consequences) - 
-Positive, negative, and mitigation strategies.
-- [Cross-Cutting Concerns](#adr-001-cross-cutting) - 
-Impacts that span multiple levels.
-- [Implementation Notes](#adr-001-implementation) - 
-Ordered steps for implementation.
-- [Revisit Triggers](#adr-001-revisit) - 
-When should this decision be reconsidered?
+- [Status](#adr-001-status) - 
+Current status of this decision.
+- [Problem/Requirement](#adr-001-problem) - 
+Starting point - what user asked for, why change is needed.
+- [Exploration Journey](#adr-001-exploration) - 
+How understanding developed through scoping.
+- [Solution](#adr-001-solution) - 
+Formed through exploration above.
+- [Changes Across Layers](#adr-001-changes) - 
+Specific changes to each affected document.
+- [Verification](#adr-001-verification) - 
+Checklist derived from scoping - what to inspect when implementing.
 - [Related](#adr-001-related)
 
 ---

@@ -46,6 +46,52 @@ the technical foundation.
 | HTTP Client | Axios | 1.x | API requests |
 | Testing | Vitest + RTL | - | Unit/component tests |
 
+## Middleware Pipeline {#con-002-middleware}
+<!--
+Describes the request/response processing pipeline for frontend data flow.
+Read this to understand how data flows through the application layers.
+-->
+
+```mermaid
+graph LR
+    A[User Action] --> B[Component]
+    B --> C[Custom Hook]
+    C --> D[Store Action]
+    D --> E[API Client]
+    E --> F[Request Interceptor]
+    F --> G[Backend API]
+    G --> H[Response Interceptor]
+    H --> I[Store Update]
+    I --> J[Component Re-render]
+```
+
+### Data Flow Pipeline
+
+1. **User Action**: Click, form submit, navigation
+2. **Component**: React component handles event
+3. **Custom Hook**: `useTasks`, `useAuth` orchestrate logic
+4. **Store Action**: Zustand store mutation
+5. **API Client**: Axios request preparation
+6. **Request Interceptor**: Add auth token, correlation ID
+7. **Backend API**: Network request
+8. **Response Interceptor**: Handle errors, transform data
+9. **Store Update**: Update local state
+10. **Component Re-render**: UI updates
+
+### Error Handling Pipeline
+
+```mermaid
+graph TD
+    A[API Error] --> B{Status Code?}
+    B -->|401| C[Token Refresh]
+    C -->|Success| D[Retry Request]
+    C -->|Failure| E[Redirect to Login]
+    B -->|403| F[Show Forbidden Message]
+    B -->|404| G[Show Not Found]
+    B -->|5xx| H[Show Error Toast]
+    B -->|Network| I[Show Offline Message]
+```
+
 ## Component Organization {#con-002-components}
 <!--
 Shows how components are structured inside the container.
@@ -82,7 +128,7 @@ graph TD
 - **State Layer**: Zustand stores, custom hooks
 - **Data Layer**: API client, TypeScript types
 
-### Directory Structure {#con-002-directory-structure}
+### Directory Structure
 
 ```
 src/
@@ -122,97 +168,29 @@ src/
 | TaskForm | `src/components/Form/` | Task creation/editing |
 | AuthProvider | `src/hooks/useAuth.ts` | Authentication context |
 
-## State Management {#con-002-state}
+## API Endpoints {#con-002-api-endpoints}
 <!--
-How application state is organized and managed.
+Documents the API endpoints consumed by this container.
 -->
 
-### Store Organization {#con-002-stores}
+### Tasks API (consumed)
 
-```mermaid
-graph LR
-    subgraph "Global State"
-        AS[Auth Store]
-        TS[Task Store]
-        US[UI Store]
-    end
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/tasks` | List user's tasks |
+| POST | `/api/v1/tasks` | Create new task |
+| GET | `/api/v1/tasks/:id` | Get task by ID |
+| PUT | `/api/v1/tasks/:id` | Update task |
+| DELETE | `/api/v1/tasks/:id` | Delete task |
 
-    subgraph "Server State"
-        RQ[API Cache]
-    end
+### Auth API (consumed)
 
-    AS -->|User session| C[Components]
-    TS -->|Task data| C
-    US -->|UI state| C
-    RQ -->|Cached data| C
-```
-
-**Store Responsibilities:**
-
-| Store | Purpose | Persistence |
-|-------|---------|-------------|
-| Auth Store | User session, tokens | localStorage |
-| Task Store | Task list, filters | None (fetched) |
-| UI Store | Sidebar state, theme | localStorage |
-
-### Example Store {#con-002-store-example}
-
-```typescript
-// src/stores/authStore.ts
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-
-interface AuthState {
-  user: User | null;
-  isAuthenticated: boolean;
-  setUser: (user: User | null) => void;
-  logout: () => void;
-}
-
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      user: null,
-      isAuthenticated: false,
-      setUser: (user) => set({ user, isAuthenticated: !!user }),
-      logout: () => set({ user: null, isAuthenticated: false }),
-    }),
-    { name: 'auth-storage' }
-  )
-);
-```
-
-## Routing {#con-002-routing}
-<!--
-Client-side routing configuration.
--->
-
-### Route Structure {#con-002-routes}
-
-| Path | Component | Auth Required | Description |
-|------|-----------|---------------|-------------|
-| `/` | Dashboard | Yes | Main dashboard |
-| `/tasks` | TaskList | Yes | All tasks view |
-| `/tasks/:id` | TaskDetail | Yes | Single task view |
-| `/tasks/new` | TaskForm | Yes | Create new task |
-| `/login` | Login | No | Authentication |
-| `/register` | Register | No | User registration |
-
-### Protected Routes {#con-002-protected-routes}
-
-```typescript
-// src/components/ProtectedRoute.tsx
-function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = useAuthStore();
-  const location = useLocation();
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  return children;
-}
-```
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/auth/login` | User login |
+| POST | `/api/v1/auth/register` | User registration |
+| POST | `/api/v1/auth/refresh` | Refresh tokens |
+| POST | `/api/v1/auth/logout` | User logout |
 
 ## Communication Patterns {#con-002-communication}
 <!--
@@ -244,7 +222,7 @@ sequenceDiagram
     C-->>U: Show new task
 ```
 
-### Error Handling {#con-002-error-handling}
+### Error Handling
 
 API errors are caught and transformed:
 
@@ -262,6 +240,26 @@ api.interceptors.response.use(
 );
 ```
 
+## Data Responsibilities {#con-002-data}
+<!--
+What data this container owns and manages.
+-->
+
+**Owns (client-side):**
+- UI state (sidebar, theme, modals)
+- Form draft data (before submission)
+- Optimistic updates (pending confirmation)
+
+**Caches (from backend):**
+- Task list (via React Query/store)
+- User profile
+- Authentication tokens
+
+**Does NOT own:**
+- Persistent task data (owned by backend)
+- User credentials (verified by backend)
+- Business rules (enforced by backend)
+
 ## Configuration {#con-002-configuration}
 <!--
 Environment-based configuration for this container.
@@ -273,7 +271,7 @@ Environment-based configuration for this container.
 | `VITE_APP_NAME` | `TaskFlow Dev` | `TaskFlow` | Application name |
 | `VITE_ENABLE_DEVTOOLS` | `true` | `false` | React DevTools |
 
-## Build & Deployment {#con-002-deployment}
+## Deployment {#con-002-deployment}
 <!--
 Container-specific deployment characteristics.
 -->

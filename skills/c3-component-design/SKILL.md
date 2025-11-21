@@ -12,6 +12,7 @@ Explore Component-level impact during the scoping phase of c3-design. Component 
 **Abstraction Level:** Implementation details. Code examples, configuration snippets, and library usage are appropriate here.
 
 **Announce at start:** "I'm using the c3-component-design skill to explore Component-level impact."
+**Naming:** Follow `c3-naming` (components embed parent container code in ID/filename; anchors use `{#com-xxx-*}`).
 
 ## When Invoked
 

@@ -29,6 +29,7 @@ Bootstrap C3 (Context-Container-Component) architecture documentation for an exi
 - **Downward-only links:** CTX → CON sections; CON → COM docs. No upward links.
 - **Infra containers are leaf nodes:** No components; their features must be cited by consuming components.
 - **Anchors:** Use `{#ctx-xxx-*}`, `{#con-xxx-*}`, `{#com-xxx-*}` for stable links.
+- **Naming:** Use `c3-naming` (components carry parent container code; IDs match filenames/paths).
 - **Templates/checklists:** Use templates from c3-context-design, c3-container-design, c3-component-design and complete all checklist items.
 
 ---

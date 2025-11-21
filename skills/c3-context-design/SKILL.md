@@ -12,6 +12,7 @@ Explore Context-level impact during the scoping phase of c3-design. Context is t
 **Abstraction Level:** WHAT exists and HOW they relate. No implementation details.
 
 **Announce at start:** "I'm using the c3-context-design skill to explore Context-level impact."
+**Naming:** Apply `c3-naming` (CTX/CON IDs follow patterns; anchors `{#ctx-xxx-*}`).
 
 ## When Invoked
 

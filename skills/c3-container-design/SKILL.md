@@ -12,6 +12,7 @@ Explore Container-level impact during the scoping phase of c3-design. Container 
 **Abstraction Level:** WHAT and WHY, not HOW. Characteristics and architecture, not implementation code.
 
 **Announce at start:** "I'm using the c3-container-design skill to explore Container-level impact."
+**Naming:** Use `c3-naming` (unique `CON-###-slug`; components must include parent container code in IDs and filenames).
 
 ## When Invoked
 

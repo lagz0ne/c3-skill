@@ -1,30 +1,29 @@
----
-id: COM-005-error-handler
+id: C3-105-error-handler
 title: Error Handler (Cross-cutting)
 summary: >
   Unified error formatting middleware. Converts exceptions to consistent JSON error responses.
 nature: Cross-cutting
 ---
 
-# [COM-005-error-handler] Error Handler (Cross-cutting)
+# [C3-105-error-handler] Error Handler (Cross-cutting)
 
-## Overview {#com-005-overview}
+## Overview {#c3-105-overview}
 
 Express error middleware that catches all errors and formats them into consistent JSON responses with correlation IDs.
 
-## Stack {#com-005-stack}
+## Stack {#c3-105-stack}
 
 - Library: None (Express middleware)
 - Why: Native Express error handling pattern
 
-## Configuration {#com-005-config}
+## Configuration {#c3-105-config}
 
 | Env Var | Dev | Prod | Why |
 |---------|-----|------|-----|
 | EXPOSE_STACK | `true` | `false` | Include stack trace in dev |
 | NODE_ENV | `development` | `production` | Environment detection |
 
-### Config Loading {#com-005-config-loading}
+### Config Loading {#c3-105-config-loading}
 
 ```typescript
 import { z } from 'zod';
@@ -40,7 +39,7 @@ export const errorConfig = errorConfigSchema.parse({
 });
 ```
 
-## Interfaces & Types {#com-005-interfaces}
+## Interfaces & Types {#c3-105-interfaces}
 
 ```typescript
 interface ErrorResponse {
@@ -59,7 +58,7 @@ interface AppError extends Error {
 }
 ```
 
-## Behavior {#com-005-behavior}
+## Behavior {#c3-105-behavior}
 
 ```mermaid
 flowchart TD
@@ -72,7 +71,7 @@ flowchart TD
     Log --> Send[Send response]
 ```
 
-## Error Handling {#com-005-errors}
+## Error Handling {#c3-105-errors}
 
 | Error Type | Status | Code |
 |------------|--------|------|
@@ -82,7 +81,7 @@ flowchart TD
 | NotFoundError | 404 | `not_found` |
 | Unknown | 500 | `internal_error` |
 
-## Usage {#com-005-usage}
+## Usage {#c3-105-usage}
 
 ```typescript
 import { errorHandler } from './middleware/errorHandler';
@@ -94,13 +93,13 @@ app.use(errorHandler);
 throw new AppError('Task not found', 'task_not_found', 404);
 ```
 
-## Health Checks {#com-005-health}
+## Health Checks {#c3-105-health}
 
 | Check | Probe | Expectation |
 |-------|-------|-------------|
 | Middleware registered | Check app middleware stack | Handler present |
 
-## Metrics & Observability {#com-005-metrics}
+## Metrics & Observability {#c3-105-metrics}
 
 | Metric | Type | Description |
 |--------|------|-------------|
@@ -108,8 +107,8 @@ throw new AppError('Task not found', 'task_not_found', 404);
 | `errors_by_status` | Counter | Errors by HTTP status |
 | `unhandled_errors_total` | Counter | Non-operational errors |
 
-## Dependencies {#com-005-deps}
+## Dependencies {#c3-105-deps}
 
-- **Upstream:** [COM-004-logger](./COM-004-logger.md) for error logging
+- **Upstream:** [C3-104-logger](./C3-104-logger.md) for error logging
 - **Downstream:** None (terminal middleware)
 - **Infra features consumed:** None

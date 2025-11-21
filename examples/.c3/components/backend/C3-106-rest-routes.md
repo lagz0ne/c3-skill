@@ -1,34 +1,34 @@
 ---
-id: COM-001-rest-routes
+id: C3-106-rest-routes
 title: REST Routes (Entrypoint)
 summary: >
   HTTP entrypoint that validates auth, routes requests, and delegates persistence to the DB pool.
 ---
 
-# [COM-001-rest-routes] REST Routes (Entrypoint)
+# [C3-106-rest-routes] REST Routes (Entrypoint)
 
-## Overview {#com-001-overview}
+## Overview {#c3-106-overview}
 - Entry point for HTTP requests; handles routing and hands off auth + persistence.
-- Implements CTX protocol by delegating SQL operations to [COM-002-db-pool](./COM-002-db-pool.md#com-002-behavior) via container [CON-001-backend#con-001-protocols](../../containers/CON-001-backend.md#con-001-protocols).
+- Implements CTX protocol by delegating SQL operations to [C3-101-db-pool](./C3-101-db-pool.md#c3-101-behavior) via container [C3-1-backend#c3-1-protocols](../../containers/C3-1-backend.md#c3-1-protocols).
 
-## Stack {#com-001-stack}
+## Stack {#c3-106-stack}
 - Framework: Express 4.18
 - Language: TypeScript 5.x
 - Why: Minimal routing, middleware support, strong ecosystem
 
-## Configuration {#com-001-config}
+## Configuration {#c3-106-config}
 | Env Var | Dev | Prod | Why |
 |---------|-----|------|-----|
 | PORT | 3000 | 8080 | Bind port |
 | API_PREFIX | /api | /api | Stable routing prefix |
 | AUTH_PUBLIC_KEY_PATH | ./keys/dev.pub | /etc/keys/auth.pub | Token verification |
 
-## Interfaces & Types {#com-001-interfaces}
+## Interfaces & Types {#c3-106-interfaces}
 - `POST /tasks` → `createTask(body, userContext): Task`
 - `GET /tasks/:id` → `getTask(id, userContext): Task`
 - Middleware: `(req, res, next) => void` with attached `req.user`
 
-## Behavior {#com-001-behavior}
+## Behavior {#c3-106-behavior}
 - Validates auth token, injects `user` into request.
 - Routes call DB pool through lightweight service helpers.
 - Errors normalized before response.
@@ -43,14 +43,14 @@ flowchart TD
     CallDB --> Log
 ```
 
-## Error Handling {#com-001-errors}
+## Error Handling {#c3-106-errors}
 | Error | Retriable | Action/Code |
 |-------|-----------|-------------|
 | Missing/invalid token | No | 401/403 with code `auth_invalid` |
 | DB query rejected | Yes | 503 with code `db_unavailable`, logged |
 | Validation failed | No | 400 with code `validation_error` |
 
-## Usage {#com-001-usage}
+## Usage {#c3-106-usage}
 ```typescript
 import { createApp } from './app';
 
@@ -58,6 +58,6 @@ const app = createApp({ logger, dbPool });
 app.listen(process.env.PORT || 8080);
 ```
 
-## Dependencies {#com-001-deps}
-- [COM-002-db-pool](./COM-002-db-pool.md#com-002-behavior) for persistence
-- [COM-003-logger](./COM-003-logger.md#com-003-behavior) for request/error logging
+## Dependencies {#c3-106-deps}
+- [C3-101-db-pool](./C3-101-db-pool.md#c3-101-behavior) for persistence
+- [C3-104-logger](./C3-104-logger.md#c3-104-behavior) for request/error logging

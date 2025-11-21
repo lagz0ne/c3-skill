@@ -53,17 +53,17 @@ graph TB
 
 | Container | Type (Code/Infra) | Description |
 |-----------|-------------------|-------------|
-| [CON-001-backend](./containers/CON-001-backend.md) | Code | REST API handling business logic |
-| [CON-002-frontend](./containers/CON-002-frontend.md) | Code | Web user interface |
-| [CON-003-postgres](./containers/CON-003-postgres.md) | Infrastructure | Data persistence |
+| [C3-1-backend](./containers/C3-1-backend.md) | Code | REST API handling business logic |
+| [C3-2-frontend](./containers/C3-2-frontend.md) | Code | Web user interface |
+| [C3-3-postgres](./containers/C3-3-postgres.md) | Infrastructure | Data persistence |
 
 ## Protocols {#ctx-001-protocols}
 
 | From | To | Protocol | Implementations |
 |------|----|----------|-----------------|
-| Frontend | Backend | REST/HTTPS | [CON-002-frontend#con-002-api-calls](./containers/CON-002-frontend.md#con-002-api-calls), [CON-001-backend#con-001-rest-endpoints](./containers/CON-001-backend.md#con-001-rest-endpoints) |
-| Backend | Postgres | SQL/TCP | [CON-001-backend#con-001-db-access](./containers/CON-001-backend.md#con-001-db-access), [CON-003-postgres#con-003-features](./containers/CON-003-postgres.md#con-003-features) |
-| Backend | Email Service | SMTP/TLS | [CON-001-backend#con-001-email-integration](./containers/CON-001-backend.md#con-001-email-integration) |
+| Frontend | Backend | REST/HTTPS | [C3-2-frontend#c3-2-api-calls](./containers/C3-2-frontend.md#c3-2-api-calls), [C3-1-backend#c3-1-rest-endpoints](./containers/C3-1-backend.md#c3-1-rest-endpoints) |
+| Backend | Postgres | SQL/TCP | [C3-1-backend#c3-1-db-access](./containers/C3-1-backend.md#c3-1-db-access), [C3-3-postgres#c3-3-features](./containers/C3-3-postgres.md#c3-3-features) |
+| Backend | Email Service | SMTP/TLS | [C3-1-backend#c3-1-email-integration](./containers/C3-1-backend.md#c3-1-email-integration) |
 
 ### REST API Protocol {#ctx-001-rest-api}
 
@@ -109,8 +109,8 @@ JWT-based authentication with refresh tokens:
 - Token validation at API gateway level
 
 **Implemented in:**
-- [CON-001-backend#con-001-auth-middleware](./containers/CON-001-backend.md#con-001-auth-middleware) - Token validation
-- [CON-002-frontend#con-002-auth-handling](./containers/CON-002-frontend.md#con-002-auth-handling) - Token storage and refresh
+- [C3-1-backend#c3-1-auth-middleware](./containers/C3-1-backend.md#c3-1-auth-middleware) - Token validation
+- [C3-2-frontend#c3-2-auth-handling](./containers/C3-2-frontend.md#c3-2-auth-handling) - Token storage and refresh
 
 ### Logging {#ctx-001-logging}
 
@@ -120,8 +120,8 @@ Structured JSON logging across all containers:
 - Centralized logging via stdout (container-friendly)
 
 **Implemented in:**
-- [CON-001-backend#con-001-logging](./containers/CON-001-backend.md#con-001-logging) - Backend logging
-- [CON-002-frontend#con-002-logging](./containers/CON-002-frontend.md#con-002-logging) - Frontend logging
+- [C3-1-backend#c3-1-logging](./containers/C3-1-backend.md#c3-1-logging) - Backend logging
+- [C3-2-frontend#c3-2-logging](./containers/C3-2-frontend.md#c3-2-logging) - Frontend logging
 
 ### Error Handling {#ctx-001-error-handling}
 
@@ -137,8 +137,8 @@ Consistent error response format:
 ```
 
 **Implemented in:**
-- [CON-001-backend#con-001-error-handling](./containers/CON-001-backend.md#con-001-error-handling) - Error formatting
-- [CON-002-frontend#con-002-error-handling](./containers/CON-002-frontend.md#con-002-error-handling) - Error display
+- [C3-1-backend#c3-1-error-handling](./containers/C3-1-backend.md#c3-1-error-handling) - Error formatting
+- [C3-2-frontend#c3-2-error-handling](./containers/C3-2-frontend.md#c3-2-error-handling) - Error display
 
 ## Deployment {#ctx-001-deployment}
 

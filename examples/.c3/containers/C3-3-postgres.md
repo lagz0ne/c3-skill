@@ -1,13 +1,12 @@
----
-id: CON-003-postgres
+id: C3-3-postgres
 title: PostgreSQL Container (Infrastructure)
 summary: >
   Managed PostgreSQL for TaskFlow. Leaf infrastructure container—features are consumed by code containers; no component level beneath.
 ---
 
-# [CON-003-postgres] PostgreSQL Container (Infrastructure)
+# [C3-3-postgres] PostgreSQL Container (Infrastructure)
 
-## Engine {#con-003-engine}
+## Engine {#c3-3-engine}
 
 PostgreSQL 15 (managed service)
 
@@ -19,7 +18,7 @@ PostgreSQL 15 (managed service)
 
 See [ADR-002: PostgreSQL Choice](../adr/ADR-002-postgresql.md) for decision rationale.
 
-## Configuration {#con-003-config}
+## Configuration {#c3-3-config}
 
 | Setting | Value | Why |
 |---------|-------|-----|
@@ -31,7 +30,7 @@ See [ADR-002: PostgreSQL Choice](../adr/ADR-002-postgresql.md) for decision rati
 | `log_statement` | ddl | Log schema changes |
 | `log_min_duration_statement` | 1000 | Log slow queries (>1s) |
 
-### Development vs Production {#con-003-dev-vs-prod}
+### Development vs Production {#c3-3-dev-vs-prod}
 
 | Setting | Development | Production |
 |---------|-------------|------------|
@@ -40,17 +39,17 @@ See [ADR-002: PostgreSQL Choice](../adr/ADR-002-postgresql.md) for decision rati
 | `log_statement` | all | ddl |
 | `ssl` | off | on |
 
-## Features Provided {#con-003-features}
+## Features Provided {#c3-3-features}
 
 | Feature | Used By | Purpose |
 |---------|---------|---------|
-| Connection pooling support | [CON-001-backend](./CON-001-backend.md#con-001-db-access) → [COM-001-db-pool](../components/backend/COM-001-db-pool.md) | Efficient connection reuse |
-| LISTEN/NOTIFY | [CON-001-backend](./CON-001-backend.md#con-001-db-access) → [COM-001-db-pool](../components/backend/COM-001-db-pool.md) | Real-time event notifications |
-| JSON/JSONB columns | [CON-001-backend](./CON-001-backend.md#con-001-components) → [COM-003-task-service](../components/backend/COM-003-task-service.md) | Flexible task metadata |
-| Full-text search | [CON-001-backend](./CON-001-backend.md#con-001-components) → [COM-003-task-service](../components/backend/COM-003-task-service.md) | Task search functionality |
+| Connection pooling support | [C3-1-backend](./C3-1-backend.md#c3-1-db-access) → [C3-101-db-pool](../components/backend/C3-101-db-pool.md) | Efficient connection reuse |
+| LISTEN/NOTIFY | [C3-1-backend](./C3-1-backend.md#c3-1-db-access) → [C3-101-db-pool](../components/backend/C3-101-db-pool.md) | Real-time event notifications |
+| JSON/JSONB columns | [C3-1-backend](./C3-1-backend.md#c3-1-components) → [C3-103-task-service](../components/backend/C3-103-task-service.md) | Flexible task metadata |
+| Full-text search | [C3-1-backend](./C3-1-backend.md#c3-1-components) → [C3-103-task-service](../components/backend/C3-103-task-service.md) | Task search functionality |
 | WAL logical replication | Future: Event streaming | CDC for external systems |
 
-## Schema Overview {#con-003-schema}
+## Schema Overview {#c3-3-schema}
 
 ```mermaid
 erDiagram
@@ -73,7 +72,7 @@ erDiagram
     users ||--o{ tasks : owns
 ```
 
-## Backup & Recovery {#con-003-backup}
+## Backup & Recovery {#c3-3-backup}
 
 | Aspect | Strategy |
 |--------|----------|
@@ -83,7 +82,7 @@ erDiagram
 | RTO | < 1 hour |
 | RPO | < 5 minutes |
 
-## Health Checks {#con-003-health}
+## Health Checks {#c3-3-health}
 
 ```sql
 -- Liveness check
@@ -95,7 +94,7 @@ FROM pg_stat_activity
 WHERE state != 'idle';
 ```
 
-## Deployment {#con-003-deployment}
+## Deployment {#c3-3-deployment}
 
 **Docker image:** `postgres:15-alpine`
 
@@ -109,8 +108,8 @@ WHERE state != 'idle';
 - Named volume in docker-compose
 - EBS/Persistent disk in cloud
 
-## Related {#con-003-related}
+## Related {#c3-3-related}
 
 - [CTX-001: System Overview](../CTX-001-system-overview.md#ctx-001-database-protocol)
-- [CON-001: Backend](./CON-001-backend.md#con-001-db-access) - Primary consumer
+- [C3-1: Backend](./C3-1-backend.md#c3-1-db-access) - Primary consumer
 - [ADR-002: PostgreSQL Choice](../adr/ADR-002-postgresql.md)

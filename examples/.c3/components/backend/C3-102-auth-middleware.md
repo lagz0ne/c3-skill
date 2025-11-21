@@ -1,23 +1,22 @@
----
-id: COM-002-auth-middleware
+id: C3-102-auth-middleware
 title: Auth Middleware (Cross-cutting)
 summary: >
   JWT token validation middleware. Extracts and validates tokens, injects user context into requests.
 nature: Cross-cutting
 ---
 
-# [COM-002-auth-middleware] Auth Middleware (Cross-cutting)
+# [C3-102-auth-middleware] Auth Middleware (Cross-cutting)
 
-## Overview {#com-002-overview}
+## Overview {#c3-102-overview}
 
 Validates JWT tokens from Authorization header or cookies, injects user context into request for downstream handlers.
 
-## Stack {#com-002-stack}
+## Stack {#c3-102-stack}
 
 - Library: `jsonwebtoken` 9.x
 - Why: Standard JWT implementation, well-maintained, supports RS256/ES256
 
-## Configuration {#com-002-config}
+## Configuration {#c3-102-config}
 
 | Env Var | Dev | Prod | Why |
 |---------|-----|------|-----|
@@ -26,7 +25,7 @@ Validates JWT tokens from Authorization header or cookies, injects user context 
 | JWT_AUDIENCE | `taskflow-api` | `taskflow-api` | Token audience validation |
 | JWT_EXPIRY | `1h` | `15m` | Shorter expiry in prod |
 
-### Config Loading {#com-002-config-loading}
+### Config Loading {#c3-102-config-loading}
 
 ```typescript
 import { z } from 'zod';
@@ -46,7 +45,7 @@ export const authConfig = authConfigSchema.parse({
 });
 ```
 
-## Interfaces & Types {#com-002-interfaces}
+## Interfaces & Types {#c3-102-interfaces}
 
 ```typescript
 interface UserContext {
@@ -65,7 +64,7 @@ declare global {
 }
 ```
 
-## Behavior {#com-002-behavior}
+## Behavior {#c3-102-behavior}
 
 ```mermaid
 flowchart TD
@@ -82,7 +81,7 @@ flowchart TD
     I --> J[next]
 ```
 
-## Error Handling {#com-002-errors}
+## Error Handling {#c3-102-errors}
 
 | Error | Retriable | Action/Code |
 |-------|-----------|-------------|
@@ -90,7 +89,7 @@ flowchart TD
 | Invalid signature | No | 401 `auth_invalid` |
 | Token expired | No | 401 `auth_expired` |
 
-## Usage {#com-002-usage}
+## Usage {#c3-102-usage}
 
 ```typescript
 import { authMiddleware } from './middleware/auth';
@@ -104,14 +103,14 @@ app.get('/api/v1/tasks', (req, res) => {
 });
 ```
 
-## Health Checks {#com-002-health}
+## Health Checks {#c3-102-health}
 
 | Check | Probe | Expectation |
 |-------|-------|-------------|
 | Key availability | Verify JWT_SECRET loaded | Non-empty secret |
 | Token validation | Validate sample token format | Parse without crash |
 
-## Metrics & Observability {#com-002-metrics}
+## Metrics & Observability {#c3-102-metrics}
 
 | Metric | Type | Description |
 |--------|------|-------------|
@@ -119,7 +118,7 @@ app.get('/api/v1/tasks', (req, res) => {
 | `auth_failures_total` | Counter | Failed auth attempts by reason |
 | `auth_latency_ms` | Histogram | Token validation time |
 
-## Dependencies {#com-002-deps}
+## Dependencies {#c3-102-deps}
 
 - **Upstream:** None
 - **Downstream:** Used by all protected routes

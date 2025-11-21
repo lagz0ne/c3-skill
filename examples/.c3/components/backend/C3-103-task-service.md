@@ -1,23 +1,22 @@
----
-id: COM-003-task-service
+id: C3-103-task-service
 title: Task Service (Business Logic)
 summary: >
   Core task operations - CRUD, validation, and business rules for task management.
 nature: Business Logic
 ---
 
-# [COM-003-task-service] Task Service (Business Logic)
+# [C3-103-task-service] Task Service (Business Logic)
 
-## Overview {#com-003-overview}
+## Overview {#c3-103-overview}
 
 Handles task creation, retrieval, updates, and deletion with business rule enforcement.
 
-## Stack {#com-003-stack}
+## Stack {#c3-103-stack}
 
 - Library: None (plain TypeScript)
 - ORM: Uses Prisma client from container
 
-## Configuration {#com-003-config}
+## Configuration {#c3-103-config}
 
 | Env Var | Dev | Prod | Why |
 |---------|-----|------|-----|
@@ -25,7 +24,7 @@ Handles task creation, retrieval, updates, and deletion with business rule enfor
 | TASK_TITLE_MAX_LEN | 200 | 200 | Title length limit |
 | TASK_DESC_MAX_LEN | 2000 | 2000 | Description length limit |
 
-### Config Loading {#com-003-config-loading}
+### Config Loading {#c3-103-config-loading}
 
 ```typescript
 import { z } from 'zod';
@@ -43,7 +42,7 @@ export const taskConfig = taskConfigSchema.parse({
 });
 ```
 
-## Interfaces & Types {#com-003-interfaces}
+## Interfaces & Types {#c3-103-interfaces}
 
 ```typescript
 interface Task {
@@ -64,7 +63,7 @@ interface CreateTaskInput {
 }
 ```
 
-## Behavior {#com-003-behavior}
+## Behavior {#c3-103-behavior}
 
 ```mermaid
 sequenceDiagram
@@ -81,7 +80,7 @@ sequenceDiagram
     TaskService-->>Route: Task
 ```
 
-## Domain Rules {#com-003-rules}
+## Domain Rules {#c3-103-rules}
 
 | Rule | Condition | Action |
 |------|-----------|--------|
@@ -89,7 +88,7 @@ sequenceDiagram
 | Title required | Empty title | Reject with `validation_error` |
 | Owner only | User != task.userId | Reject with `forbidden` |
 
-## Error Handling {#com-003-errors}
+## Error Handling {#c3-103-errors}
 
 | Error | Retriable | Action/Code |
 |-------|-----------|-------------|
@@ -97,7 +96,7 @@ sequenceDiagram
 | Validation failed | No | 400 `validation_error` |
 | Limit exceeded | No | 403 `task_limit_exceeded` |
 
-## Usage {#com-003-usage}
+## Usage {#c3-103-usage}
 
 ```typescript
 const taskService = new TaskService(dbPool);
@@ -107,14 +106,14 @@ const task = await taskService.create(userId, {
 });
 ```
 
-## Health Checks {#com-003-health}
+## Health Checks {#c3-103-health}
 
 | Check | Probe | Expectation |
 |-------|-------|-------------|
 | Config loaded | Verify limits are positive | maxTasksPerUser > 0 |
 | DB accessible | Delegate to db-pool health | Healthy |
 
-## Metrics & Observability {#com-003-metrics}
+## Metrics & Observability {#c3-103-metrics}
 
 | Metric | Type | Description |
 |--------|------|-------------|
@@ -123,8 +122,8 @@ const task = await taskService.create(userId, {
 | `task_operation_latency_ms` | Histogram | CRUD operation time |
 | `task_limit_exceeded_total` | Counter | Limit rejections |
 
-## Dependencies {#com-003-deps}
+## Dependencies {#c3-103-deps}
 
-- **Upstream:** [COM-001-db-pool](./COM-001-db-pool.md) for persistence
+- **Upstream:** [C3-101-db-pool](./C3-101-db-pool.md) for persistence
 - **Downstream:** Used by route handlers
-- **Infra features consumed:** [CON-003-postgres#con-003-features](../../containers/CON-003-postgres.md#con-003-features)
+- **Infra features consumed:** [C3-3-postgres#c3-3-features](../../containers/C3-3-postgres.md#c3-3-features)

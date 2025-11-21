@@ -1,5 +1,4 @@
----
-id: COM-001-db-pool
+id: C3-101-db-pool
 title: Database Connection Pool Component
 summary: >
   Explains PostgreSQL connection pooling strategy, configuration by environment,
@@ -7,13 +6,13 @@ summary: >
 nature: Resource
 ---
 
-# [COM-001-db-pool] Database Connection Pool (Resource Nature)
+# [C3-101-db-pool] Database Connection Pool (Resource Nature)
 
 ## Overview
 
 The Database Connection Pool component manages PostgreSQL connections using a pool pattern. It provides efficient connection reuse, prevents connection exhaustion, and implements resilient connection handling with automatic retry.
 
-## Stack {#com-001-stack}
+## Stack {#c3-101-stack}
 
 - Library: `pg` 8.11.x
 - Why: Native PostgreSQL driver, proven stability, supports LISTEN/NOTIFY, excellent TypeScript support
@@ -23,7 +22,7 @@ The Database Connection Pool component manages PostgreSQL connections using a po
 - `knex` - Query builder overhead unnecessary with Prisma
 - `typeorm` - Full ORM, we use Prisma instead
 
-## Configuration {#com-001-config}
+## Configuration {#c3-101-config}
 
 | Env Var | Dev | Prod | Why |
 |---------|-----|------|-----|
@@ -37,7 +36,7 @@ The Database Connection Pool component manages PostgreSQL connections using a po
 | `DB_IDLE_TIMEOUT` | `10000` | `30000` | Release faster in dev |
 | `DB_CONNECTION_TIMEOUT` | `5000` | `10000` | More patience in prod |
 
-### Configuration Loading {#com-001-config-loading}
+### Configuration Loading {#c3-101-config-loading}
 
 ```typescript
 // src/db/config.ts
@@ -68,7 +67,7 @@ export const dbConfig = dbConfigSchema.parse({
 });
 ```
 
-## Behavior {#com-001-behavior}
+## Behavior {#c3-101-behavior}
 
 ```mermaid
 stateDiagram-v2
@@ -90,7 +89,7 @@ max_connections = (available_db_connections / app_instances) * 0.8
 
 Example: 100 DB connections, 2 app instances = 40 max per instance
 
-## Error Handling {#com-001-errors}
+## Error Handling {#c3-101-errors}
 
 | Error | Retriable | Action |
 |-------|-----------|--------|
@@ -123,7 +122,7 @@ async function withRetry<T>(
 }
 ```
 
-## Health Check {#com-001-health}
+## Health Check {#c3-101-health}
 
 ```typescript
 export async function checkDatabaseHealth(): Promise<HealthStatus> {
@@ -148,7 +147,7 @@ export async function checkDatabaseHealth(): Promise<HealthStatus> {
 }
 ```
 
-## Usage {#com-001-usage}
+## Usage {#c3-101-usage}
 
 ```typescript
 // src/repositories/taskRepository.ts
@@ -170,7 +169,7 @@ export async function createTask(task: NewTask): Promise<Task> {
 }
 ```
 
-## Metrics {#com-001-metrics}
+## Metrics {#c3-101-metrics}
 
 | Metric | Type | Description |
 |--------|------|-------------|
@@ -180,8 +179,8 @@ export async function createTask(task: NewTask): Promise<Task> {
 | `db_pool_acquire_time` | Histogram | Time to get connection |
 | `db_query_duration` | Histogram | Query execution time |
 
-## Dependencies {#com-001-deps}
+## Dependencies {#c3-101-deps}
 
 - **Upstream:** None (this is a foundational resource)
-- **Downstream:** Used by [COM-003-task-service](./COM-003-task-service.md) for persistence
-- **Infra features consumed:** [CON-003-postgres#con-003-features](../../containers/CON-003-postgres.md#con-003-features) - SQL data store, connection pooling support
+- **Downstream:** Used by [C3-103-task-service](./C3-103-task-service.md) for persistence
+- **Infra features consumed:** [C3-3-postgres#c3-3-features](../../containers/C3-3-postgres.md#c3-3-features) - SQL data store, connection pooling support

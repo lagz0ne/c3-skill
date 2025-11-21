@@ -1,5 +1,4 @@
----
-id: COM-004-api-client
+id: C3-201-api-client
 title: API Client (Resource)
 summary: >
   Frontend HTTP client for TaskFlow. Wraps fetch with auth header injection, JSON parsing,
@@ -7,24 +6,24 @@ summary: >
 nature: Resource
 ---
 
-# [COM-004-api-client] API Client (Resource)
+# [C3-201-api-client] API Client (Resource)
 
-## Overview {#com-004-overview}
-- Implements the CTX REST protocol to the backend from [CON-002-frontend#con-002-api-calls](../../containers/CON-002-frontend.md#con-002-api-calls).
+## Overview {#c3-201-overview}
+- Implements the CTX REST protocol to the backend from [C3-2-frontend#c3-2-api-calls](../../containers/C3-2-frontend.md#c3-2-api-calls).
 - Centralized HTTP client for all backend API calls. Handles auth token injection, JSON parsing, retries, and consistent error formatting.
 
-## Stack {#com-004-stack}
+## Stack {#c3-201-stack}
 - Library: Native `fetch` API with small wrapper
 - Language: TypeScript 5.x
 
-## Configuration {#com-004-config}
+## Configuration {#c3-201-config}
 | Env Var | Dev | Prod | Why |
 |---------|-----|------|-----|
 | VITE_API_URL | http://localhost:3000/api | /api | Backend base URL |
 | VITE_API_TIMEOUT_MS | 10000 | 30000 | Request timeout ms |
 | VITE_RETRY_COUNT | 1 | 3 | Max retries for retriable errors |
 
-### Config Loading {#com-004-config-loading}
+### Config Loading {#c3-201-config-loading}
 
 ```typescript
 const apiConfig = {
@@ -34,7 +33,7 @@ const apiConfig = {
 };
 ```
 
-## Interfaces & Types {#com-004-interfaces}
+## Interfaces & Types {#c3-201-interfaces}
 
 ```typescript
 interface ApiClient {
@@ -51,7 +50,7 @@ interface ApiError {
 }
 ```
 
-## Behavior {#com-004-behavior}
+## Behavior {#c3-201-behavior}
 
 ```mermaid
 sequenceDiagram
@@ -74,7 +73,7 @@ sequenceDiagram
 - Retries idempotent requests on network/5xx up to `VITE_RETRY_COUNT`.
 - Maps HTTP errors into UI-friendly objects with correlation IDs when provided by backend.
 
-## Error Handling {#com-004-errors}
+## Error Handling {#c3-201-errors}
 | Error | Retriable | Action/Code |
 |-------|-----------|-------------|
 | Network error | Yes | Retry with backoff up to `VITE_RETRY_COUNT` |
@@ -82,7 +81,7 @@ sequenceDiagram
 | 4xx validation | No | Surface normalized error |
 | 5xx | Yes | Retry up to retry count, then surface |
 
-## Usage {#com-004-usage}
+## Usage {#c3-201-usage}
 
 ```typescript
 import { apiClient } from './api';
@@ -91,13 +90,13 @@ const tasks = await apiClient.get<Task[]>('/tasks');
 await apiClient.post('/tasks', { title: 'Demo' });
 ```
 
-## Health Checks {#com-004-health}
+## Health Checks {#c3-201-health}
 | Check | Probe | Expectation |
 |-------|-------|-------------|
 | Backend reachable | `GET /health` | 200 OK |
 | Config valid | `baseUrl` non-empty | Non-empty string |
 
-## Metrics & Observability {#com-004-metrics}
+## Metrics & Observability {#c3-201-metrics}
 | Metric | Type | Description |
 |--------|------|-------------|
 | `api_requests_total` | Counter | Requests by method |
@@ -105,6 +104,6 @@ await apiClient.post('/tasks', { title: 'Demo' });
 | `api_latency_ms` | Histogram | Request duration |
 | `api_retries_total` | Counter | Retry attempts |
 
-## Dependencies {#com-004-deps}
-- Consumes backend REST API at [CON-001-backend](../../containers/CON-001-backend.md)
+## Dependencies {#c3-201-deps}
+- Consumes backend REST API at [C3-1-backend](../../containers/C3-1-backend.md)
 - Used by frontend data-fetching hooks and pages

@@ -1,6 +1,6 @@
 ---
 name: c3-design
-description: Design or update system architecture using C3 methodology - iterative scoping through hypothesis, exploration, and discovery across Context/Container/Component layers
+description: Use when designing or updating system architecture with the C3 methodology - iteratively scope through hypothesis, exploration, and discovery across Context/Container/Component layers
 ---
 
 # C3 Architecture Design
@@ -24,6 +24,10 @@ Transform requirements into structured C3 (Context-Container-Component) architec
 ## Prerequisites
 
 **Required:** `.c3/` directory with `TOC.md` must exist.
+
+**Pre-flight sanity checks (especially when auditing examples):**
+- Open the TOC first (e.g., `examples/.c3/TOC.md` in this repo) instead of hopping between files.
+- Scan for duplicate IDs across containers/components and fix them before scoping so navigation stays unambiguous.
 
 If `.c3/` doesn't exist:
 - Stop and inform user to initialize structure first
@@ -234,6 +238,14 @@ Use the Skill tool to invoke during exploration:
 | `c3-container-design` | Explore Container-level impact |
 | `c3-component-design` | Explore Component-level impact |
 
+## Example (Auditing bundled sample)
+
+Goal: sanity check `examples/.c3` before sharing with others.
+- **HYPOTHESIZE:** Index shows backend and frontend components reusing numbers; expect duplicate IDs and missing TOC.
+- **EXPLORE:** Open `examples/.c3/TOC.md`, scan backend components, check frontend client; confirm legacy CON/COM prefixes caused collisions (e.g., COM-004 reused by logger and API client, REST routes sharing numbers).
+- **DISCOVER:** Add the TOC, align IDs to `C3-<digit>`/`C3-<digit><NN>` (e.g., C3-106 for REST routes, C3-201 for API client), drop legacy duplicates, and refresh index links.
+- **Outcome:** Unique IDs and clean downward links ready for ADR and implementation work.
+
 ## Key Principles
 
 | Principle | Application |
@@ -245,6 +257,26 @@ Use the Skill tool to invoke during exploration:
 | **Higher = bigger impact** | Upstream/higher-level discoveries trigger revisit |
 | **ADR as stream** | Capture journey, not just final answer |
 | **Iterate freely** | Loop until stable, don't force forward |
+
+## Common Mistakes
+
+- Skipping the TOC/ID sweep and diving into files, which hides upstream impacts and duplicate IDs.
+- Asking the user to point to files instead of forming a hypothesis from the TOC and existing docs.
+- Drafting an ADR before the hypothesis → explore → discover loop stabilizes.
+- Treating examples as throwaway and allowing duplicate IDs or missing TOC to persist.
+
+## Red Flags & Counters
+
+| Rationalization | Counter |
+|-----------------|---------|
+| "No time to refresh the TOC, I'll just skim files" | Stop and build/read the TOC first; C3 navigation depends on it. |
+| "Examples can keep duplicate IDs, they're just sample data" | IDs must be unique or locate/anchor references break—fix collisions before scoping. |
+| "I'll ask the user where to change docs instead of hypothesizing" | Hypothesis bounds exploration and prevents confirmation bias; form it before asking questions. |
+
+**Red flags that mean you should pause:**
+- `.c3/TOC.md` missing or obviously stale.
+- Component IDs reused across containers or layers.
+- ADR being drafted without notes from hypothesis, exploration, and discovery.
 
 ## Common Patterns
 

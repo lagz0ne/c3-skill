@@ -46,4 +46,4 @@ Use REST over HTTPS with JSON payloads, versioned via URL prefix (`/api/v1`), au
 
 - Add ETags/caching headers for GET responses
 - Consider gRPC/websockets for future real-time features
-- HTTP error contract covered by [CON-001-backend#con-001-error-handling](../containers/CON-001-backend.md#con-001-error-handling)
+- HTTP error contract covered by [C3-1-backend#c3-1-error-handling](../containers/C3-1-backend.md#c3-1-error-handling)

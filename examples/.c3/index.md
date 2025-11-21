@@ -22,22 +22,20 @@ References only flow DOWN - higher layers link to lower layer implementations.
 
 | Container | Type | Description |
 |-----------|------|-------------|
-| [CON-001: Backend](./containers/CON-001-backend.md) | Code | REST API handling business logic |
-| [CON-002: Frontend](./containers/CON-002-frontend.md) | Code | Web user interface |
-| [CON-003: Postgres](./containers/CON-003-postgres.md) | Infrastructure | Data persistence (leaf node) |
+| [C3-1: Backend](./containers/C3-1-backend.md) | Code | REST API handling business logic |
+| [C3-2: Frontend](./containers/C3-2-frontend.md) | Code | Web user interface |
+| [C3-3: Postgres](./containers/C3-3-postgres.md) | Infrastructure | Data persistence (leaf node) |
 
 ### Components (How It Works)
 - Backend Components:
-  - [COM-001: DB Pool](./components/backend/COM-001-db-pool.md) - Resource nature
-  - [COM-002: Auth Middleware](./components/backend/COM-002-auth-middleware.md) - Cross-cutting nature
-  - [COM-003: Task Service](./components/backend/COM-003-task-service.md) - Business logic nature
-  - [COM-004: Logger](./components/backend/COM-004-logger.md) - Cross-cutting nature
-  - [COM-005: Error Handler](./components/backend/COM-005-error-handler.md) - Cross-cutting nature
-  - [COM-001-rest-routes: REST Routes](./components/backend/COM-001-rest-routes.md) - Entrypoint example
-  - [COM-002-db-pool: DB Pool](./components/backend/COM-002-db-pool.md) - Legacy pool example
-  - [COM-003-logger: Logger](./components/backend/COM-003-logger.md) - Legacy logger/error formatter example
+  - [C3-101: DB Pool](./components/backend/C3-101-db-pool.md) - Resource nature
+  - [C3-102: Auth Middleware](./components/backend/C3-102-auth-middleware.md) - Cross-cutting nature
+  - [C3-103: Task Service](./components/backend/C3-103-task-service.md) - Business logic nature
+  - [C3-104: Logger](./components/backend/C3-104-logger.md) - Cross-cutting nature
+  - [C3-105: Error Handler](./components/backend/C3-105-error-handler.md) - Cross-cutting nature
+  - [C3-106: REST Routes](./components/backend/C3-106-rest-routes.md) - Entrypoint example
 - Frontend Components:
-  - [COM-004: API Client](./components/frontend/COM-004-api-client.md)
+  - [C3-201: API Client](./components/frontend/C3-201-api-client.md)
 
 ### Architecture Decision Records
 - [ADR-001: REST API Choice](./adr/ADR-001-rest-api.md)
@@ -50,17 +48,17 @@ This example demonstrates the **hierarchical derivation relationship**:
 ```
 Context (WHAT exists, HOW they relate)
 │
-├── Protocols → CON-X#section, CON-Y#section
-├── Cross-cutting → CON-X#section
+├── Protocols → C3-<digit>#section
+├── Cross-cutting → C3-<digit>#section
 │
 ↓
 Container (WHAT it does, WITH WHAT)
 │
 ├── Code Container
-│   ├── Components → COM-X, COM-Y
+│   ├── Components → C3-<digit><NN>
 │   ├── Relationships → Flowchart
 │   ├── Data flow → Sequence diagram
-│   └── Container cross-cutting → COM-Z
+│   └── Container cross-cutting → C3-<digit><NN>
 │
 ├── Infrastructure Container (LEAF)
 │   └── Features → consumed by Code Container components
@@ -77,8 +75,7 @@ Component (HOW it works)
 
 | Level | ID Pattern | Location | Links Down To |
 |-------|-----------|----------|---------------|
-| Context | `CTX-NNN-slug` | `.c3/` | Container docs, Container#sections |
-| Container (Code) | `CON-NNN-slug` | `.c3/containers/` | Component docs |
-| Container (Infra) | `CON-NNN-slug` | `.c3/containers/` | - (leaf node) |
-| Component | `COM-NNN-slug` | `.c3/components/{container}/` | - (terminal) |
-| ADR | `ADR-NNN-slug` | `.c3/adr/` | - |
+| Context | `CTX-###-slug` | `.c3/` | Container docs, Container#sections |
+| Container (Code/Infra) | `C3-<C>-slug` (`C` = container digit) | `.c3/containers/` | Component docs (if code) |
+| Component | `C3-<C><NN>-slug` (inherits container digit) | `.c3/components/{container}/` | - (terminal) |
+| ADR | `ADR-###-slug` | `.c3/adr/` | - |

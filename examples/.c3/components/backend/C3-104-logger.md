@@ -1,23 +1,22 @@
----
-id: COM-004-logger
+id: C3-104-logger
 title: Logger (Cross-cutting)
 summary: >
   Structured JSON logging with correlation IDs for request tracing across the backend.
 nature: Cross-cutting
 ---
 
-# [COM-004-logger] Logger (Cross-cutting)
+# [C3-104-logger] Logger (Cross-cutting)
 
-## Overview {#com-004-overview}
+## Overview {#c3-104-overview}
 
 Provides structured JSON logging with correlation ID propagation for distributed tracing.
 
-## Stack {#com-004-stack}
+## Stack {#c3-104-stack}
 
 - Library: `pino` 8.x
 - Why: Fast JSON logging, low overhead, good TypeScript support
 
-## Configuration {#com-004-config}
+## Configuration {#c3-104-config}
 
 | Env Var | Dev | Prod | Why |
 |---------|-----|------|-----|
@@ -25,7 +24,7 @@ Provides structured JSON logging with correlation ID propagation for distributed
 | LOG_PRETTY | `true` | `false` | Human-readable in dev |
 | SERVICE_NAME | `backend-dev` | `backend` | Service identifier in logs |
 
-### Config Loading {#com-004-config-loading}
+### Config Loading {#c3-104-config-loading}
 
 ```typescript
 import { z } from 'zod';
@@ -43,7 +42,7 @@ export const logConfig = logConfigSchema.parse({
 });
 ```
 
-## Interfaces & Types {#com-004-interfaces}
+## Interfaces & Types {#c3-104-interfaces}
 
 ```typescript
 interface Logger {
@@ -54,7 +53,7 @@ interface Logger {
 }
 ```
 
-## Behavior {#com-004-behavior}
+## Behavior {#c3-104-behavior}
 
 ```mermaid
 flowchart LR
@@ -65,14 +64,14 @@ flowchart LR
     LogEvents --> JSONOutput
 ```
 
-## Error Handling {#com-004-errors}
+## Error Handling {#c3-104-errors}
 
 | Error | Retriable | Action/Code |
 |-------|-----------|-------------|
 | Missing correlation ID | Yes | Generate new UUID |
 | Log write failure | No | Fallback to stderr |
 
-## Usage {#com-004-usage}
+## Usage {#c3-104-usage}
 
 ```typescript
 import { createLogger } from './logger';
@@ -91,21 +90,21 @@ app.use((req, res, next) => {
 req.logger.info('Task created', { taskId: task.id });
 ```
 
-## Health Checks {#com-004-health}
+## Health Checks {#c3-104-health}
 
 | Check | Probe | Expectation |
 |-------|-------|-------------|
 | Logger initialized | Check logger instance | Non-null |
 | Output writable | Test log to stdout | No throw |
 
-## Metrics & Observability {#com-004-metrics}
+## Metrics & Observability {#c3-104-metrics}
 
 | Metric | Type | Description |
 |--------|------|-------------|
 | `logs_total` | Counter | Logs emitted by level |
 | `log_errors_total` | Counter | Log write failures |
 
-## Dependencies {#com-004-deps}
+## Dependencies {#c3-104-deps}
 
 - **Upstream:** None
 - **Downstream:** Used by all components for logging

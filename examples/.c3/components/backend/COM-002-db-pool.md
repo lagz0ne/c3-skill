@@ -71,6 +71,17 @@ stateDiagram-v2
 | Pool exhausted | Yes | Wait up to 5s then 503 |
 | Query timeout | No | Throw typed `QueryTimeoutError` |
 
+## Health Checks {#com-002-health}
+| Check | Probe | Expectation |
+|-------|-------|-------------|
+| Liveness | `SELECT 1` | < 500ms |
+| Readiness | `SELECT 1` with acquire timeout | Respects `DB_CONNECTION_TIMEOUT` |
+
+## Metrics & Observability {#com-002-metrics}
+- Pool size / idle / waiting clients
+- Acquire latency (p50/p95) and query duration
+- Error rate by code (connection refused, timeout)
+
 ## Usage {#com-002-usage}
 ```typescript
 const pool = createPool(dbConfig);

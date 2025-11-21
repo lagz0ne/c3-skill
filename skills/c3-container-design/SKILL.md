@@ -141,6 +141,7 @@ sequenceDiagram
 - Features table with consumer links.
 - Explicitly no components included (leaf).
 - Anchors follow `{#con-xxx-*}` scheme for link targets.
+- Optional (when helpful): add ops context such as schema overview, backup/recovery, and health checks.
 
 ---
 

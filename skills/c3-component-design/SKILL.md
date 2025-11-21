@@ -58,6 +58,7 @@ Also called by c3-adopt to CREATE initial Component documentation.
 - Error handling table (retriable? action/code).
 - Usage example (code snippet).
 - Dependencies and consumed infra features.
+- Optional when relevant: health checks and metrics/observability (especially for resource/cross-cutting components).
 
 ---
 
@@ -113,6 +114,7 @@ stateDiagram-v2
 - Usage example included.
 - Dependencies and consumed infra features listed.
 - Anchors follow `{#com-xxx-*}` scheme.
+- Health checks/metrics captured when the component is a resource/cross-cutting element with availability/observability needs.
 
 ---
 

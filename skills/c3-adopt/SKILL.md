@@ -23,6 +23,13 @@ Bootstrap C3 (Context-Container-Component) architecture documentation for an exi
 | **4. Component Identification** | Identify key components | COM stubs |
 | **5. Generate & Verify** | Delegate to sub-skills, build TOC | Complete documentation |
 
+## Derivation Guardrails (apply everywhere)
+- Reading order: Context → Container → Component.
+- Downward-only links: CTX → CON sections; CON → COM docs. No upward links.
+- Infra containers are leaf nodes (no components); their features must be cited by consuming components.
+- Anchors: use `{#ctx-xxx-*}`, `{#con-xxx-*}`, `{#com-xxx-*}` for stable links.
+- Templates/checklists: use the templates from c3-context-design, c3-container-design, c3-component-design and complete all checklist items.
+
 ---
 
 ## Phase 1: Establish
@@ -115,32 +122,34 @@ From answers, construct:
 - [Actor 2]
 
 **Containers (identified):**
-| Name | Type | Purpose |
-|------|------|---------|
+| Name | Type (Code/Infra) | Purpose |
+|------|-------------------|---------|
 | [Name] | [Backend/Frontend/DB/etc] | [What it does] |
 
 **Protocols:**
-| From | To | Protocol |
-|------|-----|----------|
-| [A] | [B] | [REST/gRPC/etc] |
+| From | To | Protocol | Notes |
+|------|-----|----------|-------|
+| [A] | [B] | [REST/gRPC/etc] | Implements CTX->[CON-xxx#protocol] |
 
 **External Dependencies:**
 - [Service 1]
 - [Service 2]
+ 
+**Cross-Cutting:**
+- Auth: ...
+- Logging/observability: ...
+- Error strategy: ...
 ```
 
 ### Delegate to c3-context-design
 
 Once you have understanding:
-> "I now understand your system context. I'll use the c3-context-design skill to create CTX-001."
+> "I now understand your system context. I'll use the c3-context-design skill to create CTX-001 using the template and checklist."
 
 Use `c3-context-design` to create the Context document with:
-- System overview
-- Architecture diagram (from identified containers)
-- Container list (high-level)
-- Protocols section
-- Cross-cutting concerns
-- Deployment section
+- Template sections from the CTX skill (boundary, actors, container inventory with type, protocols, cross-cutting, deployment/topology).
+- Downward links from protocols/cross-cutting to specific container sections (to be created next).
+- System context + container overview diagrams; high-level deployment if relevant.
 
 ---
 
@@ -153,6 +162,7 @@ Use `c3-context-design` to create the Context document with:
 #### Identity
 1. > "For [Container Name]: What is its single main responsibility?"
 2. > "What technology does it use? (language, framework)"
+3. > "Is this a **Code** container or an **Infrastructure** container?"
 
 #### Structure
 3. > "How is code organized inside? Layers? Feature folders?"
@@ -169,6 +179,7 @@ Use `c3-context-design` to create the Context document with:
 #### Key Components
 9. > "What are the 3-5 most important components inside?"
    - "The ones a new developer MUST understand"
+10. > "Which components implement CTX protocols or cross-cutting choices?"
 
 ### Build Container Model
 
@@ -179,29 +190,52 @@ From answers:
 
 **Responsibility:** [One sentence]
 **Technology:** [Language + Framework]
+**Type:** [Code | Infra]
 
-**Structure:**
-| Layer | Purpose |
-|-------|---------|
-| [Layer] | [What it does] |
+**For Code containers:**
 
-**APIs Exposed:**
-- [Endpoint 1]
-- [Endpoint 2]
+**Protocol Implementations:**
+| Protocol (from CTX) | Implemented In (components/sections) |
+|---------------------|--------------------------------------|
+| [REST/HTTPS auth] | [COM-002#behavior] |
 
-**Data Owned:**
-- [Data 1]
-- [Data 2]
+**Component Relationships:**
+- Flowchart text/diagram notes
 
-**Key Components:**
-| Component | Purpose | Priority |
-|-----------|---------|----------|
-| [Name] | [What it does] | High/Medium |
+**Data Flow:**
+- Sequence of steps for a key request
+
+**Cross-Cutting:**
+- Logging: [component/section]
+- Error handling: [component/section]
+
+**Components:**
+| Component | Nature | Responsibility |
+|-----------|--------|----------------|
+| [COM-001-name] | [Entrypoint/Business/etc] | [What it does] |
+
+**For Infrastructure containers (leaf):**
+
+**Engine:** [version/mode]
+
+**Configuration:**
+| Setting | Value | Why |
+|---------|-------|-----|
+| ... | ... | ... |
+
+**Features Provided:**
+| Feature | Consumed By |
+|---------|-------------|
+| [Feature] | [CON-XXX#components] → [COM-YYY] |
 ```
 
 ### Delegate to c3-container-design
 
-> "I understand [Container Name]. I'll use the c3-container-design skill to create CON-XXX."
+> "I understand [Container Name]. I'll use the c3-container-design skill to create CON-XXX with the appropriate (Code/Infra) template and checklist."
+
+Use `c3-container-design` to:
+- For **Code** containers: fill stack, protocol mapping table (CTX → components), relationships flowchart, data-flow sequence diagram, cross-cutting mapping, and component inventory with nature/responsibility.
+- For **Infrastructure** containers: record engine/config/features, link consumers, and ensure no components.
 
 Repeat for each container.
 
@@ -230,14 +264,19 @@ For each container's key components:
 ### Create Component Stubs
 
 For High/Medium priority, create stub with:
-- Overview (from user description)
-- Purpose (responsibility)
-- TODO markers for implementation details
+- Overview (responsibility + which container protocols/cross-cutting it implements)
+- Nature (resource, business, cross-cutting, entrypoint, testing, deployment, contextual, etc.)
+- Stack + key configuration items (env vars)
+- TODO markers for interfaces/behavior/errors/usage
 
 ### Delegate to c3-component-design
 
 For high-priority components:
-> "I'll use the c3-component-design skill to create detailed documentation for [Component Name]."
+> "I'll use the c3-component-design skill to create detailed documentation for [Component Name] using the component template/checklist."
+
+Use `c3-component-design` to:
+- Fill template sections (overview, stack, config with env diffs, interfaces, behavior + diagram, error handling table, usage, dependencies).
+- Ensure anchors `{#com-xxx-*}` and tie back to the container sections this component fulfills.
 
 ---
 
@@ -264,6 +303,13 @@ Present to user:
 - [ ] `.c3/components/*/COM-*.md` - [N] components
 - [ ] `.c3/TOC.md` - Table of contents
 - [ ] `.c3/scripts/build-toc.sh` - TOC generator
+
+### Derivation Checks:
+- [ ] CTX protocols/cross-cutting link to CON sections
+- [ ] Code CONs have flowchart + sequence diagrams; protocol table maps CTX entries to components
+- [ ] Infra CONs are leaf nodes (no components) and list consumers for each feature
+- [ ] COMs include stack/config, interfaces, diagram (if non-trivial), error handling, usage, deps
+- [ ] Anchors `{#ctx|con|com-*}` present for all link targets
 
 ### Gaps Identified:
 - [Any areas that need more detail]

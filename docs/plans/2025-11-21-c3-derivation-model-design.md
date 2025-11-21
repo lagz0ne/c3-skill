@@ -1,350 +1,238 @@
 # C3 Derivation Model Design
 
-> Design for the hierarchical derivation relationship between Context, Container, and Component layers.
+> Concrete, ready-to-apply spec for how Context, Container, and Component docs derive from each other, including templates, checklists, and required skill updates.
 
-## Problem
-
-Current C3 skills describe each layer independently but lack clarity on:
-- How higher layers constrain lower layers
-- How to navigate between layers
-- What each layer should contain vs delegate down
-- How relationships should be documented and traced
-
-## Core Insight
-
-**Higher layers derive lower layers.** When you define something at Context level (like a protocol between Frontend and Backend), that becomes a constraint that MUST be addressed when describing the lower levels.
-
-## Design
-
-### Reading Order
-
-Always top-down: **Context → Container → Component**
-
-### Reference Direction
-
-References only flow DOWN - higher layer links to lower layer implementations.
-
-- Context defines protocols → links to Container#sections implementing them
-- Container defines components → links to Component docs
-- **No upward links needed** - reader already came from above
-
-This creates:
-- Single source of truth (no duplicate relationship definitions)
-- Natural reading flow follows derivation
-- Maintenance only at one location
+## Intent
+- Make derivation explicit: higher layers **constrain** lower layers; lower layers **implement** higher-layer contracts.
+- Provide repeatable templates and checklists so authors can produce consistent CTX/CON/COM documents without re-deciding structure.
+- Ensure traceability: every protocol, cross-cutting decision, and component has a clear downward link to its implementation.
 
 ---
 
-## Context Level
+## Core Rules
+- **Reading order:** Context → Container → Component.
+- **Reference direction:** Only downward links. Context → Container sections; Container → Component docs. No upward links.
+- **Single source:** Define relationships once at the highest layer that owns the decision; lower layers only implement/link.
+- **Infrastructure containers are leaf nodes:** they have no components; their features are consumed by code containers/components.
 
-**Abstraction:** Bird's eye view - WHAT exists and HOW they relate
+---
 
-### Contains
+## Templates and Checklists
 
-| Element | Description | Links Down To |
-|---------|-------------|---------------|
-| System boundary | What's inside vs outside | - |
-| Actors | Users, external systems, third parties | - |
-| Container inventory | WHAT containers exist (not how) | Container docs |
-| Protocols | How containers communicate | Container#sections implementing each side |
-| System cross-cutting | Auth strategy, logging approach, error handling patterns | Container#sections implementing them |
-| Deployment topology | High-level infrastructure | - |
+### Context Document (CTX-###)
+**Purpose:** Bird’s-eye view of the system: what exists, boundaries, and protocols that must be implemented below.
 
-### Diagrams
-
-- System context diagram (actors, boundaries)
-- Container overview diagram (what exists, protocols between)
-- Deployment topology (high-level)
-
-### Example Structure
-
+**Template (copy/paste and fill):**
 ```markdown
-# CTX-001 System Overview
+# CTX-XXX <Name>
 
-## Containers {#ctx-001-containers}
-| Container | Type | Description |
-|-----------|------|-------------|
-| [CON-001-backend](./containers/CON-001-backend.md) | Code | REST API |
-| [CON-002-frontend](./containers/CON-002-frontend.md) | Code | Web UI |
-| [CON-003-postgres](./containers/CON-003-postgres.md) | Infrastructure | Data store |
+## System Boundary {#ctx-xxx-boundary}
+- Inside: ...
+- Outside: ...
 
-## Protocols {#ctx-001-protocols}
+## Actors {#ctx-xxx-actors}
+| Actor | Role |
+|-------|------|
+| ...   | ...  |
+
+## Containers {#ctx-xxx-containers}
+| Container | Type (Code/Infra) | Description |
+|-----------|-------------------|-------------|
+| [CON-XXX-name](./containers/CON-XXX-name.md) | Code | ... |
+| ... | ... | ... |
+
+## Protocols {#ctx-xxx-protocols}
 | From | To | Protocol | Implementations |
-|------|-----|----------|-----------------|
-| Frontend | Backend | REST/HTTPS | [CON-002#api-calls], [CON-001#rest-endpoints] |
-| Backend | Postgres | SQL | [CON-001#db-access], [CON-003#config] |
+|------|----|----------|-----------------|
+| Frontend | Backend | REST/HTTPS | [CON-002#api], [CON-001#rest] |
+| ... | ... | ... | ... |
 
-## Cross-Cutting {#ctx-001-cross-cutting}
-### Authentication
-JWT-based, implemented in: [CON-001#auth-middleware], [CON-002#auth-handling]
+## Cross-Cutting {#ctx-xxx-cross-cutting}
+- Auth: ... implemented in [CON-####auth]
+- Logging: ... implemented in [CON-####logging]
+- Error strategy: ... implemented in [CON-####errors]
 
-### Logging
-Structured JSON with correlation IDs, implemented in: [CON-001#logging], [CON-002#logging]
+## Deployment Topology {#ctx-xxx-deployment}
+- Diagram or bullets for high-level infra layout
 ```
 
----
+**Checklist (must be true to call CTX done):**
+- System boundary and actors listed.
+- Container inventory table includes every container with type (Code/Infra) and link.
+- Protocols table lists every inter-container communication with links to implementing container sections.
+- Cross-cutting decisions listed with downward links to container sections.
+- Topology described (diagram or text).
 
-## Container Level
+### Code Container Document (CON-###, type=Code)
+**Purpose:** What this container does and with what components; how it fulfills Context protocols and cross-cutting choices.
 
-**Abstraction:** WHAT it does and WITH WHAT, not implementation details
-
-### Two Container Types
-
-| Type | Has Components? | Documentation Focus |
-|------|-----------------|---------------------|
-| **Code Container** | Yes | Tech stack, component inventory, how protocols are implemented |
-| **Infrastructure Container** | No (leaf node) | Engine, config, features provided to code containers |
-
-### Code Container Contains
-
-| Element | Description | Links Down To |
-|---------|-------------|---------------|
-| Technology stack | Language, framework, runtime | - |
-| Component inventory | WHAT components exist | Component docs |
-| Component relationships | How components connect | Flowchart diagram |
-| Data flow | How data moves through container | Sequence diagram |
-| Container cross-cutting | Logging, error handling, validation within this container | Component docs |
-| Protocol implementations | How this container implements Context protocols | Component#sections |
-
-### Infrastructure Container Contains
-
-| Element | Description | Consumed By |
-|---------|-------------|-------------|
-| Engine/technology | PostgreSQL 15, NATS, Redis | - |
-| Configuration | Settings, tuning | Code container components |
-| Features provided | WAL, pub/sub, streams | Code container components reference these |
-
-**Infrastructure containers are LEAF NODES** - no component level beneath them. Their features become inputs to code container components.
-
-### Diagrams
-
-- **Flowchart** - component relationships/connections
-- **Sequence diagram** - data flow through container
-
-### Example Structure (Code Container)
-
+**Template:**
 ```markdown
-# CON-001 Backend Container (Code)
+# CON-XXX <Name> (Code)
 
-## Technology Stack {#con-001-stack}
-- Runtime: Node.js 20
-- Framework: Express 4.18
-- Language: TypeScript 5.x
+## Technology Stack {#con-xxx-stack}
+- Runtime, language, framework
 
-## Component Relationships {#con-001-relationships}
+## Protocol Implementations {#con-xxx-protocols}
+| Protocol (from CTX) | Implemented In |
+|---------------------|----------------|
+| REST/HTTPS auth | [COM-002-auth] |
+| ... | ... |
 
-​```mermaid
+## Component Relationships {#con-xxx-relationships}
+```mermaid
 flowchart LR
-    Entry[REST Routes] --> Auth[Auth Middleware]
-    Auth --> Business[Order Flow]
-    Business --> DB[DB Pool]
-    DB --> External[Postgres]
+    ... component flow ...
+```
 
-    Auth -.-> Log[Logger]
-    Business -.-> Log
-    DB -.-> Log
-​```
-
-## Data Flow {#con-001-data-flow}
-
-​```mermaid
+## Data Flow {#con-xxx-data-flow}
+```mermaid
 sequenceDiagram
-    participant Client
-    participant Routes
-    participant Auth
-    participant OrderFlow
-    participant DBPool
+    ... request/response path ...
+```
 
-    Client->>Routes: POST /orders
-    Routes->>Auth: validate token
-    Auth-->>Routes: user context
-    Routes->>OrderFlow: createOrder(user, data)
-    OrderFlow->>DBPool: insert
-    DBPool-->>OrderFlow: order
-    OrderFlow-->>Routes: result
-    Routes-->>Client: 201 Created
-​```
+## Container Cross-Cutting {#con-xxx-cross-cutting}
+- Logging: implemented by [COM-0xx-logger]
+- Error handling: implemented by [COM-0xx-errors]
+- Validation/observability/etc.: links to components
 
-## Container Cross-Cutting {#con-001-cross-cutting}
-
-### Logging {#con-001-logging}
-- Structured JSON, correlation IDs passed through
-- Implemented by: [COM-006-logger]
-
-### Error Handling {#con-001-error-handling}
-- Unified error format, error codes catalog
-- Implemented by: [COM-007-error-handler]
-
-## Components {#con-001-components}
+## Components {#con-xxx-components}
 | Component | Nature | Responsibility |
 |-----------|--------|----------------|
-| [COM-001-rest-routes] | Entrypoint | HTTP handling |
-| [COM-002-auth-middleware] | Cross-cutting | Token validation |
-| [COM-003-db-pool] | Resource | Connection management |
-| [COM-004-order-flow] | Business | Order processing |
+| [COM-001-name](../components/COM-001-name.md) | Entrypoint | ... |
+| ... | ... | ... |
 ```
 
-### Example Structure (Infrastructure Container)
+**Checklist:**
+- Stack recorded.
+- Protocols table maps every CTX protocol to specific components/sections.
+- Flowchart shows component relationships (must exist).
+- Sequence diagram shows data flow (must exist).
+- Cross-cutting choices mapped to components.
+- Component inventory complete with nature + responsibility.
 
+### Infrastructure Container Document (CON-###, type=Infra)
+**Purpose:** Leaf node describing platform service features that code containers consume.
+
+**Template:**
 ```markdown
-# CON-003 Postgres Container (Infrastructure)
+# CON-XXX <Name> (Infrastructure)
 
-## Engine {#con-003-engine}
-PostgreSQL 15
+## Engine {#con-xxx-engine}
+- Version/edition, deployment mode
 
-## Configuration {#con-003-config}
+## Configuration {#con-xxx-config}
 | Setting | Value | Why |
 |---------|-------|-----|
-| max_connections | 100 | Support pooling from backend |
-| wal_level | logical | Enable event streaming |
+| ... | ... | ... |
 
-## Features Provided {#con-003-features}
-| Feature | Used By |
-|---------|---------|
-| WAL logical replication | [CON-001-backend] → [COM-005-event-streaming] |
-| LISTEN/NOTIFY | [CON-001-backend] → [COM-003-db-pool] |
+## Features Provided {#con-xxx-features}
+| Feature | Consumed By |
+|---------|-------------|
+| WAL logical replication | [CON-001#components] → [COM-005-event-streaming] |
+| ... | ... |
 ```
 
----
+**Checklist:**
+- Engine/version stated.
+- Config table with rationale.
+- Features table lists capabilities with links to consuming code containers/components.
+- No component-level sections; this is a leaf.
 
-## Component Level
+### Component Document (COM-###)
+**Purpose:** HOW the component works; implementation detail level.
 
-**Abstraction:** Implementation details - HOW it works
-
-### What Component Contains
-
-Component contains what Container doesn't enforce:
-
-| Element | Description |
-|---------|-------------|
-| Stack details | Which library, why chosen, exact configuration |
-| Environment config | Env vars, defaults, dev vs prod differences |
-| Implementation patterns | Conventions, algorithms, code patterns |
-| Interfaces/Types | Method signatures, data structures, DTOs |
-| Error handling | Specific error codes, retry strategies |
-| Usage examples | Code snippets showing how to use it |
-
-### Component Nature Types (Open-Ended)
-
-Nature type determines documentation focus. Not a fixed taxonomy - use whatever helps code quality.
-
-| Nature Type | Documentation Focus |
-|-------------|---------------------|
-| **Resource/Integration** | Configuration, env differences, how/why config loaded |
-| **Business Logic** | Domain flows, rules, edge cases, the "messy" heart |
-| **Framework/Entrypoint** | Mixed concerns - auth, errors, signals, protocol handoff, lifecycle |
-| **Cross-cutting** | Integration patterns, how it's used everywhere, conventions |
-| **Build/Deployment** | Build pipeline, deploy config, CI/CD specifics |
-| **Testing** | Test strategies, fixtures, mocking approaches |
-| **Contextual** | Situation-specific behavior (caching, websocket, etc.) |
-| ... | Whatever the component needs |
-
-### Diagrams
-
-Use common UML techniques where they help explain:
-- **Flowchart** - decision logic, processing steps
-- **Sequence diagram** - component interactions, request flow
-- **ERD** - data relationships
-- **State chart** - lifecycle, state transitions
-
-Choice is contextual based on what needs explaining.
-
-### Example Structure
-
+**Template:**
 ```markdown
-# COM-003 DB Pool (Resource Nature)
+# COM-XXX <Name> (<Nature>)
 
-## Overview
-Connection pooling for PostgreSQL
+## Overview {#com-xxx-overview}
+- Responsibility and how it fits container protocols/cross-cutting.
 
-## Stack {#com-003-stack}
-- Library: `pg` 8.11.x
-- Why: Native driver, proven stability, supports LISTEN/NOTIFY
+## Stack {#com-xxx-stack}
+- Library/version choices; why selected.
 
-## Configuration {#com-003-config}
+## Configuration {#com-xxx-config}
 | Env Var | Dev | Prod | Why |
 |---------|-----|------|-----|
-| DB_POOL_MIN | 2 | 10 | Baseline connections |
-| DB_POOL_MAX | 10 | 50 | Scale with load |
-| DB_IDLE_TIMEOUT | 30s | 10s | Release faster in prod |
+| ... | ... | ... |
 
-## Behavior {#com-003-behavior}
+## Interfaces & Types {#com-xxx-interfaces}
+- Signatures, DTOs, events; link to schemas.
 
-​```mermaid
+## Behavior {#com-xxx-behavior}
+- Narrative plus diagram where helpful.
+```mermaid
 stateDiagram-v2
-    [*] --> Idle
-    Idle --> Acquiring: getConnection()
-    Acquiring --> Active: success
-    Acquiring --> Waiting: pool exhausted
-    Waiting --> Acquiring: connection released
-    Waiting --> Error: timeout
-    Active --> Idle: release()
-    Error --> [*]
-​```
-
-## Error Handling {#com-003-errors}
-| Error | Retriable | Action |
-|-------|-----------|--------|
-| Connection refused | Yes | Retry with backoff |
-| Pool exhausted | Yes | Wait up to 5s |
-| Query timeout | No | Propagate to caller |
-
-## Usage {#com-003-usage}
-​```typescript
-const pool = createPool(config);
-const result = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
-​```
+    ... if useful ...
 ```
+- Alternative: flowchart/sequence/ERD depending on need.
+
+## Error Handling {#com-xxx-errors}
+| Error | Retriable | Action/Code |
+|-------|-----------|-------------|
+| ... | ... | ... |
+
+## Usage {#com-xxx-usage}
+```typescript
+// exemplar usage
+```
+
+## Dependencies {#com-xxx-deps}
+- Upstream/downstream components; infra features consumed.
+```
+
+**Checklist:**
+- Nature chosen and informs focus (resource, business, cross-cutting, entrypoint, testing, deployment, contextual, etc.).
+- Stack and configuration fully documented (with env differences).
+- Interfaces/types specified.
+- Behavior explained with at least one diagram if non-trivial.
+- Error handling table present.
+- Usage example shows intended invocation.
+- Dependencies and consumed infra features listed.
 
 ---
 
-## Derivation Chain Summary
+## Derivation Enforcement
+- **Context → Container:** Every protocol and cross-cutting item in CTX links to specific container sections describing implementation. Containers must not invent protocols absent from CTX without updating CTX.
+- **Container → Component:** Every protocol or cross-cutting implementation in a code container maps to specific components/sections. Component inventory must cover all behavior shown in relationships/data-flow diagrams.
+- **Infrastructure:** Features listed in infra containers must be cited by consuming components; infra docs are final leaves.
+- **Anchors:** Use `{#ctx-xxx-...}`, `{#con-xxx-...}`, `{#com-xxx-...}` so downward links are stable.
+- **No upward duplication:** lower layers do not redefine relationships; they implement and link back downwards only.
 
+---
+
+## Skill Updates (must implement)
+1. `skills/c3-context-design/SKILL.md`
+   - Add checklist enforcing container inventory, protocol table with downward links, cross-cutting with links, topology.
+   - Include CTX template above; require anchor usage guidance and downward-only linking.
+2. `skills/c3-container-design/SKILL.md`
+   - Describe Code vs Infrastructure container types and the “infra is leaf” rule.
+   - For Code containers, require protocol mapping table, flowchart, sequence diagram, cross-cutting mapping, and component inventory with nature/responsibility.
+   - For Infra containers, require engine/config/features table with consuming links, and explicitly forbid components.
+3. `skills/c3-component-design/SKILL.md`
+   - Include nature taxonomy guidance (open-ended, examples above).
+   - Require stack/config ownership, interfaces, behavior diagrams when non-trivial, error handling table, usage example, dependencies.
+4. Examples
+   - Update sample CTX/CON/COM docs to match the templates (or add new examples mirroring them).
+5. `skills/c3-adopt/SKILL.md`
+   - Ensure adoption flow instructs teams to create CTX → CON → COM following these templates and checklists, including anchor conventions and downward-link validation.
+
+---
+
+## Quick Reference: Derivation Chain
 ```
 Context (WHAT exists, HOW they relate)
-│
-├── Protocols → CON-X#section, CON-Y#section
-├── Cross-cutting → CON-X#section
-│
+│  ├─ Protocols → CON#section
+│  └─ Cross-cutting → CON#section
 ↓
 Container (WHAT it does, WITH WHAT)
-│
-├── Code Container
-│   ├── Components → COM-X, COM-Y
-│   ├── Relationships → Flowchart
-│   ├── Data flow → Sequence diagram
-│   └── Container cross-cutting → COM-Z
-│
-├── Infrastructure Container (LEAF)
-│   └── Features → consumed by Code Container components
-│
+│  ├─ Code containers → components, relationships (flowchart), data flow (sequence)
+│  ├─ Cross-cutting → COM links
+│  └─ Infra containers → features consumed by Code
 ↓
 Component (HOW it works)
-│
-├── Nature determines focus
-├── Stack details, config, implementation
-└── Terminal - no further derivation
+   ├─ Nature-driven focus
+   ├─ Stack, config, interfaces, behavior, errors, usage
+   └─ Terminal leaf
 ```
-
-## Implementation Tasks
-
-1. Update `skills/c3-context-design/SKILL.md` with:
-   - Downward linking to Container#sections
-   - Protocol and cross-cutting tables with implementation links
-
-2. Update `skills/c3-container-design/SKILL.md` with:
-   - Two container types (Code vs Infrastructure)
-   - Flowchart for component relationships
-   - Sequence diagram for data flow
-   - Container cross-cutting section
-   - Downward linking to Component docs
-
-3. Update `skills/c3-component-design/SKILL.md` with:
-   - Open-ended nature types
-   - Stack details ownership
-   - Environment configuration focus
-   - Appropriate diagram guidance
-
-4. Update example documents to follow new structure
-
-5. Update `skills/c3-adopt/SKILL.md` to create documents following this model

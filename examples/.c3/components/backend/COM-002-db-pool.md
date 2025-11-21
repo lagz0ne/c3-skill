@@ -1,0 +1,53 @@
+# COM-002 DB Pool (Resource)
+
+## Overview {#com-002-overview}
+- Manages pooled PostgreSQL connections for the backend container.
+- Implements CTX SQL protocol from [CON-001-backend#con-001-protocols](../../containers/CON-001-backend.md#con-001-protocols).
+
+## Stack {#com-002-stack}
+- Library: `pg` 8.11.x
+- Why: Native driver, stable, supports pooling and async/await
+
+## Configuration {#com-002-config}
+| Env Var | Dev | Prod | Why |
+|---------|-----|------|-----|
+| DB_URL | postgres://localhost/tasks | ${DB_URL} | Connection target |
+| DB_POOL_MIN | 2 | 10 | Baseline connections |
+| DB_POOL_MAX | 10 | 50 | Handle higher load |
+| DB_IDLE_TIMEOUT | 30s | 10s | Release idle connections |
+
+## Interfaces & Types {#com-002-interfaces}
+- `query<T>(text: string, params?: any[]): Promise<QueryResult<T>>`
+- `withTransaction<T>(fn: (client) => Promise<T>): Promise<T>`
+
+## Behavior {#com-002-behavior}
+- Opens pool on startup; acquires connections per request.
+- Retries transient connection errors with backoff up to 5 seconds.
+```mermaid
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> Acquiring: getConnection()
+    Acquiring --> Active: success
+    Acquiring --> Waiting: pool exhausted
+    Waiting --> Acquiring: connection released
+    Waiting --> Error: timeout
+    Active --> Idle: release()
+    Error --> [*]
+```
+
+## Error Handling {#com-002-errors}
+| Error | Retriable | Action/Code |
+|-------|-----------|-------------|
+| Connection refused | Yes | Retry with backoff, bubble if exceeds |
+| Pool exhausted | Yes | Wait up to 5s then 503 |
+| Query timeout | No | Throw typed `QueryTimeoutError` |
+
+## Usage {#com-002-usage}
+```typescript
+const pool = createPool(env);
+const result = await pool.query('SELECT * FROM tasks WHERE id = $1', [taskId]);
+```
+
+## Dependencies {#com-002-deps}
+- Consumes features from [CON-002-postgres#con-002-features](../../containers/CON-002-postgres.md#con-002-features)
+- Used by [COM-001-rest-routes#com-001-behavior](./COM-001-rest-routes.md#com-001-behavior)

@@ -25,6 +25,70 @@ Also called by c3-adopt to CREATE initial Context documentation.
 
 ---
 
+## Core Principles for Context Documents
+
+- **Reading order:** Context → Container → Component. Context sets constraints; lower layers implement.
+- **Reference direction:** Downward-only. CTX links to specific Container sections; no upward references required.
+- **Single source:** Define protocols/cross-cutting once here; Containers implement and link back down.
+- **Anchors:** Use stable anchors `{#ctx-xxx-*}` for every section you expect to link to (protocols, cross-cutting, containers).
+
+---
+
+## Required Outputs (CTX)
+- System boundary (inside vs outside) and actors.
+- Container inventory table with type (Code/Infra) and links.
+- Protocols table with downward links to Container sections implementing each side.
+- Cross-cutting decisions with downward links to Container sections.
+- Deployment topology (diagram or text).
+- Diagrams: system context diagram (actors + boundary), container overview diagram (containers + protocols), optional high-level topology.
+
+---
+
+## Template (copy/paste and fill)
+
+```markdown
+# CTX-XXX <Name>
+
+## System Boundary {#ctx-xxx-boundary}
+- Inside: ...
+- Outside: ...
+
+## Actors {#ctx-xxx-actors}
+| Actor | Role |
+|-------|------|
+| ...   | ...  |
+
+## Containers {#ctx-xxx-containers}
+| Container | Type (Code/Infra) | Description |
+|-----------|-------------------|-------------|
+| [CON-XXX-name](./containers/CON-XXX-name.md) | Code | ... |
+| ... | ... | ... |
+
+## Protocols {#ctx-xxx-protocols}
+| From | To | Protocol | Implementations |
+|------|----|----------|-----------------|
+| Frontend | Backend | REST/HTTPS | [CON-002#api], [CON-001#rest] |
+| ... | ... | ... | ... |
+
+## Cross-Cutting {#ctx-xxx-cross-cutting}
+- Auth: ... implemented in [CON-####auth]
+- Logging: ... implemented in [CON-####logging]
+- Error strategy: ... implemented in [CON-####errors]
+
+## Deployment Topology {#ctx-xxx-deployment}
+- Diagram or bullets for high-level infra layout
+```
+
+### Checklist (CTX must be true)
+- System boundary and actors listed.
+- Container inventory table includes every container with type and link.
+- Protocols table has every inter-container communication with downward links to Container sections.
+- Cross-cutting decisions list where each is implemented (downward links).
+- Deployment topology captured (diagram or text).
+- Anchors follow `{#ctx-xxx-*}` scheme for all link targets.
+
+---
+
 ## What Belongs at Context Level
 
 ### Inclusion Criteria
@@ -90,9 +154,9 @@ Ask: "Would changing this require coordinating multiple containers or external p
 
 ---
 
-## Diagrams for Context Level
+## Diagrams for Context Level (required/optional)
 
-### Primary: System Context Diagram
+### Primary: System Context Diagram (required)
 
 **Purpose:** Show system boundary, actors, and external systems.
 
@@ -115,7 +179,7 @@ graph TB
 
 **When to use:** Always include in CTX document.
 
-### Secondary: Container Overview Diagram
+### Secondary: Container Overview Diagram (recommended)
 
 **Purpose:** Show containers within system and their protocols.
 
@@ -135,7 +199,7 @@ graph TB
 
 **When to use:** When system has multiple containers.
 
-### Tertiary: Deployment Topology
+### Tertiary: Deployment Topology (recommended)
 
 **Purpose:** Show high-level infrastructure layout.
 
@@ -172,150 +236,11 @@ graph LR
 
 ---
 
-## Context Level Defines
+## Exploration Questions (keep Socratic)
+- System boundary: What is inside vs external? Who/what interacts? Which third parties?
+- Containers: What deployable units exist? What data stores? Any new containers needed?
+- Protocols: How do containers talk? Sync vs async? What protocols need change?
+- Cross-cutting: Auth, logging, monitoring strategies? Are they changing?
+- Downstream: Which containers must implement protocols/cross-cutting decisions?
 
-| Concern | Examples |
-|---------|----------|
-| **System boundaries** | What's inside vs outside the system |
-| **Actors** | Users, external systems, third parties |
-| **Containers** | High-level view of all containers |
-| **Cross-cutting concerns** | Auth strategy, logging, monitoring |
-| **Protocols** | REST, gRPC, WebSocket, message queues |
-| **Deployment model** | Cloud, on-prem, hybrid (high level) |
-
-## Exploration Questions
-
-When exploring Context level, investigate:
-
-### Isolated (at Context)
-- What system boundaries change?
-- What actors are affected?
-- What protocols need modification?
-
-### Upstream (external)
-- What external systems depend on this?
-- What third-party integrations affected?
-- What user-facing contracts change?
-
-### Adjacent (same level)
-- What other cross-cutting concerns related?
-- What other protocol decisions affected?
-
-### Downstream (to Containers)
-- Which containers does this affect?
-- How do container responsibilities change?
-- What new containers might be needed?
-
-## Socratic Questions for Context Discovery
-
-When creating or validating Context documentation, ask:
-
-### System Boundary
-1. "What is inside your system vs what is external?"
-2. "Who or what interacts with your system from outside?"
-3. "Are there third-party services your system depends on?"
-
-### Actors
-4. "What types of users interact with the system?"
-5. "Are there other systems that call into yours?"
-6. "Are there background processes or scheduled jobs?"
-
-### Containers
-7. "If you deployed this system, what would be the separately deployable units?"
-8. "What processes would be running?"
-9. "What data stores exist?"
-
-### Protocols
-10. "How do your containers talk to each other?"
-11. "What protocols are used for external communication?"
-12. "Is communication synchronous or asynchronous?"
-
-### Cross-Cutting
-13. "How is authentication handled across the system?"
-14. "How does logging and monitoring work?"
-15. "Are there shared concerns that span multiple containers?"
-
-## Reading Context Documents
-
-Use c3-locate to retrieve:
-
-```
-c3-locate CTX-001                    # Overview
-c3-locate #ctx-001-architecture      # System diagram
-c3-locate #ctx-001-containers        # Container list
-c3-locate #ctx-001-protocols         # Communication patterns
-c3-locate #ctx-001-cross-cutting     # System-wide concerns
-c3-locate #ctx-001-deployment        # Deployment overview
-```
-
-## Impact Signals
-
-| Signal | Meaning |
-|--------|---------|
-| Change affects system boundary | Major architectural shift |
-| New actor type introduced | Interface design needed |
-| Protocol change | All containers using it affected |
-| Cross-cutting concern change | Ripples through all layers |
-
-## Output for c3-design
-
-After exploring Context level, report:
-- What Context-level elements are affected
-- Impact magnitude (boundary change = high, protocol tweak = medium)
-- Downstream containers that need exploration
-- Whether hypothesis needs revision
-
-## Document Template Reference
-
-Context documents follow this structure:
-
-```markdown
----
-id: CTX-NNN-slug
-title: [System Name] System Architecture Overview
-summary: >
-  [Why read this document - what it covers]
----
-
-# [CTX-NNN-slug] [System Name] System Architecture Overview
-
-## Overview {#ctx-nnn-overview}
-<!--
-Describes the system at the highest level - what it does, who uses it,
-and what the major components are. Read to understand the big picture.
--->
-
-## Architecture {#ctx-nnn-architecture}
-<!--
-Shows the complete system diagram with all containers, external systems,
-and their relationships. Read to understand how pieces fit together.
--->
-
-## Containers {#ctx-nnn-containers}
-<!--
-Lists all containers with brief descriptions and links. Read to navigate
-to specific container details.
--->
-
-## Protocols & Communication {#ctx-nnn-protocols}
-<!--
-Explains communication protocols used across the system and why chosen.
-Read to understand integration patterns.
--->
-
-## Cross-Cutting Concerns {#ctx-nnn-cross-cutting}
-<!--
-Describes concerns that span multiple containers like authentication,
-logging, and monitoring. Read to understand system-wide patterns.
--->
-
-## Deployment {#ctx-nnn-deployment}
-<!--
-High-level deployment architecture - cloud vs on-prem, scaling approach,
-infrastructure patterns. Read to understand operational context.
--->
-
-## Related {#ctx-nnn-related}
-```
-
-Use these heading IDs for precise exploration.
+Use responses to populate the CTX template and ensure every protocol/cross-cutting item has a downward link to the implementing container sections.

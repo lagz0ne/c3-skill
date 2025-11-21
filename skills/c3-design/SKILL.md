@@ -1,252 +1,258 @@
 ---
 name: c3-design
-description: Use when designing system architecture from scratch, updating existing designs, migrating systems, or auditing current architecture - guides through Context→Container→Component methodology with mermaid diagrams and structured documentation
+description: Design or update system architecture using C3 methodology - iterative scoping through hypothesis, exploration, and discovery across Context/Container/Component layers
 ---
 
 # C3 Architecture Design
 
 ## Overview
 
-Transform system requirements into structured C3 (Context-Container-Component) architecture documentation through intelligent state detection and phased workflows.
+Transform requirements into structured C3 (Context-Container-Component) architecture documentation through iterative scoping.
 
-**Core principle:** Detect current state, understand intention through Socratic questioning, scope changes precisely, document decisions via ADR.
+**Core principle:** Form hypothesis, explore to validate, discover impacts, iterate until stable. Uncertainty is expected and healthy.
 
 **Announce at start:** "I'm using the c3-design skill to guide you through architecture design."
 
 ## Quick Reference
 
-| Phase | Key Activities | Socratic? | Output |
-|-------|---------------|-----------|--------|
-| **1. Understand** | Read `.c3/`, analyze request, infer affected levels | Only if ambiguous | Current state picture |
-| **2. Confirm** | Map to C3 structure, present understanding | REQUIRED | Validated intention |
-| **3. Scope** | Cross-cutting concerns, boundaries | If uncertain | Change scope |
-| **4. ADR** | Document decision with progressive detail | No | ADR in `.c3/adr/` |
+| Phase | Key Activities | Output |
+|-------|---------------|--------|
+| **1. Surface Understanding** | Read TOC, parse request, form hypothesis | Initial hypothesis |
+| **2. Iterative Scoping** | HYPOTHESIZE → EXPLORE → DISCOVER loop | Stable scope |
+| **3. ADR with Stream** | Document journey, changes, verification | ADR in `.c3/adr/` |
 
 ## Prerequisites
 
-**Required Location:** `.c3/` directory must exist in project root.
+**Required:** `.c3/` directory with `TOC.md` must exist.
 
-If `.c3/` doesn't exist AND user didn't force mode via `/c3-init`:
+If `.c3/` doesn't exist:
 - Stop and inform user to initialize structure first
 - Suggest: "Create `.c3/` directory to start, or use `/c3-init` to initialize"
 
 ## The Process
 
-### Phase 1: Understand Current Situation
+### Phase 1: Surface Understanding
 
-**Goal:** Build clear picture of what exists and what user wants
+**Goal:** Form initial hypothesis about what's affected.
 
 **Actions:**
 
-1. **Check for `.c3/` directory**
+1. **Read TOC for current state**
    ```bash
-   if [ ! -d ".c3" ]; then
-     echo "Error: .c3/ directory not found. Initialize with /c3-init or create manually."
-     exit 1
-   fi
+   cat .c3/TOC.md
    ```
 
-2. **Read existing documents**
-   - List all files: `find .c3 -name "*.md" -type f`
-   - Parse document IDs from frontmatter:
-     ```bash
-     awk '/^---$/,/^---$/ {if (/^id:/) print $2}' .c3/CTX-*.md
-     ```
-   - Extract status and summaries to understand current state
+2. **Parse user request**
+   - What do they think they want?
+   - What words/concepts map to existing documents?
 
-3. **Analyze user request**
-   - Which C3 level does this touch?
-     - Context: Cross-component, protocols, deployment, system boundaries
-     - Container: Individual container tech/structure/middleware
-     - Component: Implementation details, config, dependencies
-   - May span multiple levels (e.g., "add authentication" → all three)
+3. **Form initial hypothesis** (THINKING, not asking)
+   - Which layer? (Context / Container / Component)
+   - Which specific element? (CTX-001? CON-002? COM-003?)
+   - Why do you think so?
+   - What's uncertain?
 
-4. **Use Socratic questions ONLY if:**
-   - Request is ambiguous
-   - Scope is unclear
-   - Conflicting signals detected
+**Output:** Abstract, high-level hypothesis to explore.
 
-**Output:** Clear understanding of current state + user's goal
+### Phase 2: Iterative Scoping (Core Loop)
 
-### Phase 2: Analyze & Confirm Intention (REQUIRED: Socratic)
+**Goal:** Validate and refine hypothesis until scope is stable.
 
-**Goal:** Validate understanding before proceeding
+```
+┌────────────────────────────────────────────────────────┐
+│                                                        │
+│   HYPOTHESIZE (abstract, from TOC + understanding)     │
+│        ↓                                               │
+│   EXPLORE (investigate with c3-locate + sub-skills)    │
+│        │                                               │
+│        ├── Socratic questions as needed                │
+│        │   (confirm understanding along the way)       │
+│        ↓                                               │
+│   DISCOVER (what did exploration reveal?)              │
+│        │                                               │
+│        ├── Need to revise? → Update hypothesis, loop   │
+│        │                                               │
+│        └── Stable? → Exit to Phase 3                   │
+│                                                        │
+└────────────────────────────────────────────────────────┘
+```
 
-**Actions:**
+#### HYPOTHESIZE
 
-1. **Map request to C3 structure**
-   - Determine impacted levels
-   - Identify affected containers/components
-   - Recognize intention pattern:
-     - No docs + "design system" = from-scratch
-     - Docs exist + "add X" = update-existing
-     - Different structure + "convert" = migrate-system
-     - Docs exist + "review" = audit-current
+Form or update hypothesis based on current understanding:
+- "This likely affects [X] because [reasoning]"
+- "But could also be [Y] if [condition]"
+- Map to specific document IDs from TOC
 
-2. **Present understanding concisely**
-   ```
-   "I see you have [current state]. You want to [goal].
-   This will affect:
-   - Context level: [impact or none]
-   - Container level: [which containers]
-   - Component level: [which components]
+**This is internal reasoning, not questions to user.**
 
-   Is this understanding correct?"
-   ```
+#### EXPLORE
 
-3. **Ask targeted Socratic questions**
-   - Use AskUserQuestion tool for structured choices
-   - Be surgical - don't ask everything
-   - Example: If adding auth, ask "Cookie-based or token-based?"
+Investigate hypothesis in 4 directions:
 
-4. **Iterate until aligned**
+| Direction | Question | Tool |
+|-----------|----------|------|
+| **Isolated** | What changes directly at this element? | c3-locate by ID |
+| **Upstream** | What feeds into this? Dependencies? | c3-locate related IDs |
+| **Adjacent** | What's at same level? Siblings? | c3-locate same-layer IDs |
+| **Downstream** | What does this affect? Consumers? | c3-locate dependent IDs |
 
-**Output:** Validated, mutual understanding of what needs to change
+**Use sub-skills for layer-specific exploration:**
+- `c3-locate` - ID-based content retrieval
+- `c3-context-design` - Explore Context-level impact
+- `c3-container-design` - Explore Container-level impact
+- `c3-component-design` - Explore Component-level impact
 
-### Phase 3: Scoping the Change
+**Socratic questions during exploration** to confirm understanding:
+- "Based on CON-001, the auth middleware handles tokens. Is that still accurate?"
+- "I see COM-002 depends on this. Does that dependency need to change?"
 
-**Goal:** Define precise boundaries of impact
+#### DISCOVER
 
-**Actions:**
+Assess what exploration revealed:
 
-1. **Identify cross-cutting concerns**
-   - What touches multiple levels?
-   - Examples: Auth spans Context (protocol) → Container (middleware) → Component (JWT handler)
+| Discovery | Signal | Action |
+|-----------|--------|--------|
+| Impact at **higher** abstraction | Bigger than thought | Form new hypothesis at higher level, loop |
+| Impact at **same level** widely | Scope expansion | Expand hypothesis, continue exploring |
+| Impact only **downstream** | Contained | Scope is stable, proceed |
+| No new impacts | Complete | Exit to Phase 3 |
 
-2. **Define boundaries**
-   - What will NOT change?
-   - Be explicit about out-of-scope items
+**Key principle:**
+- Upstream/higher-level impacts → revisit hypothesis
+- Downstream/lower-level impacts → expected, proceed
 
-3. **If scope uncertain:**
-   - Use Socratic clarification
-   - Present options with AskUserQuestion
+#### Loop Exit Criteria
 
-**Output:** Clear boundaries - what changes and what doesn't
+Scope is stable when:
+- You can name all affected documents (by ID)
+- You understand why each is affected
+- No exploration reveals new upstream/higher impacts
+- Socratic confirmation validates understanding
 
-### Phase 4: Suggest Changes via ADR
+### Phase 3: ADR with Stream
 
-**Goal:** Document the architectural decision as planning artifact
+**Goal:** Document the decision capturing the full scoping journey.
 
-**Actions:**
+**Determine ADR number:**
+```bash
+last_adr=$(find .c3/adr -name "ADR-*.md" | sed 's/.*ADR-\([0-9]*\).*/\1/' | sort -n | tail -1)
+next_num=$(printf "%03d" $((10#${last_adr:-0} + 1)))
+```
 
-1. **Determine ADR number**
-   ```bash
-   # Find next ADR number
-   last_adr=$(find .c3/adr -name "ADR-*.md" | sed 's/.*ADR-\([0-9]*\).*/\1/' | sort -n | tail -1)
-   next_num=$(printf "%03d" $((10#$last_adr + 1)))
-   ```
+**ADR Template (Stream Format):**
 
-2. **Create ADR with progressive detail**
+```markdown
+---
+id: ADR-{NNN}-{slug}
+title: [Decision Title]
+summary: >
+  [Why read this - what decision, what it affects]
+status: proposed
+date: YYYY-MM-DD
+---
 
-   File: `.c3/adr/ADR-{NNN}-{slug}.md`
+# [ADR-{NNN}] [Decision Title]
 
-   Template:
-   ```markdown
-   ---
-   id: ADR-{NNN}-{slug}
-   title: [Decision Title]
-   summary: >
-     Documents the decision to [what]. Read this to understand [why],
-     what alternatives were considered, and the trade-offs involved.
-   status: proposed
-   date: YYYY-MM-DD
-   related-components: [CON-XXX, COM-YYY]
-   ---
+## Status {#adr-{nnn}-status}
+**Proposed** - YYYY-MM-DD
 
-   # [ADR-{NNN}] [Decision Title]
+## Problem/Requirement {#adr-{nnn}-problem}
+<!--
+Starting point - what user asked for, why change is needed.
+-->
 
-   ## Status {#adr-{nnn}-status}
-   **Proposed** - YYYY-MM-DD
+[What triggered this decision]
 
-   ## Context {#adr-{nnn}-context}
-   Current situation and why change is needed.
+## Exploration Journey {#adr-{nnn}-exploration}
+<!--
+How understanding developed through scoping.
+-->
 
-   ## Decision {#adr-{nnn}-decision}
+**Initial hypothesis:** [What we first thought]
 
-   ### High-Level Approach (Context Level)
-   System-wide implications with diagram.
+**Explored:**
+- Isolated: [What we found at the element]
+- Upstream: [Dependencies discovered]
+- Adjacent: [Related elements at same level]
+- Downstream: [Consumers/dependents affected]
 
-   ### Container Level Details
-   Affected containers: [CON-001-backend](../containers/CON-001-backend.md)
-   Technology choices and architecture.
+**Discovered:** [Key insights that shaped the solution]
 
-   ### Component Level Impact
-   New/modified components: [COM-010-new-component](../components/backend/COM-010-new-component.md)
+**Confirmed:** [What Socratic questions validated]
 
-   ## Alternatives Considered {#adr-{nnn}-alternatives}
-   What else was considered and why rejected.
+## Solution {#adr-{nnn}-solution}
+<!--
+Formed through exploration above.
+-->
 
-   ## Consequences {#adr-{nnn}-consequences}
-   Positive, negative, and mitigation strategies.
+[The approach and why it fits]
 
-   ## Cross-Cutting Concerns {#adr-{nnn}-cross-cutting}
-   Impacts that span multiple levels.
+## Changes Across Layers {#adr-{nnn}-changes}
+<!--
+Specific changes to each affected document.
+-->
 
-   ## Implementation Notes {#adr-{nnn}-implementation}
-   Ordered steps for implementation.
+### Context Level
+- [CTX-XXX]: [What changes, why]
 
-   ## Related {#adr-{nnn}-related}
-   - [Other ADRs]
-   - [Affected containers/components]
-   ```
+### Container Level
+- [CON-XXX]: [What changes, why]
 
-3. **Invoke sub-skills as needed**
+### Component Level
+- [COM-XXX]: [What changes, why]
 
-   Based on ADR scope, use the Skill tool to invoke:
-   - `c3-context-design` - If Context level affected
-   - `c3-container-design` - If Container level affected
-   - `c3-component-design` - If Component level affected
+## Verification {#adr-{nnn}-verification}
+<!--
+Checklist derived from scoping - what to inspect when implementing.
+-->
 
-4. **Regenerate TOC**
-   ```bash
-   .c3/scripts/build-toc.sh
-   ```
+- [ ] Is [X] at the right abstraction level?
+- [ ] Does [Y] upstream dependency still hold?
+- [ ] Are [Z] downstream consumers updated?
+- [ ] [Specific checks from exploration]
 
-**Output:** ADR document + updated/new C3 docs + regenerated TOC
+## Related {#adr-{nnn}-related}
+- [Links to affected documents]
+```
 
-## Iteration & Back-tracking
-
-**You can go backward at any phase:**
-- Phase 2 reveals new constraint → Return to Phase 1
-- Phase 3 shows fundamental gap → Return to Phase 1
-- Phase 4 questions approach → Return to Phase 2
-
-**Don't force forward** when going backward clarifies better.
+**After ADR:**
+1. Update affected documents (CTX/CON/COM) as specified
+2. Regenerate TOC: `.c3/scripts/build-toc.sh`
 
 ## Sub-Skill Invocation
 
-Use the Skill tool to invoke sub-skills:
-- `c3-context-design` - Context level design
-- `c3-container-design` - Container level design
-- `c3-component-design` - Component level design
+Use the Skill tool to invoke during exploration:
 
-Each sub-skill focuses on its level with appropriate abstraction.
+| Skill | When to Use |
+|-------|-------------|
+| `c3-locate` | Retrieve content by document/heading ID |
+| `c3-context-design` | Explore Context-level impact |
+| `c3-container-design` | Explore Container-level impact |
+| `c3-component-design` | Explore Component-level impact |
 
 ## Key Principles
 
 | Principle | Application |
 |-----------|-------------|
-| **Detect before ask** | Read `.c3/` first, infer intention, ask only if unclear |
-| **Socratic when mandatory** | Phase 2 always, others only if ambiguous |
-| **Progressive detail** | ADR starts Context→Container→Component |
-| **Unique IDs** | Every document/heading has ID |
-| **Regenerate TOC** | After any document changes |
-| **Iterate freely** | Go backward when needed |
+| **Hypothesis first** | Form from TOC, don't ask directly for location |
+| **Explore to validate** | Investigate before confirming |
+| **Socratic during exploration** | Questions confirm understanding, not discover location |
+| **ID-based navigation** | Use document/heading IDs, not keyword search |
+| **Higher = bigger impact** | Upstream/higher-level discoveries trigger revisit |
+| **ADR as stream** | Capture journey, not just final answer |
+| **Iterate freely** | Loop until stable, don't force forward |
 
 ## Common Patterns
 
-### From Scratch
-No `.c3/` exists → Initialize structure → Create Context → Containers → Components
+### New Feature
+Surface → Hypothesis at Container level → Explore up to Context, down to Components → ADR with cross-layer changes
 
-### Update Existing
-Docs exist → Detect change scope → Update affected levels → New ADR
+### Bug Fix
+Surface → Hypothesis at Component level → Explore if isolated or upstream cause → ADR focused on Component, verify no upstream issues
 
-### Migrate System
-Different structure exists → Map to C3 → Create migration ADR → Progressive conversion
+### Architectural Change
+Surface → Hypothesis at Context level → Explore all downstream Containers/Components → Large ADR with many changes
 
-### Audit Current
-Docs exist → Review for completeness/accuracy → Identify gaps → Suggest improvements
-
-## Announce Usage
-
-At start of session: "I'm using the c3-design skill to guide you through architecture design."
+### Refactoring
+Surface → Hypothesis at Component level → Explore adjacent components → ADR focused on Component layer

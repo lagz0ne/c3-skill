@@ -13,6 +13,20 @@ Bootstrap C3 (Context-Container-Component) architecture documentation for an exi
 
 **Announce at start:** "I'm using the c3-adopt skill to initialize architecture documentation for this project."
 
+### Derivation Model
+
+Documents follow a strict hierarchy: **Context → Container → Component**
+
+- **Reading order:** Always top-down
+- **Reference direction:** Links flow DOWN only
+  - Context links to Container#sections
+  - Container links to Component docs
+  - Components are terminal (no further links)
+- **Implementation links:** Context protocols and cross-cutting rows include links to Container sections that implement them; Container cross-cutting and protocol rows include links to Component docs/sections.
+- **Container types:**
+  - **Code containers** have components beneath them
+  - **Infrastructure containers** are leaf nodes (no components)
+
 ## Quick Reference
 
 | Phase | Key Activities | Output |
@@ -89,16 +103,19 @@ Instead of scanning files, ASK the user. They know their system better than any 
 5. > "If you deployed this today, what separate processes would be running?"
    - Hint: "Think Docker containers, serverless functions, databases"
 6. > "What data stores exist? (databases, caches, queues)"
+7. > "For each container: is it CODE you write or INFRASTRUCTURE you configure?"
+   - Code: backend services, frontends, workers (have components inside)
+   - Infrastructure: databases, caches, message queues (leaf nodes, no components)
 
 #### Communication
-7. > "How do these pieces talk to each other?"
+8. > "How do these pieces talk to each other?"
    - REST? gRPC? Message queues? Direct function calls?
-8. > "What external services does your system call?"
+9. > "What external services does your system call?"
    - Email? Payment? Auth providers?
 
 #### Cross-Cutting
-9. > "How is authentication handled across the system?"
-10. > "How do you handle logging and monitoring?"
+10. > "How is authentication handled across the system?"
+11. > "How do you handle logging and monitoring?"
 
 ### Build Context Model
 
@@ -115,14 +132,24 @@ From answers, construct:
 - [Actor 2]
 
 **Containers (identified):**
-| Name | Type | Purpose |
-|------|------|---------|
-| [Name] | [Backend/Frontend/DB/etc] | [What it does] |
+| Name | Container Type | Role | Has Components? |
+|------|----------------|------|-----------------|
+| [Backend] | Code | REST API | Yes |
+| [Frontend] | Code | Web UI | Yes |
+| [Postgres] | Infrastructure | Data store | No (leaf) |
+| [Redis] | Infrastructure | Cache | No (leaf) |
 
-**Protocols:**
-| From | To | Protocol |
-|------|-----|----------|
-| [A] | [B] | [REST/gRPC/etc] |
+**Protocols (will link to Container#sections):**
+| From | To | Protocol | Implementations |
+|------|-----|----------|-----------------|
+| [Frontend] | [Backend] | REST/HTTPS | [CON-002-frontend#api-calls], [CON-001-backend#rest-endpoints] |
+| [Backend] | [Postgres] | SQL | [CON-001-backend#db-access], [CON-003-postgres#con-003-config] |
+
+**Cross-Cutting (will link to Container#sections):**
+| Concern | Pattern | Implemented By |
+|---------|---------|----------------|
+| Authentication | JWT | [CON-001-backend#con-001-auth] |
+| Logging | Structured JSON | [CON-001-backend#con-001-logging] |
 
 **External Dependencies:**
 - [Service 1]
@@ -138,70 +165,115 @@ Use `c3-context-design` to create the Context document with:
 - System overview
 - Architecture diagram (from identified containers)
 - Container list (high-level)
-- Protocols section
-- Cross-cutting concerns
+- Protocols section with Implementation links to Container sections
+- Cross-cutting concerns with Implementation links to Container sections
 - Deployment section
 
 ---
 
 ## Phase 3: Container Discovery
 
-**Goal:** For each container identified, build understanding through questions.
+**Goal:** For each container identified, build understanding through questions. Questions differ by container type.
 
-### Container Questions (per container)
+### Code Container Questions
+
+For containers where you write code (backends, frontends, workers):
+
+#### Identity & Technology
+1. > "What is its single main responsibility?"
+2. > "What technology stack? (language, framework, runtime)"
+
+#### Structure & Components
+3. > "How is code organized? Layers? Feature folders?"
+4. > "What are the 3-5 most important components inside?"
+   - "The ones a new developer MUST understand"
+5. > "How do these components connect to each other?"
+
+#### Cross-Cutting Within Container
+6. > "How does this container handle logging internally?"
+7. > "How does it handle errors?"
+8. > "How does it implement authentication (if applicable)?"
+
+### Infrastructure Container Questions
+
+For databases, caches, queues (leaf nodes - no components):
 
 #### Identity
-1. > "For [Container Name]: What is its single main responsibility?"
-2. > "What technology does it use? (language, framework)"
+1. > "What engine/technology is this? (PostgreSQL 15, Redis 7, etc.)"
 
-#### Structure
-3. > "How is code organized inside? Layers? Feature folders?"
-4. > "What are the main entry points?"
+#### Configuration
+2. > "What key configuration settings matter?"
+3. > "Why were those settings chosen?"
 
-#### APIs
-5. > "What endpoints/interfaces does it expose?"
-6. > "What does it consume from other containers?"
-
-#### Data
-7. > "What data does this container own?"
-8. > "What data does it read but not own?"
-
-#### Key Components
-9. > "What are the 3-5 most important components inside?"
-   - "The ones a new developer MUST understand"
+#### Features Provided
+4. > "What features do your code containers use from this?"
+   - WAL replication? LISTEN/NOTIFY? Pub/sub? Streams?
 
 ### Build Container Model
 
-From answers:
+**For Code Containers:**
 
 ```markdown
-## Container: [Name]
+## Container: [Name] (Code)
 
 **Responsibility:** [One sentence]
 **Technology:** [Language + Framework]
 
-**Structure:**
-| Layer | Purpose |
-|-------|---------|
-| [Layer] | [What it does] |
+**Component Relationships (flowchart):**
+[Sketch: Routes → Auth → Service → DB Pool]
 
-**APIs Exposed:**
-- [Endpoint 1]
-- [Endpoint 2]
+**Data Flow (sequence):**
+[Sketch: Client → Routes → Auth → Service → DB]
 
-**Data Owned:**
-- [Data 1]
-- [Data 2]
+**Container Cross-Cutting:**
+| Concern | Implemented By |
+|---------|----------------|
+| Logging | [COM-005-logger] |
+| Errors | [COM-006-error-handler] |
 
-**Key Components:**
-| Component | Purpose | Priority |
-|-----------|---------|----------|
-| [Name] | [What it does] | High/Medium |
+**Protocol Implementations:**
+| Context Protocol | Implemented By |
+|------------------|----------------|
+| REST/HTTPS | [COM-001-rest-routes] |
+| SQL | [COM-003-db-pool] |
+
+**Key Components (link to COM docs):**
+| Component | Nature | Purpose | Priority |
+|-----------|--------|---------|----------|
+| [COM-001-rest-routes] | Entrypoint | HTTP handling | High |
+| [COM-002-auth-middleware] | Cross-cutting | Token validation | High |
+```
+
+**For Infrastructure Containers:**
+
+```markdown
+## Container: [Name] (Infrastructure)
+
+**Engine:** [PostgreSQL 15]
+
+**Configuration:**
+| Setting | Value | Why |
+|---------|-------|-----|
+| max_connections | 100 | Support pooling |
+
+**Features Provided (consumed by code containers):**
+| Feature | Used By |
+|---------|---------|
+| WAL replication | [CON-001-backend] → [COM-005-event-streaming] |
+| LISTEN/NOTIFY | [CON-001-backend] → [COM-003-db-pool] |
 ```
 
 ### Delegate to c3-container-design
 
 > "I understand [Container Name]. I'll use the c3-container-design skill to create CON-XXX."
+
+Use `c3-container-design` to create container docs with:
+- Technology stack summary
+- Component relationships (flowchart) and data flow (sequence)
+- Container cross-cutting + protocol implementations linking to Component docs/sections
+- Component inventory with links to Component docs
+
+**Important:** Infrastructure containers are leaf nodes - skip Phase 4 (Component Identification) for them.
 
 Repeat for each container.
 
@@ -211,13 +283,32 @@ Repeat for each container.
 
 **Goal:** Identify which components need documentation now vs later.
 
+**Applies to:** Code containers only. Infrastructure containers are leaf nodes - skip this phase for them.
+
+### Assign Nature Types
+
+For each component identified in Phase 3, assign a nature type to guide documentation focus:
+
+| Nature Type | Documentation Focus | Example |
+|-------------|---------------------|---------|
+| **Resource/Integration** | Config, env differences, connection handling | DB Pool, Cache Client |
+| **Business Logic** | Domain flows, rules, edge cases | Order Service, Payment Flow |
+| **Framework/Entrypoint** | Protocol handling, lifecycle, signals | REST Routes, CLI Handler |
+| **Cross-cutting** | Integration patterns, conventions | Logger, Error Handler |
+| **Build/Deployment** | Pipeline, packaging | Release pipeline |
+| **Testing** | Strategies, fixtures | Integration test harness |
+| **Contextual** | Situation-specific | Caching layer, websocket hub |
+| ... | Whatever fits | Use your judgment |
+
+Stack choices and environment configuration live in Component docs. Containers only name the high-level stack.
+
 ### Prioritization Questions
 
-For each container's key components:
+For each component:
 
-1. > "Which of these would cause the most confusion for a new developer?"
-2. > "Which components have the most complex configuration?"
-3. > "Which components integrate with external services?"
+1. > "Which would cause the most confusion for a new developer?"
+2. > "Which have the most complex configuration?"
+3. > "Which integrate with external services?"
 
 ### Component Priority Matrix
 
@@ -225,19 +316,21 @@ For each container's key components:
 |----------|----------|--------|
 | **High** | Core business logic, External integrations, Complex config | Create full COM document |
 | **Medium** | Important but straightforward | Create COM stub |
-| **Low** | Utilities, Simple wrappers | Note in Container doc |
+| **Low** | Utilities, Simple wrappers | Note in Container doc only |
 
 ### Create Component Stubs
 
 For High/Medium priority, create stub with:
 - Overview (from user description)
-- Purpose (responsibility)
-- TODO markers for implementation details
+- Nature type
+- Stack (library, why chosen)
+- Environment config (env vars with dev/prod defaults)
+- TODO markers for config, behavior, errors
 
 ### Delegate to c3-component-design
 
 For high-priority components:
-> "I'll use the c3-component-design skill to create detailed documentation for [Component Name]."
+> "I'll use the c3-component-design skill to create detailed documentation for [Component Name] ([Nature Type])."
 
 ---
 
@@ -264,6 +357,10 @@ Present to user:
 - [ ] `.c3/components/*/COM-*.md` - [N] components
 - [ ] `.c3/TOC.md` - Table of contents
 - [ ] `.c3/scripts/build-toc.sh` - TOC generator
+- [ ] Context protocols/cross-cutting include Implementation links to Container sections
+- [ ] Containers include component relationships (flowchart) and data flow (sequence)
+- [ ] Container cross-cutting/protocol implementations link to Component docs
+- [ ] Components document stack + environment config (dev/prod)
 
 ### Gaps Identified:
 - [Any areas that need more detail]

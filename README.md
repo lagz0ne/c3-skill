@@ -64,14 +64,10 @@ Claude will:
 3. Confirm understanding via targeted questions
 4. Create/update documentation with appropriate diagrams
 
-### Force Specific Mode
+### Commands
 
-Use slash commands to invoke specific sub-skills:
-
-- `/c3-from-scratch` - Design new system from scratch
-- `/c3-context-design` - Design Context level
-- `/c3-container-design` - Design Container level
-- `/c3-component-design` - Design Component level
+- `/c3` - Design or update architecture (main command)
+- `/c3-init` - Initialize `.c3/` structure from scratch
 
 ## Documentation Structure
 

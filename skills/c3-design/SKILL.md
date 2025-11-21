@@ -26,9 +26,9 @@ Transform system requirements into structured C3 (Context-Container-Component) a
 
 **Required Location:** `.c3/` directory must exist in project root.
 
-If `.c3/` doesn't exist AND user didn't force mode via `/c3-from-scratch`:
+If `.c3/` doesn't exist AND user didn't force mode via `/c3-init`:
 - Stop and inform user to initialize structure first
-- Suggest: "Create `.c3/` directory to start, or use `/c3-from-scratch` to initialize"
+- Suggest: "Create `.c3/` directory to start, or use `/c3-init` to initialize"
 
 ## The Process
 
@@ -41,7 +41,7 @@ If `.c3/` doesn't exist AND user didn't force mode via `/c3-from-scratch`:
 1. **Check for `.c3/` directory**
    ```bash
    if [ ! -d ".c3" ]; then
-     echo "Error: .c3/ directory not found. Initialize with /c3-from-scratch or create manually."
+     echo "Error: .c3/ directory not found. Initialize with /c3-init or create manually."
      exit 1
    fi
    ```
@@ -192,17 +192,10 @@ If `.c3/` doesn't exist AND user didn't force mode via `/c3-from-scratch`:
 
 3. **Invoke sub-skills as needed**
 
-   Based on ADR scope:
-   ```bash
-   # If Context level affected
-   /c3-context-design
-
-   # If Container level affected
-   /c3-container-design
-
-   # If Component level affected
-   /c3-component-design
-   ```
+   Based on ADR scope, use the Skill tool to invoke:
+   - `c3-context-design` - If Context level affected
+   - `c3-container-design` - If Container level affected
+   - `c3-component-design` - If Component level affected
 
 4. **Regenerate TOC**
    ```bash
@@ -222,13 +215,10 @@ If `.c3/` doesn't exist AND user didn't force mode via `/c3-from-scratch`:
 
 ## Sub-Skill Invocation
 
-Use SlashCommand tool to invoke sub-skills:
-
-```
-Use SlashCommand tool with command: "/c3-context-design"
-Use SlashCommand tool with command: "/c3-container-design"
-Use SlashCommand tool with command: "/c3-component-design"
-```
+Use the Skill tool to invoke sub-skills:
+- `c3-context-design` - Context level design
+- `c3-container-design` - Container level design
+- `c3-component-design` - Component level design
 
 Each sub-skill focuses on its level with appropriate abstraction.
 

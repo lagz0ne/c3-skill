@@ -1,0 +1,20 @@
+{
+  "name": "c3-skill-marketplace",
+  "description": "C3 architecture design methodology plugin marketplace",
+  "owner": {
+    "name": "Lagz0ne",
+    "email": "lagz0ne@users.noreply.github.com"
+  },
+  "plugins": [
+    {
+      "name": "c3-skill",
+      "description": "C3 (Context-Container-Component) architecture design methodology with structured top-down documentation, mermaid diagrams, and intention-based workflows",
+      "version": "1.0.0",
+      "source": "./",
+      "author": {
+        "name": "Lagz0ne",
+        "email": "lagz0ne@users.noreply.github.com"
+      }
+    }
+  ]
+}

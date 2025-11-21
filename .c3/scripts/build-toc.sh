@@ -80,16 +80,23 @@ extract_heading_summary() {
     ' "$file"
 }
 
-# List headings with IDs
+# List headings with IDs (POSIX-compliant, tab-delimited)
 list_headings() {
     local file=$1
     awk '
         /^## .* \{#[a-z0-9-]+\}$/ {
-            match($0, /\{#([^}]+)\}/, arr)
-            heading_id = arr[1]
-            sub(/ \{#[^}]+\}$/, "")
-            sub(/^## /, "")
-            print heading_id "|||" $0
+            # Extract heading ID using POSIX-compliant gsub
+            id_part = $0
+            gsub(/.*\{#/, "", id_part)
+            gsub(/\}.*/, "", id_part)
+            heading_id = id_part
+
+            # Extract heading title
+            title_part = $0
+            gsub(/ \{#[^}]+\}$/, "", title_part)
+            gsub(/^## /, "", title_part)
+
+            print heading_id "\t" title_part
         }
     ' "$file"
 }
@@ -115,7 +122,7 @@ if [ "$ctx_count" -gt 0 ]; then
         echo "" >> "$TEMP_FILE"
 
         echo "**Sections**:" >> "$TEMP_FILE"
-        while IFS='|||' read -r heading_id heading_title; do
+        while IFS=$'\t' read -r heading_id heading_title; do
             heading_summary=$(extract_heading_summary "$file" "$heading_id")
             if [ -n "$heading_summary" ]; then
                 echo "- [$heading_title](#$heading_id) - $heading_summary" >> "$TEMP_FILE"
@@ -144,7 +151,7 @@ if [ "$con_count" -gt 0 ]; then
         echo "" >> "$TEMP_FILE"
 
         echo "**Sections**:" >> "$TEMP_FILE"
-        while IFS='|||' read -r heading_id heading_title; do
+        while IFS=$'\t' read -r heading_id heading_title; do
             heading_summary=$(extract_heading_summary "$file" "$heading_id")
             if [ -n "$heading_summary" ]; then
                 echo "- [$heading_title](#$heading_id) - $heading_summary" >> "$TEMP_FILE"
@@ -179,7 +186,7 @@ if [ "$com_count" -gt 0 ]; then
             echo "" >> "$TEMP_FILE"
 
             echo "**Sections**:" >> "$TEMP_FILE"
-            while IFS='|||' read -r heading_id heading_title; do
+            while IFS=$'\t' read -r heading_id heading_title; do
                 heading_summary=$(extract_heading_summary "$file" "$heading_id")
                 if [ -n "$heading_summary" ]; then
                     echo "- [$heading_title](#$heading_id) - $heading_summary" >> "$TEMP_FILE"
@@ -212,7 +219,7 @@ if [ "$adr_count" -gt 0 ]; then
         echo "" >> "$TEMP_FILE"
 
         echo "**Sections**:" >> "$TEMP_FILE"
-        while IFS='|||' read -r heading_id heading_title; do
+        while IFS=$'\t' read -r heading_id heading_title; do
             heading_summary=$(extract_heading_summary "$file" "$heading_id")
             if [ -n "$heading_summary" ]; then
                 echo "- [$heading_title](#$heading_id) - $heading_summary" >> "$TEMP_FILE"

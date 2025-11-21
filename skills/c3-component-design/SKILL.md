@@ -13,6 +13,10 @@ Explore Component-level impact during the scoping phase of c3-design. Component 
 
 **Announce at start:** "I'm using the c3-component-design skill to explore Component-level impact."
 
+**Reading order:** Navigate Context → Container → Component.
+
+**Reference direction:** Components are terminal - no further derivation. They receive links FROM Container docs but do not link upward or further down.
+
 ## When Invoked
 
 Called during EXPLORE phase of c3-design when:
@@ -62,6 +66,40 @@ Ask: "Could a developer implement this from the documentation?"
 - **Yes** → Correct level (Component)
 - **No, needs more detail** → Add implementation specifics
 - **No, it's about structure** → Push up to Container
+
+---
+
+## Component Nature Types (Open-Ended)
+
+Nature type determines documentation focus. **This is NOT a fixed taxonomy** - use whatever nature type helps describe and organize the component's documentation.
+
+| Nature Type | Documentation Focus |
+|-------------|---------------------|
+| **Resource/Integration** | Configuration, env differences, how/why config loaded |
+| **Business Logic** | Domain flows, rules, edge cases, the "messy" heart |
+| **Framework/Entrypoint** | Mixed concerns - auth, errors, signals, protocol handoff, lifecycle |
+| **Cross-cutting** | Integration patterns, how it's used everywhere, conventions |
+| **Build/Deployment** | Build pipeline, deploy config, CI/CD specifics |
+| **Testing** | Test strategies, fixtures, mocking approaches |
+| **Contextual** | Situation-specific behavior (caching, websocket, etc.) |
+| ... | Whatever the component needs |
+
+**Key principle:** The nature type guides what sections to emphasize, not what the component is allowed to be.
+
+---
+
+## Component Contains What Container Doesn't Enforce
+
+| Element | Description |
+|---------|-------------|
+| Stack details | Which library, why chosen, exact configuration |
+| Environment config | Env vars, defaults, dev vs prod differences |
+| Implementation patterns | Conventions, algorithms, code patterns |
+| Interfaces/Types | Method signatures, data structures, DTOs |
+| Error handling | Specific error codes, retry strategies |
+| Usage examples | Code snippets showing how to use it |
+
+**Stack and config live here:** Library selections, versions, and exact configuration belong to the Component. Containers only name the technology stack; Components document the concrete choices and environment differences.
 
 ---
 
@@ -124,114 +162,13 @@ interface TaskService {
 
 ## Diagrams for Component Level
 
-### Primary: Sequence Diagram (with code)
+Use the diagram that best explains how the component works:
+- **Flowchart** - decision logic or processing steps
+- **Sequence diagram** - calls between functions/components during a request
+- **ERD (detailed)** - data relationships owned by this component
+- **State chart** - lifecycle and state transitions
 
-**Purpose:** Show method calls and data flow in detail.
-
-```mermaid
-sequenceDiagram
-    participant R as Route Handler
-    participant S as TaskService
-    participant V as Validator
-    participant D as Repository
-    participant E as EventEmitter
-
-    R->>S: createTask(userId, data)
-    S->>V: validate(data)
-    V-->>S: validatedData
-    S->>D: insert(task)
-    D-->>S: taskId
-    S->>E: emit('task.created')
-    S-->>R: Task
-```
-
-**When to use:** When documenting component interactions and flow.
-
-### Secondary: State Diagram
-
-**Purpose:** Show component state transitions.
-
-```mermaid
-stateDiagram-v2
-    [*] --> Idle
-    Idle --> Connecting: getConnection()
-    Connecting --> Connected: success
-    Connecting --> Retrying: transient error
-    Retrying --> Connecting: retry
-    Retrying --> Failed: max retries
-    Connected --> Idle: release()
-    Failed --> [*]
-```
-
-**When to use:** When component has state machine behavior.
-
-### Tertiary: Class/Interface Diagram
-
-**Purpose:** Show type relationships and interfaces.
-
-```mermaid
-classDiagram
-    class TaskService {
-        +create(userId, data) Task
-        +update(taskId, data) Task
-        +delete(taskId) void
-    }
-    class TaskRepository {
-        +insert(task) string
-        +findById(id) Task
-        +delete(id) void
-    }
-    class Task {
-        +id: string
-        +title: string
-        +status: string
-    }
-    TaskService --> TaskRepository
-    TaskService --> Task
-    TaskRepository --> Task
-```
-
-**When to use:** When documenting complex type relationships.
-
-### Quaternary: Flowchart (with logic)
-
-**Purpose:** Show algorithm or decision logic.
-
-```mermaid
-flowchart TD
-    A[Receive Token] --> B{Token in header?}
-    B -->|Yes| C[Extract from header]
-    B -->|No| D{Token in cookie?}
-    D -->|Yes| E[Extract from cookie]
-    D -->|No| F[Return 401]
-    C --> G[Validate signature]
-    E --> G
-    G --> H{Valid?}
-    H -->|Yes| I[Inject user context]
-    H -->|No| F
-    I --> J[Continue]
-```
-
-**When to use:** When documenting decision logic or algorithms.
-
-### Avoid at Component Level
-
-| Diagram Type | Why Not | Where It Belongs |
-|--------------|---------|------------------|
-| System context | Too high level | Context |
-| Container overview | Too high level | Container |
-| Deployment diagrams | Infrastructure | Context/Container |
-| ER diagrams (high level) | Schema overview | Container |
-
-### Appropriate at Component Level
-
-| Diagram Type | Use Case |
-|--------------|----------|
-| Detailed sequence | Method calls with params |
-| State machine | Component lifecycle |
-| Class diagram | Type relationships |
-| Flowchart | Algorithm logic |
-| ER diagram (detailed) | Specific table columns |
+Avoid repeating Container-level diagrams; focus on implementation specifics.
 
 ---
 
@@ -312,12 +249,11 @@ Use c3-locate to retrieve:
 
 ```
 c3-locate COM-001                    # Overview
-c3-locate #com-001-implementation    # Technical details
-c3-locate #com-001-configuration     # Config options
-c3-locate #com-001-pool-behavior     # Specific behavior
-c3-locate #com-001-error-handling    # Error strategies
-c3-locate #com-001-performance       # Performance characteristics
-c3-locate #com-001-health-checks     # Health monitoring
+c3-locate #com-001-stack             # Library and version
+c3-locate #com-001-interfaces        # Methods and types
+c3-locate #com-001-config            # Env vars and defaults
+c3-locate #com-001-behavior          # Diagrams/behavior
+c3-locate #com-001-errors            # Error strategies
 c3-locate #com-001-usage             # Usage examples
 ```
 
@@ -360,68 +296,68 @@ If change belongs higher, report this to c3-design for hypothesis revision.
 
 ## Document Template Reference
 
-Component documents follow this structure:
+Component documents follow this structure. **Adapt sections based on Nature Type.**
 
 ```markdown
 ---
 id: COM-NNN-slug
-title: [Component Name] Component
+title: [Component Name] ([Nature Type])
 summary: >
   [Why read this document - what it covers]
 ---
 
-# [COM-NNN-slug] [Component Name] Component
+# [COM-NNN-slug] [Component Name] ([Nature Type])
 
 ::: info Container
 Belongs to [CON-XXX: Container Name](../../containers/CON-XXX-slug.md)
 :::
 
 ## Overview {#com-nnn-overview}
+[Brief description of what this component does]
+
+## Stack {#com-nnn-stack}
+- Library: `[e.g., pg 8.11.x]`
+- Why: [Reason for choice - stability, features, etc.]
+
+## Interfaces & Types {#com-nnn-interfaces}
+```typescript
+interface TaskService {
+  create(userId: string, data: CreateInput): Promise<Task>;
+  update(taskId: string, data: UpdateInput): Promise<Task>;
+  delete(taskId: string): Promise<void>;
+}
+```
+
+## Configuration {#com-nnn-config}
+| Env Var | Dev | Prod | Why |
+|---------|-----|------|-----|
+| DB_POOL_MIN | 2 | 10 | Baseline connections |
+| DB_POOL_MAX | 10 | 50 | Scale with load |
+| DB_IDLE_TIMEOUT | 30s | 10s | Release faster in prod |
+
+## Behavior {#com-nnn-behavior}
 <!--
-What this component does and why it exists.
+State diagram, flowchart, or prose explaining key behavior.
+Choose diagram type based on what needs explaining (flowchart, sequence,
+ERD, state chart).
 -->
 
-## Purpose {#com-nnn-purpose}
-<!--
-Specific responsibilities and goals.
--->
+## Error Handling {#com-nnn-errors}
+| Error | Retriable | Action |
+|-------|-----------|--------|
+| Connection refused | Yes | Retry with backoff |
+| Pool exhausted | Yes | Wait up to 5s |
+| Query timeout | No | Propagate to caller |
 
-## Technical Implementation {#com-nnn-implementation}
-<!--
-How it's built - libraries, patterns, architecture.
--->
-
-## Configuration {#com-nnn-configuration}
-<!--
-Environment variables and configuration options.
--->
-
-## [Behavior Section] {#com-nnn-behavior}
-<!--
-Component-specific behavior (e.g., Pool Behavior, Token Validation).
--->
-
-## Error Handling {#com-nnn-error-handling}
-<!--
-How errors are handled, retry strategy, error types.
--->
-
-## Performance {#com-nnn-performance}
-<!--
-Performance characteristics, optimizations, metrics.
--->
-
-## Health Checks {#com-nnn-health-checks}
-<!--
-Health check implementation and monitoring.
--->
-
-## Usage Example {#com-nnn-usage}
-<!--
-How to use this component in application code.
--->
+## Usage {#com-nnn-usage}
+```typescript
+const pool = createPool(config);
+const result = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+```
 
 ## Related {#com-nnn-related}
 ```
+
+**Diagram choice is contextual:** Use flowchart for decision logic, sequence for interactions, state chart for lifecycle, ERD for data relationships.
 
 Use these heading IDs for precise exploration.

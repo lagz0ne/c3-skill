@@ -13,6 +13,10 @@ Explore Context-level impact during the scoping phase of c3-design. Context is t
 
 **Announce at start:** "I'm using the c3-context-design skill to explore Context-level impact."
 
+**Reading order:** Always navigate top-down: Context → Container → Component.
+
+**Reference direction:** References flow downward only. Context links to Container sections that implement protocols and cross-cutting concerns. No upward links are needed because the reader enters from Context and drills down.
+
 ## When Invoked
 
 Called during EXPLORE phase of c3-design when:
@@ -31,14 +35,14 @@ Also called by c3-adopt to CREATE initial Context documentation.
 
 **INCLUDE at Context level:**
 
-| Element | Why Context | Example |
-|---------|-------------|---------|
-| System boundary | Defines inside vs outside | "TaskFlow system includes..." |
-| Actors | Who/what interacts with system | Users, Admin, External APIs |
-| Container inventory | WHAT containers exist (not HOW) | "Backend API, Frontend, Database" |
-| Protocols between containers | Communication contracts | REST, gRPC, WebSocket |
-| Cross-cutting concerns | Span multiple containers | Auth strategy, logging approach |
-| Deployment topology | High-level infrastructure | Cloud, multi-region, CDN |
+| Element | Why Context | Example | Links Down To |
+|---------|-------------|---------|---------------|
+| System boundary | Defines inside vs outside | "TaskFlow system includes..." | - |
+| Actors | Who/what interacts with system | Users, Admin, External APIs | - |
+| Container inventory | WHAT containers exist (not HOW) | "Backend API, Frontend, Database" | Container docs |
+| Protocols between containers | Communication contracts | REST, gRPC, WebSocket | Container#sections implementing each side |
+| Cross-cutting concerns | Span multiple containers | Auth strategy, logging approach | Container#sections implementing them |
+| Deployment topology | High-level infrastructure | Cloud, multi-region, CDN | - |
 
 **EXCLUDE from Context (push down to Container):**
 
@@ -75,11 +79,11 @@ Ask: "Would changing this require coordinating multiple containers or external p
 ```markdown
 ## Container Relationships
 
-| From | To | Protocol | Purpose |
-|------|-----|----------|---------|
-| Frontend | Backend | REST/HTTPS | API calls |
-| Backend | Database | PostgreSQL | Data persistence |
-| Backend | Email Service | SMTP | Notifications |
+| From | To | Protocol | Purpose | Implementations |
+|------|-----|----------|---------|-----------------|
+| Frontend | Backend | REST/HTTPS | API calls | [CON-002-frontend#api-calls], [CON-001-backend#rest-endpoints] |
+| Backend | Database | PostgreSQL | Data persistence | [CON-001-backend#db-access], [CON-003-postgres#config] |
+| Backend | Email Service | SMTP | Notifications | [CON-001#email-adapter] |
 ```
 
 ### DO NOT Express at Context
@@ -88,6 +92,23 @@ Ask: "Would changing this require coordinating multiple containers or external p
 - Method calls or interfaces (Component level)
 - Data flow within a container (Container level)
 
+### Downward Linking to Container Sections
+
+- Every protocol listed at Context level must link to the Container sections that implement each side.
+- Every cross-cutting concern must list the Container sections that implement it.
+- Keep links unidirectional (Context → Container). Do not add upward references from Containers.
+
+### Cross-Cutting Table Format
+
+```markdown
+## Cross-Cutting
+
+| Concern | Pattern | Implemented By |
+|---------|---------|----------------|
+| Authentication | JWT with refresh tokens | [CON-001#auth-middleware], [CON-002#auth-handling] |
+| Logging | Structured JSON with correlation IDs | [CON-001#logging], [CON-002#logging] |
+| Error Handling | Unified error envelope | [CON-001#error-handling], [CON-002#error-handling] |
+```
 ---
 
 ## Diagrams for Context Level
@@ -296,18 +317,33 @@ and their relationships. Read to understand how pieces fit together.
 Lists all containers with brief descriptions and links. Read to navigate
 to specific container details.
 -->
+| Container | Type | Description |
+|-----------|------|-------------|
+| [CON-001-backend](./containers/CON-001-backend.md) | Code | REST API |
+| [CON-002-frontend](./containers/CON-002-frontend.md) | Code | Web UI |
+| [CON-003-postgres](./containers/CON-003-postgres.md) | Infrastructure | Data store |
 
 ## Protocols & Communication {#ctx-nnn-protocols}
 <!--
 Explains communication protocols used across the system and why chosen.
-Read to understand integration patterns.
+Read to understand integration patterns. Must link to Container sections
+that implement each side of the protocol.
 -->
+| From | To | Protocol | Implementations |
+|------|----|----------|-----------------|
+| Frontend | Backend | REST/HTTPS | [CON-002#api-calls], [CON-001#rest-endpoints] |
+| Backend | Postgres | SQL | [CON-001#db-access], [CON-003#config] |
 
 ## Cross-Cutting Concerns {#ctx-nnn-cross-cutting}
 <!--
 Describes concerns that span multiple containers like authentication,
 logging, and monitoring. Read to understand system-wide patterns.
+Include links to Container sections that implement the concern.
 -->
+| Concern | Pattern | Implemented By |
+|---------|---------|----------------|
+| Authentication | JWT with refresh tokens | [CON-001#auth-middleware], [CON-002#auth-handling] |
+| Logging | Structured JSON with correlation IDs | [CON-001#logging], [CON-002#logging] |
 
 ## Deployment {#ctx-nnn-deployment}
 <!--

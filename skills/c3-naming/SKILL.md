@@ -1,12 +1,12 @@
 ---
 name: c3-naming
-description: Use when creating or renaming C3 context/container/component/ADR docs to keep names short while encoding parentage (C3 prefix + container digit + component digits) without CON/COM - defines numeric patterns, examples, red flags, and counters
+description: Use when creating or renaming C3 context/container/component/ADR docs to keep names short while encoding parentage (C3 prefix + container digit + component digits) without legacy CON/COM - defines numeric patterns, anchors, examples, red flags, and counters
 ---
 
 # C3 Naming Conventions
 
 ## Overview
-Short, container-aware names prevent collisions and make derivation obvious. Drop `CON/COM`; use a stable prefix plus container digit and component digits (`C3-1xx`) to encode parentage. This defines ID/filename patterns so readers can infer lineage without opening files.
+Short, container-aware names prevent collisions and make derivation obvious. Drop legacy `CON/COM`; use a stable prefix plus container digit and component digits (`C3-1xx`) to encode parentage. This defines ID/filename/anchor patterns so readers can infer lineage without opening files.
 
 ## When to Use
 - Creating or renaming C3 docs (CTX/CON/COM/ADR)
@@ -16,8 +16,8 @@ Short, container-aware names prevent collisions and make derivation obvious. Dro
 
 ## Core Principles
 - Single context: one `CTX-###-slug` per system.
-- Containers own a single digit (or two if >9 containers): `C3-<C>-slug`.
-- Components inherit container digit and add 2-digit sequence: `C3-<C><NN>-slug` (NN zero-padded).
+- Containers own a single digit (extend to two digits if >9 containers): `C3-<C>-slug`.
+- Components inherit container digit and add 2-digit sequence: `C3-<C><NN>-slug` (NN zero-padded; extend to three digits if >99 components).
 - File names align with IDs; paths mirror hierarchy.
 - Downward-only links; names must stand alone outside folder context.
 
@@ -26,7 +26,7 @@ Short, container-aware names prevent collisions and make derivation obvious. Dro
 |-------|------------|-------------------|---------|
 | Context | `CTX-###-slug` | `.c3/CTX-###-slug.md` | `CTX-001-system-overview.md` |
 | Container (Code/Infra) | `C3-<C>-slug` (`C` = digit) | `.c3/containers/C3-<C>-slug.md` | `C3-1-backend.md` |
-| Component | `C3-<C><NN>-slug` (`NN` = 01-99 inside container `C`) | `.c3/components/<container-slug>/C3-<C><NN>-slug.md` | `C3-101-api-client.md` under `components/frontend/` |
+| Component | `C3-<C><NN>-slug` (`NN` = 01-99 inside container `C`; use 3 digits if needed) | `.c3/components/<container-slug>/C3-<C><NN>-slug.md` | `C3-101-api-client.md` under `components/backend/` |
 | ADR | `ADR-###-slug` | `.c3/adr/ADR-###-slug.md` | `ADR-002-postgresql.md` |
 
 ## Flow (small)
@@ -35,13 +35,13 @@ flowchart TD
     Need[Creating/renaming doc?] --> Type{Type?}
     Type -->|Context| Ctx[CTX-###-slug<br/>one per system]
     Type -->|Container| Con[C3-<C>-slug<br/>unique digit]
-    Type -->|Component| Com[Use parent container digit<br/>C3-<C><NN>-slug]
+    Type -->|Component| Com[Use parent digit<br/>C3-<C><NN>-slug]
     Type -->|ADR| Adr[ADR-###-slug<br/>optional CTX/CON refs inside]
 ```
 
 ## How to Name
-1) Assign/confirm container digit `C` (1–9; extend to two digits only if needed). Do not reuse across containers.
-2) For components, prefix with `C3-`, container digit, and two-digit seq: `C3-<C><NN>-slug` (NN starts at `01` for each container).
+1) Assign/confirm container digit `C` (1–9; extend to two digits if needed). Do not reuse across containers.
+2) For components, prefix with `C3-`, container digit, and two/three-digit seq: `C3-<C><NN>-slug` (NN starts at `01` for each container; use three digits if you exceed 99 components).
    - Example: container `C3-2-frontend` → components `C3-201-api-client.md`, `C3-202-auth-guard.md`.
 3) Slugs: short, lowercase, hyphenated nouns (no spaces).
 4) File paths mirror IDs:
@@ -82,11 +82,11 @@ Paths:
 - Copying examples without updating IDs and anchors.
 
 ## Checklist
-- IDs follow patterns above (CTX/CON/COM/ADR).
-- Components include parent container code in ID and filename.
+- IDs follow patterns above (CTX/C3/ADR).
+- Components include parent container digit in ID and filename.
 - File path matches ID (no mismatches).
 - Links updated to new IDs + anchors.
-- Anchors follow `{#ctx|con|com-*}` scheme.
+- Anchors follow `{#ctx-*}`, `{#c3-*}`, `{#adr-*}`; include container digit in component anchors (e.g., `{#c3-201-behavior}`).
 - One container = one digit; no reuse.
 - Slugs stay short, lower-kebab, noun-first.
 

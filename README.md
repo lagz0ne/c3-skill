@@ -77,10 +77,10 @@ Claude will:
 ├── TOC.md                        # Auto-generated TOC
 ├── CTX-001-system-overview.md    # Context documents
 ├── containers/
-│   └── CON-001-backend.md        # Container documents
+│   └── C3-1-backend.md           # Container documents
 ├── components/
 │   ├── backend/
-│   │   └── COM-001-db-pool.md    # Component documents
+│   │   └── C3-101-db-pool.md     # Component documents
 ├── adr/
 │   └── ADR-001-rest-api.md       # Architecture decisions
 └── scripts/
@@ -94,8 +94,8 @@ Claude will:
 Every document has a unique ID:
 
 - **CTX-NNN-slug**: Context level (e.g., `CTX-001-system-overview`)
-- **CON-NNN-slug**: Container level (e.g., `CON-001-backend`)
-- **COM-NNN-slug**: Component level (e.g., `COM-001-db-pool`)
+- **C3-<C>-slug**: Container level (e.g., `C3-1-backend`; two digits only if you exceed nine containers)
+- **C3-<C><NN>-slug**: Component level (e.g., `C3-101-db-pool`; `NN` zero-padded per container, use three digits if >99 components)
 - **ADR-NNN-slug**: Architecture decisions (e.g., `ADR-001-rest-api`)
 
 ### Simplified Frontmatter
@@ -104,7 +104,7 @@ Focus on summaries:
 
 ```yaml
 ---
-id: COM-001-db-pool
+id: C3-101-db-pool
 title: Database Connection Pool Component
 summary: >
   Explains PostgreSQL connection pooling strategy, configuration, and

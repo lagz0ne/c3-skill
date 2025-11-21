@@ -26,6 +26,19 @@ Also called by c3-adopt to CREATE initial Container documentation.
 
 ---
 
+## Two Container Types
+
+Containers come in two types with different documentation focus:
+
+| Type | Has Components? | Documentation Focus |
+|------|-----------------|---------------------|
+| **Code Container** | Yes | Tech stack, component inventory, how protocols are implemented |
+| **Infrastructure Container** | No (leaf node) | Engine, config, features provided to code containers |
+
+**Infrastructure containers are LEAF NODES** - no component level beneath them. Their features become inputs to code container components.
+
+---
+
 ## What Belongs at Container Level
 
 ### Inclusion Criteria
@@ -36,8 +49,11 @@ Also called by c3-adopt to CREATE initial Container documentation.
 |---------|--------------|---------|
 | Technology stack | Container-specific choices | Node.js 20, Express 4.18 |
 | Container responsibilities | What this container does | "Handles API requests" |
-| Middleware pipeline | Request processing flow | Auth → RateLimit → Handler |
-| Component inventory | WHAT components exist | "DB Pool, Auth Middleware, Services" |
+| Component relationships | How components connect (flowchart) | Entry → Auth → Business → DB |
+| Data flow | How data moves through (sequence diagram) | Request → Validate → Process → Store |
+| Component inventory | WHAT components exist (links to Component docs) | [COM-001], [COM-002] |
+| Container cross-cutting | Logging, error handling within container | [COM-006-logger], [COM-007-error-handler] |
+| Protocol implementations | How this container implements Context protocols | [COM-001#rest-endpoints] |
 | API surface | Endpoints exposed | `POST /api/v1/tasks` |
 | Data ownership | What data this owns | "User accounts, Tasks" |
 | Inter-container communication | How it talks to siblings | "REST to Backend, SQL to DB" |
@@ -115,39 +131,51 @@ Show layers and component groups:
 
 ## Diagrams for Container Level
 
-### Primary: Internal Layer Diagram
+### Primary: Component Relationships Flowchart
 
-**Purpose:** Show internal structure and component organization.
+**Purpose:** Show how components connect to each other within the container.
 
 ```mermaid
-graph TD
-    subgraph "API Layer"
-        R[Routes]
-        M[Middleware]
-    end
+flowchart LR
+    Entry[REST Routes] --> Auth[Auth Middleware]
+    Auth --> Business[Order Flow]
+    Business --> DB[DB Pool]
+    DB --> External[Postgres]
 
-    subgraph "Business Layer"
-        S[Services]
-        V[Validators]
-    end
-
-    subgraph "Data Layer"
-        RP[Repositories]
-        P[DB Pool]
-    end
-
-    M --> R
-    R --> S
-    S --> V
-    S --> RP
-    RP --> P
+    Auth -.-> Log[Logger]
+    Business -.-> Log
+    DB -.-> Log
 ```
 
-**When to use:** Always include to show component organization.
+**When to use:** Always include to show component organization and dependencies.
 
-### Secondary: Middleware Pipeline Diagram
+### Secondary: Data Flow Sequence Diagram
 
-**Purpose:** Show request processing flow.
+**Purpose:** Show how data moves through the container during a request.
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Routes
+    participant Auth
+    participant OrderFlow
+    participant DBPool
+
+    Client->>Routes: POST /orders
+    Routes->>Auth: validate token
+    Auth-->>Routes: user context
+    Routes->>OrderFlow: createOrder(user, data)
+    OrderFlow->>DBPool: insert
+    DBPool-->>OrderFlow: order
+    OrderFlow-->>Routes: result
+    Routes-->>Client: 201 Created
+```
+
+**When to use:** Always include to show data transformation and request lifecycle.
+
+### Tertiary: Middleware Pipeline Diagram
+
+**Purpose:** Show request processing flow through middleware.
 
 ```mermaid
 graph LR
@@ -160,41 +188,7 @@ graph LR
     G --> H[Response]
 ```
 
-**When to use:** When container has middleware/pipeline.
-
-### Tertiary: Communication Diagram
-
-**Purpose:** Show how this container communicates with others.
-
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant B as This Container
-    participant D as Database
-    participant E as External
-
-    C->>B: Request
-    B->>D: Query
-    D-->>B: Data
-    B->>E: Notify
-    B-->>C: Response
-```
-
-**When to use:** When documenting inter-container communication patterns.
-
-### Quaternary: Data Flow Diagram
-
-**Purpose:** Show how data moves through the container.
-
-```mermaid
-flowchart LR
-    Input[Request] --> Validate[Validation]
-    Validate --> Process[Business Logic]
-    Process --> Store[Data Layer]
-    Store --> Output[Response]
-```
-
-**When to use:** When data transformation is important.
+**When to use:** When container has significant middleware/pipeline.
 
 ### Avoid at Container Level
 
@@ -315,70 +309,149 @@ After exploring Container level, report:
 
 ## Document Template Reference
 
-Container documents follow this structure:
+### Code Container Template
+
+Code containers have components and use **downward linking**:
 
 ```markdown
 ---
 id: CON-NNN-slug
-title: [Container Name] Container
+title: [Container Name] Container (Code)
 summary: >
   [Why read this document - what it covers]
 ---
 
-# [CON-NNN-slug] [Container Name] Container
-
-::: info Context
-This container is part of [CTX-001: System Overview](../CTX-001-system-overview.md).
-:::
+# [CON-NNN-slug] [Container Name] Container (Code)
 
 ## Overview {#con-nnn-overview}
 <!--
 High-level description of container purpose and responsibilities.
 -->
 
-## Technology Stack {#con-nnn-technology-stack}
-<!--
-Lists languages, frameworks, and key libraries used. Read to understand
-the technical foundation.
--->
+## Technology Stack {#con-nnn-stack}
+- Runtime: Node.js 20
+- Framework: Express 4.18
+- Language: TypeScript 5.x
 
-## Middleware Pipeline {#con-nnn-middleware}
+## Component Relationships {#con-nnn-relationships}
 <!--
-Describes the request processing pipeline. Read this to understand how
-requests flow through this container.
+Flowchart showing how components connect.
 -->
+```mermaid
+flowchart LR
+    Entry[REST Routes] --> Auth[Auth Middleware]
+    Auth --> Business[Order Flow]
+    Business --> DB[DB Pool]
+    DB --> External[Postgres]
 
-## Component Organization {#con-nnn-components}
-<!--
-Shows how components are structured inside the container.
--->
+    Auth -.-> Log[Logger]
+    Business -.-> Log
+    DB -.-> Log
+```
 
-## API Endpoints {#con-nnn-api-endpoints}
+## Data Flow {#con-nnn-data-flow}
 <!--
-Documents the main API endpoints exposed by this container.
+Sequence diagram showing how data moves through container.
 -->
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Routes
+    participant Auth
+    participant OrderFlow
+    participant DBPool
 
-## Communication Patterns {#con-nnn-communication}
-<!--
-Explains how this container talks to other containers.
--->
+    Client->>Routes: POST /orders
+    Routes->>Auth: validate token
+    Auth-->>Routes: user context
+    Routes->>OrderFlow: createOrder(user, data)
+    OrderFlow->>DBPool: insert
+    DBPool-->>OrderFlow: order
+    OrderFlow-->>Routes: result
+    Routes-->>Client: 201 Created
+```
 
-## Data Responsibilities {#con-nnn-data}
-<!--
-What data this container owns and manages.
--->
+## Container Cross-Cutting {#con-nnn-cross-cutting}
 
-## Configuration {#con-nnn-configuration}
-<!--
-Environment-based configuration for this container.
--->
+### Logging {#con-nnn-logging}
+- Structured JSON, correlation IDs passed through
+- Implemented by: [COM-006-logger](./components/CON-NNN/COM-006-logger.md)
 
-## Deployment {#con-nnn-deployment}
+### Error Handling {#con-nnn-error-handling}
+- Unified error format, error codes catalog
+- Implemented by: [COM-007-error-handler](./components/CON-NNN/COM-007-error-handler.md)
+
+## Components {#con-nnn-components}
 <!--
-Container-specific deployment characteristics.
+Links DOWN to Component docs. Reader follows links to dive deeper.
 -->
+| Component | Nature | Responsibility |
+|-----------|--------|----------------|
+| [COM-001-rest-routes](./components/CON-NNN/COM-001-rest-routes.md) | Entrypoint | HTTP handling |
+| [COM-002-auth-middleware](./components/CON-NNN/COM-002-auth-middleware.md) | Cross-cutting | Token validation |
+| [COM-003-db-pool](./components/CON-NNN/COM-003-db-pool.md) | Resource | Connection management |
+| [COM-004-order-flow](./components/CON-NNN/COM-004-order-flow.md) | Business | Order processing |
 
 ## Related {#con-nnn-related}
 ```
+
+### Code Container Checklist (must be true to call CON done)
+
+- [ ] Technology stack recorded
+- [ ] Protocol implementations table maps every CTX protocol to specific components/sections
+- [ ] Flowchart shows component relationships (must exist)
+- [ ] Sequence diagram shows data flow (must exist)
+- [ ] Cross-cutting choices mapped to implementing components
+- [ ] Component inventory complete with Nature + Responsibility
+- [ ] All anchors use `{#con-xxx-*}` format for stable linking
+
+### Infrastructure Container Template
+
+Infrastructure containers are **LEAF NODES** - no components, focus on features provided:
+
+```markdown
+---
+id: CON-NNN-slug
+title: [Infrastructure Name] Container (Infrastructure)
+summary: >
+  [Why read this document - what it covers]
+---
+
+# [CON-NNN-slug] [Infrastructure Name] Container (Infrastructure)
+
+## Engine {#con-nnn-engine}
+PostgreSQL 15
+
+## Configuration {#con-nnn-config}
+| Setting | Value | Why |
+|---------|-------|-----|
+| max_connections | 100 | Support pooling from backend |
+| wal_level | logical | Enable event streaming |
+
+## Features Provided {#con-nnn-features}
+<!--
+Features that code containers consume. No downward links - this is a leaf node.
+-->
+| Feature | Used By |
+|---------|---------|
+| WAL logical replication | [CON-001-backend] → [COM-005-event-streaming] |
+| LISTEN/NOTIFY | [CON-001-backend] → [COM-003-db-pool] |
+```
+
+### Infrastructure Container Checklist (must be true to call CON done)
+
+- [ ] Engine/version stated
+- [ ] Configuration table with settings and rationale
+- [ ] Features table lists capabilities with links to consuming code containers/components
+- [ ] No component-level sections (this is a leaf node)
+- [ ] All anchors use `{#con-xxx-*}` format for stable linking
+
+### Reference Direction Principle
+
+**References only flow DOWN** from Container to Component:
+
+- Container defines components → links to Component docs
+- Container defines cross-cutting → links to Component docs implementing them
+- **No upward links needed** - reader already came from Context
 
 Use these heading IDs for precise exploration.

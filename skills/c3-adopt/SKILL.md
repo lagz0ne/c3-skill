@@ -23,6 +23,14 @@ Bootstrap C3 (Context-Container-Component) architecture documentation for an exi
 | **4. Component Identification** | Identify key components | COM stubs |
 | **5. Generate & Verify** | Delegate to sub-skills, build TOC | Complete documentation |
 
+## Derivation Guardrails (apply everywhere)
+
+- **Reading order:** Context → Container → Component
+- **Downward-only links:** CTX → CON sections; CON → COM docs. No upward links.
+- **Infra containers are leaf nodes:** No components; their features must be cited by consuming components.
+- **Anchors:** Use `{#ctx-xxx-*}`, `{#con-xxx-*}`, `{#com-xxx-*}` for stable links.
+- **Templates/checklists:** Use templates from c3-context-design, c3-container-design, c3-component-design and complete all checklist items.
+
 ---
 
 ## Phase 1: Establish

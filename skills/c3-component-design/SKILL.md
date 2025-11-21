@@ -25,7 +25,26 @@ Also called by c3-adopt to CREATE initial Component documentation.
 
 ---
 
+## Component Nature Types (Open-Ended)
+
+Nature type determines documentation focus. **Not a fixed taxonomy** - use whatever helps code quality.
+
+| Nature Type | Documentation Focus |
+|-------------|---------------------|
+| **Resource/Integration** | Configuration, env differences, how/why config loaded |
+| **Business Logic** | Domain flows, rules, edge cases, the "messy" heart |
+| **Framework/Entrypoint** | Mixed concerns - auth, errors, signals, protocol handoff, lifecycle |
+| **Cross-cutting** | Integration patterns, how it's used everywhere, conventions |
+| **Build/Deployment** | Build pipeline, deploy config, CI/CD specifics |
+| **Testing** | Test strategies, fixtures, mocking approaches |
+| **Contextual** | Situation-specific behavior (caching, websocket, etc.) |
+| ... | Whatever the component needs |
+
+---
+
 ## What Belongs at Component Level
+
+Component contains **what Container doesn't enforce** - the implementation details.
 
 ### Inclusion Criteria
 
@@ -33,13 +52,12 @@ Also called by c3-adopt to CREATE initial Component documentation.
 
 | Element | Why Component | Example |
 |---------|--------------|---------|
-| Implementation details | HOW it works | Connection pooling algorithm |
-| Libraries & versions | Specific dependencies | `pg: 8.11.x` |
-| Configuration values | Actual env vars | `DB_POOL_MAX=50` |
-| Code examples | Usage patterns | TypeScript snippets |
-| Error handling | Specific strategies | Retry with backoff |
-| Interfaces/Types | Data structures | `interface Task { ... }` |
-| Algorithms | Logic specifics | Token validation steps |
+| Stack details | Which library, why chosen, exact configuration | `pg: 8.11.x` - why over alternatives |
+| Environment config | Env vars, defaults, dev vs prod differences | `DB_POOL_MAX=50` (dev: 10, prod: 50) |
+| Implementation patterns | Conventions, algorithms, code patterns | Connection pooling algorithm |
+| Interfaces/Types | Method signatures, data structures, DTOs | `interface Task { ... }` |
+| Error handling | Specific error codes, retry strategies | Retry with backoff, error catalog |
+| Usage examples | Code snippets showing how to use it | TypeScript snippets |
 | Performance tuning | Specific optimizations | Pool sizing formula |
 | Health checks | Implementation | `SELECT 1` ping |
 | Testing approach | How to test | Mock strategies |
@@ -124,9 +142,30 @@ interface TaskService {
 
 ## Diagrams for Component Level
 
-### Primary: Sequence Diagram (with code)
+Use common UML techniques **where they help explain**. Choice is contextual based on what needs explaining.
 
-**Purpose:** Show method calls and data flow in detail.
+### Flowchart - Decision Logic
+
+**When to use:** Algorithm logic, processing steps, decision trees.
+
+```mermaid
+flowchart TD
+    A[Receive Token] --> B{Token in header?}
+    B -->|Yes| C[Extract from header]
+    B -->|No| D{Token in cookie?}
+    D -->|Yes| E[Extract from cookie]
+    D -->|No| F[Return 401]
+    C --> G[Validate signature]
+    E --> G
+    G --> H{Valid?}
+    H -->|Yes| I[Inject user context]
+    H -->|No| F
+    I --> J[Continue]
+```
+
+### Sequence Diagram - Component Interactions
+
+**When to use:** Method calls, request flow, component collaboration.
 
 ```mermaid
 sequenceDiagram
@@ -145,74 +184,39 @@ sequenceDiagram
     S-->>R: Task
 ```
 
-**When to use:** When documenting component interactions and flow.
+### State Chart - Lifecycle/Transitions
 
-### Secondary: State Diagram
-
-**Purpose:** Show component state transitions.
+**When to use:** Component lifecycle, connection states, state machines.
 
 ```mermaid
 stateDiagram-v2
     [*] --> Idle
-    Idle --> Connecting: getConnection()
-    Connecting --> Connected: success
-    Connecting --> Retrying: transient error
-    Retrying --> Connecting: retry
-    Retrying --> Failed: max retries
-    Connected --> Idle: release()
-    Failed --> [*]
+    Idle --> Acquiring: getConnection()
+    Acquiring --> Active: success
+    Acquiring --> Waiting: pool exhausted
+    Waiting --> Acquiring: connection released
+    Waiting --> Error: timeout
+    Active --> Idle: release()
+    Error --> [*]
 ```
 
-**When to use:** When component has state machine behavior.
+### ERD - Data Relationships
 
-### Tertiary: Class/Interface Diagram
+**When to use:** Specific table columns, data structures, relationships.
 
-**Purpose:** Show type relationships and interfaces.
+### Class Diagram - Type Relationships
 
-```mermaid
-classDiagram
-    class TaskService {
-        +create(userId, data) Task
-        +update(taskId, data) Task
-        +delete(taskId) void
-    }
-    class TaskRepository {
-        +insert(task) string
-        +findById(id) Task
-        +delete(id) void
-    }
-    class Task {
-        +id: string
-        +title: string
-        +status: string
-    }
-    TaskService --> TaskRepository
-    TaskService --> Task
-    TaskRepository --> Task
-```
+**When to use:** Complex type hierarchies, interface contracts.
 
-**When to use:** When documenting complex type relationships.
+### Diagram Selection Guide
 
-### Quaternary: Flowchart (with logic)
-
-**Purpose:** Show algorithm or decision logic.
-
-```mermaid
-flowchart TD
-    A[Receive Token] --> B{Token in header?}
-    B -->|Yes| C[Extract from header]
-    B -->|No| D{Token in cookie?}
-    D -->|Yes| E[Extract from cookie]
-    D -->|No| F[Return 401]
-    C --> G[Validate signature]
-    E --> G
-    G --> H{Valid?}
-    H -->|Yes| I[Inject user context]
-    H -->|No| F
-    I --> J[Continue]
-```
-
-**When to use:** When documenting decision logic or algorithms.
+| What to Explain | Diagram Type |
+|-----------------|--------------|
+| Decision logic, algorithms | Flowchart |
+| Method calls, request flow | Sequence diagram |
+| Lifecycle, state transitions | State chart |
+| Data structures, tables | ERD |
+| Type relationships | Class diagram |
 
 ### Avoid at Component Level
 
@@ -221,17 +225,6 @@ flowchart TD
 | System context | Too high level | Context |
 | Container overview | Too high level | Container |
 | Deployment diagrams | Infrastructure | Context/Container |
-| ER diagrams (high level) | Schema overview | Container |
-
-### Appropriate at Component Level
-
-| Diagram Type | Use Case |
-|--------------|----------|
-| Detailed sequence | Method calls with params |
-| State machine | Component lifecycle |
-| Class diagram | Type relationships |
-| Flowchart | Algorithm logic |
-| ER diagram (detailed) | Specific table columns |
 
 ---
 
@@ -360,7 +353,9 @@ If change belongs higher, report this to c3-design for hypothesis revision.
 
 ## Document Template Reference
 
-Component documents follow this structure:
+Component documents focus on **what Container doesn't enforce**. Structure varies by nature type.
+
+### Example: Resource Nature (DB Pool)
 
 ```markdown
 ---
@@ -368,60 +363,101 @@ id: COM-NNN-slug
 title: [Component Name] Component
 summary: >
   [Why read this document - what it covers]
+nature: Resource
 ---
 
-# [COM-NNN-slug] [Component Name] Component
+# [COM-NNN-slug] [Component Name] (Resource Nature)
 
-::: info Container
-Belongs to [CON-XXX: Container Name](../../containers/CON-XXX-slug.md)
-:::
+## Overview
+Connection pooling for PostgreSQL
 
-## Overview {#com-nnn-overview}
-<!--
-What this component does and why it exists.
--->
+## Stack {#com-nnn-stack}
+- Library: `pg` 8.11.x
+- Why: Native driver, proven stability, supports LISTEN/NOTIFY
 
-## Purpose {#com-nnn-purpose}
-<!--
-Specific responsibilities and goals.
--->
+## Configuration {#com-nnn-config}
+| Env Var | Dev | Prod | Why |
+|---------|-----|------|-----|
+| DB_POOL_MIN | 2 | 10 | Baseline connections |
+| DB_POOL_MAX | 10 | 50 | Scale with load |
+| DB_IDLE_TIMEOUT | 30s | 10s | Release faster in prod |
 
-## Technical Implementation {#com-nnn-implementation}
-<!--
-How it's built - libraries, patterns, architecture.
--->
+## Behavior {#com-nnn-behavior}
 
-## Configuration {#com-nnn-configuration}
-<!--
-Environment variables and configuration options.
--->
-
-## [Behavior Section] {#com-nnn-behavior}
-<!--
-Component-specific behavior (e.g., Pool Behavior, Token Validation).
--->
-
-## Error Handling {#com-nnn-error-handling}
-<!--
-How errors are handled, retry strategy, error types.
--->
-
-## Performance {#com-nnn-performance}
-<!--
-Performance characteristics, optimizations, metrics.
--->
-
-## Health Checks {#com-nnn-health-checks}
-<!--
-Health check implementation and monitoring.
--->
-
-## Usage Example {#com-nnn-usage}
-<!--
-How to use this component in application code.
--->
-
-## Related {#com-nnn-related}
+```mermaid
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> Acquiring: getConnection()
+    Acquiring --> Active: success
+    Acquiring --> Waiting: pool exhausted
+    Waiting --> Acquiring: connection released
+    Waiting --> Error: timeout
+    Active --> Idle: release()
+    Error --> [*]
 ```
+
+## Error Handling {#com-nnn-errors}
+| Error | Retriable | Action |
+|-------|-----------|--------|
+| Connection refused | Yes | Retry with backoff |
+| Pool exhausted | Yes | Wait up to 5s |
+| Query timeout | No | Propagate to caller |
+
+## Usage {#com-nnn-usage}
+```typescript
+const pool = createPool(config);
+const result = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+```
+```
+
+### Example: Business Logic Nature
+
+```markdown
+---
+id: COM-NNN-slug
+title: Order Flow Component
+nature: Business Logic
+---
+
+# [COM-NNN-slug] Order Flow (Business Logic Nature)
+
+## Overview
+Core order processing - the "messy" heart of order handling.
+
+## Domain Rules {#com-nnn-rules}
+| Rule | Condition | Action |
+|------|-----------|--------|
+| Stock check | Before confirm | Validate inventory |
+| Price lock | On add to cart | Lock price for 15min |
+| Tax calculation | At checkout | Apply regional rules |
+
+## Edge Cases {#com-nnn-edge-cases}
+- Partial fulfillment when stock insufficient
+- Price change during checkout flow
+- Concurrent modifications to same order
+
+## Flow {#com-nnn-flow}
+[Flowchart or sequence diagram as appropriate]
+
+## Dependencies {#com-nnn-deps}
+- Upstream: [components this depends on]
+- Downstream: [components that depend on this]
+- Infra features consumed: [CON-xxx#features]
+```
+
+### Component Checklist (must be true to call COM done)
+
+- [ ] Nature chosen and documented (resource, business, cross-cutting, entrypoint, etc.)
+- [ ] Stack and configuration fully documented (with dev/prod differences)
+- [ ] Interfaces/types specified
+- [ ] Behavior explained with at least one diagram if non-trivial
+- [ ] Error handling table present
+- [ ] Usage example shows intended invocation
+- [ ] Dependencies section lists upstream/downstream components and consumed infra features
+- [ ] All anchors use `{#com-xxx-*}` format for stable linking
+
+### Key Principle
+
+Component documentation is **terminal** - no further derivation. Include everything needed to understand and implement.
 
 Use these heading IDs for precise exploration.

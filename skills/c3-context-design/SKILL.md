@@ -35,7 +35,7 @@ Also called by c3-adopt to CREATE initial Context documentation.
 |---------|-------------|---------|
 | System boundary | Defines inside vs outside | "TaskFlow system includes..." |
 | Actors | Who/what interacts with system | Users, Admin, External APIs |
-| Container inventory | WHAT containers exist (not HOW) | "Backend API, Frontend, Database" |
+| Container inventory | WHAT containers exist (links to Container docs) | "Backend API, Frontend, Database" → [CON-001], [CON-002] |
 | Protocols between containers | Communication contracts | REST, gRPC, WebSocket |
 | Cross-cutting concerns | Span multiple containers | Auth strategy, logging approach |
 | Deployment topology | High-level infrastructure | Cloud, multi-region, CDN |
@@ -73,14 +73,32 @@ Ask: "Would changing this require coordinating multiple containers or external p
 ### Relationship Table Format
 
 ```markdown
-## Container Relationships
-
-| From | To | Protocol | Purpose |
-|------|-----|----------|---------|
-| Frontend | Backend | REST/HTTPS | API calls |
-| Backend | Database | PostgreSQL | Data persistence |
-| Backend | Email Service | SMTP | Notifications |
+## Protocols {#ctx-001-protocols}
+| From | To | Protocol | Implementations |
+|------|-----|----------|--------------------|
+| Frontend | Backend | REST/HTTPS | [CON-002#api-calls], [CON-001#rest-endpoints] |
+| Backend | Postgres | SQL | [CON-001#db-access], [CON-003#config] |
+| Backend | Email Service | SMTP | [CON-001#email-integration] |
 ```
+
+**Key change:** Protocols table links DOWN to Container#sections that implement each side.
+
+### Cross-Cutting Table Format
+
+```markdown
+## Cross-Cutting Concerns {#ctx-001-cross-cutting}
+
+### Authentication
+JWT-based, implemented in: [CON-001#auth-middleware], [CON-002#auth-handling]
+
+### Logging
+Structured JSON with correlation IDs, implemented in: [CON-001#logging], [CON-002#logging]
+
+### Error Handling
+Unified error codes catalog, implemented in: [CON-001#error-handling], [CON-002#error-handling]
+```
+
+**Key change:** Cross-cutting concerns link DOWN to Container#sections implementing them.
 
 ### DO NOT Express at Context
 
@@ -267,7 +285,7 @@ After exploring Context level, report:
 
 ## Document Template Reference
 
-Context documents follow this structure:
+Context documents follow this structure with **downward linking**:
 
 ```markdown
 ---
@@ -293,21 +311,32 @@ and their relationships. Read to understand how pieces fit together.
 
 ## Containers {#ctx-nnn-containers}
 <!--
-Lists all containers with brief descriptions and links. Read to navigate
-to specific container details.
+Lists all containers with links DOWN to their docs. Reader follows links to dive deeper.
 -->
+| Container | Type | Description |
+|-----------|------|-------------|
+| [CON-001-backend](./containers/CON-001-backend.md) | Code | REST API |
+| [CON-002-frontend](./containers/CON-002-frontend.md) | Code | Web UI |
+| [CON-003-postgres](./containers/CON-003-postgres.md) | Infrastructure | Data store |
 
-## Protocols & Communication {#ctx-nnn-protocols}
+## Protocols {#ctx-nnn-protocols}
 <!--
-Explains communication protocols used across the system and why chosen.
-Read to understand integration patterns.
+Communication protocols with links DOWN to Container#sections implementing each side.
 -->
+| From | To | Protocol | Implementations |
+|------|-----|----------|--------------------|
+| Frontend | Backend | REST/HTTPS | [CON-002#api-calls], [CON-001#rest-endpoints] |
+| Backend | Postgres | SQL | [CON-001#db-access], [CON-003#config] |
 
 ## Cross-Cutting Concerns {#ctx-nnn-cross-cutting}
 <!--
-Describes concerns that span multiple containers like authentication,
-logging, and monitoring. Read to understand system-wide patterns.
+System-wide concerns with links DOWN to Container#sections implementing them.
 -->
+### Authentication
+JWT-based, implemented in: [CON-001#auth-middleware], [CON-002#auth-handling]
+
+### Logging
+Structured JSON with correlation IDs, implemented in: [CON-001#logging], [CON-002#logging]
 
 ## Deployment {#ctx-nnn-deployment}
 <!--
@@ -317,5 +346,27 @@ infrastructure patterns. Read to understand operational context.
 
 ## Related {#ctx-nnn-related}
 ```
+
+### Checklist (must be true to call CTX done)
+
+- [ ] System boundary and actors listed
+- [ ] Container inventory table includes every container with Type (Code/Infra) and link
+- [ ] Protocols table lists every inter-container communication with links to implementing Container#sections
+- [ ] Cross-cutting decisions listed with downward links to Container#sections
+- [ ] Deployment topology described (diagram or text)
+- [ ] All anchors use `{#ctx-xxx-*}` format for stable linking
+
+### Reference Direction Principle
+
+**References only flow DOWN** - higher layer links to lower layer implementations.
+
+- Context defines protocols → links to Container#sections implementing them
+- Context defines containers → links to Container docs
+- **No upward links needed** - reader already came from above
+
+This creates:
+- Single source of truth (no duplicate relationship definitions)
+- Natural reading flow follows derivation
+- Maintenance only at one location
 
 Use these heading IDs for precise exploration.

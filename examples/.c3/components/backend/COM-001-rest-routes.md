@@ -1,4 +1,11 @@
-# COM-001 REST Routes (Entrypoint)
+---
+id: COM-001-rest-routes
+title: REST Routes (Entrypoint)
+summary: >
+  HTTP entrypoint that validates auth, routes requests, and delegates persistence to the DB pool.
+---
+
+# [COM-001-rest-routes] REST Routes (Entrypoint)
 
 ## Overview {#com-001-overview}
 - Entry point for HTTP requests; handles routing and hands off auth + persistence.

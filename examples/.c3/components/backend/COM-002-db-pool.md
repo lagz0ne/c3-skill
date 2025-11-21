@@ -1,4 +1,11 @@
-# COM-002 DB Pool (Resource)
+---
+id: COM-002-db-pool
+title: DB Pool (Resource)
+summary: >
+  PostgreSQL connection pooling for the backend. Owns stack/config, retry behavior, and surfaces errors to routes.
+---
+
+# [COM-002-db-pool] DB Pool (Resource)
 
 ## Overview {#com-002-overview}
 - Manages pooled PostgreSQL connections for the backend container.
@@ -15,6 +22,28 @@
 | DB_POOL_MIN | 2 | 10 | Baseline connections |
 | DB_POOL_MAX | 10 | 50 | Handle higher load |
 | DB_IDLE_TIMEOUT | 30s | 10s | Release idle connections |
+| DB_CONNECTION_TIMEOUT | 5s | 10s | Tolerate slower prod networks |
+
+### Config Loading {#com-002-config-loading}
+```typescript
+import { z } from 'zod';
+
+const schema = z.object({
+  url: z.string().url(),
+  min: z.coerce.number().default(2),
+  max: z.coerce.number().default(10),
+  idleTimeoutMillis: z.coerce.number().default(30000),
+  connectionTimeoutMillis: z.coerce.number().default(5000),
+});
+
+export const dbConfig = schema.parse({
+  url: process.env.DB_URL,
+  min: process.env.DB_POOL_MIN,
+  max: process.env.DB_POOL_MAX,
+  idleTimeoutMillis: process.env.DB_IDLE_TIMEOUT,
+  connectionTimeoutMillis: process.env.DB_CONNECTION_TIMEOUT,
+});
+```
 
 ## Interfaces & Types {#com-002-interfaces}
 - `query<T>(text: string, params?: any[]): Promise<QueryResult<T>>`
@@ -44,10 +73,10 @@ stateDiagram-v2
 
 ## Usage {#com-002-usage}
 ```typescript
-const pool = createPool(env);
+const pool = createPool(dbConfig);
 const result = await pool.query('SELECT * FROM tasks WHERE id = $1', [taskId]);
 ```
 
 ## Dependencies {#com-002-deps}
-- Consumes features from [CON-002-postgres#con-002-features](../../containers/CON-002-postgres.md#con-002-features)
+- Consumes features from [CON-003-postgres#con-003-features](../../containers/CON-003-postgres.md#con-003-features)
 - Used by [COM-001-rest-routes#com-001-behavior](./COM-001-rest-routes.md#com-001-behavior)

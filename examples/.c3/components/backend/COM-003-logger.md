@@ -1,4 +1,11 @@
-# COM-003 Logger (Cross-cutting)
+---
+id: COM-003-logger
+title: Logger (Cross-cutting)
+summary: >
+  Structured JSON logging with correlation IDs and HTTP error normalization for the backend container.
+---
+
+# [COM-003-logger] Logger (Cross-cutting)
 
 ## Overview {#com-003-overview}
 - Provides structured JSON logging with correlation IDs across container components.

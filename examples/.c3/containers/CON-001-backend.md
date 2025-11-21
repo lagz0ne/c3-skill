@@ -1,4 +1,11 @@
-# CON-001 Backend API (Code)
+---
+id: CON-001-backend
+title: Backend Container (Code)
+summary: >
+  REST API for TaskFlow. Implements CTX protocols to Postgres and handles auth/logging/error cross-cutting.
+---
+
+# [CON-001-backend] Backend Container (Code)
 
 ## Technology Stack {#con-001-stack}
 - Runtime: Node.js 20
@@ -48,3 +55,7 @@ sequenceDiagram
 | [COM-001-rest-routes](../components/backend/COM-001-rest-routes.md) | Entrypoint | HTTP routing and auth handoff |
 | [COM-002-db-pool](../components/backend/COM-002-db-pool.md) | Resource | Connection pooling and queries |
 | [COM-003-logger](../components/backend/COM-003-logger.md) | Cross-cutting | Request logging and error formatting |
+
+## Related {#con-001-related}
+- [CTX-001: System Overview](../CTX-001-system-overview.md)
+- Downstream infra: [CON-003-postgres](./CON-003-postgres.md)

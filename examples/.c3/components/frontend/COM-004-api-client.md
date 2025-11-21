@@ -23,6 +23,18 @@ Centralized HTTP client for all backend API calls. Wraps fetch with auth handlin
 |---------|-----|------|-----|
 | VITE_API_URL | `http://localhost:3000` | `/api` | Backend URL |
 | VITE_API_TIMEOUT | `10000` | `30000` | Request timeout ms |
+| VITE_RETRY_COUNT | `3` | `3` | Max retries for retriable errors |
+
+### Config Loading {#com-004-config-loading}
+
+```typescript
+// Vite exposes env vars on import.meta.env
+const apiConfig = {
+  baseUrl: import.meta.env.VITE_API_URL || '/api',
+  timeout: Number(import.meta.env.VITE_API_TIMEOUT) || 30000,
+  retryCount: Number(import.meta.env.VITE_RETRY_COUNT) || 3,
+};
+```
 
 ## Interfaces & Types {#com-004-interfaces}
 
@@ -82,6 +94,22 @@ const newTask = await apiClient.post<Task>('/tasks', {
   title: 'New task',
 });
 ```
+
+## Health Checks {#com-004-health}
+
+| Check | Probe | Expectation |
+|-------|-------|-------------|
+| Backend reachable | `GET /health` | 200 OK |
+| Config valid | Check baseUrl non-empty | Non-empty string |
+
+## Metrics & Observability {#com-004-metrics}
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `api_requests_total` | Counter | Requests by method |
+| `api_errors_total` | Counter | Errors by status code |
+| `api_latency_ms` | Histogram | Request duration |
+| `api_retries_total` | Counter | Retry attempts |
 
 ## Dependencies {#com-004-deps}
 

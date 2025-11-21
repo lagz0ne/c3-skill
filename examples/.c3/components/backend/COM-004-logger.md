@@ -23,6 +23,25 @@ Provides structured JSON logging with correlation ID propagation for distributed
 |---------|-----|------|-----|
 | LOG_LEVEL | `debug` | `info` | Verbosity control |
 | LOG_PRETTY | `true` | `false` | Human-readable in dev |
+| SERVICE_NAME | `backend-dev` | `backend` | Service identifier in logs |
+
+### Config Loading {#com-004-config-loading}
+
+```typescript
+import { z } from 'zod';
+
+const logConfigSchema = z.object({
+  level: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+  pretty: z.coerce.boolean().default(false),
+  serviceName: z.string().default('backend'),
+});
+
+export const logConfig = logConfigSchema.parse({
+  level: process.env.LOG_LEVEL,
+  pretty: process.env.LOG_PRETTY,
+  serviceName: process.env.SERVICE_NAME,
+});
+```
 
 ## Interfaces & Types {#com-004-interfaces}
 
@@ -71,6 +90,20 @@ app.use((req, res, next) => {
 // In handler
 req.logger.info('Task created', { taskId: task.id });
 ```
+
+## Health Checks {#com-004-health}
+
+| Check | Probe | Expectation |
+|-------|-------|-------------|
+| Logger initialized | Check logger instance | Non-null |
+| Output writable | Test log to stdout | No throw |
+
+## Metrics & Observability {#com-004-metrics}
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `logs_total` | Counter | Logs emitted by level |
+| `log_errors_total` | Counter | Log write failures |
 
 ## Dependencies {#com-004-deps}
 

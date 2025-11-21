@@ -22,6 +22,23 @@ Express error middleware that catches all errors and formats them into consisten
 | Env Var | Dev | Prod | Why |
 |---------|-----|------|-----|
 | EXPOSE_STACK | `true` | `false` | Include stack trace in dev |
+| NODE_ENV | `development` | `production` | Environment detection |
+
+### Config Loading {#com-005-config-loading}
+
+```typescript
+import { z } from 'zod';
+
+const errorConfigSchema = z.object({
+  exposeStack: z.coerce.boolean().default(false),
+  nodeEnv: z.enum(['development', 'production', 'test']).default('production'),
+});
+
+export const errorConfig = errorConfigSchema.parse({
+  exposeStack: process.env.EXPOSE_STACK,
+  nodeEnv: process.env.NODE_ENV,
+});
+```
 
 ## Interfaces & Types {#com-005-interfaces}
 
@@ -76,6 +93,20 @@ app.use(errorHandler);
 // Throwing errors
 throw new AppError('Task not found', 'task_not_found', 404);
 ```
+
+## Health Checks {#com-005-health}
+
+| Check | Probe | Expectation |
+|-------|-------|-------------|
+| Middleware registered | Check app middleware stack | Handler present |
+
+## Metrics & Observability {#com-005-metrics}
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `errors_total` | Counter | Errors by code |
+| `errors_by_status` | Counter | Errors by HTTP status |
+| `unhandled_errors_total` | Counter | Non-operational errors |
 
 ## Dependencies {#com-005-deps}
 

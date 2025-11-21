@@ -24,6 +24,27 @@ Validates JWT tokens from Authorization header or cookies, injects user context 
 | JWT_SECRET | `dev-secret` | (from secret) | Token signing key |
 | JWT_ISSUER | `taskflow-dev` | `taskflow` | Token issuer validation |
 | JWT_AUDIENCE | `taskflow-api` | `taskflow-api` | Token audience validation |
+| JWT_EXPIRY | `1h` | `15m` | Shorter expiry in prod |
+
+### Config Loading {#com-002-config-loading}
+
+```typescript
+import { z } from 'zod';
+
+const authConfigSchema = z.object({
+  secret: z.string().min(32),
+  issuer: z.string().default('taskflow'),
+  audience: z.string().default('taskflow-api'),
+  expiryMs: z.coerce.number().default(3600000),
+});
+
+export const authConfig = authConfigSchema.parse({
+  secret: process.env.JWT_SECRET,
+  issuer: process.env.JWT_ISSUER,
+  audience: process.env.JWT_AUDIENCE,
+  expiryMs: parseDuration(process.env.JWT_EXPIRY || '1h'),
+});
+```
 
 ## Interfaces & Types {#com-002-interfaces}
 
@@ -83,8 +104,23 @@ app.get('/api/v1/tasks', (req, res) => {
 });
 ```
 
+## Health Checks {#com-002-health}
+
+| Check | Probe | Expectation |
+|-------|-------|-------------|
+| Key availability | Verify JWT_SECRET loaded | Non-empty secret |
+| Token validation | Validate sample token format | Parse without crash |
+
+## Metrics & Observability {#com-002-metrics}
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `auth_requests_total` | Counter | Total auth attempts |
+| `auth_failures_total` | Counter | Failed auth attempts by reason |
+| `auth_latency_ms` | Histogram | Token validation time |
+
 ## Dependencies {#com-002-deps}
 
 - **Upstream:** None
-- **Downstream:** Used by all protected routes in [COM-001-rest-routes](./COM-001-rest-routes.md)
+- **Downstream:** Used by all protected routes
 - **Infra features consumed:** None

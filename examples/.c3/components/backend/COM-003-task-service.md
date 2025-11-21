@@ -23,6 +23,25 @@ Handles task creation, retrieval, updates, and deletion with business rule enfor
 |---------|-----|------|-----|
 | MAX_TASKS_PER_USER | 100 | 1000 | Limit per user |
 | TASK_TITLE_MAX_LEN | 200 | 200 | Title length limit |
+| TASK_DESC_MAX_LEN | 2000 | 2000 | Description length limit |
+
+### Config Loading {#com-003-config-loading}
+
+```typescript
+import { z } from 'zod';
+
+const taskConfigSchema = z.object({
+  maxTasksPerUser: z.coerce.number().default(100),
+  titleMaxLen: z.coerce.number().default(200),
+  descMaxLen: z.coerce.number().default(2000),
+});
+
+export const taskConfig = taskConfigSchema.parse({
+  maxTasksPerUser: process.env.MAX_TASKS_PER_USER,
+  titleMaxLen: process.env.TASK_TITLE_MAX_LEN,
+  descMaxLen: process.env.TASK_DESC_MAX_LEN,
+});
+```
 
 ## Interfaces & Types {#com-003-interfaces}
 
@@ -87,6 +106,22 @@ const task = await taskService.create(userId, {
   dueDate: new Date('2024-12-31'),
 });
 ```
+
+## Health Checks {#com-003-health}
+
+| Check | Probe | Expectation |
+|-------|-------|-------------|
+| Config loaded | Verify limits are positive | maxTasksPerUser > 0 |
+| DB accessible | Delegate to db-pool health | Healthy |
+
+## Metrics & Observability {#com-003-metrics}
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `tasks_created_total` | Counter | Tasks created |
+| `tasks_by_status` | Gauge | Tasks per status |
+| `task_operation_latency_ms` | Histogram | CRUD operation time |
+| `task_limit_exceeded_total` | Counter | Limit rejections |
 
 ## Dependencies {#com-003-deps}
 

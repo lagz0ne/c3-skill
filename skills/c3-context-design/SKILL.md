@@ -12,7 +12,7 @@ Explore Context-level impact during the scoping phase of c3-design. Context is t
 **Abstraction Level:** WHAT exists and HOW they relate. No implementation details.
 
 **Announce at start:** "I'm using the c3-context-design skill to explore Context-level impact."
-**Naming:** Apply `c3-naming` (CTX/C3 IDs follow patterns; anchors `{#ctx-xxx-*}`).
+**Naming:** Apply `c3-naming` (CTX/C3 IDs follow patterns; anchors `{#ctx-*}`).
 
 ## When Invoked
 
@@ -74,7 +74,7 @@ Ask: "Would changing this require coordinating multiple containers or external p
 ### Relationship Table Format
 
 ```markdown
-## Protocols {#ctx-001-protocols}
+## Protocols {#ctx-protocols}
 | From | To | Protocol | Implementations |
 |------|-----|----------|--------------------|
 | Frontend | Backend | REST/HTTPS | [C3-2-frontend#api-calls], [C3-1-backend#rest-endpoints] |
@@ -87,7 +87,7 @@ Ask: "Would changing this require coordinating multiple containers or external p
 ### Cross-Cutting Table Format
 
 ```markdown
-## Cross-Cutting Concerns {#ctx-001-cross-cutting}
+## Cross-Cutting Concerns {#ctx-cross-cutting}
 
 ### Authentication
 JWT-based, implemented in: [C3-1-backend#auth-middleware], [C3-2-frontend#auth-handling]
@@ -259,12 +259,12 @@ When creating or validating Context documentation, ask:
 Use c3-locate to retrieve:
 
 ```
-c3-locate CTX-001                    # Overview
-c3-locate #ctx-001-architecture      # System diagram
-c3-locate #ctx-001-containers        # Container list
-c3-locate #ctx-001-protocols         # Communication patterns
-c3-locate #ctx-001-cross-cutting     # System-wide concerns
-c3-locate #ctx-001-deployment        # Deployment overview
+c3-locate CTX-system-overview        # Overview
+c3-locate #ctx-architecture          # System diagram
+c3-locate #ctx-containers            # Container list
+c3-locate #ctx-protocols             # Communication patterns
+c3-locate #ctx-cross-cutting         # System-wide concerns
+c3-locate #ctx-deployment            # Deployment overview
 ```
 
 ## Impact Signals
@@ -290,27 +290,27 @@ Context documents follow this structure with **downward linking**:
 
 ```markdown
 ---
-id: CTX-NNN-slug
+id: CTX-slug
 title: [System Name] System Architecture Overview
 summary: >
   [Why read this document - what it covers]
 ---
 
-# [CTX-NNN-slug] [System Name] System Architecture Overview
+# [CTX-slug] [System Name] System Architecture Overview
 
-## Overview {#ctx-nnn-overview}
+## Overview {#ctx-overview}
 <!--
 Describes the system at the highest level - what it does, who uses it,
 and what the major components are. Read to understand the big picture.
 -->
 
-## Architecture {#ctx-nnn-architecture}
+## Architecture {#ctx-architecture}
 <!--
 Shows the complete system diagram with all containers, external systems,
 and their relationships. Read to understand how pieces fit together.
 -->
 
-## Containers {#ctx-nnn-containers}
+## Containers {#ctx-containers}
 <!--
 Lists all containers with links DOWN to their docs. Reader follows links to dive deeper.
 -->
@@ -320,7 +320,7 @@ Lists all containers with links DOWN to their docs. Reader follows links to dive
 | [C3-2-frontend](./containers/C3-2-frontend.md) | Code | Web UI |
 | [C3-3-postgres](./containers/C3-3-postgres.md) | Infrastructure | Data store |
 
-## Protocols {#ctx-nnn-protocols}
+## Protocols {#ctx-protocols}
 <!--
 Communication protocols with links DOWN to Container#sections implementing each side.
 -->
@@ -329,7 +329,7 @@ Communication protocols with links DOWN to Container#sections implementing each 
 | Frontend | Backend | REST/HTTPS | [C3-2-frontend#api-calls], [C3-1-backend#rest-endpoints] |
 | Backend | Postgres | SQL | [C3-1-backend#db-access], [C3-3-postgres#config] |
 
-## Cross-Cutting Concerns {#ctx-nnn-cross-cutting}
+## Cross-Cutting Concerns {#ctx-cross-cutting}
 <!--
 System-wide concerns with links DOWN to Container#sections implementing them.
 -->
@@ -339,13 +339,13 @@ JWT-based, implemented in: [C3-1-backend#auth-middleware], [C3-2-frontend#auth-h
 ### Logging
 Structured JSON with correlation IDs, implemented in: [C3-1-backend#logging], [C3-2-frontend#logging]
 
-## Deployment {#ctx-nnn-deployment}
+## Deployment {#ctx-deployment}
 <!--
 High-level deployment architecture - cloud vs on-prem, scaling approach,
 infrastructure patterns. Read to understand operational context.
 -->
 
-## Related {#ctx-nnn-related}
+## Related {#ctx-related}
 ```
 
 ### Checklist (must be true to call CTX done)
@@ -355,7 +355,7 @@ infrastructure patterns. Read to understand operational context.
 - [ ] Protocols table lists every inter-container communication with links to implementing Container#sections
 - [ ] Cross-cutting decisions listed with downward links to Container#sections
 - [ ] Deployment topology described (diagram or text)
-- [ ] All anchors use `{#ctx-xxx-*}` format for stable linking
+- [ ] All anchors use `{#ctx-*}` format for stable linking
 
 ### Reference Direction Principle
 

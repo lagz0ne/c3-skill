@@ -53,7 +53,7 @@ If `.c3/` doesn't exist:
 
 3. **Form initial hypothesis** (THINKING, not asking)
    - Which layer? (Context / Container / Component)
-   - Which specific element? (CTX-001? C3-2-backend? C3-103-db-pool?)
+   - Which specific element? (CTX-system-overview? C3-2-backend? C3-103-db-pool?)
    - Why do you think so?
    - What's uncertain?
 
@@ -199,7 +199,7 @@ Specific changes to each affected document.
 -->
 
 ### Context Level
-- [CTX-###-slug]: [What changes, why]
+- [CTX-slug]: [What changes, why]
 
 ### Container Level
 - [C3-<C>-slug]: [What changes, why]

@@ -109,7 +109,7 @@ What user asked for (starting point)
 Formed through iteration above
 
 ## Changes (across layers)
-- CTX-001: [what changes, why]
+- CTX-system-overview: [what changes, why]
 - C3-2: [what changes, why]
 - C3-203: [what changes, why]
 
@@ -124,7 +124,7 @@ Formed through iteration above
 Purpose: Retrieve content by ID during exploration.
 
 ### Primary Mode (ID-based)
-- Input: Document ID (CTX-001, C3-2, C3-203)
+- Input: Document ID (CTX-system-overview, C3-2, C3-203)
 - Input: Heading ID (#c3-1-middleware, #c3-102-configuration)
 - Output: Frontmatter + section content
 

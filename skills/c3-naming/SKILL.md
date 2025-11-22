@@ -15,7 +15,7 @@ Short, container-aware names prevent collisions and make derivation obvious. Dro
 - Aligning legacy names that lost their parent connection
 
 ## Core Principles
-- Single context: one `CTX-###-slug` per system.
+- Single context: one `CTX-slug` per system (no number needed—there's only one).
 - Containers own a single digit (extend to two digits if >9 containers): `C3-<C>-slug`.
 - Components inherit container digit and add 2-digit sequence: `C3-<C><NN>-slug` (NN zero-padded; extend to three digits if >99 components).
 - File names align with IDs; paths mirror hierarchy.
@@ -24,7 +24,7 @@ Short, container-aware names prevent collisions and make derivation obvious. Dro
 ## Quick Reference
 | Level | ID Pattern | File Path Pattern | Example |
 |-------|------------|-------------------|---------|
-| Context | `CTX-###-slug` | `.c3/CTX-###-slug.md` | `CTX-001-system-overview.md` |
+| Context | `CTX-slug` | `.c3/CTX-slug.md` | `CTX-system-overview.md` |
 | Container (Code/Infra) | `C3-<C>-slug` (`C` = digit) | `.c3/containers/C3-<C>-slug.md` | `C3-1-backend.md` |
 | Component | `C3-<C><NN>-slug` (`NN` = 01-99 inside container `C`; use 3 digits if needed) | `.c3/components/<container-slug>/C3-<C><NN>-slug.md` | `C3-101-api-client.md` under `components/backend/` |
 | ADR | `ADR-###-slug` | `.c3/adr/ADR-###-slug.md` | `ADR-002-postgresql.md` |
@@ -35,7 +35,7 @@ Container and component IDs share the `C3-` prefix but differ in digit count. Us
 
 | Element | Simple Search | Regex Pattern | Notes |
 |---------|--------------|---------------|-------|
-| Context | `CTX-` | `CTX-\d{3}-` | Always 3 digits |
+| Context | `CTX-` | `CTX-[a-z]` | No digits, just slug |
 | Container | Find `C3-X-` where X is 1-9 | `C3-\d-[a-z]` | Single digit + dash + letter |
 | Component | Find `C3-XXX-` where XXX is 3+ digits | `C3-\d{3,}-` | 3+ digits encode container + sequence |
 | ADR | `ADR-` | `ADR-\d{3}-` | Always 3 digits |
@@ -56,10 +56,10 @@ grep -E 'C3-2[0-9]{2}-' .c3/
 ```mermaid
 flowchart TD
     Need[Creating/renaming doc?] --> Type{Type?}
-    Type -->|Context| Ctx[CTX-###-slug<br/>one per system]
+    Type -->|Context| Ctx[CTX-slug<br/>one per system]
     Type -->|Container| Con[C3-<C>-slug<br/>unique digit]
     Type -->|Component| Com[Use parent digit<br/>C3-<C><NN>-slug]
-    Type -->|ADR| Adr[ADR-###-slug<br/>optional CTX/CON refs inside]
+    Type -->|ADR| Adr[ADR-###-slug<br/>optional refs inside]
 ```
 
 ## How to Name

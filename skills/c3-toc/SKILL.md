@@ -23,7 +23,7 @@ The TOC reflects the physical organization of `.c3/`:
 ```
 .c3/
 ├── TOC.md                           # This index
-├── CTX-001-*.md                     # Context level (root)
+├── CTX-*.md                         # Context level (root)
 ├── containers/
 │   ├── C3-1-backend.md              # Container 1
 │   └── C3-2-frontend.md             # Container 2
@@ -86,7 +86,7 @@ cat .c3/TOC.md
 grep -c "^### \|^#### " .c3/TOC.md
 
 # Find all document IDs (CTX, ADR, and C3 patterns)
-grep -oP "(?<=\[)(CTX-[0-9]{3}|ADR-[0-9]{3}|C3-[0-9]+)[^\]]*(?=\])" .c3/TOC.md | sort -u
+grep -oP "(?<=\[)(CTX-[a-z][a-z0-9-]*|ADR-[0-9]{3}|C3-[0-9]+)[^\]]*(?=\])" .c3/TOC.md | sort -u
 ```
 
 ## Rebuilding TOC
@@ -123,7 +123,7 @@ find .c3 -name "*.md" ! -name "TOC.md" | sort
 
 # Compare with TOC entries
 diff <(find .c3 -name "*.md" ! -name "TOC.md" -exec basename {} .md \; | sort) \
-     <(grep -oP "(?<=\[)(CTX-[0-9]{3}|ADR-[0-9]{3}|C3-[0-9]+)[^\]]*(?=\])" .c3/TOC.md | sort -u)
+     <(grep -oP "(?<=\[)(CTX-[a-z][a-z0-9-]*|ADR-[0-9]{3}|C3-[0-9]+)[^\]]*(?=\])" .c3/TOC.md | sort -u)
 ```
 
 ## Build Script Reference
@@ -253,7 +253,7 @@ find .c3 -name "*.md" ! -name "TOC.md" | while read f; do
 done
 
 # Check for stale entries
-grep -oP "(?<=\[)(CTX-[0-9]{3}|ADR-[0-9]{3}|C3-[0-9]+)[^\]]*(?=\])" .c3/TOC.md | while read id; do
+grep -oP "(?<=\[)(CTX-[a-z][a-z0-9-]*|ADR-[0-9]{3}|C3-[0-9]+)[^\]]*(?=\])" .c3/TOC.md | while read id; do
     if ! find .c3 -name "${id}*.md" | grep -q .; then
         echo "Stale TOC entry: $id"
     fi

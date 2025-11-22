@@ -97,7 +97,7 @@ c3-skill/
 
 | Category | Prefix | Location | Example |
 |----------|--------|----------|---------|
-| Context | `CTX-` | `.c3/` | `CTX-001-system-overview.md` |
+| Context | `CTX-` | `.c3/` | `CTX-system-overview.md` |
 | Container | `C3-C-` | `.c3/containers/` | `C3-1-backend.md` |
 | Component | `C3-CNN-` | `.c3/components/{container}/` | `C3-101-db-pool.md` |
 | ADR | `ADR-` | `.c3/adr/` | `ADR-001-rest-api.md` |
@@ -132,7 +132,7 @@ understand how to configure the connection pool for different environments.
 .c3/
 ├── index.md                      # Conventions & navigation
 ├── TOC.md                        # Auto-generated (never edit)
-├── CTX-XXX-*.md                  # Context documents
+├── CTX-*.md                      # Context documents
 ├── containers/
 │   └── C3-X-*.md                 # Container documents
 ├── components/
@@ -160,7 +160,7 @@ understand how to configure the connection pool for different environments.
 - High-level concerns (gateway, deployment, auth, protocols)
 
 **Output**:
-- `.c3/CTX-###-{slug}.md` with:
+- `.c3/CTX-{slug}.md` with:
   - Architecture/flowchart diagram (required)
   - Sequence diagrams for protocols
   - Flow diagrams for special concepts

@@ -19,40 +19,40 @@
 
 ## Templates and Checklists
 
-### Context Document (CTX-###)
+### Context Document (CTX-slug)
 **Purpose:** Bird’s-eye view of the system: what exists, boundaries, and protocols that must be implemented below.
 
 **Template (copy/paste and fill):**
 ```markdown
-# CTX-XXX <Name>
+# CTX-slug <Name>
 
-## System Boundary {#ctx-xxx-boundary}
+## System Boundary {#ctx-slug-boundary}
 - Inside: ...
 - Outside: ...
 
-## Actors {#ctx-xxx-actors}
+## Actors {#ctx-slug-actors}
 | Actor | Role |
 |-------|------|
 | ...   | ...  |
 
-## Containers {#ctx-xxx-containers}
+## Containers {#ctx-slug-containers}
 | Container | Type (Code/Infra) | Description |
 |-----------|-------------------|-------------|
 | [C3-X-name](./containers/C3-X-name.md) | Code | ... |
 | ... | ... | ... |
 
-## Protocols {#ctx-xxx-protocols}
+## Protocols {#ctx-slug-protocols}
 | From | To | Protocol | Implementations |
 |------|----|----------|-----------------|
 | Frontend | Backend | REST/HTTPS | [C3-2#api], [C3-1#rest] |
 | ... | ... | ... | ... |
 
-## Cross-Cutting {#ctx-xxx-cross-cutting}
+## Cross-Cutting {#ctx-slug-cross-cutting}
 - Auth: ... implemented in [C3-X#auth]
 - Logging: ... implemented in [C3-X#logging]
 - Error strategy: ... implemented in [C3-X#errors]
 
-## Deployment Topology {#ctx-xxx-deployment}
+## Deployment Topology {#ctx-slug-deployment}
 - Diagram or bullets for high-level infra layout
 ```
 
@@ -197,7 +197,7 @@ stateDiagram-v2
 - **Context → Container:** Every protocol and cross-cutting item in CTX links to specific container sections describing implementation. Containers must not invent protocols absent from CTX without updating CTX.
 - **Container → Component:** Every protocol or cross-cutting implementation in a code container maps to specific components/sections. Component inventory must cover all behavior shown in relationships/data-flow diagrams.
 - **Infrastructure:** Features listed in infra containers must be cited by consuming components; infra docs are final leaves.
-- **Anchors:** Use `{#ctx-xxx-...}`, `{#c3-x-...}`, `{#c3-xnn-...}` so downward links are stable.
+- **Anchors:** Use `{#ctx-slug-...}`, `{#c3-x-...}`, `{#c3-xnn-...}` so downward links are stable.
 - **No upward duplication:** lower layers do not redefine relationships; they implement and link back downwards only.
 
 ---

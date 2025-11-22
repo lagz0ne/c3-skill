@@ -467,7 +467,7 @@ Define the system landscape: what containers/users/systems exist, how they inter
 find .c3 -maxdepth 1 -name "CTX-*.md"
 
 # Read frontmatter and content
-awk '/^---$/,/^---$/ {print}' .c3/CTX-001-*.md
+awk '/^---$/,/^---$/ {print}' .c3/CTX-*.md
 ```
 
 If exists: Understand current architecture, containers, protocols
@@ -513,19 +513,17 @@ Use mermaid syntax embedded in markdown.
 **Determine file path:**
 ```bash
 # If updating existing
-file_path=".c3/CTX-001-system-overview.md"
+file_path=".c3/CTX-system-overview.md"
 
 # If new context aspect
-last_ctx=$(find .c3 -maxdepth 1 -name "CTX-*.md" | sed 's/.*CTX-\([0-9]*\).*/\1/' | sort -n | tail -1)
-next_num=$(printf "%03d" $((10#$last_ctx + 1)))
-file_path=".c3/CTX-${next_num}-${slug}.md"
+file_path=".c3/CTX-${slug}.md"
 ```
 
 **Document structure:**
 
 ```markdown
 ---
-id: CTX-001-system-overview
+id: CTX-system-overview
 title: System Architecture Overview
 summary: >
   Explains the overall system landscape, how users interact with the system,
@@ -533,9 +531,9 @@ summary: >
   bird's-eye view before diving into individual containers.
 ---
 
-# [CTX-001] System Architecture Overview
+# [CTX-system-overview] System Architecture Overview
 
-## Overview {#ctx-001-overview}
+## Overview {#ctx-system-overview-overview}
 <!--
 Describes the system at the highest level - what it does, who uses it,
 and what the major components are. Read to understand the big picture.
@@ -543,7 +541,7 @@ and what the major components are. Read to understand the big picture.
 
 High-level prose description of the system.
 
-## Architecture {#ctx-001-architecture}
+## Architecture {#ctx-system-overview-architecture}
 <!--
 Shows the complete system diagram with all containers, external systems,
 and their relationships. Read to understand how pieces fit together.
@@ -561,7 +559,7 @@ graph TB
 
 Description of architecture and key relationships.
 
-## Containers {#ctx-001-containers}
+## Containers {#ctx-system-overview-containers}
 <!--
 Lists all containers with brief descriptions and links. Read to navigate
 to specific container details.
@@ -571,7 +569,7 @@ to specific container details.
 - [C3-2-frontend: Web Frontend](./containers/C3-2-frontend.md) - User interface
 - [C3-3-database: PostgreSQL DB](./containers/C3-3-database.md) - Data storage
 
-## Protocols & Communication {#ctx-001-protocols}
+## Protocols & Communication {#ctx-system-overview-protocols}
 <!--
 Explains communication protocols used across the system and why chosen.
 Read to understand integration patterns.
@@ -593,7 +591,7 @@ sequenceDiagram
 ### WebSocket
 For real-time updates.
 
-## Cross-Cutting Concerns {#ctx-001-cross-cutting}
+## Cross-Cutting Concerns {#ctx-system-overview-cross-cutting}
 <!--
 Describes concerns that span multiple containers like authentication,
 logging, and monitoring. Read to understand system-wide patterns.
@@ -603,7 +601,7 @@ logging, and monitoring. Read to understand system-wide patterns.
 - **Rate Limiting**: Gateway-level throttling
 - **Monitoring**: Prometheus + Grafana stack
 
-## Deployment {#ctx-001-deployment}
+## Deployment {#ctx-system-overview-deployment}
 <!--
 High-level deployment architecture - cloud vs on-prem, scaling approach,
 infrastructure patterns. Read to understand operational context.
@@ -614,7 +612,7 @@ Kubernetes-based deployment in AWS:
 - Horizontal auto-scaling
 - Blue-green deployments
 
-## Related {#ctx-001-related}
+## Related {#ctx-system-overview-related}
 
 - [ADR-001: REST API Choice](./adr/ADR-001-rest-api.md)
 ```
@@ -643,11 +641,11 @@ summary: >
 ```
 
 ### Heading IDs
-Pattern: `{#ctx-nnn-heading-slug}`
+Pattern: `{#ctx-slug-heading-slug}`
 
 ### Heading Summaries (Optional)
 ```markdown
-## Section Name {#ctx-001-section}
+## Section Name {#ctx-system-overview-section}
 <!--
 Summary of what this section explains and why to read it.
 -->
@@ -794,7 +792,7 @@ summary: >
 # [C3-1] Backend Container
 
 ::: info Context
-This container is part of [CTX-001: System Context](../CTX-001-system-overview.md).
+This container is part of [CTX-system-overview: System Context](../CTX-system-overview.md).
 :::
 
 ## Overview {#c3-1-overview}
@@ -923,7 +921,7 @@ Container-specific deployment characteristics.
 
 ## Related {#c3-1-related}
 
-- [CTX-001: System Context](../CTX-001-system-overview.md)
+- [CTX-system-overview: System Context](../CTX-system-overview.md)
 - [ADR-003: Cookie-based sessions](../adr/ADR-003-cookie-sessions.md)
 ```
 
@@ -961,7 +959,7 @@ What this section explains.
 ```
 
 ### Links
-- Up to context: `[CTX-001](../CTX-001-system-overview.md)`
+- Up to context: `[CTX-system-overview](../CTX-system-overview.md)`
 - Down to components: `[C3-101](../components/backend/C3-101-db-pool.md)`
 - Across containers: `[C3-2](./C3-2-frontend.md)`
 - To specific sections: `[Middleware](./C3-1-backend.md#c3-1-middleware)`
@@ -1690,7 +1688,7 @@ Use slash commands to invoke specific sub-skills:
 .c3/
 ├── index.md                      # Conventions and navigation
 ├── TOC.md                        # Auto-generated TOC
-├── CTX-001-system-overview.md    # Context documents
+├── CTX-system-overview.md        # Context documents
 ├── containers/
 │   └── C3-1-backend.md           # Container documents
 ├── components/
@@ -1708,7 +1706,7 @@ Use slash commands to invoke specific sub-skills:
 
 Every document has a unique ID:
 
-- **CTX-###-slug**: Context level (e.g., `CTX-001-system-overview`)
+- **CTX-slug**: Context level (e.g., `CTX-system-overview`)
 - **C3-C-slug**: Container level (e.g., `C3-1-backend`)
 - **C3-CNN-slug**: Component level (e.g., `C3-101-db-pool`)
 - **ADR-###-slug**: Architecture decisions (e.g., `ADR-001-rest-api`)
@@ -1821,7 +1819,7 @@ git commit -m "docs: add comprehensive README"
 
 **Files:**
 - Create: `examples/.c3/index.md`
-- Create: `examples/.c3/CTX-001-system-overview.md`
+- Create: `examples/.c3/CTX-system-overview.md`
 - Create: `examples/.c3/containers/C3-1-backend.md`
 - Create: `examples/.c3/components/backend/C3-101-db-pool.md`
 - Create: `examples/.c3/adr/ADR-001-rest-api.md`
@@ -1855,7 +1853,7 @@ This is an example C3 documentation structure for a simple web application.
 
 ## Navigation
 
-- 📋 [CTX-001: System Overview](./CTX-001-system-overview.md)
+- [CTX-system-overview: System Overview](./CTX-system-overview.md)
 - 📦 [Containers](./containers/)
   - [C3-1: Backend](./containers/C3-1-backend.md)
 - 🔧 [Components](./components/)
@@ -1875,7 +1873,7 @@ This example demonstrates:
 
 **Step 4: Create example context document**
 
-File: `examples/.c3/CTX-001-system-overview.md`
+File: `examples/.c3/CTX-system-overview.md`
 
 Use the Context document structure from Task 3, with example content for a simple web app.
 

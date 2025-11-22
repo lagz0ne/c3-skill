@@ -75,7 +75,7 @@ Claude will:
 .c3/
 ├── index.md                      # Conventions and navigation
 ├── TOC.md                        # Auto-generated TOC
-├── CTX-001-system-overview.md    # Context documents
+├── CTX-system-overview.md        # Context documents
 ├── containers/
 │   └── C3-1-backend.md           # Container documents
 ├── components/
@@ -93,7 +93,7 @@ Claude will:
 
 Every document has a unique ID:
 
-- **CTX-NNN-slug**: Context level (e.g., `CTX-001-system-overview`)
+- **CTX-slug**: Context level (e.g., `CTX-system-overview`)
 - **C3-<C>-slug**: Container level (e.g., `C3-1-backend`; two digits only if you exceed nine containers)
 - **C3-<C><NN>-slug**: Component level (e.g., `C3-101-db-pool`; `NN` zero-padded per container, use three digits if >99 components)
 - **ADR-NNN-slug**: Architecture decisions (e.g., `ADR-001-rest-api`)

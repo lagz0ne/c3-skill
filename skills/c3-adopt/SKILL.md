@@ -28,7 +28,7 @@ Bootstrap C3 (Context-Container-Component) architecture documentation for an exi
 - **Reading order:** Context → Container → Component
 - **Downward-only links:** CTX → C3-X sections; C3-X → C3-XNN docs. No upward links.
 - **Infra containers are leaf nodes:** No components; their features must be cited by consuming components.
-- **Anchors:** Use `{#ctx-xxx-*}` for context, `{#c3-xxx-*}` for containers and components.
+- **Anchors:** Use `{#ctx-*}` for context, `{#c3-xxx-*}` for containers and components.
 - **Naming:** Use `c3-naming` (components carry parent container code; IDs match filenames/paths).
 - **Templates/checklists:** Use templates from c3-context-design, c3-container-design, c3-component-design and complete all checklist items.
 
@@ -69,7 +69,7 @@ title: C3 Architecture Documentation
 # C3 Architecture Documentation
 
 - [Table of Contents](./TOC.md)
-- [System Overview](./CTX-001-system-overview.md)
+- [System Overview](./CTX-system-overview.md)
 ```
 
 ---
@@ -141,7 +141,7 @@ From answers, construct:
 ### Delegate to c3-context-design
 
 Once you have understanding:
-> "I now understand your system context. I'll use the c3-context-design skill to create CTX-001-system-overview."
+> "I now understand your system context. I'll use the c3-context-design skill to create CTX-system-overview."
 
 Use `c3-context-design` to create the Context document with:
 - System overview
@@ -267,7 +267,7 @@ Present to user:
 ## C3 Adoption Complete
 
 ### Created:
-- [ ] `.c3/CTX-001-*.md` - System context
+- [ ] `.c3/CTX-*.md` - System context
 - [ ] `.c3/containers/C3-1-*.md` - [Container 1]
 - [ ] `.c3/containers/C3-2-*.md` - [Container 2]
 - [ ] `.c3/components/*/C3-*.md` - [N] components
@@ -279,7 +279,7 @@ Present to user:
 - [Components marked for future documentation]
 
 ### Recommended Next Steps:
-1. Review CTX-001 for accuracy
+1. Review CTX-system-overview for accuracy
 2. Fill in [specific gap]
 3. Consider ADR for [identified decision]
 ```
@@ -342,7 +342,7 @@ TODO: Needs clarification
 
 When delegating, provide:
 1. The understanding you've built
-2. Which document to create (CTX-001-slug, C3-2-slug, C3-201-slug, etc.)
+2. Which document to create (CTX-slug, C3-2-slug, C3-201-slug, etc.)
 3. Key sections to fill
 
 ---

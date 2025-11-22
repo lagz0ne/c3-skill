@@ -9,7 +9,7 @@ description: Retrieve C3 documentation content by document or heading ID - suppo
 
 Retrieve content from `.c3/` documentation by document ID or heading ID. Supports the exploration phase of c3-design by enabling precise, ID-based content lookup.
 
-**Core principle:** IDs are the primary navigation. Use document IDs (CTX-001, C3-2, C3-201) and heading IDs (#c3-1-middleware) for precise retrieval.
+**Core principle:** IDs are the primary navigation. Use document IDs (CTX-system-overview, C3-2, C3-201) and heading IDs (#c3-1-middleware) for precise retrieval.
 
 ## Quick Reference
 
@@ -26,7 +26,7 @@ Retrieve content from `.c3/` documentation by document ID or heading ID. Support
 Retrieve document frontmatter and overview:
 
 ```
-c3-locate CTX-001
+c3-locate CTX-system-overview
 c3-locate C3-1-backend
 c3-locate C3-102-auth-middleware
 c3-locate ADR-003-caching-strategy
@@ -70,7 +70,7 @@ c3-locate C3-102 #c3-102-error-handling
 
 ```bash
 # Document ID patterns:
-# Context: CTX-###-slug (e.g., CTX-001-system-overview)
+# Context: CTX-slug (e.g., CTX-system-overview)
 # Container: C3-<C>-slug where C is single digit (e.g., C3-1-backend)
 # Component: C3-<C><NN>-slug where C is container, NN is 01-99 (e.g., C3-101-db-pool)
 # ADR: ADR-###-slug (e.g., ADR-001-caching-strategy)
@@ -163,11 +163,12 @@ Exploration:
 
 | Pattern | Level | Example |
 |---------|-------|---------|
-| `CTX-###-slug` | Context | CTX-001-system-overview |
+| `CTX-slug` | Context | CTX-system-overview |
 | `C3-<C>-slug` | Container | C3-1-backend |
 | `C3-<C><NN>-slug` | Component | C3-102-auth-middleware |
 | `ADR-###-slug` | Decision | ADR-003-caching-strategy |
-| `#c3-xxx-section` | Heading | #c3-1-middleware, #c3-102-config |
+| `#ctx-section` | Context Heading | #ctx-architecture, #ctx-protocols |
+| `#c3-xxx-section` | Container/Component Heading | #c3-1-middleware, #c3-102-config |
 
 ## Fallback: Discovery Mode
 
@@ -189,7 +190,7 @@ HYPOTHESIZE → "Affects C3-1"
      ↓
 EXPLORE
   ├── c3-locate C3-1 (isolated)
-  ├── c3-locate CTX-001 #ctx-001-containers (upstream)
+  ├── c3-locate CTX-system-overview #ctx-containers (upstream)
   ├── c3-locate C3-2 (adjacent)
   └── c3-locate C3-101, C3-102 (downstream)
      ↓

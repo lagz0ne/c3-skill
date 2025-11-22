@@ -57,6 +57,13 @@ If proceeding with new documentation:
 mkdir -p .c3/{containers,components,adr,scripts}
 ```
 
+Create VERSION file with current skill version:
+```bash
+# Read current version from plugin
+SKILL_VERSION=$(cat /path/to/c3-skill/VERSION)
+echo "$SKILL_VERSION" > .c3/VERSION
+```
+
 Create `build-toc.sh` script (see Appendix A).
 
 Create `index.md`:

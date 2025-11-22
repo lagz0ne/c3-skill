@@ -103,8 +103,8 @@ list_headings() {
 
 # Count documents
 ctx_count=$(find "$C3_ROOT" -maxdepth 1 -name "CTX-*.md" 2>/dev/null | wc -l || echo 0)
-con_count=$(find "$C3_ROOT/containers" -name "CON-*.md" 2>/dev/null | wc -l || echo 0)
-com_count=$(find "$C3_ROOT/components" -name "COM-*.md" 2>/dev/null | wc -l || echo 0)
+con_count=$(find "$C3_ROOT/containers" -name "C3-[0-9]-*.md" 2>/dev/null | wc -l || echo 0)
+com_count=$(find "$C3_ROOT/components" -name "C3-[0-9][0-9][0-9]-*.md" 2>/dev/null | wc -l || echo 0)
 adr_count=$(find "$C3_ROOT/adr" -name "ADR-*.md" 2>/dev/null | wc -l || echo 0)
 
 # Context Level
@@ -141,7 +141,7 @@ if [ "$con_count" -gt 0 ]; then
     echo "## Container Level" >> "$TEMP_FILE"
     echo "" >> "$TEMP_FILE"
 
-    for file in $(find "$C3_ROOT/containers" -name "CON-*.md" 2>/dev/null | sort); do
+    for file in $(find "$C3_ROOT/containers" -name "C3-[0-9]-*.md" 2>/dev/null | sort); do
         id=$(extract_frontmatter "$file" "id")
         title=$(extract_frontmatter "$file" "title")
         summary=$(extract_summary "$file")
@@ -176,7 +176,7 @@ if [ "$com_count" -gt 0 ]; then
         echo "### ${container_name^} Components" >> "$TEMP_FILE"
         echo "" >> "$TEMP_FILE"
 
-        for file in $(find "$container_dir" -name "COM-*.md" | sort); do
+        for file in $(find "$container_dir" -name "C3-[0-9][0-9][0-9]-*.md" | sort); do
             id=$(extract_frontmatter "$file" "id")
             title=$(extract_frontmatter "$file" "title")
             summary=$(extract_summary "$file")

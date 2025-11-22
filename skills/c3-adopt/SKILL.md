@@ -49,6 +49,15 @@ If `.c3/` exists, ask:
 > 2. Back up and create fresh documentation
 > 3. Abort and preserve what's there"
 
+### Check Version
+
+If `.c3/` exists but `.c3/VERSION` is missing:
+
+> "I found existing `.c3/` documentation but no VERSION file.
+> This may be from an older version of the C3 skill.
+>
+> After review, consider running `/c3-migrate` to update to current format."
+
 ### Create Scaffolding
 
 If proceeding with new documentation:

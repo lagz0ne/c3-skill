@@ -68,6 +68,30 @@ Claude will:
 
 - `/c3` - Design or update architecture (main command)
 - `/c3-init` - Initialize `.c3/` structure from scratch
+- `/c3-migrate` - Migrate documentation to current skill version
+
+## Versioning
+
+C3-Skill uses sequential version numbers to track documentation format changes.
+
+### Version File
+
+Each project using C3 has a `.c3/VERSION` file containing the version number:
+```
+1
+```
+
+### Migration
+
+When the skill evolves, run `/c3-migrate` to upgrade your documentation:
+```
+/c3-migrate
+```
+
+This will:
+1. Detect your current version
+2. Show what changes are needed
+3. Apply transforms with your confirmation
 
 ## Documentation Structure
 

@@ -110,8 +110,8 @@ Formed through iteration above
 
 ## Changes (across layers)
 - CTX-001: [what changes, why]
-- CON-002: [what changes, why]
-- COM-003: [what changes, why]
+- C3-2: [what changes, why]
+- C3-203: [what changes, why]
 
 ## Verification
 - [ ] Check: Is [X] at right abstraction level?
@@ -124,15 +124,15 @@ Formed through iteration above
 Purpose: Retrieve content by ID during exploration.
 
 ### Primary Mode (ID-based)
-- Input: Document ID (CTX-001, CON-002, COM-003)
-- Input: Heading ID (#con-001-middleware, #com-002-configuration)
+- Input: Document ID (CTX-001, C3-2, C3-203)
+- Input: Heading ID (#c3-1-middleware, #c3-102-configuration)
 - Output: Frontmatter + section content
 
 Examples:
 ```
-c3-locate CON-001           → frontmatter + overview
-c3-locate #con-001-middleware → heading content + summary
-c3-locate COM-002 #com-002-error-handling → specific section
+c3-locate C3-1              → frontmatter + overview
+c3-locate #c3-1-middleware  → heading content + summary
+c3-locate C3-102 #c3-102-error-handling → specific section
 ```
 
 ### Secondary Mode (discovery, rare)

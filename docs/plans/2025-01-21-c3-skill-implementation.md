@@ -295,7 +295,7 @@ If `.c3/` doesn't exist AND user didn't force mode via `/c3-from-scratch`:
      what alternatives were considered, and the trade-offs involved.
    status: proposed
    date: YYYY-MM-DD
-   related-components: [CON-XXX, COM-YYY]
+   related-components: [C3-X, C3-XNN]
    ---
 
    # [ADR-{NNN}] [Decision Title]
@@ -312,11 +312,11 @@ If `.c3/` doesn't exist AND user didn't force mode via `/c3-from-scratch`:
    System-wide implications with diagram.
 
    ### Container Level Details
-   Affected containers: [CON-001-backend](../containers/CON-001-backend.md)
+   Affected containers: [C3-1-backend](../containers/C3-1-backend.md)
    Technology choices and architecture.
 
    ### Component Level Impact
-   New/modified components: [COM-010-new-component](../components/backend/COM-010-new-component.md)
+   New/modified components: [C3-110-new-component](../components/backend/C3-110-new-component.md)
 
    ## Alternatives Considered {#adr-{nnn}-alternatives}
    What else was considered and why rejected.
@@ -533,7 +533,7 @@ summary: >
   bird's-eye view before diving into individual containers.
 ---
 
-# [CTX-001-system-overview] System Architecture Overview
+# [CTX-001] System Architecture Overview
 
 ## Overview {#ctx-001-overview}
 <!--
@@ -567,9 +567,9 @@ Lists all containers with brief descriptions and links. Read to navigate
 to specific container details.
 -->
 
-- [CON-001-backend: Backend API](./containers/CON-001-backend.md) - Core business logic
-- [CON-002-frontend: Web Frontend](./containers/CON-002-frontend.md) - User interface
-- [CON-003-database: PostgreSQL DB](./containers/CON-003-database.md) - Data storage
+- [C3-1-backend: Backend API](./containers/C3-1-backend.md) - Core business logic
+- [C3-2-frontend: Web Frontend](./containers/C3-2-frontend.md) - User interface
+- [C3-3-database: PostgreSQL DB](./containers/C3-3-database.md) - Data storage
 
 ## Protocols & Communication {#ctx-001-protocols}
 <!--
@@ -654,8 +654,8 @@ Summary of what this section explains and why to read it.
 ```
 
 ### Links
-- Down to containers: `[CON-001-backend](./containers/CON-001-backend.md)`
-- To specific sections: `[Backend Middleware](./containers/CON-001-backend.md#con-001-middleware)`
+- Down to containers: `[C3-1-backend](./containers/C3-1-backend.md)`
+- To specific sections: `[Backend Middleware](./containers/C3-1-backend.md#c3-1-middleware)`
 - Related ADRs: `[ADR-001](./adr/ADR-001-rest-api.md)`
 
 ## Key Principles
@@ -723,17 +723,17 @@ Define individual containers: their characteristics, technology stack, internal 
 
 ```bash
 # Find container document
-find .c3/containers -name "CON-*.md"
+find .c3/containers -name "C3-*-*.md"
 
 # Read specific container
-awk '/^---$/,/^---$/ {print}' .c3/containers/CON-001-backend.md
+awk '/^---$/,/^---$/ {print}' .c3/containers/C3-1-backend.md
 ```
 
 ### Step 2: Read Parent Context
 
 ```bash
 # Understand container's role in system
-grep -l "CON-001-backend" .c3/CTX-*.md
+grep -l "C3-1-backend" .c3/CTX-*.md
 ```
 
 ### Step 3: Identify Scope
@@ -771,19 +771,19 @@ Ask ONLY if needed:
 **Determine file path:**
 ```bash
 # If updating
-file_path=".c3/containers/CON-001-backend.md"
+file_path=".c3/containers/C3-1-backend.md"
 
-# If new
-last_con=$(find .c3/containers -name "CON-*.md" | sed 's/.*CON-\([0-9]*\).*/\1/' | sort -n | tail -1)
-next_num=$(printf "%03d" $((10#$last_con + 1)))
-file_path=".c3/containers/CON-${next_num}-${slug}.md"
+# If new container (C is 1-9 for container digit)
+last_con=$(find .c3/containers -name "C3-*-*.md" | sed 's/.*C3-\([0-9]\)-.*/\1/' | sort -n | tail -1)
+next_num=$((last_con + 1))
+file_path=".c3/containers/C3-${next_num}-${slug}.md"
 ```
 
 **Document structure:**
 
 ```markdown
 ---
-id: CON-001-backend
+id: C3-1-backend
 title: Backend Container
 summary: >
   Describes the backend API service architecture, middleware pipeline,
@@ -791,20 +791,20 @@ summary: >
   handles requests, manages authentication, and structures its components.
 ---
 
-# [CON-001-backend] Backend Container
+# [C3-1] Backend Container
 
 ::: info Context
 This container is part of [CTX-001: System Context](../CTX-001-system-overview.md).
 :::
 
-## Overview {#con-001-overview}
+## Overview {#c3-1-overview}
 <!--
 High-level description of container purpose and responsibilities.
 -->
 
 REST API service handling business logic, authentication, and data management.
 
-## Technology Stack {#con-001-technology-stack}
+## Technology Stack {#c3-1-technology-stack}
 <!--
 Lists languages, frameworks, and key libraries used. Read to understand
 technical foundation.
@@ -815,7 +815,7 @@ technical foundation.
 - **Runtime**: Node.js 20 LTS
 - **ORM**: Prisma 5
 
-## Middleware Pipeline {#con-001-middleware}
+## Middleware Pipeline {#c3-1-middleware}
 <!--
 Describes the request processing pipeline through authentication, cookie
 handling, and rate limiting layers. Read this to understand how requests
@@ -831,16 +831,16 @@ graph LR
     E --> F[Business Logic]
 ```
 
-### Authentication Middleware {#con-001-auth-middleware}
-**Component**: [COM-003-auth-middleware](../components/backend/COM-003-auth-middleware.md)
+### Authentication Middleware {#c3-1-auth-middleware}
+**Component**: [C3-103-auth-middleware](../components/backend/C3-103-auth-middleware.md)
 
 JWT token validation via cookies:
 - Token validation and expiry
 - Session state management
 - User context injection
 
-### Cookie Handler {#con-001-cookie-handler}
-**Component**: [COM-004-cookie-handler](../components/backend/COM-004-cookie-handler.md)
+### Cookie Handler {#c3-1-cookie-handler}
+**Component**: [C3-104-cookie-handler](../components/backend/C3-104-cookie-handler.md)
 
 Cookie management with security characteristics:
 
@@ -854,15 +854,15 @@ Cookie management with security characteristics:
 - Development: localhost, relaxed security
 - Production: secure flags, short expiry, production domain
 
-### Rate Limiter {#con-001-rate-limiter}
-**Component**: [COM-005-rate-limiter](../components/backend/COM-005-rate-limiter.md)
+### Rate Limiter {#c3-1-rate-limiter}
+**Component**: [C3-105-rate-limiter](../components/backend/C3-105-rate-limiter.md)
 
 Request throttling:
 - IP-based: 100 req/min
 - User-based: 1000 req/min
 - Redis-backed sliding window
 
-## Component Organization {#con-001-components}
+## Component Organization {#c3-1-components}
 <!--
 Shows how components are structured inside the container.
 -->
@@ -881,29 +881,29 @@ Layers:
 - **Data Access**: Database queries
 
 ### Key Components
-- [COM-001-db-pool](../components/backend/COM-001-db-pool.md) - Database connection management
-- [COM-002-user-service](../components/backend/COM-002-user-service.md) - User operations
+- [C3-101-db-pool](../components/backend/C3-101-db-pool.md) - Database connection management
+- [C3-102-user-service](../components/backend/C3-102-user-service.md) - User operations
 
-## Communication Patterns {#con-001-communication}
+## Communication Patterns {#c3-1-communication}
 <!--
 Explains how this container talks to other containers.
 -->
 
-### To Database Container {#con-001-to-database}
-**Container**: [CON-003-database](./CON-003-database.md)
+### To Database Container {#c3-1-to-database}
+**Container**: [C3-3-database](./C3-3-database.md)
 
 - Protocol: PostgreSQL wire protocol
 - Connection: Pooled (10-50 connections)
 - Security: SSL/TLS in production
 
-### To Auth Service {#con-001-to-auth-service}
-**Container**: [CON-004-auth-service](./CON-004-auth-service.md)
+### To Auth Service {#c3-1-to-auth-service}
+**Container**: [C3-4-auth-service](./C3-4-auth-service.md)
 
 - Protocol: gRPC
 - Pattern: Synchronous request/response
 - Fallback: Cached public keys
 
-## Data Responsibilities {#con-001-data}
+## Data Responsibilities {#c3-1-data}
 <!--
 What data this container owns and manages.
 -->
@@ -912,7 +912,7 @@ What data this container owns and manages.
 - **Manages**: Session tokens (cookies), rate limit counters (Redis)
 - **Transient**: Request/response data, in-memory caches
 
-## Deployment {#con-001-deployment}
+## Deployment {#c3-1-deployment}
 <!--
 Container-specific deployment characteristics.
 -->
@@ -921,7 +921,7 @@ Container-specific deployment characteristics.
 - **Health checks**: `/health` with DB check
 - **Graceful shutdown**: 30s drain period
 
-## Related {#con-001-related}
+## Related {#c3-1-related}
 
 - [CTX-001: System Context](../CTX-001-system-overview.md)
 - [ADR-003: Cookie-based sessions](../adr/ADR-003-cookie-sessions.md)
@@ -942,7 +942,7 @@ Add to sidebar if new container.
 ### Frontmatter
 ```yaml
 ---
-id: CON-NNN-slug
+id: C3-X-slug
 title: Container Name
 summary: >
   What this container does and why you should read this doc.
@@ -950,11 +950,11 @@ summary: >
 ```
 
 ### Heading IDs
-Pattern: `{#con-nnn-heading-slug}`
+Pattern: `{#c3-x-heading-slug}`
 
 ### Heading Summaries
 ```markdown
-## Section {#con-001-section}
+## Section {#c3-1-section}
 <!--
 What this section explains.
 -->
@@ -962,9 +962,9 @@ What this section explains.
 
 ### Links
 - Up to context: `[CTX-001](../CTX-001-system-overview.md)`
-- Down to components: `[COM-001](../components/backend/COM-001-db-pool.md)`
-- Across containers: `[CON-002](./CON-002-frontend.md)`
-- To specific sections: `[Middleware](./CON-001-backend.md#con-001-middleware)`
+- Down to components: `[C3-101](../components/backend/C3-101-db-pool.md)`
+- Across containers: `[C3-2](./C3-2-frontend.md)`
+- To specific sections: `[Middleware](./C3-1-backend.md#c3-1-middleware)`
 
 ## Key Principles
 
@@ -1030,17 +1030,17 @@ Define individual components with implementation-level detail: configuration, de
 
 ```bash
 # Find component
-find .c3/components -name "COM-*.md"
+find .c3/components -name "C3-*-*.md"
 
 # Read specific
-awk '/^---$/,/^---$/ {print}' .c3/components/backend/COM-001-db-pool.md
+awk '/^---$/,/^---$/ {print}' .c3/components/backend/C3-101-db-pool.md
 ```
 
 ### Step 2: Read Parent Container
 
 ```bash
 # Understand component's role in container
-grep -l "COM-001-db-pool" .c3/containers/CON-*.md
+grep -l "C3-101-db-pool" .c3/containers/C3-*.md
 ```
 
 ### Step 3: Identify Scope
@@ -1079,17 +1079,19 @@ Ask ONLY if needed:
 container_dir=".c3/components/backend"
 mkdir -p "$container_dir"
 
-# If new component
-last_com=$(find .c3/components -name "COM-*.md" | sed 's/.*COM-\([0-9]*\).*/\1/' | sort -n | tail -1)
-next_num=$(printf "%03d" $((10#$last_com + 1)))
-file_path="$container_dir/COM-${next_num}-${slug}.md"
+# If new component (CNN = Container digit + NN for 01-99)
+# For container 1, components are C3-101, C3-102, etc.
+container_digit=1  # from parent container
+last_com=$(find .c3/components -name "C3-${container_digit}*-*.md" | sed 's/.*C3-\([0-9]*\)-.*/\1/' | sort -n | tail -1)
+next_num=$((last_com + 1))
+file_path="$container_dir/C3-${next_num}-${slug}.md"
 ```
 
 **Document structure:**
 
 ```markdown
 ---
-id: COM-001-db-pool
+id: C3-101-db-pool
 title: Database Connection Pool Component
 summary: >
   Explains PostgreSQL connection pooling strategy, configuration, and
@@ -1097,20 +1099,20 @@ summary: >
   connections efficiently and handles connection failures.
 ---
 
-# [COM-001-db-pool] Database Connection Pool Component
+# [C3-101] Database Connection Pool Component
 
 ::: info Container
-Belongs to [CON-001-backend: Backend Container](../../containers/CON-001-backend.md#con-001-db-pool)
+Belongs to [C3-1-backend: Backend Container](../../containers/C3-1-backend.md#c3-1-db-pool)
 :::
 
-## Overview {#com-001-overview}
+## Overview {#c3-101-overview}
 <!--
 What this component does and why it exists.
 -->
 
 Manages PostgreSQL connections using pool pattern for efficient resource usage and resilient access.
 
-## Purpose {#com-001-purpose}
+## Purpose {#c3-101-purpose}
 <!--
 Specific responsibilities and goals.
 -->
@@ -1120,16 +1122,16 @@ Specific responsibilities and goals.
 - Handle failures with retry
 - Provide health checks
 
-## Technical Implementation {#com-001-implementation}
+## Technical Implementation {#c3-101-implementation}
 <!--
 How it's built - libraries, patterns, architecture.
 -->
 
-### Libraries {#com-001-libraries}
+### Libraries {#c3-101-libraries}
 - **pg** (v8.11.0): PostgreSQL client
 - **pg-pool**: Connection pooling
 
-### Architecture {#com-001-architecture}
+### Architecture {#c3-101-architecture}
 
 ```mermaid
 sequenceDiagram
@@ -1148,14 +1150,14 @@ sequenceDiagram
     App->>Pool: Release
 ```
 
-## Configuration {#com-001-configuration}
+## Configuration {#c3-101-configuration}
 <!--
 Explains environment variables, configuration loading strategy, and
 differences between development and production. Read this section to
 understand how to configure the connection pool for different environments.
 -->
 
-### Environment Variables {#com-001-env-vars}
+### Environment Variables {#c3-101-env-vars}
 
 | Variable | Dev | Production | Description |
 |----------|-----|------------|-------------|
@@ -1165,7 +1167,7 @@ understand how to configure the connection pool for different environments.
 | `DB_POOL_MAX` | `10` | `50` | Max connections |
 | `DB_IDLE_TIMEOUT` | `10000` | `30000` | Idle timeout (ms) |
 
-### Configuration Loading {#com-001-config-loading}
+### Configuration Loading {#c3-101-config-loading}
 
 Loaded from `.env` files:
 - `.env.development`
@@ -1179,12 +1181,12 @@ DB_POOL_MIN=2
 DB_POOL_MAX=10
 ```
 
-## Connection Pool Behavior {#com-001-pool-behavior}
+## Connection Pool Behavior {#c3-101-pool-behavior}
 <!--
 How the pool manages connections, sizing strategy, lifecycle.
 -->
 
-### Pool Sizing {#com-001-pool-sizing}
+### Pool Sizing {#c3-101-pool-sizing}
 
 ```mermaid
 graph TD
@@ -1204,7 +1206,7 @@ graph TD
 - Dev: Small pool (2-10)
 - Prod: Larger pool (10-50) based on load
 
-### Lifecycle {#com-001-lifecycle}
+### Lifecycle {#c3-101-lifecycle}
 
 1. Acquisition: Request from pool
 2. Usage: Execute queries
@@ -1212,12 +1214,12 @@ graph TD
 4. Idle timeout: Close after timeout
 5. Health check: Periodic validation
 
-## Error Handling {#com-001-error-handling}
+## Error Handling {#c3-101-error-handling}
 <!--
 How errors are handled, retry strategy, error types.
 -->
 
-### Retry Strategy {#com-001-retry-strategy}
+### Retry Strategy {#c3-101-retry-strategy}
 
 ```mermaid
 stateDiagram-v2
@@ -1236,7 +1238,7 @@ stateDiagram-v2
 - Retriable: Connection timeout, network errors
 - Non-retriable: Auth failure, DB not found
 
-### Error Types {#com-001-error-types}
+### Error Types {#c3-101-error-types}
 
 | Error | Cause | Handling |
 |-------|-------|----------|
@@ -1244,24 +1246,24 @@ stateDiagram-v2
 | Pool exhausted | Too many requests | Queue or reject |
 | Auth failure | Invalid credentials | Fail immediately |
 
-## Performance {#com-001-performance}
+## Performance {#c3-101-performance}
 <!--
 Performance characteristics, benefits, monitoring.
 -->
 
-### Benefits {#com-001-pooling-benefits}
+### Benefits {#c3-101-pooling-benefits}
 - Reduced latency: ~50ms saved per request
 - Resource efficiency: Share connections
 - Throughput: More concurrent requests
 
-### Metrics {#com-001-metrics}
+### Metrics {#c3-101-metrics}
 - Active connections (gauge)
 - Idle connections (gauge)
 - Wait queue length (gauge)
 - Acquisition time (histogram)
 - Query execution time (histogram)
 
-## Health Checks {#com-001-health-checks}
+## Health Checks {#c3-101-health-checks}
 <!--
 Health check implementation and frequency.
 -->
@@ -1276,10 +1278,10 @@ WHERE datname = current_database();
 
 Runs every 30 seconds.
 
-## Related {#com-001-related}
+## Related {#c3-101-related}
 
-- [CON-001-backend: Backend Container](../../containers/CON-001-backend.md#con-001-db-pool)
-- [COM-002-user-service: User Service](./COM-002-user-service.md)
+- [C3-1-backend: Backend Container](../../containers/C3-1-backend.md#c3-1-db-pool)
+- [C3-102-user-service: User Service](./C3-102-user-service.md)
 - [ADR-004: Connection pooling](../../adr/ADR-004-connection-pooling.md)
 ```
 
@@ -1298,7 +1300,7 @@ Add to sidebar under appropriate container section.
 ### Frontmatter
 ```yaml
 ---
-id: COM-NNN-slug
+id: C3-XNN-slug
 title: Component Name
 summary: >
   What this component does and why read this doc.
@@ -1306,12 +1308,12 @@ summary: >
 ```
 
 ### Heading IDs
-Pattern: `{#com-nnn-heading-slug}`
+Pattern: `{#c3-xnn-heading-slug}`
 
 ### Links
-- Up to container: `[CON-001](../../containers/CON-001-backend.md)`
-- To container section: `[Middleware](../../containers/CON-001-backend.md#con-001-middleware)`
-- Across components: `[COM-002](./COM-002-user-service.md)`
+- Up to container: `[C3-1](../../containers/C3-1-backend.md)`
+- To container section: `[Middleware](../../containers/C3-1-backend.md#c3-1-middleware)`
+- Across components: `[C3-102](./C3-102-user-service.md)`
 
 ## Key Principles
 
@@ -1445,8 +1447,8 @@ list_headings() {
 
 # Count documents
 ctx_count=$(find "$C3_ROOT" -maxdepth 1 -name "CTX-*.md" 2>/dev/null | wc -l || echo 0)
-con_count=$(find "$C3_ROOT/containers" -name "CON-*.md" 2>/dev/null | wc -l || echo 0)
-com_count=$(find "$C3_ROOT/components" -name "COM-*.md" 2>/dev/null | wc -l || echo 0)
+con_count=$(find "$C3_ROOT/containers" -name "C3-*-*.md" 2>/dev/null | wc -l || echo 0)
+com_count=$(find "$C3_ROOT/components" -name "C3-*-*.md" 2>/dev/null | wc -l || echo 0)
 adr_count=$(find "$C3_ROOT/adr" -name "ADR-*.md" 2>/dev/null | wc -l || echo 0)
 
 # Context Level
@@ -1483,7 +1485,7 @@ if [ "$con_count" -gt 0 ]; then
     echo "## Container Level" >> "$TEMP_FILE"
     echo "" >> "$TEMP_FILE"
 
-    for file in $(find "$C3_ROOT/containers" -name "CON-*.md" 2>/dev/null | sort); do
+    for file in $(find "$C3_ROOT/containers" -name "C3-*-*.md" 2>/dev/null | sort); do
         id=$(extract_frontmatter "$file" "id")
         title=$(extract_frontmatter "$file" "title")
         summary=$(extract_summary "$file")
@@ -1518,7 +1520,7 @@ if [ "$com_count" -gt 0 ]; then
         echo "### ${container_name^} Components" >> "$TEMP_FILE"
         echo "" >> "$TEMP_FILE"
 
-        for file in $(find "$container_dir" -name "COM-*.md" | sort); do
+        for file in $(find "$container_dir" -name "C3-*-*.md" | sort); do
             id=$(extract_frontmatter "$file" "id")
             title=$(extract_frontmatter "$file" "title")
             summary=$(extract_summary "$file")
@@ -1690,10 +1692,10 @@ Use slash commands to invoke specific sub-skills:
 ├── TOC.md                        # Auto-generated TOC
 ├── CTX-001-system-overview.md    # Context documents
 ├── containers/
-│   └── CON-001-backend.md        # Container documents
+│   └── C3-1-backend.md           # Container documents
 ├── components/
 │   ├── backend/
-│   │   └── COM-001-db-pool.md    # Component documents
+│   │   └── C3-101-db-pool.md     # Component documents
 ├── adr/
 │   └── ADR-001-rest-api.md       # Architecture decisions
 └── scripts/
@@ -1706,10 +1708,10 @@ Use slash commands to invoke specific sub-skills:
 
 Every document has a unique ID:
 
-- **CTX-NNN-slug**: Context level (e.g., `CTX-001-system-overview`)
-- **CON-NNN-slug**: Container level (e.g., `CON-001-backend`)
-- **COM-NNN-slug**: Component level (e.g., `COM-001-db-pool`)
-- **ADR-NNN-slug**: Architecture decisions (e.g., `ADR-001-rest-api`)
+- **CTX-###-slug**: Context level (e.g., `CTX-001-system-overview`)
+- **C3-C-slug**: Container level (e.g., `C3-1-backend`)
+- **C3-CNN-slug**: Component level (e.g., `C3-101-db-pool`)
+- **ADR-###-slug**: Architecture decisions (e.g., `ADR-001-rest-api`)
 
 ### Simplified Frontmatter
 
@@ -1717,7 +1719,7 @@ Focus on summaries:
 
 ```yaml
 ---
-id: COM-001-db-pool
+id: C3-101-db-pool
 title: Database Connection Pool Component
 summary: >
   Explains PostgreSQL connection pooling strategy, configuration, and
@@ -1731,7 +1733,7 @@ summary: >
 Every heading has a unique anchor:
 
 ```markdown
-## Configuration {#com-001-configuration}
+## Configuration {#c3-101-configuration}
 <!--
 Explains environment variables and configuration loading. Read to understand
 how to configure the pool for different environments.
@@ -1820,8 +1822,8 @@ git commit -m "docs: add comprehensive README"
 **Files:**
 - Create: `examples/.c3/index.md`
 - Create: `examples/.c3/CTX-001-system-overview.md`
-- Create: `examples/.c3/containers/CON-001-backend.md`
-- Create: `examples/.c3/components/backend/COM-001-db-pool.md`
+- Create: `examples/.c3/containers/C3-1-backend.md`
+- Create: `examples/.c3/components/backend/C3-101-db-pool.md`
 - Create: `examples/.c3/adr/ADR-001-rest-api.md`
 
 **Step 1: Create examples directory**
@@ -1855,9 +1857,9 @@ This is an example C3 documentation structure for a simple web application.
 
 - 📋 [CTX-001: System Overview](./CTX-001-system-overview.md)
 - 📦 [Containers](./containers/)
-  - [CON-001: Backend](./containers/CON-001-backend.md)
+  - [C3-1: Backend](./containers/C3-1-backend.md)
 - 🔧 [Components](./components/)
-  - [COM-001: DB Connection Pool](./components/backend/COM-001-db-pool.md)
+  - [C3-101: DB Connection Pool](./components/backend/C3-101-db-pool.md)
 - 📝 [ADRs](./adr/)
   - [ADR-001: REST API Choice](./adr/ADR-001-rest-api.md)
 
@@ -1879,13 +1881,13 @@ Use the Context document structure from Task 3, with example content for a simpl
 
 **Step 5: Create example container document**
 
-File: `examples/.c3/containers/CON-001-backend.md`
+File: `examples/.c3/containers/C3-1-backend.md`
 
 Use the Container document structure from Task 4.
 
 **Step 6: Create example component document**
 
-File: `examples/.c3/components/backend/COM-001-db-pool.md`
+File: `examples/.c3/components/backend/C3-101-db-pool.md`
 
 Use the Component document structure from Task 5.
 

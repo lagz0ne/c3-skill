@@ -19,16 +19,16 @@ Bootstrap C3 (Context-Container-Component) architecture documentation for an exi
 |-------|---------------|--------|
 | **1. Establish** | Check prerequisites, create scaffolding | `.c3/` directory |
 | **2. Context Discovery** | Socratic questions about system | Understanding for CTX |
-| **3. Container Discovery** | Socratic questions per container | Understanding for CON |
-| **4. Component Identification** | Identify key components | COM stubs |
+| **3. Container Discovery** | Socratic questions per container | Understanding for C3-X |
+| **4. Component Identification** | Identify key components | C3-XNN stubs |
 | **5. Generate & Verify** | Delegate to sub-skills, build TOC | Complete documentation |
 
 ## Derivation Guardrails (apply everywhere)
 
 - **Reading order:** Context → Container → Component
-- **Downward-only links:** CTX → CON sections; CON → COM docs. No upward links.
+- **Downward-only links:** CTX → C3-X sections; C3-X → C3-XNN docs. No upward links.
 - **Infra containers are leaf nodes:** No components; their features must be cited by consuming components.
-- **Anchors:** Use `{#ctx-xxx-*}`, `{#con-xxx-*}`, `{#com-xxx-*}` for stable links.
+- **Anchors:** Use `{#ctx-xxx-*}` for context, `{#c3-xxx-*}` for containers and components.
 - **Naming:** Use `c3-naming` (components carry parent container code; IDs match filenames/paths).
 - **Templates/checklists:** Use templates from c3-context-design, c3-container-design, c3-component-design and complete all checklist items.
 
@@ -141,7 +141,7 @@ From answers, construct:
 ### Delegate to c3-context-design
 
 Once you have understanding:
-> "I now understand your system context. I'll use the c3-context-design skill to create CTX-001."
+> "I now understand your system context. I'll use the c3-context-design skill to create CTX-001-system-overview."
 
 Use `c3-context-design` to create the Context document with:
 - System overview
@@ -210,7 +210,7 @@ From answers:
 
 ### Delegate to c3-container-design
 
-> "I understand [Container Name]. I'll use the c3-container-design skill to create CON-XXX."
+> "I understand [Container Name]. I'll use the c3-container-design skill to create C3-X-[slug]."
 
 Repeat for each container.
 
@@ -232,8 +232,8 @@ For each container's key components:
 
 | Priority | Criteria | Action |
 |----------|----------|--------|
-| **High** | Core business logic, External integrations, Complex config | Create full COM document |
-| **Medium** | Important but straightforward | Create COM stub |
+| **High** | Core business logic, External integrations, Complex config | Create full C3-XNN document |
+| **Medium** | Important but straightforward | Create C3-XNN stub |
 | **Low** | Utilities, Simple wrappers | Note in Container doc |
 
 ### Create Component Stubs
@@ -268,9 +268,9 @@ Present to user:
 
 ### Created:
 - [ ] `.c3/CTX-001-*.md` - System context
-- [ ] `.c3/containers/CON-001-*.md` - [Container 1]
-- [ ] `.c3/containers/CON-002-*.md` - [Container 2]
-- [ ] `.c3/components/*/COM-*.md` - [N] components
+- [ ] `.c3/containers/C3-1-*.md` - [Container 1]
+- [ ] `.c3/containers/C3-2-*.md` - [Container 2]
+- [ ] `.c3/components/*/C3-*.md` - [N] components
 - [ ] `.c3/TOC.md` - Table of contents
 - [ ] `.c3/scripts/build-toc.sh` - TOC generator
 
@@ -342,7 +342,7 @@ TODO: Needs clarification
 
 When delegating, provide:
 1. The understanding you've built
-2. Which document to create (CTX-001, CON-002, etc.)
+2. Which document to create (CTX-001-slug, C3-2-slug, C3-201-slug, etc.)
 3. Key sections to fill
 
 ---
@@ -385,8 +385,8 @@ for file in $(find "$C3_ROOT" -maxdepth 1 -name "CTX-*.md" 2>/dev/null | sort); 
     echo "" >> "$TEMP_FILE"
 done
 
-# Containers
-for file in $(find "$C3_ROOT/containers" -name "CON-*.md" 2>/dev/null | sort); do
+# Containers (C3-X-slug.md where X is single digit)
+for file in $(find "$C3_ROOT/containers" -name "C3-[0-9]-*.md" 2>/dev/null | sort); do
     id=$(extract_field "$file" "id")
     title=$(extract_field "$file" "title")
     echo "## Container: [$id](./containers/${id}.md)" >> "$TEMP_FILE"
@@ -394,11 +394,11 @@ for file in $(find "$C3_ROOT/containers" -name "CON-*.md" 2>/dev/null | sort); d
     echo "" >> "$TEMP_FILE"
 done
 
-# Components
+# Components (C3-XNN-slug.md where X is container digit, NN is 01-99)
 for dir in $(find "$C3_ROOT/components" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort); do
     container=$(basename "$dir")
     echo "## Components: ${container}" >> "$TEMP_FILE"
-    for file in $(find "$dir" -name "COM-*.md" | sort); do
+    for file in $(find "$dir" -name "C3-[0-9][0-9][0-9]-*.md" | sort); do
         id=$(extract_field "$file" "id")
         title=$(extract_field "$file" "title")
         echo "- [$id](./components/$container/${id}.md) - $title" >> "$TEMP_FILE"

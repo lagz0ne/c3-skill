@@ -12,7 +12,7 @@ Explore Component-level impact during the scoping phase of c3-design. Component 
 **Abstraction Level:** Implementation details. Code examples, configuration snippets, and library usage are appropriate here.
 
 **Announce at start:** "I'm using the c3-component-design skill to explore Component-level impact."
-**Naming:** Follow `c3-naming` (components embed parent container code in ID/filename; anchors use `{#com-xxx-*}`).
+**Naming:** Follow `c3-naming` (components embed parent container digit in ID/filename; anchors use `{#c3-xxx-*}`).
 
 ## When Invoked
 
@@ -305,14 +305,14 @@ When creating or validating Component documentation, ask:
 Use c3-locate to retrieve:
 
 ```
-c3-locate COM-001                    # Overview
-c3-locate #com-001-implementation    # Technical details
-c3-locate #com-001-configuration     # Config options
-c3-locate #com-001-pool-behavior     # Specific behavior
-c3-locate #com-001-error-handling    # Error strategies
-c3-locate #com-001-performance       # Performance characteristics
-c3-locate #com-001-health-checks     # Health monitoring
-c3-locate #com-001-usage             # Usage examples
+c3-locate C3-101                    # Overview
+c3-locate #c3-101-implementation    # Technical details
+c3-locate #c3-101-configuration     # Config options
+c3-locate #c3-101-pool-behavior     # Specific behavior
+c3-locate #c3-101-error-handling    # Error strategies
+c3-locate #c3-101-performance       # Performance characteristics
+c3-locate #c3-101-health-checks     # Health monitoring
+c3-locate #c3-101-usage             # Usage examples
 ```
 
 ## Impact Signals
@@ -360,30 +360,30 @@ Component documents focus on **what Container doesn't enforce**. Structure varie
 
 ```markdown
 ---
-id: COM-NNN-slug
+id: C3-1NN-slug
 title: [Component Name] Component
 summary: >
   [Why read this document - what it covers]
 nature: Resource
 ---
 
-# [COM-NNN-slug] [Component Name] (Resource Nature)
+# [C3-1NN-slug] [Component Name] (Resource Nature)
 
 ## Overview
 Connection pooling for PostgreSQL
 
-## Stack {#com-nnn-stack}
+## Stack {#c3-1nn-stack}
 - Library: `pg` 8.11.x
 - Why: Native driver, proven stability, supports LISTEN/NOTIFY
 
-## Configuration {#com-nnn-config}
+## Configuration {#c3-1nn-config}
 | Env Var | Dev | Prod | Why |
 |---------|-----|------|-----|
 | DB_POOL_MIN | 2 | 10 | Baseline connections |
 | DB_POOL_MAX | 10 | 50 | Scale with load |
 | DB_IDLE_TIMEOUT | 30s | 10s | Release faster in prod |
 
-## Behavior {#com-nnn-behavior}
+## Behavior {#c3-1nn-behavior}
 
 ```mermaid
 stateDiagram-v2
@@ -397,14 +397,14 @@ stateDiagram-v2
     Error --> [*]
 ```
 
-## Error Handling {#com-nnn-errors}
+## Error Handling {#c3-1nn-errors}
 | Error | Retriable | Action |
 |-------|-----------|--------|
 | Connection refused | Yes | Retry with backoff |
 | Pool exhausted | Yes | Wait up to 5s |
 | Query timeout | No | Propagate to caller |
 
-## Usage {#com-nnn-usage}
+## Usage {#c3-1nn-usage}
 ```typescript
 const pool = createPool(config);
 const result = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
@@ -415,35 +415,35 @@ const result = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
 
 ```markdown
 ---
-id: COM-NNN-slug
+id: C3-1NN-slug
 title: Order Flow Component
 nature: Business Logic
 ---
 
-# [COM-NNN-slug] Order Flow (Business Logic Nature)
+# [C3-1NN-slug] Order Flow (Business Logic Nature)
 
 ## Overview
 Core order processing - the "messy" heart of order handling.
 
-## Domain Rules {#com-nnn-rules}
+## Domain Rules {#c3-1nn-rules}
 | Rule | Condition | Action |
 |------|-----------|--------|
 | Stock check | Before confirm | Validate inventory |
 | Price lock | On add to cart | Lock price for 15min |
 | Tax calculation | At checkout | Apply regional rules |
 
-## Edge Cases {#com-nnn-edge-cases}
+## Edge Cases {#c3-1nn-edge-cases}
 - Partial fulfillment when stock insufficient
 - Price change during checkout flow
 - Concurrent modifications to same order
 
-## Flow {#com-nnn-flow}
+## Flow {#c3-1nn-flow}
 [Flowchart or sequence diagram as appropriate]
 
-## Dependencies {#com-nnn-deps}
+## Dependencies {#c3-1nn-deps}
 - Upstream: [components this depends on]
 - Downstream: [components that depend on this]
-- Infra features consumed: [CON-xxx#features]
+- Infra features consumed: [C3-x#features]
 ```
 
 ### Component Checklist (must be true to call COM done)
@@ -455,7 +455,7 @@ Core order processing - the "messy" heart of order handling.
 - [ ] Error handling table present
 - [ ] Usage example shows intended invocation
 - [ ] Dependencies section lists upstream/downstream components and consumed infra features
-- [ ] All anchors use `{#com-xxx-*}` format for stable linking
+- [ ] All anchors use `{#c3-xxx-*}` format for stable linking
 
 ### Key Principle
 

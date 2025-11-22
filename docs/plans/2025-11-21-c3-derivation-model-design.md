@@ -38,19 +38,19 @@
 ## Containers {#ctx-xxx-containers}
 | Container | Type (Code/Infra) | Description |
 |-----------|-------------------|-------------|
-| [CON-XXX-name](./containers/CON-XXX-name.md) | Code | ... |
+| [C3-X-name](./containers/C3-X-name.md) | Code | ... |
 | ... | ... | ... |
 
 ## Protocols {#ctx-xxx-protocols}
 | From | To | Protocol | Implementations |
 |------|----|----------|-----------------|
-| Frontend | Backend | REST/HTTPS | [CON-002#api], [CON-001#rest] |
+| Frontend | Backend | REST/HTTPS | [C3-2#api], [C3-1#rest] |
 | ... | ... | ... | ... |
 
 ## Cross-Cutting {#ctx-xxx-cross-cutting}
-- Auth: ... implemented in [CON-####auth]
-- Logging: ... implemented in [CON-####logging]
-- Error strategy: ... implemented in [CON-####errors]
+- Auth: ... implemented in [C3-X#auth]
+- Logging: ... implemented in [C3-X#logging]
+- Error strategy: ... implemented in [C3-X#errors]
 
 ## Deployment Topology {#ctx-xxx-deployment}
 - Diagram or bullets for high-level infra layout
@@ -63,43 +63,43 @@
 - Cross-cutting decisions listed with downward links to container sections.
 - Topology described (diagram or text).
 
-### Code Container Document (CON-###, type=Code)
+### Code Container Document (C3-C, type=Code)
 **Purpose:** What this container does and with what components; how it fulfills Context protocols and cross-cutting choices.
 
 **Template:**
 ```markdown
-# CON-XXX <Name> (Code)
+# C3-X <Name> (Code)
 
-## Technology Stack {#con-xxx-stack}
+## Technology Stack {#c3-x-stack}
 - Runtime, language, framework
 
-## Protocol Implementations {#con-xxx-protocols}
+## Protocol Implementations {#c3-x-protocols}
 | Protocol (from CTX) | Implemented In |
 |---------------------|----------------|
-| REST/HTTPS auth | [COM-002-auth] |
+| REST/HTTPS auth | [C3-X02-auth] |
 | ... | ... |
 
-## Component Relationships {#con-xxx-relationships}
+## Component Relationships {#c3-x-relationships}
 ```mermaid
 flowchart LR
     ... component flow ...
 ```
 
-## Data Flow {#con-xxx-data-flow}
+## Data Flow {#c3-x-data-flow}
 ```mermaid
 sequenceDiagram
     ... request/response path ...
 ```
 
-## Container Cross-Cutting {#con-xxx-cross-cutting}
-- Logging: implemented by [COM-0xx-logger]
-- Error handling: implemented by [COM-0xx-errors]
+## Container Cross-Cutting {#c3-x-cross-cutting}
+- Logging: implemented by [C3-Xxx-logger]
+- Error handling: implemented by [C3-Xxx-errors]
 - Validation/observability/etc.: links to components
 
-## Components {#con-xxx-components}
+## Components {#c3-x-components}
 | Component | Nature | Responsibility |
 |-----------|--------|----------------|
-| [COM-001-name](../components/COM-001-name.md) | Entrypoint | ... |
+| [C3-X01-name](../components/C3-X01-name.md) | Entrypoint | ... |
 | ... | ... | ... |
 ```
 
@@ -111,25 +111,25 @@ sequenceDiagram
 - Cross-cutting choices mapped to components.
 - Component inventory complete with nature + responsibility.
 
-### Infrastructure Container Document (CON-###, type=Infra)
+### Infrastructure Container Document (C3-C, type=Infra)
 **Purpose:** Leaf node describing platform service features that code containers consume.
 
 **Template:**
 ```markdown
-# CON-XXX <Name> (Infrastructure)
+# C3-X <Name> (Infrastructure)
 
-## Engine {#con-xxx-engine}
+## Engine {#c3-x-engine}
 - Version/edition, deployment mode
 
-## Configuration {#con-xxx-config}
+## Configuration {#c3-x-config}
 | Setting | Value | Why |
 |---------|-------|-----|
 | ... | ... | ... |
 
-## Features Provided {#con-xxx-features}
+## Features Provided {#c3-x-features}
 | Feature | Consumed By |
 |---------|-------------|
-| WAL logical replication | [CON-001#components] → [COM-005-event-streaming] |
+| WAL logical replication | [C3-1#components] → [C3-105-event-streaming] |
 | ... | ... |
 ```
 
@@ -139,28 +139,28 @@ sequenceDiagram
 - Features table lists capabilities with links to consuming code containers/components.
 - No component-level sections; this is a leaf.
 
-### Component Document (COM-###)
+### Component Document (C3-CNN)
 **Purpose:** HOW the component works; implementation detail level.
 
 **Template:**
 ```markdown
-# COM-XXX <Name> (<Nature>)
+# C3-XNN <Name> (<Nature>)
 
-## Overview {#com-xxx-overview}
+## Overview {#c3-xnn-overview}
 - Responsibility and how it fits container protocols/cross-cutting.
 
-## Stack {#com-xxx-stack}
+## Stack {#c3-xnn-stack}
 - Library/version choices; why selected.
 
-## Configuration {#com-xxx-config}
+## Configuration {#c3-xnn-config}
 | Env Var | Dev | Prod | Why |
 |---------|-----|------|-----|
 | ... | ... | ... |
 
-## Interfaces & Types {#com-xxx-interfaces}
+## Interfaces & Types {#c3-xnn-interfaces}
 - Signatures, DTOs, events; link to schemas.
 
-## Behavior {#com-xxx-behavior}
+## Behavior {#c3-xnn-behavior}
 - Narrative plus diagram where helpful.
 ```mermaid
 stateDiagram-v2
@@ -168,17 +168,17 @@ stateDiagram-v2
 ```
 - Alternative: flowchart/sequence/ERD depending on need.
 
-## Error Handling {#com-xxx-errors}
+## Error Handling {#c3-xnn-errors}
 | Error | Retriable | Action/Code |
 |-------|-----------|-------------|
 | ... | ... | ... |
 
-## Usage {#com-xxx-usage}
+## Usage {#c3-xnn-usage}
 ```typescript
 // exemplar usage
 ```
 
-## Dependencies {#com-xxx-deps}
+## Dependencies {#c3-xnn-deps}
 - Upstream/downstream components; infra features consumed.
 ```
 
@@ -197,7 +197,7 @@ stateDiagram-v2
 - **Context → Container:** Every protocol and cross-cutting item in CTX links to specific container sections describing implementation. Containers must not invent protocols absent from CTX without updating CTX.
 - **Container → Component:** Every protocol or cross-cutting implementation in a code container maps to specific components/sections. Component inventory must cover all behavior shown in relationships/data-flow diagrams.
 - **Infrastructure:** Features listed in infra containers must be cited by consuming components; infra docs are final leaves.
-- **Anchors:** Use `{#ctx-xxx-...}`, `{#con-xxx-...}`, `{#com-xxx-...}` so downward links are stable.
+- **Anchors:** Use `{#ctx-xxx-...}`, `{#c3-x-...}`, `{#c3-xnn-...}` so downward links are stable.
 - **No upward duplication:** lower layers do not redefine relationships; they implement and link back downwards only.
 
 ---

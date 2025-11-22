@@ -12,7 +12,7 @@ Explore Container-level impact during the scoping phase of c3-design. Container 
 **Abstraction Level:** WHAT and WHY, not HOW. Characteristics and architecture, not implementation code.
 
 **Announce at start:** "I'm using the c3-container-design skill to explore Container-level impact."
-**Naming:** Use `c3-naming` (unique `CON-###-slug`; components must include parent container code in IDs and filenames).
+**Naming:** Use `c3-naming` (unique `C3-<C>-slug`; components must include parent container digit in IDs and filenames).
 
 ## When Invoked
 
@@ -52,9 +52,9 @@ Containers come in two types with different documentation focus:
 | Container responsibilities | What this container does | "Handles API requests" |
 | Component relationships | How components connect (flowchart) | Entry → Auth → Business → DB |
 | Data flow | How data moves through (sequence diagram) | Request → Validate → Process → Store |
-| Component inventory | WHAT components exist (links to Component docs) | [COM-001], [COM-002] |
-| Container cross-cutting | Logging, error handling within container | [COM-006-logger], [COM-007-error-handler] |
-| Protocol implementations | How this container implements Context protocols | [COM-001#rest-endpoints] |
+| Component inventory | WHAT components exist (links to Component docs) | [C3-101], [C3-102] |
+| Container cross-cutting | Logging, error handling within container | [C3-106-logger], [C3-107-error-handler] |
+| Protocol implementations | How this container implements Context protocols | [C3-101#rest-endpoints] |
 | API surface | Endpoints exposed | `POST /api/v1/tasks` |
 | Data ownership | What data this owns | "User accounts, Tasks" |
 | Inter-container communication | How it talks to siblings | "REST to Backend, SQL to DB" |
@@ -278,15 +278,15 @@ When creating or validating Container documentation, ask:
 Use c3-locate to retrieve:
 
 ```
-c3-locate CON-001                    # Overview
-c3-locate #con-001-technology-stack  # Tech choices
-c3-locate #con-001-middleware        # Request pipeline
-c3-locate #con-001-components        # Internal structure
-c3-locate #con-001-api-endpoints     # API surface
-c3-locate #con-001-communication     # Inter-container
-c3-locate #con-001-data              # Data ownership
-c3-locate #con-001-configuration     # Config approach
-c3-locate #con-001-deployment        # Deployment details
+c3-locate C3-1-backend               # Overview
+c3-locate #c3-1-technology-stack     # Tech choices
+c3-locate #c3-1-middleware           # Request pipeline
+c3-locate #c3-1-components           # Internal structure
+c3-locate #c3-1-api-endpoints        # API surface
+c3-locate #c3-1-communication        # Inter-container
+c3-locate #c3-1-data                 # Data ownership
+c3-locate #c3-1-configuration        # Config approach
+c3-locate #c3-1-deployment           # Deployment details
 ```
 
 ## Impact Signals
@@ -316,25 +316,25 @@ Code containers have components and use **downward linking**:
 
 ```markdown
 ---
-id: CON-NNN-slug
+id: C3-<C>-slug
 title: [Container Name] Container (Code)
 summary: >
   [Why read this document - what it covers]
 ---
 
-# [CON-NNN-slug] [Container Name] Container (Code)
+# [C3-<C>-slug] [Container Name] Container (Code)
 
-## Overview {#con-nnn-overview}
+## Overview {#c3-<c>-overview}
 <!--
 High-level description of container purpose and responsibilities.
 -->
 
-## Technology Stack {#con-nnn-stack}
+## Technology Stack {#c3-<c>-stack}
 - Runtime: Node.js 20
 - Framework: Express 4.18
 - Language: TypeScript 5.x
 
-## Component Relationships {#con-nnn-relationships}
+## Component Relationships {#c3-<c>-relationships}
 <!--
 Flowchart showing how components connect.
 -->
@@ -350,7 +350,7 @@ flowchart LR
     DB -.-> Log
 ```
 
-## Data Flow {#con-nnn-data-flow}
+## Data Flow {#c3-<c>-data-flow}
 <!--
 Sequence diagram showing how data moves through container.
 -->
@@ -372,28 +372,28 @@ sequenceDiagram
     Routes-->>Client: 201 Created
 ```
 
-## Container Cross-Cutting {#con-nnn-cross-cutting}
+## Container Cross-Cutting {#c3-<c>-cross-cutting}
 
-### Logging {#con-nnn-logging}
+### Logging {#c3-<c>-logging}
 - Structured JSON, correlation IDs passed through
-- Implemented by: [COM-006-logger](./components/CON-NNN/COM-006-logger.md)
+- Implemented by: [C3-106-logger](./components/<container-slug>/C3-106-logger.md)
 
-### Error Handling {#con-nnn-error-handling}
+### Error Handling {#c3-<c>-error-handling}
 - Unified error format, error codes catalog
-- Implemented by: [COM-007-error-handler](./components/CON-NNN/COM-007-error-handler.md)
+- Implemented by: [C3-107-error-handler](./components/<container-slug>/C3-107-error-handler.md)
 
-## Components {#con-nnn-components}
+## Components {#c3-<c>-components}
 <!--
 Links DOWN to Component docs. Reader follows links to dive deeper.
 -->
 | Component | Nature | Responsibility |
 |-----------|--------|----------------|
-| [COM-001-rest-routes](./components/CON-NNN/COM-001-rest-routes.md) | Entrypoint | HTTP handling |
-| [COM-002-auth-middleware](./components/CON-NNN/COM-002-auth-middleware.md) | Cross-cutting | Token validation |
-| [COM-003-db-pool](./components/CON-NNN/COM-003-db-pool.md) | Resource | Connection management |
-| [COM-004-order-flow](./components/CON-NNN/COM-004-order-flow.md) | Business | Order processing |
+| [C3-101-rest-routes](./components/<container-slug>/C3-101-rest-routes.md) | Entrypoint | HTTP handling |
+| [C3-102-auth-middleware](./components/<container-slug>/C3-102-auth-middleware.md) | Cross-cutting | Token validation |
+| [C3-103-db-pool](./components/<container-slug>/C3-103-db-pool.md) | Resource | Connection management |
+| [C3-104-order-flow](./components/<container-slug>/C3-104-order-flow.md) | Business | Order processing |
 
-## Related {#con-nnn-related}
+## Related {#c3-<c>-related}
 ```
 
 ### Code Container Checklist (must be true to call CON done)
@@ -404,7 +404,7 @@ Links DOWN to Component docs. Reader follows links to dive deeper.
 - [ ] Sequence diagram shows data flow (must exist)
 - [ ] Cross-cutting choices mapped to implementing components
 - [ ] Component inventory complete with Nature + Responsibility
-- [ ] All anchors use `{#con-xxx-*}` format for stable linking
+- [ ] All anchors use `{#c3-<c>-*}` format for stable linking
 
 ### Infrastructure Container Template
 
@@ -412,31 +412,31 @@ Infrastructure containers are **LEAF NODES** - no components, focus on features 
 
 ```markdown
 ---
-id: CON-NNN-slug
+id: C3-<C>-slug
 title: [Infrastructure Name] Container (Infrastructure)
 summary: >
   [Why read this document - what it covers]
 ---
 
-# [CON-NNN-slug] [Infrastructure Name] Container (Infrastructure)
+# [C3-<C>-slug] [Infrastructure Name] Container (Infrastructure)
 
-## Engine {#con-nnn-engine}
+## Engine {#c3-<c>-engine}
 PostgreSQL 15
 
-## Configuration {#con-nnn-config}
+## Configuration {#c3-<c>-config}
 | Setting | Value | Why |
 |---------|-------|-----|
 | max_connections | 100 | Support pooling from backend |
 | wal_level | logical | Enable event streaming |
 
-## Features Provided {#con-nnn-features}
+## Features Provided {#c3-<c>-features}
 <!--
 Features that code containers consume. No downward links - this is a leaf node.
 -->
 | Feature | Used By |
 |---------|---------|
-| WAL logical replication | [CON-001-backend] → [COM-005-event-streaming] |
-| LISTEN/NOTIFY | [CON-001-backend] → [COM-003-db-pool] |
+| WAL logical replication | [C3-1-backend] → [C3-105-event-streaming] |
+| LISTEN/NOTIFY | [C3-1-backend] → [C3-103-db-pool] |
 ```
 
 ### Infrastructure Container Checklist (must be true to call CON done)
@@ -445,7 +445,7 @@ Features that code containers consume. No downward links - this is a leaf node.
 - [ ] Configuration table with settings and rationale
 - [ ] Features table lists capabilities with links to consuming code containers/components
 - [ ] No component-level sections (this is a leaf node)
-- [ ] All anchors use `{#con-xxx-*}` format for stable linking
+- [ ] All anchors use `{#c3-<c>-*}` format for stable linking
 
 ### Reference Direction Principle
 

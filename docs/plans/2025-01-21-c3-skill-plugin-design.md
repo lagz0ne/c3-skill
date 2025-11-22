@@ -98,8 +98,8 @@ c3-skill/
 | Category | Prefix | Location | Example |
 |----------|--------|----------|---------|
 | Context | `CTX-` | `.c3/` | `CTX-001-system-overview.md` |
-| Container | `CON-` | `.c3/containers/` | `CON-001-backend.md` |
-| Component | `COM-` | `.c3/components/{container}/` | `COM-001-db-pool.md` |
+| Container | `C3-C-` | `.c3/containers/` | `C3-1-backend.md` |
+| Component | `C3-CNN-` | `.c3/components/{container}/` | `C3-101-db-pool.md` |
 | ADR | `ADR-` | `.c3/adr/` | `ADR-001-rest-api.md` |
 
 ### Simplified Frontmatter
@@ -107,7 +107,7 @@ c3-skill/
 **Document-Level** (focuses on summary):
 ```yaml
 ---
-id: COM-001-db-pool
+id: C3-101-db-pool
 title: Database Connection Pool Component
 summary: >
   Explains PostgreSQL connection pooling strategy, configuration, and
@@ -118,7 +118,7 @@ summary: >
 
 **Heading-Level** (optional, for important sections):
 ```markdown
-## Configuration {#com-001-configuration}
+## Configuration {#c3-101-configuration}
 <!--
 Explains environment variables, configuration loading strategy, and
 differences between development and production. Read this section to
@@ -134,10 +134,10 @@ understand how to configure the connection pool for different environments.
 ├── TOC.md                        # Auto-generated (never edit)
 ├── CTX-XXX-*.md                  # Context documents
 ├── containers/
-│   └── CON-XXX-*.md              # Container documents
+│   └── C3-X-*.md                 # Container documents
 ├── components/
 │   ├── {container-name}/
-│   │   └── COM-XXX-*.md          # Component documents
+│   │   └── C3-XNN-*.md           # Component documents
 ├── adr/
 │   └── ADR-XXX-*.md              # Architecture decisions
 ├── scripts/
@@ -160,7 +160,7 @@ understand how to configure the connection pool for different environments.
 - High-level concerns (gateway, deployment, auth, protocols)
 
 **Output**:
-- `.c3/CTX-XXX-{slug}.md` with:
+- `.c3/CTX-###-{slug}.md` with:
   - Architecture/flowchart diagram (required)
   - Sequence diagrams for protocols
   - Flow diagrams for special concepts
@@ -180,7 +180,7 @@ understand how to configure the connection pool for different environments.
 **Abstraction Level**: WHAT and WHY, not HOW. Focus on characteristics and properties, not code.
 
 **Output**:
-- `.c3/containers/CON-XXX-{slug}.md` with:
+- `.c3/containers/C3-C-{slug}.md` with:
   - C4 Container diagram or component structure
   - Middleware pipeline diagram
   - Data flow diagrams
@@ -199,7 +199,7 @@ understand how to configure the connection pool for different environments.
 **Abstraction Level**: Implementation details. Code examples and configuration snippets are appropriate.
 
 **Output**:
-- `.c3/components/{container-name}/COM-XXX-{slug}.md` with:
+- `.c3/components/{container-name}/C3-CNN-{slug}.md` with:
   - Sequence/class/state/flow diagrams
   - Configuration examples
   - Code snippets where helpful
@@ -210,7 +210,7 @@ understand how to configure the connection pool for different environments.
 **Purpose**: Document architectural decisions with progressive detail across C3 levels.
 
 **Output**:
-- `.c3/adr/ADR-XXX-{slug}.md` with:
+- `.c3/adr/ADR-###-{slug}.md` with:
   - Context: Current situation and why change needed
   - Decision: High-level approach (Context level first)
   - Container-level details

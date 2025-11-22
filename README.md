@@ -118,7 +118,7 @@ summary: >
 Every heading has a unique anchor:
 
 ```markdown
-## Configuration {#com-001-configuration}
+## Configuration {#C3-101-configuration}
 <!--
 Explains environment variables and configuration loading. Read to understand
 how to configure the pool for different environments.

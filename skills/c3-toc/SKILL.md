@@ -25,14 +25,14 @@ The TOC reflects the physical organization of `.c3/`:
 ├── TOC.md                           # This index
 ├── CTX-001-*.md                     # Context level (root)
 ├── containers/
-│   ├── CON-001-*.md                 # Container level
-│   └── CON-002-*.md
+│   ├── C3-1-backend.md              # Container 1
+│   └── C3-2-frontend.md             # Container 2
 ├── components/
 │   ├── backend/                     # Grouped by container
-│   │   ├── COM-001-*.md
-│   │   └── COM-002-*.md
+│   │   ├── C3-101-db-pool.md        # Container 1, Component 01
+│   │   └── C3-102-auth-service.md   # Container 1, Component 02
 │   └── frontend/
-│       └── COM-003-*.md
+│       └── C3-201-ui-router.md      # Container 2, Component 01
 └── adr/
     ├── ADR-001-*.md
     └── ADR-002-*.md
@@ -42,8 +42,8 @@ The TOC reflects the physical organization of `.c3/`:
 
 ```
 CTX (Context)
- └── CON (Container)
-      └── COM (Component)
+ └── C3-<C> (Container, e.g., C3-1-backend)
+      └── C3-<C><NN> (Component, e.g., C3-101-db-pool)
 
 ADR (Decisions) - Cross-cutting, linked to affected levels
 ```
@@ -85,8 +85,8 @@ cat .c3/TOC.md
 # Quick count of documents
 grep -c "^### \|^#### " .c3/TOC.md
 
-# Find all document IDs
-grep -oP "(?<=\[)[A-Z]{3}-[0-9]{3}[^\]]*(?=\])" .c3/TOC.md | sort -u
+# Find all document IDs (CTX, ADR, and C3 patterns)
+grep -oP "(?<=\[)(CTX-[0-9]{3}|ADR-[0-9]{3}|C3-[0-9]+)[^\]]*(?=\])" .c3/TOC.md | sort -u
 ```
 
 ## Rebuilding TOC
@@ -99,7 +99,7 @@ When documents change, rebuild TOC:
 
 ### What the Script Does
 
-1. **Scans directories** for CTX/CON/COM/ADR files
+1. **Scans directories** for CTX/C3-*/ADR files
 2. **Extracts frontmatter** (id, title, summary, status)
 3. **Lists headings** with their IDs and summaries
 4. **Organizes by level** with proper nesting
@@ -123,7 +123,7 @@ find .c3 -name "*.md" ! -name "TOC.md" | sort
 
 # Compare with TOC entries
 diff <(find .c3 -name "*.md" ! -name "TOC.md" -exec basename {} .md \; | sort) \
-     <(grep -oP "(?<=\[)[A-Z]{3}-[0-9]{3}[^\]]*(?=\])" .c3/TOC.md | sort -u)
+     <(grep -oP "(?<=\[)(CTX-[0-9]{3}|ADR-[0-9]{3}|C3-[0-9]+)[^\]]*(?=\])" .c3/TOC.md | sort -u)
 ```
 
 ## Build Script Reference
@@ -253,8 +253,8 @@ find .c3 -name "*.md" ! -name "TOC.md" | while read f; do
 done
 
 # Check for stale entries
-grep -oP "(?<=\[)[A-Z]{3}-[0-9]{3}[^\]]*(?=\])" .c3/TOC.md | while read id; do
-    if ! find .c3 -name "${id}.md" | grep -q .; then
+grep -oP "(?<=\[)(CTX-[0-9]{3}|ADR-[0-9]{3}|C3-[0-9]+)[^\]]*(?=\])" .c3/TOC.md | while read id; do
+    if ! find .c3 -name "${id}*.md" | grep -q .; then
         echo "Stale TOC entry: $id"
     fi
 done
@@ -268,8 +268,8 @@ tail -3 .c3/TOC.md
 
 # Or calculate fresh
 echo "Contexts: $(find .c3 -maxdepth 1 -name 'CTX-*.md' | wc -l)"
-echo "Containers: $(find .c3/containers -name 'CON-*.md' 2>/dev/null | wc -l)"
-echo "Components: $(find .c3/components -name 'COM-*.md' 2>/dev/null | wc -l)"
+echo "Containers: $(find .c3/containers -name 'C3-[0-9]-*.md' 2>/dev/null | wc -l)"
+echo "Components: $(find .c3/components -name 'C3-[0-9][0-9][0-9]-*.md' 2>/dev/null | wc -l)"
 echo "ADRs: $(find .c3/adr -name 'ADR-*.md' 2>/dev/null | wc -l)"
 ```
 

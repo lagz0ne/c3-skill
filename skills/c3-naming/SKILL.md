@@ -29,6 +29,29 @@ Short, container-aware names prevent collisions and make derivation obvious. Dro
 | Component | `C3-<C><NN>-slug` (`NN` = 01-99 inside container `C`; use 3 digits if needed) | `.c3/components/<container-slug>/C3-<C><NN>-slug.md` | `C3-101-api-client.md` under `components/backend/` |
 | ADR | `ADR-###-slug` | `.c3/adr/ADR-###-slug.md` | `ADR-002-postgresql.md` |
 
+## Search Patterns
+
+Container and component IDs share the `C3-` prefix but differ in digit count. Use these patterns for reliable extraction:
+
+| Element | Simple Search | Regex Pattern | Notes |
+|---------|--------------|---------------|-------|
+| Context | `CTX-` | `CTX-\d{3}-` | Always 3 digits |
+| Container | Find `C3-X-` where X is 1-9 | `C3-\d-[a-z]` | Single digit + dash + letter |
+| Component | Find `C3-XXX-` where XXX is 3+ digits | `C3-\d{3,}-` | 3+ digits encode container + sequence |
+| ADR | `ADR-` | `ADR-\d{3}-` | Always 3 digits |
+
+**Examples:**
+```bash
+# Find all containers
+grep -E 'C3-[0-9]-[a-z]' .c3/
+
+# Find all components
+grep -E 'C3-[0-9]{3,}-' .c3/
+
+# Find components of container 2 specifically
+grep -E 'C3-2[0-9]{2}-' .c3/
+```
+
 ## Flow (small)
 ```mermaid
 flowchart TD
@@ -47,7 +70,7 @@ flowchart TD
 4) File paths mirror IDs:
    - Container: `.c3/containers/C3-2-frontend.md`
    - Component: `.c3/components/frontend/C3-201-api-client.md`
-5) Update links to use new IDs and anchors (`{#con-xxx-*}`, `{#com-xxx-*}`) after renaming.
+5) Update links to use new IDs and anchors (`{#c3-xxx-*}` for containers/components, `{#ctx-xxx-*}` for context, `{#adr-xxx-*}` for ADRs) after renaming.
 
 ## Excellent Example (single)
 ```

@@ -9,7 +9,7 @@ description: Retrieve C3 documentation content by document or heading ID - suppo
 
 Retrieve content from `.c3/` documentation by document ID or heading ID. Supports the exploration phase of c3-design by enabling precise, ID-based content lookup.
 
-**Core principle:** IDs are the primary navigation. Use document IDs (CTX-001, CON-002, COM-003) and heading IDs (#con-001-middleware) for precise retrieval.
+**Core principle:** IDs are the primary navigation. Use document IDs (CTX-001, C3-2, C3-201) and heading IDs (#c3-1-middleware) for precise retrieval.
 
 ## Quick Reference
 
@@ -27,8 +27,8 @@ Retrieve document frontmatter and overview:
 
 ```
 c3-locate CTX-001
-c3-locate CON-001-backend
-c3-locate COM-002-auth-middleware
+c3-locate C3-1-backend
+c3-locate C3-102-auth-middleware
 c3-locate ADR-003-caching-strategy
 ```
 
@@ -42,8 +42,8 @@ c3-locate ADR-003-caching-strategy
 Retrieve specific section from any document:
 
 ```
-c3-locate #con-001-middleware
-c3-locate #com-002-configuration
+c3-locate #c3-1-middleware
+c3-locate #c3-102-configuration
 c3-locate #adr-003-consequences
 ```
 
@@ -57,8 +57,8 @@ c3-locate #adr-003-consequences
 Retrieve specific section from specific document:
 
 ```
-c3-locate CON-001 #con-001-middleware
-c3-locate COM-002 #com-002-error-handling
+c3-locate C3-1 #c3-1-middleware
+c3-locate C3-102 #c3-102-error-handling
 ```
 
 **Returns:**
@@ -69,17 +69,20 @@ c3-locate COM-002 #com-002-error-handling
 ### Finding Documents by ID
 
 ```bash
-# Document ID pattern: {TYPE}-{NNN}-{slug}
-# TYPE: CTX, CON, COM, ADR
+# Document ID patterns:
+# Context: CTX-###-slug (e.g., CTX-001-system-overview)
+# Container: C3-<C>-slug where C is single digit (e.g., C3-1-backend)
+# Component: C3-<C><NN>-slug where C is container, NN is 01-99 (e.g., C3-101-db-pool)
+# ADR: ADR-###-slug (e.g., ADR-001-caching-strategy)
 
 # Context documents
 find .c3 -maxdepth 1 -name "CTX-*.md"
 
-# Container documents
-find .c3/containers -name "CON-*.md"
+# Container documents (C3-<digit>-*.md)
+find .c3/containers -name "C3-[0-9]-*.md"
 
-# Component documents
-find .c3/components -name "COM-*.md"
+# Component documents (C3-<digit><two-digits>-*.md)
+find .c3/components -name "C3-[0-9][0-9][0-9]-*.md"
 
 # ADR documents
 find .c3/adr -name "ADR-*.md"
@@ -89,7 +92,7 @@ find .c3/adr -name "ADR-*.md"
 
 ```bash
 # Extract frontmatter from document
-awk '/^---$/,/^---$/ {print}' .c3/containers/CON-001-backend.md
+awk '/^---$/,/^---$/ {print}' .c3/containers/C3-1-backend.md
 ```
 
 ### Finding Heading by ID
@@ -98,7 +101,7 @@ awk '/^---$/,/^---$/ {print}' .c3/containers/CON-001-backend.md
 # Heading pattern: ## Title {#heading-id}
 # Find heading and extract content until next heading
 
-awk -v hid="con-001-middleware" '
+awk -v hid="c3-1-middleware" '
   $0 ~ "{#" hid "}" {
     found = 1
     print
@@ -106,14 +109,14 @@ awk -v hid="con-001-middleware" '
   }
   found && /^## / { exit }
   found { print }
-' .c3/containers/CON-001-backend.md
+' .c3/containers/C3-1-backend.md
 ```
 
 ### Extracting Heading Summary
 
 ```bash
 # Summary is in HTML comment after heading
-awk -v hid="con-001-middleware" '
+awk -v hid="c3-1-middleware" '
   $0 ~ "{#" hid "}" {
     getline
     if ($0 ~ /^<!--/) {
@@ -130,7 +133,7 @@ awk -v hid="con-001-middleware" '
     }
     print
   }
-' .c3/containers/CON-001-backend.md
+' .c3/containers/C3-1-backend.md
 ```
 
 ## During Exploration
@@ -138,21 +141,21 @@ awk -v hid="con-001-middleware" '
 Use c3-locate to investigate hypothesis:
 
 ```
-Hypothesis: "This affects CON-001 middleware"
+Hypothesis: "This affects C3-1 middleware"
 
 Exploration:
-1. c3-locate CON-001
+1. c3-locate C3-1
    → Get overview, see what components exist
 
-2. c3-locate #con-001-middleware
+2. c3-locate #c3-1-middleware
    → Read middleware section details
 
-3. c3-locate #con-001-components
+3. c3-locate #c3-1-components
    → See component organization
 
-4. Discover: "Ah, this actually touches COM-002-auth-middleware"
+4. Discover: "Ah, this actually touches C3-102-auth-middleware"
 
-5. c3-locate COM-002
+5. c3-locate C3-102
    → Deeper exploration of that component
 ```
 
@@ -160,11 +163,11 @@ Exploration:
 
 | Pattern | Level | Example |
 |---------|-------|---------|
-| `CTX-NNN-slug` | Context | CTX-001-system-overview |
-| `CON-NNN-slug` | Container | CON-001-backend |
-| `COM-NNN-slug` | Component | COM-002-auth-middleware |
-| `ADR-NNN-slug` | Decision | ADR-003-caching-strategy |
-| `#doc-nnn-section` | Heading | #con-001-middleware |
+| `CTX-###-slug` | Context | CTX-001-system-overview |
+| `C3-<C>-slug` | Container | C3-1-backend |
+| `C3-<C><NN>-slug` | Component | C3-102-auth-middleware |
+| `ADR-###-slug` | Decision | ADR-003-caching-strategy |
+| `#c3-xxx-section` | Heading | #c3-1-middleware, #c3-102-config |
 
 ## Fallback: Discovery Mode
 
@@ -182,13 +185,13 @@ When you don't know the ID yet (rare):
 Called during EXPLORE phase of iterative scoping:
 
 ```
-HYPOTHESIZE → "Affects CON-001"
+HYPOTHESIZE → "Affects C3-1"
      ↓
 EXPLORE
-  ├── c3-locate CON-001 (isolated)
+  ├── c3-locate C3-1 (isolated)
   ├── c3-locate CTX-001 #ctx-001-containers (upstream)
-  ├── c3-locate CON-002 (adjacent)
-  └── c3-locate COM-001, COM-002 (downstream)
+  ├── c3-locate C3-2 (adjacent)
+  └── c3-locate C3-101, C3-102 (downstream)
      ↓
 DISCOVER → Refine or confirm hypothesis
 ```

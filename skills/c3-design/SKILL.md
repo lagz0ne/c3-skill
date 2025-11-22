@@ -53,7 +53,7 @@ If `.c3/` doesn't exist:
 
 3. **Form initial hypothesis** (THINKING, not asking)
    - Which layer? (Context / Container / Component)
-   - Which specific element? (CTX-001? CON-002? COM-003?)
+   - Which specific element? (CTX-001? C3-2-backend? C3-103-db-pool?)
    - Why do you think so?
    - What's uncertain?
 
@@ -109,8 +109,8 @@ Investigate hypothesis in 4 directions:
 - `c3-component-design` - Explore Component-level impact
 
 **Socratic questions during exploration** to confirm understanding:
-- "Based on CON-001, the auth middleware handles tokens. Is that still accurate?"
-- "I see COM-002 depends on this. Does that dependency need to change?"
+- "Based on C3-1-backend, the auth middleware handles tokens. Is that still accurate?"
+- "I see C3-102-auth-service depends on this. Does that dependency need to change?"
 
 #### DISCOVER
 
@@ -199,13 +199,13 @@ Specific changes to each affected document.
 -->
 
 ### Context Level
-- [CTX-XXX]: [What changes, why]
+- [CTX-###-slug]: [What changes, why]
 
 ### Container Level
-- [CON-XXX]: [What changes, why]
+- [C3-<C>-slug]: [What changes, why]
 
 ### Component Level
-- [COM-XXX]: [What changes, why]
+- [C3-<C><NN>-slug]: [What changes, why]
 
 ## Verification {#adr-{nnn}-verification}
 <!--
@@ -242,8 +242,8 @@ Use the Skill tool to invoke during exploration:
 
 Goal: sanity check `examples/.c3` before sharing with others.
 - **HYPOTHESIZE:** Index shows backend and frontend components reusing numbers; expect duplicate IDs and missing TOC.
-- **EXPLORE:** Open `examples/.c3/TOC.md`, scan backend components, check frontend client; confirm legacy CON/COM prefixes caused collisions (e.g., COM-004 reused by logger and API client, REST routes sharing numbers).
-- **DISCOVER:** Add the TOC, align IDs to `C3-<digit>`/`C3-<digit><NN>` (e.g., C3-106 for REST routes, C3-201 for API client), drop legacy duplicates, and refresh index links.
+- **EXPLORE:** Open `examples/.c3/TOC.md`, scan backend components, check frontend client; confirm legacy CON/COM prefixes caused collisions (e.g., **before:** `COM-004` reused by logger and API client, REST routes sharing numbers).
+- **DISCOVER:** Add the TOC, align IDs to `C3-<C>`/`C3-<C><NN>` (e.g., `C3-106-rest-routes` for REST routes, `C3-201-api-client` for frontend API client), drop legacy duplicates, and refresh index links.
 - **Outcome:** Unique IDs and clean downward links ready for ADR and implementation work.
 
 ## Key Principles

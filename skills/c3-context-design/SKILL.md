@@ -12,7 +12,7 @@ Explore Context-level impact during the scoping phase of c3-design. Context is t
 **Abstraction Level:** WHAT exists and HOW they relate. No implementation details.
 
 **Announce at start:** "I'm using the c3-context-design skill to explore Context-level impact."
-**Naming:** Apply `c3-naming` (CTX/CON IDs follow patterns; anchors `{#ctx-xxx-*}`).
+**Naming:** Apply `c3-naming` (CTX/C3 IDs follow patterns; anchors `{#ctx-xxx-*}`).
 
 ## When Invoked
 
@@ -36,7 +36,7 @@ Also called by c3-adopt to CREATE initial Context documentation.
 |---------|-------------|---------|
 | System boundary | Defines inside vs outside | "TaskFlow system includes..." |
 | Actors | Who/what interacts with system | Users, Admin, External APIs |
-| Container inventory | WHAT containers exist (links to Container docs) | "Backend API, Frontend, Database" → [CON-001], [CON-002] |
+| Container inventory | WHAT containers exist (links to Container docs) | "Backend API, Frontend, Database" → [C3-1-backend], [C3-2-frontend] |
 | Protocols between containers | Communication contracts | REST, gRPC, WebSocket |
 | Cross-cutting concerns | Span multiple containers | Auth strategy, logging approach |
 | Deployment topology | High-level infrastructure | Cloud, multi-region, CDN |
@@ -77,9 +77,9 @@ Ask: "Would changing this require coordinating multiple containers or external p
 ## Protocols {#ctx-001-protocols}
 | From | To | Protocol | Implementations |
 |------|-----|----------|--------------------|
-| Frontend | Backend | REST/HTTPS | [CON-002#api-calls], [CON-001#rest-endpoints] |
-| Backend | Postgres | SQL | [CON-001#db-access], [CON-003#config] |
-| Backend | Email Service | SMTP | [CON-001#email-integration] |
+| Frontend | Backend | REST/HTTPS | [C3-2-frontend#api-calls], [C3-1-backend#rest-endpoints] |
+| Backend | Postgres | SQL | [C3-1-backend#db-access], [C3-3-postgres#config] |
+| Backend | Email Service | SMTP | [C3-1-backend#email-integration] |
 ```
 
 **Key change:** Protocols table links DOWN to Container#sections that implement each side.
@@ -90,13 +90,13 @@ Ask: "Would changing this require coordinating multiple containers or external p
 ## Cross-Cutting Concerns {#ctx-001-cross-cutting}
 
 ### Authentication
-JWT-based, implemented in: [CON-001#auth-middleware], [CON-002#auth-handling]
+JWT-based, implemented in: [C3-1-backend#auth-middleware], [C3-2-frontend#auth-handling]
 
 ### Logging
-Structured JSON with correlation IDs, implemented in: [CON-001#logging], [CON-002#logging]
+Structured JSON with correlation IDs, implemented in: [C3-1-backend#logging], [C3-2-frontend#logging]
 
 ### Error Handling
-Unified error codes catalog, implemented in: [CON-001#error-handling], [CON-002#error-handling]
+Unified error codes catalog, implemented in: [C3-1-backend#error-handling], [C3-2-frontend#error-handling]
 ```
 
 **Key change:** Cross-cutting concerns link DOWN to Container#sections implementing them.
@@ -316,9 +316,9 @@ Lists all containers with links DOWN to their docs. Reader follows links to dive
 -->
 | Container | Type | Description |
 |-----------|------|-------------|
-| [CON-001-backend](./containers/CON-001-backend.md) | Code | REST API |
-| [CON-002-frontend](./containers/CON-002-frontend.md) | Code | Web UI |
-| [CON-003-postgres](./containers/CON-003-postgres.md) | Infrastructure | Data store |
+| [C3-1-backend](./containers/C3-1-backend.md) | Code | REST API |
+| [C3-2-frontend](./containers/C3-2-frontend.md) | Code | Web UI |
+| [C3-3-postgres](./containers/C3-3-postgres.md) | Infrastructure | Data store |
 
 ## Protocols {#ctx-nnn-protocols}
 <!--
@@ -326,18 +326,18 @@ Communication protocols with links DOWN to Container#sections implementing each 
 -->
 | From | To | Protocol | Implementations |
 |------|-----|----------|--------------------|
-| Frontend | Backend | REST/HTTPS | [CON-002#api-calls], [CON-001#rest-endpoints] |
-| Backend | Postgres | SQL | [CON-001#db-access], [CON-003#config] |
+| Frontend | Backend | REST/HTTPS | [C3-2-frontend#api-calls], [C3-1-backend#rest-endpoints] |
+| Backend | Postgres | SQL | [C3-1-backend#db-access], [C3-3-postgres#config] |
 
 ## Cross-Cutting Concerns {#ctx-nnn-cross-cutting}
 <!--
 System-wide concerns with links DOWN to Container#sections implementing them.
 -->
 ### Authentication
-JWT-based, implemented in: [CON-001#auth-middleware], [CON-002#auth-handling]
+JWT-based, implemented in: [C3-1-backend#auth-middleware], [C3-2-frontend#auth-handling]
 
 ### Logging
-Structured JSON with correlation IDs, implemented in: [CON-001#logging], [CON-002#logging]
+Structured JSON with correlation IDs, implemented in: [C3-1-backend#logging], [C3-2-frontend#logging]
 
 ## Deployment {#ctx-nnn-deployment}
 <!--

@@ -26,7 +26,8 @@ Retrieve content from `.c3/` documentation by document ID or heading ID. Support
 Retrieve document frontmatter and overview:
 
 ```
-c3-locate CTX-system-overview
+c3-locate context              # Primary context (README.md)
+c3-locate CTX-actors           # Auxiliary context
 c3-locate C3-1-backend
 c3-locate C3-102-auth-middleware
 c3-locate ADR-003-caching-strategy
@@ -70,19 +71,28 @@ c3-locate C3-102 #c3-102-error-handling
 
 ```bash
 # Document ID patterns:
-# Context: CTX-slug (e.g., CTX-system-overview)
+# Context (v2): id "context" maps to README.md
+# Context (v1/aux): CTX-slug (e.g., CTX-actors)
 # Container: C3-<C>-slug where C is single digit (e.g., C3-1-backend)
 # Component: C3-<C><NN>-slug where C is container, NN is 01-99 (e.g., C3-101-db-pool)
 # ADR: ADR-###-slug (e.g., ADR-001-caching-strategy)
 
-# Context documents
+# Primary context (v2)
+if [ "$ID" = "context" ]; then
+    find .c3 -maxdepth 1 -name "README.md"
+fi
+
+# Auxiliary context documents
 find .c3 -maxdepth 1 -name "CTX-*.md"
 
 # Container documents (C3-<digit>-*.md)
 find .c3/containers -name "C3-[0-9]-*.md"
 
-# Component documents (C3-<digit><two-digits>-*.md)
-find .c3/components -name "C3-[0-9][0-9][0-9]-*.md"
+# Component documents - check v2 flat first, then v1 nested
+# V2 flat:
+find .c3/components -maxdepth 1 -name "C3-[0-9][0-9][0-9]-*.md"
+# V1 nested (fallback):
+find .c3/components -mindepth 2 -name "C3-[0-9][0-9][0-9]-*.md"
 
 # ADR documents
 find .c3/adr -name "ADR-*.md"
@@ -161,14 +171,15 @@ Exploration:
 
 ## ID Conventions
 
-| Pattern | Level | Example |
-|---------|-------|---------|
-| `CTX-slug` | Context | CTX-system-overview |
-| `C3-<C>-slug` | Container | C3-1-backend |
-| `C3-<C><NN>-slug` | Component | C3-102-auth-middleware |
-| `ADR-###-slug` | Decision | ADR-003-caching-strategy |
-| `#ctx-section` | Context Heading | #ctx-architecture, #ctx-protocols |
-| `#c3-xxx-section` | Container/Component Heading | #c3-1-middleware, #c3-102-config |
+| Pattern | Level | Example | File Path |
+|---------|-------|---------|-----------|
+| `context` | Primary Context | context | `.c3/README.md` |
+| `CTX-slug` | Auxiliary Context | CTX-actors | `.c3/CTX-actors.md` |
+| `C3-<C>-slug` | Container | C3-1-backend | `.c3/containers/C3-1-backend.md` |
+| `C3-<C><NN>-slug` | Component | C3-102-auth | `.c3/components/C3-102-auth.md` |
+| `ADR-###-slug` | Decision | ADR-003-cache | `.c3/adr/ADR-003-cache.md` |
+| `#ctx-section` | Context Heading | #ctx-architecture | (within context docs) |
+| `#c3-xxx-section` | Container/Component Heading | #c3-1-middleware | (within C3 docs) |
 
 ## Fallback: Discovery Mode
 
@@ -190,7 +201,7 @@ HYPOTHESIZE → "Affects C3-1"
      ↓
 EXPLORE
   ├── c3-locate C3-1 (isolated)
-  ├── c3-locate CTX-system-overview #ctx-containers (upstream)
+  ├── c3-locate context #ctx-containers (upstream - v2)
   ├── c3-locate C3-2 (adjacent)
   └── c3-locate C3-101, C3-102 (downstream)
      ↓

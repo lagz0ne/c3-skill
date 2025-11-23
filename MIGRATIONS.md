@@ -27,6 +27,45 @@ Current version: 1
 
 ---
 
+## Version 2 (from 1)
+
+### Changes
+- Flatten components directory (remove container subfolders)
+- Primary context becomes README.md with `id: context`
+- Path: `components/{container}/C3-*.md` → `components/C3-*.md`
+- Path: `CTX-system-overview.md` → `README.md`
+
+### Transforms
+
+**Move nested components to flat:**
+- **Files:** `components/*/*.md`
+- **Action:** Move to `components/` (parent directory)
+- **Command:** `mv .c3/components/*/*.md .c3/components/ && rmdir .c3/components/*/`
+
+**Rename primary context:**
+- **Pattern:** `CTX-system-overview.md`
+- **Replace:** `README.md`
+- **Frontmatter:** Change `id: CTX-system-overview` → `id: context`
+
+**Update internal links:**
+- **Pattern:** `](./components/[^/]+/(C3-[0-9])`
+- **Replace:** `](./components/$1`
+- **Files:** `.c3/**/*.md`
+
+**Update context links:**
+- **Pattern:** `CTX-system-overview.md`
+- **Replace:** `README.md`
+- **Files:** `.c3/**/*.md`
+
+### Verification
+- `.c3/VERSION` contains `2`
+- No subdirectories in `.c3/components/`
+- `.c3/README.md` exists with `id: context`
+- All component files match `.c3/components/C3-[0-9][0-9][0-9]-*.md`
+- No broken internal links (grep for old paths returns empty)
+
+---
+
 ## Migration Format Reference
 
 Each future version section should include:

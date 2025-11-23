@@ -63,8 +63,11 @@ If `.c3/` exists but `.c3/VERSION` is missing:
 If proceeding with new documentation:
 
 ```bash
+# V2 flat structure - no nested component subfolders
 mkdir -p .c3/{containers,components,adr,scripts}
 ```
+
+> **Note:** V2 uses flat `components/` directory. Component files are named `C3-{container}{NN}-slug.md` where the container number is encoded in the filename, eliminating the need for nested folders.
 
 Create VERSION file with current skill version:
 ```bash
@@ -93,7 +96,7 @@ title: C3 Architecture Documentation
 # C3 Architecture Documentation
 
 - [Table of Contents](./TOC.md)
-- [System Overview](./CTX-system-overview.md)
+- [System Overview](./README.md)
 ```
 
 ---
@@ -165,9 +168,9 @@ From answers, construct:
 ### Delegate to c3-context-design
 
 Once you have understanding:
-> "I now understand your system context. I'll use the c3-context-design skill to create CTX-system-overview."
+> "I now understand your system context. I'll use the c3-context-design skill to create README.md (primary context)."
 
-Use `c3-context-design` to create the Context document with:
+Use `c3-context-design` to create `README.md` with `id: context`:
 - System overview
 - Architecture diagram (from identified containers)
 - Container list (high-level)
@@ -291,11 +294,12 @@ Present to user:
 ## C3 Adoption Complete
 
 ### Created:
-- [ ] `.c3/CTX-*.md` - System context
+- [ ] `.c3/README.md` - System context (id: context)
 - [ ] `.c3/containers/C3-1-*.md` - [Container 1]
 - [ ] `.c3/containers/C3-2-*.md` - [Container 2]
-- [ ] `.c3/components/*/C3-*.md` - [N] components
+- [ ] `.c3/components/C3-*.md` - [N] components (flat structure)
 - [ ] `.c3/TOC.md` - Table of contents
+- [ ] `.c3/VERSION` - Version file (contains "2")
 - [ ] `.c3/scripts/build-toc.sh` - TOC generator
 
 ### Gaps Identified:
@@ -303,7 +307,7 @@ Present to user:
 - [Components marked for future documentation]
 
 ### Recommended Next Steps:
-1. Review CTX-system-overview for accuracy
+1. Review README.md for accuracy
 2. Fill in [specific gap]
 3. Consider ADR for [identified decision]
 ```
@@ -372,6 +376,8 @@ When delegating, provide:
 ---
 
 ## Appendix A: build-toc.sh
+
+> **Note:** The embedded script below is for reference. Always copy the current version from the plugin's `.c3/scripts/build-toc.sh` which supports both v1 and v2 structures.
 
 ```bash
 #!/bin/bash

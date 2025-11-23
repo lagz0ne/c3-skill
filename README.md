@@ -72,14 +72,7 @@ Claude will:
 
 ## Versioning
 
-C3-Skill uses sequential version numbers to track documentation format changes.
-
-### Version File
-
-Each project using C3 has a `.c3/VERSION` file containing the version number:
-```
-1
-```
+C3-Skill uses `c3-version` frontmatter to track documentation format changes.
 
 ### Migration
 
@@ -89,7 +82,7 @@ When the skill evolves, run `/c3-migrate` to upgrade your documentation:
 ```
 
 This will:
-1. Detect your current version
+1. Detect your current version from frontmatter
 2. Show what changes are needed
 3. Apply transforms with your confirmation
 
@@ -97,23 +90,27 @@ This will:
 
 ```
 .c3/
-├── README.md                     # Primary context (id: context)
-├── CTX-actors.md                 # Auxiliary context (optional)
-├── index.md                      # Navigation index
-├── TOC.md                        # Auto-generated TOC
-├── VERSION                       # Version number (e.g., "2")
-├── containers/
-│   └── C3-1-backend.md           # Container documents
-├── components/
-│   ├── C3-101-db-pool.md         # Component documents (flat!)
-│   └── C3-102-auth-service.md    # No nested subfolders
+├── README.md                      # Context (id: c3-0, c3-version: 3)
+├── actors.md                      # Aux context (applies downward)
+├── TOC.md                         # Auto-generated
 ├── adr/
-│   └── ADR-001-rest-api.md       # Architecture decisions
-└── scripts/
-    └── build-toc.sh              # TOC generator
+│   └── adr-001-rest-api.md
+├── scripts/
+│   └── build-toc.sh
+├── c3-1-backend/                  # Container folder
+│   ├── README.md                  # Container doc (id: c3-1)
+│   ├── c3-101-db-pool.md          # Component (id: c3-101)
+│   └── c3-102-auth-service.md
+└── c3-2-frontend/
+    ├── README.md                  # Container doc (id: c3-2)
+    └── c3-201-api-client.md
 ```
 
-> **V2 Change:** Components are now flat in `components/` directory. The container number is encoded in the component ID (e.g., `C3-101` = container 1, component 01).
+> **V3 Changes:**
+> - Containers are now folders (`c3-{N}-name/`) containing their components
+> - All IDs use numeric format: `c3-0` (context), `c3-1` (container), `c3-101` (component)
+> - All filenames are lowercase
+> - Version tracked via `c3-version` frontmatter instead of VERSION file
 
 ## Document Conventions
 
@@ -121,18 +118,18 @@ This will:
 
 Every document has a unique ID:
 
-- **context**: Primary context (`.c3/README.md`)
-- **CTX-slug**: Auxiliary context (e.g., `CTX-actors`)
-- **C3-<C>-slug**: Container level (e.g., `C3-1-backend`; single digit container number)
-- **C3-<C><NN>-slug**: Component level (e.g., `C3-101-db-pool`; container digit + 2-digit component number)
-- **ADR-NNN-slug**: Architecture decisions (e.g., `ADR-001-rest-api`)
+- `c3-0`: Context level (`.c3/README.md`)
+- `c3-{N}`: Container level (e.g., `c3-1` in `c3-1-backend/README.md`)
+- `c3-{N}{NN}`: Component level (e.g., `c3-101` in `c3-1-backend/c3-101-db-pool.md`)
+- `adr-{nnn}`: Architecture decisions (lowercase, e.g., `adr-001`)
 
-### Simplified Frontmatter
+### Frontmatter
 
-**For README.md (primary context):**
+**For README.md (context):**
 ```yaml
 ---
-id: context
+id: c3-0
+c3-version: 3
 title: System Overview
 summary: >
   Bird's-eye view of the system, actors, and key interactions.
@@ -140,15 +137,24 @@ summary: >
 ---
 ```
 
+**For containers:**
+```yaml
+---
+id: c3-1
+title: Backend Services
+summary: >
+  Core backend services handling API, authentication, and data persistence.
+---
+```
+
 **For components:**
 ```yaml
 ---
-id: C3-101-db-pool
-title: Database Connection Pool Component
+id: c3-101
+title: Database Connection Pool
 summary: >
   Explains PostgreSQL connection pooling strategy, configuration, and
-  retry behavior. Read this to understand how the backend manages database
-  connections efficiently and handles connection failures.
+  retry behavior.
 ---
 ```
 
@@ -157,7 +163,7 @@ summary: >
 Every heading has a unique anchor:
 
 ```markdown
-## Configuration {#C3-101-configuration}
+## Configuration {#c3-101-configuration}
 <!--
 Explains environment variables and configuration loading. Read to understand
 how to configure the pool for different environments.

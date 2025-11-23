@@ -97,19 +97,23 @@ This will:
 
 ```
 .c3/
-├── index.md                      # Conventions and navigation
+├── README.md                     # Primary context (id: context)
+├── CTX-actors.md                 # Auxiliary context (optional)
+├── index.md                      # Navigation index
 ├── TOC.md                        # Auto-generated TOC
-├── CTX-system-overview.md        # Context documents
+├── VERSION                       # Version number (e.g., "2")
 ├── containers/
 │   └── C3-1-backend.md           # Container documents
 ├── components/
-│   ├── backend/
-│   │   └── C3-101-db-pool.md     # Component documents
+│   ├── C3-101-db-pool.md         # Component documents (flat!)
+│   └── C3-102-auth-service.md    # No nested subfolders
 ├── adr/
 │   └── ADR-001-rest-api.md       # Architecture decisions
 └── scripts/
     └── build-toc.sh              # TOC generator
 ```
+
+> **V2 Change:** Components are now flat in `components/` directory. The container number is encoded in the component ID (e.g., `C3-101` = container 1, component 01).
 
 ## Document Conventions
 
@@ -117,15 +121,26 @@ This will:
 
 Every document has a unique ID:
 
-- **CTX-slug**: Context level (e.g., `CTX-system-overview`)
-- **C3-<C>-slug**: Container level (e.g., `C3-1-backend`; two digits only if you exceed nine containers)
-- **C3-<C><NN>-slug**: Component level (e.g., `C3-101-db-pool`; `NN` zero-padded per container, use three digits if >99 components)
+- **context**: Primary context (`.c3/README.md`)
+- **CTX-slug**: Auxiliary context (e.g., `CTX-actors`)
+- **C3-<C>-slug**: Container level (e.g., `C3-1-backend`; single digit container number)
+- **C3-<C><NN>-slug**: Component level (e.g., `C3-101-db-pool`; container digit + 2-digit component number)
 - **ADR-NNN-slug**: Architecture decisions (e.g., `ADR-001-rest-api`)
 
 ### Simplified Frontmatter
 
-Focus on summaries:
+**For README.md (primary context):**
+```yaml
+---
+id: context
+title: System Overview
+summary: >
+  Bird's-eye view of the system, actors, and key interactions.
+  Read this first to understand the overall architecture.
+---
+```
 
+**For components:**
 ```yaml
 ---
 id: C3-101-db-pool

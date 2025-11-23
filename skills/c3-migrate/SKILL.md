@@ -260,6 +260,102 @@ grep -q '^id: context$' .c3/README.md || echo "FAIL: README.md id not updated"
 ! grep -r '](./components/[^/]*/C3-' .c3/*.md .c3/**/*.md || echo "FAIL: old component links remain"
 ```
 
+## V2 → V3 Migration Details
+
+### Detecting V2 Structure
+
+```bash
+# V2 has containers/ and components/ directories
+if [ -d ".c3/containers" ] || [ -d ".c3/components" ]; then
+    echo "V2 structure detected"
+fi
+```
+
+### Transform: Convert Containers to Folders
+
+```bash
+# For each container, create folder and move doc
+for file in .c3/containers/C3-[0-9]-*.md; do
+    [ -f "$file" ] || continue
+    # Extract container number and slug
+    basename=$(basename "$file" .md)
+    lowercase=$(echo "$basename" | tr '[:upper:]' '[:lower:]')
+    container_num=$(echo "$lowercase" | sed 's/c3-\([0-9]\).*/\1/')
+
+    # Create container folder
+    mkdir -p ".c3/$lowercase"
+
+    # Move and rename to README.md, update id to numeric
+    cp "$file" ".c3/$lowercase/README.md"
+    sed -i "s/^id: .*/id: c3-$container_num/" ".c3/$lowercase/README.md"
+done
+rm -rf .c3/containers
+```
+
+### Transform: Move Components into Containers
+
+```bash
+# Move each component into its parent container folder
+for file in .c3/components/C3-[0-9][0-9][0-9]-*.md; do
+    [ -f "$file" ] || continue
+    basename=$(basename "$file")
+    lowercase=$(echo "$basename" | tr '[:upper:]' '[:lower:]')
+    container_num=$(echo "$lowercase" | sed 's/c3-\([0-9]\).*/\1/')
+    component_id=$(echo "$lowercase" | sed 's/c3-\([0-9][0-9][0-9]\).*/\1/')
+
+    # Find container folder
+    container_dir=$(find .c3 -maxdepth 1 -type d -name "c3-${container_num}-*" | head -1)
+
+    # Move component and update id
+    cp "$file" "$container_dir/$lowercase"
+    sed -i "s/^id: .*/id: c3-$component_id/" "$container_dir/$lowercase"
+done
+rm -rf .c3/components
+```
+
+### Transform: Update Context
+
+```bash
+# Update README.md: id context → c3-0, add c3-version
+sed -i 's/^id: context$/id: c3-0/' .c3/README.md
+sed -i '/^id: c3-0$/a c3-version: 3' .c3/README.md
+
+# Remove VERSION file
+rm -f .c3/VERSION
+```
+
+### Transform: Lowercase ADRs
+
+```bash
+for file in .c3/adr/ADR-*.md; do
+    [ -f "$file" ] || continue
+    lowercase=$(echo "$(basename "$file")" | tr '[:upper:]' '[:lower:]')
+    mv "$file" ".c3/adr/$lowercase"
+    # Update id to lowercase
+    sed -i 's/^id: ADR-/id: adr-/' ".c3/adr/$lowercase"
+done
+```
+
+### V2→V3 Verification
+
+```bash
+# No containers/ or components/ directories
+[ ! -d ".c3/containers" ] && [ ! -d ".c3/components" ] || echo "FAIL: type dirs remain"
+
+# README has c3-0 id and c3-version
+grep -q '^id: c3-0$' .c3/README.md || echo "FAIL: context id not updated"
+grep -q '^c3-version: 3$' .c3/README.md || echo "FAIL: c3-version not set"
+
+# No VERSION file
+[ ! -f ".c3/VERSION" ] || echo "FAIL: VERSION file still exists"
+
+# Container folders exist
+ls -d .c3/c3-[0-9]-*/ >/dev/null 2>&1 || echo "FAIL: no container folders"
+
+# All lowercase
+! find .c3 -name "C3-*" -o -name "ADR-*" | grep -q . || echo "FAIL: uppercase names remain"
+```
+
 ## Sub-Skill Usage
 
 | Task | Tool |

@@ -97,6 +97,9 @@ When documents change, rebuild TOC:
 .c3/scripts/build-toc.sh
 ```
 
+> **Script missing?** Copy from the c3-skill plugin's `.c3/scripts/build-toc.sh` to your project.
+> See `c3-adopt` skill for setup instructions.
+
 ### What the Script Does
 
 1. **Scans directories** for CTX/C3-*/ADR files

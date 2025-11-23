@@ -73,7 +73,15 @@ SKILL_VERSION=$(cat /path/to/c3-skill/VERSION)
 echo "$SKILL_VERSION" > .c3/VERSION
 ```
 
-Create `build-toc.sh` script (see Appendix A).
+Copy `build-toc.sh` script from the plugin:
+```bash
+# Copy from plugin's .c3/scripts/ to project's .c3/scripts/
+cp /path/to/c3-skill/.c3/scripts/build-toc.sh .c3/scripts/
+chmod +x .c3/scripts/build-toc.sh
+```
+
+> **Note:** The plugin path varies by installation. Use the actual plugin location.
+> A reference version is in Appendix A if needed.
 
 Create `index.md`:
 ```markdown

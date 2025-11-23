@@ -166,7 +166,8 @@ echo "{TARGET_VERSION}" > .c3/VERSION
 >
 > {N} files updated across {BATCHES} batches.
 >
-> Recommended: Run `.c3/scripts/build-toc.sh` to refresh the table of contents."
+> Recommended: Run `.c3/scripts/build-toc.sh` to refresh the table of contents.
+> (Script missing? Copy from c3-skill plugin's `.c3/scripts/build-toc.sh`)"
 
 ### Verification Checklist
 

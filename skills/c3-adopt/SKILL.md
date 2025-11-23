@@ -18,18 +18,18 @@ Bootstrap C3 (Context-Container-Component) architecture documentation for an exi
 | Phase | Key Activities | Output |
 |-------|---------------|--------|
 | **1. Establish** | Check prerequisites, create scaffolding | `.c3/` directory |
-| **2. Context Discovery** | Socratic questions about system | Understanding for CTX |
-| **3. Container Discovery** | Socratic questions per container | Understanding for C3-X |
-| **4. Component Identification** | Identify key components | C3-XNN stubs |
+| **2. Context Discovery** | Socratic questions about system | Understanding for c3-0 |
+| **3. Container Discovery** | Socratic questions per container | Understanding for c3-{N} |
+| **4. Component Identification** | Identify key components | c3-{N}{NN} stubs |
 | **5. Generate & Verify** | Delegate to sub-skills, build TOC | Complete documentation |
 
 ## Derivation Guardrails (apply everywhere)
 
 - **Reading order:** Context → Container → Component
-- **Downward-only links:** CTX → C3-X sections; C3-X → C3-XNN docs. No upward links.
+- **Downward-only links:** c3-0 → c3-{N} sections; c3-{N} → c3-{N}{NN} docs. No upward links.
 - **Infra containers are leaf nodes:** No components; their features must be cited by consuming components.
-- **Anchors:** Use `{#ctx-*}` for context, `{#c3-xxx-*}` for containers and components.
-- **Naming:** Use `c3-naming` (components carry parent container code; IDs match filenames/paths).
+- **Anchors:** Use `{#c3-0-*}` for context, `{#c3-N-*}` for containers, `{#c3-NNN-*}` for components.
+- **Naming:** Use `c3-naming` (numeric IDs only; components encode container number; paths are hierarchical).
 - **Templates/checklists:** Use templates from c3-context-design, c3-container-design, c3-component-design and complete all checklist items.
 
 ---
@@ -49,32 +49,17 @@ If `.c3/` exists, ask:
 > 2. Back up and create fresh documentation
 > 3. Abort and preserve what's there"
 
-### Check Version
-
-If `.c3/` exists but `.c3/VERSION` is missing:
-
-> "I found existing `.c3/` documentation but no VERSION file.
-> This may be from an older version of the C3 skill.
->
-> After review, consider running `/c3-migrate` to update to current format."
-
 ### Create Scaffolding
 
 If proceeding with new documentation:
 
 ```bash
-# V2 flat structure - no nested component subfolders
-mkdir -p .c3/{containers,components,adr,scripts}
+# V3 hierarchical structure - container folders created as needed
+mkdir -p .c3/{adr,scripts}
+# Container folders: c3-{N}-{slug}/ created when containers are defined
 ```
 
-> **Note:** V2 uses flat `components/` directory. Component files are named `C3-{container}{NN}-slug.md` where the container number is encoded in the filename, eliminating the need for nested folders.
-
-Create VERSION file with current skill version:
-```bash
-# Read current version from plugin
-SKILL_VERSION=$(cat /path/to/c3-skill/VERSION)
-echo "$SKILL_VERSION" > .c3/VERSION
-```
+> **Note:** V3 uses hierarchical structure where each container has its own folder (`c3-{N}-{slug}/`). Container docs live as `README.md` inside, and component docs are placed directly in the container folder with IDs like `c3-{N}{NN}`.
 
 Copy `build-toc.sh` script from the plugin:
 ```bash
@@ -98,6 +83,21 @@ title: C3 Architecture Documentation
 - [Table of Contents](./TOC.md)
 - [System Overview](./README.md)
 ```
+
+Create `README.md` (system context) with v3 frontmatter:
+```markdown
+---
+id: c3-0
+c3-version: 3
+title: System Overview
+---
+
+# System Overview
+
+<!-- Context document content goes here -->
+```
+
+> **Note:** The `c3-version: 3` in frontmatter indicates v3 hierarchical structure. The context document uses `id: c3-0`.
 
 ---
 
@@ -170,7 +170,8 @@ From answers, construct:
 Once you have understanding:
 > "I now understand your system context. I'll use the c3-context-design skill to create README.md (primary context)."
 
-Use `c3-context-design` to create `README.md` with `id: context`:
+Use `c3-context-design` to create `README.md` with:
+- Frontmatter: `id: c3-0`, `c3-version: 3`, `title: System Overview`
 - System overview
 - Architecture diagram (from identified containers)
 - Container list (high-level)
@@ -237,7 +238,28 @@ From answers:
 
 ### Delegate to c3-container-design
 
-> "I understand [Container Name]. I'll use the c3-container-design skill to create C3-X-[slug]."
+> "I understand [Container Name]. I'll use the c3-container-design skill to create the container documentation."
+
+**V3 Container Creation:**
+
+1. Create container folder:
+   ```bash
+   mkdir -p .c3/c3-{N}-{slug}/
+   ```
+
+2. Create container doc as `README.md` inside with frontmatter:
+   ```markdown
+   ---
+   id: c3-{N}
+   c3-version: 3
+   title: Container Name
+   ---
+   ```
+
+Example: Container 1 "API Server" becomes:
+- Folder: `.c3/c3-1-api-server/`
+- Document: `.c3/c3-1-api-server/README.md`
+- ID: `c3-1`
 
 Repeat for each container.
 
@@ -264,6 +286,29 @@ For each container's key components:
 | **Low** | Utilities, Simple wrappers | Note in Container doc |
 
 ### Create Component Stubs
+
+**V3 Component Creation:**
+
+Components are placed directly in the container folder with numeric-only IDs.
+
+1. Create component doc in container folder:
+   ```bash
+   # Component goes directly in container folder
+   # .c3/c3-{N}-{slug}/c3-{N}{NN}-{component-slug}.md
+   ```
+
+2. Component frontmatter:
+   ```markdown
+   ---
+   id: c3-{N}{NN}
+   c3-version: 3
+   title: Component Name
+   ---
+   ```
+
+Example: Component 01 "Auth Handler" in Container 1:
+- Location: `.c3/c3-1-api-server/c3-101-auth-handler.md`
+- ID: `c3-101` (numeric only: container 1 + component 01)
 
 For High/Medium priority, create stub with:
 - Overview (from user description)
@@ -294,13 +339,26 @@ Present to user:
 ## C3 Adoption Complete
 
 ### Created:
-- [ ] `.c3/README.md` - System context (id: context)
-- [ ] `.c3/containers/C3-1-*.md` - [Container 1]
-- [ ] `.c3/containers/C3-2-*.md` - [Container 2]
-- [ ] `.c3/components/C3-*.md` - [N] components (flat structure)
+- [ ] `.c3/README.md` - System context (id: c3-0, c3-version: 3)
+- [ ] `.c3/c3-1-{slug}/README.md` - Container 1 (id: c3-1)
+- [ ] `.c3/c3-2-{slug}/README.md` - Container 2 (id: c3-2)
+- [ ] `.c3/c3-{N}-{slug}/c3-{N}{NN}-*.md` - [N] components in container folders
 - [ ] `.c3/TOC.md` - Table of contents
-- [ ] `.c3/VERSION` - Version file (contains "2")
 - [ ] `.c3/scripts/build-toc.sh` - TOC generator
+
+### V3 Structure Summary:
+.c3/
+├── README.md           # Context (id: c3-0, c3-version: 3)
+├── TOC.md
+├── index.md
+├── c3-1-{slug}/        # Container 1 folder
+│   ├── README.md       # Container doc (id: c3-1)
+│   ├── c3-101-*.md     # Component (id: c3-101)
+│   └── c3-102-*.md     # Component (id: c3-102)
+├── c3-2-{slug}/        # Container 2 folder
+│   └── README.md       # Container doc (id: c3-2)
+├── adr/
+└── scripts/
 
 ### Gaps Identified:
 - [Any areas that need more detail]
@@ -370,18 +428,21 @@ TODO: Needs clarification
 
 When delegating, provide:
 1. The understanding you've built
-2. Which document to create (CTX-slug, C3-2-slug, C3-201-slug, etc.)
+2. Which document to create using V3 paths:
+   - Context: `.c3/README.md` with `id: c3-0`
+   - Container N: `.c3/c3-{N}-{slug}/README.md` with `id: c3-{N}`
+   - Component NN in Container N: `.c3/c3-{N}-{slug}/c3-{N}{NN}-{comp-slug}.md` with `id: c3-{N}{NN}`
 3. Key sections to fill
 
 ---
 
 ## Appendix A: build-toc.sh
 
-> **Note:** The embedded script below is for reference. Always copy the current version from the plugin's `.c3/scripts/build-toc.sh` which supports both v1 and v2 structures.
+> **Note:** The embedded script below is for reference. Always copy the current version from the plugin's `.c3/scripts/build-toc.sh` which supports v3 hierarchical structure.
 
 ```bash
 #!/bin/bash
-# Build Table of Contents from C3 documentation
+# Build Table of Contents from C3 documentation (V3 hierarchical structure)
 set -e
 
 C3_ROOT=".c3"
@@ -405,35 +466,41 @@ extract_field() {
     awk -v field="$2" '/^---$/{f=!f;next} f && $0~"^"field":"{ sub("^"field": *",""); print; exit }' "$1"
 }
 
-# Context
-for file in $(find "$C3_ROOT" -maxdepth 1 -name "CTX-*.md" 2>/dev/null | sort); do
-    [ -z "$(cat "$file" 2>/dev/null)" ] && continue
-    id=$(extract_field "$file" "id")
-    title=$(extract_field "$file" "title")
-    echo "## Context: [$id](./${id}.md)" >> "$TEMP_FILE"
-    echo "$title" >> "$TEMP_FILE"
-    echo "" >> "$TEMP_FILE"
-done
+# Context (README.md at root with id: c3-0)
+if [ -f "$C3_ROOT/README.md" ]; then
+    id=$(extract_field "$C3_ROOT/README.md" "id")
+    title=$(extract_field "$C3_ROOT/README.md" "title")
+    if [ "$id" = "c3-0" ]; then
+        echo "## Context: [$id](./README.md)" >> "$TEMP_FILE"
+        echo "$title" >> "$TEMP_FILE"
+        echo "" >> "$TEMP_FILE"
+    fi
+fi
 
-# Containers (C3-X-slug.md where X is single digit)
-for file in $(find "$C3_ROOT/containers" -name "C3-[0-9]-*.md" 2>/dev/null | sort); do
-    id=$(extract_field "$file" "id")
-    title=$(extract_field "$file" "title")
-    echo "## Container: [$id](./containers/${id}.md)" >> "$TEMP_FILE"
-    echo "$title" >> "$TEMP_FILE"
-    echo "" >> "$TEMP_FILE"
-done
+# V3: Container folders (c3-{N}-{slug}/)
+for dir in $(find "$C3_ROOT" -maxdepth 1 -type d -name "c3-[0-9]-*" 2>/dev/null | sort); do
+    container_readme="$dir/README.md"
+    if [ -f "$container_readme" ]; then
+        id=$(extract_field "$container_readme" "id")
+        title=$(extract_field "$container_readme" "title")
+        dirname=$(basename "$dir")
+        echo "## Container: [$id](./$dirname/README.md)" >> "$TEMP_FILE"
+        echo "$title" >> "$TEMP_FILE"
+        echo "" >> "$TEMP_FILE"
 
-# Components (C3-XNN-slug.md where X is container digit, NN is 01-99)
-for dir in $(find "$C3_ROOT/components" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort); do
-    container=$(basename "$dir")
-    echo "## Components: ${container}" >> "$TEMP_FILE"
-    for file in $(find "$dir" -name "C3-[0-9][0-9][0-9]-*.md" | sort); do
-        id=$(extract_field "$file" "id")
-        title=$(extract_field "$file" "title")
-        echo "- [$id](./components/$container/${id}.md) - $title" >> "$TEMP_FILE"
-    done
-    echo "" >> "$TEMP_FILE"
+        # Components in this container folder (c3-{N}{NN}-*.md)
+        components=$(find "$dir" -maxdepth 1 -name "c3-[0-9][0-9][0-9]-*.md" 2>/dev/null | sort)
+        if [ -n "$components" ]; then
+            echo "### Components:" >> "$TEMP_FILE"
+            for file in $components; do
+                comp_id=$(extract_field "$file" "id")
+                comp_title=$(extract_field "$file" "title")
+                filename=$(basename "$file")
+                echo "- [$comp_id](./$dirname/$filename) - $comp_title" >> "$TEMP_FILE"
+            done
+            echo "" >> "$TEMP_FILE"
+        fi
+    fi
 done
 
 # ADRs
@@ -441,7 +508,7 @@ for file in $(find "$C3_ROOT/adr" -name "ADR-*.md" 2>/dev/null | sort -r); do
     id=$(extract_field "$file" "id")
     title=$(extract_field "$file" "title")
     status=$(extract_field "$file" "status")
-    echo "## ADR: [$id](./adr/${id}.md)" >> "$TEMP_FILE"
+    echo "## ADR: [$id](./adr/$(basename "$file"))" >> "$TEMP_FILE"
     echo "$title (${status:-proposed})" >> "$TEMP_FILE"
     echo "" >> "$TEMP_FILE"
 done

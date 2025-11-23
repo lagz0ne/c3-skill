@@ -3,7 +3,7 @@
 > This file defines all migrations between C3 skill versions.
 > Each version section describes changes and transforms needed.
 
-Current version: 1
+Current version: 2
 
 ---
 

@@ -1,6 +1,10 @@
 #!/bin/bash
 # Build Table of Contents from C3 documentation
 # Usage: .c3/scripts/build-toc.sh
+#
+# Supports:
+# - v2: containers/ and components/ folders, VERSION file
+# - v3: c3-[0-9]-*/ container folders, c3-version in README.md frontmatter
 
 set -e
 
@@ -9,6 +13,28 @@ TOC_FILE="${C3_ROOT}/TOC.md"
 TEMP_FILE=$(mktemp)
 
 echo "Building C3 Table of Contents..."
+
+# Detect version - v3 uses container folders, v2 uses containers/ directory
+detect_version() {
+    # Check for v3 container folders (c3-[0-9]-*/)
+    v3_container_count=$(find "$C3_ROOT" -maxdepth 1 -type d -name "c3-[0-9]-*" 2>/dev/null | wc -l || echo 0)
+
+    # Check for v2 containers directory
+    v2_containers_exist=0
+    [ -d "$C3_ROOT/containers" ] && v2_containers_exist=1
+
+    if [ "$v3_container_count" -gt 0 ]; then
+        echo "v3"
+    elif [ "$v2_containers_exist" -eq 1 ]; then
+        echo "v2"
+    else
+        # Default to v3 if no containers found (new project)
+        echo "v3"
+    fi
+}
+
+C3_VERSION=$(detect_version)
+echo "Detected C3 structure: $C3_VERSION"
 
 # Header
 cat > "$TEMP_FILE" << 'EOF'
@@ -101,24 +127,61 @@ list_headings() {
     ' "$file"
 }
 
-# Count documents - support both README.md and CTX-*.md for context
-readme_exists=0
-[ -f "$C3_ROOT/README.md" ] && readme_exists=1
-ctx_count=$(find "$C3_ROOT" -maxdepth 1 -name "CTX-*.md" 2>/dev/null | wc -l || echo 0)
-ctx_total=$((readme_exists + ctx_count))
+# Output sections for a file
+output_sections() {
+    local file=$1
+    echo "**Sections**:" >> "$TEMP_FILE"
+    while IFS=$'\t' read -r heading_id heading_title; do
+        heading_summary=$(extract_heading_summary "$file" "$heading_id")
+        if [ -n "$heading_summary" ]; then
+            echo "- [$heading_title](#$heading_id) - $heading_summary" >> "$TEMP_FILE"
+        else
+            echo "- [$heading_title](#$heading_id)" >> "$TEMP_FILE"
+        fi
+    done < <(list_headings "$file")
+    echo "" >> "$TEMP_FILE"
+    echo "---" >> "$TEMP_FILE"
+    echo "" >> "$TEMP_FILE"
+}
 
-con_count=$(find "$C3_ROOT/containers" -name "C3-[0-9]-*.md" 2>/dev/null | wc -l || echo 0)
+# Count documents based on version
+if [ "$C3_VERSION" = "v3" ]; then
+    # v3 counts
+    readme_exists=0
+    [ -f "$C3_ROOT/README.md" ] && readme_exists=1
+    ctx_count=$(find "$C3_ROOT" -maxdepth 1 -name "ctx-*.md" 2>/dev/null | wc -l || echo 0)
+    ctx_total=$((readme_exists + ctx_count))
 
-# Component count - check flat first, then nested
-flat_com_count=$(find "$C3_ROOT/components" -maxdepth 1 -name "C3-[0-9][0-9][0-9]-*.md" 2>/dev/null | wc -l || echo 0)
-nested_com_count=$(find "$C3_ROOT/components" -mindepth 2 -name "C3-[0-9][0-9][0-9]-*.md" 2>/dev/null | wc -l || echo 0)
-com_count=$((flat_com_count + nested_com_count))
+    con_count=$(find "$C3_ROOT" -maxdepth 1 -type d -name "c3-[0-9]-*" 2>/dev/null | wc -l || echo 0)
+    com_count=$(find "$C3_ROOT" -path "*/c3-[0-9]-*/c3-[0-9][0-9][0-9]-*.md" 2>/dev/null | wc -l || echo 0)
+    adr_count=$(find "$C3_ROOT/adr" -name "adr-*.md" 2>/dev/null | wc -l || echo 0)
+else
+    # v2 counts (existing logic)
+    readme_exists=0
+    [ -f "$C3_ROOT/README.md" ] && readme_exists=1
+    ctx_count=$(find "$C3_ROOT" -maxdepth 1 -name "CTX-*.md" 2>/dev/null | wc -l || echo 0)
+    ctx_total=$((readme_exists + ctx_count))
 
-adr_count=$(find "$C3_ROOT/adr" -name "ADR-*.md" 2>/dev/null | wc -l || echo 0)
+    con_count=$(find "$C3_ROOT/containers" -name "C3-[0-9]-*.md" 2>/dev/null | wc -l || echo 0)
 
-# Context Level - check README.md first, then CTX-*.md
+    # Component count - check flat first, then nested
+    flat_com_count=$(find "$C3_ROOT/components" -maxdepth 1 -name "C3-[0-9][0-9][0-9]-*.md" 2>/dev/null | wc -l || echo 0)
+    nested_com_count=$(find "$C3_ROOT/components" -mindepth 2 -name "C3-[0-9][0-9][0-9]-*.md" 2>/dev/null | wc -l || echo 0)
+    com_count=$((flat_com_count + nested_com_count))
+
+    adr_count=$(find "$C3_ROOT/adr" -name "ADR-*.md" 2>/dev/null | wc -l || echo 0)
+fi
+
+# Context Level - check README.md first, then auxiliary context files
 readme_file="$C3_ROOT/README.md"
-ctx_files=$(find "$C3_ROOT" -maxdepth 1 -name "CTX-*.md" 2>/dev/null | sort)
+readme_exists=0
+[ -f "$readme_file" ] && readme_exists=1
+
+if [ "$C3_VERSION" = "v3" ]; then
+    ctx_files=$(find "$C3_ROOT" -maxdepth 1 -name "ctx-*.md" 2>/dev/null | sort)
+else
+    ctx_files=$(find "$C3_ROOT" -maxdepth 1 -name "CTX-*.md" 2>/dev/null | sort)
+fi
 
 if [ "$readme_exists" -eq 1 ] || [ -n "$ctx_files" ]; then
     echo "## Context Level" >> "$TEMP_FILE"
@@ -134,174 +197,212 @@ if [ "$readme_exists" -eq 1 ] || [ -n "$ctx_files" ]; then
         echo "> $summary" >> "$TEMP_FILE"
         echo "" >> "$TEMP_FILE"
 
-        echo "**Sections**:" >> "$TEMP_FILE"
-        while IFS=$'\t' read -r heading_id heading_title; do
-            heading_summary=$(extract_heading_summary "$readme_file" "$heading_id")
-            if [ -n "$heading_summary" ]; then
-                echo "- [$heading_title](#$heading_id) - $heading_summary" >> "$TEMP_FILE"
-            else
-                echo "- [$heading_title](#$heading_id)" >> "$TEMP_FILE"
-            fi
-        done < <(list_headings "$readme_file")
-        echo "" >> "$TEMP_FILE"
-        echo "---" >> "$TEMP_FILE"
-        echo "" >> "$TEMP_FILE"
+        output_sections "$readme_file"
     fi
 
-    # Process auxiliary CTX-*.md files
+    # Process auxiliary context files
     for file in $ctx_files; do
         id=$(extract_frontmatter "$file" "id")
         title=$(extract_frontmatter "$file" "title")
         summary=$(extract_summary "$file")
+        filename=$(basename "$file")
 
-        echo "### [$id](./${id}.md) - $title" >> "$TEMP_FILE"
+        echo "### [$id](./${filename}) - $title" >> "$TEMP_FILE"
         echo "> $summary" >> "$TEMP_FILE"
         echo "" >> "$TEMP_FILE"
 
-        echo "**Sections**:" >> "$TEMP_FILE"
-        while IFS=$'\t' read -r heading_id heading_title; do
-            heading_summary=$(extract_heading_summary "$file" "$heading_id")
-            if [ -n "$heading_summary" ]; then
-                echo "- [$heading_title](#$heading_id) - $heading_summary" >> "$TEMP_FILE"
-            else
-                echo "- [$heading_title](#$heading_id)" >> "$TEMP_FILE"
-            fi
-        done < <(list_headings "$file")
-        echo "" >> "$TEMP_FILE"
-        echo "---" >> "$TEMP_FILE"
-        echo "" >> "$TEMP_FILE"
+        output_sections "$file"
     done
 fi
 
 # Container Level
-if [ "$con_count" -gt 0 ]; then
-    echo "## Container Level" >> "$TEMP_FILE"
-    echo "" >> "$TEMP_FILE"
+if [ "$C3_VERSION" = "v3" ]; then
+    # v3: Container folders with README.md inside
+    container_dirs=$(find "$C3_ROOT" -maxdepth 1 -type d -name "c3-[0-9]-*" 2>/dev/null | sort)
 
-    for file in $(find "$C3_ROOT/containers" -name "C3-[0-9]-*.md" 2>/dev/null | sort); do
-        id=$(extract_frontmatter "$file" "id")
-        title=$(extract_frontmatter "$file" "title")
-        summary=$(extract_summary "$file")
-
-        echo "### [$id](./containers/${id}.md) - $title" >> "$TEMP_FILE"
-        echo "> $summary" >> "$TEMP_FILE"
+    if [ -n "$container_dirs" ]; then
+        echo "## Container Level" >> "$TEMP_FILE"
         echo "" >> "$TEMP_FILE"
 
-        echo "**Sections**:" >> "$TEMP_FILE"
-        while IFS=$'\t' read -r heading_id heading_title; do
-            heading_summary=$(extract_heading_summary "$file" "$heading_id")
-            if [ -n "$heading_summary" ]; then
-                echo "- [$heading_title](#$heading_id) - $heading_summary" >> "$TEMP_FILE"
-            else
-                echo "- [$heading_title](#$heading_id)" >> "$TEMP_FILE"
+        for container_dir in $container_dirs; do
+            container_name=$(basename "$container_dir")
+            container_readme="$container_dir/README.md"
+
+            if [ -f "$container_readme" ]; then
+                id=$(extract_frontmatter "$container_readme" "id")
+                title=$(extract_frontmatter "$container_readme" "title")
+                summary=$(extract_summary "$container_readme")
+
+                echo "### [$id](./${container_name}/) - $title" >> "$TEMP_FILE"
+                echo "> $summary" >> "$TEMP_FILE"
+                echo "" >> "$TEMP_FILE"
+
+                output_sections "$container_readme"
             fi
-        done < <(list_headings "$file")
+        done
+    fi
+else
+    # v2: containers/ directory with .md files
+    if [ "$con_count" -gt 0 ]; then
+        echo "## Container Level" >> "$TEMP_FILE"
         echo "" >> "$TEMP_FILE"
-        echo "---" >> "$TEMP_FILE"
-        echo "" >> "$TEMP_FILE"
-    done
+
+        for file in $(find "$C3_ROOT/containers" -name "C3-[0-9]-*.md" 2>/dev/null | sort); do
+            id=$(extract_frontmatter "$file" "id")
+            title=$(extract_frontmatter "$file" "title")
+            summary=$(extract_summary "$file")
+
+            echo "### [$id](./containers/${id}.md) - $title" >> "$TEMP_FILE"
+            echo "> $summary" >> "$TEMP_FILE"
+            echo "" >> "$TEMP_FILE"
+
+            output_sections "$file"
+        done
+    fi
 fi
 
-# Component Level - support both v1 (nested) and v2 (flat)
-if [ "$flat_com_count" -gt 0 ]; then
-    # V2: Flat structure - components directly in components/ directory
-    echo "## Component Level" >> "$TEMP_FILE"
-    echo "" >> "$TEMP_FILE"
+# Component Level
+if [ "$C3_VERSION" = "v3" ]; then
+    # v3: Components inside container folders
+    container_dirs=$(find "$C3_ROOT" -maxdepth 1 -type d -name "c3-[0-9]-*" 2>/dev/null | sort)
+    total_components=0
 
-    # Group by container number (first digit after C3-)
-    for container_num in $(find "$C3_ROOT/components" -maxdepth 1 -name "C3-[0-9][0-9][0-9]-*.md" -exec basename {} \; 2>/dev/null | sed 's/C3-\([0-9]\).*/\1/' | sort -u); do
-        echo "### Container $container_num Components" >> "$TEMP_FILE"
+    # Check if any components exist
+    for container_dir in $container_dirs; do
+        comp_count=$(find "$container_dir" -maxdepth 1 -name "c3-[0-9][0-9][0-9]-*.md" 2>/dev/null | wc -l || echo 0)
+        total_components=$((total_components + comp_count))
+    done
+
+    if [ "$total_components" -gt 0 ]; then
+        echo "## Component Level" >> "$TEMP_FILE"
         echo "" >> "$TEMP_FILE"
 
-        for file in $(find "$C3_ROOT/components" -maxdepth 1 -name "C3-${container_num}[0-9][0-9]-*.md" 2>/dev/null | sort); do
-            id=$(extract_frontmatter "$file" "id")
-            title=$(extract_frontmatter "$file" "title")
-            summary=$(extract_summary "$file")
+        for container_dir in $container_dirs; do
+            container_name=$(basename "$container_dir")
+            container_readme="$container_dir/README.md"
 
-            echo "#### [$id](./components/${id}.md) - $title" >> "$TEMP_FILE"
-            echo "> $summary" >> "$TEMP_FILE"
-            echo "" >> "$TEMP_FILE"
+            # Get container title for grouping
+            if [ -f "$container_readme" ]; then
+                container_title=$(extract_frontmatter "$container_readme" "title")
+            else
+                container_title="$container_name"
+            fi
 
-            echo "**Sections**:" >> "$TEMP_FILE"
-            while IFS=$'\t' read -r heading_id heading_title; do
-                heading_summary=$(extract_heading_summary "$file" "$heading_id")
-                if [ -n "$heading_summary" ]; then
-                    echo "- [$heading_title](#$heading_id) - $heading_summary" >> "$TEMP_FILE"
-                else
-                    echo "- [$heading_title](#$heading_id)" >> "$TEMP_FILE"
-                fi
-            done < <(list_headings "$file")
-            echo "" >> "$TEMP_FILE"
-            echo "---" >> "$TEMP_FILE"
-            echo "" >> "$TEMP_FILE"
+            component_files=$(find "$container_dir" -maxdepth 1 -name "c3-[0-9][0-9][0-9]-*.md" 2>/dev/null | sort)
+
+            if [ -n "$component_files" ]; then
+                echo "### $container_title Components" >> "$TEMP_FILE"
+                echo "" >> "$TEMP_FILE"
+
+                for file in $component_files; do
+                    id=$(extract_frontmatter "$file" "id")
+                    title=$(extract_frontmatter "$file" "title")
+                    summary=$(extract_summary "$file")
+                    filename=$(basename "$file")
+
+                    echo "#### [$id](./${container_name}/${filename}) - $title" >> "$TEMP_FILE"
+                    echo "> $summary" >> "$TEMP_FILE"
+                    echo "" >> "$TEMP_FILE"
+
+                    output_sections "$file"
+                done
+            fi
         done
-    done
-elif [ "$nested_com_count" -gt 0 ]; then
-    # V1: Nested structure - components in container subfolders
-    echo "## Component Level" >> "$TEMP_FILE"
-    echo "" >> "$TEMP_FILE"
-
-    for container_dir in $(find "$C3_ROOT/components" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort); do
-        container_name=$(basename "$container_dir")
-
-        echo "### ${container_name^} Components" >> "$TEMP_FILE"
+    fi
+else
+    # v2: Flat or nested components directory
+    if [ "$flat_com_count" -gt 0 ]; then
+        # V2: Flat structure - components directly in components/ directory
+        echo "## Component Level" >> "$TEMP_FILE"
         echo "" >> "$TEMP_FILE"
 
-        for file in $(find "$container_dir" -name "C3-[0-9][0-9][0-9]-*.md" | sort); do
-            id=$(extract_frontmatter "$file" "id")
-            title=$(extract_frontmatter "$file" "title")
-            summary=$(extract_summary "$file")
-
-            echo "#### [$id](./components/$container_name/${id}.md) - $title" >> "$TEMP_FILE"
-            echo "> $summary" >> "$TEMP_FILE"
+        # Group by container number (first digit after C3-)
+        for container_num in $(find "$C3_ROOT/components" -maxdepth 1 -name "C3-[0-9][0-9][0-9]-*.md" -exec basename {} \; 2>/dev/null | sed 's/C3-\([0-9]\).*/\1/' | sort -u); do
+            echo "### Container $container_num Components" >> "$TEMP_FILE"
             echo "" >> "$TEMP_FILE"
 
-            echo "**Sections**:" >> "$TEMP_FILE"
-            while IFS=$'\t' read -r heading_id heading_title; do
-                heading_summary=$(extract_heading_summary "$file" "$heading_id")
-                if [ -n "$heading_summary" ]; then
-                    echo "- [$heading_title](#$heading_id) - $heading_summary" >> "$TEMP_FILE"
-                else
-                    echo "- [$heading_title](#$heading_id)" >> "$TEMP_FILE"
-                fi
-            done < <(list_headings "$file")
-            echo "" >> "$TEMP_FILE"
-            echo "---" >> "$TEMP_FILE"
-            echo "" >> "$TEMP_FILE"
+            for file in $(find "$C3_ROOT/components" -maxdepth 1 -name "C3-${container_num}[0-9][0-9]-*.md" 2>/dev/null | sort); do
+                id=$(extract_frontmatter "$file" "id")
+                title=$(extract_frontmatter "$file" "title")
+                summary=$(extract_summary "$file")
+
+                echo "#### [$id](./components/${id}.md) - $title" >> "$TEMP_FILE"
+                echo "> $summary" >> "$TEMP_FILE"
+                echo "" >> "$TEMP_FILE"
+
+                output_sections "$file"
+            done
         done
-    done
+    elif [ "$nested_com_count" -gt 0 ]; then
+        # V1: Nested structure - components in container subfolders
+        echo "## Component Level" >> "$TEMP_FILE"
+        echo "" >> "$TEMP_FILE"
+
+        for container_dir in $(find "$C3_ROOT/components" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort); do
+            container_name=$(basename "$container_dir")
+
+            echo "### ${container_name^} Components" >> "$TEMP_FILE"
+            echo "" >> "$TEMP_FILE"
+
+            for file in $(find "$container_dir" -name "C3-[0-9][0-9][0-9]-*.md" | sort); do
+                id=$(extract_frontmatter "$file" "id")
+                title=$(extract_frontmatter "$file" "title")
+                summary=$(extract_summary "$file")
+
+                echo "#### [$id](./components/$container_name/${id}.md) - $title" >> "$TEMP_FILE"
+                echo "> $summary" >> "$TEMP_FILE"
+                echo "" >> "$TEMP_FILE"
+
+                output_sections "$file"
+            done
+        done
+    fi
 fi
 
 # ADR Level
-if [ "$adr_count" -gt 0 ]; then
-    echo "## Architecture Decisions" >> "$TEMP_FILE"
-    echo "" >> "$TEMP_FILE"
-
-    for file in $(find "$C3_ROOT/adr" -name "ADR-*.md" 2>/dev/null | sort -r); do
-        id=$(extract_frontmatter "$file" "id")
-        title=$(extract_frontmatter "$file" "title")
-        summary=$(extract_summary "$file")
-        status=$(extract_frontmatter "$file" "status")
-
-        echo "### [$id](./adr/${id}.md) - $title" >> "$TEMP_FILE"
-        echo "> $summary" >> "$TEMP_FILE"
-        echo "" >> "$TEMP_FILE"
-        echo "**Status**: ${status^}" >> "$TEMP_FILE"
+if [ "$C3_VERSION" = "v3" ]; then
+    # v3: lowercase adr-*.md
+    if [ "$adr_count" -gt 0 ]; then
+        echo "## Architecture Decisions" >> "$TEMP_FILE"
         echo "" >> "$TEMP_FILE"
 
-        echo "**Sections**:" >> "$TEMP_FILE"
-        while IFS=$'\t' read -r heading_id heading_title; do
-            heading_summary=$(extract_heading_summary "$file" "$heading_id")
-            if [ -n "$heading_summary" ]; then
-                echo "- [$heading_title](#$heading_id) - $heading_summary" >> "$TEMP_FILE"
-            else
-                echo "- [$heading_title](#$heading_id)" >> "$TEMP_FILE"
-            fi
-        done < <(list_headings "$file")
+        for file in $(find "$C3_ROOT/adr" -name "adr-*.md" 2>/dev/null | sort -r); do
+            id=$(extract_frontmatter "$file" "id")
+            title=$(extract_frontmatter "$file" "title")
+            summary=$(extract_summary "$file")
+            status=$(extract_frontmatter "$file" "status")
+            filename=$(basename "$file")
+
+            echo "### [$id](./adr/${filename}) - $title" >> "$TEMP_FILE"
+            echo "> $summary" >> "$TEMP_FILE"
+            echo "" >> "$TEMP_FILE"
+            echo "**Status**: ${status^}" >> "$TEMP_FILE"
+            echo "" >> "$TEMP_FILE"
+
+            output_sections "$file"
+        done
+    fi
+else
+    # v2: uppercase ADR-*.md
+    if [ "$adr_count" -gt 0 ]; then
+        echo "## Architecture Decisions" >> "$TEMP_FILE"
         echo "" >> "$TEMP_FILE"
-        echo "---" >> "$TEMP_FILE"
-        echo "" >> "$TEMP_FILE"
-    done
+
+        for file in $(find "$C3_ROOT/adr" -name "ADR-*.md" 2>/dev/null | sort -r); do
+            id=$(extract_frontmatter "$file" "id")
+            title=$(extract_frontmatter "$file" "title")
+            summary=$(extract_summary "$file")
+            status=$(extract_frontmatter "$file" "status")
+
+            echo "### [$id](./adr/${id}.md) - $title" >> "$TEMP_FILE"
+            echo "> $summary" >> "$TEMP_FILE"
+            echo "" >> "$TEMP_FILE"
+            echo "**Status**: ${status^}" >> "$TEMP_FILE"
+            echo "" >> "$TEMP_FILE"
+
+            output_sections "$file"
+        done
+    fi
 fi
 
 # Quick Reference

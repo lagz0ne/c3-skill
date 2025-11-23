@@ -9,7 +9,7 @@ description: Retrieve C3 documentation content by document or heading ID - suppo
 
 Retrieve content from `.c3/` documentation by document ID or heading ID. Supports the exploration phase of c3-design by enabling precise, ID-based content lookup.
 
-**Core principle:** IDs are the primary navigation. Use document IDs (CTX-system-overview, C3-2, C3-201) and heading IDs (#c3-1-middleware) for precise retrieval.
+**Core principle:** IDs are the primary navigation. Use numeric document IDs (c3-0, c3-1, c3-101) and heading IDs (#c3-1-middleware) for precise retrieval.
 
 ## Quick Reference
 
@@ -26,11 +26,10 @@ Retrieve content from `.c3/` documentation by document ID or heading ID. Support
 Retrieve document frontmatter and overview:
 
 ```
-c3-locate context              # Primary context (README.md)
-c3-locate CTX-actors           # Auxiliary context
-c3-locate C3-1-backend
-c3-locate C3-102-auth-middleware
-c3-locate ADR-003-caching-strategy
+c3-locate c3-0                 # Context (README.md)
+c3-locate c3-1                 # Container 1 (c3-1-*/README.md)
+c3-locate c3-101               # Component 01 in container 1
+c3-locate adr-003              # ADR document (lowercase)
 ```
 
 **Returns:**
@@ -44,7 +43,7 @@ Retrieve specific section from any document:
 
 ```
 c3-locate #c3-1-middleware
-c3-locate #c3-102-configuration
+c3-locate #c3-101-configuration
 c3-locate #adr-003-consequences
 ```
 
@@ -58,8 +57,8 @@ c3-locate #adr-003-consequences
 Retrieve specific section from specific document:
 
 ```
-c3-locate C3-1 #c3-1-middleware
-c3-locate C3-102 #c3-102-error-handling
+c3-locate c3-1 #c3-1-middleware
+c3-locate c3-101 #c3-101-error-handling
 ```
 
 **Returns:**
@@ -70,38 +69,52 @@ c3-locate C3-102 #c3-102-error-handling
 ### Finding Documents by ID
 
 ```bash
-# Document ID patterns:
-# Context (v2): id "context" maps to README.md
-# Context (v1/aux): CTX-slug (e.g., CTX-actors)
-# Container: C3-<C>-slug where C is single digit (e.g., C3-1-backend)
-# Component: C3-<C><NN>-slug where C is container, NN is 01-99 (e.g., C3-101-db-pool)
-# ADR: ADR-###-slug (e.g., ADR-001-caching-strategy)
+# Document ID patterns (v3 hierarchical):
+# Context: c3-0 → .c3/README.md
+# Container: c3-{N} → .c3/c3-{N}-*/README.md (folder with README)
+# Component: c3-{N}{NN} → .c3/c3-{N}-*/c3-{N}{NN}-*.md (inside container folder)
+# ADR: adr-{nnn} → .c3/adr/adr-{nnn}-*.md (lowercase)
 
-# Primary context (v2)
-if [ "$ID" = "context" ]; then
+# Context (v3): c3-0 maps to README.md
+if [ "$ID" = "c3-0" ]; then
     find .c3 -maxdepth 1 -name "README.md"
 fi
 
-# Auxiliary context documents
-find .c3 -maxdepth 1 -name "CTX-*.md"
+# Container documents (v3): c3-{N} → folder/README.md
+# e.g., c3-1 → .c3/c3-1-backend/README.md
+if [[ "$ID" =~ ^c3-([0-9])$ ]]; then
+    N="${BASH_REMATCH[1]}"
+    find .c3 -maxdepth 2 -path ".c3/c3-${N}-*/README.md"
+fi
 
-# Container documents (C3-<digit>-*.md)
-find .c3/containers -name "C3-[0-9]-*.md"
+# Component documents (v3): c3-{N}{NN} → inside container folder
+# e.g., c3-101 → .c3/c3-1-*/c3-101-*.md
+if [[ "$ID" =~ ^c3-([0-9])([0-9]{2})$ ]]; then
+    N="${BASH_REMATCH[1]}"
+    NN="${BASH_REMATCH[2]}"
+    find .c3/c3-${N}-* -name "c3-${N}${NN}-*.md" 2>/dev/null
+fi
 
-# Component documents - check v2 flat first, then v1 nested
-# V2 flat:
-find .c3/components -maxdepth 1 -name "C3-[0-9][0-9][0-9]-*.md"
-# V1 nested (fallback):
-find .c3/components -mindepth 2 -name "C3-[0-9][0-9][0-9]-*.md"
+# ADR documents (v3): lowercase
+# e.g., adr-003 → .c3/adr/adr-003-*.md
+find .c3/adr -name "adr-*.md"
 
-# ADR documents
-find .c3/adr -name "ADR-*.md"
+# V2 fallback patterns (backward compatibility):
+# Container: C3-{N}-slug.md in containers/
+find .c3/containers -name "C3-[0-9]-*.md" 2>/dev/null
+# Component: C3-{N}{NN}-slug.md in components/
+find .c3/components -name "C3-[0-9][0-9][0-9]-*.md" 2>/dev/null
+# ADR: ADR-###-*.md (uppercase)
+find .c3/adr -name "ADR-*.md" 2>/dev/null
 ```
 
 ### Extracting Frontmatter
 
 ```bash
-# Extract frontmatter from document
+# Extract frontmatter from document (v3 example)
+awk '/^---$/,/^---$/ {print}' .c3/c3-1-backend/README.md
+
+# V2 fallback example
 awk '/^---$/,/^---$/ {print}' .c3/containers/C3-1-backend.md
 ```
 
@@ -111,6 +124,7 @@ awk '/^---$/,/^---$/ {print}' .c3/containers/C3-1-backend.md
 # Heading pattern: ## Title {#heading-id}
 # Find heading and extract content until next heading
 
+# V3 example (hierarchical structure)
 awk -v hid="c3-1-middleware" '
   $0 ~ "{#" hid "}" {
     found = 1
@@ -119,13 +133,18 @@ awk -v hid="c3-1-middleware" '
   }
   found && /^## / { exit }
   found { print }
-' .c3/containers/C3-1-backend.md
+' .c3/c3-1-backend/README.md
+
+# V2 fallback
+awk -v hid="c3-1-middleware" '...' .c3/containers/C3-1-backend.md
 ```
 
 ### Extracting Heading Summary
 
 ```bash
 # Summary is in HTML comment after heading
+
+# V3 example
 awk -v hid="c3-1-middleware" '
   $0 ~ "{#" hid "}" {
     getline
@@ -143,7 +162,7 @@ awk -v hid="c3-1-middleware" '
     }
     print
   }
-' .c3/containers/C3-1-backend.md
+' .c3/c3-1-backend/README.md
 ```
 
 ## During Exploration
@@ -151,10 +170,10 @@ awk -v hid="c3-1-middleware" '
 Use c3-locate to investigate hypothesis:
 
 ```
-Hypothesis: "This affects C3-1 middleware"
+Hypothesis: "This affects c3-1 middleware"
 
 Exploration:
-1. c3-locate C3-1
+1. c3-locate c3-1
    → Get overview, see what components exist
 
 2. c3-locate #c3-1-middleware
@@ -163,13 +182,25 @@ Exploration:
 3. c3-locate #c3-1-components
    → See component organization
 
-4. Discover: "Ah, this actually touches C3-102-auth-middleware"
+4. Discover: "Ah, this actually touches c3-101-auth-middleware"
 
-5. c3-locate C3-102
+5. c3-locate c3-101
    → Deeper exploration of that component
 ```
 
 ## ID Conventions
+
+### V3 Structure (Current)
+
+| Pattern | Level | Example | File Path |
+|---------|-------|---------|-----------|
+| `c3-0` | Context | c3-0 | `.c3/README.md` |
+| `c3-{N}` | Container | c3-1 | `.c3/c3-{N}-*/README.md` |
+| `c3-{N}{NN}` | Component | c3-101 | `.c3/c3-{N}-*/c3-{N}{NN}-*.md` |
+| `adr-{nnn}` | Decision | adr-003 | `.c3/adr/adr-{nnn}-*.md` |
+| `#c3-xxx-section` | Heading | #c3-1-middleware | (within any doc) |
+
+### V2 Fallback (Backward Compatibility)
 
 | Pattern | Level | Example | File Path |
 |---------|-------|---------|-----------|
@@ -178,8 +209,6 @@ Exploration:
 | `C3-<C>-slug` | Container | C3-1-backend | `.c3/containers/C3-1-backend.md` |
 | `C3-<C><NN>-slug` | Component | C3-102-auth | `.c3/components/C3-102-auth.md` |
 | `ADR-###-slug` | Decision | ADR-003-cache | `.c3/adr/ADR-003-cache.md` |
-| `#ctx-section` | Context Heading | #ctx-architecture | (within context docs) |
-| `#c3-xxx-section` | Container/Component Heading | #c3-1-middleware | (within C3 docs) |
 
 ## Fallback: Discovery Mode
 
@@ -197,13 +226,13 @@ When you don't know the ID yet (rare):
 Called during EXPLORE phase of iterative scoping:
 
 ```
-HYPOTHESIZE → "Affects C3-1"
+HYPOTHESIZE → "Affects c3-1"
      ↓
 EXPLORE
-  ├── c3-locate C3-1 (isolated)
-  ├── c3-locate context #ctx-containers (upstream - v2)
-  ├── c3-locate C3-2 (adjacent)
-  └── c3-locate C3-101, C3-102 (downstream)
+  ├── c3-locate c3-1 (isolated)
+  ├── c3-locate c3-0 #c3-0-containers (upstream)
+  ├── c3-locate c3-2 (adjacent)
+  └── c3-locate c3-101, c3-102 (downstream)
      ↓
 DISCOVER → Refine or confirm hypothesis
 ```

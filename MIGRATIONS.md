@@ -3,7 +3,7 @@
 > This file defines all migrations between C3 skill versions.
 > Each version section describes changes and transforms needed.
 
-Current version: 2
+Current version: 3
 
 ---
 
@@ -63,6 +63,49 @@ Current version: 2
 - `.c3/README.md` exists with `id: context`
 - All component files match `.c3/components/C3-[0-9][0-9][0-9]-*.md`
 - No broken internal links (grep for old paths returns empty)
+
+---
+
+## Version 3 (from 2)
+
+### Changes
+- Containers become folders containing their components
+- No more `containers/` or `components/` type folders
+- All lowercase naming (c3-1-backend instead of C3-1-backend)
+- IDs are numeric only (c3-1, c3-101 instead of C3-1-backend, C3-101-db-pool)
+- Context ID changes from `context` to `c3-0`
+- VERSION file removed, `c3-version` added to README.md frontmatter
+- ADRs lowercase (adr-001 instead of ADR-001)
+
+### Transforms
+
+**Convert containers to folders:**
+- **Pattern:** `containers/C3-{N}-{slug}.md`
+- **Action:** Create `c3-{n}-{slug}/README.md`, move content, update id to `c3-{n}`
+
+**Move components into container folders:**
+- **Pattern:** `components/C3-{N}{NN}-{slug}.md`
+- **Action:** Move to `c3-{n}-*/c3-{n}{nn}-{slug}.md`, update id to `c3-{n}{nn}`
+
+**Update context:**
+- Change `id: context` to `id: c3-0`
+- Add `c3-version: 3` to README.md frontmatter
+- Remove VERSION file
+
+**Lowercase ADRs:**
+- Rename `ADR-{NNN}-{slug}.md` to `adr-{nnn}-{slug}.md`
+- Update id to lowercase
+
+**Update internal links:**
+- `](./containers/C3-` → `](./c3-`
+- `](./components/C3-` → container-relative paths
+
+### Verification
+- `.c3/README.md` contains `c3-version: 3` and `id: c3-0`
+- No `containers/` or `components/` directories exist
+- Container folders match `c3-[0-9]-*/` pattern
+- Each container folder has `README.md`
+- All IDs are numeric only
 
 ---
 

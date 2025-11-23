@@ -17,11 +17,11 @@ Migrate project `.c3/` documentation from older versions to current skill versio
 
 | Phase | Key Activities | Output |
 |-------|---------------|--------|
-| **1. Detect** | Read .c3/VERSION, compare to current | Version gap identified |
+| **1. Detect** | Read version (README.md frontmatter or VERSION file), compare to current | Version gap identified |
 | **2. Plan** | Parse MIGRATIONS.md, scan files | Migration plan |
 | **3. Confirm** | Present changes to user | User approval |
 | **4. Execute** | Apply transforms in batches | Updated files |
-| **5. Finalize** | Update VERSION, suggest TOC rebuild | Migration complete |
+| **5. Finalize** | Update version (frontmatter for v3+, VERSION file for v1/v2), suggest TOC rebuild | Migration complete |
 
 ## Phase 1: Detect Version
 
@@ -34,13 +34,21 @@ if [ ! -d ".c3" ]; then
     exit 0
 fi
 
-# Read version (default 0 if missing)
-if [ -f ".c3/VERSION" ]; then
+# Read version - check frontmatter first (v3), then VERSION file (v1/v2)
+if grep -q '^c3-version:' .c3/README.md 2>/dev/null; then
+    PROJECT_VERSION=$(grep '^c3-version:' .c3/README.md | sed 's/c3-version: *//')
+elif [ -f ".c3/VERSION" ]; then
     PROJECT_VERSION=$(cat .c3/VERSION)
 else
     PROJECT_VERSION=0
 fi
 ```
+
+**Version storage by format:**
+| Format | Location |
+|--------|----------|
+| v1/v2 | `.c3/VERSION` file |
+| v3+ | `c3-version:` frontmatter in `.c3/README.md` |
 
 ### Read Current Skill Version
 
@@ -154,11 +162,33 @@ For each batch:
 
 ## Phase 5: Finalize
 
-### Update VERSION
+### Update Version
+
+Update the version in the appropriate location based on target version:
 
 ```bash
-echo "{TARGET_VERSION}" > .c3/VERSION
+if [ "$TARGET_VERSION" -ge 3 ]; then
+    # v3+: Update c3-version in README.md frontmatter
+    if grep -q '^c3-version:' .c3/README.md; then
+        # Update existing frontmatter
+        sed -i "s/^c3-version: .*/c3-version: $TARGET_VERSION/" .c3/README.md
+    else
+        # Add c3-version after id line
+        sed -i "/^id: c3-0$/a c3-version: $TARGET_VERSION" .c3/README.md
+    fi
+    # Remove VERSION file if it exists (v3 doesn't use it)
+    rm -f .c3/VERSION
+else
+    # v1/v2: Update VERSION file
+    echo "$TARGET_VERSION" > .c3/VERSION
+fi
 ```
+
+**Version update by target:**
+| Target | Action |
+|--------|--------|
+| v1/v2 | Write to `.c3/VERSION` file |
+| v3+ | Update `c3-version:` in `.c3/README.md` frontmatter, remove VERSION file |
 
 ### Suggest TOC Rebuild
 
@@ -373,4 +403,4 @@ ls -d .c3/c3-[0-9]-*/ >/dev/null 2>&1 || echo "FAIL: no container folders"
 | "I'll migrate without asking" | Always confirm with user first |
 | "I'll do all files at once" | Batch in groups of 3-5 for trackability |
 | "Pattern didn't match, skip silently" | Log warnings for transparency |
-| "VERSION file not critical" | Always update VERSION on success |
+| "Version update not critical" | Always update version on success (VERSION file for v1/v2, frontmatter for v3+) |

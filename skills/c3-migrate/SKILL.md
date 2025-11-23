@@ -196,6 +196,70 @@ For non-regex transforms (like adding required fields):
    - Add with placeholder: `summary: "TODO: Add summary"`
    - Prompt user for value
 
+## V1 → V2 Migration Details
+
+### Detecting V1 Structure
+
+```bash
+# V1 has nested component directories
+nested_dirs=$(find .c3/components -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)
+if [ "$nested_dirs" -gt 0 ]; then
+    echo "V1 structure detected: nested component directories"
+fi
+```
+
+### Transform: Flatten Components
+
+```bash
+# Move all component files up one level
+for container_dir in .c3/components/*/; do
+    [ -d "$container_dir" ] || continue
+    mv "$container_dir"*.md .c3/components/ 2>/dev/null || true
+    rmdir "$container_dir" 2>/dev/null || true
+done
+```
+
+### Transform: Rename Context
+
+```bash
+# Rename CTX-system-overview.md to README.md
+if [ -f ".c3/CTX-system-overview.md" ]; then
+    mv ".c3/CTX-system-overview.md" ".c3/README.md"
+    # Update frontmatter id
+    sed -i 's/^id: CTX-system-overview$/id: context/' ".c3/README.md"
+fi
+```
+
+### Transform: Update Internal Links
+
+```bash
+# Update component links (remove container subfolder from path)
+find .c3 -name "*.md" -exec sed -i \
+    's|\](./components/[^/]*/\(C3-[0-9]\)|\](./components/\1|g' {} \;
+
+# Update context links
+find .c3 -name "*.md" -exec sed -i \
+    's|CTX-system-overview\.md|README.md|g' {} \;
+```
+
+### V1→V2 Verification
+
+After migration, verify:
+
+```bash
+# No nested component directories
+[ $(find .c3/components -mindepth 1 -maxdepth 1 -type d | wc -l) -eq 0 ] || echo "FAIL: nested dirs remain"
+
+# README.md exists with correct id
+grep -q '^id: context$' .c3/README.md || echo "FAIL: README.md id not updated"
+
+# VERSION updated
+[ "$(cat .c3/VERSION)" = "2" ] || echo "FAIL: VERSION not updated"
+
+# No broken component links
+! grep -r '](./components/[^/]*/C3-' .c3/*.md .c3/**/*.md || echo "FAIL: old component links remain"
+```
+
 ## Sub-Skill Usage
 
 | Task | Tool |

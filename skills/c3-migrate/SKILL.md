@@ -17,24 +17,20 @@ Migrate project `.c3/` documentation from older versions to current skill versio
 
 | Phase | Key Activities | Output |
 |-------|---------------|--------|
-| **1. Detect** | Read version (README.md frontmatter or VERSION file), compare to current | Version gap identified |
+| **1. Detect** | Read version, compare to current | Version gap identified |
 | **2. Plan** | Parse MIGRATIONS.md, scan files | Migration plan |
 | **3. Confirm** | Present changes to user | User approval |
 | **4. Execute** | Apply transforms in batches | Updated files |
-| **5. Finalize** | Update version (frontmatter for v3+, VERSION file for v1/v2), suggest TOC rebuild | Migration complete |
+| **5. Finalize** | Update version, suggest TOC rebuild | Migration complete |
+
+---
 
 ## Phase 1: Detect Version
 
 ### Read Project Version
 
 ```bash
-# Check if .c3/ exists
-if [ ! -d ".c3" ]; then
-    echo "No .c3/ directory found. Nothing to migrate."
-    exit 0
-fi
-
-# Read version - check frontmatter first (v3), then VERSION file (v1/v2)
+# Check frontmatter first (v3), then VERSION file (v1/v2)
 if grep -q '^c3-version:' .c3/README.md 2>/dev/null; then
     PROJECT_VERSION=$(grep '^c3-version:' .c3/README.md | sed 's/c3-version: *//')
 elif [ -f ".c3/VERSION" ]; then
@@ -44,65 +40,49 @@ else
 fi
 ```
 
-**Version storage by format:**
+**Version storage:**
 | Format | Location |
 |--------|----------|
 | v1/v2 | `.c3/VERSION` file |
-| v3+ | `c3-version:` frontmatter in `.c3/README.md` |
-
-### Read Current Skill Version
-
-The current version is defined in the plugin's `VERSION` file:
-```bash
-SKILL_VERSION=$(cat /path/to/c3-skill/VERSION)
-```
+| v3+ | `c3-version:` in `.c3/README.md` frontmatter |
 
 ### Compare Versions
 
 | Condition | Action |
 |-----------|--------|
-| PROJECT_VERSION == SKILL_VERSION | "Already at version N, no migration needed." Stop. |
-| PROJECT_VERSION > SKILL_VERSION | "Project version newer than skill. This shouldn't happen." Stop. |
-| PROJECT_VERSION < SKILL_VERSION | Continue to Phase 2 |
+| PROJECT == SKILL | "Already current, no migration needed." Stop. |
+| PROJECT > SKILL | "Project newer than skill." Stop. |
+| PROJECT < SKILL | Continue to Phase 2 |
+
+---
 
 ## Phase 2: Build Migration Plan
 
-### Parse MIGRATIONS.md
+1. Parse `MIGRATIONS.md` from plugin directory
+2. For each version from `PROJECT + 1` to `SKILL`:
+   - Extract transforms section
+   - Parse patterns and file globs
+3. Scan `.c3/` for affected files
+4. Build plan summary
 
-Read `MIGRATIONS.md` from the plugin directory.
-
-For each version from `PROJECT_VERSION + 1` to `SKILL_VERSION`:
-1. Extract the `### Transforms` section
-2. Parse patterns, replacements, and file globs
-3. Collect into migration steps
-
-### Scan Affected Files
-
-For each transform:
-1. Glob for matching files in `.c3/`
-2. Check which files contain the pattern
-3. Count matches per file
-
-### Build Plan Summary
+### Plan Format
 
 ```markdown
 ## Migration Plan: v{FROM} → v{TO}
 
 ### Version {N} transforms:
-- {PATTERN_DESC}: {FILE_COUNT} files, {MATCH_COUNT} matches
-  - file1.md (3 matches)
-  - file2.md (1 match)
+- {PATTERN_DESC}: {FILE_COUNT} files
 
 ### Batches:
-- Batch 1: file1.md, file2.md, file3.md
-- Batch 2: file4.md, file5.md
+- Batch 1: file1.md, file2.md
+- Batch 2: file3.md, file4.md
 ```
+
+---
 
 ## Phase 3: Confirm with User
 
-Present the plan:
-
-> "I'll migrate your `.c3/` documentation from version {FROM} to version {TO}.
+> "I'll migrate your `.c3/` documentation from v{FROM} to v{TO}.
 >
 > Changes:
 > - {CHANGE_1}
@@ -110,73 +90,39 @@ Present the plan:
 >
 > Files affected: {N}
 >
-> Proceed with migration? [y/n]"
+> Proceed? [y/n]"
 
-If user declines, stop.
+If declined, stop.
+
+---
 
 ## Phase 4: Execute Migration
 
 ### Batch Processing
 
-Process files in batches of 3-5 to balance parallelism and trackability.
+Process 3-5 files per batch for trackability.
 
 For each batch:
-
-1. **Dispatch subagent** with task:
-   ```
-   Apply these transforms to these files:
-
-   Transforms:
-   - Pattern: {REGEX}
-     Replace: {REPLACEMENT}
-
-   Files:
-   - {FILE_1}
-   - {FILE_2}
-   - {FILE_3}
-
-   Instructions:
-   1. Read each file
-   2. Apply pattern replacements
-   3. Write updated content
-   4. Report: filename, lines changed, any issues
-   ```
-
-2. **Wait for completion**
-
-3. **Report progress**
-   ```
-   Batch 1/3 complete: 3 files updated
-   - file1.md: 5 replacements
-   - file2.md: 2 replacements
-   - file3.md: 1 replacement
-   ```
+1. Apply transforms to files
+2. Report progress: `Batch 1/3 complete: 3 files updated`
 
 ### Error Handling
 
 | Error | Action |
 |-------|--------|
 | Pattern doesn't match | Log warning, continue |
-| File read error | Stop batch, report to user |
-| Subagent timeout | Retry once, then stop |
+| File read error | Stop batch, report |
+
+---
 
 ## Phase 5: Finalize
 
 ### Update Version
 
-Update the version in the appropriate location based on target version:
-
 ```bash
 if [ "$TARGET_VERSION" -ge 3 ]; then
-    # v3+: Update c3-version in README.md frontmatter
-    if grep -q '^c3-version:' .c3/README.md; then
-        # Update existing frontmatter
-        sed -i "s/^c3-version: .*/c3-version: $TARGET_VERSION/" .c3/README.md
-    else
-        # Add c3-version after id line
-        sed -i "/^id: c3-0$/a c3-version: $TARGET_VERSION" .c3/README.md
-    fi
-    # Remove VERSION file if it exists (v3 doesn't use it)
+    # v3+: Update frontmatter
+    sed -i "s/^c3-version: .*/c3-version: $TARGET_VERSION/" .c3/README.md
     rm -f .c3/VERSION
 else
     # v1/v2: Update VERSION file
@@ -184,223 +130,69 @@ else
 fi
 ```
 
-**Version update by target:**
-| Target | Action |
-|--------|--------|
-| v1/v2 | Write to `.c3/VERSION` file |
-| v3+ | Update `c3-version:` in `.c3/README.md` frontmatter, remove VERSION file |
-
 ### Suggest TOC Rebuild
 
 > "Migration complete: v{FROM} → v{TO}
 >
-> {N} files updated across {BATCHES} batches.
->
-> Recommended: Run `.c3/scripts/build-toc.sh` to refresh the table of contents.
-> (Script missing? Copy from c3-skill plugin's `.c3/scripts/build-toc.sh`)"
+> Run `.c3/scripts/build-toc.sh` to refresh TOC."
 
-### Verification Checklist
+---
 
-Run the `### Verification` checks from MIGRATIONS.md for the target version:
-- Report pass/fail for each check
-- If any fail, warn user
+## V1 → V2 Migration
 
-## Common Patterns
+### Transforms
 
-### Regex Transform Examples
+1. **Flatten components:** Move from `components/{container}/` to `components/`
+2. **Rename context:** `CTX-system-overview.md` → `README.md`
+3. **Update links:** Remove container subfolder from paths
 
-| Change | Pattern | Replace |
-|--------|---------|---------|
-| CON→C3 prefix | `CON-(\d+)-` | `C3-$1-` |
-| COM→C3 prefix | `COM-(\d+)-` | `C3-$1-` |
-| Heading ID simplify | `\{#(CTX\|C3\|ADR)-[^}]+-([^}]+)\}` | `{#$2}` |
-| Add frontmatter field | (structural) | Insert after `---` |
-
-### Structural Transforms
-
-For non-regex transforms (like adding required fields):
-
-1. Parse file frontmatter
-2. Check for required field
-3. If missing, either:
-   - Add with placeholder: `summary: "TODO: Add summary"`
-   - Prompt user for value
-
-## V1 → V2 Migration Details
-
-### Detecting V1 Structure
-
-```bash
-# V1 has nested component directories
-nested_dirs=$(find .c3/components -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)
-if [ "$nested_dirs" -gt 0 ]; then
-    echo "V1 structure detected: nested component directories"
-fi
-```
-
-### Transform: Flatten Components
-
-```bash
-# Move all component files up one level
-for container_dir in .c3/components/*/; do
-    [ -d "$container_dir" ] || continue
-    mv "$container_dir"*.md .c3/components/ 2>/dev/null || true
-    rmdir "$container_dir" 2>/dev/null || true
-done
-```
-
-### Transform: Rename Context
-
-```bash
-# Rename CTX-system-overview.md to README.md
-if [ -f ".c3/CTX-system-overview.md" ]; then
-    mv ".c3/CTX-system-overview.md" ".c3/README.md"
-    # Update frontmatter id
-    sed -i 's/^id: CTX-system-overview$/id: context/' ".c3/README.md"
-fi
-```
-
-### Transform: Update Internal Links
-
-```bash
-# Update component links (remove container subfolder from path)
-find .c3 -name "*.md" -exec sed -i \
-    's|\](./components/[^/]*/\(C3-[0-9]\)|\](./components/\1|g' {} \;
-
-# Update context links
-find .c3 -name "*.md" -exec sed -i \
-    's|CTX-system-overview\.md|README.md|g' {} \;
-```
-
-### V1→V2 Verification
-
-After migration, verify:
+### Verification
 
 ```bash
 # No nested component directories
-[ $(find .c3/components -mindepth 1 -maxdepth 1 -type d | wc -l) -eq 0 ] || echo "FAIL: nested dirs remain"
+[ $(find .c3/components -mindepth 1 -type d | wc -l) -eq 0 ]
 
-# README.md exists with correct id
-grep -q '^id: context$' .c3/README.md || echo "FAIL: README.md id not updated"
-
-# VERSION updated
-[ "$(cat .c3/VERSION)" = "2" ] || echo "FAIL: VERSION not updated"
-
-# No broken component links
-! grep -r '](./components/[^/]*/C3-' .c3/*.md .c3/**/*.md || echo "FAIL: old component links remain"
+# README.md has correct id
+grep -q '^id: context$' .c3/README.md
 ```
 
-## V2 → V3 Migration Details
+---
 
-### Detecting V2 Structure
+## V2 → V3 Migration
 
-```bash
-# V2 has containers/ and components/ directories
-if [ -d ".c3/containers" ] || [ -d ".c3/components" ]; then
-    echo "V2 structure detected"
-fi
-```
+### Transforms
 
-### Transform: Convert Containers to Folders
+1. **Convert containers to folders:** `containers/C3-1-*.md` → `c3-1-*/README.md`
+2. **Move components into containers:** `components/C3-101-*.md` → `c3-1-*/c3-101-*.md`
+3. **Update context:** `id: context` → `id: c3-0`, add `c3-version: 3`
+4. **Lowercase ADRs:** `ADR-001-*.md` → `adr-001-*.md`
 
-```bash
-# For each container, create folder and move doc
-for file in .c3/containers/C3-[0-9]-*.md; do
-    [ -f "$file" ] || continue
-    # Extract container number and slug
-    basename=$(basename "$file" .md)
-    lowercase=$(echo "$basename" | tr '[:upper:]' '[:lower:]')
-    container_num=$(echo "$lowercase" | sed 's/c3-\([0-9]\).*/\1/')
-
-    # Create container folder
-    mkdir -p ".c3/$lowercase"
-
-    # Move and rename to README.md, update id to numeric
-    cp "$file" ".c3/$lowercase/README.md"
-    sed -i "s/^id: .*/id: c3-$container_num/" ".c3/$lowercase/README.md"
-done
-rm -rf .c3/containers
-```
-
-### Transform: Move Components into Containers
-
-```bash
-# Move each component into its parent container folder
-for file in .c3/components/C3-[0-9][0-9][0-9]-*.md; do
-    [ -f "$file" ] || continue
-    basename=$(basename "$file")
-    lowercase=$(echo "$basename" | tr '[:upper:]' '[:lower:]')
-    container_num=$(echo "$lowercase" | sed 's/c3-\([0-9]\).*/\1/')
-    component_id=$(echo "$lowercase" | sed 's/c3-\([0-9][0-9][0-9]\).*/\1/')
-
-    # Find container folder
-    container_dir=$(find .c3 -maxdepth 1 -type d -name "c3-${container_num}-*" | head -1)
-
-    # Move component and update id
-    cp "$file" "$container_dir/$lowercase"
-    sed -i "s/^id: .*/id: c3-$component_id/" "$container_dir/$lowercase"
-done
-rm -rf .c3/components
-```
-
-### Transform: Update Context
-
-```bash
-# Update README.md: id context → c3-0, add c3-version
-sed -i 's/^id: context$/id: c3-0/' .c3/README.md
-sed -i '/^id: c3-0$/a c3-version: 3' .c3/README.md
-
-# Remove VERSION file
-rm -f .c3/VERSION
-```
-
-### Transform: Lowercase ADRs
-
-```bash
-for file in .c3/adr/ADR-*.md; do
-    [ -f "$file" ] || continue
-    lowercase=$(echo "$(basename "$file")" | tr '[:upper:]' '[:lower:]')
-    mv "$file" ".c3/adr/$lowercase"
-    # Update id to lowercase
-    sed -i 's/^id: ADR-/id: adr-/' ".c3/adr/$lowercase"
-done
-```
-
-### V2→V3 Verification
+### Verification
 
 ```bash
 # No containers/ or components/ directories
-[ ! -d ".c3/containers" ] && [ ! -d ".c3/components" ] || echo "FAIL: type dirs remain"
+[ ! -d ".c3/containers" ] && [ ! -d ".c3/components" ]
 
-# README has c3-0 id and c3-version
-grep -q '^id: c3-0$' .c3/README.md || echo "FAIL: context id not updated"
-grep -q '^c3-version: 3$' .c3/README.md || echo "FAIL: c3-version not set"
-
-# No VERSION file
-[ ! -f ".c3/VERSION" ] || echo "FAIL: VERSION file still exists"
-
-# Container folders exist
-ls -d .c3/c3-[0-9]-*/ >/dev/null 2>&1 || echo "FAIL: no container folders"
+# Context has c3-0 and c3-version
+grep -q '^id: c3-0$' .c3/README.md
+grep -q '^c3-version: 3$' .c3/README.md
 
 # All lowercase
-! find .c3 -name "C3-*" -o -name "ADR-*" | grep -q . || echo "FAIL: uppercase names remain"
+! find .c3 -name "C3-*" -o -name "ADR-*" | grep -q .
 ```
 
-## Sub-Skill Usage
-
-| Task | Tool |
-|------|------|
-| Batch file transforms | Task tool with subagent |
-| File reading | Read tool |
-| File writing | Edit or Write tool |
-| Pattern matching | Grep tool |
-| User confirmation | AskUserQuestion tool |
+---
 
 ## Red Flags
 
 | Rationalization | Counter |
 |-----------------|---------|
 | "I'll migrate without asking" | Always confirm with user first |
-| "I'll do all files at once" | Batch in groups of 3-5 for trackability |
-| "Pattern didn't match, skip silently" | Log warnings for transparency |
-| "Version update not critical" | Always update version on success (VERSION file for v1/v2, frontmatter for v3+) |
+| "I'll do all files at once" | Batch for trackability |
+| "Pattern didn't match, skip silently" | Log warnings |
+| "Version update not critical" | Always update on success |
+
+## Related
+
+- [v3-structure.md](../../references/v3-structure.md)
+- [MIGRATIONS.md](../../MIGRATIONS.md)

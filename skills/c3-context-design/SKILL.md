@@ -12,115 +12,67 @@ Explore Context-level impact during the scoping phase of c3-design. Context is t
 **Abstraction Level:** WHAT exists and HOW they relate. No implementation details.
 
 **Announce at start:** "I'm using the c3-context-design skill to explore Context-level impact."
-**Naming:** Apply `c3-naming` (CTX/C3 IDs follow patterns; anchors `{#ctx-*}`).
 
 ## When Invoked
 
 Called during EXPLORE phase of c3-design when:
 - Hypothesis suggests Context-level impact
 - Need to understand system-wide implications
-- Exploring upstream from Container/Component
 - Change affects system boundaries or protocols
 
 Also called by c3-adopt to CREATE initial Context documentation.
+
+## Quick Reference
+
+| Direction | Question | Action |
+|-----------|----------|--------|
+| **Isolated** | What system boundaries change? | Investigate context |
+| **Upstream** | What external systems depend on this? | Check third-party impacts |
+| **Adjacent** | What cross-cutting concerns related? | Check protocols |
+| **Downstream** | Which containers affected? | Delegate to c3-container-design |
 
 ---
 
 ## What Belongs at Context Level
 
-### Inclusion Criteria
+### Include
 
-**INCLUDE at Context level:**
+| Element | Example |
+|---------|---------|
+| System boundary | "TaskFlow system includes..." |
+| Actors | Users, Admin, External APIs |
+| Container inventory | Links to container docs |
+| Protocols | REST, gRPC, WebSocket |
+| Cross-cutting concerns | Auth strategy, logging approach |
+| Deployment topology | Cloud, multi-region |
 
-| Element | Why Context | Example |
-|---------|-------------|---------|
-| System boundary | Defines inside vs outside | "TaskFlow system includes..." |
-| Actors | Who/what interacts with system | Users, Admin, External APIs |
-| Container inventory | WHAT containers exist (links to Container docs) | "Backend API, Frontend, Database" → [C3-1-backend], [C3-2-frontend] |
-| Protocols between containers | Communication contracts | REST, gRPC, WebSocket |
-| Cross-cutting concerns | Span multiple containers | Auth strategy, logging approach |
-| Deployment topology | High-level infrastructure | Cloud, multi-region, CDN |
+### Exclude
 
-**EXCLUDE from Context (push down to Container):**
-
-| Element | Why Not Context | Where It Belongs |
-|---------|-----------------|------------------|
-| Technology choices | Implementation detail | Container |
-| Middleware specifics | Container internal | Container |
-| API endpoint details | Container responsibility | Container |
-| Component structure | Too granular | Container/Component |
-| Configuration values | Implementation | Container/Component |
-| Code examples | Implementation | Component |
+| Element | Where |
+|---------|-------|
+| Technology choices | Container |
+| Middleware specifics | Container |
+| API endpoints | Container |
+| Configuration values | Component |
+| Code examples | Component |
 
 ### Litmus Test
 
-Ask: "Would changing this require coordinating multiple containers or external parties?"
+> "Would changing this require coordinating multiple containers or external parties?"
 - **Yes** → Context level
-- **No** → Push down to Container
+- **No** → Push to Container
 
 ---
 
-## Expressing Relationships at Context Level
-
-### Relationship Types
-
-| Relationship | Expression | Example |
-|--------------|------------|---------|
-| Actor → System | "interacts with", "uses" | Users use TaskFlow via HTTPS |
-| Container → Container | Protocol name | Backend → Database via PostgreSQL |
-| System → External | "integrates with", "depends on" | System integrates with SendGrid |
-| Containment | "contains", "comprises" | System contains Backend, Frontend, DB |
-
-### Relationship Table Format
-
-```markdown
-## Protocols {#ctx-protocols}
-| From | To | Protocol | Implementations |
-|------|-----|----------|--------------------|
-| Frontend | Backend | REST/HTTPS | [C3-2-frontend#api-calls], [C3-1-backend#rest-endpoints] |
-| Backend | Postgres | SQL | [C3-1-backend#db-access], [C3-3-postgres#config] |
-| Backend | Email Service | SMTP | [C3-1-backend#email-integration] |
-```
-
-**Key change:** Protocols table links DOWN to Container#sections that implement each side.
-
-### Cross-Cutting Table Format
-
-```markdown
-## Cross-Cutting Concerns {#ctx-cross-cutting}
-
-### Authentication
-JWT-based, implemented in: [C3-1-backend#auth-middleware], [C3-2-frontend#auth-handling]
-
-### Logging
-Structured JSON with correlation IDs, implemented in: [C3-1-backend#logging], [C3-2-frontend#logging]
-
-### Error Handling
-Unified error codes catalog, implemented in: [C3-1-backend#error-handling], [C3-2-frontend#error-handling]
-```
-
-**Key change:** Cross-cutting concerns link DOWN to Container#sections implementing them.
-
-### DO NOT Express at Context
-
-- Internal component dependencies (Container level)
-- Method calls or interfaces (Component level)
-- Data flow within a container (Container level)
-
----
-
-## Diagrams for Context Level
+## Diagrams
 
 ### Primary: System Context Diagram
-
-**Purpose:** Show system boundary, actors, and external systems.
 
 ```mermaid
 graph TB
     subgraph "External"
         Users[Users]
         Admin[Administrators]
-        ExtAPI[External API]
     end
 
     subgraph "System Boundary"
@@ -129,245 +81,152 @@ graph TB
 
     Users -->|HTTPS| App
     Admin -->|HTTPS| App
-    App -->|REST| ExtAPI
 ```
 
-**When to use:** Always include in CTX document.
-
-### Secondary: Container Overview Diagram
-
-**Purpose:** Show containers within system and their protocols.
+### Secondary: Container Overview
 
 ```mermaid
 graph TB
-    subgraph "System Name"
+    subgraph "System"
         FE[Frontend]
         BE[Backend]
         DB[(Database)]
-        Cache[(Cache)]
     end
 
     FE -->|REST| BE
     BE -->|SQL| DB
-    BE -->|Redis| Cache
 ```
 
-**When to use:** When system has multiple containers.
-
-### Tertiary: Deployment Topology
-
-**Purpose:** Show high-level infrastructure layout.
-
-```mermaid
-graph LR
-    subgraph "Region: US-East"
-        LB[Load Balancer]
-        App1[App Instance]
-        App2[App Instance]
-        DB[(Primary DB)]
-    end
-
-    subgraph "Region: US-West"
-        DB2[(Replica)]
-    end
-
-    LB --> App1
-    LB --> App2
-    App1 --> DB
-    App2 --> DB
-    DB -.->|Replication| DB2
-```
-
-**When to use:** When deployment affects architecture decisions.
-
-### Avoid at Context Level
-
-| Diagram Type | Why Not | Where It Belongs |
-|--------------|---------|------------------|
-| Sequence diagrams with methods | Too detailed | Component |
-| Class diagrams | Implementation | Component |
-| Flowcharts with logic | Implementation | Component |
-| ER diagrams with columns | Too detailed | Container/Component |
+**Avoid:** Sequence diagrams with methods, class diagrams, flowcharts with logic (too detailed).
 
 ---
 
-## Context Level Defines
-
-| Concern | Examples |
-|---------|----------|
-| **System boundaries** | What's inside vs outside the system |
-| **Actors** | Users, external systems, third parties |
-| **Containers** | High-level view of all containers |
-| **Cross-cutting concerns** | Auth strategy, logging, monitoring |
-| **Protocols** | REST, gRPC, WebSocket, message queues |
-| **Deployment model** | Cloud, on-prem, hybrid (high level) |
-
 ## Exploration Questions
 
-When exploring Context level, investigate:
-
-### Isolated (at Context)
+### Isolated
 - What system boundaries change?
 - What actors are affected?
 - What protocols need modification?
 
-### Upstream (external)
+### Upstream
 - What external systems depend on this?
 - What third-party integrations affected?
-- What user-facing contracts change?
 
-### Adjacent (same level)
+### Adjacent
 - What other cross-cutting concerns related?
 - What other protocol decisions affected?
 
-### Downstream (to Containers)
-- Which containers does this affect?
-- How do container responsibilities change?
-- What new containers might be needed?
+### Downstream
+- Which containers affected?
+- What new containers needed?
 
-## Socratic Questions for Context Discovery
+---
 
-When creating or validating Context documentation, ask:
+## Socratic Questions
 
-### System Boundary
-1. "What is inside your system vs what is external?"
-2. "Who or what interacts with your system from outside?"
-3. "Are there third-party services your system depends on?"
+See [socratic-method.md](../../references/socratic-method.md) for techniques.
 
-### Actors
-4. "What types of users interact with the system?"
-5. "Are there other systems that call into yours?"
-6. "Are there background processes or scheduled jobs?"
+**System Boundary:**
+- "What is inside vs external?"
+- "Who/what interacts from outside?"
 
-### Containers
-7. "If you deployed this system, what would be the separately deployable units?"
-8. "What processes would be running?"
-9. "What data stores exist?"
+**Actors:**
+- "What types of users interact?"
+- "Are there other systems that call in?"
 
-### Protocols
-10. "How do your containers talk to each other?"
-11. "What protocols are used for external communication?"
-12. "Is communication synchronous or asynchronous?"
+**Containers:**
+- "What would be separately deployed?"
+- "What data stores exist?"
 
-### Cross-Cutting
-13. "How is authentication handled across the system?"
-14. "How does logging and monitoring work?"
-15. "Are there shared concerns that span multiple containers?"
+**Protocols:**
+- "How do containers talk to each other?"
+- "Synchronous or asynchronous?"
 
-## Reading Context Documents
+**Cross-Cutting:**
+- "How is authentication handled?"
+- "How does logging work?"
 
-Use c3-locate to retrieve:
+---
 
+## Document Template
+
+```markdown
+---
+id: c3-0
+c3-version: 3
+title: [System Name] Overview
+---
+
+# [System Name] Overview
+
+## Overview {#c3-0-overview}
+[System description]
+
+## Architecture {#c3-0-architecture}
+[System context diagram]
+
+## Containers {#c3-0-containers}
+| Container | Type | Description |
+|-----------|------|-------------|
+| [link] | Code/Infra | [purpose] |
+
+## Protocols {#c3-0-protocols}
+| From | To | Protocol | Implementations |
+|------|-----|----------|-----------------|
+| Frontend | Backend | REST | [container#section links] |
+
+## Cross-Cutting Concerns {#c3-0-cross-cutting}
+### Authentication
+[Strategy], implemented in: [container#section links]
+
+### Logging
+[Approach], implemented in: [container#section links]
+
+## Deployment {#c3-0-deployment}
+[High-level topology]
 ```
-c3-locate CTX-system-overview        # Overview
-c3-locate #ctx-architecture          # System diagram
-c3-locate #ctx-containers            # Container list
-c3-locate #ctx-protocols             # Communication patterns
-c3-locate #ctx-cross-cutting         # System-wide concerns
-c3-locate #ctx-deployment            # Deployment overview
-```
+
+### Checklist
+
+- [ ] System boundary and actors listed
+- [ ] Container inventory with types and links
+- [ ] Protocols table with implementation links
+- [ ] Cross-cutting decisions with downward links
+- [ ] Deployment topology described
+- [ ] Anchors use `{#c3-0-*}` format
+
+---
+
+## Reference Direction
+
+**References only flow DOWN** - Context links to Container implementations.
+
+- Context defines protocols → links to Container#sections
+- Context defines containers → links to Container docs
+- **No upward links** - reader came from above
+
+See [derivation-guardrails.md](../../references/derivation-guardrails.md).
+
+---
 
 ## Impact Signals
 
 | Signal | Meaning |
 |--------|---------|
-| Change affects system boundary | Major architectural shift |
-| New actor type introduced | Interface design needed |
-| Protocol change | All containers using it affected |
-| Cross-cutting concern change | Ripples through all layers |
+| System boundary change | Major architectural shift |
+| New actor type | Interface design needed |
+| Protocol change | All using containers affected |
+| Cross-cutting change | Ripples through all layers |
 
 ## Output for c3-design
 
-After exploring Context level, report:
-- What Context-level elements are affected
-- Impact magnitude (boundary change = high, protocol tweak = medium)
-- Downstream containers that need exploration
+After exploring, report:
+- Context-level elements affected
+- Impact magnitude
+- Downstream containers needing exploration
 - Whether hypothesis needs revision
 
-## Document Template Reference
+## Related
 
-Context documents follow this structure with **downward linking**:
-
-```markdown
----
-id: CTX-slug
-title: [System Name] System Architecture Overview
-summary: >
-  [Why read this document - what it covers]
----
-
-# [CTX-slug] [System Name] System Architecture Overview
-
-## Overview {#ctx-overview}
-<!--
-Describes the system at the highest level - what it does, who uses it,
-and what the major components are. Read to understand the big picture.
--->
-
-## Architecture {#ctx-architecture}
-<!--
-Shows the complete system diagram with all containers, external systems,
-and their relationships. Read to understand how pieces fit together.
--->
-
-## Containers {#ctx-containers}
-<!--
-Lists all containers with links DOWN to their docs. Reader follows links to dive deeper.
--->
-| Container | Type | Description |
-|-----------|------|-------------|
-| [C3-1-backend](./containers/C3-1-backend.md) | Code | REST API |
-| [C3-2-frontend](./containers/C3-2-frontend.md) | Code | Web UI |
-| [C3-3-postgres](./containers/C3-3-postgres.md) | Infrastructure | Data store |
-
-## Protocols {#ctx-protocols}
-<!--
-Communication protocols with links DOWN to Container#sections implementing each side.
--->
-| From | To | Protocol | Implementations |
-|------|-----|----------|--------------------|
-| Frontend | Backend | REST/HTTPS | [C3-2-frontend#api-calls], [C3-1-backend#rest-endpoints] |
-| Backend | Postgres | SQL | [C3-1-backend#db-access], [C3-3-postgres#config] |
-
-## Cross-Cutting Concerns {#ctx-cross-cutting}
-<!--
-System-wide concerns with links DOWN to Container#sections implementing them.
--->
-### Authentication
-JWT-based, implemented in: [C3-1-backend#auth-middleware], [C3-2-frontend#auth-handling]
-
-### Logging
-Structured JSON with correlation IDs, implemented in: [C3-1-backend#logging], [C3-2-frontend#logging]
-
-## Deployment {#ctx-deployment}
-<!--
-High-level deployment architecture - cloud vs on-prem, scaling approach,
-infrastructure patterns. Read to understand operational context.
--->
-
-## Related {#ctx-related}
-```
-
-### Checklist (must be true to call CTX done)
-
-- [ ] System boundary and actors listed
-- [ ] Container inventory table includes every container with Type (Code/Infra) and link
-- [ ] Protocols table lists every inter-container communication with links to implementing Container#sections
-- [ ] Cross-cutting decisions listed with downward links to Container#sections
-- [ ] Deployment topology described (diagram or text)
-- [ ] All anchors use `{#ctx-*}` format for stable linking
-
-### Reference Direction Principle
-
-**References only flow DOWN** - higher layer links to lower layer implementations.
-
-- Context defines protocols → links to Container#sections implementing them
-- Context defines containers → links to Container docs
-- **No upward links needed** - reader already came from above
-
-This creates:
-- Single source of truth (no duplicate relationship definitions)
-- Natural reading flow follows derivation
-- Maintenance only at one location
-
-Use these heading IDs for precise exploration.
+- [v3-structure.md](../../references/v3-structure.md)
+- [socratic-method.md](../../references/socratic-method.md)

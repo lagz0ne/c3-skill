@@ -26,6 +26,7 @@ Quick reference for C3 documentation file paths and ID patterns in v3 hierarchic
 .c3/
 ├── README.md              # Context (id: c3-0, c3-version: 3)
 ├── TOC.md                 # Table of contents
+├── settings.yaml          # Project settings (via c3-config)
 ├── index.md               # VitePress index
 ├── platform/              # Platform docs (Context-level)
 │   ├── deployment.md      # c3-0-deployment
@@ -106,6 +107,35 @@ Platform documents use Context-level IDs with descriptive suffix:
 | CI/CD | c3-0-cicd |
 
 These are conceptually part of Context (c3-0), split for manageability.
+
+## Settings File
+
+`.c3/settings.yaml` stores project preferences:
+
+```yaml
+diagrams: |
+  tool and usage patterns
+
+context: |
+  context-layer guidance
+
+container: |
+  container-layer guidance
+
+component: |
+  component-layer guidance
+
+guard: |
+  team guardrails
+
+handoff: |
+  post-ADR steps
+
+audit: |
+  audit handoff preference
+```
+
+Created via `c3-config` skill, read by `c3-design` at start.
 
 ## Key Rules
 

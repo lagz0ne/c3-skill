@@ -184,6 +184,27 @@ title: [System Name] Overview
 
 ## Deployment {#c3-0-deployment}
 [High-level topology]
+
+## Platform {#c3-0-platform}
+
+Platform infrastructure documentation (if applicable):
+- [Deployment](platform/deployment.md)
+- [Networking](platform/networking.md)
+- [Secrets Management](platform/secrets.md)
+- [CI/CD Pipeline](platform/ci-cd.md)
+
+See @references/platform-patterns.md for templates.
+
+## System Testing {#c3-0-testing}
+
+Reference @references/testing-discovery.md for approach.
+
+Document system-level tests if they exist:
+- End-to-end tests
+- Cross-container integration
+- Chaos/resilience testing
+
+Accept TBD if not yet established.
 ```
 
 ### Checklist
@@ -193,6 +214,8 @@ title: [System Name] Overview
 - [ ] Protocols table with implementation links
 - [ ] Cross-cutting decisions with downward links
 - [ ] Deployment topology described
+- [ ] Platform links added (if applicable)
+- [ ] System testing documented (or TBD)
 - [ ] Anchors use `{#c3-0-*}` format
 
 ---

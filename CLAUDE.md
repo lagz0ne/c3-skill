@@ -8,13 +8,13 @@
 
 Ask yourself:
 1. Does this change affect the structure of user `.c3/` directories?
-2. Does this change the ID patterns (c3-0, c3-N, c3-NNN, adr-nnn)?
+2. Does this change the ID patterns (c3-0, c3-N, c3-NNN, adr-YYYYMMDD-slug)?
 3. Does this change frontmatter requirements?
 4. Does this change file naming conventions?
 
 **If YES to any:**
-- Update `VERSION` file (increment version number)
-- Add migration section to `MIGRATIONS.md`
+- Update `VERSION` file (use `YYYYMMDD-slug` format)
+- Create migration file in `migrations/YYYYMMDD-slug.md`
 - Update `c3-migrate` skill if transforms are needed
 - **Require reviewer confirmation before merge**
 

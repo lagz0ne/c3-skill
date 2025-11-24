@@ -209,6 +209,7 @@ Implemented by: [component link]
 
 ### Code Container Checklist
 
+- [ ] **Scoping verified** (up/down/aside per derivation-guardrails.md)
 - [ ] Technology stack recorded
 - [ ] Protocol implementations mapped
 - [ ] Component relationships flowchart present
@@ -242,6 +243,7 @@ title: [Infrastructure Name]
 
 ### Infrastructure Checklist
 
+- [ ] **Scoping verified** (up/down/aside per derivation-guardrails.md)
 - [ ] Engine/version stated
 - [ ] Configuration with rationale
 - [ ] Features table with consumers

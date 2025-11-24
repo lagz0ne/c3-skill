@@ -94,7 +94,7 @@ This will:
 ├── actors.md                      # Aux context (applies downward)
 ├── TOC.md                         # Auto-generated
 ├── adr/
-│   └── adr-001-rest-api.md
+│   └── adr-20250115-rest-api.md
 ├── scripts/
 │   └── build-toc.sh
 ├── c3-1-backend/                  # Container folder
@@ -106,11 +106,12 @@ This will:
     └── c3-201-api-client.md
 ```
 
-> **V3 Changes:**
+> **V3+ Changes:**
 > - Containers are now folders (`c3-{N}-name/`) containing their components
 > - All IDs use numeric format: `c3-0` (context), `c3-1` (container), `c3-101` (component)
 > - All filenames are lowercase
-> - Version tracked via `c3-version` frontmatter instead of VERSION file
+> - Version tracked via `c3-version` frontmatter (format: `YYYYMMDD-slug`)
+> - ADRs use date-based naming: `adr-{YYYYMMDD}-{slug}` (e.g., `adr-20250115-rest-api.md`)
 
 ## Document Conventions
 
@@ -121,7 +122,7 @@ Every document has a unique ID:
 - `c3-0`: Context level (`.c3/README.md`)
 - `c3-{N}`: Container level (e.g., `c3-1` in `c3-1-backend/README.md`)
 - `c3-{N}{NN}`: Component level (e.g., `c3-101` in `c3-1-backend/c3-101-db-pool.md`)
-- `adr-{nnn}`: Architecture decisions (lowercase, e.g., `adr-001`)
+- `adr-{YYYYMMDD}-{slug}`: Architecture decisions (date-based, e.g., `adr-20250115-rest-api`)
 
 ### Frontmatter
 

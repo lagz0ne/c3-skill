@@ -50,7 +50,8 @@ When reviewing PRs that claim to need migration:
   - [ ] Verification (how to confirm success)
 - [ ] Migration slug is unique (no duplicates in `migrations/`)
 - [ ] c3-migrate skill updated if transforms are complex
-- [ ] README updated if user-facing behavior changes
+- [ ] README.md updated if user-facing behavior changes (ID patterns, naming conventions, examples)
+- [ ] references/v3-structure.md updated if structure patterns change
 
 When reviewing PRs that claim NO migration needed:
 
@@ -75,6 +76,23 @@ ls migrations/ | grep -c "YYYYMMDD-your-slug"  # Should return 0
 **Examples:**
 - `20251124-adr-date-naming` - ADR naming convention change
 - `20251125-component-validation` - Component validation rules
+
+### Files to Update When Patterns Change
+
+When changing ID patterns, naming conventions, or structure:
+
+| File | What to Update |
+|------|----------------|
+| `README.md` | Examples, documentation structure, ID format descriptions |
+| `references/v3-structure.md` | ID patterns, file paths, frontmatter examples |
+| `skills/c3-naming/SKILL.md` | Naming patterns, search patterns, examples |
+| `skills/c3-migrate/SKILL.md` | Version comparison, transforms, verification |
+| `skills/c3-locate/SKILL.md` | ID resolution patterns, lookup examples |
+
+**Tip:** Search for old patterns across all files before marking migration complete:
+```bash
+grep -r 'old-pattern' skills/ references/ README.md
+```
 
 ## Plugin Structure
 

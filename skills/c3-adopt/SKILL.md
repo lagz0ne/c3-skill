@@ -19,8 +19,9 @@ Bootstrap C3 (Context-Container-Component) architecture documentation for an exi
 | **2. Context Discovery** | Socratic questions about system | Understanding for c3-0 |
 | **3. Container Discovery** | Archetype-guided exploration, Socratic questions | Understanding for c3-{N} |
 | **4. Component Identification** | Identify key components | c3-{N}{NN} stubs |
-| **5. Generate & Verify** | Delegate to sub-skills, build TOC | Complete documentation |
-| **6. Platform (Optional)** | Document deployment, networking, secrets, CI/CD | `.c3/platform/` docs |
+| **5. Configure Settings** | Call c3-config if settings.yaml missing | `.c3/settings.yaml` |
+| **6. Generate & Verify** | Delegate to sub-skills, build TOC | Complete documentation |
+| **7. Platform (Optional)** | Document deployment, networking, secrets, CI/CD | `.c3/platform/` docs |
 
 ## Guardrails
 
@@ -268,7 +269,27 @@ For high-priority, delegate to c3-component-design.
 
 ---
 
-## Phase 5: Generate & Verify
+## Phase 5: Configure Settings
+
+### Check for settings.yaml
+
+After scaffolding, check if `.c3/settings.yaml` exists:
+
+```bash
+ls .c3/settings.yaml 2>/dev/null && echo "EXISTS" || echo "MISSING"
+```
+
+**If MISSING:**
+- Announce: "I'll use the c3-config skill to set up project settings."
+- Use the `c3-config` skill
+- When called from c3-adopt, c3-config creates defaults and offers customization
+
+**If EXISTS:**
+- Skip, settings already configured
+
+---
+
+## Phase 6: Generate & Verify
 
 ### Generate TOC
 
@@ -312,7 +333,7 @@ chmod +x .c3/scripts/build-toc.sh
 
 ---
 
-## Phase 6: Platform Documentation (Optional)
+## Phase 7: Platform Documentation (Optional)
 
 Ask user:
 ```

@@ -34,6 +34,19 @@ If `.c3/` doesn't exist:
 - Suggest: "Use the `c3-adopt` skill to initialize C3 documentation for this project"
 - The `c3-adopt` skill will discover the project structure and create initial documents
 
+**Load project settings (if exists):**
+```bash
+cat .c3/settings.yaml 2>/dev/null
+```
+
+If `.c3/settings.yaml` exists, apply preferences throughout the session:
+- `diagrams` - Use specified tool and patterns when creating diagrams
+- `context`/`container`/`component` - Follow layer-specific guidance when writing docs
+- `guard` - Respect guardrails as constraints during design
+- `handoff` - Follow post-ADR steps after decision is accepted
+
+Settings are optional - if missing, use sensible defaults.
+
 ## The Process
 
 ### Phase 1: Surface Understanding

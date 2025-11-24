@@ -29,7 +29,7 @@ Retrieve document frontmatter and overview:
 c3-locate c3-0                 # Context (README.md)
 c3-locate c3-1                 # Container 1 (c3-1-*/README.md)
 c3-locate c3-101               # Component 01 in container 1
-c3-locate adr-003              # ADR document (lowercase)
+c3-locate adr-20251124-caching  # ADR document (date-based)
 ```
 
 **Returns:**
@@ -44,7 +44,7 @@ Retrieve specific section from any document:
 ```
 c3-locate #c3-1-middleware
 c3-locate #c3-101-configuration
-c3-locate #adr-003-consequences
+c3-locate #adr-20251124-caching-consequences
 ```
 
 **Returns:**
@@ -73,7 +73,7 @@ c3-locate c3-101 #c3-101-error-handling
 # Context: c3-0 → .c3/README.md
 # Container: c3-{N} → .c3/c3-{N}-*/README.md (folder with README)
 # Component: c3-{N}{NN} → .c3/c3-{N}-*/c3-{N}{NN}-*.md (inside container folder)
-# ADR: adr-{nnn} → .c3/adr/adr-{nnn}-*.md (lowercase)
+# ADR: adr-{YYYYMMDD}-{slug} → .c3/adr/adr-{YYYYMMDD}-{slug}.md (date-based)
 
 # Context (v3): c3-0 maps to README.md
 if [ "$ID" = "c3-0" ]; then
@@ -95,8 +95,8 @@ if [[ "$ID" =~ ^c3-([0-9])([0-9]{2})$ ]]; then
     find .c3/c3-${N}-* -name "c3-${N}${NN}-*.md" 2>/dev/null
 fi
 
-# ADR documents (v3): lowercase
-# e.g., adr-003 → .c3/adr/adr-003-*.md
+# ADR documents (v3): date-based
+# e.g., adr-20251124-caching → .c3/adr/adr-20251124-caching.md
 find .c3/adr -name "adr-*.md"
 
 # V2 fallback patterns (backward compatibility):
@@ -104,7 +104,7 @@ find .c3/adr -name "adr-*.md"
 find .c3/containers -name "C3-[0-9]-*.md" 2>/dev/null
 # Component: C3-{N}{NN}-slug.md in components/
 find .c3/components -name "C3-[0-9][0-9][0-9]-*.md" 2>/dev/null
-# ADR: ADR-###-*.md (uppercase)
+# ADR: ADR-###-slug.md (uppercase, legacy)
 find .c3/adr -name "ADR-*.md" 2>/dev/null
 ```
 
@@ -197,7 +197,7 @@ Exploration:
 | `c3-0` | Context | c3-0 | `.c3/README.md` |
 | `c3-{N}` | Container | c3-1 | `.c3/c3-{N}-*/README.md` |
 | `c3-{N}{NN}` | Component | c3-101 | `.c3/c3-{N}-*/c3-{N}{NN}-*.md` |
-| `adr-{nnn}` | Decision | adr-003 | `.c3/adr/adr-{nnn}-*.md` |
+| `adr-{YYYYMMDD}-{slug}` | Decision | adr-20251124-caching | `.c3/adr/adr-{YYYYMMDD}-{slug}.md` |
 | `#c3-xxx-section` | Heading | #c3-1-middleware | (within any doc) |
 
 ### V2 Fallback (Backward Compatibility)
@@ -208,7 +208,7 @@ Exploration:
 | `CTX-slug` | Auxiliary Context | CTX-actors | `.c3/CTX-actors.md` |
 | `C3-<C>-slug` | Container | C3-1-backend | `.c3/containers/C3-1-backend.md` |
 | `C3-<C><NN>-slug` | Component | C3-102-auth | `.c3/components/C3-102-auth.md` |
-| `ADR-###-slug` | Decision | ADR-003-cache | `.c3/adr/ADR-003-cache.md` |
+| `ADR-###-slug` | Decision | ADR-003-cache | `.c3/adr/ADR-###-slug.md` |
 
 ## Fallback: Discovery Mode
 

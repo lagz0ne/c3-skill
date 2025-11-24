@@ -77,27 +77,52 @@ jobs:
 
           cat changelog.md
 
-      - name: Create release zip
+      - name: Create release zips (one per skill)
         run: |
           VERSION=${{ steps.version.outputs.version }}
-          ZIP_NAME="c3-skill-v${VERSION}.zip"
+          mkdir -p dist
 
-          # Create zip with plugin-compatible structure
-          # Exclude git, worktrees, and development files
-          zip -r "$ZIP_NAME" . \
+          # Create one ZIP per skill with SKILL.md at root
+          for skill_dir in skills/*/; do
+            skill_name=$(basename "$skill_dir")
+            zip_name="dist/${skill_name}-v${VERSION}.zip"
+
+            echo "Creating $zip_name..."
+
+            # Create temp dir for this skill
+            tmp_dir=$(mktemp -d)
+
+            # Copy SKILL.md to root of temp dir
+            cp "${skill_dir}SKILL.md" "$tmp_dir/SKILL.md"
+
+            # Copy references (skills may need these)
+            if [ -d "references" ]; then
+              cp -r references "$tmp_dir/"
+            fi
+
+            # Create zip from temp dir
+            (cd "$tmp_dir" && zip -r - .) > "$zip_name"
+
+            rm -rf "$tmp_dir"
+
+            echo "Created: $zip_name"
+            unzip -l "$zip_name"
+            echo ""
+          done
+
+          # Also create full plugin zip for those who want everything
+          FULL_ZIP="dist/c3-skill-full-v${VERSION}.zip"
+          zip -r "$FULL_ZIP" . \
             -x ".git/*" \
             -x ".github/*" \
             -x ".wt/*" \
             -x "docs/plans/*" \
+            -x "dist/*" \
             -x "*.zip" \
             -x ".gitignore"
 
-          echo "Created: $ZIP_NAME"
-          ls -la "$ZIP_NAME"
-
-          # Verify zip contents
-          echo "--- Zip contents ---"
-          unzip -l "$ZIP_NAME"
+          echo "Created full plugin: $FULL_ZIP"
+          ls -la dist/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -105,7 +130,7 @@ jobs:
           tag_name: v${{ steps.version.outputs.version }}
           name: C3 Skill v${{ steps.version.outputs.version }}
           body_path: changelog.md
-          files: c3-skill-v${{ steps.version.outputs.version }}.zip
+          files: dist/*.zip
           draft: false
           prerelease: false
         env:
@@ -117,4 +142,8 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Version**: v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Tag**: v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Artifact**: c3-skill-v${{ steps.version.outputs.version }}.zip" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Skill ZIPs (one SKILL.md per ZIP)" >> $GITHUB_STEP_SUMMARY
+          for f in dist/*.zip; do
+            echo "- $(basename $f)" >> $GITHUB_STEP_SUMMARY
+          done

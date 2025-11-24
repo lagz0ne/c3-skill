@@ -29,7 +29,7 @@ Short, hierarchical names prevent collisions and make derivation obvious. Use al
 | Context | `c3-0` | `.c3/c3-0-{slug}/README.md` | `.c3/c3-0-system/README.md` |
 | Container | `c3-{N}` (`N` = 1-9) | `.c3/c3-{N}-{slug}/README.md` | `.c3/c3-1-backend/README.md` |
 | Component | `c3-{N}{NN}` (`NN` = 01-99) | `.c3/c3-{N}-{slug}/c3-{N}{NN}-{slug}.md` | `.c3/c3-1-backend/c3-101-api-client.md` |
-| ADR | `adr-{nnn}` | `.c3/adr/adr-{nnn}-{slug}.md` | `.c3/adr/adr-002-postgresql.md` |
+| ADR | `adr-{YYYYMMDD}-{slug}` | `.c3/adr/adr-{YYYYMMDD}-{slug}.md` | `.c3/adr/adr-20251124-postgresql.md` |
 
 ## Search Patterns
 
@@ -40,7 +40,7 @@ Container and component IDs share the `c3-` prefix but differ in digit count. Us
 | Context | `c3-0` | `c3-0-[a-z]` | Zero digit, then slug |
 | Container | Find `c3-X-` where X is 1-9 | `c3-[1-9]-[a-z]` | Single digit (1-9) + dash + letter |
 | Component | Find `c3-XXX-` where XXX is 3+ digits | `c3-[1-9][0-9]{2,}-` | 3+ digits encode container + sequence |
-| ADR | `adr-` | `adr-[0-9]{3}-` | Always 3 digits, lowercase |
+| ADR | `adr-2` | `adr-[0-9]{8}-` | 8 digits (YYYYMMDD), lowercase |
 
 **Examples:**
 ```bash
@@ -51,7 +51,13 @@ ls -d .c3/c3-[1-9]-*/
 ls .c3/c3-2-*/c3-2*.md
 
 # Find all ADRs
-ls .c3/adr/adr-*.md
+ls .c3/adr/adr-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-*.md
+
+# Find ADRs by year
+ls .c3/adr/adr-2025*.md
+
+# Find ADRs by month
+ls .c3/adr/adr-202511*.md
 ```
 
 ## Flow (small)
@@ -61,7 +67,7 @@ flowchart TD
     Type -->|Context| Ctx[c3-0-slug<br/>system root]
     Type -->|Container| Con[c3-N-slug<br/>unique digit 1-9]
     Type -->|Component| Com[Use parent digit<br/>c3-NNN-slug]
-    Type -->|ADR| Adr[adr-nnn-slug<br/>lowercase, 3 digits]
+    Type -->|ADR| Adr[adr-YYYYMMDD-slug<br/>date-based, unique slug]
 ```
 
 ## How to Name
@@ -73,7 +79,7 @@ flowchart TD
    - Context: `.c3/c3-0-system/README.md`
    - Container: `.c3/c3-2-frontend/README.md`
    - Component: `.c3/c3-2-frontend/c3-201-api-client.md`
-   - ADR: `.c3/adr/adr-003-caching.md`
+   - ADR: `.c3/adr/adr-20251124-caching.md`
 5) Update links to use new IDs and anchors (`{#c3-xxx-*}` for containers/components, `{#adr-xxx-*}` for ADRs) after renaming.
 
 ## Excellent Example (single)
@@ -90,8 +96,8 @@ Components inside c3-1-backend:
 - .c3/c3-1-backend/c3-103-task-service.md
 
 ADRs:
-- .c3/adr/adr-001-database-choice.md
-- .c3/adr/adr-002-auth-strategy.md
+- .c3/adr/adr-20250115-database-choice.md
+- .c3/adr/adr-20250220-auth-strategy.md
 ```
 
 ## Directory Structure Example
@@ -108,8 +114,8 @@ ADRs:
     c3-201-ui-shell.md     # Component
     c3-202-state.md        # Component
   adr/
-    adr-001-database.md
-    adr-002-auth.md
+    adr-20250115-database.md
+    adr-20250220-auth.md
 ```
 
 ## Rationalization Table (counters)
@@ -139,7 +145,7 @@ ADRs:
 
 ## Checklist
 - All IDs and filenames are lowercase.
-- IDs follow patterns above (c3-0/c3-N/c3-NNN/adr-nnn).
+- IDs follow patterns above (c3-0/c3-N/c3-NNN/adr-YYYYMMDD-slug).
 - Components include parent container digit in ID and filename.
 - Components are nested inside container directories.
 - Container directories have README.md.

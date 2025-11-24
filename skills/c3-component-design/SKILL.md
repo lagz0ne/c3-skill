@@ -44,6 +44,20 @@ Nature type determines documentation focus:
 | **Build/Deployment** | CI/CD, build config |
 | **Testing** | Test strategies, fixtures |
 
+## Role Mapping
+
+Map discovered components to roles from @references/role-taxonomy.md:
+
+| Nature Type | Typical Roles |
+|-------------|---------------|
+| Resource/Integration | Database Access, Cache Access, External Client |
+| Business Logic | Business Logic, Saga Coordinator |
+| Framework/Entrypoint | Request Handler, Event Consumer |
+| Cross-cutting | Health/Readiness, Observability |
+| Testing | (testing infrastructure, not a role) |
+
+Use roles as vocabulary: "This resource component provides Database Access - correct?"
+
 ---
 
 ## What Belongs at Component Level
@@ -113,24 +127,39 @@ Component contains **what Container doesn't enforce**.
 
 ---
 
-## Exploration Questions
+## Discovery Approach
 
-### Isolated
-- What implementation details change?
-- What configuration affected?
-- What error handling needs updating?
+### Step 1: Understand Flow
 
-### Upstream
-- Does this change container responsibilities?
-- Are container APIs affected?
+Look in all directions:
+- **Upward:** What calls this component?
+- **Downward:** What does this component call?
+- **Adjacent:** What runs alongside this?
 
-### Adjacent
-- What sibling components related?
-- What shared utilities affected?
+### Step 2: Task Explore (if needed)
 
-### Downstream
-- What code uses this component?
-- What tests need updating?
+For complex components, use Task Explore:
+```
+Explore this component at [path]:
+- What does it depend on? (imports, injections)
+- What depends on it? (who imports this)
+- What's the main pattern? (service, repository, handler)
+- How are errors handled?
+```
+
+### Step 3: Socratic Questions
+
+Use @references/discovery-questions.md for component-level questions.
+Use AskUserQuestion when choices are clear.
+
+### Exploration Questions
+
+| Direction | Questions |
+|-----------|-----------|
+| **Isolated** | What implementation details change? What configuration affected? |
+| **Upstream** | Does this change container responsibilities? Are APIs affected? |
+| **Adjacent** | What sibling components related? What shared utilities affected? |
+| **Downstream** | What code uses this component? What tests need updating? |
 
 ---
 
@@ -169,6 +198,23 @@ See [socratic-method.md](../../references/socratic-method.md) for techniques.
 - No upstream contract changes
 
 If change belongs higher, report to c3-design for hypothesis revision.
+
+---
+
+## Testing Discovery
+
+Reference @references/testing-discovery.md for testing documentation.
+
+Ask: "Are there tests for this component?"
+
+If yes, document location and how to run.
+If no, document as TBD - don't enforce.
+
+```markdown
+## Testing {#c3-nnn-testing}
+- Location: `src/__tests__/componentName.test.ts`
+- Run: `npm test componentName`
+```
 
 ---
 

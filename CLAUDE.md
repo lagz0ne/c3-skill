@@ -36,18 +36,19 @@ Ask yourself:
 
 ### Current Version
 
-Check `VERSION` file for current version (currently: 3).
-Check `MIGRATIONS.md` for migration history and format.
+Check `VERSION` file for current version (currently: `20251124-adr-date-naming`).
+Check `migrations/` directory for migration history (files sorted lexicographically).
 
 ### Migration Checklist for Reviewers
 
 When reviewing PRs that claim to need migration:
 
 - [ ] VERSION file incremented
-- [ ] MIGRATIONS.md has new version section with:
+- [ ] New migration file in `migrations/YYYYMMDD-slug.md` with:
   - [ ] Changes (human-readable)
   - [ ] Transforms (patterns and replacements)
   - [ ] Verification (how to confirm success)
+- [ ] Migration slug is unique (no duplicates in `migrations/`)
 - [ ] c3-migrate skill updated if transforms are complex
 - [ ] README updated if user-facing behavior changes
 
@@ -57,6 +58,23 @@ When reviewing PRs that claim NO migration needed:
 - [ ] No file structure changes
 - [ ] No ID/naming pattern changes
 - [ ] No frontmatter changes
+
+### Version Slug Uniqueness Rule
+
+Migration slugs must be unique across all migrations. Reviewers must reject PRs with duplicate version slugs.
+
+**Before creating a migration, verify uniqueness:**
+```bash
+ls migrations/ | grep -c "YYYYMMDD-your-slug"  # Should return 0
+```
+
+**Naming format:** `YYYYMMDD-descriptive-slug`
+- Date: The date the migration is created
+- Slug: Short, descriptive, lowercase, hyphenated
+
+**Examples:**
+- `20251124-adr-date-naming` - ADR naming convention change
+- `20251125-component-validation` - Component validation rules
 
 ## Plugin Structure
 
@@ -68,8 +86,8 @@ c3-design/
 ├── references/          # Shared reference docs for skills
 ├── docs/plans/          # Design documents
 ├── .c3/                 # Plugin's own C3 documentation
-├── VERSION              # Current version number
-├── MIGRATIONS.md        # Migration specifications
+├── VERSION              # Current version (YYYYMMDD-slug format)
+├── migrations/          # Individual migration files
 └── CLAUDE.md            # This file
 ```
 
@@ -78,6 +96,6 @@ c3-design/
 1. Create design doc in `docs/plans/` for significant changes
 2. Assess migration impact (see above)
 3. Make changes
-4. If migration needed: update VERSION, MIGRATIONS.md
+4. If migration needed: update VERSION, create `migrations/YYYYMMDD-slug.md`
 5. Commit with descriptive message
 6. Request review with migration assessment noted

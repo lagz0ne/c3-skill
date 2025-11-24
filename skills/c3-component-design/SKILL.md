@@ -258,6 +258,7 @@ nature: [Resource/Business/etc]
 
 ### Checklist
 
+- [ ] **Scoping verified** (up/down/aside per derivation-guardrails.md)
 - [ ] Nature chosen and documented
 - [ ] Stack and configuration documented
 - [ ] Interfaces/types specified

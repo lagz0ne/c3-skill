@@ -2,6 +2,34 @@
 
 Rules for maintaining consistent C3 documentation hierarchy and relationships.
 
+## Core Principles
+
+### Parent Defines, Child Implements
+
+Higher layers define how lower layers work together:
+- **Context** defines protocols → containers implement them
+- **Container** defines component responsibilities → components implement them
+- Parent owns the "contract", child owns the "how"
+
+### Test Placement by Failure Scope
+
+Place tests where failures originate:
+- **Component tests** - failures from internal logic (unit tests)
+- **Container tests** - failures from sibling component interaction (integration tests)
+- **Context tests** - failures from container interaction (system/e2e tests)
+
+If a test fails due to inner unit details → test stays at that level.
+If a test fails due to sibling units → test belongs one level up.
+
+### Verify Scoping by Direction
+
+Before documenting, always confirm scope by looking:
+- **Up** - does this affect parent layer?
+- **Down** - what children are impacted?
+- **Aside** - what siblings are related?
+
+If upstream impact found → scope is bigger than thought, revise.
+
 ## Reading Order
 
 Always read top-down: **Context → Container → Component**

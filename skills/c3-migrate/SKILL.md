@@ -1,6 +1,6 @@
 ---
 name: c3-migrate
-description: Migrate .c3/ documentation to current skill version - reads VERSION, compares against MIGRATIONS.md, executes transforms in batches
+description: Migrate .c3/ documentation to current skill version - reads VERSION, compares against migrations/ directory, executes transforms in batches
 ---
 
 # C3 Migration Skill
@@ -18,7 +18,7 @@ Migrate project `.c3/` documentation from older versions to current skill versio
 | Phase | Key Activities | Output |
 |-------|---------------|--------|
 | **1. Detect** | Read version, compare to current | Version gap identified |
-| **2. Plan** | Parse MIGRATIONS.md, scan files | Migration plan |
+| **2. Plan** | List migrations/, scan files | Migration plan |
 | **3. Confirm** | Present changes to user | User approval |
 | **4. Execute** | Apply transforms in batches | Updated files |
 | **5. Finalize** | Update version, suggest TOC rebuild | Migration complete |
@@ -44,7 +44,8 @@ fi
 | Format | Location |
 |--------|----------|
 | v1/v2 | `.c3/VERSION` file |
-| v3+ | `c3-version:` in `.c3/README.md` frontmatter |
+| v3 | `c3-version: 3` in `.c3/README.md` frontmatter |
+| v4+ (date-based) | `c3-version: YYYYMMDD-slug` in `.c3/README.md` frontmatter |
 
 ### Compare Versions
 
@@ -54,16 +55,22 @@ fi
 | PROJECT > SKILL | "Project newer than skill." Stop. |
 | PROJECT < SKILL | Continue to Phase 2 |
 
+**Version ordering:**
+- Numeric versions (1, 2, 3) sort before date-based versions
+- Date-based versions sort lexicographically: `20251124-foo` < `20251125-bar`
+- Example: `1` < `2` < `3` < `20251124-adr-date-naming` < `20251125-next-change`
+
 ---
 
 ## Phase 2: Build Migration Plan
 
-1. Parse `MIGRATIONS.md` from plugin directory
-2. For each version from `PROJECT + 1` to `SKILL`:
+1. List files in `migrations/` directory from plugin directory
+2. Sort lexicographically (numeric versions first, then YYYYMMDD-slug)
+3. For each migration newer than `PROJECT`:
    - Extract transforms section
    - Parse patterns and file globs
-3. Scan `.c3/` for affected files
-4. Build plan summary
+4. Scan `.c3/` for affected files
+5. Build plan summary
 
 ### Plan Format
 
@@ -120,13 +127,18 @@ For each batch:
 ### Update Version
 
 ```bash
-if [ "$TARGET_VERSION" -ge 3 ]; then
-    # v3+: Update frontmatter
+# For numeric versions (1, 2, 3)
+if [[ "$TARGET_VERSION" =~ ^[0-9]+$ ]]; then
+    if [ "$TARGET_VERSION" -ge 3 ]; then
+        sed -i "s/^c3-version: .*/c3-version: $TARGET_VERSION/" .c3/README.md
+        rm -f .c3/VERSION
+    else
+        echo "$TARGET_VERSION" > .c3/VERSION
+    fi
+else
+    # For date-based versions (YYYYMMDD-slug)
     sed -i "s/^c3-version: .*/c3-version: $TARGET_VERSION/" .c3/README.md
     rm -f .c3/VERSION
-else
-    # v1/v2: Update VERSION file
-    echo "$TARGET_VERSION" > .c3/VERSION
 fi
 ```
 
@@ -195,4 +207,4 @@ grep -q '^c3-version: 3$' .c3/README.md
 ## Related
 
 - [v3-structure.md](../../references/v3-structure.md)
-- [MIGRATIONS.md](../../MIGRATIONS.md)
+- [migrations/](../../migrations/) - Individual migration files

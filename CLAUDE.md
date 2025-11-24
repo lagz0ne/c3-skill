@@ -117,3 +117,38 @@ c3-design/
 4. If migration needed: update VERSION, create `migrations/YYYYMMDD-slug.md`
 5. Commit with descriptive message
 6. Request review with migration assessment noted
+
+## Feature Evaluation
+
+**IMPORTANT:** Continuously evaluate features as you work on this plugin.
+
+### When Adding Features
+
+Ask yourself:
+1. Does this feature overlap with an existing skill? → Consider merging
+2. Is this feature used by multiple skills? → Extract to `references/`
+3. Does this feature need a command entry point? → Add to `commands/`
+
+### When Working on Existing Features
+
+Ask yourself:
+1. Is this skill still useful? → If not, consider deprecating
+2. Is this skill too complex? → Consider splitting
+3. Are there patterns repeated across skills? → Extract to shared reference
+4. Is the skill description accurate? → Update if behavior changed
+
+### Feature Inventory
+
+Periodically review:
+- `skills/` - Are all skills still relevant and well-scoped?
+- `commands/` - Do commands map clearly to user intents?
+- `references/` - Is shared content factored out appropriately?
+- `README.md` - Does it reflect current capabilities?
+
+### Red Flags
+
+- Skill that duplicates another skill's purpose
+- Command without a corresponding skill
+- Reference file not used by any skill
+- Feature documented in README but not implemented
+- Implemented feature not documented in README

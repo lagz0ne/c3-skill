@@ -66,9 +66,42 @@ Claude will:
 
 ### Commands
 
-- `/c3` - Design or update architecture (main command)
-- `/c3-init` - Initialize `.c3/` structure from scratch
-- `/c3-migrate` - Migrate documentation to current skill version
+| Command | Description |
+|---------|-------------|
+| `/c3-use` | **Start here** - Get oriented with existing docs or adopt C3 |
+| `/c3` | Design or update architecture |
+| `/c3-init` | Initialize `.c3/` structure from scratch |
+| `/c3-config` | Configure project settings (diagrams, guardrails, handoff) |
+| `/c3-migrate` | Migrate documentation to current skill version |
+| `/c3-audit` | Audit C3 docs against codebase reality |
+
+### Skills
+
+| Skill | Purpose |
+|-------|---------|
+| `c3-use` | Entry point - guides reading or offers adoption |
+| `c3-adopt` | Initialize C3 for existing project via Socratic discovery |
+| `c3-design` | Main architecture design workflow |
+| `c3-config` | Create/update `.c3/settings.yaml` preferences |
+| `c3-locate` | Find documents by ID or heading |
+| `c3-context-design` | Context-level documentation |
+| `c3-container-design` | Container-level documentation |
+| `c3-component-design` | Component-level documentation |
+| `c3-naming` | ID and naming conventions |
+| `c3-toc` | Table of contents management |
+| `c3-migrate` | Version migration transforms |
+
+### Getting Started
+
+**For new users:** Add to your project's `CLAUDE.md`:
+
+```markdown
+# Architecture
+
+Use `/c3-skill:c3-use` to get started with architecture documentation.
+```
+
+This will check for `.c3/` and guide you through reading existing docs or setting up C3.
 
 ## Versioning
 

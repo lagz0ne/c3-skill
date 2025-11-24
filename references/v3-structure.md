@@ -27,6 +27,11 @@ Quick reference for C3 documentation file paths and ID patterns in v3 hierarchic
 ├── README.md              # Context (id: c3-0, c3-version: 3)
 ├── TOC.md                 # Table of contents
 ├── index.md               # VitePress index
+├── platform/              # Platform docs (Context-level)
+│   ├── deployment.md      # c3-0-deployment
+│   ├── networking.md      # c3-0-networking
+│   ├── secrets.md         # c3-0-secrets
+│   └── ci-cd.md           # c3-0-cicd
 ├── c3-1-{slug}/           # Container 1 folder
 │   ├── README.md          # Container doc (id: c3-1)
 │   ├── c3-101-*.md        # Component 01 (id: c3-101)
@@ -88,6 +93,19 @@ All headings use lowercase IDs with level prefix:
 | Container | `{#c3-N-*}` | `{#c3-1-middleware}` |
 | Component | `{#c3-NNN-*}` | `{#c3-101-config}` |
 | ADR | `{#adr-YYYYMMDD-*}` | `{#adr-20251124-decision}` |
+
+## Platform IDs
+
+Platform documents use Context-level IDs with descriptive suffix:
+
+| Document | ID |
+|----------|-------|
+| Deployment | c3-0-deployment |
+| Networking | c3-0-networking |
+| Secrets | c3-0-secrets |
+| CI/CD | c3-0-cicd |
+
+These are conceptually part of Context (c3-0), split for manageability.
 
 ## Key Rules
 

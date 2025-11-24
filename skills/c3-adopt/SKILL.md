@@ -15,25 +15,75 @@ Bootstrap C3 (Context-Container-Component) architecture documentation for an exi
 
 | Phase | Key Activities | Output |
 |-------|---------------|--------|
-| **1. Establish** | Check prerequisites, create scaffolding | `.c3/` directory |
+| **1. Discovery & Scaffolding** | Task Explore codebase, create scaffolding | `.c3/` directory, container map |
 | **2. Context Discovery** | Socratic questions about system | Understanding for c3-0 |
-| **3. Container Discovery** | Socratic questions per container | Understanding for c3-{N} |
+| **3. Container Discovery** | Archetype-guided exploration, Socratic questions | Understanding for c3-{N} |
 | **4. Component Identification** | Identify key components | c3-{N}{NN} stubs |
 | **5. Generate & Verify** | Delegate to sub-skills, build TOC | Complete documentation |
+| **6. Platform (Optional)** | Document deployment, networking, secrets, CI/CD | `.c3/platform/` docs |
 
 ## Guardrails
 
-See [derivation-guardrails.md](../../references/derivation-guardrails.md) for complete rules. Key points:
+**Required reading before starting:**
+- [derivation-guardrails.md](../../references/derivation-guardrails.md) - Hierarchy and abstraction rules
+- [v3-structure.md](../../references/v3-structure.md) - File paths and ID patterns
+- [role-taxonomy.md](../../references/role-taxonomy.md) - Component role vocabulary
+- [archetype-hints.md](../../references/archetype-hints.md) - Container archetype patterns
+- [discovery-questions.md](../../references/discovery-questions.md) - Socratic questioning guide
+
+**Key rules:**
 - **Reading order:** Context → Container → Component
 - **Downward-only links:** Parent links to children, never reverse
 - **Infra containers are leaf nodes:** No components beneath them
-- **Naming:** Use [v3-structure.md](../../references/v3-structure.md) patterns
 
 ---
 
-## Phase 1: Establish
+## Phase 1: Discovery & Scaffolding
 
-### Check Prerequisites
+### Step 1.1: Full Codebase Exploration
+
+**Use Task Explore (very thorough) to build container map:**
+
+Prompt for Task Explore:
+```
+Explore this codebase thoroughly to identify all deployable containers.
+
+Look for:
+1. Package managers: package.json, go.mod, requirements.txt, Cargo.toml, pom.xml
+2. Entry points: main.*, index.*, app.*, server.*
+3. Docker/container files: Dockerfile, docker-compose.yml
+4. Framework indicators: next.config.*, nuxt.config.*, angular.json
+5. Infrastructure: terraform/, helm/, k8s/
+
+For each potential container found:
+- Directory path
+- Likely archetype (backend, frontend, worker, infrastructure)
+- Key technologies detected
+- Entry points found
+
+Return a structured container map.
+```
+
+### Step 1.2: Present Container Map
+
+Show discovered containers to user:
+
+```markdown
+## Discovered Containers
+
+| # | Path | Archetype | Technologies |
+|---|------|-----------|--------------|
+| 1 | /api | Backend | Node.js, Express, PostgreSQL |
+| 2 | /web | Frontend | Next.js, React |
+| 3 | /worker | Worker | Node.js, BullMQ |
+| 4 | - | Infrastructure | PostgreSQL, Redis |
+
+Does this match your understanding? Any containers missing or incorrectly identified?
+```
+
+Use AskUserQuestion if choices needed.
+
+### Step 1.3: Check Prerequisites
 
 ```bash
 ls -la .c3 2>/dev/null && echo "WARNING: .c3 already exists"
@@ -45,7 +95,9 @@ If `.c3/` exists, ask:
 > 2. Back up and create fresh documentation
 > 3. Abort and preserve what's there"
 
-### Create Scaffolding
+### Step 1.4: Scaffold .c3/ Directory
+
+Create structure based on confirmed containers:
 
 ```bash
 mkdir -p .c3/{adr,scripts}
@@ -77,6 +129,17 @@ title: System Overview
 # System Overview
 
 <!-- Context document content goes here -->
+```
+
+Create container folders based on discovered containers:
+```
+.c3/
+├── README.md           # Context stub
+├── c3-1-{slug}/        # First container
+│   └── README.md
+├── c3-2-{slug}/        # Second container
+│   └── README.md
+└── adr/                # ADR directory
 ```
 
 ---
@@ -141,7 +204,24 @@ From answers, construct:
 
 ## Phase 3: Container Discovery
 
-**Goal:** For each container identified, build understanding through questions.
+**Goal:** For each container identified in Phase 1, build understanding through questions.
+
+### Step 3.1: Archetype-Guided Exploration
+
+Reference [archetype-hints.md](../../references/archetype-hints.md) for the container's archetype.
+
+Use Task Explore to discover:
+- Component structure within the container
+- Dependencies (upstream, downstream)
+- Technology specifics
+
+### Step 3.2: Socratic Refinement
+
+Using [discovery-questions.md](../../references/discovery-questions.md), ask container-level questions:
+- Identity: "What is this container's primary responsibility?"
+- Technology: Use AskUserQuestion with discovered options
+- Dependencies: "What does this call? What calls this?"
+- Testing: "How is this tested?"
 
 ### Container Questions (per container)
 
@@ -152,7 +232,7 @@ From answers, construct:
 5. **Data:** "What data does it own vs read from others?"
 6. **Key Components:** "What are the 3-5 most important components?"
 
-### Delegate to c3-container-design
+### Step 3.3: Delegate to c3-container-design
 
 > "I understand [Container Name]. I'll use the c3-container-design skill to create the documentation."
 
@@ -229,6 +309,39 @@ chmod +x .c3/scripts/build-toc.sh
 1. Review README.md for accuracy
 2. Fill in [specific gap]
 ```
+
+---
+
+## Phase 6: Platform Documentation (Optional)
+
+Ask user:
+```
+Do you want to document platform concerns?
+- Deployment strategy
+- Networking topology
+- Secrets management
+- CI/CD pipeline
+
+These are optional but help complete the system picture.
+```
+
+If yes:
+1. Create `.c3/platform/` directory
+2. Reference [platform-patterns.md](../../references/platform-patterns.md)
+3. Use discovery questions for each area
+4. Accept TBD for unknowns
+
+### Platform Structure
+
+```
+.c3/platform/
+├── deployment.md      # c3-0-deployment
+├── networking.md      # c3-0-networking
+├── secrets.md         # c3-0-secrets
+└── ci-cd.md           # c3-0-cicd
+```
+
+Platform docs use `c3-0-*` IDs to indicate they're Context-level.
 
 ---
 

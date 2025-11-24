@@ -91,14 +91,22 @@ grep -oP "(?<=\[)(CTX-[a-z][a-z0-9-]*|ADR-[0-9]{3}|C3-[0-9]+)[^\]]*(?=\])" .c3/T
 
 ## Rebuilding TOC
 
-When documents change, rebuild TOC:
+When documents change, rebuild TOC using the plugin's script:
 
 ```bash
-.c3/scripts/build-toc.sh
+# Run from project root - the script is part of the c3-skill plugin
+# Find the plugin location and run the build-toc.sh script
+bash "$(dirname "$(realpath "$(which claude)" 2>/dev/null || echo "$HOME/.claude")")/../plugins/c3-skill/scripts/build-toc.sh" 2>/dev/null || \
+  bash ~/.config/claude-code/plugins/c3-skill/scripts/build-toc.sh 2>/dev/null || \
+  bash ~/.claude/plugins/c3-skill/scripts/build-toc.sh 2>/dev/null || \
+  echo "Plugin script not found. Ensure c3-skill plugin is installed."
 ```
 
-> **Script missing?** Copy from the c3-skill plugin's `.c3/scripts/build-toc.sh` to your project.
-> See `c3-adopt` skill for setup instructions.
+**Simpler approach:** If you have the plugin installed locally:
+```bash
+# Direct path (adjust based on your plugin installation)
+bash ~/.config/claude-code/plugins/c3-skill/scripts/build-toc.sh
+```
 
 ### What the Script Does
 
@@ -131,97 +139,15 @@ diff <(find .c3 -name "*.md" ! -name "TOC.md" -exec basename {} .md \; | sort) \
 
 ## Build Script Reference
 
-The build script (`.c3/scripts/build-toc.sh`) uses these key functions:
+The build script (`scripts/build-toc.sh` in the c3-skill plugin) contains the implementation.
 
-### Extract Frontmatter Field
+**Key capabilities:**
+- `extract_frontmatter` - Reads YAML frontmatter fields (id, title, summary, status)
+- `extract_summary` - Handles multi-line summary fields
+- `list_headings` - Finds all `## Heading {#id}` patterns
+- `extract_heading_summary` - Gets HTML comment summaries below headings
 
-```bash
-extract_frontmatter() {
-    local file=$1
-    local field=$2
-    awk -v field="$field" '
-        /^---$/ { in_fm = !in_fm; next }
-        in_fm && $0 ~ "^" field ":" {
-            sub("^" field ": *", "")
-            print
-            exit
-        }
-    ' "$file"
-}
-```
-
-### Extract Multi-line Summary
-
-```bash
-extract_summary() {
-    local file=$1
-    awk '
-        /^---$/ { in_fm = !in_fm; next }
-        in_fm && /^summary:/ {
-            in_summary = 1
-            sub(/^summary: *>? */, "")
-            if (length($0) > 0) print
-            next
-        }
-        in_fm && in_summary {
-            if (/^[a-zA-Z-]+:/) { exit }
-            if (length($0) > 0) print
-        }
-    ' "$file" | sed 's/^  //'
-}
-```
-
-### List Headings with IDs
-
-```bash
-list_headings() {
-    local file=$1
-    awk '
-        /^## .* \{#[a-z0-9-]+\}$/ {
-            id_part = $0
-            gsub(/.*\{#/, "", id_part)
-            gsub(/\}.*/, "", id_part)
-            heading_id = id_part
-
-            title_part = $0
-            gsub(/ \{#[^}]+\}$/, "", title_part)
-            gsub(/^## /, "", title_part)
-
-            print heading_id "\t" title_part
-        }
-    ' "$file"
-}
-```
-
-### Extract Heading Summary
-
-```bash
-extract_heading_summary() {
-    local file=$1
-    local heading_id=$2
-    awk -v hid="$heading_id" '
-        $0 ~ "{#" hid "}" {
-            getline
-            if ($0 ~ /^<!--/) {
-                in_comment = 1
-                sub(/^<!-- */, "")
-                if ($0 !~ /-->$/) {
-                    print
-                    next
-                }
-            }
-        }
-        in_comment {
-            if ($0 ~ /-->$/) {
-                sub(/ *-->$/, "")
-                if (length($0) > 0) print
-                exit
-            }
-            print
-        }
-    ' "$file"
-}
-```
+> See the plugin's `scripts/build-toc.sh` for full implementation details.
 
 ## Integration with c3-design
 
@@ -242,7 +168,7 @@ The hypothesis is formed by matching request concepts to TOC entries, not by ask
 1. Create document in appropriate directory
 2. Ensure frontmatter has: id, title, summary
 3. Add heading IDs to all `##` sections
-4. Run `.c3/scripts/build-toc.sh`
+4. Rebuild TOC (see "Rebuilding TOC" section above)
 
 ### Verify TOC Accuracy
 

@@ -209,6 +209,7 @@ Accept TBD if not yet established.
 
 ### Checklist
 
+- [ ] **Scoping verified** (up/down/aside per derivation-guardrails.md)
 - [ ] System boundary and actors listed
 - [ ] Container inventory with types and links
 - [ ] Protocols table with implementation links

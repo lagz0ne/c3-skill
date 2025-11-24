@@ -9,7 +9,7 @@ Quick reference for C3 documentation file paths and ID patterns in v3 hierarchic
 | Context | `c3-0` | `c3-0` (single root) |
 | Container | `c3-{N}` (N=1-9) | `c3-1`, `c3-2` |
 | Component | `c3-{N}{NN}` (NN=01-99) | `c3-101`, `c3-215` |
-| ADR | `adr-{nnn}` (nnn=001-999) | `adr-001`, `adr-042` |
+| ADR | `adr-{YYYYMMDD}-{slug}` | `adr-20251124-database`, `adr-20250115-auth` |
 
 ## File Paths
 
@@ -18,7 +18,7 @@ Quick reference for C3 documentation file paths and ID patterns in v3 hierarchic
 | Context | `.c3/README.md` | `.c3/README.md` |
 | Container | `.c3/c3-{N}-{slug}/README.md` | `.c3/c3-1-backend/README.md` |
 | Component | `.c3/c3-{N}-{slug}/c3-{N}{NN}-{slug}.md` | `.c3/c3-1-backend/c3-101-db-pool.md` |
-| ADR | `.c3/adr/adr-{nnn}-{slug}.md` | `.c3/adr/adr-001-database.md` |
+| ADR | `.c3/adr/adr-{YYYYMMDD}-{slug}.md` | `.c3/adr/adr-20251124-database.md` |
 
 ## Directory Layout
 
@@ -34,7 +34,7 @@ Quick reference for C3 documentation file paths and ID patterns in v3 hierarchic
 ├── c3-2-{slug}/           # Container 2 folder
 │   └── README.md          # Container doc (id: c3-2)
 ├── adr/                   # Architecture Decision Records
-│   └── adr-001-*.md
+│   └── adr-YYYYMMDD-*.md  # e.g., adr-20251124-database.md
 └── scripts/
     └── build-toc.sh       # TOC generator
 ```
@@ -71,7 +71,7 @@ title: Database Pool Component
 ### ADR
 ```yaml
 ---
-id: adr-001
+id: adr-20250115-postgresql
 title: Use PostgreSQL for persistence
 status: accepted
 date: 2025-01-15
@@ -87,7 +87,7 @@ All headings use lowercase IDs with level prefix:
 | Context | `{#c3-0-*}` | `{#c3-0-containers}` |
 | Container | `{#c3-N-*}` | `{#c3-1-middleware}` |
 | Component | `{#c3-NNN-*}` | `{#c3-101-config}` |
-| ADR | `{#adr-nnn-*}` | `{#adr-001-decision}` |
+| ADR | `{#adr-YYYYMMDD-*}` | `{#adr-20251124-decision}` |
 
 ## Key Rules
 
@@ -110,5 +110,8 @@ ls -d .c3/c3-[1-9]-*/
 ls .c3/c3-2-*/c3-2*.md
 
 # Find all ADRs
-ls .c3/adr/adr-*.md
+ls .c3/adr/adr-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-*.md
+
+# Find ADRs by year
+ls .c3/adr/adr-2025*.md
 ```

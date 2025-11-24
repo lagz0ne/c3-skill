@@ -13,6 +13,14 @@ Explore Container-level impact during the scoping phase of c3-design. Container 
 
 **Announce at start:** "I'm using the c3-container-design skill to explore Container-level impact."
 
+## Role Vocabulary
+
+Reference @references/role-taxonomy.md for component role patterns.
+
+Use roles as **discovery vocabulary**, not requirements:
+- "This looks like a Request Handler role - accurate?"
+- "I see Database Access here - what database?"
+
 ## When Invoked
 
 Called during EXPLORE phase of c3-design when:
@@ -126,7 +134,22 @@ sequenceDiagram
 
 ## Socratic Questions
 
-See [socratic-method.md](../../references/socratic-method.md) for techniques.
+Use @references/discovery-questions.md for full question bank.
+
+**Use AskUserQuestion tool when presenting choices:**
+
+Example for technology discovery:
+```
+Question: "What web framework does this use?"
+Options (from Task Explore findings):
+- Express (discovered in package.json)
+- Fastify
+- Other
+```
+
+**Use open-ended questions for context:**
+- "What is this container's primary responsibility?"
+- "What would break if this was removed?"
 
 **Identity:**
 - "What is the single responsibility of this container?"
@@ -223,6 +246,26 @@ title: [Infrastructure Name]
 - [ ] Configuration with rationale
 - [ ] Features table with consumers
 - [ ] No component sections (leaf node)
+
+---
+
+## Meta-Framework Containers
+
+For Next.js, Nuxt, SvelteKit containers, document by execution context:
+
+Reference @references/archetype-hints.md for execution context table.
+
+```markdown
+## Execution Contexts {#c3-n-contexts}
+
+| Context | Roles | Examples |
+|---------|-------|----------|
+| Server Build-time | Data Access, View Layer | getStaticProps, generateStaticParams |
+| Server Runtime | Request Handler, Business Logic | API routes, server actions |
+| Client Runtime | View Layer, State Container | Client components, stores |
+```
+
+Document components by which context they run in.
 
 ---
 

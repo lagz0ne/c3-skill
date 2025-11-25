@@ -179,9 +179,11 @@ You CANNOT:
 
 Until you have created an ADR file in `.c3/adr/`.
 
-### Phase 3: ADR with Stream
+### Phase 3: ADR Creation (MANDATORY)
 
 **Goal:** Document the decision capturing the full scoping journey.
+
+**This phase is NOT optional.** You must create an ADR before any document updates.
 
 **Determine ADR number:**
 ```bash

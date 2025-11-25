@@ -13,6 +13,32 @@ Explore Context-level impact during the scoping phase of c3-design. Context is t
 
 **Announce at start:** "I'm using the c3-context-design skill to explore Context-level impact."
 
+## Configuration Loading
+
+**At skill start:**
+
+1. Read `defaults.md` from this skill directory
+2. Read `.c3/settings.yaml` (if exists)
+3. Check `context` section in settings:
+   - If `useDefaults: true` (or missing) → merge defaults + user customizations
+   - If `useDefaults: false` → use only user-provided config
+4. Display merged configuration
+
+**Merge rules:**
+- `include`: defaults + user additions (union)
+- `exclude`: defaults + user additions (union)
+- `litmus`: user overrides default (replacement)
+- `diagrams`: user overrides default (replacement)
+
+**Display at start:**
+```
+Layer configuration (Context):
+- Include: [merged list]
+- Exclude: [merged list]
+- Litmus: [active litmus test]
+- Diagrams: [active diagram types]
+```
+
 ## When Invoked
 
 Called during EXPLORE phase of c3-design when:
@@ -35,69 +61,21 @@ Also called by c3-adopt to CREATE initial Context documentation.
 
 ## What Belongs at Context Level
 
-### Include
+See `defaults.md` for canonical include/exclude lists.
 
-| Element | Example |
-|---------|---------|
-| System boundary | "TaskFlow system includes..." |
-| Actors | Users, Admin, External APIs |
-| Container inventory | Links to container docs |
-| Protocols | REST, gRPC, WebSocket |
-| Cross-cutting concerns | Auth strategy, logging approach |
-| Deployment topology | Cloud, multi-region |
+Check `.c3/settings.yaml` for project-specific overrides under the `context` section.
 
-### Exclude
-
-| Element | Where |
-|---------|-------|
-| Technology choices | Container |
-| Middleware specifics | Container |
-| API endpoints | Container |
-| Configuration values | Component |
-| Code examples | Component |
-
-### Litmus Test
-
-> "Would changing this require coordinating multiple containers or external parties?"
-- **Yes** → Context level
-- **No** → Push to Container
+Apply the active litmus test when deciding content placement.
 
 ---
 
 ## Diagrams
 
-### Primary: System Context Diagram
+See `defaults.md` for default diagram recommendations.
 
-```mermaid
-graph TB
-    subgraph "External"
-        Users[Users]
-        Admin[Administrators]
-    end
+Check `.c3/settings.yaml` for project-specific diagram preferences under `context.diagrams`.
 
-    subgraph "System Boundary"
-        App[Application]
-    end
-
-    Users -->|HTTPS| App
-    Admin -->|HTTPS| App
-```
-
-### Secondary: Container Overview
-
-```mermaid
-graph TB
-    subgraph "System"
-        FE[Frontend]
-        BE[Backend]
-        DB[(Database)]
-    end
-
-    FE -->|REST| BE
-    BE -->|SQL| DB
-```
-
-**Avoid:** Sequence diagrams with methods, class diagrams, flowcharts with logic (too detailed).
+Use the project's `diagrams` setting (root level) for tool preference (mermaid, PlantUML, etc.).
 
 ---
 

@@ -361,6 +361,10 @@ Goal: sanity check `examples/.c3` before sharing with others.
 - Asking the user to point to files instead of forming a hypothesis from the TOC and existing docs.
 - Drafting an ADR before the hypothesis → explore → discover loop stabilizes.
 - Treating examples as throwaway and allowing duplicate IDs or missing TOC to persist.
+- **Skipping Phase 3 (ADR creation)** and updating documents directly.
+- **Skipping Phase 4 (Handoff)** and ending the session without executing settings.yaml steps.
+- **Not creating TodoWrite items** for phase tracking.
+- **Ignoring settings.yaml** handoff configuration.
 
 ## Red Flags & Counters
 

@@ -15,11 +15,14 @@ Transform requirements into structured C3 (Context-Container-Component) architec
 
 ## Quick Reference
 
-| Phase | Key Activities | Output |
-|-------|---------------|--------|
-| **1. Surface Understanding** | Read TOC, parse request, form hypothesis | Initial hypothesis |
-| **2. Iterative Scoping** | HYPOTHESIZE → EXPLORE → DISCOVER loop | Stable scope |
-| **3. ADR with Stream** | Document journey, changes, verification | ADR in `.c3/adr/` |
+| Phase | Key Activities | Output | Gate |
+|-------|---------------|--------|------|
+| **1. Surface Understanding** | Read TOC, parse request, form hypothesis | Initial hypothesis | TodoWrite: phases tracked |
+| **2. Iterative Scoping** | HYPOTHESIZE → EXPLORE → DISCOVER loop | Stable scope | Scope stable, all IDs named |
+| **3. ADR Creation** | Document journey, changes, verification | ADR in `.c3/adr/` | **ADR file exists** |
+| **4. Handoff** | Execute settings.yaml handoff steps | Tasks/notifications created | Handoff complete |
+
+**MANDATORY:** You MUST create TodoWrite items for each phase. No phase can be skipped.
 
 ## Prerequisites
 

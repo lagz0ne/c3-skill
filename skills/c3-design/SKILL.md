@@ -281,6 +281,47 @@ If no ADR file exists, **STOP**. Create the ADR before proceeding.
 2. Regenerate TOC: `.c3/scripts/build-toc.sh`
 3. **Proceed to Phase 4: Handoff**
 
+### Phase 4: Handoff (MANDATORY)
+
+**Goal:** Execute post-ADR steps configured in settings.yaml.
+
+**Step 1: Load handoff configuration**
+
+```bash
+# Check for settings.yaml
+cat .c3/settings.yaml 2>/dev/null | grep -A 20 "^handoff:" || echo "NO_HANDOFF_CONFIG"
+```
+
+**Step 2: Determine handoff actions**
+
+| If settings.yaml has... | Then do... |
+|------------------------|------------|
+| `handoff:` section exists | Execute each step listed |
+| No `handoff:` section | Use defaults below |
+| No settings.yaml | Use defaults below |
+
+**Default handoff steps (when no config):**
+1. Summarize ADR to user
+2. List affected documents
+3. Ask: "Would you like me to create implementation tasks?"
+
+**Step 3: Execute handoff**
+
+For each step in handoff config (or defaults):
+- If "create tasks" → Use vibe_kanban MCP or ask user for task system
+- If "notify team" → Ask user how to notify (Slack, email, etc.)
+- If "update docs" → Already done in Phase 3
+- If custom step → Execute as described
+
+**Step 4: Verify handoff complete**
+
+Confirm with user:
+- "ADR created: `.c3/adr/adr-YYYYMMDD-slug.md`"
+- "Documents updated: [list]"
+- "Handoff actions completed: [list what was done]"
+
+**Phase 4 Gate:** User acknowledges handoff is complete.
+
 ## Sub-Skill Invocation
 
 Use the Skill tool to invoke during exploration:

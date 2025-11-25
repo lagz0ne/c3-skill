@@ -103,6 +103,58 @@ Use `/c3-skill:c3-use` to get started with architecture documentation.
 
 This will check for `.c3/` and guide you through reading existing docs or setting up C3.
 
+## Layer Configuration
+
+Each C3 layer (Context, Container, Component) has configurable rules for what content belongs at that level.
+
+### Defaults
+
+Each layer skill includes a `defaults.md` with sensible defaults:
+- `skills/c3-context-design/defaults.md`
+- `skills/c3-container-design/defaults.md`
+- `skills/c3-component-design/defaults.md`
+
+### Customization
+
+Customize layer rules in `.c3/settings.yaml`:
+
+```yaml
+context:
+  useDefaults: true    # Load defaults, then merge customizations
+  guidance: |
+    your team's context-level guidance
+  include: |
+    compliance requirements
+    audit trails
+  exclude: |
+    internal service details
+  litmus: |
+    "Does this affect external stakeholders?"
+
+container:
+  useDefaults: true
+  guidance: |
+    your team's container-level guidance
+
+component:
+  useDefaults: false   # Only use what's specified here
+  guidance: |
+    your team's component-level guidance
+  include: |
+    your custom include list
+```
+
+### Configuration Keys
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `useDefaults` | boolean | `true`: merge with defaults. `false`: only use settings.yaml |
+| `guidance` | prose | General documentation guidance |
+| `include` | list | Items that belong at this layer |
+| `exclude` | list | Items to push to other layers |
+| `litmus` | prose | Decision question for content placement |
+| `diagrams` | list | Diagram types for this layer |
+
 ## Versioning
 
 C3-Skill uses `c3-version` frontmatter to track documentation format changes.

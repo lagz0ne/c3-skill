@@ -13,6 +13,32 @@ Explore Component-level impact during the scoping phase of c3-design. Component 
 
 **Announce at start:** "I'm using the c3-component-design skill to explore Component-level impact."
 
+## Configuration Loading
+
+**At skill start:**
+
+1. Read `defaults.md` from this skill directory
+2. Read `.c3/settings.yaml` (if exists)
+3. Check `component` section in settings:
+   - If `useDefaults: true` (or missing) → merge defaults + user customizations
+   - If `useDefaults: false` → use only user-provided config
+4. Display merged configuration
+
+**Merge rules:**
+- `include`: defaults + user additions (union)
+- `exclude`: defaults + user additions (union)
+- `litmus`: user overrides default (replacement)
+- `diagrams`: user overrides default (replacement)
+
+**Display at start:**
+```
+Layer configuration (Component):
+- Include: [merged list]
+- Exclude: [merged list]
+- Litmus: [active litmus test]
+- Diagrams: [active diagram types]
+```
+
 ## When Invoked
 
 Called during EXPLORE phase of c3-design when:
@@ -62,34 +88,11 @@ Use roles as vocabulary: "This resource component provides Database Access - cor
 
 ## What Belongs at Component Level
 
-Component contains **what Container doesn't enforce**.
+See `defaults.md` for canonical include/exclude lists.
 
-### Include
+Check `.c3/settings.yaml` for project-specific overrides under the `component` section.
 
-| Element | Example |
-|---------|---------|
-| Stack details | `pg: 8.11.x` - why chosen |
-| Environment config | `DB_POOL_MAX=50` (dev vs prod) |
-| Implementation patterns | Connection pooling algorithm |
-| Interfaces/Types | Method signatures, DTOs |
-| Error handling | Retry strategies, error catalog |
-| Usage examples | TypeScript snippets |
-
-### Exclude (push up)
-
-| Element | Where |
-|---------|-------|
-| Container purpose | Container |
-| API endpoint list | Container |
-| Technology choice rationale | Container |
-| System protocols | Context |
-
-### Litmus Test
-
-> "Could a developer implement this from the documentation?"
-- **Yes** → Correct level
-- **No, needs more detail** → Add specifics
-- **No, it's about structure** → Push to Container
+Apply the active litmus test when deciding content placement.
 
 ---
 
@@ -115,15 +118,11 @@ Component contains **what Container doesn't enforce**.
 
 ## Diagrams
 
-| What to Explain | Diagram Type |
-|-----------------|--------------|
-| Decision logic | Flowchart |
-| Method calls | Sequence diagram |
-| Lifecycle/state | State chart |
-| Data structures | ERD |
-| Type relationships | Class diagram |
+See `defaults.md` for default diagram recommendations.
 
-**Avoid:** System context, container overview, deployment diagrams (too high level).
+Check `.c3/settings.yaml` for project-specific diagram preferences under `component.diagrams`.
+
+Use the project's `diagrams` setting (root level) for tool preference (mermaid, PlantUML, etc.).
 
 ---
 

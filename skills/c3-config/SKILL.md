@@ -37,17 +37,31 @@ diagrams: |
   sequence: API interactions, request flows
   flowchart: decision logic, error handling
 
-context: |
-  system boundaries, actors, external integrations
-  avoid implementation details
+context:
+  useDefaults: true
+  guidance: |
+    system boundaries, actors, external integrations
+    avoid implementation details
+  include: |
+    # Optional: add items to defaults
+  exclude: |
+    # Optional: add items to defaults
+  litmus: |
+    # Optional: override default litmus test
+  diagrams: |
+    # Optional: override default diagrams
 
-container: |
-  service responsibilities, API contracts
-  backend: endpoints, data flows
-  frontend: component hierarchy, state
+container:
+  useDefaults: true
+  guidance: |
+    service responsibilities, API contracts
+    backend: endpoints, data flows
+    frontend: component hierarchy, state
 
-component: |
-  technical specifics, configs, algorithms
+component:
+  useDefaults: true
+  guidance: |
+    technical specifics, configs, algorithms
 
 guard: |
   discovered incrementally via c3-config
@@ -64,10 +78,16 @@ audit: |
 **Sections:**
 | Section | Purpose |
 |---------|---------|
-| `diagrams` | Diagram tool and usage patterns |
-| `context` | Context-layer documentation guidance |
-| `container` | Container-layer documentation guidance |
-| `component` | Component-layer documentation guidance |
+| `diagrams` | Diagram tool and usage patterns (global) |
+| `context` | Context-layer configuration |
+| `context.useDefaults` | Load defaults from skill's defaults.md (default: true) |
+| `context.guidance` | Prose guidance for context documentation |
+| `context.include` | Additional items to include at context level |
+| `context.exclude` | Additional items to exclude from context level |
+| `context.litmus` | Override default litmus test |
+| `context.diagrams` | Override default diagram recommendations |
+| `container` | Container-layer configuration (same keys as context) |
+| `component` | Component-layer configuration (same keys as context) |
 | `guard` | Team guardrails and constraints |
 | `handoff` | Post-ADR completion steps |
 | `audit` | Audit findings handoff preference |
@@ -147,6 +167,12 @@ Which section would you like to refine?
 **Diagrams:**
 - "What diagramming tool does your team use? (mermaid, PlantUML, draw.io, etc.)"
 - "What types of diagrams are most useful for your project?"
+
+**Layer Configuration (Context/Container/Component):**
+- "Do you want to use the default include/exclude rules, or customize them?"
+- "Are there specific items that should ALWAYS be at this layer for your project?"
+- "Are there items that should NEVER be at this layer?"
+- "Do you want a custom litmus test for deciding content placement?"
 
 **Context/Container/Component Guidance:**
 - "What should documentation at the [layer] level emphasize?"

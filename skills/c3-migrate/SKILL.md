@@ -195,6 +195,56 @@ grep -q '^c3-version: 3$' .c3/README.md
 
 ---
 
+## 20251125-layer-settings Migration
+
+### Changes
+
+- Layer sections support structured configuration with `useDefaults`, `include`, `exclude`, `litmus`, `diagrams`
+- Existing prose-only format still works (backward compatible)
+- Skills read defaults from `defaults.md` files
+
+### Transforms
+
+**No automatic transforms required.**
+
+This migration is backward compatible:
+- Existing `context: |` prose format continues to work
+- Skills fall back to defaults.md when settings not customized
+
+### Optional Upgrade
+
+Users who want layer customization can manually convert:
+
+**From:**
+```yaml
+context: |
+  prose guidance here
+```
+
+**To:**
+```yaml
+context:
+  useDefaults: true
+  guidance: |
+    prose guidance here
+  include: |
+    custom items
+```
+
+### Verification
+
+```bash
+# VERSION shows 20251125-layer-settings or later
+grep 'c3-version:' .c3/README.md
+
+# settings.yaml still valid (basic check)
+if [ -f ".c3/settings.yaml" ]; then
+  grep -q '^context:' .c3/settings.yaml || grep -q '^context$' .c3/settings.yaml
+fi
+```
+
+---
+
 ## Red Flags
 
 | Rationalization | Counter |

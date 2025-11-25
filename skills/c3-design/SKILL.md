@@ -170,6 +170,15 @@ Scope is stable when:
 - No exploration reveals new upstream/higher impacts
 - Socratic confirmation validates understanding
 
+**MANDATORY NEXT STEP:** Phase 3 (ADR Creation) is required.
+
+You CANNOT:
+- Update any C3 documents directly
+- Skip to handoff
+- Consider the design "done"
+
+Until you have created an ADR file in `.c3/adr/`.
+
 ### Phase 3: ADR with Stream
 
 **Goal:** Document the decision capturing the full scoping journey.

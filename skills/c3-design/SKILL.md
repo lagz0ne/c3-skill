@@ -267,9 +267,19 @@ Checklist derived from scoping - what to inspect when implementing.
 - [Links to affected documents]
 ```
 
-**After ADR:**
+**Phase 3 Gate - Verify ADR exists:**
+
+```bash
+# Verify ADR was created
+ls .c3/adr/adr-*.md | tail -1
+```
+
+If no ADR file exists, **STOP**. Create the ADR before proceeding.
+
+**After ADR verified:**
 1. Update affected documents (CTX/CON/COM) as specified
 2. Regenerate TOC: `.c3/scripts/build-toc.sh`
+3. **Proceed to Phase 4: Handoff**
 
 ## Sub-Skill Invocation
 

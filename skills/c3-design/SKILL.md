@@ -13,6 +13,25 @@ Transform requirements into structured C3 (Context-Container-Component) architec
 
 **Announce at start:** "I'm using the c3-design skill to guide you through architecture design."
 
+## Mandatory Phase Tracking
+
+**IMMEDIATELY after announcing, create TodoWrite items:**
+
+```
+Phase 1: Surface Understanding - Read TOC, form hypothesis
+Phase 2: Iterative Scoping - HYPOTHESIZE → EXPLORE → DISCOVER until stable
+Phase 3: ADR Creation - Create ADR file in .c3/adr/ (MANDATORY)
+Phase 4: Handoff - Execute settings.yaml handoff steps
+```
+
+**Rules:**
+- Mark each phase `in_progress` when starting
+- Mark `completed` only when gate criteria met
+- **Phase 3 gate:** ADR file MUST exist before marking complete
+- **Phase 4 gate:** Handoff steps MUST be executed before marking complete
+
+**Skipping phases = skill failure. No exceptions.**
+
 ## Quick Reference
 
 | Phase | Key Activities | Output | Gate |

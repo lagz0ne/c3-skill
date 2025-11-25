@@ -13,6 +13,32 @@ Explore Container-level impact during the scoping phase of c3-design. Container 
 
 **Announce at start:** "I'm using the c3-container-design skill to explore Container-level impact."
 
+## Configuration Loading
+
+**At skill start:**
+
+1. Read `defaults.md` from this skill directory
+2. Read `.c3/settings.yaml` (if exists)
+3. Check `container` section in settings:
+   - If `useDefaults: true` (or missing) → merge defaults + user customizations
+   - If `useDefaults: false` → use only user-provided config
+4. Display merged configuration
+
+**Merge rules:**
+- `include`: defaults + user additions (union)
+- `exclude`: defaults + user additions (union)
+- `litmus`: user overrides default (replacement)
+- `diagrams`: user overrides default (replacement)
+
+**Display at start:**
+```
+Layer configuration (Container):
+- Include: [merged list]
+- Exclude: [merged list]
+- Litmus: [active litmus test]
+- Diagrams: [active diagram types]
+```
+
 ## Role Vocabulary
 
 Reference @references/role-taxonomy.md for component role patterns.
@@ -52,62 +78,21 @@ Infrastructure containers are **leaf nodes** - no component level beneath them.
 
 ## What Belongs at Container Level
 
-### Include
+See `defaults.md` for canonical include/exclude lists.
 
-| Element | Example |
-|---------|---------|
-| Technology stack | Node.js 20, Express 4.18 |
-| Container responsibilities | "Handles API requests" |
-| Component relationships | Flowchart of connections |
-| Data flow | Sequence diagram |
-| Component inventory | Links to component docs |
-| API surface | Endpoints exposed |
-| Data ownership | "Owns User accounts, Tasks" |
-| Inter-container communication | "REST to Backend, SQL to DB" |
+Check `.c3/settings.yaml` for project-specific overrides under the `container` section.
 
-### Exclude
-
-| Element | Where |
-|---------|-------|
-| System boundary | Context |
-| Cross-cutting concerns | Context |
-| Implementation code | Component |
-| Library specifics | Component |
-| Configuration values | Component |
-
-### Litmus Test
-
-> "Is this about WHAT this container does and WITH WHAT, not HOW internally?"
-- **Yes** → Container level
-- **No (system-wide)** → Push to Context
-- **No (implementation)** → Push to Component
+Apply the active litmus test when deciding content placement.
 
 ---
 
 ## Diagrams
 
-### Required: Component Relationships Flowchart
+See `defaults.md` for default diagram recommendations.
 
-```mermaid
-flowchart LR
-    Entry[REST Routes] --> Auth[Auth Middleware]
-    Auth --> Business[Order Flow]
-    Business --> DB[DB Pool]
-```
+Check `.c3/settings.yaml` for project-specific diagram preferences under `container.diagrams`.
 
-### Required: Data Flow Sequence
-
-```mermaid
-sequenceDiagram
-    Client->>Routes: POST /orders
-    Routes->>Auth: validate token
-    Auth-->>Routes: user context
-    Routes->>OrderFlow: createOrder()
-    OrderFlow-->>Routes: result
-    Routes-->>Client: 201 Created
-```
-
-**Avoid:** System context, actor diagrams, detailed class diagrams (wrong level).
+Use the project's `diagrams` setting (root level) for tool preference (mermaid, PlantUML, etc.).
 
 ---
 

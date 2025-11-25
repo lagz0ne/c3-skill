@@ -369,11 +369,18 @@ Goal: sanity check `examples/.c3` before sharing with others.
 | "No time to refresh the TOC, I'll just skim files" | Stop and build/read the TOC first; C3 navigation depends on it. |
 | "Examples can keep duplicate IDs, they're just sample data" | IDs must be unique or locate/anchor references break—fix collisions before scoping. |
 | "I'll ask the user where to change docs instead of hypothesizing" | Hypothesis bounds exploration and prevents confirmation bias; form it before asking questions. |
+| "The scope is clear, I can skip the ADR" | **NO.** ADR is mandatory. It documents the journey and enables review. |
+| "I'll just update the docs and mention what I did" | **NO.** ADR first, then doc updates. This is non-negotiable. |
+| "Handoff is just cleanup, I can skip it" | **NO.** Handoff ensures tasks are created and team is informed. Execute it. |
+| "No settings.yaml means no handoff needed" | **NO.** Use default handoff steps. Always confirm completion with user. |
 
 **Red flags that mean you should pause:**
 - `.c3/TOC.md` missing or obviously stale.
 - Component IDs reused across containers or layers.
 - ADR being drafted without notes from hypothesis, exploration, and discovery.
+- **Updating C3 documents without an ADR file existing.**
+- **Ending the session without executing handoff.**
+- **No TodoWrite items for the 4 phases.**
 
 ## Common Patterns
 

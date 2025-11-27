@@ -38,10 +38,27 @@ Phase 4: Handoff - Execute settings.yaml handoff steps
 |-------|---------------|--------|------|
 | **1. Surface Understanding** | Read TOC, parse request, form hypothesis | Initial hypothesis | TodoWrite: phases tracked |
 | **2. Iterative Scoping** | HYPOTHESIZE → EXPLORE → DISCOVER loop | Stable scope | Scope stable, all IDs named |
-| **3. ADR Creation** | Document journey, changes, verification | ADR in `.c3/adr/` | **ADR file exists** |
+| **3. ADR + Plan Creation** | Document journey, changes, verification, **AND implementation plan** | ADR with Plan in `.c3/adr/` | **ADR file exists with Implementation Plan section** |
 | **4. Handoff** | Execute settings.yaml handoff steps | Tasks/notifications created | Handoff complete |
 
 **MANDATORY:** You MUST create TodoWrite items for each phase. No phase can be skipped.
+
+## ADR + Plan: Inseparable Pair
+
+Every design change produces **both** an ADR and an Implementation Plan. They are two sides of the same coin:
+
+```
+ADR (medium abstraction)              Plan (low abstraction)
+├── Changes Across Layers ───────────→ Code Changes
+├── Verification ────────────────────→ Acceptance Criteria
+└────────────────── Mutual Reference ─────────────────────┘
+```
+
+**Rules:**
+- No ADR is complete without an Implementation Plan section
+- Every "Changes Across Layers" item must map to a Code Change
+- Every Verification item must map to an Acceptance Criterion
+- Audit will verify this coherence
 
 ## Prerequisites
 
@@ -87,10 +104,50 @@ Settings are optional - if missing, use sensible defaults.
    - What words/concepts map to existing documents?
 
 3. **Form initial hypothesis** (THINKING, not asking)
-   - Which layer? (Context / Container / Component)
-   - Which specific element? (CTX-system-overview? C3-2-backend? C3-103-db-pool?)
-   - Why do you think so?
-   - What's uncertain?
+
+   <extended_thinking>
+   <goal>Form initial hypothesis about which C3 layer and element is affected</goal>
+
+   <layer_detection>
+   Parse user request for layer signals:
+
+   CONTEXT signals (system-wide):
+   - "add a new service/container"
+   - "change how services communicate"
+   - "add authentication across the system"
+   - "new type of user/actor"
+   - Words: boundary, protocol, cross-cutting, system-wide
+
+   CONTAINER signals (service-level):
+   - "change the backend/frontend/worker"
+   - "add new functionality to [service]"
+   - "refactor [service] internals"
+   - Words: technology, patterns, components within
+
+   COMPONENT signals (implementation-level):
+   - "fix this bug in [specific module]"
+   - "optimize [specific function]"
+   - "add a field to [specific endpoint]"
+   - Words: code, implementation, configuration
+   </layer_detection>
+
+   <hypothesis_formation>
+   Based on signals:
+   - Primary layer: [Context/Container/Component]
+   - Specific element: [map to TOC ID]
+   - Evidence: [what in the request points here]
+   - Uncertainty: [what could make this wrong]
+   - Upstream risk: [could this be bigger?]
+   </hypothesis_formation>
+
+   <confidence_assessment>
+   HIGH if: Clear layer signal, maps directly to TOC ID
+   MEDIUM if: Some ambiguity, multiple possible elements
+   LOW if: Vague request, could be multiple layers
+
+   If LOW confidence: Explore more before committing to hypothesis
+   </confidence_assessment>
+   </extended_thinking>
 
 **Output:** Abstract, high-level hypothesis to explore.
 
@@ -120,9 +177,15 @@ Settings are optional - if missing, use sensible defaults.
 #### HYPOTHESIZE
 
 Form or update hypothesis based on current understanding:
-- "This likely affects [X] because [reasoning]"
-- "But could also be [Y] if [condition]"
-- Map to specific document IDs from TOC
+
+<thinking>
+Update hypothesis based on what I've learned:
+- Current hypothesis: [X] because [reasoning]
+- Alternative: Could be [Y] if [condition]
+- Document IDs involved: [list from TOC]
+- Confidence level: High/Medium/Low
+- What would change my mind?
+</thinking>
 
 **This is internal reasoning, not questions to user.**
 
@@ -151,6 +214,71 @@ Investigate hypothesis in 4 directions:
 
 Assess what exploration revealed:
 
+<extended_thinking>
+<goal>Evaluate exploration results and decide whether to iterate or exit</goal>
+
+<impact_classification>
+Classify each finding by direction:
+
+UPSTREAM (higher level) findings:
+- Needs new protocol → Context impact
+- Changes actor interface → Context impact
+- Violates boundary → Context impact
+- Changes cross-cutting pattern → Context impact
+→ SIGNAL: Hypothesis was too narrow
+
+ADJACENT (same level) findings:
+- Affects sibling containers/components
+- Changes shared interfaces
+- Impacts shared data structures
+→ SIGNAL: Scope expanding horizontally
+
+DOWNSTREAM (lower level) findings:
+- Child documents need updates
+- Implementation details affected
+- Normal propagation expected
+→ SIGNAL: Contained, proceed
+
+NO NEW findings:
+- Exploration confirmed hypothesis
+- No surprises
+→ SIGNAL: Scope stable
+</impact_classification>
+
+<scope_stability_check>
+Questions to determine stability:
+1. Can I name ALL affected documents by ID? [list them]
+2. For each affected document, do I know WHY it's affected?
+3. Did exploration reveal any UPSTREAM impacts? [if yes, unstable]
+4. Are there documents I'm UNSURE about? [if yes, explore more]
+5. Have Socratic questions validated my understanding?
+</scope_stability_check>
+
+<decision>
+IF upstream_impacts_found THEN
+  - Scope is UNSTABLE
+  - Form new hypothesis at higher level
+  - LOOP BACK to HYPOTHESIZE
+
+ELIF adjacent_impacts_expanding THEN
+  - Scope is GROWING
+  - Add affected siblings to hypothesis
+  - Continue EXPLORE phase
+
+ELIF only_downstream_or_none THEN
+  - Scope is STABLE
+  - EXIT to Phase 3 (ADR Creation)
+</decision>
+
+<iteration_counter>
+Track iterations to prevent infinite loops:
+- Iteration 1: Initial hypothesis
+- Iteration 2: [if upstream found]
+- Iteration 3: [if still expanding]
+- Iteration 4+: Consider if scope is unbounded → ask user for constraints
+</iteration_counter>
+</extended_thinking>
+
 | Discovery | Signal | Action |
 |-----------|--------|--------|
 | Impact at **higher** abstraction | Bigger than thought | Form new hypothesis at higher level, loop |
@@ -163,6 +291,17 @@ Assess what exploration revealed:
 - Downstream/lower-level impacts → expected, proceed
 
 #### Loop Exit Criteria
+
+<thinking>
+Verify scope stability before exiting:
+- Can I name ALL affected documents by ID? [list them]
+- Do I understand WHY each is affected?
+- Did the last exploration round reveal anything new?
+- Have Socratic questions confirmed my understanding?
+
+If ALL yes → Exit to Phase 3
+If ANY no → Another iteration needed
+</thinking>
 
 Scope is stable when:
 - You can name all affected documents (by ID)
@@ -179,104 +318,88 @@ You CANNOT:
 
 Until you have created an ADR file in `.c3/adr/`.
 
-### Phase 3: ADR Creation (MANDATORY)
+### Phase 3: ADR + Plan Creation (MANDATORY)
 
-**Goal:** Document the decision capturing the full scoping journey.
+**Goal:** Document the decision AND the implementation plan as an inseparable pair.
 
-**This phase is NOT optional.** You must create an ADR before any document updates.
+**This phase is NOT optional.** You must create an ADR with Implementation Plan before any document updates.
 
-**Determine ADR number:**
+**Determine ADR filename:**
 ```bash
-last_adr=$(find .c3/adr -name "ADR-*.md" | sed 's/.*ADR-\([0-9]*\).*/\1/' | sort -n | tail -1)
-next_num=$(printf "%03d" $((10#${last_adr:-0} + 1)))
+today=$(date +%Y%m%d)
+# Use: .c3/adr/adr-YYYYMMDD-{slug}.md
 ```
 
-**ADR Template (Stream Format):**
+**Create ADR using template:** See [adr-template.md](../../references/adr-template.md) for full template.
 
-```markdown
----
-id: ADR-{NNN}-{slug}
-title: [Decision Title]
-summary: >
-  [Why read this - what decision, what it affects]
-status: proposed
-date: YYYY-MM-DD
----
+Key sections (ADR - medium abstraction):
+1. **Problem/Requirement** - What triggered this decision
+2. **Exploration Journey** - How understanding developed (hypothesis → explore → discover)
+3. **Solution** - The approach formed through exploration
+4. **Changes Across Layers** - Specific changes to each C3 document
+5. **Verification** - Checklist derived from scoping
 
-# [ADR-{NNN}] [Decision Title]
+Key sections (Implementation Plan - low abstraction):
+6. **Code Changes** - Maps each "Changes Across Layers" to specific code locations
+7. **Dependencies** - Order of operations, what depends on what
+8. **Acceptance Criteria** - Maps each Verification item to testable code behavior
 
-## Status {#adr-{nnn}-status}
-**Proposed** - YYYY-MM-DD
+<extended_thinking>
+<goal>Verify ADR and Plan are coherent before marking Phase 3 complete</goal>
 
-## Problem/Requirement {#adr-{nnn}-problem}
-<!--
-Starting point - what user asked for, why change is needed.
--->
+<coherence_check>
+For each item in "Changes Across Layers":
+- Is there a corresponding entry in "Code Changes"?
+- Is the code location specific (file:function, not "somewhere")?
 
-[What triggered this decision]
+For each item in "Verification":
+- Is there a corresponding entry in "Acceptance Criteria"?
+- Is the criterion testable (command/test, not "should work")?
 
-## Exploration Journey {#adr-{nnn}-exploration}
-<!--
-How understanding developed through scoping.
--->
+Mapping must be complete:
+- Orphan doc changes (no code work) = incomplete
+- Orphan verifications (no criteria) = incomplete
+- Vague code locations = incomplete
+</coherence_check>
 
-**Initial hypothesis:** [What we first thought]
+<mutual_reference_verification>
+ADR references Plan:
+- "Changes Across Layers" points to "Code Changes"
+- "Verification" points to "Acceptance Criteria"
 
-**Explored:**
-- Isolated: [What we found at the element]
-- Upstream: [Dependencies discovered]
-- Adjacent: [Related elements at same level]
-- Downstream: [Consumers/dependents affected]
+Plan references ADR:
+- Each Code Change traces back to a Layer Change
+- Each Acceptance Criterion traces back to a Verification item
 
-**Discovered:** [Key insights that shaped the solution]
+If mapping is incomplete → DO NOT proceed to Phase 4
+</mutual_reference_verification>
+</extended_thinking>
 
-**Confirmed:** [What Socratic questions validated]
-
-## Solution {#adr-{nnn}-solution}
-<!--
-Formed through exploration above.
--->
-
-[The approach and why it fits]
-
-## Changes Across Layers {#adr-{nnn}-changes}
-<!--
-Specific changes to each affected document.
--->
-
-### Context Level
-- [CTX-slug]: [What changes, why]
-
-### Container Level
-- [C3-<C>-slug]: [What changes, why]
-
-### Component Level
-- [C3-<C><NN>-slug]: [What changes, why]
-
-## Verification {#adr-{nnn}-verification}
-<!--
-Checklist derived from scoping - what to inspect when implementing.
--->
-
-- [ ] Is [X] at the right abstraction level?
-- [ ] Does [Y] upstream dependency still hold?
-- [ ] Are [Z] downstream consumers updated?
-- [ ] [Specific checks from exploration]
-
-## Related {#adr-{nnn}-related}
-- [Links to affected documents]
-```
-
-**Phase 3 Gate - Verify ADR exists:**
+**Phase 3 Gate - Verify ADR + Plan coherence:**
 
 ```bash
 # Verify ADR was created
 ls .c3/adr/adr-*.md | tail -1
+
+# Verify Implementation Plan section exists
+grep -q "## Implementation Plan" .c3/adr/adr-*.md && echo "Plan section: OK"
+
+# Verify Code Changes table exists
+grep -q "### Code Changes" .c3/adr/adr-*.md && echo "Code Changes: OK"
+
+# Verify Acceptance Criteria table exists
+grep -q "### Acceptance Criteria" .c3/adr/adr-*.md && echo "Acceptance Criteria: OK"
 ```
 
-If no ADR file exists, **STOP**. Create the ADR before proceeding.
+**Gate criteria (ALL must pass):**
+- [ ] ADR file exists
+- [ ] Implementation Plan section exists
+- [ ] Code Changes maps to all "Changes Across Layers"
+- [ ] Acceptance Criteria maps to all Verification items
 
-**After ADR verified:**
+If any gate fails, **STOP**. Complete the ADR+Plan before proceeding.
+
+**After ADR+Plan verified:**
 1. Update affected documents (CTX/CON/COM) as specified
 2. Regenerate TOC: `.c3/scripts/build-toc.sh`
 3. **Proceed to Phase 4: Handoff**
@@ -293,6 +416,19 @@ cat .c3/settings.yaml 2>/dev/null | grep -A 20 "^handoff:" || echo "NO_HANDOFF_C
 ```
 
 **Step 2: Determine handoff actions**
+
+<thinking>
+Determine handoff approach:
+- Does settings.yaml exist? [yes/no]
+- Does it have a `handoff:` section? [yes/no]
+- If yes: What steps are configured?
+- If no: Use default handoff (summarize, list docs, offer tasks)
+
+Handoff steps to execute:
+1. [step]
+2. [step]
+...
+</thinking>
 
 | If settings.yaml has... | Then do... |
 |------------------------|------------|
@@ -361,7 +497,11 @@ Goal: sanity check `examples/.c3` before sharing with others.
 - Asking the user to point to files instead of forming a hypothesis from the TOC and existing docs.
 - Drafting an ADR before the hypothesis → explore → discover loop stabilizes.
 - Treating examples as throwaway and allowing duplicate IDs or missing TOC to persist.
-- **Skipping Phase 3 (ADR creation)** and updating documents directly.
+- **Skipping Phase 3 (ADR+Plan creation)** and updating documents directly.
+- **Creating ADR without Implementation Plan** - they are inseparable.
+- **Orphan layer changes** - "Changes Across Layers" without corresponding Code Changes.
+- **Orphan verifications** - Verification items without corresponding Acceptance Criteria.
+- **Vague code locations** - "update auth" instead of `src/handlers/auth.ts:validateToken()`.
 - **Skipping Phase 4 (Handoff)** and ending the session without executing settings.yaml steps.
 - **Not creating TodoWrite items** for phase tracking.
 - **Ignoring settings.yaml** handoff configuration.
@@ -375,6 +515,8 @@ Goal: sanity check `examples/.c3` before sharing with others.
 | "I'll ask the user where to change docs instead of hypothesizing" | Hypothesis bounds exploration and prevents confirmation bias; form it before asking questions. |
 | "The scope is clear, I can skip the ADR" | **NO.** ADR is mandatory. It documents the journey and enables review. |
 | "I'll just update the docs and mention what I did" | **NO.** ADR first, then doc updates. This is non-negotiable. |
+| "I'll add the Implementation Plan later" | **NO.** ADR and Plan are created together. Plan is part of Phase 3 gate. |
+| "The code changes are obvious, no need to list them" | **NO.** Explicit mapping enables audit verification. List them. |
 | "Handoff is just cleanup, I can skip it" | **NO.** Handoff ensures tasks are created and team is informed. Execute it. |
 | "No settings.yaml means no handoff needed" | **NO.** Use default handoff steps. Always confirm completion with user. |
 
@@ -383,6 +525,9 @@ Goal: sanity check `examples/.c3` before sharing with others.
 - Component IDs reused across containers or layers.
 - ADR being drafted without notes from hypothesis, exploration, and discovery.
 - **Updating C3 documents without an ADR file existing.**
+- **ADR without Implementation Plan section.**
+- **"Changes Across Layers" count ≠ "Code Changes" count.**
+- **"Verification" count ≠ "Acceptance Criteria" count.**
 - **Ending the session without executing handoff.**
 - **No TodoWrite items for the 4 phases.**
 
@@ -399,3 +544,12 @@ Surface → Hypothesis at Context level → Explore all downstream Containers/Co
 
 ### Refactoring
 Surface → Hypothesis at Component level → Explore adjacent components → ADR focused on Component layer
+
+---
+
+## Related
+
+- [adr-template.md](../../references/adr-template.md) - ADR template and sections
+- [hierarchy-model.md](../../references/hierarchy-model.md) - C3 layer inheritance
+- [v3-structure.md](../../references/v3-structure.md) - Document structure
+- [skill-protocol.md](../../references/skill-protocol.md) - Skill conventions

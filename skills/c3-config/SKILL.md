@@ -66,10 +66,18 @@ component:
 guard: |
   discovered incrementally via c3-config
 
+adr:
+  requirePlan: true  # Implementation Plan is mandatory (default: true)
+  coherenceCheck: true  # Run ADR-Plan coherence audit before handoff (default: true)
+  planGranularity: detailed  # detailed | summary
+  # detailed: file:function level code locations
+  # summary: file-level code locations only
+
 handoff: |
   after ADR accepted:
-  1. create implementation tasks
+  1. create implementation tasks from Plan
   2. notify team
+  target: vibe_kanban  # or: linear, jira, github, manual
 
 audit: |
   handoff: tasks
@@ -89,7 +97,12 @@ audit: |
 | `container` | Container-layer configuration (same keys as context) |
 | `component` | Component-layer configuration (same keys as context) |
 | `guard` | Team guardrails and constraints |
+| `adr` | ADR and Implementation Plan settings |
+| `adr.requirePlan` | Whether Implementation Plan is mandatory (default: true) |
+| `adr.coherenceCheck` | Run ADR-Plan coherence audit before handoff (default: true) |
+| `adr.planGranularity` | Level of detail for Code Changes (detailed/summary) |
 | `handoff` | Post-ADR completion steps |
+| `handoff.target` | Where to send tasks (vibe_kanban, linear, jira, github, manual) |
 | `audit` | Audit findings handoff preference |
 
 ## The Process
@@ -183,9 +196,17 @@ Which section would you like to refine?
 - "Any technologies or patterns that are off-limits?"
 - "Performance or security constraints to always consider?"
 
+**ADR Settings:**
+- "Should Implementation Plan be required for every ADR?" (default: yes)
+- "Should ADR-Plan coherence be verified before handoff?" (default: yes)
+- "What level of detail for Code Changes?"
+  - "detailed" - file:function level (e.g., `src/auth.ts:validateToken()`)
+  - "summary" - file level only (e.g., `src/auth.ts`)
+
 **Handoff:**
 - "What happens after an ADR is accepted?"
-- "How should implementation tasks be tracked? (GitHub issues, Jira, Linear, etc.)"
+- "How should implementation tasks be tracked? (GitHub issues, Jira, Linear, vibe_kanban, etc.)"
+- "Should Plan items automatically become tasks?"
 
 **Audit:**
 Use AskUserQuestion:
@@ -226,6 +247,7 @@ grep -q '^context:' .c3/settings.yaml && echo "context: OK"
 grep -q '^container:' .c3/settings.yaml && echo "container: OK"
 grep -q '^component:' .c3/settings.yaml && echo "component: OK"
 grep -q '^guard:' .c3/settings.yaml && echo "guard: OK"
+grep -q '^adr:' .c3/settings.yaml && echo "adr: OK"
 grep -q '^handoff:' .c3/settings.yaml && echo "handoff: OK"
 grep -q '^audit:' .c3/settings.yaml && echo "audit: OK"
 ```
@@ -240,7 +262,8 @@ Configured:
 - container: [summary]
 - component: [summary]
 - guard: [summary or "none yet"]
-- handoff: [summary]
+- adr: requirePlan=true, coherenceCheck=true, planGranularity=detailed
+- handoff: [summary + target]
 - audit: [handoff preference]
 
 These settings will be used by c3-design when creating documentation.

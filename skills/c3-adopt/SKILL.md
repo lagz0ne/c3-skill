@@ -67,6 +67,19 @@ Return a structured container map.
 
 ### Step 1.2: Present Container Map
 
+<thinking>
+Evaluate discovered containers:
+- Did Task Explore find clear container boundaries?
+- Are archetypes correctly identified (backend/frontend/worker/infra)?
+- Any ambiguous cases (monorepo? shared code?)?
+- What's missing that the user might expect?
+
+Confidence assessment:
+- High confidence: [containers with clear markers]
+- Need confirmation: [ambiguous containers]
+- Possibly missing: [gaps in typical architecture]
+</thinking>
+
 Show discovered containers to user:
 
 ```markdown
@@ -101,10 +114,10 @@ If `.c3/` exists, ask:
 Create structure based on confirmed containers:
 
 ```bash
-mkdir -p .c3/{adr,scripts}
+mkdir -p .c3/adr
 ```
 
-Copy `build-toc.sh` from the plugin's `.c3/scripts/` directory.
+The TOC can be rebuilt using the c3-toc skill.
 
 Create `index.md`:
 ```markdown
@@ -140,7 +153,8 @@ Create container folders based on discovered containers:
 │   └── README.md
 ├── c3-2-{slug}/        # Second container
 │   └── README.md
-└── adr/                # ADR directory
+├── adr/                # ADR directory
+└── TOC.md              # Auto-generated TOC
 ```
 
 ---
@@ -174,6 +188,21 @@ See [socratic-method.md](../../references/socratic-method.md) for question techn
    - "How do you handle logging and monitoring?"
 
 ### Build Context Model
+
+<thinking>
+Synthesize user answers into context model:
+- System identity: Clear name and purpose?
+- Boundary: What's inside vs external is defined?
+- Containers: All identified and typed?
+- Protocols: How containers communicate?
+- Cross-cutting: Auth, logging, monitoring covered?
+
+Gaps remaining:
+- [any unanswered questions]
+- [areas needing follow-up]
+
+Ready to delegate to c3-context-design? [yes/no]
+</thinking>
 
 From answers, construct:
 
@@ -247,6 +276,19 @@ Using [discovery-questions.md](../../references/discovery-questions.md), ask con
 
 **Goal:** Identify which components need documentation now vs later.
 
+<thinking>
+Prioritize components for documentation:
+- Which are core to business logic? → High priority
+- Which have complex configuration? → High priority
+- Which integrate with external services? → High priority
+- Which are simple utilities/wrappers? → Low priority
+
+For each container, list components by priority:
+- Container 1: [high], [medium], [low]
+- Container 2: [high], [medium], [low]
+...
+</thinking>
+
 ### Prioritization Questions
 
 - "Which components would cause the most confusion for a new developer?"
@@ -293,10 +335,7 @@ ls .c3/settings.yaml 2>/dev/null && echo "EXISTS" || echo "MISSING"
 
 ### Generate TOC
 
-```bash
-chmod +x .c3/scripts/build-toc.sh
-.c3/scripts/build-toc.sh
-```
+Ask Claude to rebuild the TOC (uses plugin's build-toc.sh script).
 
 ### Verification Checklist
 
@@ -304,7 +343,6 @@ chmod +x .c3/scripts/build-toc.sh
 - [ ] `.c3/c3-{N}-{slug}/README.md` - Each container
 - [ ] `.c3/c3-{N}-{slug}/c3-{N}{NN}-*.md` - Priority components
 - [ ] `.c3/TOC.md` - Table of contents
-- [ ] `.c3/scripts/build-toc.sh` - TOC generator
 
 ### Present Summary
 

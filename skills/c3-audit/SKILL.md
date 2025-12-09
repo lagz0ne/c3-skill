@@ -356,6 +356,26 @@ For behavioral checks:
 </output>
 </extended_thinking>
 
+### Phase 5: Status Transition (if audit passes)
+
+If the ADR audit passes completely (all doc changes implemented, all code verified):
+
+**Automatically transition status:**
+
+```bash
+# Update ADR frontmatter from 'accepted' to 'implemented'
+sed -i 's/^status: accepted$/status: implemented/' .c3/adr/adr-YYYYMMDD-slug.md
+
+# Rebuild TOC to include the newly-implemented ADR
+# (Use plugin's build-toc.sh script)
+```
+
+**Announce to user:**
+- "ADR `adr-YYYYMMDD-slug` has been verified and marked as `implemented`."
+- "The ADR will now appear in the Table of Contents."
+
+**If audit fails:** Do NOT transition status. Report gaps and next steps.
+
 ---
 
 ## Mode 3: ADR-Plan Coherence Audit
@@ -762,6 +782,8 @@ NOT safe to auto-fix (require user decision):
 - [ ] Each verification checklist item checked against code
 - [ ] Implementation recommendation made
 - [ ] Gaps documented with next steps
+- [ ] If all checks pass: transition status to `implemented`
+- [ ] Rebuild TOC after status transition
 
 **For ADR-Plan Coherence Audit:**
 - [ ] ADR + Implementation Plan sections extracted

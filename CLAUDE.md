@@ -36,7 +36,7 @@ Ask yourself:
 
 ### Current Version
 
-Check `VERSION` file for current version (currently: `20251124-adr-date-naming`).
+Check `VERSION` file for current version (currently: `20251209-adr-status-separation`).
 Check `migrations/` directory for migration history (files sorted lexicographically).
 
 ### Migration Checklist for Reviewers

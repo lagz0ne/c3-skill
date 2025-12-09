@@ -54,6 +54,19 @@ ADR (medium abstraction)              Plan (low abstraction)
 └────────────────── Mutual Reference ─────────────────────┘
 ```
 
+**ADR Lifecycle:**
+```
+proposed → accepted → implemented
+    ↓         ↓
+superseded/deprecated
+```
+
+- **proposed**: Created by c3-design, awaiting review
+- **accepted**: Approved by team, ready for implementation
+- **implemented**: Verified by c3-audit, appears in TOC
+
+> **Note:** Only `implemented` ADRs appear in the Table of Contents. Use `c3-audit` to verify implementation and transition status.
+
 **Rules:**
 - No ADR is complete without an Implementation Plan section
 - Every "Changes Across Layers" item must map to a Code Change

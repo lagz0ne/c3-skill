@@ -22,20 +22,17 @@ The TOC reflects the physical organization of `.c3/`:
 
 ```
 .c3/
-├── TOC.md                           # This index
-├── CTX-*.md                         # Context level (root)
-├── containers/
-│   ├── C3-1-backend.md              # Container 1
-│   └── C3-2-frontend.md             # Container 2
-├── components/
-│   ├── backend/                     # Grouped by container
-│   │   ├── C3-101-db-pool.md        # Container 1, Component 01
-│   │   └── C3-102-auth-service.md   # Container 1, Component 02
-│   └── frontend/
-│       └── C3-201-ui-router.md      # Container 2, Component 01
+├── TOC.md                           # This index (auto-generated)
+├── README.md                        # Context level (c3-0)
+├── c3-1-backend/                    # Container 1 folder
+│   ├── README.md                    # Container doc
+│   ├── c3-101-db-pool.md            # Component 01
+│   └── c3-102-auth-service.md       # Component 02
+├── c3-2-frontend/                   # Container 2 folder
+│   └── c3-201-ui-router.md          # Component 01
 └── adr/
-    ├── ADR-001-*.md
-    └── ADR-002-*.md
+    ├── adr-20251201-example.md      # Only status: implemented shown in TOC
+    └── adr-20251209-proposed.md     # status: proposed - NOT in TOC
 ```
 
 ### Logical Hierarchy
@@ -91,22 +88,20 @@ grep -oP "(?<=\[)(CTX-[a-z][a-z0-9-]*|ADR-[0-9]{3}|C3-[0-9]+)[^\]]*(?=\])" .c3/T
 
 ## Rebuilding TOC
 
-When documents change, rebuild TOC using the plugin's script:
+When documents change, rebuild TOC using the plugin's script.
+
+**Important:** The build script lives in the c3-skill plugin, NOT in your project's `.c3/` directory. This ensures all projects use the same up-to-date script.
 
 ```bash
-# Run from project root - the script is part of the c3-skill plugin
-# Find the plugin location and run the build-toc.sh script
-bash "$(dirname "$(realpath "$(which claude)" 2>/dev/null || echo "$HOME/.claude")")/../plugins/c3-skill/scripts/build-toc.sh" 2>/dev/null || \
-  bash ~/.config/claude-code/plugins/c3-skill/scripts/build-toc.sh 2>/dev/null || \
-  bash ~/.claude/plugins/c3-skill/scripts/build-toc.sh 2>/dev/null || \
-  echo "Plugin script not found. Ensure c3-skill plugin is installed."
+# The plugin provides the build-toc.sh script
+# Claude Code will locate and run it from the plugin directory
+# Simply ask Claude to "rebuild the TOC" and it will use the correct script
 ```
 
-**Simpler approach:** If you have the plugin installed locally:
-```bash
-# Direct path (adjust based on your plugin installation)
-bash ~/.config/claude-code/plugins/c3-skill/scripts/build-toc.sh
-```
+**If running manually:** The script is at `<plugin-path>/scripts/build-toc.sh`. Common locations:
+- `~/.claude/plugins/cache/*/c3-skill/*/scripts/build-toc.sh`
+
+**ADR Filtering:** The script only includes ADRs with `status: implemented` in the TOC. Proposed and accepted ADRs are stored in `.c3/adr/` but won't appear in TOC until implemented.
 
 ### What the Script Does
 

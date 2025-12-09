@@ -54,6 +54,19 @@ ADR (medium abstraction)              Plan (low abstraction)
 └────────────────── Mutual Reference ─────────────────────┘
 ```
 
+**ADR Lifecycle:**
+```
+proposed → accepted → implemented
+    ↓         ↓
+superseded/deprecated
+```
+
+- **proposed**: Created by c3-design, awaiting review
+- **accepted**: Approved by team, ready for implementation
+- **implemented**: Verified by c3-audit, appears in TOC
+
+> **Note:** Only `implemented` ADRs appear in the Table of Contents. Use `c3-audit` to verify implementation and transition status.
+
 **Rules:**
 - No ADR is complete without an Implementation Plan section
 - Every "Changes Across Layers" item must map to a Code Change
@@ -401,7 +414,7 @@ If any gate fails, **STOP**. Complete the ADR+Plan before proceeding.
 
 **After ADR+Plan verified:**
 1. Update affected documents (CTX/CON/COM) as specified
-2. Regenerate TOC: `.c3/scripts/build-toc.sh`
+2. Regenerate TOC using the c3-toc skill
 3. **Proceed to Phase 4: Handoff**
 
 ### Phase 4: Handoff (MANDATORY)

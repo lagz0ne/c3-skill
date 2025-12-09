@@ -68,6 +68,26 @@ c3-locate c3-101 #c3-101-error-handling
 
 ### Finding Documents by ID
 
+<thinking>
+Parse the ID to determine document type and path:
+
+1. Identify ID pattern:
+   - c3-0 → Context (root README)
+   - c3-{N} (single digit) → Container
+   - c3-{N}{NN} (3+ digits) → Component
+   - adr-{YYYYMMDD}-{slug} → ADR decision
+
+2. Determine file path:
+   - c3-0 → .c3/README.md
+   - c3-{N} → .c3/c3-{N}-*/README.md
+   - c3-{N}{NN} → .c3/c3-{N}-*/c3-{N}{NN}-*.md
+   - adr-* → .c3/adr/adr-*.md
+
+3. Fallback strategy if v3 not found:
+   - Try v2 paths (containers/, components/, uppercase)
+   - Report which version was found
+</thinking>
+
 ```bash
 # Document ID patterns (v3 hierarchical):
 # Context: c3-0 → .c3/README.md
@@ -211,6 +231,18 @@ Exploration:
 | `ADR-###-slug` | Decision | ADR-003-cache | `.c3/adr/ADR-###-slug.md` |
 
 ## Fallback: Discovery Mode
+
+<thinking>
+When ID is unknown, use discovery mode:
+1. Do I have a document ID? → Use ID-based lookup (preferred)
+2. No ID, but know the concept? → Read TOC, find ID, then lookup
+3. Vague keyword only? → Search TOC summaries for matching concept
+
+Decision:
+- ID available → Direct lookup
+- Concept known → TOC → ID → Lookup
+- Keyword only → Search mode (last resort)
+</thinking>
 
 When you don't know the ID yet (rare):
 

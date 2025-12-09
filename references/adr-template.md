@@ -156,13 +156,15 @@ Each verification item should have a testable criterion here.
 
 ## Status Values
 
-| Status | Meaning |
-|--------|---------|
-| `proposed` | Decision documented, awaiting review |
-| `accepted` | Approved, ready for implementation |
-| `implemented` | Changes made to C3 docs and code |
-| `superseded` | Replaced by another ADR (link to it) |
-| `deprecated` | No longer relevant |
+| Status | Meaning | In TOC |
+|--------|---------|--------|
+| `proposed` | Decision documented, awaiting review | No |
+| `accepted` | Approved, ready for implementation | No |
+| `implemented` | Changes made to C3 docs and code | **Yes** |
+| `superseded` | Replaced by another ADR (link to it) | No |
+| `deprecated` | No longer relevant | No |
+
+> **Note:** Only `implemented` ADRs appear in the Table of Contents. Proposed and accepted ADRs exist in `.c3/adr/` but are filtered from TOC until implementation is verified.
 
 ## Key Sections Explained
 

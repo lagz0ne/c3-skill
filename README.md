@@ -45,7 +45,7 @@ C3-Skill provides a structured approach to documenting system architecture throu
 Create `.c3/` directory in your project:
 
 ```bash
-mkdir -p .c3/{containers,components,adr,scripts}
+mkdir -p .c3/adr
 ```
 
 ### Design Architecture
@@ -180,8 +180,6 @@ This will:
 ├── TOC.md                         # Auto-generated
 ├── adr/
 │   └── adr-20250115-rest-api.md
-├── scripts/
-│   └── build-toc.sh
 ├── c3-1-backend/                  # Container folder
 │   ├── README.md                  # Container doc (id: c3-1)
 │   ├── c3-101-db-pool.md          # Component (id: c3-101)
@@ -260,11 +258,7 @@ how to configure the pool for different environments.
 
 ### Generate TOC
 
-```bash
-.c3/scripts/build-toc.sh
-```
-
-Regenerate after:
+Use the c3-toc skill to rebuild the table of contents after:
 - Creating new documents
 - Updating summaries
 - Adding new sections

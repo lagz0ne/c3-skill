@@ -146,7 +146,7 @@ fi
 
 > "Migration complete: v{FROM} → v{TO}
 >
-> Run `.c3/scripts/build-toc.sh` to refresh TOC."
+> Rebuild the TOC using the c3-toc skill to refresh the table of contents."
 
 ---
 

@@ -88,7 +88,7 @@ Use checkboxes for verification checklists:
 | Find C3 files | Glob tool with `.c3/**/*.md` |
 | Search C3 content | Grep tool |
 | Create/edit docs | Write/Edit tool |
-| Generate TOC | Bash: `.c3/scripts/build-toc.sh` |
+| Generate TOC | c3-toc skill |
 | User confirmation | AskUserQuestion tool |
 
 ## Error Handling

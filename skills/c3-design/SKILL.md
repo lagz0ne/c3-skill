@@ -414,7 +414,7 @@ If any gate fails, **STOP**. Complete the ADR+Plan before proceeding.
 
 **After ADR+Plan verified:**
 1. Update affected documents (CTX/CON/COM) as specified
-2. Regenerate TOC: `.c3/scripts/build-toc.sh`
+2. Regenerate TOC using the c3-toc skill
 3. **Proceed to Phase 4: Handoff**
 
 ### Phase 4: Handoff (MANDATORY)

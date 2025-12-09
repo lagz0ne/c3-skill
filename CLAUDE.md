@@ -152,3 +152,232 @@ Periodically review:
 - Reference file not used by any skill
 - Feature documented in README but not implemented
 - Implemented feature not documented in README
+
+---
+
+## C3 Architecture Overview
+
+### The C3 Hierarchy
+
+C3 = **Context → Container → Component**
+
+```
+Context (c3-0)           ← Eagle-eye introduction, defines WHAT exists
+    │
+    ├── Container (c3-1) ← Architectural command center, defines HOW things organize
+    │       ├── Component (c3-101)  ← Implementation details
+    │       └── Component (c3-102)
+    │
+    └── Container (c3-2)
+            └── Component (c3-201)
+```
+
+**Key Principle:** Each layer inherits from above and defines contracts for below.
+
+### Layer Responsibilities
+
+| Layer | Abstraction | Key Questions | Changes Are... |
+|-------|-------------|---------------|----------------|
+| **Context** | Eagle-eye | What containers exist? How do they talk? | Rare, system-wide |
+| **Container** | Command center | What components? What patterns? What tech? | Moderate, container-wide |
+| **Component** | Implementation | How does this work? What config? | Frequent, isolated |
+
+---
+
+## Skills Organization
+
+### Core Design Skills (The Layer Skills)
+
+These three skills handle the actual architectural documentation:
+
+| Skill | Purpose | When Used |
+|-------|---------|-----------|
+| `c3-context-design` | Document Context level | Adding/changing containers, protocols |
+| `c3-container-design` | Document Container level | Tech stack, components, patterns, diagrams |
+| `c3-component-design` | Document Component level | Implementation details, config, code patterns |
+
+**Design Principle:** Container is the "sweet spot" - it has the most architectural impact and is where strategic diagram decisions happen.
+
+### Orchestration Skills
+
+| Skill | Purpose | When Used |
+|-------|---------|-----------|
+| `c3-design` | Main entry point, orchestrates layer skills | Any architectural change |
+| `c3-adopt` | Initialize C3 for existing project | New project adoption |
+| `c3-init` | Create C3 structure from scratch | Brand new documentation |
+
+### Utility Skills
+
+| Skill | Purpose | When Used |
+|-------|---------|-----------|
+| `c3-use` | Entry point for reading/using C3 docs | User wants to understand architecture |
+| `c3-locate` | Find C3 documents by ID | Navigation, lookups |
+| `c3-toc` | Manage Table of Contents | After doc changes |
+| `c3-naming` | Naming conventions guidance | Creating new docs |
+| `c3-config` | Manage settings.yaml | Configure project preferences |
+| `c3-migrate` | Handle version migrations | After plugin updates |
+| `c3-audit` | Verify docs match code reality | Post-implementation verification |
+
+---
+
+## Design Principles
+
+### 1. Settings & Defaults System
+
+Each layer skill has:
+- `defaults.md` - Built-in defaults (include/exclude, litmus test, diagrams)
+- Loads `.c3/settings.yaml` at start
+- Merges settings with defaults based on `useDefaults` flag
+
+**Merge Logic:**
+```
+defaults.md → loaded first
+settings.yaml → merged/overrides based on useDefaults
+                ↓
+         Active Configuration
+```
+
+**When modifying layer skills:** Ensure the "Load Settings & Defaults" section exists and is applied throughout reasoning.
+
+### 2. Litmus Tests for Layer Placement
+
+Each layer has a litmus test to determine if content belongs there:
+
+| Layer | Litmus Test |
+|-------|-------------|
+| **Context** | "Would changing this require coordinating multiple containers or external parties?" |
+| **Container** | "Is this about WHAT this container does and WITH WHAT, not HOW internally?" |
+| **Component** | "Could a developer implement this from the documentation?" |
+
+### 3. Diagram Philosophy
+
+**Key Insight:** There's no one-size-fits-all diagram. Each container needs different diagrams based on complexity.
+
+**Container level has highest diagram ROI** because:
+- Full context from above
+- Controls component organization below
+- Where readers understand the architecture
+
+**Diagram Decision Framework (in c3-container-design):**
+1. Characterize container (simple/moderate/complex)
+2. Evaluate each diagram type (clarity + value + cost)
+3. Check combinations for redundancy
+4. Document decisions with justifications
+
+### 4. Inter-Container Interactions
+
+**Key Insight:** Inter-container communication is NOT Container-to-Container. It's Component-to-Component, mediated by Container.
+
+```
+Container A "talks to" Container B means:
+- Component in A (e.g., "B Client") initiates
+- Component in B (e.g., "Request Handler") receives
+- The protocol comes from Context
+- Container A documents its client component
+- Container B documents its handler component
+```
+
+### 5. ADR Verification
+
+ADRs have:
+- `Changes Across Layers` - What should change in docs
+- `Verification Checklist` - What to check in code
+
+`c3-audit` verifies:
+1. Are ADR doc changes actually made?
+2. Does code match what docs describe?
+3. Are verification items satisfied?
+
+---
+
+## Key Files to Know
+
+### Layer Skills (modify for architectural behavior)
+
+| File | Purpose |
+|------|---------|
+| `skills/c3-context-design/SKILL.md` | Context level exploration |
+| `skills/c3-context-design/defaults.md` | Context defaults (include/exclude/litmus/diagrams) |
+| `skills/c3-container-design/SKILL.md` | Container level exploration (heaviest skill) |
+| `skills/c3-container-design/defaults.md` | Container defaults |
+| `skills/c3-component-design/SKILL.md` | Component level exploration |
+| `skills/c3-component-design/defaults.md` | Component defaults |
+
+### Reference Files (shared knowledge)
+
+| File | Purpose |
+|------|---------|
+| `references/hierarchy-model.md` | C3 layer inheritance diagram |
+| `references/v3-structure.md` | File paths, ID patterns, frontmatter |
+| `references/diagram-patterns.md` | Diagram syntax and examples |
+| `references/adr-template.md` | ADR structure |
+| `references/archetype-hints.md` | Container type patterns |
+
+### Settings & Config
+
+| File | Purpose |
+|------|---------|
+| `skills/c3-config/SKILL.md` | Settings management skill |
+| `.c3/settings.yaml` (user's project) | Project-specific settings |
+
+---
+
+## Common Modification Scenarios
+
+### "I want to change what goes in Context vs Container"
+
+1. Edit `skills/c3-context-design/defaults.md` (include/exclude lists)
+2. Edit `skills/c3-container-design/defaults.md` (include/exclude lists)
+3. Update litmus tests if needed
+4. No migration needed (skill-internal change)
+
+### "I want to change diagram guidance"
+
+1. For defaults: Edit layer skill's `defaults.md`
+2. For decision framework: Edit `skills/c3-container-design/SKILL.md` Phase 4
+3. For syntax examples: Edit `references/diagram-patterns.md`
+
+### "I want to add a new setting"
+
+1. Add to `skills/c3-config/SKILL.md` settings structure
+2. Update layer skills to read and apply the new setting
+3. Update `references/v3-structure.md` if it affects file structure
+
+### "I want to change how ADR verification works"
+
+1. Edit `skills/c3-audit/SKILL.md` (Mode 2: ADR Audit)
+2. If changing ADR structure: also edit `references/adr-template.md`
+
+### "I want to change the extended thinking in a layer skill"
+
+1. Edit the relevant `<extended_thinking>` block in the SKILL.md
+2. Ensure the thinking aligns with settings/defaults loading
+3. No migration needed
+
+---
+
+## Session History: 2025-11-27 Changes
+
+### c3-container-design (Major Enhancement)
+- Positioned as "architectural command center"
+- Added extensive diagram decision framework with extended thinking
+- Clarified inter-container interactions are component-mediated
+- Added diagram type analysis (capabilities/limitations of each type)
+- Added diagram combination patterns and anti-patterns
+- Added settings loading section
+
+### c3-context-design (Simplified)
+- Reframed as "eagle-eye introduction"
+- Focused on two core jobs: container inventory + container interactions
+- Removed heavy extended thinking (lighter touch for this layer)
+- Added settings loading section
+
+### c3-audit (Enhanced)
+- Added audit modes: Full, ADR, Container, Quick
+- Added ADR verification workflow (verify doc changes + code conformance)
+- Added verification checklist results tracking
+
+### All Layer Skills
+- Added "Load Settings & Defaults" section
+- Settings are loaded at start and applied throughout reasoning
+- Merge logic: defaults.md + settings.yaml based on useDefaults flag

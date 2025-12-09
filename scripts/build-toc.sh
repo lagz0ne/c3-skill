@@ -1,6 +1,6 @@
 #!/bin/bash
 # Build Table of Contents from C3 documentation
-# Usage: .c3/scripts/build-toc.sh
+# Usage: Call from plugin directory or via c3-toc skill
 #
 # Supports:
 # - v2: containers/ and components/ folders, VERSION file
@@ -40,7 +40,7 @@ echo "Detected C3 structure: $C3_VERSION"
 cat > "$TEMP_FILE" << 'EOF'
 # C3 Documentation Table of Contents
 
-> **AUTO-GENERATED** - Do not edit manually. Regenerate with: `.c3/scripts/build-toc.sh`
+> **AUTO-GENERATED** - Do not edit manually. Rebuild using the c3-toc skill.
 >
 EOF
 

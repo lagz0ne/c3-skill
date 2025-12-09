@@ -157,7 +157,14 @@ if [ "$C3_VERSION" = "v3" ]; then
 
     con_count=$(find "$C3_ROOT" -maxdepth 1 -type d -name "c3-[0-9]-*" 2>/dev/null | wc -l || echo 0)
     com_count=$(find "$C3_ROOT" -path "*/c3-[0-9]-*/c3-[0-9][0-9][0-9]-*.md" 2>/dev/null | wc -l || echo 0)
-    adr_count=$(find "$C3_ROOT/adr" -name "adr-*.md" 2>/dev/null | wc -l || echo 0)
+
+    # Count only implemented ADRs
+    implemented_adr_count=0
+    for file in $(find "$C3_ROOT/adr" -name "adr-*.md" 2>/dev/null); do
+        status=$(extract_frontmatter "$file" "status")
+        [ "$status" = "implemented" ] && implemented_adr_count=$((implemented_adr_count + 1))
+    done
+    adr_count=$implemented_adr_count
 else
     # v2 counts (existing logic)
     readme_exists=0
@@ -172,7 +179,13 @@ else
     nested_com_count=$(find "$C3_ROOT/components" -mindepth 2 -name "C3-[0-9][0-9][0-9]-*.md" 2>/dev/null | wc -l || echo 0)
     com_count=$((flat_com_count + nested_com_count))
 
-    adr_count=$(find "$C3_ROOT/adr" -name "ADR-*.md" 2>/dev/null | wc -l || echo 0)
+    # Count only implemented ADRs
+    implemented_adr_count=0
+    for file in $(find "$C3_ROOT/adr" -name "ADR-*.md" 2>/dev/null); do
+        status=$(extract_frontmatter "$file" "status")
+        [ "$status" = "implemented" ] && implemented_adr_count=$((implemented_adr_count + 1))
+    done
+    adr_count=$implemented_adr_count
 fi
 
 # Context Level - check README.md first, then auxiliary context files
@@ -373,16 +386,19 @@ fi
 
 # ADR Level
 if [ "$C3_VERSION" = "v3" ]; then
-    # v3: lowercase adr-*.md
+    # v3: lowercase adr-*.md (only implemented ADRs)
     if [ "$adr_count" -gt 0 ]; then
         echo "## Architecture Decisions" >> "$TEMP_FILE"
         echo "" >> "$TEMP_FILE"
 
         for file in $(find "$C3_ROOT/adr" -name "adr-*.md" 2>/dev/null | sort -r); do
+            status=$(extract_frontmatter "$file" "status")
+            # Skip non-implemented ADRs
+            [ "$status" != "implemented" ] && continue
+
             id=$(extract_frontmatter "$file" "id")
             title=$(extract_frontmatter "$file" "title")
             summary=$(extract_summary "$file")
-            status=$(extract_frontmatter "$file" "status")
             filename=$(basename "$file")
             rel_path="./adr/${filename}"
 
@@ -396,16 +412,19 @@ if [ "$C3_VERSION" = "v3" ]; then
         done
     fi
 else
-    # v2: uppercase ADR-*.md
+    # v2: uppercase ADR-*.md (only implemented ADRs)
     if [ "$adr_count" -gt 0 ]; then
         echo "## Architecture Decisions" >> "$TEMP_FILE"
         echo "" >> "$TEMP_FILE"
 
         for file in $(find "$C3_ROOT/adr" -name "ADR-*.md" 2>/dev/null | sort -r); do
+            status=$(extract_frontmatter "$file" "status")
+            # Skip non-implemented ADRs
+            [ "$status" != "implemented" ] && continue
+
             id=$(extract_frontmatter "$file" "id")
             title=$(extract_frontmatter "$file" "title")
             summary=$(extract_summary "$file")
-            status=$(extract_frontmatter "$file" "status")
             filename=$(basename "$file")
             rel_path="./adr/${filename}"
 
@@ -425,7 +444,7 @@ total_docs=$((ctx_total + con_count + com_count + adr_count))
 echo "## Quick Reference" >> "$TEMP_FILE"
 echo "" >> "$TEMP_FILE"
 echo "**Total Documents**: $total_docs" >> "$TEMP_FILE"
-echo "**Contexts**: $ctx_total | **Containers**: $con_count | **Components**: $com_count | **ADRs**: $adr_count" >> "$TEMP_FILE"
+echo "**Contexts**: $ctx_total | **Containers**: $con_count | **Components**: $com_count | **ADRs**: $adr_count (implemented)" >> "$TEMP_FILE"
 
 # Move to final location
 mv "$TEMP_FILE" "$TOC_FILE"

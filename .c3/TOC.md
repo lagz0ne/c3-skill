@@ -1,8 +1,8 @@
 # C3 Documentation Table of Contents
 
-> **AUTO-GENERATED** - Do not edit manually. Regenerate with: `.c3/scripts/build-toc.sh`
+> **AUTO-GENERATED** - Do not edit manually. Rebuild using the c3-toc skill.
 >
-> Last generated: 2025-12-09 16:18:05
+> Last generated: 2025-12-09 16:25:25
 
 ## Quick Reference
 

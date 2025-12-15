@@ -68,28 +68,29 @@ Claude will:
 
 | Command | Description |
 |---------|-------------|
-| `/c3-use` | **Start here** - Get oriented with existing docs or adopt C3 |
-| `/c3` | Design or update architecture |
-| `/c3-init` | Initialize `.c3/` structure from scratch |
+| `/c3` | **Start here** - Design, update, or explore architecture |
 | `/c3-config` | Configure project settings (diagrams, guardrails, handoff) |
 | `/c3-migrate` | Migrate documentation to current skill version |
 | `/c3-audit` | Audit C3 docs against codebase reality |
 
-### Skills
+### Skills (8)
 
 | Skill | Purpose |
 |-------|---------|
-| `c3-use` | Entry point - guides reading or offers adoption |
-| `c3-adopt` | Initialize C3 for existing project via Socratic discovery |
-| `c3-design` | Main architecture design workflow |
-| `c3-config` | Create/update `.c3/settings.yaml` preferences |
-| `c3-locate` | Find documents by ID or heading |
+| `c3-design` | Main entry point - design, update, or explore architecture |
+| `c3-adopt` | Initialize C3 for any project (existing or fresh) |
 | `c3-context-design` | Context-level documentation |
 | `c3-container-design` | Container-level documentation |
 | `c3-component-design` | Component-level documentation |
-| `c3-naming` | ID and naming conventions |
-| `c3-toc` | Table of contents management |
+| `c3-config` | Create/update `.c3/settings.yaml` preferences |
 | `c3-migrate` | Version migration transforms |
+| `c3-audit` | Audit C3 docs against codebase reality |
+
+### References
+
+Utility patterns extracted as reference docs (not skills):
+- `lookup-patterns.md` - ID-based document retrieval
+- `naming-conventions.md` - ID and naming conventions
 
 ### Getting Started
 
@@ -98,10 +99,10 @@ Claude will:
 ```markdown
 # Architecture
 
-Use `/c3-skill:c3-use` to get started with architecture documentation.
+Use `/c3` to get started with architecture documentation.
 ```
 
-This will check for `.c3/` and guide you through reading existing docs or setting up C3.
+This will check for `.c3/` and guide you through exploring existing docs or setting up C3.
 
 ## Layer Configuration
 
@@ -258,7 +259,7 @@ how to configure the pool for different environments.
 
 ### Generate TOC
 
-Use the c3-toc skill to rebuild the table of contents after:
+Ask Claude to "rebuild the TOC" (uses the plugin's `build-toc.sh` script) after:
 - Creating new documents
 - Updating summaries
 - Adding new sections

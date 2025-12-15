@@ -1,24 +1,31 @@
 ---
 name: c3-audit
-description: Audit C3 documentation against codebase reality - find drift between docs and implementation
+description: Audit C3 documentation against codebase reality - find drift between docs and implementation. Also verify docs follow C3 methodology rules (layer content, structure, diagrams).
 ---
 
 # C3 Audit
 
 ## Overview
 
-The audit skill is used **after implementation** to verify:
+The audit skill verifies C3 documentation quality from two angles:
 
-1. **ADR Implementation** - Are accepted ADRs actually implemented in C3 docs?
-2. **Architecture Conformance** - Does the code follow what C3 docs describe?
-3. **Verification Checklists** - Are ADR verification items satisfied?
+1. **Methodology Compliance** - Do docs follow C3 layer rules?
+   - Correct content at each layer (Context/Container/Component)
+   - Proper structure (IDs, paths, frontmatter)
+   - Appropriate diagrams per layer
+   - Valid contract chain (no orphans/phantoms)
+
+2. **Implementation Conformance** - Do docs match reality?
+   - ADR Implementation - Are accepted ADRs actually implemented?
+   - Architecture Conformance - Does code follow what docs describe?
+   - Verification Checklists - Are ADR verification items satisfied?
 
 <audit_position>
 When to use:
-- After completing implementation work
-- After accepting an ADR (to verify it was implemented)
-- Periodically to catch drift
-- Before major releases
+- **Methodology Audit**: After creating/updating C3 docs, before review
+- **Full/Container Audit**: After implementation, periodically to catch drift
+- **ADR Audit**: After accepting an ADR (to verify it was implemented)
+- **ADR-Plan Audit**: After c3-design, before handoff
 
 This is NOT for:
 - Active design work (use c3-design)
@@ -35,11 +42,449 @@ The audit can run in different modes based on what you want to verify:
 
 | Mode | Purpose | When to Use |
 |------|---------|-------------|
+| **Methodology** | Verify docs follow C3 layer rules | After creating/updating docs |
 | **Full** | Complete audit of all docs vs code | Periodic health check |
 | **ADR** | Verify specific ADR was implemented | After ADR implementation |
 | **ADR-Plan** | Verify ADR ↔ Plan coherence | After c3-design, before handoff |
 | **Container** | Audit single container and its components | After container changes |
 | **Quick** | High-level inventory check only | Fast sanity check |
+
+---
+
+## Mode 0: Methodology Audit
+
+Verify that C3 documentation follows the C3 methodology rules - correct content at each layer, proper structure, and appropriate diagrams.
+
+**Use this mode:**
+- After creating new C3 documentation
+- After significant doc updates
+- To validate documentation quality before review
+- When onboarding to ensure docs follow standards
+
+### Phase 1: Load Layer Defaults
+
+<chain_prompt id="load_defaults">
+<instruction>Load the layer rules from plugin references</instruction>
+
+<rules>
+**Context Layer (c3-0) - Bird's-eye view**
+
+MUST INCLUDE:
+- Container responsibilities (WHY each exists)
+- Container relationships (how they connect)
+- Connecting points (APIs, protocols, events)
+- External actors (who/what interacts)
+- System boundary (inside vs outside)
+
+MUST EXCLUDE:
+- Component lists (push to Container)
+- How containers work internally (push to Container)
+- Implementation details (push to Component)
+
+LITMUS: "Is this about WHY containers exist and HOW they relate?"
+
+DIAGRAMS: System Context, Container Overview
+AVOID: Sequence with methods, class diagrams, flowcharts with logic
+
+---
+
+**Container Layer (c3-N) - Inside view**
+
+MUST INCLUDE:
+- Component responsibilities (WHAT each does)
+- Component relationships (how they interact)
+- Data flows (how data moves)
+- Business flows (workflows spanning components)
+- Inner patterns (logging, config, errors)
+
+MUST EXCLUDE:
+- WHY this container exists (push to Context)
+- Container-to-container details (push to Context)
+- HOW components work (push to Component)
+
+LITMUS: "Is this about WHAT components do and HOW they relate?"
+
+DIAGRAMS: Component Relationships, Data Flow
+AVOID: System context, actor diagrams
+
+---
+
+**Component Layer (c3-NNN) - Close-up view**
+
+MUST INCLUDE:
+- Flows (step-by-step processing)
+- Dependencies (what it calls)
+- Decision logic (branching points)
+- Edge cases (non-obvious scenarios)
+- Error handling (what can go wrong)
+
+MUST EXCLUDE:
+- WHAT this component does (already in Container)
+- Component relationships (push to Container)
+- Container relationships (push to Context)
+
+LITMUS: "Is this about HOW this component implements its contract?"
+
+DIAGRAMS: Flowcharts, Sequence (to dependencies), State charts
+AVOID: System context, container overview
+</rules>
+</chain_prompt>
+
+### Phase 2: Structure Compliance Check
+
+<chain_prompt id="check_structure">
+<instruction>Verify file structure, IDs, and frontmatter</instruction>
+
+<action>
+```bash
+# List all C3 docs
+find .c3 -name "*.md" -type f | sort
+```
+</action>
+
+<checks>
+**ID Pattern Checks:**
+| Level | Pattern | Regex |
+|-------|---------|-------|
+| Context | `c3-0` | `^c3-0$` |
+| Container | `c3-{N}` | `^c3-[1-9]$` |
+| Component | `c3-{N}{NN}` | `^c3-[1-9][0-9]{2}$` |
+| ADR | `adr-{YYYYMMDD}-{slug}` | `^adr-[0-9]{8}-[a-z0-9-]+$` |
+
+**Path Pattern Checks:**
+| Level | Expected Path |
+|-------|---------------|
+| Context | `.c3/README.md` |
+| Container | `.c3/c3-{N}-{slug}/README.md` |
+| Component | `.c3/c3-{N}-{slug}/c3-{N}{NN}-{slug}.md` |
+
+**Frontmatter Required Fields:**
+| Level | Required Fields |
+|-------|-----------------|
+| Context | `id: c3-0`, `title` |
+| Container | `id: c3-N`, `title`, `parent: c3-0` |
+| Component | `id: c3-NNN`, `title`, `parent: c3-N`, `type: component` |
+</checks>
+
+<output>
+```xml
+<structure_audit>
+  <id_pattern_violations>
+    <violation doc=".c3/c3-1-api/c3-1a-handler.md">
+      <expected>c3-101, c3-102, etc.</expected>
+      <actual>c3-1a</actual>
+      <fix>Rename to c3-101-handler.md with id: c3-101</fix>
+    </violation>
+  </id_pattern_violations>
+
+  <path_violations>
+    <violation doc=".c3/components/auth.md">
+      <expected>.c3/c3-N-slug/c3-NNN-slug.md</expected>
+      <actual>Flat structure in components/</actual>
+      <fix>Move to container folder</fix>
+    </violation>
+  </path_violations>
+
+  <frontmatter_violations>
+    <violation doc=".c3/c3-1-api/README.md">
+      <missing>parent</missing>
+      <fix>Add `parent: c3-0` to frontmatter</fix>
+    </violation>
+  </frontmatter_violations>
+</structure_audit>
+```
+</output>
+</chain_prompt>
+
+### Phase 3: Layer Content Audit
+
+<extended_thinking>
+<goal>Verify each document contains appropriate content for its layer</goal>
+
+<audit_process>
+For each document, determine its layer from ID, then audit content:
+
+**Context (c3-0) Audit:**
+
+| Check | How to Detect | Violation |
+|-------|---------------|-----------|
+| Has container inventory | Table/list of containers with IDs | Missing = FAIL |
+| Has actor list | External actors section | Missing = WARN |
+| Has protocols | Container interactions table | Missing = FAIL |
+| NO component lists | Mentions c3-NNN IDs in body | Found = VIOLATION (push down) |
+| NO implementation details | Code blocks, algorithms | Found = VIOLATION (push down) |
+
+**Container (c3-N) Audit:**
+
+| Check | How to Detect | Violation |
+|-------|---------------|-----------|
+| Has component inventory | Table/list of components with IDs | Missing = FAIL |
+| Has tech stack | Technology section | Missing = WARN |
+| Has data/business flows | Flow descriptions or diagrams | Missing = WARN |
+| NO "why container exists" | Purpose statement without context ref | Found = VIOLATION (push up) |
+| NO step-by-step flows | Detailed algorithms for single component | Found = VIOLATION (push down) |
+
+**Component (c3-NNN) Audit:**
+
+| Check | How to Detect | Violation |
+|-------|---------------|-----------|
+| Has flow/algorithm | Step-by-step or flowchart | Missing = FAIL |
+| Has dependencies | Dependencies table/list | Missing = WARN |
+| Has edge cases | Edge cases section | Missing = WARN |
+| Has error handling | Error handling section | Missing = WARN |
+| References container contract | "As defined in c3-N" or similar | Missing = WARN |
+| NO component relationships | Diagrams showing sibling components | Found = VIOLATION (push up) |
+| NO container relationships | Mentions other containers | Found = VIOLATION (push up) |
+</audit_process>
+
+<output>
+```xml
+<layer_content_audit>
+  <context doc=".c3/README.md">
+    <required_present>
+      <item check="container_inventory">PASS</item>
+      <item check="protocols">PASS</item>
+    </required_present>
+    <violations>
+      <violation type="content_too_detailed" severity="high">
+        <location>Line 45-60</location>
+        <content>Lists components of Backend (c3-101, c3-102...)</content>
+        <rule>Context should NOT list components</rule>
+        <fix>Move component inventory to Container doc</fix>
+      </violation>
+    </violations>
+  </context>
+
+  <container doc=".c3/c3-1-api/README.md" id="c3-1">
+    <required_present>
+      <item check="component_inventory">PASS</item>
+      <item check="tech_stack">PASS</item>
+    </required_present>
+    <violations>
+      <violation type="abstraction_leak_down" severity="medium">
+        <location>Line 80-120</location>
+        <content>Detailed sync algorithm with decision tree</content>
+        <rule>Container documents WHAT, not HOW</rule>
+        <fix>Move algorithm to component doc (c3-105)</fix>
+      </violation>
+    </violations>
+  </container>
+
+  <component doc=".c3/c3-1-api/c3-105-sync.md" id="c3-105">
+    <required_present>
+      <item check="flow">PASS</item>
+      <item check="dependencies">PASS</item>
+      <item check="edge_cases">PASS</item>
+    </required_present>
+    <violations>
+      <violation type="abstraction_leak_up" severity="medium">
+        <location>Line 15-30</location>
+        <content>Describes relationships with all sibling components</content>
+        <rule>Component docs focus on HOW this component works</rule>
+        <fix>Move component relationships to Container doc</fix>
+      </violation>
+    </violations>
+  </component>
+</layer_content_audit>
+```
+</output>
+</extended_thinking>
+
+### Phase 4: Diagram Appropriateness Audit
+
+<extended_thinking>
+<goal>Verify diagrams match their layer's appropriate types</goal>
+
+<diagram_rules>
+| Layer | Appropriate | Inappropriate |
+|-------|-------------|---------------|
+| **Context** | System Context, Container Overview, Actor diagrams | Sequence with methods, Flowcharts with logic, Class diagrams |
+| **Container** | Component Relationships, Data Flow, Sequence (high-level) | System Context, Actor diagrams, Detailed flowcharts |
+| **Component** | Flowcharts, Sequence (to deps), State machines | System Context, Container Overview, Component relationships |
+</diagram_rules>
+
+<detection_patterns>
+**Mermaid diagram type detection:**
+- `C4Context` / `C4Container` → System/Container level
+- `flowchart` with decision nodes → Flowchart
+- `sequenceDiagram` → Sequence
+- `stateDiagram` → State machine
+- `graph` with components → Component relationships
+
+**Inappropriate patterns:**
+- Context with `sequenceDiagram` showing method calls → TOO DETAILED
+- Container with `C4Context` showing actors → WRONG LEVEL
+- Component with `graph` showing sibling relationships → WRONG LEVEL
+</detection_patterns>
+
+<output>
+```xml
+<diagram_audit>
+  <doc path=".c3/README.md" layer="context">
+    <diagrams_found>
+      <diagram type="C4Context" line="50">APPROPRIATE</diagram>
+      <diagram type="sequenceDiagram" line="80">
+        <verdict>INAPPROPRIATE</verdict>
+        <reason>Sequence diagram with method calls too detailed for Context</reason>
+        <fix>Move to Container or remove method details</fix>
+      </diagram>
+    </diagrams_found>
+  </doc>
+
+  <doc path=".c3/c3-1-api/README.md" layer="container">
+    <diagrams_found>
+      <diagram type="flowchart" line="60">APPROPRIATE</diagram>
+    </diagrams_found>
+  </doc>
+
+  <doc path=".c3/c3-1-api/c3-105-sync.md" layer="component">
+    <diagrams_found>
+      <diagram type="flowchart" line="30">APPROPRIATE</diagram>
+      <diagram type="stateDiagram" line="80">APPROPRIATE</diagram>
+    </diagrams_found>
+    <missing_recommended>
+      <diagram type="dependencies_sequence">Dependencies table exists but no sequence showing calls</diagram>
+    </missing_recommended>
+  </doc>
+</diagram_audit>
+```
+</output>
+</extended_thinking>
+
+### Phase 5: Contract Chain Verification
+
+<extended_thinking>
+<goal>Verify each layer properly references and implements its parent's contract</goal>
+
+<contract_chain_checks>
+**Container → Context:**
+- Container must be listed in Context's container inventory
+- Container's "inherited from context" should match Context's definition
+- Container's external dependencies should match Context's protocols
+
+**Component → Container:**
+- Component must be listed in Container's component inventory
+- Component should reference "contract from Container"
+- Component's responsibilities should match what Container says
+
+**Orphan Detection:**
+- Containers not listed in Context = ORPHAN
+- Components not listed in their Container = ORPHAN
+- Containers in Context but no folder = PHANTOM
+- Components in Container but no file = PHANTOM
+</contract_chain_checks>
+
+<output>
+```xml
+<contract_chain_audit>
+  <context_to_container>
+    <container id="c3-1">
+      <listed_in_context>yes</listed_in_context>
+      <folder_exists>yes</folder_exists>
+      <status>VALID</status>
+    </container>
+    <container id="c3-3">
+      <listed_in_context>yes</listed_in_context>
+      <folder_exists>no</folder_exists>
+      <status>PHANTOM - documented but no folder</status>
+      <fix>Create .c3/c3-3-slug/ or remove from Context</fix>
+    </container>
+  </context_to_container>
+
+  <container_to_component>
+    <component id="c3-105" container="c3-1">
+      <listed_in_container>yes</listed_in_container>
+      <file_exists>yes</file_exists>
+      <references_contract>yes - "As defined in Container..."</references_contract>
+      <status>VALID</status>
+    </component>
+    <component id="c3-107" container="c3-1">
+      <listed_in_container>no</listed_in_container>
+      <file_exists>yes</file_exists>
+      <status>ORPHAN - file exists but not in Container inventory</status>
+      <fix>Add to Container's component table or delete file</fix>
+    </component>
+  </container_to_component>
+
+  <inheritance_mismatches>
+    <mismatch container="c3-2">
+      <context_says>Communicates via REST</context_says>
+      <container_says>Inherited: gRPC</container_says>
+      <fix>Align Container's inherited section with Context</fix>
+    </mismatch>
+  </inheritance_mismatches>
+</contract_chain_audit>
+```
+</output>
+</extended_thinking>
+
+### Phase 6: Methodology Audit Report
+
+<report_template>
+```markdown
+# C3 Methodology Audit Report
+
+**Date:** YYYY-MM-DD
+**Target:** [.c3/ path or specific container]
+
+## Executive Summary
+
+| Category | Pass | Warn | Fail |
+|----------|------|------|------|
+| Structure (IDs, paths, frontmatter) | N | N | N |
+| Layer Content | N | N | N |
+| Diagrams | N | N | N |
+| Contract Chain | N | N | N |
+
+**Overall:** COMPLIANT / NEEDS_FIXES / NON_COMPLIANT
+
+## Structure Violations
+
+| Doc | Issue | Severity | Fix |
+|-----|-------|----------|-----|
+| path | ID pattern invalid | High | Rename to c3-NNN |
+
+## Layer Content Violations
+
+### Abstraction Leaks Down (too detailed)
+
+| Doc | Layer | Content | Should Be In |
+|-----|-------|---------|--------------|
+| .c3/README.md | Context | Component list | Container |
+
+### Abstraction Leaks Up (belongs higher)
+
+| Doc | Layer | Content | Should Be In |
+|-----|-------|---------|--------------|
+| c3-105-sync.md | Component | Sibling relationships | Container |
+
+### Missing Required Content
+
+| Doc | Layer | Missing |
+|-----|-------|---------|
+| c3-2/README.md | Container | Component inventory |
+
+## Diagram Issues
+
+| Doc | Diagram | Issue | Fix |
+|-----|---------|-------|-----|
+| README.md | sequenceDiagram L80 | Too detailed for Context | Move to Container |
+
+## Contract Chain Issues
+
+| Type | ID | Issue | Fix |
+|------|-----|-------|-----|
+| PHANTOM | c3-3 | In Context, no folder | Create folder or remove |
+| ORPHAN | c3-107 | File exists, not in Container | Add to inventory |
+| MISMATCH | c3-2 | Protocol differs from Context | Align inherited section |
+
+## Recommendations
+
+1. [Priority fixes by severity]
+2. [Structural changes needed]
+3. [Content to relocate]
+```
+</report_template>
 
 ---
 
@@ -768,6 +1213,15 @@ NOT safe to auto-fix (require user decision):
 ## Checklist
 
 <verification_checklist>
+**For Methodology Audit:**
+- [ ] Layer defaults loaded (Context/Container/Component rules)
+- [ ] Structure checked (IDs, paths, frontmatter)
+- [ ] Layer content audited (include/exclude rules)
+- [ ] Diagrams audited (appropriate types per layer)
+- [ ] Contract chain verified (no orphans, no phantoms)
+- [ ] Abstraction leaks identified (up and down)
+- [ ] Report generated with fixes
+
 **For Full Audit:**
 - [ ] All C3 docs loaded
 - [ ] Codebase explored

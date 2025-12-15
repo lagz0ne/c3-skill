@@ -1,21 +1,30 @@
 ---
 name: c3-adopt
-description: Initialize C3 architecture documentation for an existing project - uses Socratic questioning to build understanding, then delegates to layer skills for document creation
+description: Initialize C3 architecture documentation for any project (existing codebase or fresh start) - uses Socratic questioning to build understanding, then delegates to layer skills for document creation
 ---
 
 # C3 Adopt - Initialize Architecture Documentation
 
 ## Overview
 
-Bootstrap C3 (Context-Container-Component) architecture documentation for an existing codebase through Socratic questioning and delegation.
+Bootstrap C3 (Context-Container-Component) architecture documentation through Socratic questioning and delegation. Works for both existing codebases and fresh projects.
 
 **Announce at start:** "I'm using the c3-adopt skill to initialize architecture documentation for this project."
+
+## When to Use
+
+| Scenario | Path |
+|----------|------|
+| Existing codebase needs C3 docs | Full workflow (explore → question → document) |
+| Brand new project, no code yet | Fresh start (question → scaffold → document) |
+| `.c3/` exists but needs rebuild | Ask user: update, backup+recreate, or abort |
 
 ## Quick Reference
 
 | Phase | Key Activities | Output |
 |-------|---------------|--------|
-| **1. Discovery & Scaffolding** | Task Explore codebase, create scaffolding | `.c3/` directory, container map |
+| **0. Project Detection** | Check for code, check for existing .c3/ | Determine path |
+| **1. Discovery & Scaffolding** | Explore codebase OR Socratic discovery | `.c3/` directory, container map |
 | **2. Context Discovery** | Socratic questions about system | Understanding for c3-0 |
 | **3. Container Discovery** | Archetype-guided exploration, Socratic questions | Understanding for c3-{N} |
 | **4. Component Identification** | Identify key components | c3-{N}{NN} stubs |
@@ -39,9 +48,44 @@ Bootstrap C3 (Context-Container-Component) architecture documentation for an exi
 
 ---
 
+## Phase 0: Project Detection
+
+### Step 0.1: Check for Existing .c3/
+
+```bash
+ls -la .c3 2>/dev/null && echo "EXISTS" || echo "MISSING"
+```
+
+**If EXISTS:** Ask user:
+> "I found existing `.c3/` documentation. Would you like me to:
+> 1. Review and update existing documentation
+> 2. Back up and create fresh documentation
+> 3. Abort and preserve what's there"
+
+### Step 0.2: Detect Project Type
+
+```bash
+# Check if this is a fresh project (no meaningful code)
+CODE_FILES=$(find . -maxdepth 3 -type f \( -name "*.js" -o -name "*.ts" -o -name "*.py" -o -name "*.go" -o -name "*.java" -o -name "*.rs" \) 2>/dev/null | head -5 | wc -l)
+PACKAGE_FILES=$(find . -maxdepth 2 -type f \( -name "package.json" -o -name "go.mod" -o -name "requirements.txt" -o -name "Cargo.toml" -o -name "pom.xml" \) 2>/dev/null | wc -l)
+
+if [ "$CODE_FILES" -eq 0 ] && [ "$PACKAGE_FILES" -eq 0 ]; then
+    echo "FRESH_PROJECT"
+else
+    echo "EXISTING_CODEBASE"
+fi
+```
+
+| Detection | Path |
+|-----------|------|
+| `FRESH_PROJECT` | Skip codebase exploration, use Socratic-only discovery |
+| `EXISTING_CODEBASE` | Full exploration + Socratic refinement |
+
+---
+
 ## Phase 1: Discovery & Scaffolding
 
-### Step 1.1: Full Codebase Exploration
+### Path A: Existing Codebase (Full Exploration)
 
 **Use Task Explore (very thorough) to build container map:**
 
@@ -97,19 +141,36 @@ Does this match your understanding? Any containers missing or incorrectly identi
 
 Use AskUserQuestion if choices needed.
 
-### Step 1.3: Check Prerequisites
+### Path B: Fresh Project (Socratic-Only Discovery)
 
-```bash
-ls -la .c3 2>/dev/null && echo "WARNING: .c3 already exists"
+When no code exists, build the container map through questions:
+
+1. **System Identity**
+   - "What is the name of this system/project?"
+   - "In one sentence, what will it do for users?"
+
+2. **Planned Architecture**
+   - "What containers/services do you plan to build?"
+   - "Will this be a monolith, microservices, or serverless?"
+
+3. **Technology Choices**
+   - "What languages/frameworks are you considering?"
+   - "What databases or external services will you use?"
+
+Build container map from answers:
+
+```markdown
+## Planned Containers
+
+| # | Name | Archetype | Planned Technologies |
+|---|------|-----------|---------------------|
+| 1 | api | Backend | [TBD or specified] |
+| 2 | web | Frontend | [TBD or specified] |
+
+Note: Architecture based on planned design, not code discovery.
 ```
 
-If `.c3/` exists, ask:
-> "I found existing `.c3/` documentation. Would you like me to:
-> 1. Review and update existing documentation
-> 2. Back up and create fresh documentation
-> 3. Abort and preserve what's there"
-
-### Step 1.4: Scaffold .c3/ Directory
+### Step 1.3: Scaffold .c3/ Directory
 
 Create structure based on confirmed containers:
 
@@ -117,7 +178,7 @@ Create structure based on confirmed containers:
 mkdir -p .c3/adr
 ```
 
-The TOC can be rebuilt using the c3-toc skill.
+The TOC can be rebuilt using the plugin's `build-toc.sh` script (ask Claude to "rebuild the TOC").
 
 Create `index.md`:
 ```markdown
@@ -132,7 +193,7 @@ title: C3 Architecture Documentation
 - [System Overview](./README.md)
 ```
 
-Create `README.md` (context) with v3 frontmatter:
+Create `README.md` (context) with v3 frontmatter and template:
 ```markdown
 ---
 id: c3-0
@@ -142,7 +203,63 @@ title: System Overview
 
 # System Overview
 
-<!-- Context document content goes here -->
+## Overview {#c3-0-overview}
+<!--
+System purpose in 1-2 sentences.
+What problem does it solve? For whom?
+-->
+
+## System Boundary {#c3-0-boundary}
+<!--
+What's INSIDE vs OUTSIDE the system.
+-->
+
+### Inside (Our System)
+- [List containers]
+
+### Outside (External)
+- [List external systems]
+
+## Actors {#c3-0-actors}
+<!--
+Who/what interacts with the system.
+-->
+
+| Actor | Type | Interacts Via | Implemented By |
+|-------|------|---------------|----------------|
+| | | | |
+
+## Containers {#c3-0-containers}
+<!--
+Inventory of all containers.
+-->
+
+| Container | ID | Type | Responsibility |
+|-----------|-----|------|----------------|
+| | | | |
+
+## Protocols {#c3-0-protocols}
+<!--
+How containers communicate.
+-->
+
+| From | To | Protocol | Contract |
+|------|-----|----------|----------|
+| | | | |
+
+## Cross-Cutting Concerns {#c3-0-cross-cutting}
+<!--
+System-wide patterns.
+-->
+
+### Authentication {#c3-0-auth}
+<!-- Strategy and implementation -->
+
+### Logging {#c3-0-logging}
+<!-- Pattern and implementation -->
+
+### Error Handling {#c3-0-errors}
+<!-- Strategy and implementation -->
 ```
 
 Create container folders based on discovered containers:
@@ -417,11 +534,15 @@ Platform docs use `c3-0-*` IDs to indicate they're Context-level.
 | System boundary, actors, protocols | `c3-context-design` |
 | Container structure, tech stack | `c3-container-design` |
 | Implementation details, config | `c3-component-design` |
-| TOC management | `c3-toc` |
-| Document retrieval | `c3-locate` |
+| Project settings | `c3-config` |
+
+**References (not skills):**
+- [lookup-patterns.md](../../references/lookup-patterns.md) - ID-based document retrieval
+- [naming-conventions.md](../../references/naming-conventions.md) - Naming patterns
 
 ## Related Skills
 
 - [c3-context-design](../c3-context-design/SKILL.md)
 - [c3-container-design](../c3-container-design/SKILL.md)
 - [c3-component-design](../c3-component-design/SKILL.md)
+- [c3-config](../c3-config/SKILL.md)

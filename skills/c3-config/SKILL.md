@@ -275,10 +275,9 @@ You can edit .c3/settings.yaml directly anytime.
 | Context | Behavior |
 |---------|----------|
 | **Standalone** | Full Socratic refinement of all sections |
-| **Via c3-adopt** | Create with defaults, minimal questions |
-| **Via c3-init** | Create with defaults, offer refinement |
+| **Via c3-adopt** | Create with defaults, minimal questions, offer refinement |
 
-When called from `c3-adopt` or `c3-init`:
+When called from `c3-adopt`:
 - Create defaults immediately
 - Ask: "Would you like to customize project settings now, or use defaults?"
 - If customize → full refinement

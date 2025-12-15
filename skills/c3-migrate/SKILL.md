@@ -146,7 +146,7 @@ fi
 
 > "Migration complete: v{FROM} → v{TO}
 >
-> Rebuild the TOC using the c3-toc skill to refresh the table of contents."
+> Rebuild the TOC using the plugin's `build-toc.sh` script to refresh the table of contents."
 
 ---
 

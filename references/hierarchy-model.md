@@ -4,58 +4,109 @@ The C3 hierarchy (Context-Container-Component) is a **zoom hierarchy**. Each lay
 
 ## Core Principle: Zoom Levels
 
-```
-Context   = Bird's-eye view (very far)  → WHY containers exist, relationships
-Container = Inside view (mid zoom)      → WHAT components do, how they relate
-Component = Close-up view (zoomed in)   → HOW each component works
+```mermaid
+flowchart TB
+    subgraph zoom["Zoom Hierarchy"]
+        direction TB
+        C["🔭 Context<br/>Bird's-eye view"]
+        CO["🔍 Container<br/>Inside view"]
+        CP["🔬 Component<br/>Close-up view"]
+        C -->|"zoom in"| CO
+        CO -->|"zoom in"| CP
+    end
 
-Code lives in the codebase, not in C3 documents.
-C3 documents enable UNDERSTANDING before making changes.
+    C -.- W1["WHY containers exist<br/>Relationships between them"]
+    CO -.- W2["WHAT components do<br/>How they relate"]
+    CP -.- W3["HOW it works<br/>Flows, dependencies, edge cases"]
 ```
+
+> Code lives in the codebase, not in C3 documents.
+> C3 documents enable UNDERSTANDING before making changes.
 
 ## The Three Layers
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  CONTEXT (c3-0) - BIRD'S-EYE VIEW                               │
-│  See the system from very far                                   │
-│  • WHY each container exists                                    │
-│  • Relationships between containers                             │
-│  • Connecting points (interfaces between containers)            │
-│  • External actors                                              │
-│                              │                                  │
-│                              ▼ ZOOM IN                          │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │  CONTAINERS (c3-1, c3-2, ...) - INSIDE VIEW              │   │
-│  │  See the structure inside one container                  │   │
-│  │  • WHAT each component does                              │   │
-│  │  • Relationships between components                      │   │
-│  │  • Data flows across components                          │   │
-│  │  • Business flows (workflows)                            │   │
-│  │  • Inner patterns (logging, config, errors)              │   │
-│  │                              │                           │   │
-│  │                              ▼ ZOOM IN                   │   │
-│  │  ┌────────────────────────────────────────────────────┐  │   │
-│  │  │  COMPONENTS (c3-101, c3-102, ...) - CLOSE-UP VIEW  │  │   │
-│  │  │  See HOW one component implements its contract     │  │   │
-│  │  │  • Flows (step-by-step processing)                 │  │   │
-│  │  │  • Dependencies (what it calls)                    │  │   │
-│  │  │  • Decision points                                 │  │   │
-│  │  │  • Edge cases and error handling                   │  │   │
-│  │  └────────────────────────────────────────────────────┘  │   │
-│  └──────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph CTX["CONTEXT (c3-0) - Bird's-eye View"]
+        direction LR
+        ctx_desc["See the system from very far"]
+        ctx_list["• WHY each container exists<br/>• Relationships between containers<br/>• Connecting points (interfaces)<br/>• External actors"]
+    end
+
+    subgraph CON["CONTAINER (c3-N) - Inside View"]
+        direction LR
+        con_desc["See the structure inside one container"]
+        con_list["• WHAT each component does<br/>• Relationships between components<br/>• Data flows across components<br/>• Business flows (workflows)<br/>• Inner patterns (logging, config)"]
+    end
+
+    subgraph CMP["COMPONENT (c3-NNN) - Close-up View"]
+        direction LR
+        cmp_desc["See HOW one component implements its contract"]
+        cmp_list["• Flows (step-by-step processing)<br/>• Dependencies (what it calls)<br/>• Decision points<br/>• Edge cases and error handling"]
+    end
+
+    CTX -->|"zoom in"| CON
+    CON -->|"zoom in"| CMP
 ```
 
 ## The Contract Chain
 
 Each layer defines a contract that the next layer implements:
 
+```mermaid
+flowchart LR
+    CTX["Context<br/>defines WHY"]
+    CON["Container<br/>defines WHAT"]
+    CMP["Component<br/>defines HOW"]
+    CODE["Code<br/>(in codebase)"]
+
+    CTX -->|"implemented by"| CON
+    CON -->|"implemented by"| CMP
+    CMP -->|"implemented by"| CODE
+```
+
 | Layer | Defines | Implemented By |
 |-------|---------|----------------|
 | **Context** | WHY containers exist, their relationships | Container |
 | **Container** | WHAT components do, their relationships | Component |
 | **Component** | HOW it works (the implementation) | (Code in codebase) |
+
+## Example: Backend System
+
+```mermaid
+flowchart TB
+    subgraph CTX["Context - Bird's-eye"]
+        User((User))
+        Backend[Backend]
+        DB[(Database)]
+        User -->|"REST API"| Backend
+        Backend -->|"SQL"| DB
+    end
+```
+
+```mermaid
+flowchart TB
+    subgraph CON["Container - Inside Backend"]
+        Handler[RequestHandler]
+        Service[UserService]
+        Adapter[DBAdapter]
+        Handler -->|"calls"| Service
+        Service -->|"calls"| Adapter
+    end
+```
+
+```mermaid
+flowchart TD
+    subgraph CMP["Component - Inside UserService"]
+        A[Receive request] --> B{Valid?}
+        B -->|No| C[Return error]
+        B -->|Yes| D{Exists?}
+        D -->|Yes| E[Return duplicate]
+        D -->|No| F[Create user]
+        F --> G[Send email]
+        G --> H[Return success]
+    end
+```
 
 ## Layer Responsibilities
 

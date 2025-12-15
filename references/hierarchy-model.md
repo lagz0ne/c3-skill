@@ -1,35 +1,45 @@
 # C3 Hierarchy Model
 
-The C3 hierarchy (Context-Container-Component) defines clear boundaries and inheritance patterns. Each layer inherits constraints from above and defines contracts for below.
+The C3 hierarchy (Context-Container-Component) is an **abstraction hierarchy**. Each layer defines interfaces that lower layers implement. The purpose is **understanding how things work**, not documenting code.
+
+## Core Principle: Abstraction Levels
+
+```
+Higher abstraction = DEFINES interfaces/contracts
+Lower abstraction  = IMPLEMENTS those interfaces (explains HOW)
+
+Code lives in the codebase, not in C3 documents.
+C3 documents enable UNDERSTANDING before making changes.
+```
 
 ## The Three Layers
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  CONTEXT (c3-0)                                                 │
-│  ROOT - Defines system-wide contracts                           │
+│  CONTEXT (c3-0) - HIGHEST ABSTRACTION                           │
+│  Defines system-wide INTERFACES that containers must honor      │
 │  • System boundary (what's in/out)                              │
 │  • Actors (who interacts)                                       │
 │  • Protocols (how containers communicate)                       │
-│  • Cross-cutting concerns (auth, logging, errors)               │
+│  • Cross-cutting contracts (auth, logging, errors)              │
 │                              │                                  │
-│                              ▼ PROPAGATES TO                    │
+│                              ▼ IMPLEMENTS                       │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │  CONTAINERS (c3-1, c3-2, c3-3, ...)                      │   │
-│  │  MIDDLE - Inherits from Context, defines for Components  │   │
-│  │  • Technology stack (runtime, framework)                 │   │
+│  │  CONTAINERS (c3-1, c3-2, c3-3, ...) - MIDDLE ABSTRACTION │   │
+│  │  Implements Context interfaces, defines Component interfaces │
+│  │  • Technology choices (runtime, framework)               │   │
 │  │  • Component organization                                │   │
-│  │  • Internal patterns & conventions                       │   │
-│  │  • API contracts (what components expose)                │   │
+│  │  • Internal contracts (patterns components must follow)  │   │
+│  │  • API surface (what this container exposes)             │   │
 │  │                              │                           │   │
-│  │                              ▼ PROPAGATES TO             │   │
+│  │                              ▼ IMPLEMENTS                │   │
 │  │  ┌────────────────────────────────────────────────────┐  │   │
-│  │  │  COMPONENTS (c3-101, c3-102, c3-201, ...)          │  │   │
-│  │  │  LEAF - Inherits all, implements actual behavior   │  │   │
-│  │  │  • HOW things work (the actual code)               │  │   │
-│  │  │  • Configuration details                           │  │   │
-│  │  │  • Error handling specifics                        │  │   │
-│  │  │  • Usage patterns                                  │  │   │
+│  │  │  COMPONENTS (c3-101, c3-102, ...) - LOWEST ABSTRACT│  │   │
+│  │  │  Implements Container interfaces                   │  │   │
+│  │  │  • HOW it works (behavior, not code)               │  │   │
+│  │  │  • Decision logic and edge cases                   │  │   │
+│  │  │  • Error handling strategy                         │  │   │
+│  │  │  • Failure modes and recovery                      │  │   │
 │  │  └────────────────────────────────────────────────────┘  │   │
 │  └──────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────┘
@@ -45,37 +55,38 @@ The C3 hierarchy (Context-Container-Component) defines clear boundaries and inhe
 
 ## Layer Responsibilities
 
-### Context (c3-0) - ROOT
+### Context (c3-0) - HIGHEST ABSTRACTION
 
-Defines WHAT exists and HOW they relate. Changes here propagate to ALL descendants.
+Defines system-wide INTERFACES. Documents understanding at the system level.
 
-| Contract Type | What Context Decides | What Children Must Honor |
-|---------------|---------------------|-------------------------|
-| **Boundary** | What's inside the system | Containers cannot expose outside boundary |
-| **Actors** | Who interacts with system | Containers implement actor interfaces |
-| **Protocols** | How containers communicate | Containers must implement specified protocols |
-| **Cross-cutting** | System-wide concerns | All containers follow these patterns |
+| Interface Type | What Context Defines | What Containers Must Implement |
+|----------------|---------------------|-------------------------------|
+| **Boundary** | What's inside the system | How to honor that boundary |
+| **Actors** | Who interacts with system | How to serve those actors |
+| **Protocols** | How containers communicate | How to implement those protocols |
+| **Cross-cutting** | System-wide patterns | How to apply those patterns |
 
-### Container (c3-N) - MIDDLE
+### Container (c3-N) - MIDDLE ABSTRACTION
 
-Inherits from Context. Defines WHAT/WHY for its domain. Changes propagate to its Components.
+Implements Context interfaces. Defines INTERFACES for its Components. Documents understanding at the architectural level.
 
-| Inherits From Context | Defines For Components |
-|----------------------|------------------------|
-| System boundary constraints | Technology stack choices |
-| Protocol contracts to implement | Component organization |
-| Cross-cutting patterns to follow | Internal patterns & conventions |
-| Actor interfaces to support | API contracts |
+| Implements From Context | Defines For Components |
+|------------------------|------------------------|
+| Boundary constraints | Technology choices and why |
+| Protocol requirements | Component organization and why |
+| Cross-cutting patterns | Internal contracts and patterns |
+| Actor interface requirements | API surface and expectations |
 
-### Component (c3-NNN) - LEAF
+### Component (c3-NNN) - LOWEST ABSTRACTION
 
-Inherits from both Container and Context (via Container). Implements HOW things work.
+Implements Container interfaces. Documents understanding at the behavioral level (how it works, not code).
 
-| Inherits From Container | Inherits From Context | Implements |
-|------------------------|----------------------|------------|
-| Technology stack | Boundary constraints | Actual code behavior |
-| Internal patterns | Cross-cutting patterns | Configuration |
-| Interface contracts | Protocol requirements | Error handling |
+| Implements From Container | Documents (No Code) |
+|--------------------------|---------------------|
+| Technology contracts | Behavioral flows |
+| Internal patterns | Decision logic |
+| Interface expectations | Edge cases and why |
+| API surface requirements | Failure modes and recovery |
 
 ## Impact Propagation Rules
 

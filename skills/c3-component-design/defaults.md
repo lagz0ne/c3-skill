@@ -1,32 +1,45 @@
 # Component Layer Defaults
 
+## Abstraction Level
+
+**Implementation abstraction** - How things work internally.
+
+This layer IMPLEMENTS Container interfaces. It answers: "How does this component work and why?"
+
+**Key principle:** Document understanding, not code. Code lives in the codebase and changes frequently. C3 documents HOW things work conceptually so readers can understand before making changes.
+
 ## Include
 
-| Element | Example |
+| Element | Purpose |
 |---------|---------|
-| Stack details | `pg: 8.11.x` - why chosen |
-| Environment config | `DB_POOL_MAX=50` (dev vs prod) |
-| Implementation patterns | Connection pooling algorithm |
-| Interfaces/Types | Method signatures, DTOs |
-| Error handling | Retry strategies, error catalog |
-| Usage examples | TypeScript snippets |
+| Behavior description | What this component does and why |
+| Internal flow | How it processes requests/data (conceptual) |
+| Decision logic | Key branching and rules |
+| Error handling strategy | How errors are handled and why |
+| Edge cases | Non-obvious scenarios and their handling |
+| Dependencies | What it depends on and why |
+| Configuration concepts | What can be configured and why |
 
 ## Exclude
 
-| Element | Push To |
-|---------|---------|
-| Container purpose | Container |
-| API endpoint list | Container |
-| Technology choice rationale | Container |
-| System protocols | Context |
+| Element | Push To | Why |
+|---------|---------|-----|
+| Container organization | Container | Higher abstraction |
+| Technology choice rationale | Container | Architectural decision |
+| System protocols | Context | System-wide concern |
+| **Code snippets** | Auxiliary docs or codebase | Code changes, adds context load |
+| **Exact file paths** | Codebase | Changes with refactoring |
+| **Type definitions** | Codebase | Implementation detail |
 
 ## Litmus Test
 
-> "Could a developer implement this from the documentation?"
+> "Does understanding this require knowing how it works internally?"
 
-- **Yes** → Correct level
-- **No, needs more detail** → Add specifics
-- **No, it's about structure** → Push to Container
+- **Yes** → Component level (behavior, flow, edge cases)
+- **No (organization)** → Push to Container
+- **No (system-wide)** → Push to Context
+
+**Abstraction check:** If someone needs this to UNDERSTAND the component before modifying it, it belongs here. If they need it to WRITE code, it belongs in auxiliary docs or the codebase.
 
 ## Diagrams
 
@@ -41,14 +54,14 @@
 
 ## Nature
 
-Determines template selection and documentation focus.
+Determines documentation focus (no code in any nature).
 
 | Nature | Indicators | Documentation Focus |
 |--------|-----------|---------------------|
-| **Resource** | DB, cache, API client, queue | Configuration, env vars, connection handling, retries |
+| **Resource** | DB, cache, API client, queue | Connection behavior, retry strategy, failure modes |
 | **Business** | Services, domain models, workflows | Domain flows, business rules, edge cases |
-| **Framework** | Controllers, handlers, middleware | Request handling, auth, validation, error responses |
-| **Cross-cutting** | Utilities, helpers, shared modules | Interface stability, usage patterns, versioning |
+| **Framework** | Controllers, handlers, middleware | Request flow, validation logic, error responses |
+| **Cross-cutting** | Utilities, helpers, shared modules | Contract stability, usage patterns, evolution strategy |
 
 **Decision questions:**
 1. Does it connect to external resources? -> Resource

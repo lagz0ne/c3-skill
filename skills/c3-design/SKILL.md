@@ -1,17 +1,80 @@
 ---
 name: c3-design
-description: Use when designing or updating system architecture with the C3 methodology - iteratively scope through hypothesis, exploration, and discovery across Context/Container/Component layers
+description: Use when designing, updating, or exploring system architecture with the C3 methodology - iteratively scope through hypothesis, exploration, and discovery across Context/Container/Component layers
 ---
 
 # C3 Architecture Design
 
 ## Overview
 
-Transform requirements into structured C3 (Context-Container-Component) architecture documentation through iterative scoping.
+Transform requirements into structured C3 (Context-Container-Component) architecture documentation through iterative scoping. Also supports exploration-only mode for reading and navigating existing docs.
 
 **Core principle:** Form hypothesis, explore to validate, discover impacts, iterate until stable. Uncertainty is expected and healthy.
 
 **Announce at start:** "I'm using the c3-design skill to guide you through architecture design."
+
+## Mode Detection
+
+Determine the user's intent to choose the right mode:
+
+| User Intent | Mode | Phases |
+|-------------|------|--------|
+| "What's the architecture?" / "Give me an overview" | **Exploration** | Read TOC, present overview, navigate on demand |
+| "How does X work?" / "Where is Y handled?" | **Exploration** | Read TOC, find matching docs, present focused view |
+| "I need to add/change/fix..." | **Design** | Full design workflow (Phases 1-4) |
+| "Why did we choose X?" | **Exploration** | Present ADR list, load specific decisions |
+
+### Exploration Mode (Read-Only)
+
+When user wants to understand (not change) the architecture:
+
+1. **Load TOC for inventory**
+   ```bash
+   cat .c3/TOC.md
+   ```
+
+2. **Parse TOC for quick reference:**
+   - Document counts (Context, Containers, Components, ADRs)
+   - Container summaries for the "what"
+   - ADR list for decision history
+
+3. **Present based on intent:**
+
+   **General orientation:**
+   ```markdown
+   ## {System Title} Architecture
+
+   **Purpose:** {from Context overview}
+
+   ### System at a Glance
+   - **Containers:** {count} deployable units
+   - **Components:** {count} internal parts
+   - **Decisions:** {count} ADRs
+
+   ### Container Overview
+   | ID | Container | Purpose |
+   |----|-----------|---------|
+   | `c3-1` | {title} | {summary from TOC} |
+
+   What would you like to explore?
+   ```
+
+   **Focused exploration:** Load relevant docs based on user's area of interest.
+
+   **Decision inquiry:** Present ADR list and load specific decisions.
+
+4. **Navigate on demand:**
+   - User asks "tell me more about c3-1" → Load container doc
+   - User asks "why did we choose X?" → Search ADRs, load match
+   - User says "I need to change Y" → **Switch to Design Mode**
+
+**Key principle:** Don't load everything upfront. Load on demand based on user's next question.
+
+---
+
+## Design Mode (Full Workflow)
+
+When user wants to make changes, use the full design workflow below.
 
 ## Mandatory Phase Tracking
 
@@ -173,7 +236,7 @@ Settings are optional - if missing, use sensible defaults.
 │                                                        │
 │   HYPOTHESIZE (abstract, from TOC + understanding)     │
 │        ↓                                               │
-│   EXPLORE (investigate with c3-locate + sub-skills)    │
+│   EXPLORE (investigate with lookup patterns + sub-skills)│
 │        │                                               │
 │        ├── Socratic questions as needed                │
 │        │   (confirm understanding along the way)       │
@@ -206,18 +269,25 @@ Update hypothesis based on what I've learned:
 
 Investigate hypothesis in 4 directions:
 
-| Direction | Question | Tool |
-|-----------|----------|------|
-| **Isolated** | What changes directly at this element? | c3-locate by ID |
-| **Upstream** | What feeds into this? Dependencies? | c3-locate related IDs |
-| **Adjacent** | What's at same level? Siblings? | c3-locate same-layer IDs |
-| **Downstream** | What does this affect? Consumers? | c3-locate dependent IDs |
+| Direction | Question | How |
+|-----------|----------|-----|
+| **Isolated** | What changes directly at this element? | Read document by ID (see [lookup-patterns.md](../../references/lookup-patterns.md)) |
+| **Upstream** | What feeds into this? Dependencies? | Read related docs |
+| **Adjacent** | What's at same level? Siblings? | Read same-layer docs |
+| **Downstream** | What does this affect? Consumers? | Read dependent docs |
 
 **Use sub-skills for layer-specific exploration:**
-- `c3-locate` - ID-based content retrieval
 - `c3-context-design` - Explore Context-level impact
 - `c3-container-design` - Explore Container-level impact
 - `c3-component-design` - Explore Component-level impact
+
+**ID-based lookup patterns** (from [lookup-patterns.md](../../references/lookup-patterns.md)):
+```bash
+# Context: cat .c3/README.md
+# Container: cat .c3/c3-{N}-*/README.md
+# Component: cat .c3/c3-{N}-*/c3-{N}{NN}-*.md
+# ADR: cat .c3/adr/adr-YYYYMMDD-slug.md
+```
 
 **Socratic questions during exploration** to confirm understanding:
 - "Based on C3-1-backend, the auth middleware handles tokens. Is that still accurate?"
@@ -431,7 +501,7 @@ If any gate fails, **STOP**. Complete the ADR+Plan before proceeding.
 
 **After ADR+Plan verified:**
 1. Update affected documents (CTX/CON/COM) as specified
-2. Regenerate TOC using the c3-toc skill
+2. Regenerate TOC using the plugin's `build-toc.sh` script
 3. **Proceed to Phase 4: Handoff**
 
 ### Phase 4: Handoff (MANDATORY)
@@ -494,12 +564,18 @@ Use the Skill tool to invoke during exploration:
 
 | Skill | When to Use |
 |-------|-------------|
-| `c3-adopt` | Initialize C3 documentation for existing project (if `.c3/` doesn't exist) |
-| `c3-toc` | Manage TOC, inspect document tree, rebuild index |
-| `c3-locate` | Retrieve content by document/heading ID |
+| `c3-adopt` | Initialize C3 documentation (if `.c3/` doesn't exist) |
 | `c3-context-design` | Explore Context-level impact |
 | `c3-container-design` | Explore Container-level impact |
 | `c3-component-design` | Explore Component-level impact |
+| `c3-config` | Configure project settings |
+| `c3-audit` | Verify docs match code after implementation |
+
+**References (for lookup patterns):**
+- [lookup-patterns.md](../../references/lookup-patterns.md) - ID-based document retrieval
+- [naming-conventions.md](../../references/naming-conventions.md) - Naming patterns
+
+**TOC Rebuild:** Use plugin's `build-toc.sh` script (ask Claude to "rebuild the TOC")
 
 ## Example (Auditing bundled sample)
 

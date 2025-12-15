@@ -1,12 +1,13 @@
 # C3 Hierarchy Model
 
-The C3 hierarchy (Context-Container-Component) is an **abstraction hierarchy**. Each layer defines interfaces that lower layers implement. The purpose is **understanding how things work**, not documenting code.
+The C3 hierarchy (Context-Container-Component) is a **zoom hierarchy**. Each layer is a different zoom level into the system. The purpose is **understanding how things work**, not documenting code.
 
-## Core Principle: Abstraction Levels
+## Core Principle: Zoom Levels
 
 ```
-Higher abstraction = DEFINES interfaces/contracts
-Lower abstraction  = IMPLEMENTS those interfaces (explains HOW)
+Context   = Bird's-eye view (very far)  → WHY containers exist, relationships
+Container = Inside view (mid zoom)      → WHAT components do, how they relate
+Component = Close-up view (zoomed in)   → HOW each component works
 
 Code lives in the codebase, not in C3 documents.
 C3 documents enable UNDERSTANDING before making changes.
@@ -16,77 +17,88 @@ C3 documents enable UNDERSTANDING before making changes.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  CONTEXT (c3-0) - HIGHEST ABSTRACTION                           │
-│  Defines system-wide INTERFACES that containers must honor      │
-│  • System boundary (what's in/out)                              │
-│  • Actors (who interacts)                                       │
-│  • Protocols (how containers communicate)                       │
-│  • Cross-cutting contracts (auth, logging, errors)              │
+│  CONTEXT (c3-0) - BIRD'S-EYE VIEW                               │
+│  See the system from very far                                   │
+│  • WHY each container exists                                    │
+│  • Relationships between containers                             │
+│  • Connecting points (interfaces between containers)            │
+│  • External actors                                              │
 │                              │                                  │
-│                              ▼ IMPLEMENTS                       │
+│                              ▼ ZOOM IN                          │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │  CONTAINERS (c3-1, c3-2, c3-3, ...) - MIDDLE ABSTRACTION │   │
-│  │  Implements Context interfaces, defines Component interfaces │
-│  │  • Technology choices (runtime, framework)               │   │
-│  │  • Component organization                                │   │
-│  │  • Internal contracts (patterns components must follow)  │   │
-│  │  • API surface (what this container exposes)             │   │
+│  │  CONTAINERS (c3-1, c3-2, ...) - INSIDE VIEW              │   │
+│  │  See the structure inside one container                  │   │
+│  │  • WHAT each component does                              │   │
+│  │  • Relationships between components                      │   │
+│  │  • Data flows across components                          │   │
+│  │  • Business flows (workflows)                            │   │
+│  │  • Inner patterns (logging, config, errors)              │   │
 │  │                              │                           │   │
-│  │                              ▼ IMPLEMENTS                │   │
+│  │                              ▼ ZOOM IN                   │   │
 │  │  ┌────────────────────────────────────────────────────┐  │   │
-│  │  │  COMPONENTS (c3-101, c3-102, ...) - LOWEST ABSTRACT│  │   │
-│  │  │  Implements Container interfaces                   │  │   │
-│  │  │  • HOW it works (behavior, not code)               │  │   │
-│  │  │  • Decision logic and edge cases                   │  │   │
-│  │  │  • Error handling strategy                         │  │   │
-│  │  │  • Failure modes and recovery                      │  │   │
+│  │  │  COMPONENTS (c3-101, c3-102, ...) - CLOSE-UP VIEW  │  │   │
+│  │  │  See HOW one component implements its contract     │  │   │
+│  │  │  • Flows (step-by-step processing)                 │  │   │
+│  │  │  • Dependencies (what it calls)                    │  │   │
+│  │  │  • Decision points                                 │  │   │
+│  │  │  • Edge cases and error handling                   │  │   │
 │  │  └────────────────────────────────────────────────────┘  │   │
 │  └──────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-## Inheritance Flow
+## The Contract Chain
 
-| From | To | What's Inherited |
-|------|-----|------------------|
-| **Context** | All Containers | Boundary, actors, protocols, cross-cutting |
-| **Container** | Its Components | Technology stack, patterns, interface contracts |
-| **Context** | Components (via Container) | System-wide constraints flow through |
+Each layer defines a contract that the next layer implements:
+
+| Layer | Defines | Implemented By |
+|-------|---------|----------------|
+| **Context** | WHY containers exist, their relationships | Container |
+| **Container** | WHAT components do, their relationships | Component |
+| **Component** | HOW it works (the implementation) | (Code in codebase) |
 
 ## Layer Responsibilities
 
-### Context (c3-0) - HIGHEST ABSTRACTION
+### Context (c3-0) - BIRD'S-EYE VIEW
 
-Defines system-wide INTERFACES. Documents understanding at the system level.
+See the system from very far. Document WHY and relationships.
 
-| Interface Type | What Context Defines | What Containers Must Implement |
-|----------------|---------------------|-------------------------------|
-| **Boundary** | What's inside the system | How to honor that boundary |
-| **Actors** | Who interacts with system | How to serve those actors |
-| **Protocols** | How containers communicate | How to implement those protocols |
-| **Cross-cutting** | System-wide patterns | How to apply those patterns |
+| Documents | Example |
+|-----------|---------|
+| WHY containers exist | "Backend handles business logic" |
+| Container relationships | "Backend calls DB for persistence" |
+| Connecting points | "REST API between Frontend and Backend" |
+| External actors | "Users, Admin, External Payment API" |
 
-### Container (c3-N) - MIDDLE ABSTRACTION
+**Does NOT document:** What's inside containers
 
-Implements Context interfaces. Defines INTERFACES for its Components. Documents understanding at the architectural level.
+### Container (c3-N) - INSIDE VIEW
 
-| Implements From Context | Defines For Components |
-|------------------------|------------------------|
-| Boundary constraints | Technology choices and why |
-| Protocol requirements | Component organization and why |
-| Cross-cutting patterns | Internal contracts and patterns |
-| Actor interface requirements | API surface and expectations |
+Zoom into one container. Document WHAT components do.
 
-### Component (c3-NNN) - LOWEST ABSTRACTION
+| Documents | Example |
+|-----------|---------|
+| Component responsibilities | "UserService handles user operations" |
+| Component relationships | "UserService calls DBAdapter" |
+| Data flows | "Request → Handler → Service → DB" |
+| Business flows | "Registration flow across components" |
+| Inner patterns | "How logging/config/errors work here" |
 
-Implements Container interfaces. Documents understanding at the behavioral level (how it works, not code).
+**Does NOT document:** How each component works internally
 
-| Implements From Container | Documents (No Code) |
-|--------------------------|---------------------|
-| Technology contracts | Behavioral flows |
-| Internal patterns | Decision logic |
-| Interface expectations | Edge cases and why |
-| API surface requirements | Failure modes and recovery |
+### Component (c3-NNN) - CLOSE-UP VIEW
+
+Zoom into one component. Document HOW it implements its contract.
+
+| Documents | Example |
+|-----------|---------|
+| Flows | Step-by-step: validate → check exists → create → notify |
+| Dependencies | "Calls DBAdapter, EmailService" |
+| Decision points | "Skip email in test environment" |
+| Edge cases | "Duplicate email returns specific error" |
+| Error handling | "DB timeout → retry 3x with backoff" |
+
+**Does NOT document:** Code (that's in the codebase)
 
 ## Impact Propagation Rules
 
@@ -118,22 +130,25 @@ Changes should escalate UP when they would break inherited contracts:
 
 ## Verification Questions
 
-Before making changes, verify you're at the right level:
+Before documenting, verify you're at the right zoom level:
 
-### "Is this a Context change?"
-- Does it affect system boundary?
-- Does it add/remove actors?
-- Does it change how containers communicate?
-- Does it affect cross-cutting concerns system-wide?
+### "Is this Context level?" (Bird's-eye)
+- Is it about WHY a container exists?
+- Is it about how containers relate to each other?
+- Is it about external actors or connecting points?
 
-### "Is this a Container change?"
-- Does it change technology stack?
-- Does it reorganize components?
-- Does it change internal patterns?
-- Does it affect multiple components the same way?
+→ If yes, document in Context
 
-### "Is this a Component change?"
-- Is it about HOW to implement something?
-- Is it isolated to this component?
-- Does it keep the interface unchanged?
-- Does it follow existing patterns?
+### "Is this Container level?" (Inside view)
+- Is it about WHAT a component does?
+- Is it about how components relate within this container?
+- Is it about data flows or business flows?
+
+→ If yes, document in Container
+
+### "Is this Component level?" (Close-up)
+- Is it about HOW a component works internally?
+- Is it about flows, dependencies, or edge cases?
+- Does it implement the contract from Container?
+
+→ If yes, document in Component

@@ -2,38 +2,37 @@
 
 ## Abstraction Level
 
-**Highest abstraction** - System-level contracts and boundaries.
+**Bird's-eye view** - See the system from very far.
 
-This layer defines the INTERFACES that containers must honor. It answers: "What exists and how do they relate?"
+This layer explains WHY containers exist, their RELATIONSHIPS, and their CONNECTING POINTS. It answers: "What's in this system and why do the parts exist?"
 
 ## Include
 
 | Element | Purpose |
 |---------|---------|
-| System boundary | What's inside vs outside the system |
-| Actors | Who/what interacts with the system |
-| Container inventory | What containers exist and their responsibilities |
-| Inter-container protocols | How containers communicate (REST, gRPC, events) |
-| Cross-cutting contracts | System-wide patterns (auth, logging, error handling) |
-| Deployment topology | Where things run conceptually |
+| Container responsibilities | WHY each container exists, what problem it solves |
+| Container relationships | How containers depend on each other |
+| Connecting points | Interfaces between containers (APIs, events, data flows) |
+| External actors | Who/what interacts with the system from outside |
+| System boundary | What's inside vs outside |
 
 ## Exclude
 
 | Element | Push To | Why |
 |---------|---------|-----|
-| Technology choices | Container | Implementation detail |
-| How components work | Container/Component | Lower abstraction |
-| Configuration values | Component | Implementation detail |
-| Code examples | Auxiliary docs | Code changes, adds context load |
+| What components exist | Container | Container's internal structure |
+| How containers work internally | Container | Lower abstraction |
+| Implementation details | Component | Even lower abstraction |
+| Code | Auxiliary docs | Code changes, adds context load |
 
 ## Litmus Test
 
-> "Does understanding this require seeing the full system picture?"
+> "Is this about WHY containers exist and HOW they relate to each other?"
 
-- **Yes** → Context level (boundaries, protocols, cross-cutting)
-- **No** → Push to Container
+- **Yes** → Context level
+- **No (internal structure)** → Push to Container
 
-**Abstraction check:** If it's about HOW a specific container works internally, it's too detailed for Context.
+**View check:** If you need to zoom into a container to explain it, it's too detailed for Context.
 
 ## Diagrams
 

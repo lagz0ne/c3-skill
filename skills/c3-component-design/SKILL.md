@@ -76,17 +76,22 @@ find .c3 -name "c3-{N}-*" -type d | head -1 | xargs -I {} cat {}/README.md  # Co
 
 ---
 
-## Phase 2: Determine Component Nature
+## Phase 2: Understand the Contract
 
-See **Nature** section in `defaults.md` for indicators and focus areas.
+The Container defines WHAT this component does. Component docs explain HOW.
 
-Use decision questions:
-1. External resources? -> **Resource**
-2. Business rules? -> **Business**
-3. Request handling? -> **Framework**
-4. Shared utility? -> **Cross-cutting**
+**Find the contract:**
+```bash
+# Read Container doc to find this component's responsibility
+cat .c3/c3-{N}-*/README.md | grep -A5 "c3-{N}{NN}"
+```
 
-Nature determines which template to use in Phase 5.
+**Extract from Container:**
+- What responsibility is assigned to this component?
+- What other components does it relate to?
+- What flows involve this component?
+
+This contract is what the Component doc must explain HOW to implement.
 
 ---
 
@@ -117,103 +122,117 @@ find .c3/c3-{N}-* -name "c3-{N}{NN}-*.md" 2>/dev/null | head -1 | xargs cat 2>/d
 
 ---
 
-## Phase 5: Document Understanding
+## Phase 5: Document the Implementation
 
 ### Documentation Principles
 
-1. **No code** - Code lives in the codebase and changes frequently
-2. **Explain behavior** - How it works conceptually, not implementation details
-3. **Enable understanding** - Reader should understand before making changes
-4. **Diagrams over code** - Flowcharts and tables convey behavior better than snippets
+1. **Implement the contract** - Container says WHAT, Component explains HOW
+2. **No code** - Code lives in the codebase
+3. **Flows and dependencies** - Show how it processes and what it calls
+4. **Edge cases matter** - Non-obvious scenarios need explanation
 
-### Template by Nature
+### Template
 
-**Resource Component:**
 ```markdown
 ---
 id: c3-{N}{NN}
-title: [Resource Name]
-nature: resource
+title: [Component Name]
 ---
 
-# [Resource Name]
+# [Component Name]
 
-## Inherited Constraints
-From Container: [technology, patterns, interface]
-From Context: [boundary, cross-cutting]
+## Contract
+From Container: [paste the responsibility defined in Container doc]
 
-## Overview
-[What this resource does and why it exists]
+## How It Works
 
-## Connection Behavior
-[How connections are managed - pooling strategy, lifecycle, health checks]
+### Main Flow
+[Mermaid flowchart showing the processing steps]
 
-## Retry Strategy
-[How failures are handled - retry logic, backoff, circuit breaker]
+### Dependencies
+| Dependency | Purpose | When Called |
+|------------|---------|-------------|
 
-## Failure Modes
-| Failure | Detection | Recovery |
-```
-
-**Business Component:**
-```markdown
----
-id: c3-{N}{NN}
-title: [Service Name]
-nature: business
----
-
-# [Service Name]
-
-## Inherited Constraints
-[Same as above]
-
-## Overview
-[What business problem this solves]
-
-## Domain Flow
-[Mermaid flowchart showing the conceptual flow]
-
-## Business Rules
-| Rule | Condition | Outcome |
+### Decision Points
+| Decision | Condition | Outcome |
+|----------|-----------|---------|
 
 ## Edge Cases
-| Case | Behavior | Rationale |
-```
 
-**Framework Component:**
-```markdown
----
-id: c3-{N}{NN}
-title: [Handler Name]
-nature: framework
----
-
-# [Handler Name]
-
-## Inherited Constraints
-[Same as above]
-
-## Overview
-[What requests this handles and why]
-
-## Request Flow
-[Mermaid flowchart showing request processing]
-
-## Validation Logic
-| Input | Validation | On Failure |
+| Scenario | Behavior | Rationale |
+|----------|----------|-----------|
 
 ## Error Handling
-| Scenario | Response | Rationale |
+
+| Error | Detection | Recovery |
+|-------|-----------|----------|
+```
+
+### Example: UserService
+
+```markdown
+# UserService
+
+## Contract
+From Container: "Handles user registration, authentication, and profile management"
+
+## How It Works
+
+### Main Flow (Registration)
+```mermaid
+flowchart TD
+    A[Receive request] --> B{Valid input?}
+    B -->|No| C[Return validation error]
+    B -->|Yes| D{User exists?}
+    D -->|Yes| E[Return duplicate error]
+    D -->|No| F[Create user]
+    F --> G[Send welcome email]
+    G --> H[Return success]
+```
+
+### Dependencies
+| Dependency | Purpose | When Called |
+|------------|---------|-------------|
+| DBAdapter | Persist user data | After validation |
+| EmailService | Send notifications | After creation |
+
+### Decision Points
+| Decision | Condition | Outcome |
+|----------|-----------|---------|
+| Skip email | Test environment | Don't send |
+| Hash algorithm | Password length | bcrypt vs argon2 |
+
+## Edge Cases
+| Scenario | Behavior | Rationale |
+|----------|----------|-----------|
+| Duplicate email | Reject with specific error | Prevent enumeration |
+| Very long name | Truncate to 255 chars | DB constraint |
+
+## Error Handling
+| Error | Detection | Recovery |
+|-------|-----------|----------|
+| DB connection lost | Timeout after 5s | Retry 3x with backoff |
+| Email service down | Circuit breaker open | Queue for later |
 ```
 
 ---
 
 ## Socratic Discovery
 
-**For Resource:** "What does this connect to? What env vars? What errors?"
-**For Business:** "What problem does this solve? What rules? What edge cases?"
-**For Framework:** "What endpoints? What auth? What request/response format?"
+**To understand the flow:**
+- "What happens when this component receives a request?"
+- "What steps does it go through?"
+- "What can go wrong at each step?"
+
+**To understand dependencies:**
+- "What other components does this call?"
+- "Why does it need each dependency?"
+- "What happens if a dependency fails?"
+
+**To understand edge cases:**
+- "What's the non-obvious behavior here?"
+- "What happens with invalid input?"
+- "What happens under load?"
 
 ---
 

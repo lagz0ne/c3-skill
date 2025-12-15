@@ -2,69 +2,55 @@
 
 ## Abstraction Level
 
-**Implementation abstraction** - How things work internally.
+**Close-up view** - Zoom into one component to see HOW it works.
 
-This layer IMPLEMENTS Container interfaces. It answers: "How does this component work and why?"
-
-**Key principle:** Document understanding, not code. Code lives in the codebase and changes frequently. C3 documents HOW things work conceptually so readers can understand before making changes.
+This layer explains HOW the component implements the contract defined at Container level. It's abstract (no code) but detailed enough to understand before making changes. It answers: "How does this component fulfill its responsibility?"
 
 ## Include
 
 | Element | Purpose |
 |---------|---------|
-| Behavior description | What this component does and why |
-| Internal flow | How it processes requests/data (conceptual) |
-| Decision logic | Key branching and rules |
-| Error handling strategy | How errors are handled and why |
+| Flows | Step-by-step: how it processes requests/data |
+| Dependencies | What other components/services it calls and why |
+| Decision logic | Key branching points and rules |
 | Edge cases | Non-obvious scenarios and their handling |
-| Dependencies | What it depends on and why |
-| Configuration concepts | What can be configured and why |
+| Error scenarios | What can go wrong and how it's handled |
+| State/Lifecycle | If stateful, how state transitions work |
 
 ## Exclude
 
 | Element | Push To | Why |
 |---------|---------|-----|
-| Container organization | Container | Higher abstraction |
-| Technology choice rationale | Container | Architectural decision |
-| System protocols | Context | System-wide concern |
-| **Code snippets** | Auxiliary docs or codebase | Code changes, adds context load |
-| **Exact file paths** | Codebase | Changes with refactoring |
-| **Type definitions** | Codebase | Implementation detail |
+| WHAT this component does | Container | Already defined there |
+| Component relationships | Container | Higher abstraction |
+| Container relationships | Context | Even higher abstraction |
+| Code | Auxiliary docs | Code changes, adds context load |
+| File paths | Codebase | Changes with refactoring |
 
 ## Litmus Test
 
-> "Does understanding this require knowing how it works internally?"
+> "Is this about HOW this component implements its contract?"
 
-- **Yes** → Component level (behavior, flow, edge cases)
-- **No (organization)** → Push to Container
-- **No (system-wide)** → Push to Context
+- **Yes** → Component level
+- **No (what it does)** → Push to Container
+- **No (relationships)** → Push to Container or Context
 
-**Abstraction check:** If someone needs this to UNDERSTAND the component before modifying it, it belongs here. If they need it to WRITE code, it belongs in auxiliary docs or the codebase.
+**View check:** Component docs IMPLEMENT what Container described. If Container says "UserService handles user operations", Component explains HOW UserService does that.
 
 ## Diagrams
 
 | Type | Use For |
 |------|---------|
-| Flowchart | Decision logic |
-| Sequence | Method calls |
-| State chart | Lifecycle/state |
-| ERD | Data structures |
-| Class diagram | Type relationships |
-| **Avoid** | System context, container overview, deployment diagrams |
+| Flowchart | Processing steps, decision logic |
+| Sequence | Calls to dependencies |
+| State chart | Lifecycle/state transitions |
+| **Avoid** | System context, container overview, component relationships |
 
-## Nature
+## Documentation Pattern
 
-Determines documentation focus (no code in any nature).
+Since Component implements Container's contract:
 
-| Nature | Indicators | Documentation Focus |
-|--------|-----------|---------------------|
-| **Resource** | DB, cache, API client, queue | Connection behavior, retry strategy, failure modes |
-| **Business** | Services, domain models, workflows | Domain flows, business rules, edge cases |
-| **Framework** | Controllers, handlers, middleware | Request flow, validation logic, error responses |
-| **Cross-cutting** | Utilities, helpers, shared modules | Contract stability, usage patterns, evolution strategy |
-
-**Decision questions:**
-1. Does it connect to external resources? -> Resource
-2. Does it encode business rules? -> Business
-3. Does it handle requests/responses? -> Framework
-4. Is it used by multiple other components? -> Cross-cutting
+1. **Reference the contract** - "As defined in Container, this component handles X"
+2. **Explain the flow** - Step-by-step how it accomplishes X
+3. **List dependencies** - What it calls to accomplish X
+4. **Cover edge cases** - What happens when things go wrong

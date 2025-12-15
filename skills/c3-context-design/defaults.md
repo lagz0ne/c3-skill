@@ -1,32 +1,39 @@
 # Context Layer Defaults
 
+## Abstraction Level
+
+**Highest abstraction** - System-level contracts and boundaries.
+
+This layer defines the INTERFACES that containers must honor. It answers: "What exists and how do they relate?"
+
 ## Include
 
-| Element | Example |
+| Element | Purpose |
 |---------|---------|
-| System boundary | "TaskFlow system includes..." |
-| Actors | Users, Admin, External APIs |
-| Container inventory | Links to container docs |
-| Protocols | REST, gRPC, WebSocket |
-| Cross-cutting concerns | Auth strategy, logging approach |
-| Deployment topology | Cloud, multi-region |
+| System boundary | What's inside vs outside the system |
+| Actors | Who/what interacts with the system |
+| Container inventory | What containers exist and their responsibilities |
+| Inter-container protocols | How containers communicate (REST, gRPC, events) |
+| Cross-cutting contracts | System-wide patterns (auth, logging, error handling) |
+| Deployment topology | Where things run conceptually |
 
 ## Exclude
 
-| Element | Push To |
-|---------|---------|
-| Technology choices | Container |
-| Middleware specifics | Container |
-| API endpoints | Container |
-| Configuration values | Component |
-| Code examples | Component |
+| Element | Push To | Why |
+|---------|---------|-----|
+| Technology choices | Container | Implementation detail |
+| How components work | Container/Component | Lower abstraction |
+| Configuration values | Component | Implementation detail |
+| Code examples | Auxiliary docs | Code changes, adds context load |
 
 ## Litmus Test
 
-> "Would changing this require coordinating multiple containers or external parties?"
+> "Does understanding this require seeing the full system picture?"
 
-- **Yes** → Context level
+- **Yes** → Context level (boundaries, protocols, cross-cutting)
 - **No** → Push to Container
+
+**Abstraction check:** If it's about HOW a specific container works internally, it's too detailed for Context.
 
 ## Diagrams
 

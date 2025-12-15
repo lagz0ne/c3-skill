@@ -249,23 +249,23 @@ type: code
 | Component | ID | Responsibility |
 |-----------|-----|----------------|
 
-## Internal Patterns {#c3-n-patterns}
+## Internal Contracts {#c3-n-contracts}
 ### Error Handling
-[Pattern]
+[Describe the error handling strategy components must follow - no code]
 
 ### Data Access
-[Pattern]
+[Describe the data access patterns components must follow - no code]
 
 ## Key Flows {#c3-n-flows}
-[1-2 critical flows, diagram if non-obvious]
+[1-2 critical flows as diagrams showing HOW things work]
 
 ## External Dependencies {#c3-n-external}
 | External Container | Our Component | Their Component | Purpose |
 |-------------------|---------------|-----------------|---------|
 
 ## Components {#c3-n-components}
-| Component | ID | Location |
-|-----------|-----|----------|
+| Component | ID | Responsibility |
+|-----------|-----|---------------|
 ```
 
 ### Infrastructure Container

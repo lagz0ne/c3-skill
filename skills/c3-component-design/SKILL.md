@@ -117,13 +117,14 @@ find .c3/c3-{N}-* -name "c3-{N}{NN}-*.md" 2>/dev/null | head -1 | xargs cat 2>/d
 
 ---
 
-## Phase 5: Document Implementation
+## Phase 5: Document Understanding
 
 ### Documentation Principles
 
-1. **Prefer generic over specific** - Document patterns, not exact file paths
-2. **Light code, heavy patterns** - Show shape, not full implementation
-3. **Flow maps, not implementation details** - Orientation, not step-by-step
+1. **No code** - Code lives in the codebase and changes frequently
+2. **Explain behavior** - How it works conceptually, not implementation details
+3. **Enable understanding** - Reader should understand before making changes
+4. **Diagrams over code** - Flowcharts and tables convey behavior better than snippets
 
 ### Template by Nature
 
@@ -142,19 +143,16 @@ From Container: [technology, patterns, interface]
 From Context: [boundary, cross-cutting]
 
 ## Overview
-[What and why]
+[What this resource does and why it exists]
 
-## Configuration
-| Env Var | Dev | Prod | Purpose |
+## Connection Behavior
+[How connections are managed - pooling strategy, lifecycle, health checks]
 
-## Connection Handling
-[Pattern code block]
+## Retry Strategy
+[How failures are handled - retry logic, backoff, circuit breaker]
 
-## Error Handling
-| Error Type | Retriable | Action |
-
-## Usage
-[Example code block]
+## Failure Modes
+| Failure | Detection | Recovery |
 ```
 
 **Business Component:**
@@ -171,16 +169,16 @@ nature: business
 [Same as above]
 
 ## Overview
-[What business problem]
+[What business problem this solves]
 
 ## Domain Flow
-[Mermaid flowchart]
+[Mermaid flowchart showing the conceptual flow]
 
 ## Business Rules
-| Rule | Condition | Action |
+| Rule | Condition | Outcome |
 
 ## Edge Cases
-| Case | Handling |
+| Case | Behavior | Rationale |
 ```
 
 **Framework Component:**
@@ -197,19 +195,16 @@ nature: framework
 [Same as above]
 
 ## Overview
-[What requests handled]
+[What requests this handles and why]
 
-## Endpoints
-| Method | Path | Auth | Purpose |
+## Request Flow
+[Mermaid flowchart showing request processing]
 
-## Request/Response
-[JSON examples]
+## Validation Logic
+| Input | Validation | On Failure |
 
-## Middleware Chain
-[Flow diagram]
-
-## Error Responses
-| Status | Code | When |
+## Error Handling
+| Scenario | Response | Rationale |
 ```
 
 ---

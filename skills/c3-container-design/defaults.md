@@ -1,35 +1,42 @@
 # Container Layer Defaults
 
+## Abstraction Level
+
+**Architectural abstraction** - Component organization and internal contracts.
+
+This layer IMPLEMENTS Context interfaces and DEFINES interfaces for Components. It answers: "How is this container organized and why?"
+
 ## Include
 
-| Element | Example |
+| Element | Purpose |
 |---------|---------|
-| Technology stack | Node.js 20, Express 4.18 |
-| Container responsibilities | "Handles API requests" |
-| Component relationships | Flowchart of connections |
-| Data flow | Sequence diagram |
-| Component inventory | Links to component docs |
-| API surface | Endpoints exposed |
-| Data ownership | "Owns User accounts, Tasks" |
-| Inter-container communication | "REST to Backend, SQL to DB" |
+| Technology choices | What stack and why (Node.js for X, PostgreSQL for Y) |
+| Component inventory | What components exist and their responsibilities |
+| Component relationships | How components interact (flowchart) |
+| Data flow patterns | How requests/data move through (sequence) |
+| API surface | What this container exposes to others |
+| Data ownership | What data this container is responsible for |
+| Internal contracts | Patterns components must follow |
 
 ## Exclude
 
-| Element | Push To |
-|---------|---------|
-| System boundary | Context |
-| Cross-cutting concerns | Context |
-| Implementation code | Component |
-| Library specifics | Component |
-| Configuration values | Component |
+| Element | Push To | Why |
+|---------|---------|-----|
+| System boundary | Context | Higher abstraction |
+| Cross-cutting concerns | Context | System-wide, not container-specific |
+| How components work internally | Component | Lower abstraction |
+| Configuration values | Component | Implementation detail |
+| Code examples | Auxiliary docs | Code changes, adds context load |
 
 ## Litmus Test
 
-> "Is this about WHAT this container does and WITH WHAT, not HOW internally?"
+> "Does understanding this require knowing how components are organized?"
 
-- **Yes** → Container level
+- **Yes** → Container level (architecture, tech choices, component contracts)
 - **No (system-wide)** → Push to Context
-- **No (implementation)** → Push to Component
+- **No (inner workings)** → Push to Component
+
+**Abstraction check:** If it's about HOW a specific component works internally, it's too detailed for Container.
 
 ## Diagrams
 

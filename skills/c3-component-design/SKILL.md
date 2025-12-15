@@ -78,12 +78,15 @@ find .c3 -name "c3-{N}-*" -type d | head -1 | xargs -I {} cat {}/README.md  # Co
 
 ## Phase 2: Determine Component Nature
 
-| Nature | Indicators | Focus |
-|--------|-----------|-------|
-| **Resource** | DB, cache, API client, queue | Config, env vars, connection, retries |
-| **Business** | Services, domain models, workflows | Domain flows, rules, edge cases |
-| **Framework** | Controllers, handlers, middleware | Request handling, auth, validation |
-| **Cross-cutting** | Utilities, helpers, shared modules | Interface stability, usage patterns |
+See **Nature** section in `defaults.md` for indicators and focus areas.
+
+Use decision questions:
+1. External resources? -> **Resource**
+2. Business rules? -> **Business**
+3. Request handling? -> **Framework**
+4. Shared utility? -> **Cross-cutting**
+
+Nature determines which template to use in Phase 5.
 
 ---
 

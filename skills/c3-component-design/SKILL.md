@@ -170,7 +170,7 @@ From Container: [paste the responsibility defined in Container doc]
 
 ### Example: UserService
 
-```markdown
+````markdown
 # UserService
 
 ## Contract
@@ -213,7 +213,7 @@ flowchart TD
 |-------|-----------|----------|
 | DB connection lost | Timeout after 5s | Retry 3x with backoff |
 | Email service down | Circuit breaker open | Queue for later |
-```
+````
 
 ---
 

@@ -2,41 +2,40 @@
 
 ## Abstraction Level
 
-**Architectural abstraction** - Component organization and internal contracts.
+**Inside view** - Zoom into one container to see its structure.
 
-This layer IMPLEMENTS Context interfaces and DEFINES interfaces for Components. It answers: "How is this container organized and why?"
+This layer explains WHAT components exist, their RESPONSIBILITIES, and their RELATIONSHIPS. It also briefly connects to adjacent containers (referencing Context). It answers: "What's inside this container and how do the parts work together?"
 
 ## Include
 
 | Element | Purpose |
 |---------|---------|
-| Technology choices | What stack and why (Node.js for X, PostgreSQL for Y) |
-| Component inventory | What components exist and their responsibilities |
-| Component relationships | How components interact (flowchart) |
-| Data flow patterns | How requests/data move through (sequence) |
-| API surface | What this container exposes to others |
-| Data ownership | What data this container is responsible for |
-| Internal contracts | Patterns components must follow |
+| Component responsibilities | WHAT each component does (not HOW) |
+| Component relationships | How components depend on and call each other |
+| Data flows | How data moves across components |
+| Business flows | Key workflows spanning multiple components |
+| Inner patterns | Shared approaches (logging, config, error handling) |
+| Adjacent connections | Brief: how this container connects to others (from Context) |
 
 ## Exclude
 
 | Element | Push To | Why |
 |---------|---------|-----|
-| System boundary | Context | Higher abstraction |
-| Cross-cutting concerns | Context | System-wide, not container-specific |
-| How components work internally | Component | Lower abstraction |
-| Configuration values | Component | Implementation detail |
-| Code examples | Auxiliary docs | Code changes, adds context load |
+| WHY this container exists | Context | Higher abstraction |
+| Container-to-container details | Context | Bird's-eye view concern |
+| HOW components work | Component | Lower abstraction |
+| Implementation details | Component | Abstract implementation |
+| Code | Auxiliary docs | Code changes, adds context load |
 
 ## Litmus Test
 
-> "Does understanding this require knowing how components are organized?"
+> "Is this about WHAT components do and HOW they relate to each other?"
 
-- **Yes** → Container level (architecture, tech choices, component contracts)
-- **No (system-wide)** → Push to Context
-- **No (inner workings)** → Push to Component
+- **Yes** → Container level
+- **No (container relationships)** → Push to Context
+- **No (how it works)** → Push to Component
 
-**Abstraction check:** If it's about HOW a specific component works internally, it's too detailed for Container.
+**View check:** If you need to explain the internal logic of one component, it's too detailed for Container.
 
 ## Diagrams
 

@@ -113,22 +113,16 @@ find .c3 -name "c3-{N}-*" -type d | head -1 | xargs -I {} cat {}/README.md
 
 ## Phase 4: Diagram Decisions
 
-See [diagram-decision-framework.md](../../references/diagram-decision-framework.md) for full guidance.
+**Reference:** [diagram-decision-framework.md](../../references/diagram-decision-framework.md)
 
-**Quick decision:**
+Use the framework's Quick Reference table to select diagrams based on container complexity (simple/moderate/complex).
 
-| Container Complexity | Diagrams |
-|---------------------|----------|
-| Simple (1-3 components, linear) | Table only |
-| Moderate (4-6 components) | Component flowchart |
-| Complex (7+ components) | Flowchart + ONE sequence |
+**For each potential diagram, ask:**
+1. Does this clarify what prose cannot?
+2. Will readers return to this as a "north star"?
+3. Is maintenance cost justified?
 
-**Evaluation checklist for each diagram:**
-- [ ] Clarity: Can prose alone convey this? Is this non-obvious?
-- [ ] Value: Will readers return to this? Is it a "north star"?
-- [ ] Cost: How often will it change? How hard to update?
-
-**Decision:** INCLUDE / SKIP / SIMPLIFY with one-sentence justification.
+**Document decision:** INCLUDE / SKIP / SIMPLIFY with one-sentence justification.
 
 ---
 

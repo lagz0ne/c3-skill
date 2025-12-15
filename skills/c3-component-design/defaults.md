@@ -38,3 +38,20 @@
 | ERD | Data structures |
 | Class diagram | Type relationships |
 | **Avoid** | System context, container overview, deployment diagrams |
+
+## Nature
+
+Determines template selection and documentation focus.
+
+| Nature | Indicators | Documentation Focus |
+|--------|-----------|---------------------|
+| **Resource** | DB, cache, API client, queue | Configuration, env vars, connection handling, retries |
+| **Business** | Services, domain models, workflows | Domain flows, business rules, edge cases |
+| **Framework** | Controllers, handlers, middleware | Request handling, auth, validation, error responses |
+| **Cross-cutting** | Utilities, helpers, shared modules | Interface stability, usage patterns, versioning |
+
+**Decision questions:**
+1. Does it connect to external resources? -> Resource
+2. Does it encode business rules? -> Business
+3. Does it handle requests/responses? -> Framework
+4. Is it used by multiple other components? -> Cross-cutting

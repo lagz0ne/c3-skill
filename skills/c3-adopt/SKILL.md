@@ -21,7 +21,7 @@ Bootstrap C3 (Context-Container-Component) architecture documentation for an exi
 | **4. Component Identification** | Identify key components | c3-{N}{NN} stubs |
 | **5. Configure Settings** | Call c3-config if settings.yaml missing | `.c3/settings.yaml` |
 | **6. Generate & Verify** | Delegate to sub-skills, build TOC | Complete documentation |
-| **7. Platform (Optional)** | Document deployment, networking, secrets, CI/CD | `.c3/platform/` docs |
+| **7. Platform (Recommended)** | Deployment, networking, secrets, CI/CD | `.c3/platform/` docs |
 
 ## Guardrails
 
@@ -367,24 +367,30 @@ Ask Claude to rebuild the TOC (uses plugin's build-toc.sh script).
 ### Next Steps:
 1. Review README.md for accuracy
 2. Fill in [specific gap]
+3. **Consider Phase 7:** Document platform concerns (deployment, networking, secrets, CI/CD)
+   - Even partial platform docs reduce onboarding friction
+   - Use `.c3/platform/` for deployment-related documentation
 ```
 
 ---
 
-## Phase 7: Platform Documentation (Optional)
+## Phase 7: Platform Documentation (Recommended)
+
+> **Why recommended?** Platform concerns (deployment, networking, secrets, CI/CD) are often the #1 source of onboarding confusion. Even partial documentation helps.
 
 Ask user:
 ```
-Do you want to document platform concerns?
-- Deployment strategy
-- Networking topology
-- Secrets management
-- CI/CD pipeline
+Platform documentation is recommended. Which areas should we cover?
 
-These are optional but help complete the system picture.
+[ ] Deployment strategy - How and where the system runs
+[ ] Networking topology - How containers communicate
+[ ] Secrets management - How credentials are handled
+[ ] CI/CD pipeline - How changes flow to production
+
+Select all that apply, or skip if truly not applicable.
 ```
 
-If yes:
+If any selected:
 1. Create `.c3/platform/` directory
 2. Reference [platform-patterns.md](../../references/platform-patterns.md)
 3. Use discovery questions for each area

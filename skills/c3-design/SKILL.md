@@ -305,24 +305,27 @@ Track iterations to prevent infinite loops:
 
 #### Loop Exit Criteria
 
-<thinking>
-Verify scope stability before exiting:
-- Can I name ALL affected documents by ID? [list them]
-- Do I understand WHY each is affected?
-- Did the last exploration round reveal anything new?
-- Have Socratic questions confirmed my understanding?
+**EXIT GATE - ALL must be true:**
 
-If ALL yes → Exit to Phase 3
-If ANY no → Another iteration needed
+| Criterion | Check | If No |
+|-----------|-------|-------|
+| Complete ID list | Can name ALL affected documents by ID | Continue exploring |
+| Impact clarity | Know WHY each document is affected | Ask clarifying questions |
+| No upstream surprises | Last round revealed no new upstream impacts | Revise hypothesis |
+| Socratic confirmation | Questions validated understanding | Ask more questions |
+
+> **Gate passed?** Exit to Phase 3 (ADR Creation)
+> **Gate failed?** Another iteration needed
+
+<thinking>
+Internal verification:
+- Documents affected: [list IDs]
+- Why each affected: [brief reason per ID]
+- New upstream impacts this round: [yes/no, list if yes]
+- Socratic confirmation status: [confirmed/pending]
 </thinking>
 
-Scope is stable when:
-- You can name all affected documents (by ID)
-- You understand why each is affected
-- No exploration reveals new upstream/higher impacts
-- Socratic confirmation validates understanding
-
-**MANDATORY NEXT STEP:** Phase 3 (ADR Creation) is required.
+**MANDATORY:** Phase 3 (ADR Creation) cannot be skipped.
 
 You CANNOT:
 - Update any C3 documents directly
@@ -345,17 +348,31 @@ today=$(date +%Y%m%d)
 
 **Create ADR using template:** See [adr-template.md](../../references/adr-template.md) for full template.
 
-Key sections (ADR - medium abstraction):
-1. **Problem/Requirement** - What triggered this decision
-2. **Exploration Journey** - How understanding developed (hypothesis → explore → discover)
-3. **Solution** - The approach formed through exploration
-4. **Changes Across Layers** - Specific changes to each C3 document
-5. **Verification** - Checklist derived from scoping
+**ADR Structure Overview:**
 
-Key sections (Implementation Plan - low abstraction):
-6. **Code Changes** - Maps each "Changes Across Layers" to specific code locations
-7. **Dependencies** - Order of operations, what depends on what
-8. **Acceptance Criteria** - Maps each Verification item to testable code behavior
+```yaml
+---
+id: adr-YYYYMMDD-{slug}
+title: [Decision Title]
+status: proposed
+date: YYYY-MM-DD
+---
+
+# [Decision Title]
+## Status
+## Problem/Requirement       # What triggered this
+## Exploration Journey       # hypothesis -> explore -> discover
+## Solution                  # Approach formed through exploration
+## Changes Across Layers     # Specific changes per C3 document
+## Verification              # Checklist from scoping
+## Implementation Plan       # MANDATORY
+  ### Code Changes           # Maps from Changes Across Layers
+  ### Dependencies           # Order of operations
+  ### Acceptance Criteria    # Maps from Verification
+## Related
+```
+
+**Key principle:** Changes Across Layers -> Code Changes (1:1), Verification -> Acceptance Criteria (1:1)
 
 <extended_thinking>
 <goal>Verify ADR and Plan are coherent before marking Phase 3 complete</goal>

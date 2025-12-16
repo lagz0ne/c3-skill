@@ -40,6 +40,17 @@ At Component level:
 
 ---
 
+## Include/Exclude
+
+See [defaults.md](./defaults.md) for complete rules.
+
+**Quick reference:**
+- **Include:** Flows, dependencies, decision logic, edge cases, error scenarios, state/lifecycle
+- **Exclude:** WHAT component does (Container), component relationships (Container), code, file paths
+- **Litmus:** "Is this about HOW this component implements its contract?"
+
+---
+
 ## Load Settings
 
 Read `.c3/settings.yaml` and merge with `defaults.md`.
@@ -47,8 +58,6 @@ Read `.c3/settings.yaml` and merge with `defaults.md`.
 ```bash
 cat .c3/settings.yaml 2>/dev/null
 ```
-
-**Default litmus:** "Could a developer implement this from the documentation?"
 
 ---
 
@@ -72,7 +81,7 @@ grep "c3-{N}{NN}" .c3/c3-{N}-*/README.md
 | Component responsibility matches | Proceed | STOP - align with Container |
 | Container archetype identified | Proceed | Ask: "What's the relationship to content?" |
 
-**If component not in Container:** This is a Container-level change. Escalate to c3-container-design to add the component to Container first, then return here.
+**If component not in Container:** Escalate to c3-container-design to add the component first.
 
 ---
 
@@ -89,34 +98,11 @@ The parent Container's archetype shapes what this component documents:
 | **Boundary** | Integration mechanics, API mapping, resilience |
 | **Platform** | Operational procedures, configs, runbooks |
 
-**Ask:** "What is my parent Container's relationship to content?" Then document HOW this component fulfills its part of that relationship.
-
 ---
 
-## Decision: Is This Component Level?
+## Exploration Process
 
-**Component-level indicators (ALL must be true):**
-- Change is about HOW to implement (not WHAT)
-- Stays within Container's technology constraints
-- Follows Container's patterns
-- Keeps interface contract unchanged
-- Isolated to this component
-
-**Escalate to Container if (ANY):**
-- Affects multiple components the same way
-- Requires changing internal patterns
-- Needs different technology
-- Changes interface contract
-- Is about WHAT/WHY not HOW
-
-**Common "looks like Component, but isn't":**
-- "Just add a new field to the API" → Interface change (Container)
-- "Just change how auth works here" → Cross-cutting (Context)
-- "Just use a different library" → Technology change (Container)
-
----
-
-## Phase 1: Inherit From Container (and Context)
+### Phase 1: Inherit From Container (and Context)
 
 **ALWAYS START HERE.**
 
@@ -134,98 +120,56 @@ find .c3 -name "c3-{N}-*" -type d | head -1 | xargs -I {} cat {}/README.md  # Co
 
 **Escalation triggers:** boundary violation, cross-cutting deviation, tech constraint violation, pattern deviation, interface change
 
----
+### Phase 2: Understand the Contract
 
-## Phase 2: Understand the Contract
-
-The Container defines WHAT this component does. Component docs explain HOW.
-
-**Find the contract:**
 ```bash
-# Read Container doc to find this component's responsibility
 cat .c3/c3-{N}-*/README.md | grep -A5 "c3-{N}{NN}"
 ```
 
-**Extract from Container:**
-- What responsibility is assigned to this component?
-- What other components does it relate to?
-- What flows involve this component?
+Extract: responsibility, related components, flows
 
-This contract is what the Component doc must explain HOW to implement.
-
----
-
-## Phase 3: Load Current State & Explore Code
+### Phase 3: Load Current State & Explore Code
 
 ```bash
 find .c3/c3-{N}-* -name "c3-{N}{NN}-*.md" 2>/dev/null | head -1 | xargs cat 2>/dev/null
 ```
 
-**Code exploration checklist:**
-- [ ] What files implement this component?
-- [ ] Does current code match documentation?
-- [ ] Which files would the change affect?
-- [ ] Can this be done within Container's technology?
+Check: implementation files, code/doc alignment, affected files, tech constraints
+
+### Phase 4: Analyze Change Impact
+
+| Check | If Yes |
+|-------|--------|
+| Breaks interface/patterns? | Escalate |
+| Needs new tech? | Escalate |
+| Affects siblings? | Escalate |
+| Implementation only? | Proceed |
+
+### Phase 5: Socratic Discovery
+
+**Confirm integrity:** Listed in Container? Responsibility defined? Archetype identified?
+
+**By container archetype:**
+- **Service:** Processing steps? Dependencies? Error paths?
+- **Data:** Structure? Queries? Migrations?
+- **Boundary:** External API? Mapping? Failures?
+- **Platform:** Process? Triggers? Recovery?
 
 ---
 
-## Phase 4: Analyze Change Impact
-
-| Check | Question | If Yes |
-|-------|----------|--------|
-| Breaks interface? | Does Container need to know? | Escalate |
-| Breaks patterns? | Does it deviate from Container's patterns? | Escalate |
-| Needs new tech? | Outside Container's tech stack? | Escalate |
-| Affects siblings? | Multiple components same way? | Escalate |
-| Affects boundary? | Outside system boundary? | Escalate (Context) |
-| Contained? | Just implementation details? | Proceed |
-
----
-
-## Phase 5: Document the Implementation
-
-### Documentation Principles
+## Documentation Principles
 
 1. **Implement the contract** - Container says WHAT, Component explains HOW
-2. **NO CODE** - Code lives in the codebase, not in C3 docs
-3. **Strategic level** - Explain direction and decisions, not coding patterns
-4. **PREFER DIAGRAMS** - A flowchart beats paragraphs of text
-5. **Edge cases and errors** - Document non-obvious behavior
+2. **NO CODE** - Code lives in codebase, not C3 docs
+3. **PREFER DIAGRAMS** - A flowchart beats paragraphs
+4. **Edge cases and errors** - Document non-obvious behavior
 
-### What Belongs Here vs Reference Docs
+**Component doc:** flows (diagram), decisions, dependencies, edge cases
+**.c3/references/:** schemas, code examples, configs, library patterns
 
-| Belongs in Component Doc | Belongs in .c3/references/ |
-|--------------------------|---------------------------|
-| Processing flow (diagram) | API schemas/contracts |
-| Decision points (what, why) | Code examples |
-| Dependencies (what it calls) | Configuration samples |
-| Edge cases (behavior) | Library usage patterns |
-| Error handling (strategy) | Integration guides |
+---
 
-**Rule:** If it's code or would change when code refactors, put it in `.c3/references/`.
-
-### Diagram-First Approach
-
-**Every component SHOULD have a flow diagram.**
-
-```mermaid
-flowchart TD
-    A[Input] --> B{Decision?}
-    B -->|Yes| C[Action A]
-    B -->|No| D[Action B]
-    C --> E[Output]
-    D --> E
-```
-
-Diagrams communicate:
-- Processing steps
-- Decision points
-- Dependencies called
-- Error paths
-
-Text supplements diagrams, not replaces them.
-
-### Template
+## Template
 
 ```markdown
 ---
@@ -265,91 +209,6 @@ From Container (c3-{N}): "[responsibility from parent container]"
 - [Link to .c3/references/ if detailed implementation docs exist]
 ```
 
-### Example: UserService
-
-````markdown
-# UserService
-
-## Contract
-From Container: "Handles user registration, authentication, and profile management"
-
-## How It Works
-
-### Main Flow (Registration)
-```mermaid
-flowchart TD
-    A[Receive request] --> B{Valid input?}
-    B -->|No| C[Return validation error]
-    B -->|Yes| D{User exists?}
-    D -->|Yes| E[Return duplicate error]
-    D -->|No| F[Create user]
-    F --> G[Send welcome email]
-    G --> H[Return success]
-```
-
-### Dependencies
-| Dependency | Purpose | When Called |
-|------------|---------|-------------|
-| DBAdapter | Persist user data | After validation |
-| EmailService | Send notifications | After creation |
-
-### Decision Points
-| Decision | Condition | Outcome |
-|----------|-----------|---------|
-| Skip email | Test environment | Don't send |
-| Hash algorithm | Password length | bcrypt vs argon2 |
-
-## Edge Cases
-| Scenario | Behavior | Rationale |
-|----------|----------|-----------|
-| Duplicate email | Reject with specific error | Prevent enumeration |
-| Very long name | Truncate to 255 chars | DB constraint |
-
-## Error Handling
-| Error | Detection | Recovery |
-|-------|-----------|----------|
-| DB connection lost | Timeout after 5s | Retry 3x with backoff |
-| Email service down | Circuit breaker open | Queue for later |
-````
-
----
-
-## Socratic Discovery
-
-**First, confirm integrity:**
-- "Is this component listed in the parent Container?"
-- "Does the Container say what this component is responsible for?"
-- "What archetype is the parent Container?"
-
-**Then, by container archetype:**
-
-For components in **Service** containers:
-- "What happens when this component receives a request?"
-- "What steps does it go through?"
-- "What other components does this call?"
-- "What can go wrong at each step?"
-
-For components in **Data** containers:
-- "What structure does this component manage?"
-- "What queries/access patterns does it support?"
-- "How does it evolve over time (migrations)?"
-
-For components in **Boundary** containers:
-- "What external API does this component interact with?"
-- "How do we map their model to ours?"
-- "What happens when the external system fails?"
-- "How do we handle their events/webhooks?"
-
-For components in **Platform** containers:
-- "What operational process does this component manage?"
-- "What triggers it? What does it produce?"
-- "What can go wrong and how do we recover?"
-
-**To understand edge cases (all archetypes):**
-- "What's the non-obvious behavior here?"
-- "What happens with invalid input?"
-- "What happens under load or failure?"
-
 ---
 
 ## Output Format
@@ -383,18 +242,17 @@ For components in **Platform** containers:
 
 - [ ] Container constraints loaded and understood
 - [ ] Context constraints loaded (via Container)
-- [ ] Component nature determined
+- [ ] Component integrity verified (listed in Container)
 - [ ] Current state loaded (if exists)
 - [ ] Change impact analyzed
 - [ ] All inherited constraints still honored
-- [ ] Documentation matches component nature
 - [ ] Escalation decision made (if needed)
 
 ---
 
 ## Related
 
-- [core-principle.md](../../references/core-principle.md) - The C3 principle (upper defines WHAT, lower implements HOW)
+- [core-principle.md](../../references/core-principle.md) - The C3 principle
+- [defaults.md](./defaults.md) - Component layer rules
 - [container-archetypes.md](../../references/container-archetypes.md) - Container types and component patterns
-- [hierarchy-model.md](../../references/hierarchy-model.md) - C3 layer inheritance
 - [diagram-patterns.md](../../references/diagram-patterns.md) - Diagram guidance

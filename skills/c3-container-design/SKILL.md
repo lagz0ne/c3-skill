@@ -36,11 +36,22 @@ At Container level:
 
 ---
 
+## Include/Exclude
+
+See [defaults.md](./defaults.md) for complete rules.
+
+**Quick reference:**
+- **Include:** Component responsibilities, component relationships, data flows, business flows, inner patterns
+- **Exclude:** WHY container exists (Context), HOW components work internally (Component), code
+- **Litmus:** "Is this about WHAT components do and HOW they relate to each other?"
+
+---
+
 ## Container Archetypes
 
 **Reference:** [container-archetypes.md](../../references/container-archetypes.md)
 
-Different containers have different relationships to content. Common archetypes:
+Different containers have different relationships to content:
 
 | Archetype | Relationship | Typical Components |
 |-----------|--------------|-------------------|
@@ -48,8 +59,6 @@ Different containers have different relationships to content. Common archetypes:
 | **Data** | Stores/structures | Schema, Indexes, Migrations |
 | **Boundary** | Interface to external | Contract, Client, Fallback |
 | **Platform** | Operates on containers | CI/CD, Deployment, Networking |
-
-**The principle matters more than archetypes.** Ask: "What is this container's relationship to content?" Components follow from that answer.
 
 ---
 
@@ -61,43 +70,11 @@ Read `.c3/settings.yaml` and merge with `defaults.md`.
 cat .c3/settings.yaml 2>/dev/null
 ```
 
-Display active config:
-```
-Container Layer Configuration:
-├── Include: [merged list]
-├── Exclude: [merged list]
-├── Litmus: [active test]
-└── Diagrams: [tool] - [types]
-```
-
-**Default litmus:** "Is this about WHAT this container does and WITH WHAT, not HOW internally?"
-
 ---
 
-## Decision: Is This Container Level?
+## Exploration Process
 
-**Container-level indicators (ANY = yes):**
-- Changes technology stack
-- Reorganizes component structure
-- Modifies internal patterns
-- Changes API contracts between components
-- Adds/removes components
-- Changes cross-container interactions
-
-**Escalate to Context if (ANY):**
-- Requires new inter-container protocol
-- Changes actor interfaces
-- Violates system boundary
-
-**Delegate to Component if (ALL):**
-- Single component change
-- Tech stack unchanged
-- Patterns followed
-- Interface unchanged
-
----
-
-## Phase 1: Inherit From Context
+### Phase 1: Inherit From Context
 
 **ALWAYS START HERE.**
 
@@ -113,40 +90,24 @@ Extract for this container:
 
 **Escalation triggers:** boundary violation, protocol break, actor change, cross-cutting deviation
 
----
-
-## Phase 2: Load Current Container
+### Phase 2: Load Current Container
 
 ```bash
 find .c3 -name "c3-{N}-*" -type d | head -1 | xargs -I {} cat {}/README.md
 ```
 
-**Must be able to answer:**
-- What runtime/framework?
-- What are the major components?
-- How do components interact internally?
-- How does this container interact with others?
-- What patterns are established?
+Extract: runtime, components, interactions, patterns
 
----
+### Phase 3: Analyze Change Impact
 
-## Phase 3: Analyze Change Impact
+| Direction | Action |
+|-----------|--------|
+| **Upstream** | New protocol/boundary violation → Escalate |
+| **Isolated** | Stack/pattern/API/org change → Document |
+| **Adjacent** | Component-to-component impact → Coordinate |
+| **Downstream** | New/changed components → Delegate |
 
-| Direction | Check | Action |
-|-----------|-------|--------|
-| **Upstream** (Context) | New protocol? Boundary violation? | Escalate |
-| **Isolated** (this Container) | Stack/pattern/API/org change? | Document |
-| **Adjacent** (siblings) | Component-to-component impact? | Coordinate |
-| **Downstream** (Components) | New/changed/removed components? | Delegate |
-
-**Key insight:** Inter-container = Component-to-Component mediated by Container.
-- Our component initiates/handles
-- Their component responds
-- Protocol defined in Context
-
----
-
-## Phase 4: Diagram Decisions
+### Phase 4: Diagram Decisions
 
 **Reference:** [diagram-decision-framework.md](../../references/diagram-decision-framework.md)
 
@@ -159,58 +120,68 @@ Use the framework's Quick Reference table to select diagrams based on container 
 
 **Document decision:** INCLUDE / SKIP / SIMPLIFY with one-sentence justification.
 
+### Phase 5: Socratic Discovery
+
+**Identify archetype:** "What is this container's relationship to content?"
+
+**By archetype:**
+- **Service:** Responsibility? Key components? Critical flows?
+- **Data:** Engine/version? Schema? Access patterns?
+- **Boundary:** Contract? Client? Fallback?
+- **Platform:** Processes? Affected containers?
+
 ---
 
-## Phase 5: Downstream Contracts
+## Diagram Requirements
 
-For each affected component, document what Container expects:
+**Container level REQUIRES two diagrams:**
 
-```yaml
-component: c3-{N}{NN}
-inherits_from: c3-{N}
-technology:
-  runtime: [version]
-  framework: [version]
-patterns:
-  - [pattern name]: [how to implement]
-interface:
-  exposes: [methods/endpoints]
-  accepts: [input types]
-  returns: [output types]
+1. **External Relationships** - Shows connections to other containers/external systems
+2. **Internal Components** - Shows how components relate to each other
+
+See [diagram-patterns.md](../../references/diagram-patterns.md) for examples.
+
+---
+
+## Template
+
+```markdown
+---
+id: c3-{N}
+title: [Container Name]
+type: container
+parent: c3-0
+---
+
+# [Container Name]
+
+## Inherited From Context
+- **Boundary:** [what this container can/cannot access]
+- **Protocols:** [what protocols this container uses]
+- **Cross-cutting:** [patterns inherited from Context]
+
+## Overview
+[Single paragraph purpose]
+
+## Technology Stack
+| Technology | Version | Purpose |
+|------------|---------|---------|
+
+## Architecture
+
+### External Relationships
+[REQUIRED: Diagram showing connections to other containers and external systems]
+
+### Internal Structure
+[REQUIRED: Diagram showing how components relate to each other]
+
+## Components
+| Component | ID | Responsibility |
+|-----------|-----|----------------|
+
+## Key Flows
+[1-2 critical flows - describe WHAT happens, not HOW (that's Component's job)]
 ```
-
----
-
-## Socratic Discovery
-
-**First, identify archetype** (see [container-archetypes.md](../../references/container-archetypes.md)):
-- "What is this container's relationship to content?"
-
-**Then, gap analysis by archetype:**
-
-For **Service** (creates/processes):
-- "What is this container's single main responsibility?"
-- "What are the 3-5 most important components and what does each do?"
-- "What's the most critical flow through this container?"
-- "How does this container interact with others?"
-
-For **Data** (stores/structures):
-- "What engine/version is this?"
-- "What's the schema/structure?"
-- "What components in other containers access this?"
-
-For **Boundary** (interface to external):
-- "What do we expect from this external system? (contract)"
-- "How do we call it? (client)"
-- "What if it fails? (fallback)"
-- "How do we receive their events? (webhook/events)"
-
-For **Platform** (operates on containers):
-- "What operational processes exist?"
-- "What does each process do?"
-- "What containers does this affect?"
-
-For **custom archetypes** - derive questions from the relationship to content.
 
 ---
 
@@ -258,98 +229,10 @@ For **custom archetypes** - derive questions from the relationship to content.
 
 ---
 
-## Diagram Requirements
-
-**Container level REQUIRES two diagrams:**
-
-### 1. External Relationships Diagram (REQUIRED)
-
-Shows how this container connects to external boundaries (other containers, external systems).
-
-```mermaid
-flowchart LR
-    subgraph c3-1["Backend (c3-1)"]
-        API[API Router]
-        SUB[Subscription Service]
-        NOTIF[Notification Service]
-    end
-
-    FE[Frontend] -->|REST| API
-    SUB -->|SDK| Stripe[Stripe]
-    NOTIF -->|API| Resend[Resend]
-    API -->|SQL| DB[(Database)]
-```
-
-### 2. Internal Component Diagram (REQUIRED)
-
-Shows how components within this container relate to each other.
-
-```mermaid
-flowchart TD
-    API[API Router] --> AUTH[Auth Service]
-    API --> SUB[Subscription Service]
-    API --> USER[User Service]
-    SUB --> NOTIF[Notification Service]
-    AUTH --> USER
-```
-
-**Why diagrams are required:**
-- Faster to understand than tables
-- Shows relationships at a glance
-- Reveals architectural patterns immediately
-
-Tables supplement diagrams for details (IDs, responsibilities).
-
----
-
-## Template
-
-```markdown
----
-id: c3-{N}
-title: [Container Name]
-type: container
-parent: c3-0
----
-
-# [Container Name]
-
-## Inherited From Context
-- **Boundary:** [what this container can/cannot access]
-- **Protocols:** [what protocols this container uses]
-- **Cross-cutting:** [patterns inherited from Context]
-
-## Overview
-[Single paragraph purpose]
-
-## Technology Stack
-| Technology | Version | Purpose |
-|------------|---------|---------|
-
-## Architecture
-
-### External Relationships
-[REQUIRED: Diagram showing connections to other containers and external systems]
-
-### Internal Structure
-[REQUIRED: Diagram showing how components relate to each other]
-
-## Components
-| Component | ID | Responsibility |
-|-----------|-----|----------------|
-
-## Key Flows
-[1-2 critical flows - describe WHAT happens, not HOW (that's Component's job)]
-```
-
----
-
 ## Checklist
 
-Before completing Container exploration:
-
 - [ ] Context constraints loaded and verified
-- [ ] Container type determined (Code/Infrastructure)
+- [ ] Container archetype determined
 - [ ] Change impact analyzed (upstream/isolated/adjacent/downstream)
 - [ ] Diagram decisions made with justification
 - [ ] Downstream contracts documented
@@ -359,7 +242,7 @@ Before completing Container exploration:
 
 ## Related
 
-- [core-principle.md](../../references/core-principle.md) - The C3 principle (upper defines WHAT, lower implements HOW)
-- [container-archetypes.md](../../references/container-archetypes.md) - Container types and patterns
+- [core-principle.md](../../references/core-principle.md) - The C3 principle
+- [defaults.md](./defaults.md) - Container layer rules
+- [container-archetypes.md](../../references/container-archetypes.md) - Container types
 - [diagram-decision-framework.md](../../references/diagram-decision-framework.md) - Full diagram guidance
-- [hierarchy-model.md](../../references/hierarchy-model.md) - C3 layer inheritance

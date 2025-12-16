@@ -1,6 +1,6 @@
 ---
 name: c3-config
-description: Create and refine .c3/settings.yaml for project-specific preferences - diagram tools, layer guidance, guardrails, and handoff steps
+description: Use when configuring project preferences in .c3/settings.yaml - diagram tools, layer guidance, guardrails, and handoff steps
 ---
 
 # C3 Config

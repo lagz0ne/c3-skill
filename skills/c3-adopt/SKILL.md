@@ -1,6 +1,6 @@
 ---
 name: c3-adopt
-description: Initialize C3 architecture documentation for any project (existing codebase or fresh start) - uses Socratic questioning to build understanding, then delegates to layer skills for document creation
+description: Use when bootstrapping C3 documentation for any project - guides through Socratic discovery and delegates to layer skills for document creation
 ---
 
 # C3 Adopt

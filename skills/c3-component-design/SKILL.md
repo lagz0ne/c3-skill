@@ -21,6 +21,25 @@ As the leaf:
 
 ---
 
+## The Principle
+
+**Reference:** [core-principle.md](../../references/core-principle.md)
+
+> **Upper layer defines WHAT. Lower layer implements HOW.**
+
+At Component level:
+- Container defines WHAT I am (my existence, my responsibility)
+- I define HOW I implement that responsibility
+- Code implements my documentation (in the codebase, not in C3)
+- I do NOT invent my responsibility - that's Container's job
+
+**Integrity rules:**
+- I must be listed in Container before I can exist
+- My "Contract" section must reference what Container says about me
+- If Container doesn't mention me, I don't exist as a C3 document
+
+---
+
 ## Load Settings
 
 Read `.c3/settings.yaml` and merge with `defaults.md`.
@@ -338,8 +357,7 @@ For components in **Platform** containers:
 
 ## Related
 
+- [core-principle.md](../../references/core-principle.md) - The C3 principle (upper defines WHAT, lower implements HOW)
 - [container-archetypes.md](../../references/container-archetypes.md) - Container types and component patterns
 - [hierarchy-model.md](../../references/hierarchy-model.md) - C3 layer inheritance
-- [role-taxonomy.md](../../references/role-taxonomy.md) - Component roles
-- [testing-discovery.md](../../references/testing-discovery.md) - Test patterns
 - [diagram-patterns.md](../../references/diagram-patterns.md) - Diagram guidance

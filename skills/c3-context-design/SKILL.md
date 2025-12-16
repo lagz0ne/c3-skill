@@ -24,6 +24,21 @@ As the introduction:
 
 ---
 
+## The Principle
+
+**Reference:** [core-principle.md](../../references/core-principle.md)
+
+> **Upper layer defines WHAT. Lower layer implements HOW.**
+
+At Context level:
+- I define WHAT containers exist and WHY
+- Container implements my definitions (WHAT components exist)
+- I do NOT define what's inside containers - that's Container's job
+
+**Integrity rule:** Containers cannot exist without being listed in Context.
+
+---
+
 ## Load Settings
 
 Read `.c3/settings.yaml` and merge with `defaults.md`.
@@ -197,6 +212,8 @@ title: [System Name] Overview
 
 ## Related
 
+- [core-principle.md](../../references/core-principle.md) - The C3 principle (upper defines WHAT, lower implements HOW)
+- [container-archetypes.md](../../references/container-archetypes.md) - Container types and patterns
 - [hierarchy-model.md](../../references/hierarchy-model.md) - C3 layer inheritance
 - [v3-structure.md](../../references/v3-structure.md) - Document structure
 - [diagram-patterns.md](../../references/diagram-patterns.md) - Diagram guidance

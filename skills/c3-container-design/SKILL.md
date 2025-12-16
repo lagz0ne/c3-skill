@@ -18,6 +18,24 @@ The Container level is the **architectural command center** of C3:
 
 ---
 
+## The Principle
+
+**Reference:** [core-principle.md](../../references/core-principle.md)
+
+> **Upper layer defines WHAT. Lower layer implements HOW.**
+
+At Container level:
+- Context defines WHAT I am (my existence, my responsibility)
+- I define WHAT components exist and WHAT they do
+- Component implements my definitions (HOW it works)
+- I do NOT define how components work internally - that's Component's job
+
+**Integrity rules:**
+- I must be listed in Context before I can exist
+- Components cannot exist without being listed in my inventory
+
+---
+
 ## Container Archetypes
 
 **Reference:** [container-archetypes.md](../../references/container-archetypes.md)
@@ -339,7 +357,7 @@ Before completing Container exploration:
 
 ## Related
 
+- [core-principle.md](../../references/core-principle.md) - The C3 principle (upper defines WHAT, lower implements HOW)
+- [container-archetypes.md](../../references/container-archetypes.md) - Container types and patterns
 - [diagram-decision-framework.md](../../references/diagram-decision-framework.md) - Full diagram guidance
-- [settings-merge.md](../../references/settings-merge.md) - Settings loading
 - [hierarchy-model.md](../../references/hierarchy-model.md) - C3 layer inheritance
-- [archetype-hints.md](../../references/archetype-hints.md) - Container types

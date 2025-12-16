@@ -36,7 +36,7 @@ Ask yourself:
 
 ### Current Version
 
-Check `VERSION` file for current version (currently: `20251216-workflow-guidelines`).
+Check `VERSION` file for current version (currently: `20251216-enforcement-harnesses`).
 Check `migrations/` directory for migration history (files sorted lexicographically).
 
 ### Migration Checklist for Reviewers

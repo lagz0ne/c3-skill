@@ -13,7 +13,6 @@ Every skill announces itself at invocation start:
 Examples:
 - "I'm using the c3-design skill to guide you through architecture design."
 - "I'm using the c3-adopt skill to initialize architecture documentation for this project."
-- "I'm using the c3-locate skill to retrieve document content."
 
 ## Quick Reference Table
 
@@ -88,7 +87,7 @@ Use checkboxes for verification checklists:
 | Find C3 files | Glob tool with `.c3/**/*.md` |
 | Search C3 content | Grep tool |
 | Create/edit docs | Write/Edit tool |
-| Generate TOC | c3-toc skill |
+| Generate TOC | build-toc.sh script in plugin |
 | User confirmation | AskUserQuestion tool |
 
 ## Error Handling

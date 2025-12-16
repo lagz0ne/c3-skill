@@ -33,6 +33,47 @@ cat .c3/settings.yaml 2>/dev/null
 
 ---
 
+## Integrity Check: Component ↔ Container
+
+**BEFORE proceeding, verify integrity with parent Container.**
+
+```bash
+# 1. Load parent Container
+cat .c3/c3-{N}-*/README.md
+
+# 2. Check this component is listed
+grep "c3-{N}{NN}" .c3/c3-{N}-*/README.md
+```
+
+**Integrity requirements:**
+
+| Check | Pass | Fail |
+|-------|------|------|
+| Component listed in Container inventory | Proceed | STOP - add to Container first |
+| Component responsibility matches | Proceed | STOP - align with Container |
+| Container archetype identified | Proceed | Ask: "What's the relationship to content?" |
+
+**If component not in Container:** This is a Container-level change. Escalate to c3-container-design to add the component to Container first, then return here.
+
+---
+
+## Container Archetype Awareness
+
+**Reference:** [container-archetypes.md](../../references/container-archetypes.md)
+
+The parent Container's archetype shapes what this component documents:
+
+| Container Archetype | Component Documents |
+|--------------------|---------------------|
+| **Service** | Processing flows, business logic, orchestration |
+| **Data** | Structure details, query patterns, migration steps |
+| **Boundary** | Integration mechanics, API mapping, resilience |
+| **Platform** | Operational procedures, configs, runbooks |
+
+**Ask:** "What is my parent Container's relationship to content?" Then document HOW this component fulfills its part of that relationship.
+
+---
+
 ## Decision: Is This Component Level?
 
 **Component-level indicators (ALL must be true):**
@@ -219,20 +260,39 @@ flowchart TD
 
 ## Socratic Discovery
 
-**To understand the flow:**
+**First, confirm integrity:**
+- "Is this component listed in the parent Container?"
+- "Does the Container say what this component is responsible for?"
+- "What archetype is the parent Container?"
+
+**Then, by container archetype:**
+
+For components in **Service** containers:
 - "What happens when this component receives a request?"
 - "What steps does it go through?"
+- "What other components does this call?"
 - "What can go wrong at each step?"
 
-**To understand dependencies:**
-- "What other components does this call?"
-- "Why does it need each dependency?"
-- "What happens if a dependency fails?"
+For components in **Data** containers:
+- "What structure does this component manage?"
+- "What queries/access patterns does it support?"
+- "How does it evolve over time (migrations)?"
 
-**To understand edge cases:**
+For components in **Boundary** containers:
+- "What external API does this component interact with?"
+- "How do we map their model to ours?"
+- "What happens when the external system fails?"
+- "How do we handle their events/webhooks?"
+
+For components in **Platform** containers:
+- "What operational process does this component manage?"
+- "What triggers it? What does it produce?"
+- "What can go wrong and how do we recover?"
+
+**To understand edge cases (all archetypes):**
 - "What's the non-obvious behavior here?"
 - "What happens with invalid input?"
-- "What happens under load?"
+- "What happens under load or failure?"
 
 ---
 
@@ -278,6 +338,7 @@ flowchart TD
 
 ## Related
 
+- [container-archetypes.md](../../references/container-archetypes.md) - Container types and component patterns
 - [hierarchy-model.md](../../references/hierarchy-model.md) - C3 layer inheritance
 - [role-taxonomy.md](../../references/role-taxonomy.md) - Component roles
 - [testing-discovery.md](../../references/testing-discovery.md) - Test patterns

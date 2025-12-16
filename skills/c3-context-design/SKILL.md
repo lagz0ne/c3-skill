@@ -39,6 +39,17 @@ At Context level:
 
 ---
 
+## Include/Exclude
+
+See [defaults.md](./defaults.md) for complete rules.
+
+**Quick reference:**
+- **Include:** Container responsibilities, container relationships, connecting points (APIs/events), external actors
+- **Exclude:** Component details, internal patterns, implementation, code
+- **Litmus:** "Is this about WHY containers exist and HOW they relate to each other?"
+
+---
+
 ## Load Settings
 
 Read `.c3/settings.yaml` and merge with `defaults.md`.
@@ -46,48 +57,6 @@ Read `.c3/settings.yaml` and merge with `defaults.md`.
 ```bash
 cat .c3/settings.yaml 2>/dev/null
 ```
-
-**Default litmus:** "Would changing this require coordinating multiple containers or external parties?"
-
----
-
-## Decision: Is This Context Level?
-
-Context changes are **rare**. Most changes happen at Container or Component level.
-
-**Context-level triggers (ANY):**
-- Adding or removing a container
-- Changing how containers talk (new/changed protocol)
-- Changing system boundary
-- Adding a new actor type
-
-**Delegate to Container if (ALL):**
-- Change is within existing container
-- No new protocols
-- Boundary unchanged
-- Same actors
-
----
-
-## Context's Two Core Jobs
-
-### Job 1: Container Inventory
-
-| Container | ID | Type | Responsibility (one sentence) |
-|-----------|-----|------|------------------------------|
-| [Name] | c3-{N} | Code/Infra | [What it does] |
-
-**Context says:** "These are the boxes"
-**Container says:** "Here's what's inside each box"
-
-### Job 2: Container Protocols
-
-| From | To | Protocol | Purpose |
-|------|-----|----------|---------|
-| c3-1 | c3-2 | [REST/Queue/etc] | [Why] |
-
-**Context says:** "Container A talks to Container B via Protocol X"
-**Container says:** "Our IntegrationClient component implements that protocol"
 
 ---
 
@@ -103,34 +72,18 @@ Extract: Container inventory, protocols, actors, boundary
 
 ### Phase 2: Analyze Change Impact
 
-| Change Type | Impact | Action |
-|-------------|--------|--------|
-| New container | Create doc | Delegate to c3-container-design |
-| Remove container | Remove doc | Audit affected protocols |
-| New protocol | Both containers | Update both docs |
-| Protocol change | All consumers/providers | Coordinate updates |
-| Boundary change | All containers | Full audit |
+| Change Type | Action |
+|-------------|--------|
+| New/remove container | Delegate to c3-container-design / Audit protocols |
+| Protocol change | Update all consumers/providers |
+| Boundary change | Full system audit |
 
-### Phase 3: Document Downstream Impact
+### Phase 3: Socratic Discovery
 
-```xml
-<contract container="c3-{N}">
-  <protocol name="[name]" role="[consumer|provider]"/>
-  <boundary>
-    <can_access>[internal]</can_access>
-    <cannot_access>[external]</cannot_access>
-  </boundary>
-</contract>
-```
-
----
-
-## Socratic Discovery
-
-**Containers:** "What would be separately deployed? What has its own codebase?"
-**Protocols:** "How do containers talk? Sync or async? What's the contract?"
-**Boundary:** "What's inside vs external? What external systems integrate?"
-**Actors:** "Who initiates interactions? Humans? Other systems?"
+- **Containers:** "What would be separately deployed?"
+- **Protocols:** "How do containers talk? What's the contract?"
+- **Boundary:** "What's inside vs external?"
+- **Actors:** "Who initiates interactions?"
 
 ---
 
@@ -138,30 +91,9 @@ Extract: Container inventory, protocols, actors, boundary
 
 **A container relationship diagram is REQUIRED at Context level.**
 
-Why: A diagram communicates container relationships faster than tables. Reviewers can grasp the system in seconds.
+Must show: containers, external systems, protocols, actors.
 
-```mermaid
-flowchart LR
-    subgraph boundary["System Boundary"]
-        FE[Frontend]
-        BE[Backend]
-        DB[(Database)]
-        FE -->|REST| BE
-        BE -->|SQL| DB
-    end
-
-    User((User)) --> FE
-    BE -->|API| Stripe[Stripe]
-    BE -->|API| Resend[Resend]
-```
-
-**Diagram must show:**
-- All containers (inside boundary)
-- External systems (outside boundary)
-- Protocols between containers (edges)
-- Actors interacting with the system
-
-Tables supplement the diagram for details, not replace it.
+See [diagram-patterns.md](../../references/diagram-patterns.md) for examples.
 
 ---
 
@@ -240,8 +172,7 @@ Note: Use Container names (e.g., "Backend → Database"), NOT component IDs.
 
 ## Related
 
-- [core-principle.md](../../references/core-principle.md) - The C3 principle (upper defines WHAT, lower implements HOW)
-- [container-archetypes.md](../../references/container-archetypes.md) - Container types and patterns
-- [hierarchy-model.md](../../references/hierarchy-model.md) - C3 layer inheritance
-- [v3-structure.md](../../references/v3-structure.md) - Document structure
+- [core-principle.md](../../references/core-principle.md) - The C3 principle
+- [defaults.md](./defaults.md) - Context layer rules
+- [container-archetypes.md](../../references/container-archetypes.md) - Container types
 - [diagram-patterns.md](../../references/diagram-patterns.md) - Diagram guidance

@@ -18,6 +18,23 @@ The Container level is the **architectural command center** of C3:
 
 ---
 
+## Container Archetypes
+
+**Reference:** [container-archetypes.md](../../references/container-archetypes.md)
+
+Different containers have different relationships to content. Common archetypes:
+
+| Archetype | Relationship | Typical Components |
+|-----------|--------------|-------------------|
+| **Service** | Creates/processes | Handlers, Services, Adapters |
+| **Data** | Stores/structures | Schema, Indexes, Migrations |
+| **Boundary** | Interface to external | Contract, Client, Fallback |
+| **Platform** | Operates on containers | CI/CD, Deployment, Networking |
+
+**The principle matters more than archetypes.** Ask: "What is this container's relationship to content?" Components follow from that answer.
+
+---
+
 ## Load Settings
 
 Read `.c3/settings.yaml` and merge with `defaults.md`.
@@ -148,19 +165,34 @@ interface:
 
 ## Socratic Discovery
 
-**Gap analysis questions:**
+**First, identify archetype** (see [container-archetypes.md](../../references/container-archetypes.md)):
+- "What is this container's relationship to content?"
 
-For Code Containers:
+**Then, gap analysis by archetype:**
+
+For **Service** (creates/processes):
 - "What is this container's single main responsibility?"
 - "What are the 3-5 most important components and what does each do?"
 - "What's the most critical flow through this container?"
 - "How does this container interact with others?"
-- "Which component handles each external interaction?"
 
-For Infrastructure Containers:
+For **Data** (stores/structures):
 - "What engine/version is this?"
-- "What features does it provide to other containers?"
-- "What components in other containers consume this?"
+- "What's the schema/structure?"
+- "What components in other containers access this?"
+
+For **Boundary** (interface to external):
+- "What do we expect from this external system? (contract)"
+- "How do we call it? (client)"
+- "What if it fails? (fallback)"
+- "How do we receive their events? (webhook/events)"
+
+For **Platform** (operates on containers):
+- "What operational processes exist?"
+- "What does each process do?"
+- "What containers does this affect?"
+
+For **custom archetypes** - derive questions from the relationship to content.
 
 ---
 

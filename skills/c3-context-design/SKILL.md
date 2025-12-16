@@ -1,6 +1,6 @@
 ---
 name: c3-context-design
-description: Explore Context level impact during scoping - system boundaries, actors, cross-component interactions, and high-level concerns
+description: Use when exploring Context level impact during scoping - system boundaries, actors, cross-container interactions, and high-level concerns
 ---
 
 # C3 Context Level Exploration

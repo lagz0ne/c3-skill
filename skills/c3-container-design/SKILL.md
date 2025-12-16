@@ -1,6 +1,6 @@
 ---
 name: c3-container-design
-description: Explore Container level impact during scoping - technology choices, component organization, middleware, and inter-container communication
+description: Use when exploring Container level impact during scoping - technology choices, component organization, middleware, and inter-container communication
 ---
 
 # C3 Container Level Exploration

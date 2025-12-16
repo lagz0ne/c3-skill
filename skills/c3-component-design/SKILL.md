@@ -1,6 +1,6 @@
 ---
 name: c3-component-design
-description: Explore Component level impact during scoping - implementation details, configuration, dependencies, and technical specifics
+description: Use when exploring Component level impact during scoping - implementation details, configuration, dependencies, and technical specifics
 ---
 
 # C3 Component Level Exploration

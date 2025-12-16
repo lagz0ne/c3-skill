@@ -1,6 +1,6 @@
 ---
 name: c3-migrate
-description: Migrate .c3/ documentation to current skill version - reads VERSION, compares against migrations/ directory, executes transforms in batches
+description: Use when upgrading .c3/ documentation to current skill version - reads VERSION, applies transforms from migrations/ directory in batches
 ---
 
 # C3 Migration Skill

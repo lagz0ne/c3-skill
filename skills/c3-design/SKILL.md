@@ -13,6 +13,8 @@ Transform requirements into C3 documentation through iterative scoping. Also sup
 
 **Announce:** "I'm using the c3-design skill to guide architecture design."
 
+**CRITICAL:** Read `references/design-guardrails.md` before starting. These guardrails are non-negotiable.
+
 ## Mode Detection
 
 | Intent | Mode |
@@ -75,6 +77,7 @@ See `references/design-phases.md` for detailed phase requirements.
 
 ## Related
 
+- `references/design-guardrails.md` - **READ FIRST:** Key principles, common mistakes, red flags
 - `references/design-exploration-mode.md`
 - `references/design-phases.md`
 - `references/adr-template.md`

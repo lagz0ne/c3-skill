@@ -26,16 +26,23 @@ Component is the **leaf layer** - it inherits all constraints from above and imp
 | Config snippets | `{ "port": 3000, ... }` | Config is implementation detail |
 | SQL/queries | `SELECT * FROM users` | Query syntax is implementation |
 | Shell commands | `npm run build` | Operational, not architectural |
+| **JSON/YAML schemas** | `{ "eventId": "uuid", "type": "..." }` | Schema syntax is implementation |
+| **Example payloads** | `{ "user": { "name": "..." } }` | Payload structure is implementation |
+| **Pseudocode schemas** | `{ field: type, nested: { } }` | Still code syntax |
+| **Wire format examples** | Request/response JSON bodies | Protocol detail is implementation |
 
 ### What to Write Instead (REQUIRED)
 
 | Instead of Code | Write This |
 |-----------------|------------|
 | Function implementation | Flow diagram showing steps |
-| Type definitions | Table of fields and their purpose |
+| Type definitions | Table: Field \| Type \| Purpose \| Required |
 | Config snippets | Table of settings and their effects |
 | SQL queries | Access pattern description |
 | API handlers | Request/response contract table |
+| **JSON/YAML schemas** | Table: Field \| Type \| Purpose (use dot notation for nesting: `user.address.city`) |
+| **Example payloads** | Table with Field \| Type \| Example Value columns |
+| **Nested structures** | Flatten with dot notation: `parent.child.field` |
 
 ### Validation Checklist (RUN BEFORE FINALIZING)
 
@@ -54,16 +61,31 @@ Before completing any component doc, verify:
 🚩 File extensions like `.ts`, `.js`, `.py`, `.go`
 🚩 Package names like `express`, `socket.io`, `yjs`
 🚩 Variable declarations or assignments
+🚩 **"Example payload"** or **"sample request/response"** in code blocks
+🚩 **`{ field: type }`** pseudocode notation
+🚩 **"Wire format"** or **"protocol structure"** as justification for JSON
+🚩 **Any nested JSON/YAML** regardless of purpose
+
+### Why Mermaid is Allowed but JSON is Not
+
+- **Mermaid** = visual flow/state diagrams (architectural, shows relationships)
+- **JSON/YAML** = data structure syntax (implementation detail)
+- **Rule:** If it could be parsed by a JSON/YAML parser, it's code → use a table instead
 
 ### Where Code DOES Belong
 
-If implementation details are truly needed for understanding:
+If implementation details are **truly necessary** for understanding:
 
 ```
 .c3/references/[component-name]-implementation.md
 ```
 
 Reference it from the component doc: `See [implementation details](../references/...)`
+
+**⚠️ references/ is NOT an escape hatch for schemas.** Use it for:
+- Complex implementation patterns that genuinely need code
+- Library-specific configuration examples
+- **NOT** for schema documentation that fits in a table
 
 ---
 

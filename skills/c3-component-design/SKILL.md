@@ -97,6 +97,8 @@ As the leaf:
 
 **Announce:** "I'm using the c3-component-design skill to explore Component-level impact."
 
+**📁 File Location:** Component is `.c3/c3-{N}-{slug}/c3-{N}{NN}-{slug}.md` - INSIDE the container folder, NOT `components/c3-NNN.md`.
+
 ---
 
 ## The Principle

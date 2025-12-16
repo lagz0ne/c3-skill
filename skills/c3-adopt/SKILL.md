@@ -11,6 +11,63 @@ Bootstrap C3 architecture documentation through Socratic questioning and delegat
 
 **Announce:** "I'm using the c3-adopt skill to initialize architecture documentation."
 
+---
+
+## 📁 V3 STRUCTURE ENFORCEMENT (MANDATORY)
+
+**This is non-negotiable. C3 v3 uses a specific hierarchical file structure.**
+
+### Required Structure (V3)
+
+```
+.c3/
+├── README.md                     ← Context (c3-0) IS the README
+├── c3-1-{slug}/
+│   ├── README.md                 ← Container 1
+│   └── c3-101-{slug}.md          ← Component inside container
+├── c3-2-{slug}/
+│   └── README.md                 ← Container 2
+└── adr/
+    └── adr-YYYYMMDD-{slug}.md    ← ADRs
+```
+
+### Prohibited Patterns (V2 - DO NOT USE)
+
+| Pattern | Why Wrong |
+|---------|-----------|
+| `context/c3-0.md` | Context IS `.c3/README.md`, not a separate folder |
+| `containers/c3-1.md` | Containers are folders: `.c3/c3-1-{slug}/README.md` |
+| `components/c3-101.md` | Components live INSIDE their container folder |
+| Any `c3-0.md` file | Context is always `README.md` at `.c3/` root |
+
+### File Path Rules
+
+| Level | Path | Example |
+|-------|------|---------|
+| Context | `.c3/README.md` | `.c3/README.md` (ONLY this) |
+| Container | `.c3/c3-{N}-{slug}/README.md` | `.c3/c3-1-backend/README.md` |
+| Component | `.c3/c3-{N}-{slug}/c3-{N}{NN}-{slug}.md` | `.c3/c3-1-backend/c3-101-api.md` |
+| ADR | `.c3/adr/adr-{YYYYMMDD}-{slug}.md` | `.c3/adr/adr-20251216-auth.md` |
+
+### Red Flags - STOP and Fix If You See
+
+🚩 Creating a `context/` folder
+🚩 Creating a `containers/` folder
+🚩 Creating a `components/` folder
+🚩 Any file named `c3-0.md` (should be `README.md`)
+🚩 Component files outside their parent container folder
+🚩 Container as a single file instead of a folder with README.md
+
+### Validation Checklist (RUN BEFORE COMPLETING)
+
+- [ ] Context is `.c3/README.md` (not in a subfolder)
+- [ ] Each container is a folder: `.c3/c3-{N}-{slug}/`
+- [ ] Each container has `README.md` inside its folder
+- [ ] Components are inside their container folder
+- [ ] No `context/`, `containers/`, or `components/` folders exist
+
+---
+
 ## When to Use
 
 | Scenario | Path |
@@ -50,13 +107,25 @@ After discovery, delegate to layer skills in order:
 
 ## Scaffolding
 
-Create structure before delegation:
+**Create V3 structure before delegation:**
 
 ```bash
+# Create base structure
 mkdir -p .c3/adr
+
+# Create container folders (NOT a containers/ folder!)
+mkdir -p .c3/c3-1-{slug}
+mkdir -p .c3/c3-2-{slug}
+# ... for each container
+
+# Context goes in README.md at root (NOT context/c3-0.md!)
+touch .c3/README.md
 ```
 
-Create container folders: `.c3/c3-{N}-{slug}/`
+**Remember:**
+- Context → `.c3/README.md` (the root README IS the context)
+- Container → `.c3/c3-{N}-{slug}/README.md` (folder with README inside)
+- Component → `.c3/c3-{N}-{slug}/c3-{N}{NN}-{slug}.md` (inside container folder)
 
 Generate TOC after documentation is complete.
 
@@ -64,11 +133,13 @@ Generate TOC after documentation is complete.
 
 - [ ] Scenario detected (existing vs fresh)
 - [ ] Discovery questions completed
-- [ ] Context delegated and created
-- [ ] Containers delegated and created
-- [ ] Key components documented
+- [ ] **📁 V3 structure scaffolded** (no context/, containers/, components/ folders)
+- [ ] Context created as `.c3/README.md`
+- [ ] Containers created as `.c3/c3-{N}-{slug}/README.md`
+- [ ] Components created inside their container folders
 - [ ] Settings configured
 - [ ] TOC generated
+- [ ] **📁 Structure validation passed** (see V3 STRUCTURE ENFORCEMENT)
 
 ## Platform Docs (Recommended)
 

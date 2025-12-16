@@ -16,6 +16,8 @@ The Container level is the **architectural command center** of C3:
 
 **Announce:** "I'm using the c3-container-design skill to explore Container-level impact."
 
+**📁 File Location:** Container is `.c3/c3-{N}-{slug}/README.md` - a folder with README inside, NOT `containers/c3-N.md`.
+
 ---
 
 ## The Principle

@@ -22,6 +22,8 @@ As the introduction:
 
 **Announce:** "I'm using the c3-context-design skill to explore Context-level impact."
 
+**📁 File Location:** Context is `.c3/README.md` - NOT `context/c3-0.md` or any subfolder.
+
 ---
 
 ## The Principle

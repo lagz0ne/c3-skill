@@ -1,214 +1,171 @@
-# Container Archetypes
+# Container Component Patterns
 
 ## The Principle
 
-> **This is what matters. Everything else is just examples.**
+> **Every container has a relationship to content. That relationship determines its components.**
 
 ### The Contract Chain
 
 ```
-Context  → defines WHAT containers exist and WHY
+Context   → defines WHAT containers exist and WHY
 Container → defines WHAT components exist and WHAT they do
 Component → defines HOW it implements its responsibility
 ```
 
-Each layer implements the layer above. This never changes.
-
-### The Question Every Container Must Answer
+### The One Question
 
 > **"What is this container's relationship to content?"**
 
-Once you answer this, components become clear:
+| Relationship | Container... | Component Focus |
+|--------------|--------------|-----------------|
+| **Processes** | Creates, transforms, orchestrates | Logic, flows, rules |
+| **Stores** | Persists, structures, indexes | Schema, access patterns |
+| **Transports** | Moves between places | Channels, routing, delivery |
+| **Presents** | Displays to users | Views, interactions, state |
+| **Integrates** | Bridges to external | Contracts, adapters, fallbacks |
+| **Operates** | Manages other containers | Pipelines, config, observability |
 
-| Relationship | Components Document |
-|--------------|---------------------|
-| Creates/processes content | Processing logic, flows |
-| Stores content | Structure, access patterns |
-| Transports content | Channels, delivery mechanics |
-| Operates on containers | Operational processes |
-| Interfaces with external | Our side of the boundary |
-
-### Deriving Components
-
-For ANY container, ask:
-
-1. What does this container DO? (its responsibility from Context)
-2. What parts make that happen? (those are your components)
-3. For each part, HOW does it work? (that's your component doc)
-
-**You don't need an archetype to document a container.** The principle is sufficient.
+Most containers combine 2-3 relationships. A backend service *processes* AND *integrates*. A frontend *presents* AND *stores* (client state).
 
 ---
 
-## Why Archetypes Exist
+## Component Inventory
 
-Archetypes are **shortcuts, not rules**.
+Instead of rigid archetypes, pick components based on what your container actually does.
 
-They provide:
-- Sensible starting points
-- Common component patterns others have found useful
-- Vocabulary for discussing container types
+### Entry Points
 
-They are NOT:
-- Exhaustive (your container might not fit any)
-- Prescriptive (you can deviate freely)
-- Required (the principle is what matters)
+How content enters the container.
 
----
+| Component | When Needed | Documents |
+|-----------|-------------|-----------|
+| **Routes/Handler** | HTTP/API entry | Path mapping, methods, middleware |
+| **UI/Views** | User-facing | Pages, layouts, navigation |
+| **CLI** | Command-line entry | Commands, args, output |
+| **Consumer** | Async/event entry | Subscriptions, message handling |
+| **Scheduler** | Time-triggered | Cron patterns, job definitions |
 
-## Common Archetypes
+### Logic
 
-These patterns appear frequently. Use them as starting points, adapt as needed.
+How content is processed.
 
-### Service
+| Component | When Needed | Documents |
+|-----------|-------------|-----------|
+| **Service/Domain** | Business rules | Rules, validation, orchestration |
+| **Transform** | Data shaping | Mapping, enrichment, normalization |
+| **Workflow** | Multi-step processes | Steps, conditions, compensation |
+| **Calculation** | Computations | Algorithms, formulas, models |
 
-**Relationship:** Creates and processes content (business logic)
+### State
 
-**Typical Components:**
+How content is stored or managed.
 
-| Component | Documents |
-|-----------|-----------|
-| Router/Handler | Request routing, entry points |
-| Service/Logic | Business rules, orchestration |
-| Adapter | Integration with other containers |
+| Component | When Needed | Documents |
+|-----------|-------------|-----------|
+| **Schema** | Structured data | Models, relationships, constraints |
+| **Cache** | Temporary storage | Keys, TTL, invalidation |
+| **Session** | User state | Storage, expiry, security |
+| **Config** | Runtime settings | Sources, precedence, secrets |
 
-**Signs you have a Service:** You wrote code that does business logic.
+### Communication
 
----
+How content moves to/from other containers.
 
-### Data
+| Component | When Needed | Documents |
+|-----------|-------------|-----------|
+| **Client/Adapter** | Calls other services | Endpoints, retry, timeout |
+| **Publisher** | Sends events/messages | Topics, schemas, delivery |
+| **Webhook** | Receives external events | Endpoints, validation, processing |
+| **Contract** | External API boundary | Expected shape, SLAs, versioning |
 
-**Relationship:** Stores and structures content
+### Resilience
 
-**Typical Components:**
+How the container handles failure.
 
-| Component | Documents |
-|-----------|-----------|
-| Schema | Data model, relationships, constraints |
-| Indexes | Query patterns, optimization |
-| Migrations | Evolution strategy |
+| Component | When Needed | Documents |
+|-----------|-------------|-----------|
+| **Fallback** | Degraded operation | Circuit breaker, defaults, retry |
+| **Validation** | Input protection | Rules, sanitization, errors |
+| **Error Handling** | Failure management | Categories, recovery, reporting |
 
-**Signs you have a Data container:** It persists state, you configure its structure.
+### Operations
 
----
+How the container is run and observed.
 
-### Boundary
-
-**Relationship:** Interface to systems we don't control
-
-**Typical Components:**
-
-| Component | Documents |
-|-----------|-----------|
-| Contract | What we expect (API shape, SLAs) |
-| Client | Our adapter/SDK usage |
-| Fallback | Retry, circuit breaker, degraded mode |
-| Webhook/Events | How we receive their events |
-
-**Signs you have a Boundary:** It's external, we integrate with it, we document OUR side.
-
----
-
-### Platform
-
-**Relationship:** Operates on other containers
-
-**Typical Components:**
-
-| Component | Documents |
-|-----------|-----------|
-| CI Pipeline | Build, test, publish |
-| Deployment | Rollout, health checks, rollback |
-| Networking | Service mesh, ingress, DNS |
-| Secrets | Storage, rotation, access |
-| Observability | Logging, metrics, tracing |
-
-**Signs you have a Platform:** It doesn't do business logic, it runs/operates other containers.
+| Component | When Needed | Documents |
+|-----------|-------------|-----------|
+| **Deployment** | Release process | Rollout, health checks, rollback |
+| **Observability** | Runtime insight | Logging, metrics, tracing |
+| **Pipeline** | Build/test/publish | Stages, gates, artifacts |
 
 ---
 
-## Extended Archetypes
+## Deriving Components
 
-Less universal, but common enough to mention.
+For ANY container:
 
-### Gateway
+1. **What does it do?** (from Context - its responsibility)
+2. **What relationships does it have?** (processes? stores? presents?)
+3. **Scan the inventory** - which components apply?
+4. **For each component** - document HOW it works
 
-**Relationship:** Routes and guards content
+### Example: Backend API
 
-**Typical Components:**
+**Responsibilities:** Handle user requests, apply business logic, persist data
 
-| Component | Documents |
-|-----------|-----------|
-| Routes | Path mapping, versioning |
-| Auth | Token validation, API keys |
-| Rate Limiting | Throttling rules |
-| Transform | Request/response shaping |
+**Relationships:** Processes + Stores + Integrates
 
-**Signs you have a Gateway:** It sits in front, routes traffic, enforces policies.
+**Components from inventory:**
+- Entry: Routes/Handler
+- Logic: Service/Domain
+- State: Schema, Config
+- Communication: Client (to database), Publisher (events)
+- Resilience: Validation, Error Handling
 
----
+### Example: Frontend App
 
-### Messaging
+**Responsibilities:** Present UI, capture interactions, manage client state
 
-**Relationship:** Transports content between containers
+**Relationships:** Presents + Stores (client) + Integrates (API)
 
-**Typical Components:**
+**Components from inventory:**
+- Entry: UI/Views
+- Logic: Transform (data formatting)
+- State: Session, Cache, Config
+- Communication: Client (to backend)
+- Resilience: Fallback (offline), Error Handling
 
-| Component | Documents |
-|-----------|-----------|
-| Topics/Queues | Channel inventory, purpose |
-| Schemas | Message structure, versioning |
-| Consumers | Who reads what, ordering |
-| Dead Letter | Failure handling |
+### Example: Worker/Job Processor
 
-**Signs you have a Messaging container:** Async communication infrastructure you configure.
+**Responsibilities:** Process async tasks from queue
 
-**Note:** If using managed messaging (SQS, Pub/Sub), consider treating as Boundary instead.
+**Relationships:** Processes + Integrates
 
----
+**Components from inventory:**
+- Entry: Consumer, Scheduler
+- Logic: Workflow, Service/Domain
+- State: Config
+- Communication: Client, Publisher (results)
+- Resilience: Fallback, Error Handling
 
-## Custom Archetypes
+### Example: Infrastructure/Platform
 
-Your container doesn't fit? That's fine. Apply the principle:
+**Responsibilities:** Deploy and operate other containers
 
-### Example: ML Pipeline
+**Relationships:** Operates
 
-**Step 1: What's its relationship to content?**
-> Transforms raw data into trained models
-
-**Step 2: What parts make that happen?**
-
-| Component | Documents |
-|-----------|-----------|
-| Data Ingestion | Sources, preprocessing |
-| Training | Algorithm, hyperparameters |
-| Evaluation | Metrics, validation |
-| Serving | How models get deployed |
-
-**Step 3: For each, document HOW it works.**
-
-Done. No archetype needed.
-
----
-
-### Example: Analytics
-
-**Relationship:** Aggregates and reports on content
-
-| Component | Documents |
-|-----------|-----------|
-| Collection | Event capture, SDKs |
-| Pipeline | Transformation, enrichment |
-| Storage | Warehouse schema |
-| Dashboards | Key reports, access |
+**Components from inventory:**
+- Operations: Pipeline, Deployment, Observability
+- State: Config (secrets, env)
+- Resilience: Fallback (rollback)
 
 ---
 
 ## Summary
 
-1. **Learn the principle** - it applies everywhere
-2. **Use archetypes as shortcuts** - when they fit
-3. **Adapt freely** - your system, your components
-4. **When in doubt** - ask "what is this container's relationship to content?"
+1. **Ask the question** - "What's this container's relationship to content?"
+2. **Identify relationships** - Processes? Stores? Presents? Integrates? Operates?
+3. **Pick from inventory** - Select components that match
+4. **Document each** - HOW does this component work?
 
-The principle is the foundation. Archetypes are just furniture.
+No archetypes needed. The inventory covers all cases.

@@ -36,7 +36,7 @@ Ask yourself:
 
 ### Current Version
 
-Check `VERSION` file for current version (currently: `20251209-adr-status-separation`).
+Check `VERSION` file for current version (currently: `20251216-enforcement-harnesses`).
 Check `migrations/` directory for migration history (files sorted lexicographically).
 
 ### Migration Checklist for Reviewers
@@ -112,11 +112,85 @@ c3-design/
 ## Development Workflow
 
 1. Create design doc in `docs/plans/` for significant changes
-2. Assess migration impact (see above)
+2. Assess migration impact (see Migration Decision below)
 3. Make changes
 4. If migration needed: update VERSION, create `migrations/YYYYMMDD-slug.md`
-5. Commit with descriptive message
+5. Commit using conventional commits (see below)
 6. Request review with migration assessment noted
+
+### Conventional Commits
+
+**Always use conventional commit format:**
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer]
+```
+
+**Types:**
+| Type | When to Use |
+|------|-------------|
+| `feat` | New feature or capability |
+| `fix` | Bug fix |
+| `docs` | Documentation only changes |
+| `refactor` | Code change that neither fixes a bug nor adds a feature |
+| `chore` | Maintenance tasks (version bumps, dependency updates) |
+| `test` | Adding or correcting tests |
+
+**Scopes:** `skills`, `references`, `commands`, `migrations`, or specific skill name
+
+**Examples:**
+```
+feat(skills): add NO CODE enforcement harness to c3-component-design
+fix(c3-audit): correct layer rule validation logic
+docs(references): update v3-structure examples
+chore: bump version to 20251216-enforcement-harnesses
+refactor(c3-adopt): extract scaffolding to separate section
+```
+
+### Version Changes
+
+**Two types of versions to track:**
+
+| Version Type | Location | When to Update |
+|--------------|----------|----------------|
+| **Skill version** | `VERSION` file | Any significant skill change |
+| **C3 version** | User's `.c3/README.md` frontmatter | When user doc structure changes |
+
+**Skill version:** Update for any notable change (features, fixes, harness additions). Use `YYYYMMDD-slug` format.
+
+**C3 version:** Only changes when user `.c3/` structure requirements change (rare).
+
+### Migration Decision
+
+**Ask these questions for EVERY change:**
+
+```
+1. Does this change how user .c3/ files are structured?     → Migration needed
+2. Does this change ID patterns users must follow?          → Migration needed
+3. Does this change required frontmatter fields?            → Migration needed
+4. Does this change file naming conventions?                → Migration needed
+5. Is this purely skill-internal (enforcement, wording)?    → No migration, but bump VERSION
+```
+
+**Decision matrix:**
+
+| Change | Bump VERSION? | Create Migration? | Update c3-migrate? |
+|--------|---------------|-------------------|-------------------|
+| Skill wording/enforcement | Yes | No | No |
+| New reference file | Yes | No | No |
+| New optional skill | Yes | No | No |
+| File structure change | Yes | **Yes** | Yes |
+| ID pattern change | Yes | **Yes** | Yes |
+| Frontmatter change | Yes | **Yes** | Yes |
+
+**When creating a migration file, include:**
+1. **Changes** - Human-readable description
+2. **Transforms** - Pattern replacements (if automatic migration possible)
+3. **Verification** - Commands to confirm migration success
 
 ## Feature Evaluation
 

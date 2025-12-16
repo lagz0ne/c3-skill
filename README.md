@@ -293,10 +293,7 @@ To render documentation:
 
 ## Examples
 
-See `examples/` directory for:
-- Sample `.c3/` structure
-- Example context/container/component documents
-- Sample ADRs
+See the plugin's own `.c3/` directory for a real-world example of C3 documentation structure.
 
 ## Contributing
 

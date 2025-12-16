@@ -85,9 +85,9 @@ When changing ID patterns, naming conventions, or structure:
 |------|----------------|
 | `README.md` | Examples, documentation structure, ID format descriptions |
 | `references/v3-structure.md` | ID patterns, file paths, frontmatter examples |
-| `skills/c3-naming/SKILL.md` | Naming patterns, search patterns, examples |
+| `references/naming-conventions.md` | Naming patterns, search patterns, examples |
 | `skills/c3-migrate/SKILL.md` | Version comparison, transforms, verification |
-| `skills/c3-locate/SKILL.md` | ID resolution patterns, lookup examples |
+| `references/lookup-patterns.md` | ID resolution patterns, lookup examples |
 
 **Tip:** Search for old patterns across all files before marking migration complete:
 ```bash
@@ -203,20 +203,19 @@ These three skills handle the actual architectural documentation:
 | Skill | Purpose | When Used |
 |-------|---------|-----------|
 | `c3-design` | Main entry point, orchestrates layer skills | Any architectural change |
-| `c3-adopt` | Initialize C3 for existing project | New project adoption |
-| `c3-init` | Create C3 structure from scratch | Brand new documentation |
+| `c3-adopt` | Initialize C3 for any project (existing or fresh) | New project adoption |
 
 ### Utility Skills
 
 | Skill | Purpose | When Used |
 |-------|---------|-----------|
-| `c3-use` | Entry point for reading/using C3 docs | User wants to understand architecture |
-| `c3-locate` | Find C3 documents by ID | Navigation, lookups |
-| `c3-toc` | Manage Table of Contents | After doc changes |
-| `c3-naming` | Naming conventions guidance | Creating new docs |
 | `c3-config` | Manage settings.yaml | Configure project preferences |
 | `c3-migrate` | Handle version migrations | After plugin updates |
 | `c3-audit` | Verify docs match code reality | Post-implementation verification |
+
+**Note:** Document lookup and naming conventions are implemented as reference patterns, not skills:
+- `references/lookup-patterns.md` - ID-based document retrieval patterns
+- `references/naming-conventions.md` - ID and naming convention patterns
 
 ---
 

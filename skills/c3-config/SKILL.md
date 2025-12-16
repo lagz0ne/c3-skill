@@ -3,7 +3,7 @@ name: c3-config
 description: Create and refine .c3/settings.yaml for project-specific preferences - diagram tools, layer guidance, guardrails, and handoff steps
 ---
 
-# C3 Config - Project Settings
+# C3 Config
 
 ## Overview
 
@@ -13,23 +13,18 @@ Create and refine `.c3/settings.yaml` for project-specific preferences through S
 
 ## Quick Reference
 
-| Phase | Key Activities | Output |
-|-------|---------------|--------|
-| **1. Check Existing** | Look for settings.yaml | Determine create vs update |
-| **2. Initialize/Load** | Create defaults or load existing | Working settings |
-| **3. Socratic Refinement** | Questions to refine sections | Updated preferences |
-| **4. Write Settings** | Save to .c3/settings.yaml | Persisted config |
+| Section | Purpose |
+|---------|---------|
+| `diagrams:` | Diagram tool and usage patterns (global) |
+| `context:` | Context layer configuration |
+| `container:` | Container layer configuration |
+| `component:` | Component layer configuration |
+| `guard:` | Team guardrails and constraints |
+| `adr:` | ADR and Implementation Plan settings |
+| `handoff:` | Post-design handoff steps |
+| `audit:` | Audit findings handoff preference |
 
-## Prerequisites
-
-**Required:** `.c3/` directory must exist.
-
-If `.c3/` doesn't exist:
-- Stop and suggest: "Use the `c3-adopt` skill to initialize C3 documentation first"
-
-## Settings File Structure
-
-`.c3/settings.yaml` contains project preferences:
+## Settings Structure
 
 ```yaml
 diagrams: |
@@ -40,260 +35,125 @@ diagrams: |
 context:
   useDefaults: true
   guidance: |
-    system boundaries, actors, external integrations
-    avoid implementation details
+    your context guidance
   include: |
-    # Optional: add items to defaults
+    additional items to include
   exclude: |
-    # Optional: add items to defaults
+    items to exclude
   litmus: |
-    # Optional: override default litmus test
+    custom litmus test (optional)
   diagrams: |
-    # Optional: override default diagrams
+    custom diagram guidance (optional)
 
 container:
   useDefaults: true
   guidance: |
-    service responsibilities, API contracts
-    backend: endpoints, data flows
-    frontend: component hierarchy, state
+    your container guidance
+  # Same keys as context
 
 component:
   useDefaults: true
   guidance: |
-    technical specifics, configs, algorithms
+    your component guidance
+  # Same keys as context
 
 guard: |
-  discovered incrementally via c3-config
+  discovered incrementally
 
 adr:
-  requirePlan: true  # Implementation Plan is mandatory (default: true)
-  coherenceCheck: true  # Run ADR-Plan coherence audit before handoff (default: true)
+  requirePlan: true
+  coherenceCheck: true
   planGranularity: detailed  # detailed | summary
-  # detailed: file:function level code locations
-  # summary: file-level code locations only
-
-handoff: |
-  after ADR accepted:
-  1. create implementation tasks from Plan
-  2. notify team
-  target: vibe_kanban  # or: linear, jira, github, manual
-
-audit: |
-  handoff: tasks
-```
-
-**Sections:**
-| Section | Purpose |
-|---------|---------|
-| `diagrams` | Diagram tool and usage patterns (global) |
-| `context` | Context-layer configuration |
-| `context.useDefaults` | Load defaults from skill's defaults.md (default: true) |
-| `context.guidance` | Prose guidance for context documentation |
-| `context.include` | Additional items to include at context level |
-| `context.exclude` | Additional items to exclude from context level |
-| `context.litmus` | Override default litmus test |
-| `context.diagrams` | Override default diagram recommendations |
-| `container` | Container-layer configuration (same keys as context) |
-| `component` | Component-layer configuration (same keys as context) |
-| `guard` | Team guardrails and constraints |
-| `adr` | ADR and Implementation Plan settings |
-| `adr.requirePlan` | Whether Implementation Plan is mandatory (default: true) |
-| `adr.coherenceCheck` | Run ADR-Plan coherence audit before handoff (default: true) |
-| `adr.planGranularity` | Level of detail for Code Changes (detailed/summary) |
-| `handoff` | Post-ADR completion steps |
-| `handoff.target` | Where to send tasks (vibe_kanban, linear, jira, github, manual) |
-| `audit` | Audit findings handoff preference |
-
-## The Process
-
-### Phase 1: Check Existing Settings
-
-```bash
-ls .c3/settings.yaml 2>/dev/null && echo "EXISTS" || echo "MISSING"
-```
-
-- If **EXISTS**: Load and show current settings
-- If **MISSING**: Proceed to create with defaults
-
-### Phase 2: Initialize or Load
-
-#### If Missing - Create with Defaults
-
-Create `.c3/settings.yaml` with sensible defaults:
-
-```yaml
-diagrams: |
-  mermaid
-  sequence: API interactions, request flows
-  flowchart: decision logic, error handling
-
-context: |
-  system boundaries, actors, external integrations
-  avoid implementation details
-
-container: |
-  service responsibilities, API contracts
-  backend: endpoints, data flows
-  frontend: component hierarchy, state
-
-component: |
-  technical specifics, configs, algorithms
-
-guard: |
-  discovered incrementally via c3-config
 
 handoff: |
   after ADR accepted:
   1. create implementation tasks
   2. notify team
+  target: vibe_kanban  # or: linear, jira, github, manual
 
 audit: |
-  handoff: tasks
+  handoff: tasks  # tasks | manual | agents
 ```
 
-#### If Exists - Load and Display
+For merge logic details, see `references/settings-merge.md`.
 
-Show current settings to user:
-```
-Current settings in .c3/settings.yaml:
+## Socratic Refinement
 
-diagrams: [current value]
-context: [current value]
-...
-
-Which section would you like to refine?
-```
-
-### Phase 3: Socratic Refinement
-
-**Goal:** Refine sections through targeted questions, not exhaustive interrogation.
-
-#### Refinement Approach
-
-1. **Focus on gaps** - Ask about empty/minimal sections first
-2. **One section at a time** - Don't overwhelm with all questions at once
-3. **Accept defaults** - User can skip any section
-
-#### Section-Specific Questions
+Refine sections through targeted questions:
 
 **Diagrams:**
-- "What diagramming tool does your team use? (mermaid, PlantUML, draw.io, etc.)"
-- "What types of diagrams are most useful for your project?"
+- "What diagramming tool does your team use?"
+- "What types of diagrams are most useful?"
 
 **Layer Configuration (Context/Container/Component):**
-- "Do you want to use the default include/exclude rules, or customize them?"
-- "Are there specific items that should ALWAYS be at this layer for your project?"
-- "Are there items that should NEVER be at this layer?"
-- "Do you want a custom litmus test for deciding content placement?"
-
-**Context/Container/Component Guidance:**
-- "What should documentation at the [layer] level emphasize?"
-- "Any specific patterns or anti-patterns to call out?"
+- "Use default include/exclude rules, or customize?"
+- "Items that should ALWAYS be at this layer?"
+- "Items that should NEVER be at this layer?"
 
 **Guardrails:**
-- "Are there architectural decisions that should never be revisited?"
-- "Any technologies or patterns that are off-limits?"
-- "Performance or security constraints to always consider?"
+- "Architectural decisions that should never be revisited?"
+- "Technologies or patterns that are off-limits?"
 
 **ADR Settings:**
-- "Should Implementation Plan be required for every ADR?" (default: yes)
-- "Should ADR-Plan coherence be verified before handoff?" (default: yes)
-- "What level of detail for Code Changes?"
-  - "detailed" - file:function level (e.g., `src/auth.ts:validateToken()`)
-  - "summary" - file level only (e.g., `src/auth.ts`)
+- "Should Implementation Plan be required?" (default: yes)
+- "Verify ADR-Plan coherence before handoff?" (default: yes)
+- "Code Changes granularity?" (detailed: file:function, summary: file-only)
 
 **Handoff:**
 - "What happens after an ADR is accepted?"
-- "How should implementation tasks be tracked? (GitHub issues, Jira, Linear, vibe_kanban, etc.)"
-- "Should Plan items automatically become tasks?"
+- "How should tasks be tracked?" (GitHub, Jira, Linear, vibe_kanban, etc.)
 
 **Audit:**
-Use AskUserQuestion:
-```
-Question: "How should audit findings be handled?"
-Options:
-  - "manual" (Review findings manually, decide case-by-case)
-  - "tasks" (Automatically create tasks/tickets for findings)
-  - "agents" (Dispatch agents to investigate/fix findings)
-```
+- "How should audit findings be handled?" (manual, tasks, agents)
 
-#### Refinement Flow
+## Process
 
-```
-┌─────────────────────────────────────────────────────┐
-│ Show current section value                          │
-│        ↓                                            │
-│ Ask targeted question                               │
-│        ↓                                            │
-│ User provides input OR skips                        │
-│        ↓                                            │
-│ Update section value                                │
-│        ↓                                            │
-│ Move to next section OR finish                      │
-└─────────────────────────────────────────────────────┘
-```
+### 1. Check Existing Settings
 
-### Phase 4: Write Settings
-
-Save updated settings to `.c3/settings.yaml`.
-
-**Verification:**
 ```bash
-# Confirm file exists and has expected sections
-ls .c3/settings.yaml
-grep -q '^diagrams:' .c3/settings.yaml && echo "diagrams: OK"
-grep -q '^context:' .c3/settings.yaml && echo "context: OK"
-grep -q '^container:' .c3/settings.yaml && echo "container: OK"
-grep -q '^component:' .c3/settings.yaml && echo "component: OK"
-grep -q '^guard:' .c3/settings.yaml && echo "guard: OK"
-grep -q '^adr:' .c3/settings.yaml && echo "adr: OK"
-grep -q '^handoff:' .c3/settings.yaml && echo "handoff: OK"
-grep -q '^audit:' .c3/settings.yaml && echo "audit: OK"
+ls .c3/settings.yaml 2>/dev/null && echo "EXISTS" || echo "MISSING"
 ```
 
-**Summary:**
-```
-Settings saved to .c3/settings.yaml
+- **EXISTS**: Load and show current settings
+- **MISSING**: Create with defaults
 
-Configured:
-- diagrams: mermaid with sequence/flowchart patterns
-- context: [summary]
-- container: [summary]
-- component: [summary]
-- guard: [summary or "none yet"]
-- adr: requirePlan=true, coherenceCheck=true, planGranularity=detailed
-- handoff: [summary + target]
-- audit: [handoff preference]
+### 2. Initialize or Load
 
-These settings will be used by c3-design when creating documentation.
-You can edit .c3/settings.yaml directly anytime.
-```
+If missing, create with sensible defaults. If exists, load and ask: "Which section would you like to refine?"
+
+### 3. Socratic Refinement
+
+Focus on gaps, one section at a time. User can skip any section.
+
+### 4. Write Settings
+
+Save to `.c3/settings.yaml` and verify sections exist.
 
 ## Invocation Contexts
 
 | Context | Behavior |
 |---------|----------|
 | **Standalone** | Full Socratic refinement of all sections |
-| **Via c3-adopt** | Create with defaults, minimal questions, offer refinement |
-
-When called from `c3-adopt`:
-- Create defaults immediately
-- Ask: "Would you like to customize project settings now, or use defaults?"
-- If customize → full refinement
-- If defaults → done
+| **Via c3-adopt** | Create defaults, offer refinement |
 
 ## Key Principles
 
-| Principle | Application |
-|-----------|-------------|
-| **Sensible defaults** | Settings work out-of-box, customization is optional |
-| **Incremental discovery** | Guardrails grow over time, not all at once |
-| **Flexible format** | YAML with prose values, not rigid schema |
-| **User can edit directly** | settings.yaml is human-readable/editable |
-| **Non-blocking** | Missing settings doesn't break other skills |
+- **Sensible defaults** - Works out-of-box, customization optional
+- **Incremental discovery** - Guardrails grow over time
+- **Flexible format** - YAML with prose values
+- **User-editable** - Human-readable/editable
+- **Non-blocking** - Missing settings doesn't break other skills
 
-## Related Skills
+## Checklist
 
-- [c3-adopt](../c3-adopt/SKILL.md) - Calls c3-config during initialization
-- [c3-design](../c3-design/SKILL.md) - Reads settings at start
+- [ ] Checked for existing `.c3/settings.yaml`
+- [ ] Initialized or loaded current settings
+- [ ] Each section reviewed via Socratic questions
+- [ ] Handoff steps configured
+- [ ] Settings file saved and verified
+
+## Related
+
+- `references/settings-merge.md` - Merge logic details
+- `c3-adopt` - Calls c3-config during initialization
+- `c3-design` - Reads settings at start

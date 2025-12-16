@@ -418,7 +418,110 @@ For each document, determine its layer from ID, then audit content:
 </output>
 </extended_thinking>
 
-### Phase 6: Methodology Audit Report
+### Phase 6: Load Layer Skills for Suggestions
+
+**BEFORE making suggestions, load the authoritative layer skills.**
+
+The layer skills are the source of truth for what each layer requires. Loading them ensures suggestions stay in sync with actual requirements.
+
+<chain_prompt id="load_layer_skills">
+<instruction>Load all three layer skills to extract current requirements</instruction>
+
+<action>
+```bash
+# Load Context skill for c3-0 requirements
+cat skills/c3-context-design/SKILL.md
+
+# Load Container skill for c3-N requirements
+cat skills/c3-container-design/SKILL.md
+
+# Load Component skill for c3-NNN requirements
+cat skills/c3-component-design/SKILL.md
+```
+</action>
+
+<extract>
+From each skill, extract:
+1. **Template section** - Required document structure
+2. **Diagram Requirements** - What diagrams are mandatory
+3. **The Principle section** - Layer integrity rules
+4. **MUST INCLUDE / MUST EXCLUDE** - Content rules
+5. **Socratic Discovery questions** - What the layer should answer
+
+```xml
+<layer_requirements>
+  <context source="c3-context-design/SKILL.md">
+    <required_sections>[from Template]</required_sections>
+    <required_diagrams>[from Diagram Requirement]</required_diagrams>
+    <must_include>[from The Principle + Template]</must_include>
+    <must_exclude>[from The Principle]</must_exclude>
+    <integrity_rule>[from The Principle]</integrity_rule>
+  </context>
+
+  <container source="c3-container-design/SKILL.md">
+    <required_sections>[from Template]</required_sections>
+    <required_diagrams>[from Diagram Requirements - TWO required]</required_diagrams>
+    <must_include>[from The Principle + Template]</must_include>
+    <must_exclude>[from The Principle]</must_exclude>
+    <integrity_rule>[from The Principle]</integrity_rule>
+  </container>
+
+  <component source="c3-component-design/SKILL.md">
+    <required_sections>[from Template]</required_sections>
+    <required_diagrams>[from Documentation Principles]</required_diagrams>
+    <must_include>[from The Principle + Template]</must_include>
+    <must_exclude>[from Documentation Principles - NO CODE]</must_exclude>
+    <integrity_rule>[from The Principle + Integrity Check]</integrity_rule>
+  </component>
+</layer_requirements>
+```
+</extract>
+</chain_prompt>
+
+### Phase 7: Generate Layer-Specific Suggestions
+
+**Use the loaded layer requirements to generate suggestions.**
+
+For each violation found in earlier phases, match it to the corresponding layer skill's requirements and generate a specific fix suggestion.
+
+#### Suggestion Generation Process
+
+```
+For each violation:
+1. Identify which layer (Context/Container/Component)
+2. Look up that layer's requirements from Phase 6
+3. Find the specific requirement that was violated
+4. Generate suggestion pointing to the skill's Template or example
+```
+
+#### Example Suggestions (derived from layer skills)
+
+**Context (from c3-context-design):**
+| Issue | Suggestion (Reference) |
+|-------|------------------------|
+| Missing diagram | See c3-context-design "Diagram Requirement" - add mermaid showing containers, external systems, protocols, actors |
+| Missing container inventory | See c3-context-design "Template" - add Containers table with ID, Archetype, Responsibility |
+| Component IDs found | Violates c3-context-design "The Principle" - Context defines WHAT containers exist, not their internals |
+
+**Container (from c3-container-design):**
+| Issue | Suggestion (Reference) |
+|-------|------------------------|
+| Missing external diagram | See c3-container-design "Diagram Requirements" - External Relationships diagram is REQUIRED |
+| Missing internal diagram | See c3-container-design "Diagram Requirements" - Internal Component diagram is REQUIRED |
+| Missing component inventory | See c3-container-design "Template" - add Components table |
+| Step-by-step algorithms | Violates c3-container-design "The Principle" - Container defines WHAT, not HOW |
+
+**Component (from c3-component-design):**
+| Issue | Suggestion (Reference) |
+|-------|------------------------|
+| Missing contract | See c3-component-design "Template" - add Contract section referencing Container |
+| Missing flow diagram | See c3-component-design "Documentation Principles" - every component SHOULD have flow diagram |
+| Code found | Violates c3-component-design "Documentation Principles" - NO CODE, move to .c3/references/ |
+| Missing dependencies | See c3-component-design "Template" - add Dependencies table |
+
+**Key benefit:** Suggestions always match current skill requirements. When skills evolve, audit suggestions automatically align.
+
+### Phase 8: Methodology Audit Report
 
 <report_template>
 ```markdown
@@ -460,9 +563,9 @@ For each document, determine its layer from ID, then audit content:
 
 ### Missing Required Content
 
-| Doc | Layer | Missing |
-|-----|-------|---------|
-| c3-2/README.md | Container | Component inventory |
+| Doc | Layer | Missing | Suggestion |
+|-----|-------|---------|------------|
+| c3-2/README.md | Container | Component inventory | Add table with component IDs |
 
 ## Diagram Issues
 
@@ -478,11 +581,22 @@ For each document, determine its layer from ID, then audit content:
 | ORPHAN | c3-107 | File exists, not in Container | Add to inventory |
 | MISMATCH | c3-2 | Protocol differs from Context | Align inherited section |
 
-## Recommendations
+## Layer-Specific Recommendations
 
-1. [Priority fixes by severity]
-2. [Structural changes needed]
-3. [Content to relocate]
+### Context (c3-0)
+[List specific suggestions from Phase 6 Context table]
+
+### Containers
+[List specific suggestions for each container from Phase 6 Container table]
+
+### Components
+[List specific suggestions for each component from Phase 6 Component table]
+
+## Priority Actions
+
+1. **High:** [Critical fixes - phantoms, orphans, missing required content]
+2. **Medium:** [Abstraction leaks, diagram issues]
+3. **Low:** [Warnings, optional improvements]
 ```
 </report_template>
 

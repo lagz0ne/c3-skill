@@ -1,6 +1,6 @@
 # C3 Documentation Table of Contents
 
-> **AUTO-GENERATED** - Do not edit manually. Rebuild using the c3-toc skill.
+> **AUTO-GENERATED** - Do not edit manually. Rebuild using the plugin's build-toc.sh script.
 >
 > Last generated: 2025-12-09 16:25:25
 

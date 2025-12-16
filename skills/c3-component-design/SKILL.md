@@ -11,6 +11,62 @@ Component is the **leaf layer** - it inherits all constraints from above and imp
 
 **Position:** LEAF (c3-{N}{NN}) | Parent: Container (c3-{N}) | Grandparent: Context (c3-0)
 
+---
+
+## ⛔ NO CODE ENFORCEMENT (MANDATORY)
+
+**This is non-negotiable. Component docs describe HOW things work, not the actual implementation.**
+
+### What Counts as Code (PROHIBITED)
+
+| Prohibited | Example | Why Prohibited |
+|------------|---------|----------------|
+| Implementation code | `function handle() { ... }` | Code lives in codebase |
+| Type definitions | `interface User { id: string }` | Types change, adds context load |
+| Config snippets | `{ "port": 3000, ... }` | Config is implementation detail |
+| SQL/queries | `SELECT * FROM users` | Query syntax is implementation |
+| Shell commands | `npm run build` | Operational, not architectural |
+
+### What to Write Instead (REQUIRED)
+
+| Instead of Code | Write This |
+|-----------------|------------|
+| Function implementation | Flow diagram showing steps |
+| Type definitions | Table of fields and their purpose |
+| Config snippets | Table of settings and their effects |
+| SQL queries | Access pattern description |
+| API handlers | Request/response contract table |
+
+### Validation Checklist (RUN BEFORE FINALIZING)
+
+Before completing any component doc, verify:
+
+- [ ] **No triple-backtick code blocks** (except mermaid diagrams)
+- [ ] **No inline code showing implementation** (variable names, function bodies)
+- [ ] **No file paths to source code** (paths change with refactoring)
+- [ ] **No language-specific syntax** (TypeScript, SQL, JSON config)
+
+### Red Flags - STOP and Rewrite If You See
+
+🚩 `function`, `class`, `interface`, `type` keywords
+🚩 `=>` arrow functions or `{ }` code blocks
+🚩 `import`, `require`, `export` statements
+🚩 File extensions like `.ts`, `.js`, `.py`, `.go`
+🚩 Package names like `express`, `socket.io`, `yjs`
+🚩 Variable declarations or assignments
+
+### Where Code DOES Belong
+
+If implementation details are truly needed for understanding:
+
+```
+.c3/references/[component-name]-implementation.md
+```
+
+Reference it from the component doc: `See [implementation details](../references/...)`
+
+---
+
 As the leaf:
 - I INHERIT from Container: technology, patterns, interfaces
 - I INHERIT from Context (via Container): boundary, protocols, cross-cutting
@@ -160,12 +216,12 @@ Check: implementation files, code/doc alignment, affected files, tech constraint
 ## Documentation Principles
 
 1. **Implement the contract** - Container says WHAT, Component explains HOW
-2. **NO CODE** - Code lives in codebase, not C3 docs
-3. **PREFER DIAGRAMS** - A flowchart beats paragraphs
+2. **⛔ NO CODE** - See [NO CODE ENFORCEMENT](#-no-code-enforcement-mandatory) above. This is MANDATORY.
+3. **PREFER DIAGRAMS** - A flowchart beats paragraphs. Mermaid is allowed.
 4. **Edge cases and errors** - Document non-obvious behavior
 
 **Component doc:** flows (diagram), decisions, dependencies, edge cases
-**.c3/references/:** schemas, code examples, configs, library patterns
+**.c3/references/:** schemas, code examples, configs, library patterns (code goes HERE, not in component docs)
 
 ---
 
@@ -247,6 +303,7 @@ From Container (c3-{N}): "[responsibility from parent container]"
 - [ ] Change impact analyzed
 - [ ] All inherited constraints still honored
 - [ ] Escalation decision made (if needed)
+- [ ] **⛔ NO CODE validation passed** (no code blocks, no implementation syntax, no file paths)
 
 ---
 

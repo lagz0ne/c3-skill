@@ -134,12 +134,42 @@ Extract: Container inventory, protocols, actors, boundary
 
 ---
 
+## Diagram Requirement
+
+**A container relationship diagram is REQUIRED at Context level.**
+
+Why: A diagram communicates container relationships faster than tables. Reviewers can grasp the system in seconds.
+
+```mermaid
+flowchart LR
+    subgraph boundary["System Boundary"]
+        FE[Frontend]
+        BE[Backend]
+        DB[(Database)]
+        FE -->|REST| BE
+        BE -->|SQL| DB
+    end
+
+    User((User)) --> FE
+    BE -->|API| Stripe[Stripe]
+    BE -->|API| Resend[Resend]
+```
+
+**Diagram must show:**
+- All containers (inside boundary)
+- External systems (outside boundary)
+- Protocols between containers (edges)
+- Actors interacting with the system
+
+Tables supplement the diagram for details, not replace it.
+
+---
+
 ## Template
 
 ```markdown
 ---
 id: c3-0
-c3-version: 3
 title: [System Name] Overview
 ---
 
@@ -148,25 +178,23 @@ title: [System Name] Overview
 ## Overview {#c3-0-overview}
 [System purpose in 1-2 sentences]
 
-## System Boundary {#c3-0-boundary}
-### Inside (Our System)
-- [Container 1]
-- [Container 2]
+## System Architecture {#c3-0-architecture}
 
-### Outside (External)
-- [External System 1]
+[REQUIRED: Mermaid diagram showing all containers, external systems, and their relationships]
 
 ## Actors {#c3-0-actors}
 | Actor | Type | Interacts Via |
 |-------|------|---------------|
 
 ## Containers {#c3-0-containers}
-| Container | ID | Type | Responsibility |
-|-----------|-----|------|----------------|
+| Container | ID | Archetype | Responsibility |
+|-----------|-----|-----------|----------------|
 
 ## Container Interactions {#c3-0-interactions}
 | From | To | Protocol | Purpose |
 |------|-----|----------|---------|
+
+Note: Use Container names (e.g., "Backend → Database"), NOT component IDs.
 
 ## Cross-Cutting Concerns {#c3-0-cross-cutting}
 - **Auth:** [approach]

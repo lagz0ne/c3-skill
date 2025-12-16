@@ -187,9 +187,43 @@ find .c3/c3-{N}-* -name "c3-{N}{NN}-*.md" 2>/dev/null | head -1 | xargs cat 2>/d
 ### Documentation Principles
 
 1. **Implement the contract** - Container says WHAT, Component explains HOW
-2. **No code** - Code lives in the codebase
-3. **Flows and dependencies** - Show how it processes and what it calls
-4. **Edge cases matter** - Non-obvious scenarios need explanation
+2. **NO CODE** - Code lives in the codebase, not in C3 docs
+3. **Strategic level** - Explain direction and decisions, not coding patterns
+4. **PREFER DIAGRAMS** - A flowchart beats paragraphs of text
+5. **Edge cases and errors** - Document non-obvious behavior
+
+### What Belongs Here vs Reference Docs
+
+| Belongs in Component Doc | Belongs in .c3/references/ |
+|--------------------------|---------------------------|
+| Processing flow (diagram) | API schemas/contracts |
+| Decision points (what, why) | Code examples |
+| Dependencies (what it calls) | Configuration samples |
+| Edge cases (behavior) | Library usage patterns |
+| Error handling (strategy) | Integration guides |
+
+**Rule:** If it's code or would change when code refactors, put it in `.c3/references/`.
+
+### Diagram-First Approach
+
+**Every component SHOULD have a flow diagram.**
+
+```mermaid
+flowchart TD
+    A[Input] --> B{Decision?}
+    B -->|Yes| C[Action A]
+    B -->|No| D[Action B]
+    C --> E[Output]
+    D --> E
+```
+
+Diagrams communicate:
+- Processing steps
+- Decision points
+- Dependencies called
+- Error paths
+
+Text supplements diagrams, not replaces them.
 
 ### Template
 
@@ -197,35 +231,38 @@ find .c3/c3-{N}-* -name "c3-{N}{NN}-*.md" 2>/dev/null | head -1 | xargs cat 2>/d
 ---
 id: c3-{N}{NN}
 title: [Component Name]
+type: component
+parent: c3-{N}
 ---
 
 # [Component Name]
 
 ## Contract
-From Container: [paste the responsibility defined in Container doc]
+From Container (c3-{N}): "[responsibility from parent container]"
 
 ## How It Works
 
-### Main Flow
-[Mermaid flowchart showing the processing steps]
+### Flow
+[REQUIRED: Mermaid diagram showing processing steps and decisions]
 
 ### Dependencies
-| Dependency | Purpose | When Called |
-|------------|---------|-------------|
+| Dependency | Container | Purpose |
+|------------|-----------|---------|
 
 ### Decision Points
 | Decision | Condition | Outcome |
 |----------|-----------|---------|
 
 ## Edge Cases
-
 | Scenario | Behavior | Rationale |
 |----------|----------|-----------|
 
 ## Error Handling
-
 | Error | Detection | Recovery |
 |-------|-----------|----------|
+
+## References
+- [Link to .c3/references/ if detailed implementation docs exist]
 ```
 
 ### Example: UserService

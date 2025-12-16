@@ -258,86 +258,88 @@ For **custom archetypes** - derive questions from the relationship to content.
 
 ---
 
-## Templates
+## Diagram Requirements
 
-### Code Container
+**Container level REQUIRES two diagrams:**
+
+### 1. External Relationships Diagram (REQUIRED)
+
+Shows how this container connects to external boundaries (other containers, external systems).
+
+```mermaid
+flowchart LR
+    subgraph c3-1["Backend (c3-1)"]
+        API[API Router]
+        SUB[Subscription Service]
+        NOTIF[Notification Service]
+    end
+
+    FE[Frontend] -->|REST| API
+    SUB -->|SDK| Stripe[Stripe]
+    NOTIF -->|API| Resend[Resend]
+    API -->|SQL| DB[(Database)]
+```
+
+### 2. Internal Component Diagram (REQUIRED)
+
+Shows how components within this container relate to each other.
+
+```mermaid
+flowchart TD
+    API[API Router] --> AUTH[Auth Service]
+    API --> SUB[Subscription Service]
+    API --> USER[User Service]
+    SUB --> NOTIF[Notification Service]
+    AUTH --> USER
+```
+
+**Why diagrams are required:**
+- Faster to understand than tables
+- Shows relationships at a glance
+- Reveals architectural patterns immediately
+
+Tables supplement diagrams for details (IDs, responsibilities).
+
+---
+
+## Template
 
 ```markdown
 ---
 id: c3-{N}
-c3-version: 3
 title: [Container Name]
-type: code
+type: container
+parent: c3-0
 ---
 
 # [Container Name]
 
-## Inherited From Context {#c3-n-inherited}
-### Boundary Constraints
-- Can access: [from Context]
-- Cannot access: [from Context]
+## Inherited From Context
+- **Boundary:** [what this container can/cannot access]
+- **Protocols:** [what protocols this container uses]
+- **Cross-cutting:** [patterns inherited from Context]
 
-### Protocol Obligations
-| Protocol | Role | Contract |
-|----------|------|----------|
-
-### Cross-Cutting Implementation
-| Concern | Pattern | Our Implementation |
-|---------|---------|-------------------|
-
-## Overview {#c3-n-overview}
+## Overview
 [Single paragraph purpose]
 
-## Technology Stack {#c3-n-stack}
-- Runtime: [version]
-- Framework: [version]
-- Key Dependencies: [libraries]
+## Technology Stack
+| Technology | Version | Purpose |
+|------------|---------|---------|
 
-## Component Organization {#c3-n-organization}
-[Diagram if complexity warrants]
+## Architecture
 
+### External Relationships
+[REQUIRED: Diagram showing connections to other containers and external systems]
+
+### Internal Structure
+[REQUIRED: Diagram showing how components relate to each other]
+
+## Components
 | Component | ID | Responsibility |
 |-----------|-----|----------------|
 
-## Internal Contracts {#c3-n-contracts}
-### Error Handling
-[Describe the error handling strategy components must follow - no code]
-
-### Data Access
-[Describe the data access patterns components must follow - no code]
-
-## Key Flows {#c3-n-flows}
-[1-2 critical flows as diagrams showing HOW things work]
-
-## External Dependencies {#c3-n-external}
-| External Container | Our Component | Their Component | Purpose |
-|-------------------|---------------|-----------------|---------|
-
-## Components {#c3-n-components}
-| Component | ID | Responsibility |
-|-----------|-----|---------------|
-```
-
-### Infrastructure Container
-
-```markdown
----
-id: c3-{N}
-c3-version: 3
-title: [Infrastructure Name]
-type: infrastructure
----
-
-# [Infrastructure Name]
-
-## Engine {#c3-n-engine}
-[Technology] [Version]
-
-## Configuration {#c3-n-config}
-| Setting | Value | Why |
-
-## Features Provided {#c3-n-features}
-| Feature | Used By | Component |
+## Key Flows
+[1-2 critical flows - describe WHAT happens, not HOW (that's Component's job)]
 ```
 
 ---

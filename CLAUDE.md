@@ -153,12 +153,18 @@ refactor(c3-adopt): extract scaffolding to separate section
 
 ### Version Changes
 
-**Two types of versions to track:**
+**Three types of versions to track:**
 
 | Version Type | Location | When to Update |
 |--------------|----------|----------------|
+| **Plugin version** | `.claude-plugin/plugin.json` + `marketplace.json` | Any user-visible change (features, fixes, harnesses) |
 | **Skill version** | `VERSION` file | Any significant skill change |
 | **C3 version** | User's `.c3/README.md` frontmatter | When user doc structure changes |
+
+**Plugin version:** Semver in `.claude-plugin/*.json`. Bump for any user-visible change:
+- **Major** (X.0.0): Breaking changes to skill behavior
+- **Minor** (x.Y.0): New features, new harnesses, new skills
+- **Patch** (x.y.Z): Bug fixes, wording improvements
 
 **Skill version:** Update for any notable change (features, fixes, harness additions). Use `YYYYMMDD-slug` format.
 
@@ -178,14 +184,16 @@ refactor(c3-adopt): extract scaffolding to separate section
 
 **Decision matrix:**
 
-| Change | Bump VERSION? | Create Migration? | Update c3-migrate? |
-|--------|---------------|-------------------|-------------------|
-| Skill wording/enforcement | Yes | No | No |
-| New reference file | Yes | No | No |
-| New optional skill | Yes | No | No |
-| File structure change | Yes | **Yes** | Yes |
-| ID pattern change | Yes | **Yes** | Yes |
-| Frontmatter change | Yes | **Yes** | Yes |
+| Change | Bump Plugin? | Bump VERSION? | Create Migration? | Update c3-migrate? |
+|--------|--------------|---------------|-------------------|-------------------|
+| Skill wording/enforcement | Minor | Yes | No | No |
+| New reference file | Minor | Yes | No | No |
+| New optional skill | Minor | Yes | No | No |
+| Bug fix | Patch | No | No | No |
+| File structure change | Minor | Yes | **Yes** | Yes |
+| ID pattern change | Minor | Yes | **Yes** | Yes |
+| Frontmatter change | Minor | Yes | **Yes** | Yes |
+| Breaking behavior change | **Major** | Yes | **Yes** | Yes |
 
 **When creating a migration file, include:**
 1. **Changes** - Human-readable description

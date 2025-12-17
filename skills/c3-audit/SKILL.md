@@ -72,6 +72,66 @@ Use template from `references/audit-report-templates.md`.
 3. Verify code matches (use verification items)
 4. If all pass: transition status to `implemented`, rebuild TOC
 
+---
+
+## 📋 ADR STATUS ENFORCEMENT (MANDATORY)
+
+**This applies to Mode 2 (ADR Audit) and any audit that touches ADRs.**
+
+### Status Workflow
+
+```
+proposed → accepted → implemented
+                   ↘ superseded
+                   ↘ deprecated
+```
+
+### Status Transition Rules
+
+| Transition | Requirement | Who |
+|------------|-------------|-----|
+| `proposed` → `accepted` | Design reviewed, approach approved | Human decision |
+| `accepted` → `implemented` | All doc changes made, code matches, verification passes | **Audit verifies** |
+| Any → `superseded` | New ADR replaces this one (link required) | Human decision |
+| Any → `deprecated` | Decision no longer relevant | Human decision |
+
+### Audit Verification for `implemented` Status
+
+**BEFORE transitioning to `implemented`, verify ALL:**
+
+| Check | How to Verify |
+|-------|---------------|
+| All "Changes Across Layers" made | Each doc modified as specified |
+| Verification checklist passes | Each item checked and passes |
+| Code matches docs | Implementation conforms to documented changes |
+| Implementation Plan complete | All Code Changes done, Acceptance Criteria met |
+
+### TOC Filtering
+
+**Only `status: implemented` ADRs appear in TOC.**
+
+After transitioning to `implemented`:
+```bash
+# Rebuild TOC using build-toc.sh from plugin
+./build-toc.sh
+```
+
+### Red Flags - STOP and Fix
+
+🚩 ADR with `implemented` status but verification items unchecked
+🚩 ADR in TOC but status is `proposed` or `accepted`
+🚩 `superseded` ADR without link to replacement
+🚩 Missing `status` field in frontmatter
+🚩 Skipping `accepted` (going straight from `proposed` to `implemented`)
+
+### Audit Checklist for ADR Status
+
+- [ ] ADR has `status` field in frontmatter
+- [ ] Status is valid (`proposed`, `accepted`, `implemented`, `superseded`, `deprecated`)
+- [ ] If `implemented`: all verifications pass
+- [ ] If `superseded`: links to replacement ADR
+- [ ] TOC only includes `implemented` ADRs
+
 ## Mode 3: ADR-Plan Coherence
 
 1. Extract ADR sections + Implementation Plan

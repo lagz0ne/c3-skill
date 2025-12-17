@@ -50,6 +50,15 @@ See `references/design-phases.md` for detailed phase requirements.
 - Phase 3 gate: ADR file MUST exist
 - Phase 4 gate: Handoff steps executed
 
+### 📋 ADR Status: New ADRs Start as `proposed`
+
+**When creating an ADR in Phase 3:**
+- Set `status: proposed` in frontmatter
+- ADR will NOT appear in TOC until `implemented`
+- Status workflow: `proposed` → `accepted` → `implemented`
+
+See `references/adr-template.md` for status values and workflow.
+
 ## Quick Reference
 
 | Phase | Output | Gate |

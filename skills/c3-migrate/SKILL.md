@@ -148,6 +148,24 @@ fi
 >
 > Rebuild the TOC using the plugin's `build-toc.sh` script to refresh the table of contents."
 
+### ADR Status Check (Post-Migration)
+
+After migration, verify ADR status field consistency:
+
+```bash
+# Check all ADRs have status field
+for f in .c3/adr/adr-*.md; do
+  grep -q '^status:' "$f" || echo "Missing status: $f"
+done
+
+# List ADRs by status
+grep -l '^status: proposed' .c3/adr/*.md 2>/dev/null
+grep -l '^status: accepted' .c3/adr/*.md 2>/dev/null
+grep -l '^status: implemented' .c3/adr/*.md 2>/dev/null
+```
+
+**Reminder:** Only `status: implemented` ADRs should appear in TOC. After migration, rebuild TOC to ensure filtering is correct.
+
 ---
 
 ## V1 → V2 Migration

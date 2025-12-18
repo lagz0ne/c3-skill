@@ -1,5 +1,5 @@
 {
-  "description": "C3 architecture gate - requires ADR before code changes",
+  "description": "C3 architecture gate - requires .c3/ docs exist, suggests c3-adopt if missing",
   "hooks": {
     "PreToolUse": [
       {

@@ -18,6 +18,11 @@ description: Use when designing, updating, or exploring system architecture with
 - If docs exist → **READ THEM** before forming any hypothesis
 - If "NO_CONTEXT" → Fresh project, proceed to Mode Detection
 
+**⚠️ DO NOT read completed ADRs** unless user specifically asks:
+- ADRs are historical records, not active guidance
+- Reading them adds unnecessary context → hallucination risk
+- Only read: Context (README.md), Containers, Components
+
 **Why this gate exists:** Agents that skip existing documentation propose conflicting changes, miss established patterns, and waste user time.
 
 **Self-check before proceeding:**
@@ -231,6 +236,36 @@ cat .c3/adr/adr-*.md | grep -A20 "Changes Across Layers"
 - [ ] If Design Mode: ADR file exists with all sections
 - [ ] Layer skills invoked (not described)
 - [ ] Handoff executed
+
+---
+
+## 📚 Reading Chain Output
+
+**At the end of your work, output a contextual reading chain based on what you discovered.**
+
+Format:
+```
+## 📚 To Go Deeper
+
+Based on this work affecting [layer/component], relevant reading:
+
+**Ancestors (understand constraints):**
+└─ c3-0 → c3-N → c3-NNN (this)
+
+**Siblings (coordinate changes):**
+├─ c3-NMM - [why relevant]
+└─ c3-NKK - [why relevant]
+
+**Downstream (propagate changes):**
+└─ c3-NNNX - [affected by this change]
+
+*Reading chain generated from actual doc relationships.*
+```
+
+**Rules:**
+- Only include docs you actually read or identified during exploration
+- Explain WHY each doc is relevant (not generic)
+- Never include ADRs unless user asked about decisions
 
 ---
 

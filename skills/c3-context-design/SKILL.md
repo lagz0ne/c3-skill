@@ -19,6 +19,11 @@ description: Use when exploring Context level impact during scoping - system bou
 - If context exists → Read it completely before proposing changes
 - If containers exist → Note them for reference
 
+**⚠️ DO NOT read ADRs** unless user specifically asks:
+- Context work focuses on current state, not historical decisions
+- ADRs add unnecessary context → hallucination risk
+- Only read: Context, Container READMEs (for inventory)
+
 **Why this gate exists:** Context is the root of all C3 docs. Changes here cascade to ALL containers and components.
 
 **Self-check before proceeding:**
@@ -203,6 +208,34 @@ grep -c '```mermaid' .c3/README.md
 - [ ] Frontmatter complete (id, c3-version, title, summary)
 - [ ] All containers listed with responsibilities
 - [ ] Interactions documented
+
+---
+
+## 📚 Reading Chain Output
+
+**At the end of context work, output a reading chain for affected containers.**
+
+Format:
+```
+## 📚 To Go Deeper
+
+Context (c3-0) defines these containers:
+
+**Containers to explore:**
+├─ c3-1-{slug} - [responsibility, why it matters]
+├─ c3-2-{slug} - [responsibility, why it matters]
+└─ ...
+
+**If this change affected protocols, also read:**
+└─ c3-N-{slug} - [which protocol changed]
+
+*Reading chain generated from containers listed in Context.*
+```
+
+**Rules:**
+- List containers mentioned in Context's inventory
+- Highlight which containers are affected by this change
+- Never include ADRs unless user asked
 
 ---
 

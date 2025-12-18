@@ -40,6 +40,33 @@ C3-Skill provides a structured approach to documenting system architecture throu
 
 ## Usage
 
+### 🚀 MANDATORY: Use c3 Agent as Kickstart
+
+**Before ANY C3 architectural work, spawn the `c3` agent first.**
+
+The c3 agent is your "wiseman" - it analyzes requirements, assesses impact, and creates ADRs directly when needed. Add this to your project's `CLAUDE.md`:
+
+```markdown
+## C3 Architecture
+
+**Before architectural work:** Spawn `c3-skill:c3` subagent first.
+
+It reads .c3/ docs, analyzes impact, and creates ADRs when needed.
+```
+
+**Example workflow:**
+
+```
+User: "Add a caching layer to the backend"
+
+Claude: [Spawns c3 agent]
+        "Add caching layer to backend"
+
+c3 Agent: [Reads .c3/, Socratic questions, impact assessment]
+          → Creates ADR directly if warranted
+          → Updates affected .c3/ docs
+```
+
 ### Initialize C3 Documentation
 
 Create `.c3/` directory in your project:
@@ -59,10 +86,10 @@ The main skill activates when you describe architecture work:
 ```
 
 Claude will:
-1. Read your existing `.c3/` docs (if any)
-2. Understand what level this affects (Context/Container/Component)
-3. Confirm understanding via targeted questions
-4. Create/update documentation with appropriate diagrams
+1. **Spawn c3 agent first** (if .c3/ exists) to analyze requirements
+2. The agent reads docs, asks clarifying questions, assesses impact
+3. Creates ADR directly if warranted
+4. Updates affected documentation
 
 ### Commands
 
@@ -77,34 +104,28 @@ Claude will:
 
 | Agent | Purpose |
 |-------|---------|
-| `c3-navigator` | **Primary C3 assistant** - Navigate, understand, and analyze architecture |
+| `c3` | **Primary C3 assistant** - Navigate, understand, analyze, and create ADRs |
 
-The **c3-navigator** agent is your single entry point for all C3 architectural work. It automatically detects what you need and responds appropriately:
+The **c3** agent is your single entry point for all C3 architectural work:
 
 | Your Question | Mode | What You Get |
 |---------------|------|--------------|
 | "Where is X documented?" | **Navigate** | Quick lookup → file path + summary |
-| "How does X work?" | **Understand** | Explanation from docs with relationships |
-| "Show me the architecture" | **Overview** | System summary from Context down |
-| "What would changing X affect?" | **Analyze** | Deep impact analysis + ADR handoff |
+| "How does X work?" | **Understand** | Explanation from docs |
+| "Show me the architecture" | **Overview** | System summary |
+| "Add/change X" | **Analyze + Design** | Impact analysis → ADR creation if needed |
 
-**Analyze mode** uses Socratic questioning to fully understand your planned change, then traces impact across all C3 layers and prepares rich context for ADR creation via `c3-design`.
+**Analyze mode** uses Socratic questioning, then creates ADRs directly when warranted.
 
 ### When to Use What
 
 | Need | Use | Why |
 |------|-----|-----|
-| Find where X is documented | `c3-navigator` agent | Fast read-only lookup |
-| Understand how Y works | `c3-navigator` agent | Explains from existing docs |
-| Impact of changing Z | `c3-navigator` → `c3-design` | Agent analyzes, skill creates ADR |
-| Create/update architecture docs | `/c3` or `c3-design` skill | Modifies documentation |
+| Any C3 question or change | `c3` agent | Single entry point, handles everything |
 | Initialize C3 for new project | `c3-adopt` skill | Bootstraps .c3/ structure |
 | Verify docs match code | `/c3-audit` command | Post-implementation validation |
 
-**Workflow: Analyze → Design → Audit**
-1. `c3-navigator` (Analyze mode) → Generates ADR Handoff
-2. `c3-design` skill → Creates ADR + updates docs
-3. `c3-audit` skill → Verifies implementation matches ADR
+**Workflow:** `c3` agent → creates ADR if needed → `c3-audit` verifies implementation
 
 ### Skills (8)
 
@@ -135,76 +156,30 @@ Utility patterns extracted as reference docs (not skills):
 ```markdown
 # Architecture
 
-## 🧠 Before You Code: Check the Architecture
+## C3 Architecture
 
-This project has **documented architecture** in `.c3/`. Reading it first makes you significantly more effective.
+**Before architectural work:** Spawn `c3-skill:c3` subagent first.
 
-\`\`\`bash
-ls .c3/README.md 2>/dev/null && echo "📚 Architecture docs exist - READ FIRST"
-\`\`\`
+It reads .c3/ docs, analyzes impact, and creates ADRs when needed.
 
-### Why This Matters
-
-| Without .c3/ docs | With .c3/ docs |
-|-------------------|----------------|
-| Guess where code belongs | Know exactly which container owns it |
-| Hope API contracts are correct | See documented protocols |
-| Discover patterns by accident | Understand patterns upfront |
-| Risk breaking undocumented flows | See flows before touching them |
-
-### Your Architecture Superpower
-
-**Before any significant change, ask yourself:**
-
-> "Do I understand where this fits in the architecture?"
-
-If NO → Read `.c3/` docs first. They exist to save you from mistakes.
-
-If `.c3/` doesn't exist → Suggest using `/c3` to create it.
-
-### Quick Navigation
-
-| Question | Answer Location |
-|----------|-----------------|
-| What is this system? | `.c3/README.md` |
-| What containers exist? | `.c3/README.md` → Containers table |
-| How do they communicate? | `.c3/README.md` → Interactions |
-| What's inside container X? | `.c3/c3-{N}-*/README.md` |
-| How does component Y work? | `.c3/c3-{N}-*/c3-{N}{NN}-*.md` |
-
-### Triggers: When to Think About Architecture
+### Triggers: Spawn c3 Agent
 
 | You're about to... | First... |
 |--------------------|----------|
-| Add a new file/module | Check which container it belongs to |
-| Change an API | Read the documented protocol |
-| Refactor code | Verify against documented flows |
-| Add inter-service communication | Check container interactions |
-| "Just quickly fix something" | Read the component doc (2 min saves 20 min) |
+| Add a new feature | Spawn c3 agent |
+| Change an API | Spawn c3 agent |
+| Refactor code | Spawn c3 agent |
+| "Just quickly fix something" | Spawn c3 agent (2 min saves 20 min) |
 
-### Red Flags: Stop and Read .c3/
+### Red Flags: STOP and Spawn c3 Agent
 
 🚩 "I'm not sure where this code should go"
-🚩 "I'll figure out the architecture as I implement"
 🚩 "This might affect other services"
 🚩 Creating new directories without checking boundaries
-🚩 Changing function signatures on shared code
-
-### Commands, Skills & Agents
-
-| Need to... | Use |
-|------------|-----|
-| Navigate, understand, or analyze architecture | `c3-navigator` agent |
-| Explore or design architecture | `/c3` or `c3-design` skill |
-| Bootstrap docs for new project | `c3-adopt` skill |
-| Understand a specific layer | `c3-context-design`, `c3-container-design`, `c3-component-design` |
 
 ### ⚠️ ADR Policy
 
-**DO NOT read ADRs** (Architecture Decision Records) unless asked:
-- They're historical context, not current guidance
-- Reading them pollutes your context with old debates
-- Current architecture is in Context/Container/Component docs
+**DO NOT read ADRs** unless asked - they're historical context, not current guidance.
 ```
 
 </details>

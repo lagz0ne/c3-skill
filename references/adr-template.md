@@ -152,6 +152,25 @@ Each verification item should have a testable criterion here.
 
 ## Related {#adr-yyyymmdd-related}
 - [Links to affected documents]
+
+## Audit Record {#adr-yyyymmdd-audit}
+<!--
+Tracks lifecycle transitions and audit runs. Updated by c3 agent.
+-->
+
+### Lifecycle
+
+| Phase | Date | Status | Notes |
+|-------|------|--------|-------|
+| Proposed | YYYY-MM-DD | ✓ | Created by c3 agent |
+| Accepted | | | |
+| Layer Docs Updated | | | |
+| Implemented | | | |
+
+### Audit Runs
+
+| Date | Scope | Result | Drift Detected |
+|------|-------|--------|----------------|
 ```
 
 ## Status Values

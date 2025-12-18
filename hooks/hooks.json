@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "condition": {
+          "directory_exists": ".c3"
+        },
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "## C3 Architecture Documentation Detected\n\nThis project has C3 (Context -> Container -> Component) architecture documentation in `.c3/`.\n\n**For architecture questions, use the `c3-design` skill** instead of reading files directly.\n\n| Question Type | Action |\n|--------------|--------|\n| \"What's the architecture?\" | `c3-design` skill (exploration mode) |\n| \"How does X work?\" | `c3-design` skill (exploration mode) |\n| \"Add/change something\" | `c3-design` skill (design mode) |\n\n**Commands:** `/c3` | `/c3-config` | `/c3-audit` | `/c3-migrate`\n\n**Tip:** Start with `/c3` to get an overview of the system architecture."
+          }
+        ]
+      }
+    ]
+  }
+}

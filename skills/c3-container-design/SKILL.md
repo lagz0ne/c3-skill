@@ -24,6 +24,11 @@ description: Use when exploring Container level impact during scoping - technolo
 - If container doc exists → Read it completely before proposing changes
 - Extract from Context: boundary, protocols, actors, cross-cutting concerns for this container
 
+**⚠️ DO NOT read ADRs** unless user specifically asks:
+- Container work focuses on current structure, not historical decisions
+- ADRs add unnecessary context → hallucination risk
+- Only read: Context, this Container, sibling Containers (if coordination needed)
+
 **Why this gate exists:** Containers INHERIT from Context. Proposing changes without understanding inherited constraints causes conflicts.
 
 **Self-check before proceeding:**
@@ -250,6 +255,38 @@ echo "Mermaid diagrams: $mermaid_count (need >= 2)"
 - [ ] BOTH diagrams included (External + Internal)
 - [ ] Components listed with responsibilities
 - [ ] Downstream delegation identified (c3-component-design)
+
+---
+
+## 📚 Reading Chain Output
+
+**At the end of container work, output a reading chain for components and related containers.**
+
+Format:
+```
+## 📚 To Go Deeper
+
+This container (c3-N) contains:
+
+**Components to explore:**
+├─ c3-N01-{slug} - [responsibility, why it matters]
+├─ c3-N02-{slug} - [responsibility, why it matters]
+└─ ...
+
+**Parent (inherited constraints):**
+└─ c3-0 (Context) - [what this container inherits]
+
+**Sibling containers (if coordination needed):**
+└─ c3-M-{slug} - [why coordination matters]
+
+*Reading chain generated from components listed in this Container.*
+```
+
+**Rules:**
+- List components from the Container's inventory
+- Highlight which components are affected by this change
+- Include parent Context for constraint reference
+- Never include ADRs unless user asked
 
 ---
 

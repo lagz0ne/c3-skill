@@ -27,6 +27,11 @@ description: Use when exploring Component level impact during scoping - implemen
 - If "COMPONENT_NOT_IN_CONTAINER" → **STOP.** Add component to Container first.
 - If component doc exists → Read it completely before proposing changes
 
+**⚠️ DO NOT read ADRs** unless user specifically asks:
+- Component work focuses on HOW, not historical WHY
+- ADRs add unnecessary context → hallucination risk
+- Only read: Context, parent Container, sibling Components (if dependencies)
+
 **Why this gate exists:** Components INHERIT from Container (and transitively from Context). A component cannot exist without being listed in its parent Container.
 
 **Self-check before proceeding:**
@@ -257,6 +262,37 @@ echo "Non-mermaid code blocks: $non_mermaid (should be 0)"
 - [ ] Flow diagram included (Mermaid)
 - [ ] **NO code blocks** (except Mermaid)
 - [ ] Tables used instead of JSON/YAML for data structures
+
+---
+
+## 📚 Reading Chain Output
+
+**At the end of component work, output a reading chain for related docs.**
+
+Format:
+```
+## 📚 To Go Deeper
+
+This component (c3-NNN) is part of:
+
+**Ancestors (understand constraints):**
+└─ c3-0 (Context) → c3-N (Container) → c3-NNN (this)
+
+**Sibling components (if dependencies):**
+├─ c3-NMM - [why this sibling matters]
+└─ c3-NKK - [dependency relationship]
+
+**Parent container (for context):**
+└─ c3-N-{slug} - [what contract this component fulfills]
+
+*Reading chain generated from component's dependencies and parent.*
+```
+
+**Rules:**
+- List siblings only if this component depends on or affects them
+- Always include parent Container for contract reference
+- Include Context only if cross-cutting concerns are relevant
+- Never include ADRs unless user asked
 
 ---
 

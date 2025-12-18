@@ -18,6 +18,11 @@ description: Use when bootstrapping C3 documentation for any project - guides th
 - If `.c3/` exists with content → Ask user: update, backup+recreate, or abort?
 - If `.c3/` exists but empty → Proceed with scaffolding
 
+**⚠️ DO NOT read existing ADRs** during adoption:
+- ADRs are historical records from past decisions
+- For fresh adoption, they add confusing context
+- If rebuilding, user will specify what to preserve
+
 **Why this gate exists:** Blindly creating `.c3/` can overwrite existing documentation.
 
 **Self-check before proceeding:**
@@ -180,6 +185,36 @@ ls .c3/components/ 2>/dev/null && echo "ERROR: V2 components folder"
 - [ ] Layer skills INVOKED (not described)
 - [ ] All verification commands pass
 - [ ] TOC generated
+
+---
+
+## 📚 Reading Chain Output
+
+**At the end of adoption, output a reading chain for the newly created docs.**
+
+Format:
+```
+## 📚 Your New C3 Documentation
+
+**Start here:**
+└─ .c3/README.md (c3-0) - System overview
+
+**Then explore containers:**
+├─ .c3/c3-1-{slug}/README.md - [description]
+├─ .c3/c3-2-{slug}/README.md - [description]
+└─ ...
+
+**Key components to understand:**
+├─ c3-101 - [why this is important]
+└─ c3-201 - [why this is important]
+
+*Reading chain generated from docs created during adoption.*
+```
+
+**Rules:**
+- List docs in logical reading order (context → containers → key components)
+- Explain WHY each doc matters (not generic)
+- Help user navigate their new documentation
 
 ---
 

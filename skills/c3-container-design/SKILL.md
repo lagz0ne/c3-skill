@@ -5,6 +5,35 @@ description: Use when exploring Container level impact during scoping - technolo
 
 # C3 Container Level Exploration
 
+## ⛔ CRITICAL GATE: Load Parent Context + Current Container First
+
+> **STOP** - Before ANY container-level work, execute:
+> ```bash
+> # Load parent Context (REQUIRED - containers inherit from here)
+> cat .c3/README.md 2>/dev/null || echo "NO_CONTEXT"
+> 
+> # Load current container (if exists)
+> cat .c3/c3-{N}-*/README.md 2>/dev/null || echo "NO_CONTAINER_DOC"
+> 
+> # Load settings
+> cat .c3/settings.yaml 2>/dev/null || echo "NO_SETTINGS"
+> ```
+
+**Based on output:**
+- If "NO_CONTEXT" → **STOP.** Context must exist first. Escalate to c3-context-design.
+- If container doc exists → Read it completely before proposing changes
+- Extract from Context: boundary, protocols, actors, cross-cutting concerns for this container
+
+**Why this gate exists:** Containers INHERIT from Context. Proposing changes without understanding inherited constraints causes conflicts.
+
+**Self-check before proceeding:**
+- [ ] I executed the commands above
+- [ ] I read parent Context doc
+- [ ] I know what constraints this container inherits
+- [ ] I read existing container doc (if exists)
+
+---
+
 ## Overview
 
 The Container level is the **architectural command center** of C3:
@@ -14,38 +43,13 @@ The Container level is the **architectural command center** of C3:
 
 **Position:** MIDDLE (c3-{N}) | Parent: Context (c3-0) | Children: Components (c3-{N}NN)
 
+**📁 File Location:** Container is `.c3/c3-{N}-{slug}/README.md` - a folder with README inside.
+
 **Announce:** "I'm using the c3-container-design skill to explore Container-level impact."
-
-**📁 File Location:** Container is `.c3/c3-{N}-{slug}/README.md` - a folder with README inside, NOT `containers/c3-N.md`.
-
----
-
-## ⛔ MERMAID-ONLY DIAGRAM ENFORCEMENT (MANDATORY)
-
-**Reference:** [diagram-patterns.md](../../references/diagram-patterns.md) - Full harness
-
-**This is non-negotiable:**
-- ALL diagrams MUST use Mermaid syntax in ` ```mermaid ` blocks
-- ASCII art, Unicode box drawing, text-based flowcharts are PROHIBITED
-
-### Quick Validation
-
-Before finalizing any Container doc:
-- [ ] All diagrams are Mermaid
-- [ ] No ASCII art anywhere
-
-### Red Flags
-
-🚩 `+---+` boxes or `├──` trees
-🚩 `-->` arrows outside Mermaid blocks
-🚩 Text describing flow without an actual diagram
-🚩 "See diagram below" with ASCII art following
 
 ---
 
 ## The Principle
-
-**Reference:** [core-principle.md](../../references/core-principle.md)
 
 > **Upper layer defines WHAT. Lower layer implements HOW.**
 
@@ -61,22 +65,7 @@ At Container level:
 
 ---
 
-## Include/Exclude
-
-See [defaults.md](./defaults.md) for complete rules.
-
-**Quick reference:**
-- **Include:** Component responsibilities, component relationships, data flows, business flows, inner patterns
-- **Exclude:** WHY container exists (Context), HOW components work internally (Component), code
-- **Litmus:** "Is this about WHAT components do and HOW they relate to each other?"
-
----
-
 ## Container Archetypes
-
-**Reference:** [container-archetypes.md](../../references/container-archetypes.md)
-
-Different containers have different relationships to content:
 
 | Archetype | Relationship | Typical Components |
 |-----------|--------------|-------------------|
@@ -87,67 +76,40 @@ Different containers have different relationships to content:
 
 ---
 
-## Load Settings
+## Include/Exclude
 
-Read `.c3/settings.yaml` and merge with `defaults.md`.
+| Include (Container Level) | Exclude (Push Up/Down) |
+|---------------------------|------------------------|
+| Component responsibilities | WHY container exists (Context) |
+| Component relationships | HOW components work internally (Component) |
+| Data flows between components | Code references |
+| Business flows | File paths |
+| Inner patterns | |
 
-```bash
-cat .c3/settings.yaml 2>/dev/null
-```
+**Litmus test:** "Is this about WHAT components do and HOW they relate to each other?"
 
 ---
 
 ## Exploration Process
 
-### Phase 1: Inherit From Context
+### Phase 1: Verify Inheritance
 
-**ALWAYS START HERE.**
-
-```bash
-cat .c3/README.md  # Load Context constraints
-```
-
-Extract for this container:
+From loaded Context, extract for this container:
 - **Boundary:** What can/cannot access
 - **Protocols:** What we implement (provider/consumer)
 - **Actors:** Who we serve
 - **Cross-cutting:** Patterns we must follow (auth, logging, errors)
 
-**Escalation triggers:** boundary violation, protocol break, actor change, cross-cutting deviation
-
-### Phase 2: Load Current Container
-
-```bash
-find .c3 -name "c3-{N}-*" -type d | head -1 | xargs -I {} cat {}/README.md
-```
-
-Extract: runtime, components, interactions, patterns
-
-### Phase 3: Analyze Change Impact
+### Phase 2: Analyze Change Impact
 
 | Direction | Action |
 |-----------|--------|
-| **Upstream** | New protocol/boundary violation → Escalate |
-| **Isolated** | Stack/pattern/API/org change → Document |
+| **Upstream** | New protocol/boundary violation → Escalate to c3-context-design |
+| **Isolated** | Stack/pattern/API/org change → Document here |
 | **Adjacent** | Component-to-component impact → Coordinate |
-| **Downstream** | New/changed components → Delegate |
+| **Downstream** | New/changed components → Delegate to c3-component-design |
 
-### Phase 4: Diagram Decisions
-
-**Reference:** [diagram-decision-framework.md](../../references/diagram-decision-framework.md)
-
-Use the framework's Quick Reference table to select diagrams based on container complexity (simple/moderate/complex).
-
-**For each potential diagram, ask:**
-1. Does this clarify what prose cannot?
-2. Will readers return to this as a "north star"?
-3. Is maintenance cost justified?
-
-**Document decision:** INCLUDE / SKIP / SIMPLIFY with one-sentence justification.
-
-### Phase 5: Socratic Discovery
-
-**Identify archetype:** "What is this container's relationship to content?"
+### Phase 3: Socratic Discovery
 
 **By archetype:**
 - **Service:** Responsibility? Key components? Critical flows?
@@ -157,25 +119,17 @@ Use the framework's Quick Reference table to select diagrams based on container 
 
 ---
 
-## Diagram Requirements
-
-**Container level REQUIRES two diagrams:**
-
-1. **External Relationships** - Shows connections to other containers/external systems
-2. **Internal Components** - Shows how components relate to each other
-
-See [diagram-patterns.md](../../references/diagram-patterns.md) for examples.
-
----
-
 ## Template
 
 ```markdown
 ---
 id: c3-{N}
+c3-version: 3
 title: [Container Name]
 type: container
 parent: c3-0
+summary: >
+  [One-line description of container purpose]
 ---
 
 # [Container Name]
@@ -215,11 +169,9 @@ flowchart TD
     subgraph Container["[Container Name] (c3-{N})"]
         C1[Component 1 c3-N01]
         C2[Component 2 c3-N02]
-        C3[Component 3 c3-N03]
     end
 
     C1 --> C2
-    C2 --> C3
 ` ` `
 
 ## Components
@@ -227,191 +179,83 @@ flowchart TD
 |-----------|-----|----------------|
 
 ## Key Flows
-[1-2 critical flows - describe WHAT happens, not HOW (that's Component's job)]
+[1-2 critical flows - describe WHAT happens, not HOW]
 ```
 
 ---
 
-## Output Format
+## Diagram Requirements
 
-```xml
-<container_exploration_result container="c3-{N}">
-  <inherited_verification>
-    <context_constraints honored="[yes|no]"/>
-    <escalation_needed>[yes|no]</escalation_needed>
-  </inherited_verification>
+**Container level REQUIRES two diagrams:**
 
-  <changes>
-    <change type="[stack|pattern|api|organization|component]">
-      [Description]
-    </change>
-  </changes>
+1. **External Relationships** - Shows connections to other containers/external systems
+2. **Internal Structure** - Shows how components relate to each other
 
-  <adjacent_impact>
-    <container id="c3-{M}">
-      <our_component>[name]</our_component>
-      <their_component>[name]</their_component>
-      <impact>[description]</impact>
-    </container>
-  </adjacent_impact>
-
-  <diagram_decisions>
-    <diagram type="[type]" include="[yes|no]">
-      <reason>[one sentence justification]</reason>
-    </diagram>
-  </diagram_decisions>
-
-  <downstream_propagation>
-    <component id="c3-{N}{NN}" action="[update|create|remove]">
-      <inherited_change>[what component must do]</inherited_change>
-    </component>
-  </downstream_propagation>
-
-  <delegation>
-    <to_skill name="c3-context-design" if="[escalation needed]"/>
-    <to_skill name="c3-component-design" components="[list]"/>
-  </delegation>
-</container_exploration_result>
-```
+Use **Mermaid only** - no ASCII art.
 
 ---
 
----
+## ⛔ Enforcement Harnesses
 
-## ⛔ TEMPLATE FIDELITY ENFORCEMENT (MANDATORY)
+### Harness 1: Template Fidelity
 
-**Rule:** Output documents MUST match the skill's template structure exactly.
+**Rule:** Output MUST match template structure exactly.
 
-### Anti-Patterns
-
-| Pattern | Why It's Wrong | Correct Action |
-|---------|----------------|----------------|
-| Adding creative sections not in template | Breaks consistency, confuses users | Stick to template sections |
-| Omitting "optional" template sections | They're optional content, not optional structure | Include section, mark N/A if empty |
-| Reordering template sections | Users expect consistent navigation | Maintain template order |
-| "Simplifying" the template for small containers | Small docs grow; structure must be ready | Full template always |
-
-### Red Flags
-
-🚩 Document has sections not in the template
-🚩 Template sections missing entirely (not even marked N/A)
-🚩 Section order differs from template
-🚩 Missing REQUIRED diagrams (External Relationships, Internal Structure)
-
-### Required Sections (Container)
-
-1. Frontmatter (id, title, type, parent)
+**Required sections (in order):**
+1. Frontmatter (id, c3-version, title, type, parent, summary)
 2. Inherited From Context
 3. Overview
 4. Technology Stack
-5. Architecture (External Relationships diagram - REQUIRED)
-6. Architecture (Internal Structure diagram - REQUIRED)
+5. Architecture - External Relationships (diagram REQUIRED)
+6. Architecture - Internal Structure (diagram REQUIRED)
 7. Components
 8. Key Flows
 
-### Self-Check
+🚩 **Red Flags:**
+- Sections missing or reordered
+- Only one diagram (need BOTH)
+- Missing "Inherited From Context" section
 
-- [ ] Did I read the template in this session?
-- [ ] Does my output have exactly the template sections, in order?
-- [ ] Are missing-content sections marked N/A, not deleted?
-- [ ] Are BOTH required diagrams present (External + Internal)?
+### Harness 2: Two Diagrams Required
 
-### Escape Hatch
+**Rule:** Container docs MUST have both External and Internal diagrams.
 
-User explicitly requests deviation: "Skip the Technology Stack section."
-
----
-
-## ⛔ REFERENCE LOADING ENFORCEMENT (MANDATORY)
-
-**Rule:** If a reference is mentioned, READ it before using its content.
-
-### Anti-Patterns
-
-| Pattern | Why It's Wrong | Correct Action |
-|---------|----------------|----------------|
-| "Per core-principle.md..." without reading | You're guessing the content | `cat references/core-principle.md` first |
-| "The container-archetypes.md says..." | Archetypes may have updated | Read the file |
-| "Following diagram-decision-framework.md..." | You need current guidance | Read the file |
-| Citing reference by memory from previous session | Context may have compacted | Re-read in this session |
-
-### Red Flags
-
-🚩 Quoting a reference file without a `cat` or Read command preceding it
-🚩 "As documented in X.md" without file content visible in conversation
-🚩 Paraphrasing reference content that wasn't loaded this session
-
-### Self-Check
-
-- [ ] For each reference I cite, is there a file read in this conversation?
-- [ ] Am I working from actual file content, not memory?
-
-### Escape Hatch
-
-If reference was read earlier in THIS conversation and context hasn't compacted, re-reading is optional.
+```bash
+# Verify both diagrams exist
+grep -c '```mermaid' .c3/c3-{N}-*/README.md  # Should be >= 2
+```
 
 ---
 
-## ⛔ OUTPUT VERIFICATION ENFORCEMENT (MANDATORY)
+## Verification Checklist
 
-**Rule:** Claiming completion requires verification evidence in the conversation.
+Before claiming completion, execute:
 
-### Verification Requirements
+```bash
+# Verify container doc exists in correct location
+ls .c3/c3-*-*/README.md
 
-| Claim | Required Evidence |
-|-------|-------------------|
-| "Created Container doc" | Write command to `.c3/c3-{N}-*/README.md` visible |
-| "Structure is correct" | Validation checklist executed with results |
-| "Diagrams included" | Both Mermaid blocks visible in output |
-| "Template followed" | Section-by-section match verified |
-| "Delegated to c3-component-design" | Skill tool invocation visible |
+# Verify frontmatter
+grep -E "^id:|^type:|^parent:" .c3/c3-{N}-*/README.md
 
-### Anti-Patterns
+# Verify BOTH mermaid diagrams exist
+mermaid_count=$(grep -c '```mermaid' .c3/c3-{N}-*/README.md)
+echo "Mermaid diagrams: $mermaid_count (need >= 2)"
+```
 
-| Pattern | Why It's Wrong | Correct Action |
-|---------|----------------|----------------|
-| "Container doc complete" (no file ops visible) | No evidence of creation | Show the write command |
-| "Following template" (no verification) | Template drift is common | Verify section-by-section |
-| "Both diagrams included" (only one visible) | May have forgotten one | Verify both mermaid blocks |
-| "Components delegated" (no skill invocation) | Hallucination | Show Skill tool usage |
-
-### Red Flags
-
-🚩 Completion claim without corresponding tool usage
-🚩 "Done" without checklist execution
-🚩 Describing artifacts that weren't created in this conversation
-🚩 Only one diagram when two are REQUIRED
-
-### Self-Check
-
-- [ ] For each artifact I claim exists, is there evidence of its creation?
-- [ ] Did I run the skill's validation checklist?
-- [ ] Can a reviewer see proof in this conversation?
-- [ ] Are BOTH required diagrams present?
-
-### Escape Hatch
-
-None. Unverified completion = not complete.
-
----
-
-## Checklist
-
-- [ ] Context constraints loaded and verified
-- [ ] Container archetype determined
-- [ ] Change impact analyzed (upstream/isolated/adjacent/downstream)
-- [ ] Diagram decisions made with justification
-- [ ] Downstream contracts documented
-- [ ] Delegation list prepared
-- [ ] **Template fidelity verified** (all sections present, in order, both diagrams)
-- [ ] **References loaded** (not assumed from memory)
-- [ ] **Output verified** (file creation evidence visible)
+- [ ] Critical gate executed (Context + current container loaded)
+- [ ] Container is listed in Context's container inventory
+- [ ] "Inherited From Context" section populated from parent
+- [ ] Template sections present in correct order
+- [ ] BOTH diagrams included (External + Internal)
+- [ ] Components listed with responsibilities
+- [ ] Downstream delegation identified (c3-component-design)
 
 ---
 
 ## Related
 
-- [core-principle.md](../../references/core-principle.md) - The C3 principle
-- [defaults.md](./defaults.md) - Container layer rules
-- [container-archetypes.md](../../references/container-archetypes.md) - Container types
-- [diagram-decision-framework.md](../../references/diagram-decision-framework.md) - Full diagram guidance
+- `references/core-principle.md` - The C3 principle
+- `defaults.md` - Container layer rules
+- `references/container-archetypes.md` - Container types
+- `references/diagram-decision-framework.md` - When to use which diagram

@@ -5,6 +5,28 @@ description: Use when bootstrapping C3 documentation for any project - guides th
 
 # C3 Adopt
 
+## ⛔ CRITICAL GATE: Check Existing State First
+
+> **STOP** - Before ANY adoption work, execute:
+> ```bash
+> ls -la .c3/ 2>/dev/null || echo "NO_C3_DIR"
+> cat .c3/README.md 2>/dev/null || echo "NO_CONTEXT"
+> ```
+
+**Based on output:**
+- If "NO_C3_DIR" → Fresh project, proceed with scaffolding
+- If `.c3/` exists with content → Ask user: update, backup+recreate, or abort?
+- If `.c3/` exists but empty → Proceed with scaffolding
+
+**Why this gate exists:** Blindly creating `.c3/` can overwrite existing documentation.
+
+**Self-check before proceeding:**
+- [ ] I executed the commands above
+- [ ] I know whether .c3/ exists
+- [ ] If exists: I asked user what to do
+
+---
+
 ## Overview
 
 Bootstrap C3 architecture documentation through Socratic questioning and delegation. Works for existing codebases and fresh projects.
@@ -13,15 +35,23 @@ Bootstrap C3 architecture documentation through Socratic questioning and delegat
 
 ---
 
-## 📁 V3 STRUCTURE ENFORCEMENT (MANDATORY)
+## Scenario Detection
 
-**This is non-negotiable. C3 v3 uses a specific hierarchical file structure.**
+| Scenario | Signal | Path |
+|----------|--------|------|
+| Fresh project | No `.c3/`, no code | Questions → Scaffold → Document |
+| Existing codebase | Code exists, no `.c3/` | Explore code → Questions → Document |
+| Rebuild needed | `.c3/` exists, user wants reset | Backup → Fresh start |
 
-### Required Structure (V3)
+---
+
+## V3 Structure (MANDATORY)
 
 ```
 .c3/
 ├── README.md                     ← Context (c3-0) IS the README
+├── TOC.md                        ← Table of contents
+├── settings.yaml                 ← Project settings
 ├── c3-1-{slug}/
 │   ├── README.md                 ← Container 1
 │   └── c3-101-{slug}.md          ← Component inside container
@@ -31,16 +61,7 @@ Bootstrap C3 architecture documentation through Socratic questioning and delegat
     └── adr-YYYYMMDD-{slug}.md    ← ADRs
 ```
 
-### Prohibited Patterns (V2 - DO NOT USE)
-
-| Pattern | Why Wrong |
-|---------|-----------|
-| `context/c3-0.md` | Context IS `.c3/README.md`, not a separate folder |
-| `containers/c3-1.md` | Containers are folders: `.c3/c3-1-{slug}/README.md` |
-| `components/c3-101.md` | Components live INSIDE their container folder |
-| Any `c3-0.md` file | Context is always `README.md` at `.c3/` root |
-
-### File Path Rules
+**File Path Rules:**
 
 | Level | Path | Example |
 |-------|------|---------|
@@ -49,187 +70,121 @@ Bootstrap C3 architecture documentation through Socratic questioning and delegat
 | Component | `.c3/c3-{N}-{slug}/c3-{N}{NN}-{slug}.md` | `.c3/c3-1-backend/c3-101-api.md` |
 | ADR | `.c3/adr/adr-{YYYYMMDD}-{slug}.md` | `.c3/adr/adr-20251216-auth.md` |
 
-### Red Flags - STOP and Fix If You See
-
-🚩 Creating a `context/` folder
-🚩 Creating a `containers/` folder
-🚩 Creating a `components/` folder
-🚩 Any file named `c3-0.md` (should be `README.md`)
-🚩 Component files outside their parent container folder
-🚩 Container as a single file instead of a folder with README.md
-
-### Validation Checklist (RUN BEFORE COMPLETING)
-
-- [ ] Context is `.c3/README.md` (not in a subfolder)
-- [ ] Each container is a folder: `.c3/c3-{N}-{slug}/`
-- [ ] Each container has `README.md` inside its folder
-- [ ] Components are inside their container folder
-- [ ] No `context/`, `containers/`, or `components/` folders exist
-
 ---
-
-## When to Use
-
-| Scenario | Path |
-|----------|------|
-| Existing codebase needs C3 docs | Explore → Question → Document |
-| New project, no code yet | Question → Scaffold → Document |
-| `.c3/` exists but needs rebuild | Ask: update, backup+recreate, or abort |
 
 ## Process
 
-| Phase | Actions | Delegates To |
-|-------|---------|--------------|
-| 1. Detect | Check for `.c3/`, existing code | - |
-| 2. Discover | Socratic questions per `references/discovery-questions.md` | - |
-| 3. Context | Document containers, actors, protocols | c3-context-design |
-| 4. Containers | For each container: components, tech, patterns | c3-container-design |
-| 5. Components | For key components: flows, dependencies | c3-component-design |
-| 6. Settings | Configure if missing | c3-config |
+### Phase 1: Detect
 
-## Socratic Discovery
+Already done via Critical Gate.
 
-Use questions from `references/discovery-questions.md`:
-- Start broad: "What problem does this system solve?"
-- Identify containers: "What are the major deployable parts?"
-- Map relationships: "How do containers communicate?"
+### Phase 2: Discover (Socratic Questions)
 
-**For existing codebases:** Explore first, then refine with questions.
-**For fresh projects:** Questions only, no code exploration.
+**For fresh projects:**
+- "What problem does this system solve?"
+- "Who are the users/actors?"
+- "What are the major deployable parts?"
 
-## Delegation Pattern
+**For existing codebases:**
+- Explore code structure first
+- "I see X, Y, Z directories. What are the major containers?"
+- "How do these parts communicate?"
 
-After discovery, delegate to layer skills in order:
-1. c3-context-design → Creates c3-0 (Context)
-2. c3-container-design → Creates c3-N for each container
-3. c3-component-design → Creates c3-NNN for key components
-4. c3-config → Creates settings.yaml if missing
-
----
-
-## ⛔ SKILL DELEGATION ENFORCEMENT (MANDATORY)
-
-**Rule:** When work requires a layer skill, INVOKE it. Never describe what it "would do."
-
-### Anti-Patterns
-
-| Pattern | Why It's Wrong | Correct Action |
-|---------|----------------|----------------|
-| "c3-context-design would create..." | Hallucinating skill behavior | Use Skill tool → c3-context-design |
-| "Following c3-container-design template..." | You don't have its template loaded | Invoke the skill first |
-| "This is simple, I'll create docs directly" | Layer skills have guardrails you're bypassing | Always invoke for layer work |
-| Summarizing a skill's output without invoking | Fabrication | Invoke, get real output |
-
-### Red Flags
-
-🚩 Using layer skill name as a noun ("the c3-context-design approach")
-🚩 Describing layer skill output without a Skill tool call in the conversation
-🚩 "I'll apply c3-X-design principles" without invoking it
-🚩 Creating `.c3/` files without invoking the appropriate layer skill
-
-### Self-Check
-
-- [ ] Did I use the Skill tool for each layer I'm creating docs for?
-- [ ] Am I quoting actual skill output, not imagined output?
-- [ ] Is there a Skill tool invocation for context, container, and component work?
-
-### Escape Hatch
-
-None. Layer work = layer skill invocation. No exceptions.
-
----
-
-## ⛔ OUTPUT VERIFICATION ENFORCEMENT (MANDATORY)
-
-**Rule:** Claiming completion requires verification evidence in the conversation.
-
-### Verification Requirements
-
-| Claim | Required Evidence |
-|-------|-------------------|
-| "Created .c3/ structure" | `mkdir` commands + `ls .c3/` showing structure |
-| "Context doc created" | Write command to `.c3/README.md` visible |
-| "Container docs created" | Write commands to `.c3/c3-{N}-*/README.md` visible |
-| "Delegated to skill X" | Skill tool invocation visible |
-| "V3 structure validated" | Validation checklist executed with results |
-
-### Anti-Patterns
-
-| Pattern | Why It's Wrong | Correct Action |
-|---------|----------------|----------------|
-| "I've scaffolded the .c3 structure" (no file ops visible) | No evidence of creation | Show the mkdir/write commands |
-| "Adoption complete" (no validation) | Structure errors are common | Run validation checklist |
-| "Delegation complete" (no skill invocation) | Hallucination | Show Skill tool usage |
-
-### Red Flags
-
-🚩 Completion claim without corresponding tool usage
-🚩 "Done" without running V3 structure validation checklist
-🚩 Describing artifacts that weren't created in this conversation
-
-### Self-Check
-
-- [ ] For each file I claim exists, is there evidence of its creation?
-- [ ] Did I run the V3 STRUCTURE ENFORCEMENT validation checklist?
-- [ ] Can a reviewer see proof in this conversation?
-
-### Escape Hatch
-
-None. Unverified completion = not complete.
-
-## Scaffolding
-
-**Create V3 structure before delegation:**
+### Phase 3: Scaffold
 
 ```bash
 # Create base structure
 mkdir -p .c3/adr
 
-# Create container folders (NOT a containers/ folder!)
+# Create container folders based on discovery
 mkdir -p .c3/c3-1-{slug}
 mkdir -p .c3/c3-2-{slug}
-# ... for each container
 
-# Context goes in README.md at root (NOT context/c3-0.md!)
+# Create empty README (will be filled by c3-context-design)
 touch .c3/README.md
 ```
 
-**Remember:**
-- Context → `.c3/README.md` (the root README IS the context)
-- Container → `.c3/c3-{N}-{slug}/README.md` (folder with README inside)
-- Component → `.c3/c3-{N}-{slug}/c3-{N}{NN}-{slug}.md` (inside container folder)
+### Phase 4: Delegate to Layer Skills
 
-Generate TOC after documentation is complete.
+**INVOKE each skill in order:**
 
-## Checklist
+| Order | Skill | Creates |
+|-------|-------|---------|
+| 1 | **Use Skill tool → c3-context-design** | `.c3/README.md` |
+| 2 | **Use Skill tool → c3-container-design** | `.c3/c3-{N}-*/README.md` |
+| 3 | **Use Skill tool → c3-component-design** | `.c3/c3-{N}-*/c3-{N}{NN}-*.md` |
+| 4 | **Use Skill tool → c3-config** | `.c3/settings.yaml` |
 
-- [ ] Scenario detected (existing vs fresh)
+### Phase 5: Generate TOC
+
+After all docs created:
+```bash
+# Run TOC generator
+./scripts/build-toc.sh
+# Or manually create TOC.md
+```
+
+---
+
+## ⛔ Enforcement Harnesses
+
+### Harness 1: V3 Structure (No V2 Patterns)
+
+**Rule:** Use V3 hierarchical structure. V2 flat structure is prohibited.
+
+| Prohibited (V2) | Required (V3) |
+|-----------------|---------------|
+| `context/c3-0.md` | `.c3/README.md` |
+| `containers/c3-1.md` | `.c3/c3-1-{slug}/README.md` |
+| `components/c3-101.md` | `.c3/c3-1-{slug}/c3-101-{slug}.md` |
+
+🚩 **Red Flags:**
+- Creating `context/`, `containers/`, or `components/` folders
+- Any file named `c3-0.md`
+- Components outside their container folder
+
+### Harness 2: Skill Delegation (No Hallucination)
+
+**Rule:** INVOKE layer skills. Never create C3 docs directly.
+
+| Anti-Pattern | Correct Action |
+|--------------|----------------|
+| Writing `.c3/README.md` content directly | Use Skill tool → c3-context-design |
+| "c3-container-design would create..." | Invoke the skill |
+| Creating docs without skill invocation | Always delegate to layer skill |
+
+🚩 **Red Flag:** Write tool used on `.c3/` files without prior Skill tool invocation
+
+---
+
+## Verification Checklist
+
+Before claiming adoption complete, execute:
+
+```bash
+# Verify V3 structure
+ls .c3/README.md                           # Context exists
+ls -d .c3/c3-[1-9]-*/                       # Container folders exist
+ls .c3/c3-[1-9]-*/README.md                 # Container READMEs exist
+
+# Verify no V2 patterns
+ls .c3/context/ 2>/dev/null && echo "ERROR: V2 context folder"
+ls .c3/containers/ 2>/dev/null && echo "ERROR: V2 containers folder"
+ls .c3/components/ 2>/dev/null && echo "ERROR: V2 components folder"
+```
+
+- [ ] Critical gate executed (existing state checked)
+- [ ] User scenario confirmed (fresh/existing/rebuild)
 - [ ] Discovery questions completed
-- [ ] **📁 V3 structure scaffolded** (no context/, containers/, components/ folders)
-- [ ] Context created as `.c3/README.md`
-- [ ] Containers created as `.c3/c3-{N}-{slug}/README.md`
-- [ ] Components created inside their container folders
-- [ ] Settings configured
+- [ ] V3 structure scaffolded
+- [ ] Layer skills INVOKED (not described)
+- [ ] All verification commands pass
 - [ ] TOC generated
-- [ ] **📁 Structure validation passed** (see V3 STRUCTURE ENFORCEMENT)
 
-## Platform Docs (Recommended)
-
-Platform concerns (deployment, networking, secrets, CI/CD) reduce onboarding friction. Ask user if they want to document:
-
-```
-.c3/platform/
-├── deployment.md      # c3-0-deployment
-├── networking.md      # c3-0-networking
-├── secrets.md         # c3-0-secrets
-└── ci-cd.md           # c3-0-cicd
-```
-
-Use `c3-0-*` IDs for Context-level platform docs.
+---
 
 ## Related
 
 - `references/discovery-questions.md` - Socratic question templates
 - `references/v3-structure.md` - File structure conventions
 - `references/archetype-hints.md` - Container type patterns
-- `references/derivation-guardrails.md` - Hierarchy rules

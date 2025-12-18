@@ -1,0 +1,43 @@
+# Architecture (C3)
+
+This project uses C3 (Context-Container-Component) architecture documentation.
+
+## Quick Start
+
+```bash
+# Check if C3 docs exist
+ls .c3/ 2>/dev/null && echo "C3 docs exist - read before changing"
+```
+
+## When to Use C3
+
+| Situation | Action |
+|-----------|--------|
+| "How does X work?" | Read `.c3/` docs first |
+| Adding new feature | Check which container it belongs to |
+| Changing how components interact | Use `/c3` or `c3-design` skill |
+| Refactoring across modules | Verify changes align with documented flows |
+| Onboarding question | Point to `.c3/README.md` |
+
+## Navigation
+
+| Want to understand... | Read |
+|-----------------------|------|
+| System overview | `.c3/README.md` |
+| How containers talk | `.c3/README.md` → Container Interactions |
+| What a container does | `.c3/c3-{N}-*/README.md` |
+| How a component works | `.c3/c3-{N}-*/c3-{N}{NN}-*.md` |
+
+## Red Flags (Stop and Check C3)
+
+🚩 Adding a new service/module without checking container boundaries
+🚩 Changing API contracts without checking documented protocols
+🚩 "I'll figure out the architecture as I code"
+🚩 Making changes that span multiple containers
+
+## ADR Policy
+
+**DO NOT read ADRs** unless specifically asked about past decisions:
+- ADRs are historical records, not active guidance
+- Reading them adds context that may cause hallucination
+- Focus on current state in Context/Container/Component docs

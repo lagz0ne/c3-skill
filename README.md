@@ -73,6 +73,39 @@ Claude will:
 | `/c3-migrate` | Migrate documentation to current skill version |
 | `/c3-audit` | Audit C3 docs against codebase reality |
 
+### Agent
+
+| Agent | Purpose |
+|-------|---------|
+| `c3-navigator` | **Primary C3 assistant** - Navigate, understand, and analyze architecture |
+
+The **c3-navigator** agent is your single entry point for all C3 architectural work. It automatically detects what you need and responds appropriately:
+
+| Your Question | Mode | What You Get |
+|---------------|------|--------------|
+| "Where is X documented?" | **Navigate** | Quick lookup → file path + summary |
+| "How does X work?" | **Understand** | Explanation from docs with relationships |
+| "Show me the architecture" | **Overview** | System summary from Context down |
+| "What would changing X affect?" | **Analyze** | Deep impact analysis + ADR handoff |
+
+**Analyze mode** uses Socratic questioning to fully understand your planned change, then traces impact across all C3 layers and prepares rich context for ADR creation via `c3-design`.
+
+### When to Use What
+
+| Need | Use | Why |
+|------|-----|-----|
+| Find where X is documented | `c3-navigator` agent | Fast read-only lookup |
+| Understand how Y works | `c3-navigator` agent | Explains from existing docs |
+| Impact of changing Z | `c3-navigator` → `c3-design` | Agent analyzes, skill creates ADR |
+| Create/update architecture docs | `/c3` or `c3-design` skill | Modifies documentation |
+| Initialize C3 for new project | `c3-adopt` skill | Bootstraps .c3/ structure |
+| Verify docs match code | `/c3-audit` command | Post-implementation validation |
+
+**Workflow: Analyze → Design → Audit**
+1. `c3-navigator` (Analyze mode) → Generates ADR Handoff
+2. `c3-design` skill → Creates ADR + updates docs
+3. `c3-audit` skill → Verifies implementation matches ADR
+
 ### Skills (8)
 
 | Skill | Purpose |
@@ -157,10 +190,11 @@ If `.c3/` doesn't exist → Suggest using `/c3` to create it.
 🚩 Creating new directories without checking boundaries
 🚩 Changing function signatures on shared code
 
-### Commands & Skills
+### Commands, Skills & Agents
 
 | Need to... | Use |
 |------------|-----|
+| Navigate, understand, or analyze architecture | `c3-navigator` agent |
 | Explore or design architecture | `/c3` or `c3-design` skill |
 | Bootstrap docs for new project | `c3-adopt` skill |
 | Understand a specific layer | `c3-context-design`, `c3-container-design`, `c3-component-design` |

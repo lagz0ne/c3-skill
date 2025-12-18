@@ -1,0 +1,79 @@
+# C3 Architecture Enforcement Template
+
+> **Instructions:** Copy the relevant sections below into your project's `CLAUDE.md` file
+> for strong c3-design skill enforcement.
+
+---
+
+## Architecture Documentation (Add to CLAUDE.md)
+
+This project uses **C3 (Context-Container-Component)** architecture methodology.
+
+### Mandatory Behavior
+
+**For ANY architecture-related question:**
+
+1. **DO NOT** read `.c3/` files directly
+2. **ALWAYS** invoke the `c3-design` skill first
+3. Let the skill guide exploration or design workflow
+
+### Why This Matters
+
+The `c3-design` skill provides:
+- **Exploration mode**: Guided navigation with context awareness
+- **Design mode**: Structured workflow with mandatory ADR creation
+- **Layer awareness**: Appropriate documentation at Context/Container/Component levels
+
+Reading files directly bypasses these benefits and may lead to:
+- Missing the big picture (jumping to components without understanding context)
+- Inconsistent documentation updates
+- Skipped ADR creation for architectural decisions
+
+### Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/c3` | Design or explore architecture (main entry point) |
+| `/c3-config` | Configure C3 settings |
+| `/c3-audit` | Verify docs match code reality |
+| `/c3-migrate` | Handle version migrations |
+
+### Quick Start
+
+```
+User: "How does the authentication work?"
+Claude: *Uses c3-design skill in exploration mode*
+        *Loads TOC, presents relevant containers/components*
+
+User: "Add a caching layer"  
+Claude: *Uses c3-design skill in design mode*
+        *Goes through scoping phases, creates ADR*
+```
+
+---
+
+## Optional: Architecture Questions Trigger
+
+Add this pattern to make architecture questions auto-trigger the skill:
+
+```markdown
+### Architecture Question Patterns
+
+When user asks any of these question types, use `c3-design` skill:
+- "What's the architecture?"
+- "How does X work?"
+- "Why did we choose X?"
+- "Show me the X container/component"
+- "Explain the system"
+- "Walk me through..."
+```
+
+---
+
+## Minimal Version (Just the essentials)
+
+```markdown
+## Architecture
+
+Use `/c3` for all architecture work. Documentation lives in `.c3/`.
+```

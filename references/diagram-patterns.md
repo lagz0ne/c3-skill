@@ -2,6 +2,47 @@
 
 Diagrams should **clarify**, not mandate. Generate when helpful, skip when trivial.
 
+---
+
+## ⛔ MERMAID-ONLY ENFORCEMENT (MANDATORY)
+
+**This is non-negotiable. ALL diagrams in C3 documentation MUST use Mermaid syntax.**
+
+### What is Prohibited (NO EXCEPTIONS)
+
+| Prohibited | Example | Why Prohibited |
+|------------|---------|----------------|
+| ASCII art diagrams | `+---+ → +---+` boxes | Not renderable, poor accessibility |
+| Text-based flowcharts | `A --> B --> C` plain text | Not a diagram, just text |
+| Unicode box drawing | `┌──┐ │ │ └──┘` | Platform-dependent rendering |
+| Indented hierarchies | Tree structures with `├──` | Use Mermaid `graph TD` instead |
+| Any non-Mermaid visual | Anything not in ` ```mermaid ` block | Inconsistent, not interactive |
+
+### Why Mermaid is Required
+
+1. **Renderable** - GitHub, GitLab, and most markdown viewers render Mermaid natively
+2. **Accessible** - Screen readers can parse structure
+3. **Maintainable** - Standard syntax, easy to diff/review in PRs
+4. **Consistent** - Single format across all documentation
+
+### Validation Checklist (RUN BEFORE FINALIZING)
+
+Before completing any C3 document with diagrams, verify:
+
+- [ ] **All diagrams use ` ```mermaid ` code blocks**
+- [ ] **No ASCII art or Unicode box drawing anywhere**
+- [ ] **No plain-text "diagrams" that should be visual**
+
+### Red Flags - STOP and Rewrite If You See
+
+🚩 `+---+` or `|   |` box drawing characters
+🚩 `───>` or `-->` arrows outside Mermaid blocks
+🚩 `├──` or `└──` tree characters
+🚩 Indentation-based hierarchies meant to show structure
+🚩 "Here's the flow: A then B then C" without a mermaid diagram
+
+---
+
 ## When to Use Diagrams
 
 **Use a diagram when:**

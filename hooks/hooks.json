@@ -12,6 +12,32 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "condition": {
+          "tool_name": "edit",
+          "path_pattern": "^.c3/(?!adr/).*\\.md$"
+        },
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "⚠️ **C3 Documentation Edit Detected**\n\nYou're about to modify C3 documentation (not an ADR).\n\n**Checklist:**\n- [ ] Am I in Design Mode (not just exploration)?\n- [ ] Does an ADR exist for this change?\n- [ ] Did I complete Phase 1 (Surface Understanding) and Phase 2 (Iterative Scoping)?\n\n**If NO ADR exists:** Create one first in `.c3/adr/adr-YYYYMMDD-slug.md`\n\n*This reminder ensures architecture decisions are tracked before documentation changes.*"
+          }
+        ]
+      },
+      {
+        "condition": {
+          "tool_name": "write",
+          "path_pattern": "^.c3/(?!adr/).*\\.md$"
+        },
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "⚠️ **C3 Documentation Write Detected**\n\nYou're about to create/overwrite C3 documentation (not an ADR).\n\n**Checklist:**\n- [ ] Am I in Design Mode (not just exploration)?\n- [ ] Does an ADR exist for this change?\n- [ ] Did I complete Phase 1 (Surface Understanding) and Phase 2 (Iterative Scoping)?\n\n**If NO ADR exists:** Create one first in `.c3/adr/adr-YYYYMMDD-slug.md`\n\n*This reminder ensures architecture decisions are tracked before documentation changes.*"
+          }
+        ]
+      }
     ]
   }
 }

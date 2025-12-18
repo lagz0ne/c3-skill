@@ -63,6 +63,18 @@ Quick read-only navigation:
 
 Full workflow with **mandatory ADR creation**.
 
+> **⛔ DESIGN MODE GATE: Load References**
+> ```bash
+> # Load skill references (from plugin directory)
+> cat references/design-guardrails.md
+> cat references/adr-template.md
+> ```
+> 
+> **Self-check before proceeding:**
+> - [ ] I read design-guardrails.md (common mistakes, red flags)
+> - [ ] I read adr-template.md (ADR structure, required sections)
+> - [ ] I understand ADR+Plan are inseparable (no ADR without Plan)
+
 ---
 
 ## Design Mode Workflow

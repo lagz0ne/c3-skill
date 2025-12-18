@@ -1,5 +1,65 @@
 # C3 Skill Development Guidelines
 
+> **STOP** - Before ANY action in this repo, you MUST run:
+> ```
+> Skill tool → superpowers-developing-for-claude-code:developing-claude-code-plugins
+> Skill tool → superpowers-developing-for-claude-code:working-with-claude-code
+> ```
+> This is a Claude Code plugin. These skills are NON-NEGOTIABLE.
+
+---
+
+## MANDATORY: Claude Code Plugin Development Context
+
+**THIS IS A CLAUDE CODE PLUGIN.** You MUST load plugin development context before ANY work in this repository.
+
+### Required Skills - Load IMMEDIATELY
+
+Before doing ANYTHING in this codebase, you MUST invoke these skills:
+
+1. **`superpowers-developing-for-claude-code:developing-claude-code-plugins`**
+   - Use for: Creating, modifying, testing, releasing, or maintaining plugins
+   - Contains: Plugin lifecycle patterns, manifest structure, skill authoring
+
+2. **`superpowers-developing-for-claude-code:working-with-claude-code`**
+   - Use for: Understanding Claude Code CLI, hooks, MCP, configuration
+   - Contains: Official documentation for all Claude Code features
+
+### Activation Harness
+
+**STOP. Before you do anything else, ask yourself:**
+
+```
+[ ] Have I loaded developing-claude-code-plugins skill?
+[ ] Have I loaded working-with-claude-code skill?
+```
+
+**If NO to either:** Use the Skill tool NOW. Do not proceed without this context.
+
+**Common rationalizations that mean you're about to fail:**
+- "I already know how plugins work" → WRONG. Load the skill for current patterns.
+- "This is just a small change" → WRONG. Small changes can break plugin loading.
+- "I'll check if I need it" → WRONG. You need it. This is a plugin repo.
+- "The CLAUDE.md has enough context" → WRONG. Skills have implementation details.
+- "I remember from last time" → WRONG. Skills get updated. Load current version.
+
+**Why this matters:**
+- Plugin manifests have specific structure requirements
+- Skills have naming conventions and file organization rules
+- Commands must be registered correctly
+- Breaking any of these = plugin fails to load for users
+
+### When to Re-load Skills
+
+Re-invoke these skills when:
+- Starting a new session (context may have compacted)
+- Switching between different types of work
+- Encountering unexpected plugin behavior
+- Before modifying `.claude-plugin/` manifests
+- Before creating new skills or commands
+
+---
+
 ## Migration Awareness
 
 **CRITICAL:** When making changes to this plugin, assess whether they require user migration.

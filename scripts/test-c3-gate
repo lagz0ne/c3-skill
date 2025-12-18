@@ -1,0 +1,202 @@
+#!/usr/bin/env bash
+#
+# Tests for c3-gate (bash script)
+#
+# Run with: ./scripts/test-c3-gate
+#
+
+set -uo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+GATE_SCRIPT="$SCRIPT_DIR/c3-gate"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+TESTS_RUN=0
+TESTS_PASSED=0
+TESTS_FAILED=0
+
+# Test helper functions
+run_gate() {
+    local input="$1"
+    local project_dir="$2"
+    CLAUDE_PROJECT_DIR="$project_dir" bash "$GATE_SCRIPT" <<< "$input" 2>&1
+    return $?
+}
+
+assert_exit_code() {
+    local expected="$1"
+    local actual="$2"
+    local test_name="$3"
+
+    TESTS_RUN=$((TESTS_RUN + 1))
+    if [[ "$actual" -eq "$expected" ]]; then
+        echo -e "${GREEN}PASS${NC}: $test_name"
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+        return 0
+    else
+        echo -e "${RED}FAIL${NC}: $test_name (expected exit $expected, got $actual)"
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+        return 1
+    fi
+}
+
+assert_contains() {
+    local haystack="$1"
+    local needle="$2"
+    local test_name="$3"
+
+    TESTS_RUN=$((TESTS_RUN + 1))
+    if [[ "$haystack" == *"$needle"* ]]; then
+        echo -e "${GREEN}PASS${NC}: $test_name"
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+        return 0
+    else
+        echo -e "${RED}FAIL${NC}: $test_name (expected to contain '$needle')"
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+        return 1
+    fi
+}
+
+# Create temp directory for tests
+TMPDIR=$(mktemp -d)
+trap "rm -rf $TMPDIR" EXIT
+
+echo "Running c3-gate tests..."
+echo ""
+
+# ============================================
+# Test: Blocks when no .c3/ directory
+# ============================================
+echo "--- Test: Blocks without .c3/ ---"
+
+TEST_DIR="$TMPDIR/no-c3"
+mkdir -p "$TEST_DIR"
+
+OUTPUT=$(run_gate '{"tool_name":"Edit","tool_input":{"file_path":"src/main.py"}}' "$TEST_DIR")
+EXIT_CODE=$?
+
+assert_exit_code 2 $EXIT_CODE "blocks edit when no .c3 dir"
+assert_contains "$OUTPUT" "No architecture documentation found" "shows no-c3 message"
+assert_contains "$OUTPUT" "c3-adopt" "suggests c3-adopt"
+
+# ============================================
+# Test: Blocks when .c3/ exists but no ADR
+# ============================================
+echo ""
+echo "--- Test: Blocks without today's ADR ---"
+
+TEST_DIR="$TMPDIR/no-adr"
+mkdir -p "$TEST_DIR/.c3"
+
+OUTPUT=$(run_gate '{"tool_name":"Edit","tool_input":{"file_path":"src/main.py"}}' "$TEST_DIR")
+EXIT_CODE=$?
+
+assert_exit_code 2 $EXIT_CODE "blocks when .c3 exists but no ADR"
+assert_contains "$OUTPUT" "c3-design" "suggests c3-design"
+assert_contains "$OUTPUT" "ADR" "mentions ADR"
+
+# ============================================
+# Test: Blocks when only old ADR exists
+# ============================================
+echo ""
+echo "--- Test: Old ADR doesn't satisfy gate ---"
+
+TEST_DIR="$TMPDIR/old-adr"
+mkdir -p "$TEST_DIR/.c3/adr"
+touch "$TEST_DIR/.c3/adr/adr-20200101-old.md"
+
+OUTPUT=$(run_gate '{"tool_name":"Edit","tool_input":{"file_path":"src/main.py"}}' "$TEST_DIR")
+EXIT_CODE=$?
+
+assert_exit_code 2 $EXIT_CODE "blocks when only old ADR exists"
+
+# ============================================
+# Test: Allows when today's ADR exists
+# ============================================
+echo ""
+echo "--- Test: Allows with today's ADR ---"
+
+TEST_DIR="$TMPDIR/has-adr"
+mkdir -p "$TEST_DIR/.c3/adr"
+TODAY=$(date +%Y%m%d)
+touch "$TEST_DIR/.c3/adr/adr-${TODAY}-test.md"
+
+OUTPUT=$(run_gate '{"tool_name":"Edit","tool_input":{"file_path":"src/main.py"}}' "$TEST_DIR")
+EXIT_CODE=$?
+
+assert_exit_code 0 $EXIT_CODE "allows when today's ADR exists"
+
+# ============================================
+# Test: Container inference
+# ============================================
+echo ""
+echo "--- Test: Container inference ---"
+
+TEST_DIR="$TMPDIR/inference"
+mkdir -p "$TEST_DIR/.c3"
+
+OUTPUT=$(run_gate '{"tool_name":"Edit","tool_input":{"file_path":"src/api/handler.py"}}' "$TEST_DIR")
+assert_contains "$OUTPUT" "api" "infers container from src/api path"
+
+OUTPUT=$(run_gate '{"tool_name":"Edit","tool_input":{"file_path":"lib/database/conn.py"}}' "$TEST_DIR")
+assert_contains "$OUTPUT" "database" "infers container from lib/database path"
+
+OUTPUT=$(run_gate '{"tool_name":"Edit","tool_input":{"file_path":"packages/ui/button.tsx"}}' "$TEST_DIR")
+assert_contains "$OUTPUT" "ui" "infers container from packages/ui path"
+
+# ============================================
+# Test: Edge cases
+# ============================================
+echo ""
+echo "--- Test: Edge cases ---"
+
+TEST_DIR="$TMPDIR/edge"
+mkdir -p "$TEST_DIR"
+
+# No file_path should allow
+OUTPUT=$(run_gate '{"tool_name":"Edit","tool_input":{}}' "$TEST_DIR")
+EXIT_CODE=$?
+assert_exit_code 0 $EXIT_CODE "allows when no file_path"
+
+# Empty input should allow (no file_path extracted)
+OUTPUT=$(run_gate '' "$TEST_DIR")
+EXIT_CODE=$?
+assert_exit_code 0 $EXIT_CODE "allows on empty input"
+
+# Invalid JSON should allow (no file_path extracted)
+OUTPUT=$(run_gate 'not valid json' "$TEST_DIR")
+EXIT_CODE=$?
+assert_exit_code 0 $EXIT_CODE "allows on invalid JSON"
+
+# ============================================
+# Test: Different tool names
+# ============================================
+echo ""
+echo "--- Test: Tool names in messages ---"
+
+TEST_DIR="$TMPDIR/tools"
+mkdir -p "$TEST_DIR"
+
+for TOOL in Edit Write NotebookEdit; do
+    OUTPUT=$(run_gate "{\"tool_name\":\"$TOOL\",\"tool_input\":{\"file_path\":\"file.py\"}}" "$TEST_DIR")
+    EXIT_CODE=$?
+    assert_exit_code 2 $EXIT_CODE "$TOOL is blocked"
+    assert_contains "$OUTPUT" "$TOOL" "$TOOL name in message"
+done
+
+# ============================================
+# Summary
+# ============================================
+echo ""
+echo "======================================"
+echo "Tests: $TESTS_RUN | Passed: $TESTS_PASSED | Failed: $TESTS_FAILED"
+echo "======================================"
+
+if [[ $TESTS_FAILED -gt 0 ]]; then
+    exit 1
+fi
+exit 0

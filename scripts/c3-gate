@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+#
+# C3 Architecture Gate
+#
+# Blocks Edit/Write operations until:
+# 1. .c3/ directory exists (C3 initialized)
+# 2. ADR exists for current session/day (architectural review done)
+#
+# Exit codes:
+# - 0: Allow the operation
+# - 2: Block the operation (stderr shown to Claude)
+
+set -uo pipefail
+
+# Read JSON from stdin
+INPUT=$(cat)
+
+# Parse tool_name and file_path using simple text extraction
+# Expected format: {"tool_name": "Edit", "tool_input": {"file_path": "/path/to/file"}}
+TOOL_NAME=$(echo "$INPUT" | grep -o '"tool_name"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*:.*"\([^"]*\)".*/\1/' 2>/dev/null || echo "")
+FILE_PATH=$(echo "$INPUT" | grep -o '"file_path"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*:.*"\([^"]*\)".*/\1/' 2>/dev/null || echo "")
+
+# No file path means we can't check - allow
+if [[ -z "$FILE_PATH" ]]; then
+    exit 0
+fi
+
+# Get project directory
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
+
+# Check 1: Does .c3/ exist?
+if [[ ! -d "$PROJECT_DIR/.c3" ]]; then
+    cat >&2 <<EOF
+C3 Architecture Gate
+
+No architecture documentation found (.c3/ directory missing).
+
+C3 helps you:
+- Document system architecture at Context/Container/Component levels
+- Track architectural decisions with ADRs
+- Ensure code changes align with system design
+
+To initialize: Use the c3-adopt skill
+
+Blocking: ${TOOL_NAME:-Edit} on $FILE_PATH
+EOF
+    exit 2
+fi
+
+# Check 2: Does today's ADR exist?
+TODAY=$(date +%Y%m%d)
+ADR_DIR="$PROJECT_DIR/.c3/adr"
+
+TODAYS_ADRS=""
+if [[ -d "$ADR_DIR" ]]; then
+    TODAYS_ADRS=$(find "$ADR_DIR" -maxdepth 1 -name "adr-${TODAY}-*.md" 2>/dev/null | head -1)
+fi
+
+if [[ -z "$TODAYS_ADRS" ]]; then
+    # Infer container from file path
+    REL_PATH="${FILE_PATH#$PROJECT_DIR/}"
+
+    # Try to extract container from common patterns
+    CONTAINER=""
+    for SRC_DIR in src lib app packages services modules; do
+        if [[ "$REL_PATH" == "$SRC_DIR/"* ]]; then
+            AFTER_SRC="${REL_PATH#$SRC_DIR/}"
+            CONTAINER="${AFTER_SRC%%/*}"
+            break
+        fi
+    done
+
+    # Fall back to first directory
+    if [[ -z "$CONTAINER" ]]; then
+        CONTAINER="${REL_PATH%%/*}"
+    fi
+
+    cat >&2 <<EOF
+C3 Architecture Gate
+
+You're about to edit: $FILE_PATH
+
+This appears to touch: $CONTAINER (inferred from path)
+
+Before editing code, c3-design will help you:
+- Load relevant architectural context
+- Identify related components
+- Create an ADR documenting this change
+
+Run c3-design skill to proceed.
+
+Blocking: ${TOOL_NAME:-Edit} on $FILE_PATH
+EOF
+    exit 2
+fi
+
+# All checks passed - allow the operation
+exit 0

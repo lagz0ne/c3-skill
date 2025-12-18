@@ -70,7 +70,13 @@ Use template from `references/audit-report-templates.md`.
 1. Load ADR, extract Changes Across Layers + Verification Checklist
 2. Verify each doc change was made
 3. Verify code matches (use verification items)
-4. If all pass: transition status to `implemented`, rebuild TOC
+4. **Update Audit Record** in ADR file:
+   - Append row to "Audit Runs" table:
+     ```
+     | YYYY-MM-DD | [layers checked] | PASS/FAIL | [drift found or "None"] |
+     ```
+   - If PASS: Update "Lifecycle" table row for Implemented
+5. If all pass: transition status to `implemented`, rebuild TOC
 
 ---
 

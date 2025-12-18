@@ -1,71 +1,26 @@
 # Architecture
 
-## 🧠 Before You Code: Check the Architecture
+## C3 Architecture
 
-This project has **documented architecture** in `.c3/`. Reading it first makes you significantly more effective.
+**Before architectural work:** Spawn `c3-skill:c3` subagent first.
 
-```bash
-ls .c3/README.md 2>/dev/null && echo "📚 Architecture docs exist - READ FIRST"
-```
+It reads .c3/ docs, analyzes impact, and creates ADRs when needed.
 
-### Why This Matters
-
-| Without .c3/ docs | With .c3/ docs |
-|-------------------|----------------|
-| Guess where code belongs | Know exactly which container owns it |
-| Hope API contracts are correct | See documented protocols |
-| Discover patterns by accident | Understand patterns upfront |
-| Risk breaking undocumented flows | See flows before touching them |
-
-### Your Architecture Superpower
-
-**Before any significant change, ask yourself:**
-
-> "Do I understand where this fits in the architecture?"
-
-If NO → Read `.c3/` docs first. They exist to save you from mistakes.
-
-If `.c3/` doesn't exist → Suggest using `/c3` to create it.
-
-### Quick Navigation
-
-| Question | Answer Location |
-|----------|-----------------|
-| What is this system? | `.c3/README.md` |
-| What containers exist? | `.c3/README.md` → Containers table |
-| How do they communicate? | `.c3/README.md` → Interactions |
-| What's inside container X? | `.c3/c3-{N}-*/README.md` |
-| How does component Y work? | `.c3/c3-{N}-*/c3-{N}{NN}-*.md` |
-
-### Triggers: When to Think About Architecture
+### Triggers: Spawn c3 Agent
 
 | You're about to... | First... |
 |--------------------|----------|
-| Add a new file/module | Check which container it belongs to |
-| Change an API | Read the documented protocol |
-| Refactor code | Verify against documented flows |
-| Add inter-service communication | Check container interactions |
-| "Just quickly fix something" | Read the component doc (2 min saves 20 min) |
+| Add a new feature | Spawn c3 agent |
+| Change an API | Spawn c3 agent |
+| Refactor code | Spawn c3 agent |
+| "Just quickly fix something" | Spawn c3 agent (2 min saves 20 min) |
 
-### Red Flags: Stop and Read .c3/
+### Red Flags: STOP and Spawn c3 Agent
 
 🚩 "I'm not sure where this code should go"
-🚩 "I'll figure out the architecture as I implement"
 🚩 "This might affect other services"
 🚩 Creating new directories without checking boundaries
-🚩 Changing function signatures on shared code
-
-### Commands & Skills
-
-| Need to... | Use |
-|------------|-----|
-| Explore or design architecture | `/c3` or `c3-design` skill |
-| Bootstrap docs for new project | `c3-adopt` skill |
-| Understand a specific layer | `c3-context-design`, `c3-container-design`, `c3-component-design` |
 
 ### ⚠️ ADR Policy
 
-**DO NOT read ADRs** (Architecture Decision Records) unless asked:
-- They're historical context, not current guidance
-- Reading them pollutes your context with old debates
-- Current architecture is in Context/Container/Component docs
+**DO NOT read ADRs** unless asked - they're historical context, not current guidance.

@@ -20,6 +20,29 @@ The Container level is the **architectural command center** of C3:
 
 ---
 
+## ⛔ MERMAID-ONLY DIAGRAM ENFORCEMENT (MANDATORY)
+
+**Reference:** [diagram-patterns.md](../../references/diagram-patterns.md) - Full harness
+
+**This is non-negotiable:**
+- ALL diagrams MUST use Mermaid syntax in ` ```mermaid ` blocks
+- ASCII art, Unicode box drawing, text-based flowcharts are PROHIBITED
+
+### Quick Validation
+
+Before finalizing any Container doc:
+- [ ] All diagrams are Mermaid
+- [ ] No ASCII art anywhere
+
+### Red Flags
+
+🚩 `+---+` boxes or `├──` trees
+🚩 `-->` arrows outside Mermaid blocks
+🚩 Text describing flow without an actual diagram
+🚩 "See diagram below" with ASCII art following
+
+---
+
 ## The Principle
 
 **Reference:** [core-principle.md](../../references/core-principle.md)
@@ -172,10 +195,32 @@ parent: c3-0
 ## Architecture
 
 ### External Relationships
-[REQUIRED: Diagram showing connections to other containers and external systems]
+[REQUIRED: Mermaid diagram showing connections to other containers]
+
+` ` `mermaid
+flowchart LR
+    ThisContainer[This Container c3-N]
+    OtherContainer[Other Container c3-M]
+    ExtSystem[External System]
+
+    ThisContainer --> OtherContainer
+    ThisContainer --> ExtSystem
+` ` `
 
 ### Internal Structure
-[REQUIRED: Diagram showing how components relate to each other]
+[REQUIRED: Mermaid diagram showing component relationships]
+
+` ` `mermaid
+flowchart TD
+    subgraph Container["[Container Name] (c3-{N})"]
+        C1[Component 1 c3-N01]
+        C2[Component 2 c3-N02]
+        C3[Component 3 c3-N03]
+    end
+
+    C1 --> C2
+    C2 --> C3
+` ` `
 
 ## Components
 | Component | ID | Responsibility |
@@ -231,6 +276,125 @@ parent: c3-0
 
 ---
 
+---
+
+## ⛔ TEMPLATE FIDELITY ENFORCEMENT (MANDATORY)
+
+**Rule:** Output documents MUST match the skill's template structure exactly.
+
+### Anti-Patterns
+
+| Pattern | Why It's Wrong | Correct Action |
+|---------|----------------|----------------|
+| Adding creative sections not in template | Breaks consistency, confuses users | Stick to template sections |
+| Omitting "optional" template sections | They're optional content, not optional structure | Include section, mark N/A if empty |
+| Reordering template sections | Users expect consistent navigation | Maintain template order |
+| "Simplifying" the template for small containers | Small docs grow; structure must be ready | Full template always |
+
+### Red Flags
+
+🚩 Document has sections not in the template
+🚩 Template sections missing entirely (not even marked N/A)
+🚩 Section order differs from template
+🚩 Missing REQUIRED diagrams (External Relationships, Internal Structure)
+
+### Required Sections (Container)
+
+1. Frontmatter (id, title, type, parent)
+2. Inherited From Context
+3. Overview
+4. Technology Stack
+5. Architecture (External Relationships diagram - REQUIRED)
+6. Architecture (Internal Structure diagram - REQUIRED)
+7. Components
+8. Key Flows
+
+### Self-Check
+
+- [ ] Did I read the template in this session?
+- [ ] Does my output have exactly the template sections, in order?
+- [ ] Are missing-content sections marked N/A, not deleted?
+- [ ] Are BOTH required diagrams present (External + Internal)?
+
+### Escape Hatch
+
+User explicitly requests deviation: "Skip the Technology Stack section."
+
+---
+
+## ⛔ REFERENCE LOADING ENFORCEMENT (MANDATORY)
+
+**Rule:** If a reference is mentioned, READ it before using its content.
+
+### Anti-Patterns
+
+| Pattern | Why It's Wrong | Correct Action |
+|---------|----------------|----------------|
+| "Per core-principle.md..." without reading | You're guessing the content | `cat references/core-principle.md` first |
+| "The container-archetypes.md says..." | Archetypes may have updated | Read the file |
+| "Following diagram-decision-framework.md..." | You need current guidance | Read the file |
+| Citing reference by memory from previous session | Context may have compacted | Re-read in this session |
+
+### Red Flags
+
+🚩 Quoting a reference file without a `cat` or Read command preceding it
+🚩 "As documented in X.md" without file content visible in conversation
+🚩 Paraphrasing reference content that wasn't loaded this session
+
+### Self-Check
+
+- [ ] For each reference I cite, is there a file read in this conversation?
+- [ ] Am I working from actual file content, not memory?
+
+### Escape Hatch
+
+If reference was read earlier in THIS conversation and context hasn't compacted, re-reading is optional.
+
+---
+
+## ⛔ OUTPUT VERIFICATION ENFORCEMENT (MANDATORY)
+
+**Rule:** Claiming completion requires verification evidence in the conversation.
+
+### Verification Requirements
+
+| Claim | Required Evidence |
+|-------|-------------------|
+| "Created Container doc" | Write command to `.c3/c3-{N}-*/README.md` visible |
+| "Structure is correct" | Validation checklist executed with results |
+| "Diagrams included" | Both Mermaid blocks visible in output |
+| "Template followed" | Section-by-section match verified |
+| "Delegated to c3-component-design" | Skill tool invocation visible |
+
+### Anti-Patterns
+
+| Pattern | Why It's Wrong | Correct Action |
+|---------|----------------|----------------|
+| "Container doc complete" (no file ops visible) | No evidence of creation | Show the write command |
+| "Following template" (no verification) | Template drift is common | Verify section-by-section |
+| "Both diagrams included" (only one visible) | May have forgotten one | Verify both mermaid blocks |
+| "Components delegated" (no skill invocation) | Hallucination | Show Skill tool usage |
+
+### Red Flags
+
+🚩 Completion claim without corresponding tool usage
+🚩 "Done" without checklist execution
+🚩 Describing artifacts that weren't created in this conversation
+🚩 Only one diagram when two are REQUIRED
+
+### Self-Check
+
+- [ ] For each artifact I claim exists, is there evidence of its creation?
+- [ ] Did I run the skill's validation checklist?
+- [ ] Can a reviewer see proof in this conversation?
+- [ ] Are BOTH required diagrams present?
+
+### Escape Hatch
+
+None. Unverified completion = not complete.
+
+---
+
 ## Checklist
 
 - [ ] Context constraints loaded and verified
@@ -239,6 +403,9 @@ parent: c3-0
 - [ ] Diagram decisions made with justification
 - [ ] Downstream contracts documented
 - [ ] Delegation list prepared
+- [ ] **Template fidelity verified** (all sections present, in order, both diagrams)
+- [ ] **References loaded** (not assumed from memory)
+- [ ] **Output verified** (file creation evidence visible)
 
 ---
 

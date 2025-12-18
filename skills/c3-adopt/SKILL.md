@@ -105,6 +105,78 @@ After discovery, delegate to layer skills in order:
 3. c3-component-design → Creates c3-NNN for key components
 4. c3-config → Creates settings.yaml if missing
 
+---
+
+## ⛔ SKILL DELEGATION ENFORCEMENT (MANDATORY)
+
+**Rule:** When work requires a layer skill, INVOKE it. Never describe what it "would do."
+
+### Anti-Patterns
+
+| Pattern | Why It's Wrong | Correct Action |
+|---------|----------------|----------------|
+| "c3-context-design would create..." | Hallucinating skill behavior | Use Skill tool → c3-context-design |
+| "Following c3-container-design template..." | You don't have its template loaded | Invoke the skill first |
+| "This is simple, I'll create docs directly" | Layer skills have guardrails you're bypassing | Always invoke for layer work |
+| Summarizing a skill's output without invoking | Fabrication | Invoke, get real output |
+
+### Red Flags
+
+🚩 Using layer skill name as a noun ("the c3-context-design approach")
+🚩 Describing layer skill output without a Skill tool call in the conversation
+🚩 "I'll apply c3-X-design principles" without invoking it
+🚩 Creating `.c3/` files without invoking the appropriate layer skill
+
+### Self-Check
+
+- [ ] Did I use the Skill tool for each layer I'm creating docs for?
+- [ ] Am I quoting actual skill output, not imagined output?
+- [ ] Is there a Skill tool invocation for context, container, and component work?
+
+### Escape Hatch
+
+None. Layer work = layer skill invocation. No exceptions.
+
+---
+
+## ⛔ OUTPUT VERIFICATION ENFORCEMENT (MANDATORY)
+
+**Rule:** Claiming completion requires verification evidence in the conversation.
+
+### Verification Requirements
+
+| Claim | Required Evidence |
+|-------|-------------------|
+| "Created .c3/ structure" | `mkdir` commands + `ls .c3/` showing structure |
+| "Context doc created" | Write command to `.c3/README.md` visible |
+| "Container docs created" | Write commands to `.c3/c3-{N}-*/README.md` visible |
+| "Delegated to skill X" | Skill tool invocation visible |
+| "V3 structure validated" | Validation checklist executed with results |
+
+### Anti-Patterns
+
+| Pattern | Why It's Wrong | Correct Action |
+|---------|----------------|----------------|
+| "I've scaffolded the .c3 structure" (no file ops visible) | No evidence of creation | Show the mkdir/write commands |
+| "Adoption complete" (no validation) | Structure errors are common | Run validation checklist |
+| "Delegation complete" (no skill invocation) | Hallucination | Show Skill tool usage |
+
+### Red Flags
+
+🚩 Completion claim without corresponding tool usage
+🚩 "Done" without running V3 structure validation checklist
+🚩 Describing artifacts that weren't created in this conversation
+
+### Self-Check
+
+- [ ] For each file I claim exists, is there evidence of its creation?
+- [ ] Did I run the V3 STRUCTURE ENFORCEMENT validation checklist?
+- [ ] Can a reviewer see proof in this conversation?
+
+### Escape Hatch
+
+None. Unverified completion = not complete.
+
 ## Scaffolding
 
 **Create V3 structure before delegation:**

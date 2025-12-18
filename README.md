@@ -94,65 +94,94 @@ Utility patterns extracted as reference docs (not skills):
 
 ### Getting Started
 
-**For new users:** Add the following to your project's `CLAUDE.md` to help agents work with C3 documentation:
+**For new users:** Add the following to your project's `CLAUDE.md` to help agents naturally use C3:
 
 <details>
 <summary><strong>📋 Click to expand CLAUDE.md template (copy this)</strong></summary>
 
 ```markdown
-# Architecture (C3)
+# Architecture
 
-This project uses C3 (Context-Container-Component) architecture documentation.
+## 🧠 Before You Code: Check the Architecture
 
-## Quick Start
+This project has **documented architecture** in `.c3/`. Reading it first makes you significantly more effective.
 
 \`\`\`bash
-# Check if C3 docs exist
-ls .c3/ 2>/dev/null && echo "C3 docs exist - read before changing"
+ls .c3/README.md 2>/dev/null && echo "📚 Architecture docs exist - READ FIRST"
 \`\`\`
 
-## When to Use C3
+### Why This Matters
 
-| Situation | Action |
-|-----------|--------|
-| "How does X work?" | Read `.c3/` docs first |
-| Adding new feature | Check which container it belongs to |
-| Changing how components interact | Use `/c3` or `c3-design` skill |
-| Refactoring across modules | Verify changes align with documented flows |
-| Onboarding question | Point to `.c3/README.md` |
+| Without .c3/ docs | With .c3/ docs |
+|-------------------|----------------|
+| Guess where code belongs | Know exactly which container owns it |
+| Hope API contracts are correct | See documented protocols |
+| Discover patterns by accident | Understand patterns upfront |
+| Risk breaking undocumented flows | See flows before touching them |
 
-## Navigation
+### Your Architecture Superpower
 
-| Want to understand... | Read |
-|-----------------------|------|
-| System overview | `.c3/README.md` |
-| How containers talk | `.c3/README.md` → Container Interactions |
-| What a container does | `.c3/c3-{N}-*/README.md` |
-| How a component works | `.c3/c3-{N}-*/c3-{N}{NN}-*.md` |
+**Before any significant change, ask yourself:**
 
-## Red Flags (Stop and Check C3)
+> "Do I understand where this fits in the architecture?"
 
-🚩 Adding a new service/module without checking container boundaries
-🚩 Changing API contracts without checking documented protocols
-🚩 "I'll figure out the architecture as I code"
-🚩 Making changes that span multiple containers
+If NO → Read `.c3/` docs first. They exist to save you from mistakes.
 
-## ADR Policy
+If `.c3/` doesn't exist → Suggest using `/c3` to create it.
 
-**DO NOT read ADRs** unless specifically asked about past decisions:
-- ADRs are historical records, not active guidance
-- Reading them adds context that may cause hallucination
-- Focus on current state in Context/Container/Component docs
+### Quick Navigation
+
+| Question | Answer Location |
+|----------|-----------------|
+| What is this system? | `.c3/README.md` |
+| What containers exist? | `.c3/README.md` → Containers table |
+| How do they communicate? | `.c3/README.md` → Interactions |
+| What's inside container X? | `.c3/c3-{N}-*/README.md` |
+| How does component Y work? | `.c3/c3-{N}-*/c3-{N}{NN}-*.md` |
+
+### Triggers: When to Think About Architecture
+
+| You're about to... | First... |
+|--------------------|----------|
+| Add a new file/module | Check which container it belongs to |
+| Change an API | Read the documented protocol |
+| Refactor code | Verify against documented flows |
+| Add inter-service communication | Check container interactions |
+| "Just quickly fix something" | Read the component doc (2 min saves 20 min) |
+
+### Red Flags: Stop and Read .c3/
+
+🚩 "I'm not sure where this code should go"
+🚩 "I'll figure out the architecture as I implement"
+🚩 "This might affect other services"
+🚩 Creating new directories without checking boundaries
+🚩 Changing function signatures on shared code
+
+### Commands & Skills
+
+| Need to... | Use |
+|------------|-----|
+| Explore or design architecture | `/c3` or `c3-design` skill |
+| Bootstrap docs for new project | `c3-adopt` skill |
+| Understand a specific layer | `c3-context-design`, `c3-container-design`, `c3-component-design` |
+
+### ⚠️ ADR Policy
+
+**DO NOT read ADRs** (Architecture Decision Records) unless asked:
+- They're historical context, not current guidance
+- Reading them pollutes your context with old debates
+- Current architecture is in Context/Container/Component docs
 ```
 
 </details>
 
 > 💡 **Tip:** This template is also available at [`templates/CLAUDE.md.c3-section`](templates/CLAUDE.md.c3-section)
 
-This will help agents:
-- Check `.c3/` docs before making architectural changes
-- Use the right skill for the right situation
-- Avoid reading ADRs unnecessarily (reduces hallucination)
+**What this template does:**
+- Frames C3 as a "superpower" that makes agents more effective
+- Provides clear triggers for when to check architecture
+- Includes a self-check question before significant changes
+- Lists red flags that should prompt reading .c3/ docs
 
 ## Layer Configuration
 

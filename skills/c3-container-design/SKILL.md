@@ -1,6 +1,6 @@
 ---
 name: c3-container-design
-description: Use when exploring Container level impact during scoping - technology choices, component organization, middleware, and inter-container communication
+description: Use when changes affect component organization, technology stack, or cross-container communication - triggered by new components, pattern changes, or needing to map external interfaces to internal components
 ---
 
 # C3 Container Level Exploration
@@ -126,66 +126,17 @@ From loaded Context, extract for this container:
 
 ## Template
 
-```markdown
----
-id: c3-{N}
-c3-version: 3
-title: [Container Name]
-type: container
-parent: c3-0
-summary: >
-  [One-line description of container purpose]
----
+See `container-template.md` for complete structure with frontmatter, diagrams, and examples.
 
-# [Container Name]
-
-## Inherited From Context
-- **Boundary:** [what this container can/cannot access]
-- **Protocols:** [what protocols this container uses]
-- **Cross-cutting:** [patterns inherited from Context]
-
-## Overview
-[Single paragraph purpose]
-
-## Technology Stack
-| Technology | Version | Purpose |
-|------------|---------|---------|
-
-## Architecture
-
-### External Relationships
-[REQUIRED: Mermaid diagram showing connections to other containers]
-
-` ` `mermaid
-flowchart LR
-    ThisContainer[This Container c3-N]
-    OtherContainer[Other Container c3-M]
-    ExtSystem[External System]
-
-    ThisContainer --> OtherContainer
-    ThisContainer --> ExtSystem
-` ` `
-
-### Internal Structure
-[REQUIRED: Mermaid diagram showing component relationships]
-
-` ` `mermaid
-flowchart TD
-    subgraph Container["[Container Name] (c3-{N})"]
-        C1[Component 1 c3-N01]
-        C2[Component 2 c3-N02]
-    end
-
-    C1 --> C2
-` ` `
-
-## Components
-| Component | ID | Responsibility |
-|-----------|-----|----------------|
-
-## Key Flows
-[1-2 critical flows - describe WHAT happens, not HOW]
-```
+**Required sections:**
+1. Inherited From Context
+2. Overview
+3. Technology Stack
+4. Architecture - External Relationships (diagram + interface mapping table)
+5. Architecture - Internal Structure (diagram with Foundation/Business layering)
+6. Component Layering Rules
+7. Components table
+8. Key Flows
 
 ---
 
@@ -287,6 +238,44 @@ This container (c3-N) contains:
 - Highlight which components are affected by this change
 - Include parent Context for constraint reference
 - Never include ADRs unless user asked
+
+---
+
+## Change Impact Decision
+
+```mermaid
+flowchart TD
+    A[Analyze Change] --> B{New protocol or<br/>boundary violation?}
+    B -->|yes| C[Escalate to<br/>c3-context-design]
+    B -->|no| D{Component org<br/>change?}
+    D -->|yes| E[Delegate to<br/>c3-component-design]
+    D -->|no| F[Document at<br/>Container level]
+```
+
+---
+
+## Common Rationalizations
+
+| Excuse | Reality |
+|--------|---------|
+| "One diagram is enough" | External + Internal are BOTH required. Different purposes. |
+| "I'll add diagrams later" | Diagrams drive understanding. Add during exploration, not after. |
+| "Template too rigid" | Template is minimum. Add sections if needed, but don't skip required ones. |
+| "This container is simple" | Simple containers still need both diagrams. Just smaller diagrams. |
+| "Inherited section is obvious" | Make inheritance explicit. What's obvious to you isn't to readers. |
+| "Layering doesn't apply here" | All containers have Foundation → Business layering. Show it. |
+
+---
+
+## Common Mistakes
+
+| Mistake | Fix |
+|---------|-----|
+| **Missing External Relationships diagram** | REQUIRED. Maps Context interfaces to owning components. |
+| **Missing Internal Structure diagram** | REQUIRED. Shows Foundation → Business layering. |
+| **Not mapping interfaces to components** | Add table: External Interface \| Owning Component \| Protocol |
+| **Duplicating Context content** | Reference Context, don't repeat. Show component ownership. |
+| **Skipping layering rules** | Always include Foundation/Business rules table. |
 
 ---
 

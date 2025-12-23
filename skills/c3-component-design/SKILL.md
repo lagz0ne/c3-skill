@@ -1,6 +1,6 @@
 ---
 name: c3-component-design
-description: Use when exploring Component level impact during scoping - implementation details, configuration, dependencies, and technical specifics
+description: Use when documenting component implementation patterns, internal structure, or hand-off points - enforces NO CODE rule and diagram-first approach for leaf-level C3 documentation
 ---
 
 # C3 Component Level Exploration
@@ -76,14 +76,62 @@ At Component level:
 
 | Include (Component Level) | Exclude (Push Up) |
 |---------------------------|-------------------|
-| Flows (how processing works) | WHAT component does (Container) |
-| Dependencies | Component relationships (Container) |
-| Decision logic | WHY patterns chosen (Container/ADR) |
-| Edge cases | Code snippets |
-| Error scenarios | File paths |
-| State/lifecycle | |
+| Interface (IN → OUT) | WHAT component does (Container) |
+| Internal organization | Component relationships (Container) |
+| Conventions & rules | WHY patterns chosen (Container/ADR) |
+| Edge cases & errors | Code snippets |
+| | File paths |
 
 **Litmus test:** "Is this about HOW this component implements its contract?"
+
+---
+
+## Diagram-First Principle
+
+**Components are documented visually.** The diagram tells the story, text supports it.
+
+Every component explains:
+- **Its boundary** - what it's responsible for (and what it's not)
+- **Hand-off points** - where information exchanges happen with other components
+- **Internal processing** - what happens inside (self-contained)
+
+### Interface Diagram (Required)
+
+Shows the boundary and hand-offs:
+
+```mermaid
+flowchart LR
+    subgraph IN["Receives"]
+        I1[From Component A]
+        I2[From External]
+    end
+
+    subgraph SELF["Owns"]
+        S1[Processing]
+        S2[Transformation]
+    end
+
+    subgraph OUT["Provides"]
+        O1[To Component B]
+        O2[To Caller]
+    end
+
+    IN --> SELF --> OUT
+```
+
+### Additional Diagrams (Where Applicable)
+
+Use multiple diagrams when needed - just enough to explain:
+
+| Diagram Type | Use When |
+|--------------|----------|
+| **Sequence** | Hand-off between multiple components matters |
+| **State** | Component has lifecycle/state transitions |
+| **Organization** | Internal structure is complex (layers, subsystems) |
+
+**Foundation vs Business components:**
+- **Foundation** (e.g., Hono): Shows the transition point - where framework ends and business begins. What it provides TO business components.
+- **Business** (e.g., User Handler): Shows the flow - receives from foundation, processes, hands off results.
 
 ---
 
@@ -143,55 +191,20 @@ From loaded Container, extract:
 
 ## Template
 
-```markdown
----
-id: c3-{N}{NN}
-c3-version: 3
-title: [Component Name]
-type: component
-parent: c3-{N}
-summary: >
-  [One-line description of what this component does]
----
+See `component-template.md` for complete structure with frontmatter, diagrams, and examples.
 
-# [Component Name]
+**Required sections:**
+1. Contract (from parent Container)
+2. Interface (diagram showing boundary - REQUIRED)
+3. Hand-offs table
+4. Conventions table
+5. Edge Cases & Errors table
 
-## Contract
-From Container (c3-{N}): "[responsibility from parent container]"
+**Optional sections (include based on component nature):**
+- Additional diagrams (Sequence, State, Organization)
+- Configuration, Dependencies, Invariants, Performance
 
-## How It Works
-
-### Flow
-[REQUIRED: Mermaid diagram showing processing steps and decisions]
-
-` ` `mermaid
-flowchart TD
-    Start([Request]) --> Validate{Validate?}
-    Validate -->|Yes| Process[Process Data]
-    Validate -->|No| Error[Return Error]
-    Process --> Result([Return Result])
-    Error --> Result
-` ` `
-
-### Dependencies
-| Dependency | Container | Purpose |
-|------------|-----------|---------|
-
-### Decision Points
-| Decision | Condition | Outcome |
-|----------|-----------|---------|
-
-## Edge Cases
-| Scenario | Behavior | Rationale |
-|----------|----------|-----------|
-
-## Error Handling
-| Error | Detection | Recovery |
-|-------|-----------|----------|
-
-## References
-- [Link to .c3/references/ if detailed implementation docs exist]
-```
+**Keep it lean:** Simple component = 5 sections. Complex framework = multiple diagrams + optional sections.
 
 ---
 
@@ -214,24 +227,29 @@ grep -E '```[a-z]+' .c3/c3-{N}-*/c3-{N}{NN}-*.md | grep -v mermaid
 - JSON/YAML blocks (even for "schemas")
 - "Example payload" in code blocks
 
-### Harness 2: Template Fidelity
+### Harness 2: Diagram-First
 
-**Rule:** Output MUST match template structure exactly.
+**Rule:** Interface diagram (IN → Processing → OUT) is REQUIRED.
 
-**Required sections (in order):**
+**Required sections:**
 1. Frontmatter (id, c3-version, title, type, parent, summary)
 2. Contract (from parent Container)
-3. How It Works
-4. Flow (Mermaid diagram REQUIRED)
-5. Dependencies
-6. Decision Points
-7. Edge Cases
-8. Error Handling
-9. References
+3. Interface (Mermaid diagram REQUIRED - boundary and hand-offs)
+4. Hand-offs (table - what exchanges with whom)
+5. Conventions (table of rules)
+6. Edge Cases & Errors (table)
+
+**Optional sections (include based on component nature):**
+- Additional diagrams (Sequence, State, Organization) - where needed
+- Configuration - significant config surface
+- Dependencies - external dependencies matter
+- Invariants - key guarantees to verify
+- Performance - throughput/latency matters
 
 🚩 **Red Flags:**
-- Missing "Contract" section
-- No flow diagram
+- Missing Interface diagram
+- No IN/OUT structure in diagram
+- Text-heavy without diagrams
 - Code blocks present
 
 ---
@@ -247,8 +265,9 @@ ls .c3/c3-{N}-*/c3-{N}{NN}-*.md
 # Verify frontmatter
 grep -E "^id:|^type:|^parent:" .c3/c3-{N}-*/c3-{N}{NN}-*.md
 
-# Verify flow diagram exists
+# Verify Interface diagram exists with IN/OUT structure
 grep -c '```mermaid' .c3/c3-{N}-*/c3-{N}{NN}-*.md  # Should be >= 1
+grep -E "subgraph.*(IN|OUT)" .c3/c3-{N}-*/c3-{N}{NN}-*.md  # Should find IN/OUT
 
 # Verify NO non-mermaid code blocks
 non_mermaid=$(grep -E '```[a-z]+' .c3/c3-{N}-*/c3-{N}{NN}-*.md | grep -v mermaid | wc -l)
@@ -258,10 +277,13 @@ echo "Non-mermaid code blocks: $non_mermaid (should be 0)"
 - [ ] Critical gate executed (Container + Context loaded)
 - [ ] Component IS listed in parent Container's inventory
 - [ ] "Contract" section references Container's description
-- [ ] Template sections present in correct order
-- [ ] Flow diagram included (Mermaid)
+- [ ] **Interface diagram present** (boundary and hand-offs)
+- [ ] **Hand-offs table present** (what exchanges with whom)
+- [ ] **Conventions table present** (rules for consistency)
+- [ ] Edge Cases & Errors table present
 - [ ] **NO code blocks** (except Mermaid)
-- [ ] Tables used instead of JSON/YAML for data structures
+- [ ] **Additional diagrams justified** - only if Sequence/State/Organization needed
+- [ ] **Optional sections justified** - only included if relevant to this component
 
 ---
 
@@ -293,6 +315,64 @@ This component (c3-NNN) is part of:
 - Always include parent Container for contract reference
 - Include Context only if cross-cutting concerns are relevant
 - Never include ADRs unless user asked
+
+---
+
+## When NOT to Use
+
+**Escalate to c3-container-design if:**
+- Change affects component relationships (not just one component's internals)
+- New technology/pattern needed
+- Component not yet listed in parent Container
+
+**Escalate to c3-context-design if:**
+- Cross-cutting concern (affects multiple containers)
+- New protocol or boundary needed
+
+**Wrong layer symptoms:**
+- Describing WHAT component does → Container's job
+- Documenting WHY component exists → Container's job
+- Including cross-container flows → Context's job
+
+---
+
+## Change Impact Decision
+
+```mermaid
+flowchart TD
+    A[Analyze Change] --> B{Breaks interface<br/>or patterns?}
+    B -->|yes| C[Escalate to<br/>c3-container-design]
+    B -->|no| D{Needs new<br/>technology?}
+    D -->|yes| C
+    D -->|no| E[Document at<br/>Component level]
+```
+
+---
+
+## Common Rationalizations
+
+| Excuse | Reality |
+|--------|---------|
+| "JSON is clearer than a table" | JSON is code. Use table with Field \| Type \| Example columns. |
+| "Just one example payload won't hurt" | Examples become implementation. Describe structure, don't show syntax. |
+| "Code is easier to understand" | Code is implementation. Component doc describes patterns, not implements. |
+| "Type definitions help readers" | Types are code. Use tables with Field, Type, Purpose columns. |
+| "I'll use a simple config snippet" | Config syntax is code. Table: Setting \| Default \| Purpose. |
+| "Mermaid is code too" | Mermaid is architectural diagram (allowed). JSON/YAML is data structure (prohibited). |
+| "Interface diagram not needed for simple component" | REQUIRED. Even simple components have IN → OUT boundary. |
+
+---
+
+## Common Mistakes
+
+| Mistake | Fix |
+|---------|-----|
+| **Including code blocks** | Use tables. Field \| Type \| Purpose for structures. |
+| **Skipping Interface diagram** | REQUIRED. Shows IN → Processing → OUT boundary. |
+| **Not checking Container first** | Component must be listed in parent Container inventory. |
+| **Text-heavy docs** | Lead with diagrams. Text supports visuals, not vice versa. |
+| **Missing Hand-offs table** | REQUIRED. Shows what exchanges with whom. |
+| **Describing WHAT not HOW** | WHAT is Container's job. Component explains HOW. |
 
 ---
 

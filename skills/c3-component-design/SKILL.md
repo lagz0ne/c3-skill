@@ -57,32 +57,100 @@ Component is the **leaf layer** - it inherits all constraints from above and imp
 
 ## The Principle
 
+> See `references/core-principle.md` for full details.
+>
 > **Upper layer defines WHAT. Lower layer implements HOW.**
 
-At Component level:
-- Container defines WHAT I am (my existence, my responsibility)
-- I define HOW I implement that responsibility
-- Code implements my documentation (in the codebase, not in C3)
-- I do NOT invent my responsibility - that's Container's job
+At Component: Container defines WHAT I am. I define HOW I implement it. Code implements my documentation. I must be listed in Container; my Contract references what Container says about me.
 
-**Integrity rules:**
-- I must be listed in Container before I can exist
-- My "Contract" section must reference what Container says about me
-- If Container doesn't mention me, I don't exist as a C3 document
+---
+
+## Component Boundaries (Context Loading Units)
+
+> **Components are stepping stones for loading context, not code documentation.**
+>
+> Group what you'd want to load together. Split what you'd want to load separately.
+
+A component doc is a **unit of context**. When someone needs to understand one concern, they load that component. The boundary question is: "Would I want this context loaded together?"
+
+### Boundary Litmus Test
+
+| Question | Decision |
+|----------|----------|
+| Would someone working on X need to understand Y? | If NO → separate docs |
+| Do X and Y change for the same reason? | If NO → separate docs |
+| Is this a technology choice (library/framework)? | → Container tech stack, NOT a component |
+| Would loading this together save navigation? | If YES and concerns are related → group |
+
+### The Economic Tradeoff
+
+**Too grouped:** "To understand TaskForm, I must load Header/Sidebar/TaskCard context" → wasted cognitive load
+
+**Too split:** "50 tiny component docs to navigate" → navigation overhead
+
+**Right balance:** Each doc = context you'd naturally want together
+
+### What Should NOT Be a Component Doc
+
+| Don't Document As Component | Why | Where It Belongs |
+|-----------------------------|-----|------------------|
+| Logger/Logging library | Technology choice, not business concern | Container → Tech Stack table |
+| Config parsing library | DI framework detail | Container → Tech Stack + patterns |
+| Database driver | Technology choice | Container → Tech Stack |
+| HTTP framework (Hono, Express) | Foundation documented at Container | Container → Internal Structure diagram |
+| Generic utilities | Not a business concern | No doc needed |
+
+### What SHOULD Be a Component Doc
+
+| Document As Component | Why |
+|-----------------------|-----|
+| Renderer service | Has unique business logic, clear IN/OUT, specific conventions |
+| Cache service | Business rules (TTL, eviction), not just "we use Redis" |
+| Queue/backpressure | Business constraints (limits, behavior), not just "semaphore" |
+| API flow orchestration | Coordinates multiple concerns, has hand-offs |
+| External integration | Mapping, error handling, retry logic |
+
+### Foundation vs Business Components
+
+Both are valid component docs, but they serve different purposes:
+
+| Aspect | Foundation Component | Business Component |
+|--------|---------------------|-------------------|
+| **Purpose** | What it PROVIDES to consumers | HOW it implements logic |
+| **Audience** | Business components using it | Maintainers of this component |
+| **Content** | Interface + conventions for consumers | Processing + hand-offs + edge cases |
+| **Examples** | Logger, Config, HTTP Framework | Renderer, Cache, Queue, Flows |
+
+**Foundation component doc answers:**
+- "What does this provide to business components?"
+- "What conventions must consumers follow?"
+- "What's the hand-off interface?"
+
+**Foundation component doc does NOT include:**
+- Implementation details ("we use pino")
+- Configuration code
+- Library-specific patterns
+
+**Example - Logger as Foundation:**
+- ✅ Interface: provides Logger instance to all business components
+- ✅ Conventions: structured fields (requestId, component), log levels (when to use each)
+- ✅ Hand-offs: what business components receive and how to use it
+- ❌ NOT: "here's the pino config code"
+
+### Technology Choice (No Doc Needed)
+
+Pure technology choice = just "we use X library". No unique conventions, no hand-off complexity.
+
+- If there are conventions for consumers → Foundation component
+- If it's just "we use X" → Container Tech Stack row only
 
 ---
 
 ## Include/Exclude
 
-| Include (Component Level) | Exclude (Push Up) |
-|---------------------------|-------------------|
-| Interface (IN → OUT) | WHAT component does (Container) |
-| Internal organization | Component relationships (Container) |
-| Conventions & rules | WHY patterns chosen (Container/ADR) |
-| Edge cases & errors | Code snippets |
-| | File paths |
+> See `defaults.md` for full include/exclude rules and litmus test.
 
-**Litmus test:** "Is this about HOW this component implements its contract?"
+**Quick check:** "Is this about HOW this component implements its contract?"
 
 ---
 
@@ -276,6 +344,9 @@ echo "Non-mermaid code blocks: $non_mermaid (should be 0)"
 
 - [ ] Critical gate executed (Container + Context loaded)
 - [ ] Component IS listed in parent Container's inventory
+- [ ] **Context unit verified** - would I want this context loaded together?
+- [ ] **Not over-grouped** - no unrelated concerns forcing unnecessary context load
+- [ ] **Not a tech choice** - if just "we use X library", belongs in Container tech stack
 - [ ] "Contract" section references Container's description
 - [ ] **Interface diagram present** (boundary and hand-offs)
 - [ ] **Hand-offs table present** (what exchanges with whom)
@@ -360,6 +431,11 @@ flowchart TD
 | "I'll use a simple config snippet" | Config syntax is code. Table: Setting \| Default \| Purpose. |
 | "Mermaid is code too" | Mermaid is architectural diagram (allowed). JSON/YAML is data structure (prohibited). |
 | "Interface diagram not needed for simple component" | REQUIRED. Even simple components have IN → OUT boundary. |
+| "Every atom/service needs a component doc" | Only if it's a context-loading unit. Logger is a tech choice → Container tech stack. |
+| "I should document all the pieces" | Document context units, not implementation units. Ask: "Would I load this together?" |
+| "The flow is already in another component" | If flow is documented elsewhere, don't duplicate. Reference it. |
+| "I'll group related things together" | Related by what? If they change independently, they're separate context units. |
+| "One doc per code file/module" | Code structure ≠ context structure. Group by what you'd want to understand together. |
 
 ---
 
@@ -373,6 +449,10 @@ flowchart TD
 | **Text-heavy docs** | Lead with diagrams. Text supports visuals, not vice versa. |
 | **Missing Hand-offs table** | REQUIRED. Shows what exchanges with whom. |
 | **Describing WHAT not HOW** | WHAT is Container's job. Component explains HOW. |
+| **Creating doc for every code unit** | Only create for context units. Tech choices → Container. |
+| **Over-grouping unrelated concerns** | If working on X doesn't need Y context, split them. |
+| **Documenting tech choice as component** | Logger, config lib → Container tech stack, not component doc. |
+| **Grouping by code structure** | Group by context need, not by file/folder structure. |
 
 ---
 

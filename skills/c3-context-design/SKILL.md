@@ -50,28 +50,19 @@ Context is the **eagle-eye introduction** to your architecture. Two core jobs:
 
 ## The Principle
 
+> See `references/core-principle.md` for full details.
+>
 > **Upper layer defines WHAT. Lower layer implements HOW.**
 
-At Context level:
-- I define WHAT containers exist and WHY
-- Container implements my definitions (WHAT components exist)
-- I do NOT define what's inside containers - that's Container's job
-
-**Integrity rule:** Containers cannot exist without being listed in Context.
+At Context: I define WHAT containers exist. Container implements my definitions. Containers cannot exist without being listed here.
 
 ---
 
 ## Include/Exclude
 
-| Include (Context Level) | Exclude (Push Down) |
-|-------------------------|---------------------|
-| Container responsibilities | Component details |
-| Container relationships | Internal patterns |
-| Connecting points (APIs/events) | Implementation |
-| External actors | Code references |
-| Cross-cutting concerns | File paths |
+> See `defaults.md` for full include/exclude rules and litmus test.
 
-**Litmus test:** "Is this about WHY containers exist and HOW they relate to each other?"
+**Quick check:** "Is this about WHY containers exist and HOW they relate?"
 
 ---
 

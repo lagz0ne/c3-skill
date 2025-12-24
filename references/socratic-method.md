@@ -99,7 +99,7 @@ TODO: Needs clarification
 - "What can go wrong?"
 - "What errors are retriable vs fatal?"
 
-## During c3-design Exploration
+## During C3 Exploration
 
 Socratic questions **confirm understanding**, not **discover location**:
 

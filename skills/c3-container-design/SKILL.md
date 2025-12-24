@@ -56,42 +56,57 @@ The Container level is the **architectural command center** of C3:
 
 ## The Principle
 
+> See `references/core-principle.md` for full details.
+>
 > **Upper layer defines WHAT. Lower layer implements HOW.**
 
-At Container level:
-- Context defines WHAT I am (my existence, my responsibility)
-- I define WHAT components exist and WHAT they do
-- Component implements my definitions (HOW it works)
-- I do NOT define how components work internally - that's Component's job
-
-**Integrity rules:**
-- I must be listed in Context before I can exist
-- Components cannot exist without being listed in my inventory
+At Container: Context defines WHAT I am. I define WHAT components exist. Component implements HOW. I must be listed in Context; components must be listed in me.
 
 ---
 
 ## Container Archetypes
 
-| Archetype | Relationship | Typical Components |
-|-----------|--------------|-------------------|
-| **Service** | Creates/processes | Handlers, Services, Adapters |
-| **Data** | Stores/structures | Schema, Indexes, Migrations |
-| **Boundary** | Interface to external | Contract, Client, Fallback |
-| **Platform** | Operates on containers | CI/CD, Deployment, Networking |
+> See `references/container-archetypes.md` for full component inventory by relationship type.
+
+**Quick reference:** Service (processes), Data (stores), Boundary (interfaces), Platform (operates).
 
 ---
 
 ## Include/Exclude
 
-| Include (Container Level) | Exclude (Push Up/Down) |
-|---------------------------|------------------------|
-| Component responsibilities | WHY container exists (Context) |
-| Component relationships | HOW components work internally (Component) |
-| Data flows between components | Code references |
-| Business flows | File paths |
-| Inner patterns | |
+> See `defaults.md` for full include/exclude rules and litmus test.
 
-**Litmus test:** "Is this about WHAT components do and HOW they relate to each other?"
+**Quick check:** "Is this about WHAT components do and HOW they relate?"
+
+---
+
+## Components vs Tech Stack
+
+> **Components have conventions for consumers. Tech Stack is just "we use X".**
+
+### Component Types
+
+| Type | Purpose | Examples |
+|------|---------|----------|
+| **Foundation** | Cross-cutting, provides to business | Logger, Config, HTTP Framework |
+| **Business** | Domain logic, processing | Renderer, Cache, Queue, Flows |
+
+Both Foundation and Business are valid components IF they have conventions consumers must follow.
+
+### When to List as Component
+
+| Has conventions for consumers? | Decision |
+|-------------------------------|----------|
+| Yes - consumers must follow rules | → Component (Foundation or Business) |
+| No - just "we use X library" | → Tech Stack row only |
+
+**Examples:**
+- Logger with structured field conventions → Foundation Component
+- "We use pino" with no conventions → Tech Stack only
+- Config with tag patterns consumers inject → Foundation Component
+- "We use dotenv" → Tech Stack only
+
+**Foundation layer in diagrams:** Show Foundation components in the Internal Structure diagram's Foundation layer, with arrows showing what they provide to Business components.
 
 ---
 
@@ -114,13 +129,50 @@ From loaded Context, extract for this container:
 | **Adjacent** | Component-to-component impact → Coordinate |
 | **Downstream** | New/changed components → Delegate to c3-component-design |
 
-### Phase 3: Socratic Discovery
+### Phase 3: Foundation-First Discovery
 
-**By archetype:**
-- **Service:** Responsibility? Key components? Critical flows?
-- **Data:** Engine/version? Schema? Access patterns?
-- **Boundary:** Contract? Client? Fallback?
-- **Platform:** Processes? Affected containers?
+> **Identify foundational aspects BEFORE business components.**
+>
+> Production-ready containers address common concerns. Discover what aspects apply, how they're addressed, and which establish conventions for business components.
+
+**Step 1: Identify relevant aspects**
+
+Based on container archetype, reason about which production-ready aspects apply:
+
+| Aspect | Question | If Conventions Exist → Foundation Component |
+|--------|----------|---------------------------------------------|
+| **Entry Point** | How do requests/events enter? | Web Server, Event Handler, UI Framework |
+| **Request Pipeline** | How are requests processed before business logic? | Middleware, Interceptors, Guards |
+| **Configuration** | How are settings/secrets managed? | Config Provider (if injection patterns) |
+| **Logging** | How is observability achieved? | Logger (if structured conventions) |
+| **Error Handling** | How do errors propagate? | Error Handler (if error taxonomy) |
+| **Persistence** | How do we talk to data stores? | DB Client, Connection Pool |
+| **External Integration** | How do we call other services? | HTTP Client, SDK Wrappers |
+| **Operations** | Health, metrics, graceful shutdown? | Health Provider, Metrics |
+| **State Management** | How is application state managed? | State Store, Cache |
+| **Navigation/Routing** | How do users/requests navigate? | Router (if route conventions) |
+
+**Step 2: Ask how each relevant aspect is addressed**
+
+For each aspect that applies:
+1. "How is [aspect] handled?" → Get the approach
+2. "Are there conventions business components must follow?" → Determines if it's a Foundation component
+3. "What patterns does it establish?" → Captures the conventions
+
+**Step 3: Then discover business components**
+
+Once foundation is understood, ask about domain logic:
+- What are the core business operations?
+- What services/handlers implement domain logic?
+- What are the critical flows?
+
+### Phase 4: Archetype-Specific Questions
+
+After foundation discovery, dive deeper by archetype:
+- **Service:** Critical flows? Error scenarios? Integration points?
+- **Data:** Schema patterns? Query conventions? Migration strategy?
+- **Boundary:** Contract shape? Retry/fallback? Rate limiting?
+- **Platform:** Deployment model? Scaling triggers? Recovery procedures?
 
 ---
 
@@ -135,8 +187,21 @@ See `container-template.md` for complete structure with frontmatter, diagrams, a
 4. Architecture - External Relationships (diagram + interface mapping table)
 5. Architecture - Internal Structure (diagram with Foundation/Business layering)
 6. Component Layering Rules
-7. Components table
+7. Components table (with Type column: Foundation/Business)
 8. Key Flows
+
+**Components table format:**
+
+```markdown
+| ID | Name | Type | Responsibility |
+|----|------|------|----------------|
+| c3-N01 | Web Server | Foundation | Request entry, middleware pipeline |
+| c3-N02 | Logger | Foundation | Structured logging conventions |
+| c3-N03 | Auth Service | Business | User authentication, token management |
+| c3-N04 | Order Service | Business | Order processing, validation |
+```
+
+Foundation components listed first, then Business components.
 
 ---
 
@@ -204,7 +269,8 @@ echo "Mermaid diagrams: $mermaid_count (need >= 2)"
 - [ ] "Inherited From Context" section populated from parent
 - [ ] Template sections present in correct order
 - [ ] BOTH diagrams included (External + Internal)
-- [ ] Components listed with responsibilities
+- [ ] **Foundation-first discovery completed** - aspects identified before business components
+- [ ] **Components table has Type column** - Foundation components listed first
 - [ ] Downstream delegation identified (c3-component-design)
 
 ---
@@ -264,6 +330,8 @@ flowchart TD
 | "This container is simple" | Simple containers still need both diagrams. Just smaller diagrams. |
 | "Inherited section is obvious" | Make inheritance explicit. What's obvious to you isn't to readers. |
 | "Layering doesn't apply here" | All containers have Foundation → Business layering. Show it. |
+| "Logger is just a tech choice" | If it has conventions for consumers (structured fields, levels), it's a Foundation component. |
+| "Every atom/service needs a component" | Only if conventions exist. "We use X" → Tech Stack. Conventions for consumers → Component. |
 
 ---
 
@@ -271,11 +339,15 @@ flowchart TD
 
 | Mistake | Fix |
 |---------|-----|
+| **Jumping to business components** | Discover foundation aspects FIRST. Entry point, logging, config, etc. |
 | **Missing External Relationships diagram** | REQUIRED. Maps Context interfaces to owning components. |
 | **Missing Internal Structure diagram** | REQUIRED. Shows Foundation → Business layering. |
 | **Not mapping interfaces to components** | Add table: External Interface \| Owning Component \| Protocol |
 | **Duplicating Context content** | Reference Context, don't repeat. Show component ownership. |
 | **Skipping layering rules** | Always include Foundation/Business rules table. |
+| **Confusing Foundation with Tech Stack** | Foundation has conventions for consumers. Tech Stack is just "we use X". |
+| **Creating component for "we use X"** | No conventions = no component. Only Tech Stack row. |
+| **Components table missing Type column** | Always include Foundation/Business type for each component. |
 
 ---
 

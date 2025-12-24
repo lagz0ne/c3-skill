@@ -340,20 +340,23 @@ These three skills handle the actual architectural documentation:
 
 **Design Principle:** Container is the "sweet spot" - it has the most architectural impact and is where strategic diagram decisions happen.
 
-### Orchestration Skills
+### Agent
 
-| Skill | Purpose | When Used |
-|-------|---------|-----------|
-| `c3-design` | Main entry point, orchestrates layer skills | Any architectural change |
-| `c3-adopt` | Initialize C3 for any project (existing or fresh) | New project adoption |
+The **c3 agent** (`agents/c3.md`) is the single entry point for all C3 work:
+- Discovery and adoption
+- Design and documentation
+- Configuration
+- Audit and verification
 
-### Utility Skills
+### Layer Skills
 
-| Skill | Purpose | When Used |
-|-------|---------|-----------|
-| `c3-config` | Manage settings.yaml | Configure project preferences |
-| `c3-migrate` | Handle version migrations | After plugin updates |
-| `c3-audit` | Verify docs match code reality | Post-implementation verification |
+| Skill | Purpose |
+|-------|---------|
+| `c3-context-design` | Context-level documentation |
+| `c3-container-design` | Container-level documentation |
+| `c3-component-design` | Component-level documentation |
+
+Layer skills are invoked by the c3 agent when documenting specific layers.
 
 **Note:** Document lookup and naming conventions are implemented as reference patterns, not skills:
 - `references/lookup-patterns.md` - ID-based document retrieval patterns
@@ -424,7 +427,7 @@ ADRs have:
 - `Changes Across Layers` - What should change in docs
 - `Verification Checklist` - What to check in code
 
-`c3-audit` verifies:
+The c3 skill's audit mode verifies:
 1. Are ADR doc changes actually made?
 2. Does code match what docs describe?
 3. Are verification items satisfied?
@@ -486,7 +489,7 @@ ADRs have:
 
 ### "I want to change how ADR verification works"
 
-1. Edit `skills/c3-audit/SKILL.md` (Mode 2: ADR Audit)
+1. Edit `agents/c3.md` (audit mode section)
 2. If changing ADR structure: also edit `references/adr-template.md`
 
 ### "I want to change the extended thinking in a layer skill"

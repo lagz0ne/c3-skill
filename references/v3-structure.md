@@ -1,165 +1,174 @@
-# V3 File Structure Reference
+# V3 Structure Reference
 
-Quick reference for C3 documentation file paths and ID patterns in v3 hierarchical structure.
+Single source of truth for C3 v3 documentation structure.
+
+## Core Concept
+
+**Context IS the README.** There is no separate "c3-0" file - the `.c3/README.md` file IS c3-0.
 
 ## ID Patterns
 
-| Level | ID Pattern | Example |
-|-------|------------|---------|
-| Context | `c3-0` | `c3-0` (single root) |
-| Container | `c3-{N}` (N=1-9) | `c3-1`, `c3-2` |
-| Component | `c3-{N}{NN}` (NN=01-99) | `c3-101`, `c3-215` |
-| ADR | `adr-{YYYYMMDD}-{slug}` | `adr-20251124-database`, `adr-20250115-auth` |
+| Level | Pattern | File | Note |
+|-------|---------|------|------|
+| Context | `c3-0` | `.c3/README.md` | Context = README |
+| Container | `c3-{N}` (N=1-9) | `.c3/c3-N-slug/README.md` | parent: c3-0 |
+| Component | `c3-{N}{NN}` (NN=01-99) | `.c3/c3-N-slug/c3-NNN-slug.md` | parent: c3-N |
+| ADR | `adr-{YYYYMMDD}-{slug}` | `.c3/adr/adr-*.md` | affects: [c3-N...] |
 
 ## File Paths
 
-| Level | Path Pattern | Example |
-|-------|--------------|---------|
-| Context | `.c3/README.md` | `.c3/README.md` |
-| Container | `.c3/c3-{N}-{slug}/README.md` | `.c3/c3-1-backend/README.md` |
-| Component | `.c3/c3-{N}-{slug}/c3-{N}{NN}-{slug}.md` | `.c3/c3-1-backend/c3-101-db-pool.md` |
-| ADR | `.c3/adr/adr-{YYYYMMDD}-{slug}.md` | `.c3/adr/adr-20251124-database.md` |
+| Level | Path |
+|-------|------|
+| Context | `.c3/README.md` |
+| Container | `.c3/c3-{N}-{slug}/README.md` |
+| Component | `.c3/c3-{N}-{slug}/c3-{N}{NN}-{slug}.md` |
+| ADR | `.c3/adr/adr-{YYYYMMDD}-{slug}.md` |
+| Settings | `.c3/settings.yaml` |
+| TOC | `.c3/TOC.md` |
 
 ## Directory Layout
 
 ```
 .c3/
-├── README.md              # Context (id: c3-0, c3-version: 3)
-├── TOC.md                 # Table of contents
-├── settings.yaml          # Project settings (via c3-config)
-├── index.md               # VitePress index
-├── platform/              # Platform docs (Context-level)
-│   ├── deployment.md      # c3-0-deployment
-│   ├── networking.md      # c3-0-networking
-│   ├── secrets.md         # c3-0-secrets
-│   └── ci-cd.md           # c3-0-cicd
-├── c3-1-{slug}/           # Container 1 folder
-│   ├── README.md          # Container doc (id: c3-1)
-│   ├── c3-101-*.md        # Component 01 (id: c3-101)
-│   └── c3-102-*.md        # Component 02 (id: c3-102)
-├── c3-2-{slug}/           # Container 2 folder
-│   └── README.md          # Container doc (id: c3-2)
-├── adr/                   # Architecture Decision Records
-│   └── adr-YYYYMMDD-*.md  # e.g., adr-20251124-database.md
-└── scripts/
-    └── build-toc.sh       # TOC generator
+├── README.md                        # Context (c3-0)
+├── TOC.md                           # Table of contents
+├── settings.yaml                    # Project settings
+├── c3-1-{slug}/                     # Container 1
+│   ├── README.md                    # Container doc
+│   ├── c3-101-{slug}.md             # Component
+│   └── c3-102-{slug}.md             # Component
+├── c3-2-{slug}/                     # Container 2
+│   └── README.md
+└── adr/                             # ADR folder
+    └── adr-YYYYMMDD-{slug}.md
 ```
 
-## Frontmatter
+---
 
-### Context (README.md)
+## Required Frontmatter
+
+### Context (c3-0)
+
 ```yaml
 ---
-id: c3-0
-c3-version: 3
-title: System Overview
+id: c3-0                    # REQUIRED: always c3-0
+c3-version: 3               # REQUIRED: always 3
+title: {System Name}        # REQUIRED
+summary: {One line}         # REQUIRED
 ---
 ```
 
-### Container
+### Container (c3-N)
+
 ```yaml
 ---
-id: c3-1
-c3-version: 3
-title: Backend API Container
+id: c3-{N}                  # REQUIRED: c3-1, c3-2, etc.
+c3-version: 3               # REQUIRED
+title: {Container Name}     # REQUIRED
+type: container             # REQUIRED
+parent: c3-0                # REQUIRED
+summary: {One line}         # REQUIRED
 ---
 ```
 
-### Component
+### Component (c3-NNN)
+
 ```yaml
 ---
-id: c3-101
-c3-version: 3
-title: Database Pool Component
+id: c3-{N}{NN}              # REQUIRED: c3-101, c3-102, etc.
+c3-version: 3               # REQUIRED
+title: {Component Name}     # REQUIRED
+type: component             # REQUIRED
+parent: c3-{N}              # REQUIRED: parent container
+summary: {One line}         # REQUIRED
 ---
 ```
 
 ### ADR
+
 ```yaml
 ---
-id: adr-20250115-postgresql
-title: Use PostgreSQL for persistence
-status: accepted
-date: 2025-01-15
+id: adr-{YYYYMMDD}-{slug}   # REQUIRED
+type: adr                   # REQUIRED
+status: proposed            # REQUIRED: proposed|accepted|implemented
+title: {Decision Title}     # REQUIRED
+affects: [c3-1, c3-2]       # REQUIRED: affected containers
 ---
 ```
 
-## Anchor Format
+---
 
-All headings use lowercase IDs with level prefix:
+## Required Sections
 
-| Level | Anchor Pattern | Example |
-|-------|----------------|---------|
-| Context | `{#c3-0-*}` | `{#c3-0-containers}` |
-| Container | `{#c3-N-*}` | `{#c3-1-middleware}` |
-| Component | `{#c3-NNN-*}` | `{#c3-101-config}` |
-| ADR | `{#adr-YYYYMMDD-*}` | `{#adr-20251124-decision}` |
+### Context (c3-0)
 
-## Platform IDs
+| Section | Purpose |
+|---------|---------|
+| Overview | What the system does |
+| Containers | Table: ID, Name, Purpose |
+| Container Interactions | Mermaid diagram |
+| External Actors | Who/what interacts with system |
 
-Platform documents use Context-level IDs with descriptive suffix:
+### Container (c3-N)
 
-| Document | ID |
-|----------|-------|
-| Deployment | c3-0-deployment |
-| Networking | c3-0-networking |
-| Secrets | c3-0-secrets |
-| CI/CD | c3-0-cicd |
+| Section | Purpose |
+|---------|---------|
+| Technology Stack | Table: Layer, Tech, Purpose |
+| Components | Table: ID, Name, Responsibility |
+| Internal Structure | Mermaid diagram (optional but recommended) |
 
-These are conceptually part of Context (c3-0), split for manageability.
+### Component (c3-NNN)
 
-## Settings File
+| Section | Purpose |
+|---------|---------|
+| Contract | What this component provides |
+| Interface | IN/OUT boundary diagram |
+| Hand-offs | Table: exchanges with other components |
+| Conventions | Rules for consumers |
+| Edge Cases | Error handling, failures |
 
-`.c3/settings.yaml` stores project preferences:
+### ADR
 
-```yaml
-diagrams: |
-  tool and usage patterns
+| Section | Purpose |
+|---------|---------|
+| Context | WHY decision needed |
+| Decision | WHAT was decided |
+| Rationale | WHY this option |
+| Consequences | Positive AND negative |
+| Changes Across Layers | What docs update |
+| Verification Checklist | How to confirm |
+| Audit Record | Lifecycle tracking |
 
-context: |
-  context-layer guidance
+---
 
-container: |
-  container-layer guidance
+## Validation Rules
 
-component: |
-  component-layer guidance
+| Rule | Check |
+|------|-------|
+| All IDs lowercase | `c3-1` not `C3-1` |
+| Container folders match ID | `c3-1-*` folder for `id: c3-1` |
+| Component parent matches folder | `c3-101` in `c3-1-*/` folder |
+| Slugs are lowercase-hyphenated | `api-backend` not `API_Backend` |
+| c3-version is 3 | No other versions |
+| Components encode parent | First digit = container number |
 
-guard: |
-  team guardrails
+---
 
-handoff: |
-  post-ADR steps
-
-audit: |
-  audit handoff preference
-```
-
-Created via `c3-config` skill, read by `c3-design` at start.
-
-## Key Rules
-
-1. **All lowercase** - IDs, slugs, filenames are lowercase
-2. **Numeric IDs are stable** - Slugs can change, numbers don't
-3. **Components encode parent** - `c3-101` = container 1, component 01
-4. **Containers own folders** - Each container is a directory
-5. **Version in frontmatter** - `c3-version: 3` in context README.md
-
-## Search Patterns (bash)
+## Search Patterns
 
 ```bash
 # Find context
-ls .c3/README.md
+cat .c3/README.md
 
 # Find all containers
 ls -d .c3/c3-[1-9]-*/
 
-# Find all components in container 2
-ls .c3/c3-2-*/c3-2*.md
+# Find components in container 1
+ls .c3/c3-1-*/c3-1*.md
 
 # Find all ADRs
-ls .c3/adr/adr-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-*.md
+ls .c3/adr/adr-*.md
 
-# Find ADRs by year
-ls .c3/adr/adr-2025*.md
+# Validate IDs
+grep -h "^id:" .c3/**/*.md
 ```

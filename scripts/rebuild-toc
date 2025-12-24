@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+#
+# Rebuild C3 TOC on session close
+# Only runs if project has adopted C3 (.c3/README.md exists)
+#
+
+set -uo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
+
+# Only run if project has adopted C3
+if [[ ! -f "$PROJECT_DIR/.c3/README.md" ]]; then
+    exit 0
+fi
+
+# Run build-toc from project directory
+cd "$PROJECT_DIR"
+"$SCRIPT_DIR/build-toc.sh" 2>/dev/null || true
+
+exit 0

@@ -1,5 +1,5 @@
 {
-  "description": "C3 architecture gate - requires .c3/ docs exist, suggests c3-adopt if missing",
+  "description": "C3 architecture hooks - gate and TOC rebuild",
   "hooks": {
     "PreToolUse": [
       {
@@ -9,6 +9,17 @@
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/scripts/c3-gate",
             "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/rebuild-toc",
+            "timeout": 30
           }
         ]
       }

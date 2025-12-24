@@ -95,10 +95,7 @@ Claude will:
 
 | Command | Description |
 |---------|-------------|
-| `/c3` | **Start here** - Design, update, or explore architecture |
-| `/c3-config` | Configure project settings (diagrams, guardrails, handoff) |
-| `/c3-migrate` | Migrate documentation to current skill version |
-| `/c3-audit` | Audit C3 docs against codebase reality |
+| `/c3` | **Start here** - Design, explore, configure, or audit architecture |
 
 ### Agent
 
@@ -119,26 +116,23 @@ The **c3** agent is your single entry point for all C3 architectural work:
 
 ### When to Use What
 
-| Need | Use | Why |
-|------|-----|-----|
-| Any C3 question or change | `c3` agent | Single entry point, handles everything |
-| Initialize C3 for new project | `c3-adopt` skill | Bootstraps .c3/ structure |
-| Verify docs match code | `/c3-audit` command | Post-implementation validation |
+Use the **c3 agent** for everything:
+- Discovery and adoption
+- Design and documentation
+- Configuration
+- Audit and verification
 
-**Workflow:** `c3` agent → creates ADR if needed → `c3-audit` verifies implementation
+**Workflow:** `c3` agent → discovery → design → layer skills → documentation → audit
 
-### Skills (8)
+### Layer Skills (3)
 
 | Skill | Purpose |
 |-------|---------|
-| `c3-design` | Main entry point - design, update, or explore architecture |
-| `c3-adopt` | Initialize C3 for any project (existing or fresh) |
-| `c3-context-design` | Context-level documentation |
-| `c3-container-design` | Container-level documentation |
-| `c3-component-design` | Component-level documentation |
-| `c3-config` | Create/update `.c3/settings.yaml` preferences |
-| `c3-migrate` | Version migration transforms |
-| `c3-audit` | Audit C3 docs against codebase reality |
+| `c3-context-design` | Context-level documentation (invoked by c3 agent) |
+| `c3-container-design` | Container-level documentation (invoked by c3 agent) |
+| `c3-component-design` | Component-level documentation (invoked by c3 agent) |
+
+The **c3 agent** orchestrates everything - discovery, design, config, and audit. Layer skills are invoked when documenting specific layers.
 
 ### References
 

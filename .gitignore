@@ -5,3 +5,4 @@ node_modules/
 .vitepress/dist
 .wt
 .worktrees/
+tests/output/

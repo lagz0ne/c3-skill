@@ -4,83 +4,59 @@ Diagrams should **clarify**, not mandate. Generate when helpful, skip when trivi
 
 ---
 
-## ⛔ MERMAID-ONLY ENFORCEMENT (MANDATORY)
+## Mermaid Only (Mandatory)
 
-**This is non-negotiable. ALL diagrams in C3 documentation MUST use Mermaid syntax.**
+**ALL diagrams MUST use Mermaid syntax.**
 
-### What is Prohibited (NO EXCEPTIONS)
+| Prohibited | Why |
+|------------|-----|
+| ASCII art (`+---+ → +---+`) | Not renderable |
+| Unicode boxes (`┌──┐`) | Platform-dependent |
+| Plain text flows (`A --> B`) | Not a diagram |
 
-| Prohibited | Example | Why Prohibited |
-|------------|---------|----------------|
-| ASCII art diagrams | `+---+ → +---+` boxes | Not renderable, poor accessibility |
-| Text-based flowcharts | `A --> B --> C` plain text | Not a diagram, just text |
-| Unicode box drawing | `┌──┐ │ │ └──┘` | Platform-dependent rendering |
-| Indented hierarchies | Tree structures with `├──` | Use Mermaid `graph TD` instead |
-| Any non-Mermaid visual | Anything not in ` ```mermaid ` block | Inconsistent, not interactive |
-
-### Why Mermaid is Required
-
-1. **Renderable** - GitHub, GitLab, and most markdown viewers render Mermaid natively
-2. **Accessible** - Screen readers can parse structure
-3. **Maintainable** - Standard syntax, easy to diff/review in PRs
-4. **Consistent** - Single format across all documentation
-
-### Validation Checklist (RUN BEFORE FINALIZING)
-
-Before completing any C3 document with diagrams, verify:
-
-- [ ] **All diagrams use ` ```mermaid ` code blocks**
-- [ ] **No ASCII art or Unicode box drawing anywhere**
-- [ ] **No plain-text "diagrams" that should be visual**
-
-### Red Flags - STOP and Rewrite If You See
-
-🚩 `+---+` or `|   |` box drawing characters
-🚩 `───>` or `-->` arrows outside Mermaid blocks
-🚩 `├──` or `└──` tree characters
-🚩 Indentation-based hierarchies meant to show structure
-🚩 "Here's the flow: A then B then C" without a mermaid diagram
+**Why Mermaid:** Renderable in GitHub/GitLab, accessible, maintainable, consistent.
 
 ---
 
 ## When to Use Diagrams
 
-**Use a diagram when:**
-- Relationships are non-obvious
-- Data flow has multiple steps
-- Test orchestration is complex
-- Architecture overview aids understanding
+| Use diagram when | Skip diagram when |
+|------------------|-------------------|
+| Relationships are non-obvious | A calls B (trivial) |
+| Data flow has multiple steps | Text description is clearer |
+| Architecture overview aids understanding | Would just repeat prose |
 
-**Skip diagrams when:**
-- Relationships are trivial (A calls B)
-- Text description is clearer
-- Diagram would just repeat prose
+---
 
-## Component Relationships (Container Level)
+## Diagram Types
 
-Show how components within a container interact.
+### Flowchart (Structure)
+
+Shows static structure and dependencies.
 
 ```mermaid
 flowchart TD
-    subgraph Container["Backend Service"]
-        RH[Request Handler]
-        BL[Business Logic]
-        DA[Database Access]
-        IC[Integration Client]
+    subgraph Container["Service"]
+        A[Handler]
+        B[Logic]
+        C[Data Access]
     end
 
-    RH --> BL
-    BL --> DA
-    BL --> IC
-    DA --> DB[(Database)]
-    IC --> ExtSvc[External Service]
+    A --> B --> C
+    C --> DB[(Database)]
 ```
 
-**When to use:** Container has 3+ components with non-trivial relationships.
+**Best for:** "What exists and what connects"
 
-## Data Flow (Sequence)
+| Can Show | Cannot Show |
+|----------|-------------|
+| Components, dependencies | Temporal ordering |
+| Data flow direction | Request/response pairing |
+| Groupings (subgraphs) | Error paths |
 
-Show how a request flows through the system.
+### Sequence (Flow)
+
+Shows temporal ordering and interactions.
 
 ```mermaid
 sequenceDiagram
@@ -89,121 +65,24 @@ sequenceDiagram
     participant Service
     participant DB
 
-    Client->>Handler: POST /orders
-    Handler->>Service: createOrder(data)
-    Service->>DB: INSERT
-    Service-->>Handler: order
-    Handler-->>Client: 201 Created
+    Client->>Handler: request
+    Handler->>Service: process
+    Service->>DB: query
+    Service-->>Handler: result
+    Handler-->>Client: response
 ```
 
-**When to use:** Request involves multiple components/services, error handling branches, or async steps.
+**Best for:** "What happens when X occurs"
 
-## Container Overview (Context Level)
+| Can Show | Cannot Show |
+|----------|-------------|
+| Temporal ordering | Overall structure |
+| Request/response pairs | Dependencies beyond flow |
+| Sync vs async | Multiple entry points |
 
-Show all containers and their relationships.
+### State (Lifecycle)
 
-```mermaid
-flowchart TB
-    subgraph System
-        FE[Frontend]
-        API[API Service]
-        Worker[Worker]
-        DB[(PostgreSQL)]
-        Queue[RabbitMQ]
-    end
-
-    User --> FE
-    FE --> API
-    API --> DB
-    API --> Queue
-    Worker --> Queue
-    Worker --> DB
-```
-
-**When to use:** System has 3+ containers.
-
-## Platform Topology
-
-Show infrastructure layout.
-
-```mermaid
-flowchart TB
-    subgraph Internet
-        User
-    end
-
-    subgraph Platform
-        LB[Load Balancer]
-        subgraph Private["Private Subnet"]
-            API
-            Worker
-        end
-        subgraph Data["Data Subnet"]
-            DB[(Database)]
-            Cache[(Redis)]
-        end
-    end
-
-    User --> LB
-    LB --> API
-    API --> DB
-    API --> Cache
-    Worker --> DB
-```
-
-**When to use:** Documenting platform/networking.
-
-## Execution Context (Meta-Frameworks)
-
-Show server vs client code paths.
-
-```mermaid
-flowchart LR
-    subgraph Build["Build Time"]
-        SSG[Static Gen]
-    end
-
-    subgraph Server["Server Runtime"]
-        RSC[Server Components]
-        API[API Routes]
-    end
-
-    subgraph Client["Client Runtime"]
-        Hydrate[Hydration]
-        State[Client State]
-    end
-
-    Build --> Server
-    Server --> Client
-```
-
-**When to use:** Documenting Next.js, Nuxt, SvelteKit applications.
-
-## Test Orchestration
-
-Show test setup and teardown.
-
-```mermaid
-sequenceDiagram
-    participant CI
-    participant TestDB
-    participant App
-    participant Tests
-
-    CI->>TestDB: docker-compose up
-    CI->>App: npm start
-    CI->>Tests: npm test
-    Tests->>App: requests
-    Tests-->>CI: results
-    CI->>App: stop
-    CI->>TestDB: docker-compose down
-```
-
-**When to use:** Integration tests with external dependencies.
-
-## State Machine (Complex Business Logic)
-
-Show state transitions for workflows.
+Shows state transitions for entities.
 
 ```mermaid
 stateDiagram-v2
@@ -215,18 +94,51 @@ stateDiagram-v2
     Completed --> [*]
 ```
 
-**When to use:** Component manages state transitions (orders, workflows, sagas).
+**Best for:** "What states can this entity be in"
+
+| Can Show | Cannot Show |
+|----------|-------------|
+| States, transitions | Who performs transition |
+| Triggers, terminal states | Multiple entities |
+
+---
+
+## Quick Reference by Complexity
+
+| Container Type | Recommended |
+|---------------|-------------|
+| Simple (1-3 components) | Component table, maybe one flowchart |
+| Moderate (4-6 components) | Flowchart, maybe one sequence |
+| Complex (7+ components) | Flowchart + ONE critical sequence |
+
+---
+
+## Combination Patterns
+
+| Pattern | When to Use |
+|---------|-------------|
+| **Flowchart + Sequence** | Complex structure AND non-obvious key flow |
+| **Flowchart + State** | Manages entities with complex lifecycles |
+
+---
 
 ## Anti-Patterns
 
-**Don't:**
-- Generate diagrams for every component (noise)
-- Create diagrams that just mirror the prose
-- Use complex diagram types when simple flowchart works
-- Force diagrams where text is clearer
+| Avoid | Why |
+|-------|-----|
+| Two flowcharts at different zoom levels | Can't mentally map between |
+| Sequence for every endpoint | Noise, maintenance nightmare |
+| State diagram for < 4 states | Overkill |
+| Table + diagram showing same thing | Redundant, will drift |
 
-**Do:**
-- Ask "does this diagram add clarity?"
-- Keep diagrams focused (5-10 nodes max)
-- Use consistent naming with documentation
-- Update diagrams when code changes
+---
+
+## Decision Checklist
+
+| Factor | Question |
+|--------|----------|
+| **Clarity** | Can prose alone convey this? |
+| **Value** | Will readers return to this? |
+| **Cost** | How often will it change? |
+
+**Decision:** INCLUDE / SKIP / SIMPLIFY

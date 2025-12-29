@@ -120,6 +120,24 @@ Yes → Container. About container relationships → Push to Context. About how 
 3. **No stubs** - Either a full doc exists or it doesn't
 4. **No doc = no consumer conventions** - Just "use it" (e.g., standard logger)
 
+```
+WRONG:
+.c3/c3-1-backend/
+├── README.md
+├── c3-101-handler.md     ← NO! Don't create at structure time
+├── c3-102-auth.md        ← NO! Conventions not mature yet
+└── c3-103-db.md          ← NO! Just "we use postgres"
+
+RIGHT:
+.c3/c3-1-backend/
+└── README.md             ← Contains component INVENTORY table
+    ## Components
+    | ID | Name | Type | Responsibility |
+    | c3-101 | Handler | Foundation | HTTP routing |
+    | c3-102 | Auth | Business | Authentication |
+    | c3-103 | DB Client | Foundation | Database access |
+```
+
 ### Components Inventory
 
 ```markdown

@@ -204,11 +204,11 @@ c3-design/
 
 **Examples:**
 ```
-feat(skills): add NO CODE enforcement harness to c3-component-design
-fix(c3-audit): correct layer rule validation logic
+feat(skills): add inventory-first model to c3-structure
+fix(c3-implementation): correct component template sections
 docs(references): update v3-structure examples
-chore: bump version to 20251216-enforcement-harnesses
-refactor(c3-adopt): extract scaffolding to separate section
+chore: bump version to 20251229-skill-consolidation
+refactor(agents): extract audit details to reference file
 ```
 
 ### Version Changes
@@ -486,7 +486,7 @@ Each layer has a litmus test to determine if content belongs there:
 - Controls component organization below
 - Where readers understand the architecture
 
-**Diagram Decision Framework (in c3-container-design):**
+**Diagram Decision Framework (in c3-structure):**
 1. Characterize container (simple/moderate/complex)
 2. Evaluate each diagram type (clarity + value + cost)
 3. Check combinations for redundancy

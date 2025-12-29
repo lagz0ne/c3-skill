@@ -98,15 +98,14 @@ Every test run generates an audit log tracking:
 
 ```
 Available skill files:
-  - agents/c3.md (322 lines)
-  - skills/c3-context-design/SKILL.md (238 lines)
-  ...
+  - agents/c3.md (387 lines)
+  - skills/c3-structure/SKILL.md (250 lines)
+  - skills/c3-implementation/SKILL.md (180 lines)
 
-[16:06:01] SKILL: c3-skill:c3-adopt
+[16:06:01] SKILL: c3-skill:c3
 [16:06:06] BASH: ls -la .c3/ 2>/dev/null
-[16:06:19] SKILL: c3-skill:c3-context-design
+[16:06:19] SKILL: c3-skill:c3-structure
 [16:06:49] WRITE: /tmp/workspace/.c3/README.md
-[16:07:00] SKILL: c3-skill:c3-container-design
 [16:07:05] READ: /tmp/workspace/.c3/README.md
 [16:07:41] WRITE: /tmp/workspace/.c3/c3-1-api/README.md
 ```

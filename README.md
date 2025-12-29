@@ -124,13 +124,12 @@ Use the **c3 agent** for everything:
 
 **Workflow:** `c3` agent → discovery → design → layer skills → documentation → audit
 
-### Layer Skills (3)
+### Layer Skills (2)
 
 | Skill | Purpose |
 |-------|---------|
-| `c3-context-design` | Context-level documentation (invoked by c3 agent) |
-| `c3-container-design` | Container-level documentation (invoked by c3 agent) |
-| `c3-component-design` | Component-level documentation (invoked by c3 agent) |
+| `c3-structure` | Context + Container structure (invoked by c3 agent) |
+| `c3-implementation` | Component implementation details (invoked by c3 agent) |
 
 The **c3 agent** orchestrates everything - discovery, design, config, and audit. Layer skills are invoked when documenting specific layers.
 
@@ -193,9 +192,8 @@ Each C3 layer (Context, Container, Component) has configurable rules for what co
 ### Defaults
 
 Each layer skill includes a `defaults.md` with sensible defaults:
-- `skills/c3-context-design/defaults.md`
-- `skills/c3-container-design/defaults.md`
-- `skills/c3-component-design/defaults.md`
+- `skills/c3-structure/defaults.md` (Context + Container)
+- `skills/c3-implementation/defaults.md` (Component)
 
 ### Customization
 

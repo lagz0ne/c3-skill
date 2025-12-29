@@ -78,7 +78,7 @@ echo "=== Structure Checks ==="
 check_file ".c3/README.md" "Context file exists"
 
 # Check for valid frontmatter in context
-# Required per c3-context-design: id, c3-version, title, summary
+# Required per c3-structure: id, c3-version, title, summary
 if [[ -f "$WORKSPACE/.c3/README.md" ]]; then
     check_content ".c3/README.md" "^id: c3-0" "Context has correct ID"
     check_content ".c3/README.md" "^c3-version:" "Context has c3-version"

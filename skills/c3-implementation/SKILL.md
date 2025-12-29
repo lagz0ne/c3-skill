@@ -32,10 +32,16 @@ See `references/core-principle.md`.
 
 ## When to Create a Component Doc
 
+**CRITICAL: Inventory-First Model**
+
+Component must be listed in Container inventory BEFORE creating a doc. The inventory is the source of truth for what exists. Docs appear when conventions mature.
+
 | Has conventions for consumers? | Action |
 |-------------------------------|--------|
 | Yes - rules consumers must follow | Create component doc |
-| No - just "we use X library" | Leave in Container inventory only |
+| No - just "we use X library" | Inventory entry only (no doc) |
+
+**No stubs.** Either a full doc exists or it doesn't. If conventions aren't mature enough to document, wait.
 
 ### What Counts as Conventions
 

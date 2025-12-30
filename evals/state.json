@@ -1,10 +1,36 @@
 {
-  "scenario": null,
-  "codebase": null,
-  "iteration": 0,
-  "best_score": 0,
-  "best_run": null,
-  "runs": [],
-  "started_at": null,
-  "last_run_at": null
+  "scenario": "adopt",
+  "codebase": "spree",
+  "iteration": 5,
+  "best_score": 100,
+  "best_run": "./results/run-20251230-181745",
+  "runs": [
+    {
+      "dir": "./results/run-20251230-173742",
+      "score": 75,
+      "at": "2025-12-30T10:45:04Z"
+    },
+    {
+      "dir": "./results/run-20251230-174703",
+      "score": 75,
+      "at": "2025-12-30T10:54:40Z"
+    },
+    {
+      "dir": "./results/run-20251230-175530",
+      "score": 67,
+      "at": "2025-12-30T11:08:33Z"
+    },
+    {
+      "dir": "./results/run-20251230-180919",
+      "score": 92,
+      "at": "2025-12-30T11:17:16Z"
+    },
+    {
+      "dir": "./results/run-20251230-181745",
+      "score": 100,
+      "at": "2025-12-30T11:24:43Z"
+    }
+  ],
+  "started_at": "2025-12-30T17:37:42+07:00",
+  "last_run_at": "2025-12-30T18:17:45+07:00"
 }

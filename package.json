@@ -1,0 +1,13 @@
+{
+  "name": "c3-design",
+  "version": "1.12.2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:opencode": "bun run scripts/build-opencode.ts"
+  },
+  "devDependencies": {
+    "bun-types": "latest",
+    "@opencode-ai/plugin": "latest"
+  }
+}

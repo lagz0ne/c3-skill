@@ -1,0 +1,115 @@
+# C3 Structure Guide
+
+Reference for Context and Container level structure.
+
+---
+
+## Context Level (c3-0)
+
+**File:** `.c3/README.md`
+
+**Litmus Test:** "Is this about WHY containers exist and HOW they connect?" Yes: Context. No: Push to Container.
+
+**Required Sections:** Overview, Containers (inventory), Interactions (Mermaid), External Actors
+
+### Container Inventory Format
+
+```markdown
+| ID | Name | Responsibility |
+|----|------|----------------|
+| c3-1 | API Backend | Request handling, business logic |
+| c3-2 | Frontend | User interface, client state |
+```
+
+**Rule:** List ALL containers. This is the source of truth.
+
+---
+
+## Container Level (c3-N)
+
+**File:** `.c3/c3-{N}-{slug}/README.md`
+
+**Litmus Test:** "Is this about WHAT components do and HOW they connect inside this container?" Yes: Container. Container relationships: Context. How components work: Component.
+
+**Required Sections:** Inherited From Context, Overview, Technology Stack, Components (inventory), Internal Structure (Mermaid), Key Flows
+
+---
+
+## Inventory-First Model
+
+**CRITICAL:** The components table is the source of truth.
+
+### Rules
+
+1. **Inventory is always complete** - List ALL components, even without detailed docs
+2. **Docs appear when conventions mature** - Component doc = conventions exist for consumers
+3. **No stubs** - Either a full doc exists or it doesn't
+4. **No doc = no consumer conventions** - Just "use it" (e.g., standard logger)
+
+### Components Inventory Format
+
+```markdown
+## Components
+
+| ID | Name | Type | Responsibility | Status |
+|----|------|------|----------------|--------|
+| c3-101 | Request Handler | Foundation | HTTP routing | |
+| c3-102 | Auth Service | Business | Token validation | Documented |
+| c3-103 | Logger | Foundation | Structured logging | Skip: stdlib wrapper |
+```
+
+### Status Values
+
+| Status | Meaning |
+|--------|---------|
+| *(empty)* | Not yet documented, conventions maturing |
+| `Documented` | Full component doc exists |
+| `Skip: {reason}` | Will never need a doc |
+| `Combined with c3-XXX` | Documented with another component |
+
+### Component Types
+
+| Type | Purpose |
+|------|---------|
+| **Foundation** | Cross-cutting (HTTP framework, logger, config) |
+| **Business** | Domain logic (auth service, order processor) |
+
+---
+
+## Technology Stack Format
+
+Document tech choices as a table. No patterns - the model knows frameworks.
+
+```markdown
+## Technology Stack
+
+| Layer | Technology | Purpose |
+|-------|------------|---------|
+| Runtime | Node.js 20 | JavaScript runtime |
+| Framework | Hono | HTTP server |
+| Database | PostgreSQL | Primary data store |
+```
+
+---
+
+## Diagrams
+
+Use **Mermaid only**. See `references/diagram-patterns.md` for syntax.
+
+| Layer | Required Diagram |
+|-------|-----------------|
+| Context | Container interactions (1 diagram) |
+| Container | Internal structure (1 diagram) |
+
+---
+
+## ALTER/ADAPT Quick Reference
+
+| Change Type | Layer | Update |
+|-------------|-------|--------|
+| New container | Context | Add to inventory, create container doc |
+| Container relationship | Context | Update interactions diagram |
+| New component | Container | Add to inventory (doc when conventions mature) |
+| Component relationship | Container | Update internal structure |
+| Protocol change | Context | Update all affected containers |
+| Tech stack change | Container | Update tech table |

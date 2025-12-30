@@ -1,0 +1,27 @@
+name: adjust
+description: |
+  Test the skill's ability to create an ADR for a proposed change.
+  Evaluates: Impact analysis, ADR structure, Layer awareness.
+
+prompt: |
+  I want to add a new authentication service to the system.
+  This should handle user login, session management, and JWT tokens.
+  Analyze the impact and create an ADR for this change.
+
+# Pre-run setup: needs existing .c3/ structure
+# (assumes codebase already has .c3/ from a previous adopt)
+setup: []
+
+# Evaluation config
+checklist: adjust.yaml
+rubric: ../rubric.yaml
+
+# Expected behavior
+expectations:
+  - Creates ADR with correct naming (adr-YYYYMMDD-slug.md)
+  - ADR has proper frontmatter (status: proposed)
+  - Identifies affected containers
+  - Documents Changes Across Layers
+  - Includes verification checklist
+  - Includes implementation plan overview
+  - Creates Audit Record section

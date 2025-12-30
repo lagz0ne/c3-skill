@@ -1,0 +1,14 @@
+{
+  "name": "c3-skill-evals",
+  "version": "0.1.0",
+  "description": "Evaluation harness for C3 skill improvement",
+  "type": "module",
+  "scripts": {
+    "check": "bun scripts/check.ts",
+    "evaluate": "bun scripts/evaluate.ts",
+    "run": "./runner.sh"
+  },
+  "dependencies": {
+    "yaml": "^2.7.0"
+  }
+}

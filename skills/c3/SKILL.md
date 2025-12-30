@@ -19,9 +19,9 @@ Create as `proposed` → human accepts → update layer docs → implement → a
 
 | Intent | Mode | Reference |
 |--------|------|-----------|
-| "Where is X?" | Navigate | Direct lookup |
+| "Where is X?" | Navigate | `references/lookup-patterns.md` |
 | "Add/change X" | Design | `references/adr-template.md` |
-| "Accept/implement ADR" | Lifecycle | See below |
+| "Accept/implement ADR" | Lifecycle | - |
 | "Audit C3" | Audit | `references/audit-checks.md` |
 | No `.c3/` exists | Adopt | `references/adopt-workflow.md` |
 
@@ -31,6 +31,12 @@ Create as `proposed` → human accepts → update layer docs → implement → a
 |-------|-----------|
 | Context/Container | `references/structure-guide.md` |
 | Component | `references/implementation-guide.md` |
+
+## Mode: Navigate
+
+ID-based lookup. Parse ID (`c3-0`, `c3-N`, `c3-NNN`, `adr-YYYYMMDD-slug`) and read the corresponding file.
+
+See `references/lookup-patterns.md` for ID resolution.
 
 ## Mode: Adopt
 

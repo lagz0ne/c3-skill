@@ -45,9 +45,25 @@ Reference for Component level documentation.
 
 What Container says about this component.
 
+Format: `From c3-{N} ([Container Name]): "[responsibility from inventory]"`
+
 ### 2. Interface Diagram
 
 Shows boundary and hand-offs. Use Mermaid with IN/PROCESS/OUT subgraphs.
+
+```mermaid
+flowchart LR
+    subgraph IN["Receives"]
+        I1[Input]
+    end
+    subgraph PROCESS["Owns"]
+        P1[Processing]
+    end
+    subgraph OUT["Provides"]
+        O1[Output]
+    end
+    IN --> PROCESS --> OUT
+```
 
 ### 3. Hand-offs Table
 
@@ -96,7 +112,19 @@ Shows boundary and hand-offs. Use Mermaid with IN/PROCESS/OUT subgraphs.
 
 ---
 
+## Quick Verification
+
+Before completing component doc:
+- [ ] Component IS in parent Container inventory
+- [ ] Interface diagram present (IN/PROCESS/OUT)
+- [ ] Hand-offs table present
+- [ ] Conventions table present
+- [ ] NO code blocks (Mermaid only exception)
+
+---
+
 ## Related
 
 - `structure-guide.md` - Context and Container structure
 - `v3-structure.md` - Full structure reference with frontmatter
+- `diagram-patterns.md` - Mermaid diagram syntax

@@ -1,132 +1,376 @@
-# Subagent Exploration for Audit/Adopt
+# C3 Discovery Engine
 
-**Status:** In Progress (brainstorming)
-**Date:** 2025-12-29
-**Priority:** Adopt first
+**Status:** Design Complete
+**Date:** 2025-12-30
+**Covers:** Adopt + Audit (unified engine)
+
+---
 
 ## Problem
 
-The c3 agent's audit and adopt modes do heavy sequential exploration that:
+The c3 agent's adopt and audit modes do heavy sequential exploration that:
 1. Exhausts context (reading many files)
 2. Takes too long (no parallelization)
+3. Doesn't leverage C3's hierarchical model
 
-## Goals
+## Solution
 
-- **Speed:** Parallelize exploration with subagents
-- **Context efficiency:** Keep main agent lean, subagents return summaries
-- **User efficiency:** Use AskUserQuestion for structured input (save typing)
+A **hierarchical discovery engine** that:
+- Follows C3's top-down structure (Context → Container → Component)
+- Uses subagents (Sonnet) to offload exploration
+- Presents findings via AskUserQuestion for efficient user confirmation
+- Serves both Adopt and Audit modes
 
 ---
 
-## Adopt Design (Priority)
-
-### Two-Stage Flow
+## Core Model: Expectation vs Reality
 
 ```
-Stage 1: Auto-Discovery
-├── Dispatch subagents to explore codebase in parallel
-├── Each returns structured findings (not raw files)
-└── Main agent synthesizes into draft inventory
-
-Stage 2: Socratic Clarification
-├── Present findings via AskUserQuestion (multiple choice)
-├── Confirm/correct container boundaries
-├── Confirm/correct component inventory per container
-└── Capture domain-specific naming/purpose
+┌─────────────────────────────────────────────────────────────┐
+│                    DISCOVERY ENGINE                          │
+│  (Unified for Adopt and Audit)                              │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  REALITY (from code)        EXPECTATION (from .c3/ docs)    │
+│        ↓                            ↓                        │
+│  Discovery subagents          Read existing docs            │
+│        ↓                            ↓                        │
+│        └────────── COMPARE ─────────┘                       │
+│                       ↓                                      │
+│         ┌─────────────┴─────────────┐                       │
+│         ↓                           ↓                        │
+│     ADOPT                        AUDIT                       │
+│  (no docs exist)             (docs exist)                   │
+│  Reality + User → Create     Reality vs Expectation → Drift │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Stage 1: Auto-Discovery (Parallel Subagents)
+---
 
-| Subagent | Explores | Returns |
-|----------|----------|---------|
-| **entry-points** | package.json scripts, main files, Dockerfiles | List of runnable entry points |
-| **boundaries** | Top-level dirs, package structure, workspaces | Candidate container boundaries |
-| **tech-stack** | Dependencies, configs, framework patterns | Tech per boundary |
-| **external-integrations** | API calls, DB connections, env vars | External actors/services |
+## Hierarchical Discovery (All Layers Required)
 
-**Output format:** Structured JSON/YAML that main agent can process without reading raw files.
+Discovery follows C3's top-down hierarchy. Each layer's inventory informs what to search for in the next layer.
 
-### Stage 2: Socratic via AskUserQuestion
-
-**Inventory-first approach:** Build comprehensive questions from discovery.
-
-**Question flow:**
-
-1. **Container confirmation:**
-   ```
-   Q: "Based on discovery, these look like separate containers. Confirm?"
-   Options:
-   - [x] backend/ → Backend API
-   - [x] frontend/ → Web App
-   - [ ] scripts/ → (exclude, not a container)
-   - Other: [specify]
-   ```
-
-2. **Per-container component inventory:**
-   ```
-   Q: "For Backend API, which are significant components?"
-   Options (multi-select):
-   - [x] src/auth/ → Authentication
-   - [x] src/api/ → API Routes
-   - [x] src/db/ → Database Layer
-   - [ ] src/utils/ → (exclude, utility)
-   ```
-
-3. **External actors:**
-   ```
-   Q: "Which external systems does this interact with?"
-   Options:
-   - [x] PostgreSQL (detected from pg dependency)
-   - [x] Stripe API (detected from stripe calls)
-   - [ ] Redis (not detected, add if needed)
-   ```
-
-4. **Naming/purpose refinement:**
-   ```
-   Q: "What's the primary purpose of this system?"
-   Options:
-   - E-commerce platform
-   - SaaS application
-   - Internal tool
-   - Other: [specify]
-   ```
-
-### Key Principles
-
-1. **Discovery informs questions** - Don't ask what can be detected
-2. **Confirmation over description** - "Is this right?" not "Describe your system"
-3. **Multi-select for inventory** - Faster than individual yes/no
-4. **Escape hatch** - Always allow "Other" for corrections
+```
+┌─────────────────────────────────────────────────────────────┐
+│  LAYER 1: CONTEXT DISCOVERY                                 │
+├─────────────────────────────────────────────────────────────┤
+│  Subagent searches for:                                     │
+│  - Apps / deployable units                                  │
+│  - Connections between units                                │
+│  - External actors (DBs, APIs, services)                    │
+│                                                              │
+│  Returns: Container inventory candidates                     │
+│                                                              │
+│  ASK USER: Confirm containers + responsibilities            │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+                    (uses confirmed inventory)
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│  LAYER 2: CONTAINER DISCOVERY (per confirmed container)     │
+├─────────────────────────────────────────────────────────────┤
+│  Subagent searches for:                                     │
+│  - Internal organization / separation of concerns           │
+│  - Significant modules within the container                 │
+│  - Tech stack per container                                 │
+│                                                              │
+│  Returns: Component inventory candidates                     │
+│                                                              │
+│  ASK USER: Confirm components per container                 │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+                    (uses confirmed inventory)
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│  LAYER 3: COMPONENT DISCOVERY (per confirmed component)     │
+├─────────────────────────────────────────────────────────────┤
+│  Subagent searches for:                                     │
+│  - Implementation patterns                                  │
+│  - Connections to other components                          │
+│  - Type classification (foundation/business/integration)    │
+│                                                              │
+│  Returns: Component details (type, responsibility, status)  │
+│                                                              │
+│  ASK USER: Confirm component roles + relationships          │
+│                                                              │
+│  ⚠️  CRITICAL: This is where code meets strategy            │
+│  - Adopt: Not finished until component inventory complete   │
+│  - Audit: Biggest drifts are at component level             │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Audit Design (Later)
+## Subagent Specifications
 
-To be designed after Adopt is implemented.
+All subagents use **Sonnet** model and are primed with C3 inventory context.
 
-### Audit Phases (from audit-checks.md)
+### Context Discovery Subagent
 
-| Phase | Work | Parallelizable? |
-|-------|------|-----------------|
-| 1. Gather | Read context, list containers, read each container | Yes - per container |
-| 2. Validate Structure | Check frontmatter, ID patterns, parents | Yes - per doc |
-| 3. Cross-Reference | Inventory vs actual code | Yes - per container |
-| 4. Validate Sections | Required sections per layer | Yes - per doc |
-| 5. ADR Lifecycle | Check orphan ADRs | Sequential (small) |
-| 6. Code Sampling | Sample major directories for drift | Yes - per directory |
+**Prompt context:**
+```
+You are scanning a codebase to identify containers for C3 documentation.
+
+A "container" in C3 is a deployable unit or major boundary:
+- Separate apps (frontend, backend, mobile)
+- Services in a microservices architecture
+- Major packages in a monorepo
+
+Find:
+1. Deployable units / entry points
+2. How they connect to each other
+3. External systems they depend on
+
+Return findings aligned to this inventory table:
+| ID | Container | Responsibility |
+```
+
+**Searches:**
+- Directory tree (depth 2-3)
+- Entry points (main files, Dockerfiles, package.json scripts)
+- Package manager signals (workspaces, multi-package)
+- Infra signals (docker-compose, k8s configs)
+
+**Returns:**
+```yaml
+containers:
+  - path: apps/backend
+    name_hint: Backend API
+    entry_points: [src/main.ts, Dockerfile]
+    confidence: high
+
+  - path: apps/frontend
+    name_hint: Frontend App
+    entry_points: [src/index.tsx]
+    confidence: high
+
+externals:
+  - name: PostgreSQL
+    type: database
+    evidence: [pg dependency, DATABASE_URL]
+
+connections:
+  - from: frontend
+    to: backend
+    type: http
+    evidence: [API_URL in frontend config]
+```
+
+### Container Discovery Subagent
+
+**Input:** Confirmed container from Layer 1 + its path
+
+**Prompt context:**
+```
+You are scanning a container to identify components for C3 documentation.
+
+A "component" in C3 is a significant internal unit:
+- Foundation: shared infrastructure (DB, HTTP, auth middleware)
+- Business: domain logic (user service, order processing)
+- Integration: external adapters (API clients, message handlers)
+
+Scan the internal structure of: {container_path}
+
+Return findings aligned to this inventory table:
+| ID | Component | Type | Responsibility |
+```
+
+**Searches:**
+- Internal directory structure
+- Module organization patterns
+- Dependency imports between modules
+
+**Returns:**
+```yaml
+container: apps/backend
+tech_stack:
+  - layer: Runtime
+    tech: Node.js
+  - layer: Framework
+    tech: Express
+
+components:
+  - path: src/auth
+    name_hint: Auth Service
+    type: business
+    confidence: high
+    imports_from: [src/db]
+
+  - path: src/api
+    name_hint: API Routes
+    type: foundation
+    confidence: high
+```
+
+### Component Discovery Subagent
+
+**Input:** Confirmed component from Layer 2 + its path
+
+**Prompt context:**
+```
+You are analyzing a component to understand its implementation for C3.
+
+Determine:
+1. Type: foundation | business | integration
+2. Responsibility: what it does (one line)
+3. Connections: what it talks to (other components, externals)
+4. Patterns: notable implementation patterns
+
+This informs the component's entry in the container inventory.
+```
+
+**Returns:**
+```yaml
+component: src/auth
+type: business
+responsibility: Handles user authentication and session management
+connections:
+  - target: src/db
+    type: internal
+    purpose: User credential storage
+  - target: Redis
+    type: external
+    purpose: Session cache
+patterns:
+  - JWT tokens
+  - Refresh token rotation
+```
 
 ---
 
-## Open Questions
+## User Interaction (AskUserQuestion)
 
-- [ ] What model for discovery subagents? (haiku for speed?)
-- [ ] How to handle monorepo vs single-app detection?
-- [ ] Max questions before user fatigue?
-- [ ] Fallback if discovery finds nothing?
+Batch aggressively with multi-select. Minimize round-trips.
+
+### Layer 1: Context Confirmation
+
+```
+Call 1:
+  Q1: "What is this system?" (single-select or Other)
+      - E-commerce platform
+      - SaaS application
+      - Internal tool
+
+  Q2: "Which are separate containers?" (multi-select)
+      - [x] apps/backend → Backend API
+      - [x] apps/frontend → Frontend App
+      - [ ] scripts/ → (likely not a container)
+```
+
+### Layer 2: Container Components (per container)
+
+```
+Call 2 (for Backend API):
+  Q1: "Container purpose?" (prefilled, confirm or edit)
+      - "Core API serving frontend and mobile clients"
+
+  Q2: "Which are significant components?" (multi-select)
+      - [x] src/auth → Auth Service
+      - [x] src/api → API Routes
+      - [x] src/db → Database Layer
+      - [ ] src/utils → (utility, exclude)
+```
+
+### Layer 3: Component Roles
+
+```
+Call 3 (batched for confirmed components):
+  Q1: "Component types correct?" (multi-select corrections)
+      - [x] Auth Service: business ✓
+      - [ ] API Routes: change to foundation
+
+  Q2: "Anything missing from inventory?" (Other for additions)
+```
+
+---
+
+## Mode-Specific Behavior
+
+### Adopt Mode
+
+1. Run all three discovery layers
+2. ASK at each layer for confirmation
+3. **Complete when:** All component inventories confirmed
+4. **Output:** Create .c3/ docs from confirmed inventories
+
+```
+Reality (discovered) + User Confirmation → Create .c3/ docs
+```
+
+### Audit Mode
+
+1. Read existing .c3/ docs (Expectation)
+2. Run all three discovery layers (Reality)
+3. Compare at each layer:
+   - Context: containers in docs vs containers in code
+   - Container: components in inventory vs components in code
+   - Component: documented details vs actual implementation
+
+```yaml
+drift_report:
+  context:
+    missing_in_docs: []
+    missing_in_code: []
+
+  containers:
+    c3-1-backend:
+      missing_in_inventory:
+        - src/cache  # new module, not documented
+      missing_in_code:
+        - c3-105-legacy  # documented but deleted
+
+  components:
+    c3-101-auth:
+      type_mismatch: null
+      responsibility_drift: "Now also handles OAuth, not just JWT"
+```
+
+---
+
+## Decisions Summary
+
+| Question | Decision |
+|----------|----------|
+| Subagent model | Sonnet |
+| Discovery approach | Hierarchical (Context → Container → Component) |
+| Each layer | Mandatory (component level is critical) |
+| User input | AskUserQuestion, batched with multi-select |
+| Fallback (nothing found) | Fall back to manual questions |
+| Unified engine | Yes - same discovery for Adopt and Audit |
+
+---
+
+## Implementation Notes
+
+### Parallelization Opportunities
+
+- **Layer 1:** Single subagent (context discovery)
+- **Layer 2:** N parallel subagents (one per confirmed container)
+- **Layer 3:** M parallel subagents (one per confirmed component, batched)
+
+### Subagent Prompt Template
+
+Each subagent prompt includes:
+1. C3 inventory model explanation
+2. Layer-specific search targets
+3. Structured output format (YAML)
+4. Confidence indicators
+
+### Error Handling
+
+- **Confused signals:** ASK user for guidance
+- **Nothing found:** Fall back to manual questions
+- **Low confidence:** Include in options but mark as "likely exclude"
+
+---
 
 ## Next Steps
 
-1. Finalize Adopt Stage 1 subagent specs
-2. Define structured output format for each subagent
-3. Design Stage 2 question flow in detail
-4. Implement and test
+1. Implement context discovery subagent
+2. Implement container discovery subagent
+3. Implement component discovery subagent
+4. Wire up AskUserQuestion flow
+5. Add audit mode diff engine
+6. Test on real codebases

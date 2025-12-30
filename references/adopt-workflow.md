@@ -2,86 +2,109 @@
 
 **Trigger:** No `.c3/` directory exists, or user asks to "set up C3", "create architecture docs"
 
-## Greenfield vs Brownfield
+**Purpose:** Discover and document existing architecture using automated codebase scanning.
 
-| Scenario | Discovery | Approach |
-|----------|-----------|----------|
-| **Greenfield** | User describes what they'll build | Create from description |
-| **Brownfield** | Existing codebase | Explore code, document current state |
+## Discovery-Based Approach
 
-## Step 1: Discovery
+The adopt workflow uses a **discovery engine** with specialized subagents to scan the codebase and propose documentation structure. User confirms at each layer before proceeding.
 
-### Greenfield
-From user description, identify:
-- System purpose
-- Main containers (typically 1-3)
-- Technology choices
-- External actors
+**Reference:** `references/discovery-engine.md` for detailed subagent specifications.
 
-### Brownfield
-Explore codebase to identify:
-- Entry points (what runs?)
-- Boundaries (what's separate?)
-- Technologies used
-- External integrations
+## 7-Step Discovery Flow
 
-## Step 2: Create Structure
+### 1. Context Discovery (Find Containers)
 
-```bash
-mkdir -p .c3/adr
+**Agent dispatches Context Discovery subagent:**
+- Scans codebase for container boundaries
+- Identifies entry points, technologies, external systems
+- Returns container candidates with confidence scores
+
+**Output:** YAML with containers and externals
+
+### 2. Confirm Containers with User
+
+**Agent presents findings:**
+- List of discovered containers (name, path, entry points, confidence)
+- Detected external systems (name, type, evidence)
+
+**User confirms:**
+- Which containers to document
+- Renames/merges/splits as needed
+- Validates external systems
+
+### 3. Container Discovery (Find Components per Container)
+
+**For each confirmed container, agent dispatches Container Discovery subagent:**
+- Scans container scope for component boundaries
+- Identifies component types (foundation/business/integration)
+- Returns component candidates with confidence scores
+
+**Output:** YAML with components per container
+
+### 4. Confirm Components per Container
+
+**Agent presents findings per container:**
+- List of discovered components (name, path, type, confidence)
+
+**User confirms:**
+- Which components to include in inventory
+- Renames/merges/splits as needed
+- Validates component types
+
+### 5. Component Discovery (Optional Detail)
+
+**ONLY if user explicitly requests detailed analysis.**
+
+**Agent dispatches Component Discovery subagent for select components:**
+- Analyzes responsibility, interfaces, dependencies, config
+- Returns detailed component characteristics
+
+**Default:** Skip this step. Component inventory is sufficient at adopt time.
+
+### 6. Confirm Component Details (If Gathered)
+
+**Agent presents analysis for reviewed components:**
+- Responsibility, interfaces, dependencies, config, conventions
+
+**User confirms accuracy.**
+
+**Note:** Details are for understanding only - no component docs are created (inventory-first model).
+
+### 7. Create .c3/ Structure
+
+**Agent scaffolds documentation using confirmed inventories:**
+
+**ID Assignment:**
+- Context: `c3-0`
+- Containers: `c3-1`, `c3-2`, `c3-3`, etc. (sequential)
+- Components: `c3-101`, `c3-102` for c3-1; `c3-201`, `c3-202` for c3-2, etc.
+
+**Created:**
+```
+.c3/
+├── README.md (c3-0) ← Context with container inventory
+├── c3-1-{slug}/
+│   └── README.md    ← Container with component inventory
+├── c3-2-{slug}/
+│   └── README.md    ← Container with component inventory
+├── adr/             ← Empty, for future ADRs
+└── settings.yaml    ← Optional custom settings
 ```
 
-## Step 3: Create Context (c3-0)
+**NOT Created:**
+- Component docs (inventory-first model)
 
-Write `.c3/README.md`:
+**Component docs appear later when:**
+- Conventions emerge that consumers must follow
+- Hand-off patterns become non-obvious
+- Edge cases need documentation
 
-```yaml
----
-id: c3-0
-c3-version: 3
-title: [System Name]
-summary: [One-line description]
----
-```
+## Inventory-First Model
 
-**Required sections:**
-- Overview
-- Containers table (ID, Name, Responsibility)
-- Interactions (Mermaid diagram)
-- External Actors
-
-## Step 4: Create Containers
-
-For EACH container:
-
-1. Create folder: `.c3/c3-{N}-{slug}/`
-2. Write `README.md`:
-
-```yaml
----
-id: c3-{N}
-c3-version: 3
-title: [Container Name]
-type: container
-parent: c3-0
-summary: [One-line description]
----
-```
-
-**Required sections:**
-- Inherited From Context
-- Technology Stack table
-- Components table (inventory)
-- Internal Structure (Mermaid diagram)
-
-## Step 5: Component Inventory (NOT Docs)
-
-**CRITICAL: Inventory-first model**
-
-List ALL components in Container's components table:
+**CRITICAL:** Adopt creates **inventory tables**, NOT component docs.
 
 ```markdown
-## Components
+## Components (in Container README)
 
 | ID | Name | Type | Responsibility |
 |----|------|------|----------------|
@@ -90,37 +113,40 @@ List ALL components in Container's components table:
 | c3-103 | User Service | Business | User management |
 ```
 
-**Do NOT create component docs at adopt time.**
+**Rationale:** Most components don't need docs at adoption time. Inventory enables navigation and impact analysis. Docs come later when implementation details matter.
 
-Component docs appear later when:
-- Conventions emerge that consumers must follow
-- Hand-off patterns become non-obvious
-- Edge cases need documentation
+## Fallback Behavior
 
-## Step 6: Create TOC
+**If discovery subagent fails or times out:**
 
-Write `.c3/TOC.md` listing all created docs.
+1. **Retry once** with same parameters
+2. **If second failure:**
+   - Fall back to manual entry mode
+   - Ask user to provide information directly
+3. **Log failure** in adoption report (note which steps used manual fallback)
 
-## Step 7: Confirm Completion
-
-```
-C3 documentation created:
-├─ .c3/README.md (Context)
-├─ .c3/c3-1-{slug}/README.md (Container)
-├─ .c3/c3-2-{slug}/README.md (Container)
-└─ .c3/TOC.md
-
-Components inventoried but not documented yet.
-Create component docs when conventions mature.
-
-Next:
-- Use `c3-structure` skill for structural changes
-- Use `c3-implementation` skill when documenting components
-- Create ADRs for architectural decisions
-```
+**Partial success is acceptable** - proceed with whatever data was successfully gathered.
 
 ## Atomic Completion
 
-**NEVER end before completing all containers.**
+**NEVER end before completing all confirmed containers.**
 
-Adopt creates the full structure in one pass. Individual component docs come later through normal development flow.
+Adopt creates the full structure in one pass. Individual component docs come later through normal development flow (via `c3-implementation` skill).
+
+## Final Report
+
+```
+**C3 structure created**
+
+Containers documented:
+- c3-1-{name} ({N} components in inventory)
+- c3-2-{name} ({N} components in inventory)
+
+Externals documented:
+- {external_name} ({type})
+
+Next steps:
+- Use `c3-structure` skill for structural changes (containers, context)
+- Use `c3-implementation` skill when documenting components
+- Create ADRs for architectural decisions
+```

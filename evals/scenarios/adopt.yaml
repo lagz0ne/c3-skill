@@ -1,0 +1,39 @@
+name: adopt
+description: |
+  Test the skill's ability to adopt C3 for a new project.
+  Evaluates: Context creation, Container identification, Component inventory.
+
+prompt: |
+  Set up C3 architecture documentation for this codebase.
+
+  IMPORTANT: This is a non-interactive run. Do NOT ask for confirmation - proceed with all discovered containers and components automatically.
+
+  Follow references/adopt-workflow.md but skip user confirmation steps. Use your best judgment for container/component selection.
+
+  Create the .c3/ directory structure following references/structure-guide.md:
+  - .c3/README.md as the Context (c3-0) with YAML frontmatter (id, c3-version, title, summary)
+  - .c3/c3-N-{slug}/README.md for each container
+  - .c3/adr/ directory
+
+  Required sections in Context: ## Overview, ## Containers, ## Interactions (Mermaid), ## External Actors
+  Required sections in Container: ## Technology Stack, ## Components (5-column inventory), ## Internal Structure (Mermaid)
+
+  Complete the full structure creation in this session.
+
+# Pre-run setup commands
+setup:
+  - rm -rf .c3/
+
+# Evaluation config
+checklist: adopt.yaml
+rubric: ../rubric.yaml
+
+# Expected behavior
+expectations:
+  - Creates .c3/ directory
+  - Creates .c3/README.md (Context c3-0)
+  - Creates .c3/adr/ directory
+  - Identifies all major containers
+  - Creates container docs with component inventories
+  - Uses Mermaid for diagrams
+  - Does NOT create component doc files (inventory-first)

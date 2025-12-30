@@ -1,0 +1,13 @@
+# Eval run results
+results/
+
+# Workbench skill iterations (copy from main skills/)
+workbench/skills/
+workbench/agents/
+
+# Dependencies
+node_modules/
+
+# Temp files
+*.log
+.DS_Store

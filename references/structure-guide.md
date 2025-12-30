@@ -31,7 +31,9 @@ Reference for Context and Container level structure.
 
 **Litmus Test:** "Is this about WHAT components do and HOW they connect inside this container?" Yes: Container. Container relationships: Context. How components work: Component.
 
-**Required Sections:** Inherited From Context, Overview, Technology Stack, Components (inventory), Internal Structure (Mermaid), Key Flows
+**Required Sections:** Technology Stack, Components (inventory), Internal Structure (Mermaid)
+
+**Optional Sections:** Inherited From Context, Overview, Key Flows (include when they add clarity)
 
 ---
 
@@ -60,12 +62,12 @@ Reference for Context and Container level structure.
 
 ### Status Values
 
-| Status | Meaning |
-|--------|---------|
-| *(empty)* | Not yet documented, conventions maturing |
-| `Documented` | Full component doc exists |
-| `Skip: {reason}` | Will never need a doc |
-| `Combined with c3-XXX` | Documented with another component |
+| Status | Meaning | Exit Strategy |
+|--------|---------|---------------|
+| *(empty)* | Not yet documented, conventions maturing | Document when consumer rules emerge |
+| `Documented` | Full component doc exists | - |
+| `Skip: {reason}` | Will never need a doc | - |
+| `Combined with c3-XXX` | Documented with another component | Split when complexity warrants |
 
 ### Component Types
 
@@ -113,3 +115,11 @@ Use **Mermaid only**. See `references/diagram-patterns.md` for syntax.
 | Component relationship | Container | Update internal structure |
 | Protocol change | Context | Update all affected containers |
 | Tech stack change | Container | Update tech table |
+
+---
+
+## Related
+
+- `v3-structure.md` - Full structure reference with frontmatter
+- `container-patterns.md` - Component inventory patterns
+- `diagram-patterns.md` - Mermaid diagram syntax

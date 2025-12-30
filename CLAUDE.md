@@ -158,16 +158,104 @@ grep -r 'old-pattern' skills/ references/ README.md
 
 ```
 c3-design/
-├── .claude-plugin/      # Plugin manifests only
-├── skills/              # Skill definitions (SKILL.md files)
+├── .claude-plugin/      # Claude Code plugin manifests
+├── skills/              # Skill definitions (SKILL.md files) - SOURCE OF TRUTH
+├── agents/              # Agent definitions - SOURCE OF TRUTH
 ├── commands/            # Slash commands
 ├── references/          # Shared reference docs for skills
 ├── docs/plans/          # Design documents
 ├── .c3/                 # Plugin's own C3 documentation
 ├── VERSION              # Current version (YYYYMMDD-slug format)
 ├── migrations/          # Individual migration files
+├── src/opencode/        # OpenCode plugin hooks (TypeScript)
+├── scripts/             # Build scripts
+├── dist/                # Generated OpenCode plugin (git-ignored)
 └── CLAUDE.md            # This file
 ```
+
+---
+
+## OpenCode Support
+
+This plugin supports both **Claude Code** and **OpenCode**. Claude Code format is the source of truth; OpenCode format is generated via build script.
+
+### Dual Distribution Model
+
+```
+Claude Code (source)              OpenCode (generated)
+─────────────────────────────────────────────────────
+skills/                    →      dist/opencode-c3/skill/
+agents/                    →      dist/opencode-c3/agent/
+references/                →      dist/opencode-c3/references/
+src/opencode/plugin.ts     →      dist/opencode-c3/plugin.js
+.claude-plugin/plugin.json →      dist/opencode-c3/package.json
+```
+
+### Build Command
+
+```bash
+bun run build:opencode
+```
+
+This transforms:
+1. **Skills**: Copies `skills/<name>/SKILL.md` to `dist/opencode-c3/skill/<name>/SKILL.md`
+2. **Agents**: Converts frontmatter (tools list → object, model mapping, adds `mode: subagent`)
+3. **References**: Copies for runtime access by skills
+4. **Plugin**: Compiles TypeScript hooks to JavaScript
+5. **Package.json**: Generates from `.claude-plugin/plugin.json`
+
+### OpenCode Plugin Hooks
+
+Located in `src/opencode/plugin.ts`:
+
+| Hook | Purpose |
+|------|---------|
+| `event` | Session detection, file change tracking |
+| `tool.execute.before` | Warn on Context edits, block C3 deletions |
+| `tool.execute.after` | Log C3 doc modifications |
+| `permission.ask` | Auto-allow reads on C3 docs |
+
+### Publishing to npm
+
+Automated via GitHub Actions (`.github/workflows/publish-opencode.yml`):
+- Triggers on release or manual dispatch
+- Requires `NPM_TOKEN` secret in GitHub repo
+- Publishes as `opencode-c3` package
+
+### OpenCode User Installation
+
+```jsonc
+// opencode.json
+{
+  "plugin": ["opencode-c3"]
+}
+```
+
+### Local Development Testing
+
+```jsonc
+// opencode.json (in a test project)
+{
+  "plugin": ["file:///path/to/c3-design/dist/opencode-c3"]
+}
+```
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `src/opencode/plugin.ts` | Hook implementations |
+| `scripts/build-opencode.ts` | Build + transform + verify |
+| `.github/workflows/publish-opencode.yml` | CI for npm publish |
+| `package.json` | Root package with Bun deps |
+
+### Limitations
+
+- **Agent description**: Multi-line YAML descriptions become empty (parser limitation)
+- **Delete protection**: Regex-based, can be bypassed with unusual commands
+- **Bun runtime**: Plugin uses Bun-specific APIs
+
+---
 
 ## Development Workflow
 
@@ -592,3 +680,26 @@ The c3 skill's audit mode verifies:
 - Merged `diagram-decision-framework.md` into `diagram-patterns.md`
 - Created `container-patterns.md` (slimmed from `container-archetypes.md`)
 - Removed: `archetype-hints.md`, `socratic-method.md`, `hierarchy-model.md`
+
+### 2025-12-30: OpenCode Support Added
+
+**Dual platform support:**
+- Added OpenCode compatibility alongside Claude Code
+- Claude Code remains source of truth
+- Build script transforms to OpenCode format
+
+**New files:**
+- `src/opencode/plugin.ts` - OpenCode hooks (event, tool guards, permissions)
+- `scripts/build-opencode.ts` - Build script for transformation
+- `.github/workflows/publish-opencode.yml` - CI for npm publishing
+- `package.json` - Root package with Bun dependencies
+
+**Build process:**
+- `bun run build:opencode` generates `dist/opencode-c3/`
+- Skills, agents, references copied/transformed
+- Plugin compiled from TypeScript
+- Package.json generated from Claude plugin manifest
+
+**Distribution:**
+- Claude Code: via marketplace (existing)
+- OpenCode: via npm as `opencode-c3` package

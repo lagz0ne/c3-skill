@@ -199,6 +199,23 @@ async function transformAgents(): Promise<string[]> {
 }
 
 // ─────────────────────────────────────────────
+// REFERENCES COPYING
+// ─────────────────────────────────────────────
+
+async function copyReferences(): Promise<void> {
+  const srcDir = join(ROOT, "references")
+  const destDir = join(DIST, "references")
+
+  if (!existsSync(srcDir)) {
+    console.warn("⚠️  No references directory found")
+    return
+  }
+
+  await cp(srcDir, destDir, { recursive: true })
+  console.log("✓ References copied")
+}
+
+// ─────────────────────────────────────────────
 // PLUGIN COMPILATION
 // ─────────────────────────────────────────────
 
@@ -250,6 +267,7 @@ async function verify(skills: string[], agents: string[]): Promise<boolean> {
   const required = [
     "package.json",
     "plugin.js",
+    "references",
     ...skills.map((s) => `skill/${s}/SKILL.md`),
     ...agents.map((a) => `agent/${a}.md`),
   ]
@@ -289,6 +307,9 @@ async function main(): Promise<void> {
   // Transform
   const skills = await transformSkills()
   const agents = await transformAgents()
+
+  // Copy references (used by skills at runtime)
+  await copyReferences()
 
   // Compile
   await compilePlugin()

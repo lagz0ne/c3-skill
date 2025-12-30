@@ -132,10 +132,10 @@ RIGHT:
 .c3/c3-1-backend/
 └── README.md             ← Contains component INVENTORY table
     ## Components
-    | ID | Name | Type | Responsibility |
-    | c3-101 | Handler | Foundation | HTTP routing |
-    | c3-102 | Auth | Business | Authentication |
-    | c3-103 | DB Client | Foundation | Database access |
+    | ID | Name | Type | Responsibility | Status |
+    | c3-101 | Handler | Foundation | HTTP routing | |
+    | c3-102 | Auth | Business | Authentication | Documented |
+    | c3-103 | DB Client | Foundation | Database access | Skip: pg library |
 ```
 
 ### Components Inventory
@@ -143,20 +143,39 @@ RIGHT:
 ```markdown
 ## Components
 
-| ID | Name | Type | Responsibility |
-|----|------|------|----------------|
-| c3-101 | Request Handler | Foundation | HTTP routing, middleware |
-| c3-102 | Auth Service | Business | Token validation, sessions |
-| c3-103 | Logger | Foundation | Structured logging |
-| c3-104 | User Service | Business | User CRUD |
+| ID | Name | Type | Responsibility | Status |
+|----|------|------|----------------|--------|
+| c3-101 | Request Handler | Foundation | HTTP routing, middleware | |
+| c3-102 | Auth Service | Business | Token validation, sessions | Documented |
+| c3-103 | Logger | Foundation | Structured logging | Skip: stdlib wrapper |
+| c3-104 | User Service | Business | User CRUD | Combined with c3-102 |
 ```
+
+### Status Column
+
+Status explains WHY a component doc doesn't exist (if applicable):
+
+| Status | Meaning | Exit Strategy |
+|--------|---------|---------------|
+| *(empty)* | Not yet documented, conventions maturing | Document when consumer rules emerge |
+| `Documented` | Full component doc exists | - |
+| `Skip: {reason}` | Will never need a doc | - |
+| `Combined with c3-XXX` | Documented together with another component | Split when complexity warrants separate doc |
+
+**Examples:**
+- `Skip: stdlib wrapper` - Standard library usage, no custom conventions
+- `Skip: framework default` - Using framework as-is
+- `Combined with c3-102` - Auth and sessions documented together
+- *(empty)* - Conventions not yet mature, may document later
 
 ### When to Create Component Doc
 
 | Has conventions for consumers? | Action |
 |-------------------------------|--------|
-| Yes - rules consumers must follow | Create component doc |
-| No - just "we use X library" | Inventory entry only |
+| Yes - rules consumers must follow | Create component doc, mark `Documented` |
+| No - just "we use X library" | Mark `Skip: {reason}` |
+| Part of another component | Mark `Combined with c3-XXX` |
+| Not yet decided | Leave Status empty |
 
 ### Foundation vs Business
 
@@ -185,12 +204,12 @@ Document tech choices as a table. No patterns - the model knows frameworks.
 ```markdown
 ## Technology Stack
 
-| Category | Choice |
-|----------|--------|
-| Runtime | Node.js 20 |
-| Framework | Hono |
-| Database | PostgreSQL |
-| Cache | Redis |
+| Layer | Technology | Purpose |
+|-------|------------|---------|
+| Runtime | Node.js 20 | JavaScript runtime |
+| Framework | Hono | HTTP server |
+| Database | PostgreSQL | Primary data store |
+| Cache | Redis | Session and response caching |
 ```
 
 ---

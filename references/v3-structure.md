@@ -113,9 +113,15 @@ affects: [c3-1, c3-2]       # REQUIRED: affected containers
 
 | Section | Purpose |
 |---------|---------|
-| Technology Stack | Table: Layer, Tech, Purpose |
-| Components | Table: ID, Name, Responsibility |
+| Technology Stack | Table: Layer, Technology, Purpose |
+| Components | Table: ID, Name, Type, Responsibility, Status |
 | Internal Structure | Mermaid diagram (optional but recommended) |
+
+**Status Column Values:**
+- *(empty)* - Conventions maturing, may document later
+- `Documented` - Full component doc exists
+- `Skip: {reason}` - Will never need a doc (e.g., `Skip: stdlib wrapper`)
+- `Combined with c3-XXX` - Documented together with another component
 
 ### Component (c3-NNN)
 

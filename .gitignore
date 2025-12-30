@@ -6,3 +6,7 @@ node_modules/
 .wt
 .worktrees/
 tests/output/
+
+# OpenCode build output
+dist/
+.opencode/

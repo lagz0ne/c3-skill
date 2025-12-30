@@ -10,13 +10,46 @@ prompt: |
 
   Follow references/adopt-workflow.md but skip user confirmation steps. Use your best judgment for container/component selection.
 
-  Create the .c3/ directory structure following references/structure-guide.md:
-  - .c3/README.md as the Context (c3-0) with YAML frontmatter (id, c3-version, title, summary)
-  - .c3/c3-N-{slug}/README.md for each container
-  - .c3/adr/ directory
+  Create the .c3/ directory structure following references/structure-guide.md EXACTLY.
 
-  Required sections in Context: ## Overview, ## Containers, ## Interactions (Mermaid), ## External Actors
-  Required sections in Container: ## Technology Stack, ## Components (5-column inventory), ## Internal Structure (Mermaid)
+  MANDATORY FRONTMATTER FORMAT:
+
+  Context (.c3/README.md):
+  ---
+  id: c3-0
+  c3-version: 3
+  title: {System Name}
+  summary: {One line}
+  ---
+
+  Container (.c3/c3-N-{slug}/README.md):
+  ---
+  id: c3-{N}
+  c3-version: 3
+  title: {Container Name}
+  type: container
+  parent: c3-0
+  summary: {One line}
+  ---
+
+  CRITICAL: c3-version MUST be integer 3, not "1.0" or any string.
+
+  MANDATORY TABLE FORMATS:
+
+  Context ## Containers section MUST use this table:
+  | ID | Name | Responsibility |
+  |----|------|----------------|
+
+  Container ## Components section MUST use this 5-column table:
+  | ID | Name | Type | Responsibility | Status |
+  |----|------|------|----------------|--------|
+
+  DO NOT use prose for containers list. DO NOT add Location/Path/Dependencies columns.
+
+  Required sections in Context: ## Overview, ## Containers (TABLE), ## Interactions (Mermaid), ## External Actors
+  Required sections in Container: ## Technology Stack, ## Components (5-column TABLE), ## Internal Structure (Mermaid)
+
+  ALSO CREATE: .c3/adr/ directory (with README.md placeholder or empty)
 
   Complete the full structure creation in this session.
 

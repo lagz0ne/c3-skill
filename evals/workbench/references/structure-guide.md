@@ -4,6 +4,42 @@ Reference for Context and Container level structure.
 
 ---
 
+## Frontmatter Format
+
+**CRITICAL: Copy these exactly. Do not modify field names or value formats.**
+
+### Context (c3-0)
+
+```yaml
+---
+id: c3-0
+c3-version: 3
+title: {System Name}
+summary: {One line description}
+---
+```
+
+### Container (c3-N)
+
+```yaml
+---
+id: c3-{N}
+c3-version: 3
+title: {Container Name}
+type: container
+parent: c3-0
+summary: {One line description}
+---
+```
+
+**MANDATORY FORMAT RULES:**
+- `c3-version: 3` — ALWAYS the integer `3`, NEVER a string like `"1.0"` or `"3"`
+- `type: container` — REQUIRED for all containers
+- `parent: c3-0` — REQUIRED for all containers
+- No extra fields, no missing fields
+
+---
+
 ## Context Level (c3-0)
 
 **File:** `.c3/README.md`
@@ -111,6 +147,8 @@ c3-103 Legacy Auth          -                           ⚠ MISSING
 
 ## Components Inventory Format
 
+**CRITICAL: Use exactly these 5 columns in this order. Do not add or rename columns.**
+
 ```markdown
 ## Components
 
@@ -120,6 +158,15 @@ c3-103 Legacy Auth          -                           ⚠ MISSING
 | c3-102 | Auth Service | Business | Token validation | Documented |
 | c3-103 | Logger | Foundation | Structured logging | Skip: stdlib wrapper |
 ```
+
+**MANDATORY COLUMNS (in order):**
+1. `ID` — Component ID (c3-NNN format)
+2. `Name` — Component name
+3. `Type` — Either `Foundation` or `Business`
+4. `Responsibility` — What it does (brief)
+5. `Status` — Empty, `Documented`, or `Skip: {reason}`
+
+**DO NOT USE:** Location, Path, Dependencies, or any other columns
 
 ### Status Values
 

@@ -1,7 +1,0 @@
-{
-  "name": "c3-skill",
-  "version": "0.0.1",
-  "description": "C3 skill workbench for evaluation",
-  "hooks": "hooks/hooks.json",
-  "commands": "./commands"
-}

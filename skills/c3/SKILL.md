@@ -17,53 +17,164 @@ Create as `proposed` → human accepts → update layer docs → implement → a
 
 ## Mode Selection
 
-| Intent | Mode | Reference |
-|--------|------|-----------|
-| "Where is X?" | Navigate | `references/lookup-patterns.md` |
-| "Add/change X" | Design | `references/adr-template.md` |
-| "Accept/implement ADR" | Lifecycle | - |
-| "Audit C3" | Audit | `references/audit-checks.md` |
-| No `.c3/` exists | Adopt | `references/adopt-workflow.md` |
+| Intent | Mode |
+|--------|------|
+| "Where is X?" | Navigate |
+| "Add/change X" | Design |
+| "Accept/implement ADR" | Lifecycle |
+| "Audit C3" | Audit |
+| No `.c3/` exists | Adopt |
 
-## Layer Reference
+## Document Structure
 
-| Layer | Reference |
-|-------|-----------|
-| Context/Container | `references/structure-guide.md` |
-| Component | `references/implementation-guide.md` |
+Every C3 document follows consistent structure:
+
+```
+┌─────────────────────────────────────┐
+│ 1. DIAGRAM (mermaid)                │
+│    Visual grab of connectivity      │
+│    Uses IDs for quick reference     │
+├─────────────────────────────────────┤
+│ 2. INVENTORY TABLE                  │
+│    ID | Name | Type | Status        │
+├─────────────────────────────────────┤
+│ 3. LINKAGES                         │
+│    From → To + WHY (reasoning)      │
+└─────────────────────────────────────┘
+```
+
+## Layer Hierarchy
+
+```
+CONTEXT (Strategic)
+│   WHAT containers exist
+│   WHY they connect (inter-container protocols)
+│
+└──→ CONTAINER (Bridge)
+     │   Fulfills protocol expectations from Context
+     │   WHAT components exist
+     │   WHY components connect internally
+     │
+     └──→ COMPONENT (Tactical)
+          HOW the protocol is implemented
+```
+
+Each layer explains its own flows. No need to reference up.
 
 ## Mode: Navigate
 
-ID-based lookup. Parse ID (`c3-0`, `c3-N`, `c3-NNN`, `adr-YYYYMMDD-slug`) and read the corresponding file.
+ID-based lookup. Parse ID and read corresponding file:
 
-See `references/lookup-patterns.md` for ID resolution.
+| Pattern | File |
+|---------|------|
+| `c3-0` | `.c3/README.md` |
+| `c3-N` | `.c3/c3-N-*/README.md` |
+| `c3-NNN` | `.c3/c3-N-*/c3-NNN-*.md` |
+| `adr-YYYYMMDD-slug` | `.c3/adr/adr-YYYYMMDD-slug.md` |
 
 ## Mode: Adopt
 
-> See `references/adopt-workflow.md`
+**Template-first approach.** Two rounds:
 
-Discovery subagents scan codebase → confirm containers → confirm components → create `.c3/` with inventories.
+### Round 1: Structure (User runs bash)
 
-**CRITICAL:** Inventory tables only, NOT component docs.
+```bash
+PROJECT="MyApp" C1="backend" C2="frontend" ./scripts/c3-init.sh
+```
+
+Creates:
+```
+.c3/
+├── README.md                       (Context)
+├── c3-1-backend/README.md          (Container)
+├── c3-2-frontend/README.md         (Container)
+└── adr/adr-00000000-c3-adoption.md (ADR)
+```
+
+### Round 2: Fill (AI subagent)
+
+Dispatch subagent to analyze codebase and fill templates:
+
+**Context (c3-0):**
+1. Analyze codebase for actors (users, schedulers, webhooks)
+2. Confirm containers match code structure
+3. Identify external systems (databases, APIs, caches)
+4. Draw mermaid diagram with IDs (A1, c3-1, E1, etc.)
+5. Fill linkages with REASONING (why they connect)
+
+**Each Container (c3-N):**
+1. Analyze container scope for components
+2. Categorize by concern:
+   - Foundation: entry, identity, integration
+   - Auxiliary: library wrappers, framework usage, utilities
+   - Business: domain services
+   - Presentation: styling, composition, state (or N/A)
+3. Draw internal mermaid diagram with component IDs
+4. Fill fulfillment section (which components handle Context links)
+5. Fill linkages with REASONING
+
+**ADR-000:**
+1. Document why C3 was adopted
+2. List all containers created
+3. Mark verification checklist
+
+### Subagent Prompt Template
+
+```
+You are filling C3 templates for {{PROJECT}}.
+
+Templates are already in place at .c3/. Your job:
+1. Analyze codebase
+2. Fill inventory tables
+3. Create mermaid diagrams with IDs
+4. Add linkages with reasoning
+
+Rules:
+- Diagram goes FIRST, uses IDs from tables
+- Every linkage needs REASONING (why, not just that)
+- Foundation/Auxiliary/Business/Presentation categories
+- Fulfillment section maps Context links to components
+- Keep structure, fill content
+```
 
 ## Mode: Design
 
-Discover (what/why/where) → Assess (read docs, identify layers) → ADR Decision → Create (`references/adr-template.md`) → Handoff
+1. **Discover** - What change, why, where
+2. **Assess** - Read affected docs, identify layers
+3. **ADR** - Create using `references/adr-template.md`
+4. **Handoff** - ADR ready for review
 
 ## Mode: Lifecycle
 
-**proposed → accepted:** Update status, parse "Changes Across Layers", update layer docs, record in Audit Record.
+**proposed → accepted:**
+- Update status
+- Parse "Changes Across Layers"
+- Update layer docs
+- Record in Audit Record
 
-**accepted → implemented:** Run audit first. PASS: update status. FAIL: report issues.
+**accepted → implemented:**
+- Run audit first
+- PASS: update status
+- FAIL: report issues
 
 ## Mode: Audit
 
-> See `references/audit-checks.md`
+Scopes:
+- `audit C3` - full system
+- `audit container c3-1` - single container
+- `audit adr adr-YYYYMMDD-slug` - single ADR
 
-Scopes: `audit C3` | `audit container c3-1` | `audit adr adr-YYYYMMDD-slug`
+Checks:
+- Diagrams match inventory tables
+- All IDs consistent
+- Linkages have reasoning
+- Fulfillment covers Context links
+- No orphan components
 
 ## Guidelines
 
-- Never skip ADR lifecycle states
-- Update layer docs after accepting ADR
-- Never mark implemented without audit passing
+- Diagram first, tables second, linkages third
+- Every linkage needs reasoning
+- Container fulfills Context links (documents constraints)
+- Component documents implementation (technology, conventions, edge cases)
+- Inventory ready for growth (empty sections OK)

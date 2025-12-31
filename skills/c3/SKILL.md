@@ -21,7 +21,6 @@ Create as `proposed` → human accepts → update layer docs → implement → a
 |--------|------|
 | "Where is X?" | Navigate |
 | "Add/change X" | Design |
-| "Accept/implement ADR" | Lifecycle |
 | "Audit C3" | Audit |
 | No `.c3/` exists | Adopt |
 
@@ -139,23 +138,66 @@ Rules:
 
 ## Mode: Design
 
-1. **Discover** - What change, why, where
-2. **Assess** - Read affected docs, identify layers
-3. **ADR** - Create using `references/adr-template.md`
-4. **Handoff** - ADR ready for review
+Conversational discovery → ADR → Plan → Execute.
 
-## Mode: Lifecycle
+### Step 1: Understand
 
-**proposed → accepted:**
-- Update status
-- Parse "Changes Across Layers"
-- Update layer docs
-- Record in Audit Record
+Ask clarifying questions:
+- What's the change? (add, modify, remove)
+- Why? (problem being solved)
+- Scope? (which containers/components)
 
-**accepted → implemented:**
-- Run audit first
-- PASS: update status
-- FAIL: report issues
+### Step 2: Scope
+
+Read current `.c3/` structure:
+- Identify affected layers (Context, Container, Component)
+- Check existing relationships
+- Summarize impact for user confirmation
+
+### Step 3: ADR
+
+Generate tactical ADR (see `references/adr-template.md`):
+- Problem (2-3 sentences)
+- Decision (clear and direct)
+- Rationale (tradeoffs considered)
+- Affected Layers (document-level)
+- Verification checklist
+
+Create: `.c3/adr/adr-YYYYMMDD-{slug}.md` with status `proposed`
+
+### Step 4: Accept
+
+User reviews ADR. On acceptance:
+- Update status to `accepted`
+- Proceed to Plan
+
+### Step 5: Plan
+
+Generate detailed plan (see `references/plan-template.md`):
+- Exact changes per file
+- Section-by-section edits
+- Order of operations
+- Verification steps
+
+Create: `.c3/adr/adr-YYYYMMDD-{slug}.plan.md`
+
+If `superpowers:writing-plans` available, use it.
+
+### Step 6: Execute
+
+Apply changes from plan:
+- Update `.c3/` docs in order specified
+- Create new component docs if needed
+- Update diagrams with correct IDs
+
+### Step 7: Verify
+
+Run audit on affected scope:
+- Check diagrams match tables
+- Verify linkages have reasoning
+- Confirm fulfillment coverage
+
+On pass: Update ADR status to `implemented`
 
 ## Mode: Audit
 

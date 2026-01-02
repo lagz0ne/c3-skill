@@ -15,7 +15,7 @@ PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 
 # Check if .c3/README.md exists
 if [[ -f "$PROJECT_DIR/.c3/README.md" ]]; then
-    echo "C3 architecture documentation exists in this project. Use the c3 skill (Skill tool with skill: 'c3-skill:c3') to navigate and work with the architecture."
+    echo "C3 architecture documentation exists. Commands: /c3, /query, /alter. Skills: c3-skill:c3, c3-skill:c3-query, c3-skill:c3-alter"
 fi
 
 exit 0

@@ -133,6 +133,9 @@ Apply changes in order specified:
 3. **Make code changes**
 4. **Update diagrams** to match new state
 
+**Reference:** See `references/implementation-guide.md` for component documentation conventions.
+For new components, use `templates/component.md` as starting template.
+
 ### Step 8: Verify
 
 Run audit on affected scope:

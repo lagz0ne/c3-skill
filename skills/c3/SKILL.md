@@ -76,6 +76,8 @@ Dispatch subagent to analyze codebase and fill templates:
 2. List all containers created
 3. Mark verification checklist
 
+**Reference:** See `references/container-patterns.md` for component categorization patterns.
+
 ### Subagent Prompt Template
 
 ```

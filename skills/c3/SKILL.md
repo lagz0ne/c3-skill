@@ -103,17 +103,19 @@ Rules:
 
 ## Mode: Audit
 
-Scopes:
+**REQUIRED:** Load `references/audit-checks.md` for comprehensive audit procedures.
+
+Quick reference scopes:
 - `audit C3` - full system
 - `audit container c3-1` - single container
 - `audit adr adr-YYYYMMDD-slug` - single ADR
 
-Checks:
-- Diagrams match inventory tables
-- All IDs consistent
-- Linkages have reasoning
-- Fulfillment covers Context links
-- No orphan components
+The reference contains detailed checks for:
+- Diagram-inventory consistency
+- ID uniqueness
+- Linkage reasoning
+- Fulfillment coverage
+- Orphan detection
 
 ## Guidelines
 

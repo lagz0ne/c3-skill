@@ -23,6 +23,17 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/c3-session-start",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   }
 }

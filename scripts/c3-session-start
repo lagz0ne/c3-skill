@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+#
+# C3 SessionStart Hook
+#
+# Checks if .c3/README.md exists in the project.
+# If exists: outputs context message about using c3-skill
+# If not: exits silently
+#
+# For SessionStart hooks, stdout is added to context when exit code is 0.
+
+set -uo pipefail
+
+# Get project directory
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
+
+# Check if .c3/README.md exists
+if [[ -f "$PROJECT_DIR/.c3/README.md" ]]; then
+    echo "C3 architecture documentation exists in this project. Use the c3 skill (Skill tool with skill: 'c3-skill:c3') to navigate and work with the architecture."
+fi
+
+exit 0

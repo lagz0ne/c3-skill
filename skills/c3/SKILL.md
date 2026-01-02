@@ -1,75 +1,34 @@
 ---
 name: c3
 description: |
-  Use when working with C3 architecture docs - navigating, understanding, designing, or auditing.
-  Triggers: "C3", "architecture", "where is X documented", "impact of changing X".
+  Use when project needs C3 adoption (no .c3/) or auditing existing C3 docs.
+  Triggers: "adopt C3", "onboard", "scaffold", "audit", "validate", "check C3", "init".
+  NOT for navigation (use c3-query) or changes (use c3-alter).
 ---
 
 # C3 Architecture Assistant
 
+## Skill Routing
+
+| Intent | Skill |
+|--------|-------|
+| "Where is X?" / Explore | `c3-query` |
+| "Add/change X" | `c3-alter` |
+| "Audit C3" | This skill |
+| No `.c3/` exists | This skill (Adopt) |
+
+## REQUIRED: Check Activation
+
+**Before proceeding, check if `.c3/README.md` exists.**
+
+- If NO `.c3/`: This is **Mode: Adopt**. Suggest `/onboard` or proceed with adoption.
+- If YES `.c3/`: Route based on intent (Audit stays here, others route to dedicated skills).
+
 ## ADR Lifecycle
 
-```
-proposed → accepted → implemented
-```
+`proposed` → `accepted` → `implemented`
 
-Create as `proposed` → human accepts → update layer docs → implement → audit passes → mark `implemented`.
-
-## Mode Selection
-
-| Intent | Mode |
-|--------|------|
-| "Where is X?" | Navigate |
-| "Add/change X" | Design |
-| "Audit C3" | Audit |
-| No `.c3/` exists | Adopt |
-
-## Document Structure
-
-Every C3 document follows consistent structure:
-
-```
-┌─────────────────────────────────────┐
-│ 1. DIAGRAM (mermaid)                │
-│    Visual grab of connectivity      │
-│    Uses IDs for quick reference     │
-├─────────────────────────────────────┤
-│ 2. INVENTORY TABLE                  │
-│    ID | Name | Type | Status        │
-├─────────────────────────────────────┤
-│ 3. LINKAGES                         │
-│    From → To + WHY (reasoning)      │
-└─────────────────────────────────────┘
-```
-
-## Layer Hierarchy
-
-```
-CONTEXT (Strategic)
-│   WHAT containers exist
-│   WHY they connect (inter-container protocols)
-│
-└──→ CONTAINER (Bridge)
-     │   Fulfills protocol expectations from Context
-     │   WHAT components exist
-     │   WHY components connect internally
-     │
-     └──→ COMPONENT (Tactical)
-          HOW the protocol is implemented
-```
-
-Each layer explains its own flows. No need to reference up.
-
-## Mode: Navigate
-
-ID-based lookup. Parse ID and read corresponding file:
-
-| Pattern | File |
-|---------|------|
-| `c3-0` | `.c3/README.md` |
-| `c3-N` | `.c3/c3-N-*/README.md` |
-| `c3-NNN` | `.c3/c3-N-*/c3-NNN-*.md` |
-| `adr-YYYYMMDD-slug` | `.c3/adr/adr-YYYYMMDD-slug.md` |
+See `references/adr-template.md` for template.
 
 ## Mode: Adopt
 
@@ -138,66 +97,9 @@ Rules:
 
 ## Mode: Design
 
-Conversational discovery → ADR → Plan → Execute.
+**Defer to `c3-alter` skill** for all architecture and code changes.
 
-### Step 1: Understand
-
-Ask clarifying questions:
-- What's the change? (add, modify, remove)
-- Why? (problem being solved)
-- Scope? (which containers/components)
-
-### Step 2: Scope
-
-Read current `.c3/` structure:
-- Identify affected layers (Context, Container, Component)
-- Check existing relationships
-- Summarize impact for user confirmation
-
-### Step 3: ADR
-
-Generate tactical ADR (see `references/adr-template.md`):
-- Problem (2-3 sentences)
-- Decision (clear and direct)
-- Rationale (tradeoffs considered)
-- Affected Layers (document-level)
-- Verification checklist
-
-Create: `.c3/adr/adr-YYYYMMDD-{slug}.md` with status `proposed`
-
-### Step 4: Accept
-
-User reviews ADR. On acceptance:
-- Update status to `accepted`
-- Proceed to Plan
-
-### Step 5: Plan
-
-Generate detailed plan (see `references/plan-template.md`):
-- Exact changes per file
-- Section-by-section edits
-- Order of operations
-- Verification steps
-
-Create: `.c3/adr/adr-YYYYMMDD-{slug}.plan.md`
-
-If `superpowers:writing-plans` available, use it.
-
-### Step 6: Execute
-
-Apply changes from plan:
-- Update `.c3/` docs in order specified
-- Create new component docs if needed
-- Update diagrams with correct IDs
-
-### Step 7: Verify
-
-Run audit on affected scope:
-- Check diagrams match tables
-- Verify linkages have reasoning
-- Confirm fulfillment coverage
-
-On pass: Update ADR status to `implemented`
+`c3-alter` enforces ADR-first workflow with impact discovery.
 
 ## Mode: Audit
 

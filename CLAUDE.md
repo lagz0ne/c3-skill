@@ -504,35 +504,30 @@ Context (c3-0)           ← Eagle-eye introduction, defines WHAT exists
 
 ## Skills Organization
 
-### Core Design Skills (2 Skills)
+### Skills (3 total)
 
 | Skill | Purpose | When Used |
 |-------|---------|-----------|
-| `c3-structure` | System structure and relationships | Context + Container: inventory, interactions, tech stack |
-| `c3-implementation` | Component conventions | How components work, hand-offs, edge cases |
+| `c3` | Adoption and Audit | No .c3/ exists (adopt), or validating existing docs (audit) |
+| `c3-query` | Navigation + Code Exploration | Understanding architecture, finding where things are |
+| `c3-alter` | Changes through ADR | Any modification to code or architecture |
 
-**Design Principle:** Structure skill handles WHAT exists. Implementation skill handles HOW it works.
+### Commands (4 total)
 
-### Agent
-
-The **c3 agent** (`agents/c3.md`) is the single entry point for all C3 work:
-- Discovery and adoption
-- Design and documentation
-- Configuration
-- Audit and verification
+| Command | Purpose | Delegates To |
+|---------|---------|--------------|
+| `/c3` | Main entry point | Routes to appropriate skill |
+| `/onboard` | Initialize C3 for new project | Scripts + c3 skill |
+| `/query` | Navigate architecture | c3-query skill |
+| `/alter` | Make changes via ADR | c3-alter skill |
 
 ### Layer Mapping
 
 | Layer | Skill |
 |-------|-------|
-| Context (c3-0) | `c3-structure` |
-| Container (c3-N) | `c3-structure` |
-| Component (c3-NNN) | `c3-implementation` |
-
-**Note:** Reference patterns:
-- `references/lookup-patterns.md` - ID-based document retrieval
-- `references/naming-conventions.md` - ID and naming conventions
-- `references/container-patterns.md` - Component inventory by relationship type
+| Context (c3-0) | `c3` (adopt), `c3-query` (navigate) |
+| Container (c3-N) | `c3-query` (navigate), `c3-alter` (change) |
+| Component (c3-NNN) | `c3-query` (navigate), `c3-alter` (change) |
 
 ---
 
@@ -612,74 +607,72 @@ The c3 skill's audit mode verifies:
 
 | File | Purpose |
 |------|---------|
-| `skills/c3-structure/SKILL.md` | Context + Container structure |
-| `skills/c3-structure/structure-template.md` | Templates for Context and Container |
-| `skills/c3-implementation/SKILL.md` | Component implementation |
-| `skills/c3-implementation/implementation-template.md` | Template for Component |
+| `skills/c3/SKILL.md` | Adoption and Audit |
+| `skills/c3-query/SKILL.md` | Navigation + Code Exploration |
+| `skills/c3-alter/SKILL.md` | Changes through ADR |
 
 ### Reference Files
 
 | File | Purpose |
 |------|---------|
-| `references/core-principle.md` | The C3 principle (upper defines WHAT, lower implements HOW) |
+| `references/adr-template.md` | ADR structure template |
+| `references/plan-template.md` | Execution plan template |
+| `references/layer-navigation.md` | Shared layer traversal pattern |
 | `references/v3-structure.md` | File paths, ID patterns, frontmatter |
-| `references/diagram-patterns.md` | Diagram syntax and guidance |
-| `references/container-patterns.md` | Component inventory by container type |
-| `references/adr-template.md` | ADR structure |
+| `references/audit-checks.md` | Comprehensive audit procedures |
+| `references/container-patterns.md` | Component categorization patterns |
+| `references/implementation-guide.md` | Component documentation conventions |
 
-### Settings & Config
+### Templates
 
 | File | Purpose |
 |------|---------|
-| `skills/c3-config/SKILL.md` | Settings management skill |
-| `.c3/settings.yaml` (user's project) | Project-specific settings |
+| `templates/context.md` | Context (c3-0) template |
+| `templates/container.md` | Container (c3-N) template |
+| `templates/component.md` | Component (c3-NNN) template |
+| `templates/adr-000.md` | ADR template |
 
 ---
 
 ## Common Modification Scenarios
 
-### "I want to change what goes in Context vs Container"
+### "I want to change layer navigation patterns"
 
-1. Edit `skills/c3-structure/SKILL.md` (Context Level and Container Level sections)
-2. Update litmus tests if needed
-3. No migration needed (skill-internal change)
+1. Edit `references/layer-navigation.md` (shared by c3-query and c3-alter)
+2. No migration needed (reference-internal change)
 
-### "I want to change diagram guidance"
+### "I want to change audit checks"
 
-1. Edit `references/diagram-patterns.md`
+1. Edit `references/audit-checks.md`
 2. No migration needed
 
-### "I want to add a new setting"
+### "I want to change ADR workflow"
 
-1. Add to `skills/c3-config/SKILL.md` settings structure
-2. Update skills to read and apply the new setting
-3. Update `references/v3-structure.md` if it affects file structure
+1. Edit `skills/c3-alter/SKILL.md` for workflow
+2. Edit `references/adr-template.md` for ADR structure
 
-### "I want to change how ADR verification works"
+### "I want to change adoption workflow"
 
-1. Edit `agents/c3.md` (audit mode section)
-2. If changing ADR structure: also edit `references/adr-template.md`
+1. Edit `skills/c3/SKILL.md` (Mode: Adopt section)
+2. Update templates in `templates/` if structure changes
 
 ---
 
 ## Session History
 
-### 2025-12-29: Major Restructuring
+### 2026-01-02: Production Cleanup
 
-**Skills consolidated from 3 to 2:**
-- `c3-context-design` + `c3-container-design` → `c3-structure`
-- `c3-component-design` → `c3-implementation`
+**Skills restructured to 3:**
+- `c3` - Adoption and Audit
+- `c3-query` - Navigation + Code Exploration
+- `c3-alter` - Changes through ADR
 
 **Key changes:**
-- Inventory-first model: Container inventory is source of truth; component docs appear when conventions mature
-- Removed tech-specific guidance (trust model knowledge)
-- ALTER/ADAPT focus: documents exist for future changes
-- ~54% reduction in total content
-
-**References consolidated:**
-- Merged `diagram-decision-framework.md` into `diagram-patterns.md`
-- Created `container-patterns.md` (slimmed from `container-archetypes.md`)
-- Removed: `archetype-hints.md`, `socratic-method.md`, `hierarchy-model.md`
+- Skills invoke skills (not agents)
+- Shared layer navigation pattern extracted to `references/layer-navigation.md`
+- All skills have activation harnesses
+- Commands delegate to skills (`/c3`, `/query`, `/alter`, `/onboard`)
+- Removed dead code: orphan templates, duplicate references
 
 ### 2025-12-30: OpenCode Support Added
 

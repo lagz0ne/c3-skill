@@ -292,11 +292,11 @@ Automated via GitHub Actions (`.github/workflows/publish-opencode.yml`):
 
 **Examples:**
 ```
-feat(skills): add inventory-first model to c3-structure
-fix(c3-implementation): correct component template sections
+feat(skills): add activation harness to c3
+fix(c3-alter): correct ADR workflow steps
 docs(references): update v3-structure examples
-chore: bump version to 20251229-skill-consolidation
-refactor(agents): extract audit details to reference file
+chore: bump version to 20260102-production-cleanup
+refactor(skills): extract layer navigation to reference
 ```
 
 ### Version Changes
@@ -569,7 +569,7 @@ Each layer has a litmus test to determine if content belongs there:
 - Controls component organization below
 - Where readers understand the architecture
 
-**Diagram Decision Framework (in c3-structure):**
+**Diagram Decision Framework:**
 1. Characterize container (simple/moderate/complex)
 2. Evaluate each diagram type (clarity + value + cost)
 3. Check combinations for redundancy

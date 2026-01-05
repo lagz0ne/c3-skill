@@ -19,183 +19,332 @@ description: |
 
 ## REQUIRED: Load Navigation Reference
 
-**Before loading current state, you MUST read `references/layer-navigation.md`.**
+**Before any work, read `../../references/layer-navigation.md`.**
 
-This reference contains:
-- Activation check
-- Traversal order (Context → Container → Component)
-- ID-to-path mapping
+## Critical: Always Use AskUserQuestionTool
 
-## Why ADR-First?
+All Socratic questioning MUST use the `AskUserQuestion` tool - never plain text questions.
+- Structured questions get structured answers
+- Multiple-choice reduces ambiguity
+- User can select rather than type
 
-Changes have ripple effects. ADR forces you to:
-1. Understand current state
-2. Identify all affected layers
-3. Document the decision
-4. Plan the execution
-5. Verify the result
+## Core Pattern
 
-## Core Principle
+Every stage uses the same recursive learning loop:
 
 ```
-INTENT → UNDERSTAND → SCOPE → ADR → ACCEPT → PLAN → EXECUTE → VERIFY
-         ↑                                                    │
-         └────────────── If verify fails ─────────────────────┘
+ANALYZE → ASK (until confident) → SYNTHESIZE → REVIEW
+              │                        │
+              └── until no open ───────┘
+                  questions
+
+On conflict during execution:
+ASCEND → fix earlier stage → re-descend
 ```
 
-**No code changes before ADR is accepted.**
+**Confident = No open questions.** Don't proceed if any field would be "TODO" or unclear.
 
-## Workflow
+---
 
-### Step 1: Understand Intent
+## Stage 1: Intent
 
-Ask clarifying questions:
+### 1.1 Analyze
 
-| Question | Why |
-|----------|-----|
-| What's the change? | Add, modify, remove, fix? |
-| Why? | Problem being solved, goal |
-| Scope? | Which part of the system? |
-| Urgency? | Breaking change? Migration needed? |
+What is the user asking for? Form hypotheses:
+- Add, modify, remove, fix, or refactor?
+- What problem are they solving?
+- What's the scope hint?
 
-Don't assume. Small changes can have large impacts.
+Build open questions list.
 
-### Step 2: Load Current State
+### 1.2 Ask (Socratic)
 
-Follow `references/layer-navigation.md` to traverse affected layers.
+Use AskUserQuestion until no open questions about intent.
 
-Load only what's relevant to the change scope identified in Step 1.
+Example questions:
+- "Is this a new feature or a fix to existing behavior?"
+- "What problem does this solve?"
+- "Is there urgency? Breaking change risk?"
 
-### Step 3: Scope Impact
+### 1.3 Synthesize
 
-Map the change to affected layers:
-
+Create clear intent statement:
 ```
-Change Type          │ Likely Impact
-─────────────────────┼──────────────────────────────
-New feature          │ Container + new Component(s)
-Bug fix              │ Component only (usually)
-Refactor             │ Container + Component(s)
-New integration      │ Context + Container
-Breaking change      │ Context + all downstream
-Rename/restructure   │ All layers referencing it
+**Intent:** Add OAuth login option to the authentication flow
+**Goal:** Allow users to log in with Google/GitHub instead of password
+**Type:** New feature
 ```
 
-**Impact Assessment Questions:**
-- Which layers document this?
-- What depends on this?
-- What does this depend on?
+### 1.4 Review
+
+Present intent. User confirms or corrects.
+
+---
+
+## Stage 2: Understand Current State
+
+### 2.1 Analyze
+
+Follow layer navigation to read affected C3 docs:
+- Context (c3-0) - for system-level context
+- Relevant Container(s) - for component inventory
+- Relevant Component(s) - for current behavior
+
+Build open questions list about current architecture.
+
+### 2.2 Ask (Socratic)
+
+Use AskUserQuestion until confident about current state.
+
+Example questions:
+- "The docs say AuthProvider handles JWT only. Is that still accurate?"
+- "Container c3-2 lists 'LoginFlow' but no OAuth. Has OAuth been added without docs?"
+- "Are there any recent code changes not reflected in C3 docs?"
+
+### 2.3 Synthesize
+
+Summarize current state:
+```
+**Current State:**
+- Auth handled by: c3-102 AuthProvider (Foundation)
+- Login flow: c3-205 LoginFlow (Feature) - password only
+- External auth: None currently documented
+- Dependencies: E1 PostgreSQL (user storage)
+```
+
+### 2.4 Review
+
+Present current state summary. User confirms or corrects.
+
+---
+
+## Stage 3: Scope Impact
+
+### 3.1 Analyze
+
+Map the change to affected layers. Form hypotheses:
+- Which layers will change?
+- What depends on what's changing?
 - Will linkages change?
 - Will diagrams change?
 
-### Step 4: Create ADR
+Build open questions list.
+
+### 3.2 Ask (Socratic)
+
+Use AskUserQuestion until confident about full scope.
+
+Example questions:
+- "Adding OAuth means a new External System. Should this be Google, GitHub, or both?"
+- "Will existing password login remain, or be replaced?"
+- "Does the API contract change? Any breaking changes for clients?"
+
+### 3.3 Synthesize
+
+Impact assessment:
+```
+**Scope:**
+Layers affected:
+- c3-0 Context: Add External System (Google OAuth)
+- c3-1 backend: Add linkage to OAuth
+- c3-102 AuthProvider: Extend contract for OAuth tokens
+- c3-205 LoginFlow: Add OAuth trigger path
+- NEW: c3-206 OAuthCallback (Feature)
+
+Breaking changes: None (additive)
+```
+
+### 3.4 Review
+
+Present scope. User confirms or expands.
+
+---
+
+## Stage 4: Create ADR
+
+### 4.1 Synthesize
 
 Generate ADR at `.c3/adr/adr-YYYYMMDD-{slug}.md`.
 
-See `references/adr-template.md` for full template.
+Use template from `../../references/adr-template.md`.
 
-**Key sections:**
-- Problem (2-3 sentences)
-- Decision (clear, direct)
-- Rationale (tradeoffs)
-- Affected Layers (c3-0, c3-N, c3-NNN)
-- Verification Checklist
+Key sections:
+- **Problem:** Why this change (2-3 sentences)
+- **Decision:** What we're doing (clear, direct)
+- **Rationale:** Why this approach over alternatives
+- **Affected Layers:** List all c3 IDs from scope
+- **Verification Checklist:** How to confirm success
 
-### Step 5: User Accepts
+### 4.2 Review
 
-Present ADR for review. User must explicitly accept.
+Present ADR for user acceptance.
 
-On acceptance:
-- Update status to `accepted`
-- Proceed to planning
+**On accept:** Update status to `accepted`, proceed to Plan.
 
-On rejection:
-- Revise based on feedback
-- Return to Step 1 if scope changed
+**On reject:**
+- If scope changed → return to Stage 3
+- If intent changed → return to Stage 1
+- If wording issue → revise ADR, re-present
 
-### Step 6: Create Plan
+---
 
-Generate execution plan at `.c3/adr/adr-YYYYMMDD-{slug}.plan.md`.
+## Stage 5: Create Plan
 
-See `references/plan-template.md` for full template.
+### 5.1 Analyze
 
-**Key sections:**
-- Order of Operations
-- Changes Per File (docs first, then code)
-- Verification Steps
+Determine order of operations:
+- Which docs update first?
+- Which code changes depend on which?
+- Any migrations or deployment steps?
 
-### Step 7: Execute
+Build open questions list.
 
-Apply changes in order specified:
+### 5.2 Ask (Socratic)
 
-1. **Update C3 docs first** (if changing existing)
-2. **Create new C3 docs** (if adding)
-3. **Make code changes**
-4. **Update diagrams** to match new state
+Use AskUserQuestion until confident about execution order.
 
-**Reference:** See `references/implementation-guide.md` for component documentation conventions.
-For new components, use `templates/component.md` as starting template.
+Example questions:
+- "Should we update the AuthProvider contract before or after adding OAuthCallback?"
+- "Are there tests that need updating? Run before or after code changes?"
+- "Any feature flags or rollout considerations?"
 
-### Step 8: Verify
+### 5.3 Synthesize
 
-Run audit on affected scope:
+Generate plan at `.c3/adr/adr-YYYYMMDD-{slug}.plan.md`.
 
 ```
-c3-skill:c3 audit container c3-N
+## Order of Operations
+
+1. Update Context: Add E2 Google OAuth
+2. Update Container c3-1: Add linkage to E2
+3. Update c3-102 AuthProvider: Extend contract
+4. Create c3-206 OAuthCallback: New component doc
+5. Implement code changes:
+   - auth/oauth.ts (new)
+   - auth/provider.ts (extend)
+   - routes/callback.ts (new)
+6. Update c3-205 LoginFlow: Add OAuth trigger
+7. Update diagrams
+8. Run tests
+9. Verify
 ```
 
-Checks:
+### 5.4 Review
+
+Present plan. User approves or adjusts.
+
+---
+
+## Stage 6: Execute
+
+### 6.1 Apply Changes
+
+Follow plan order. For each item:
+1. Make the change (doc or code)
+2. Check for conflicts with earlier assumptions
+
+### 6.2 Handle Conflicts (Ascent)
+
+During execution, discoveries may require ascending:
+
+```
+Updating c3-102 AuthProvider...
+  → Discovers it also uses Redis for session cache
+  → But Context doesn't list Redis
+  → ASCEND: Is this in scope?
+```
+
+**Tiered assumptions:**
+
+| High-Impact (ask first) | Low-Impact (auto-proceed) |
+|-------------------------|---------------------------|
+| Scope expansion | Minor doc wording fix |
+| New affected layer discovered | Fixing ID inconsistency |
+| Breaking change detected | Updating diagram to match |
+| ADR needs revision | Adding linkage reasoning |
+
+For high-impact: Ask user, potentially update ADR, then continue.
+For low-impact: Fix it, note in execution log, continue.
+
+### 6.3 Execution Log
+
+Track what was changed:
+```
+**Executed:**
+- [x] Context: Added E2 Google OAuth
+- [x] Container c3-1: Added linkage
+- [x] c3-102: Extended contract (also noted Redis dependency - added to Context)
+- [ ] c3-206: In progress...
+```
+
+---
+
+## Stage 7: Verify
+
+### 7.1 Run Audit
+
+```
+/c3 audit
+```
+
+Check:
 - Diagrams match inventory tables
 - All IDs consistent
 - Linkages have reasoning
-- Fulfillment covers Context links
-- Code matches what docs describe
+- Code matches docs
 
-**On pass:** Update ADR status to `implemented`
+### 7.2 Handle Failures
 
-**On fail:** Fix issues, re-verify (loop back)
+**On pass:** Update ADR status to `implemented`. Done.
 
-## Change Categories
+**On fail:**
+- Identify what failed
+- Fix the issue
+- Re-run audit
+- Loop until pass
 
-### Code-First Changes
-User wants to change code → Still needs ADR:
-1. Understand what code change
-2. Map to C3 layer(s)
-3. Create ADR documenting the change
-4. Accept → Plan → Execute (code + docs) → Verify
+---
 
-### Doc-First Changes
-User wants to update architecture → ADR captures why:
-1. Understand what doc change
-2. Create ADR
-3. Accept → Plan → Execute → Verify
+## Tiered Assumption Rules
 
-### Correction Changes
-User found docs are wrong → ADR documents drift:
-1. Identify what's incorrect
-2. ADR documents: "Docs said X, reality is Y"
-3. Accept → Plan → Execute → Verify
+### High-Impact (ask user first)
+- Scope expansion (new layer affected)
+- Breaking change detected
+- ADR needs significant revision
+- New External System discovered
+- Container boundary change
+
+### Low-Impact (auto-proceed, note in log)
+- Adding linkage reasoning
+- Minor doc wording improvements
+- Fixing diagram inconsistency
+- Updating IDs for consistency
+- Adding missing test scenarios
+
+---
 
 ## Red Flags - STOP
 
 | Situation | Action |
 |-----------|--------|
 | "Just a small change" | Still needs ADR. Small changes cascade. |
-| "I'll update docs later" | No. ADR first, or change isn't tracked. |
-| "Skip ADR, it's obvious" | Not obvious to future readers. ADR. |
-| Changing code without accepted ADR | Stop. Create ADR first. |
+| "I'll update docs later" | No. ADR first. |
+| "Skip ADR, it's obvious" | Not obvious to future readers. |
+| Changing code before ADR accepted | Stop. Complete Stage 4 first. |
+| Uncertain about scope | Loop in Stage 3 until confident. |
+
+---
 
 ## Response Format
 
+At each stage, show:
+
 ```
-**Change Intent:** {summary of what user wants}
+**Stage N: {Name}**
 
-**Current State:**
-- Loaded: {layers consulted}
-- Affected: {layers that will change}
+{Analysis findings}
 
-**Impact Assessment:**
-{What will change and why}
+**Open Questions:** {list, or "None - confident to proceed"}
 
-**Next Step:** {Create ADR / Revise scope / etc.}
+**Next:** {What happens next}
 ```

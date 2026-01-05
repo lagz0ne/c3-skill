@@ -10,6 +10,8 @@ Detailed validation rules for Mode: Audit in the c3 agent.
 |-------|-------------------|-------------------|
 | **Inventory vs Code** | Docs match reality | Module missing from inventory = FAIL |
 | **Component Categorization** | Foundation/Auxiliary/Feature | Wrong category = WARN |
+| **Reference Validity** | References resolve to code | Missing symbol/path/glob = FAIL |
+| **Reference Coverage** | Major code areas referenced | Major unreferenced area = WARN |
 | **Diagram Accuracy** | Diagrams match inventory | Stale reference = FAIL |
 | **ADR Lifecycle** | No stale ADRs | Accepted >30 days without implemented = WARN |
 
@@ -58,7 +60,23 @@ For each Container:
 | **Auxiliary** | Tool conventions | API patterns, Tailwind usage |
 | **Feature** | Domain-specific | ProductCard, CheckoutScreen |
 
-### Phase 4: Diagram Accuracy
+### Phase 4: References Validation
+
+```
+For each Component:
+  - Read `## References` section
+  - For each reference:
+    - Symbol: rg for definition, flag if not found
+    - Pattern: glob, flag if zero matches
+    - Path: check exists, flag if missing
+  - Report: valid, stale (moved/renamed), or broken (missing)
+
+Coverage:
+  - Identify major code areas (top-level modules/packages)
+  - Flag: major area with zero component references → WARN
+```
+
+### Phase 5: Diagram Accuracy
 
 ```
 For each diagram:
@@ -66,7 +84,7 @@ For each diagram:
   - Flag: stale reference → FAIL
 ```
 
-### Phase 5: ADR Lifecycle
+### Phase 6: ADR Lifecycle
 
 ```
 For each ADR with status=accepted:
@@ -88,6 +106,8 @@ For each ADR with status=accepted:
 |-------|--------|
 | Inventory vs Code | ✓ PASS / ✗ FAIL |
 | Component Categorization | ✓ PASS / ⚠ WARN |
+| Reference Validity | ✓ PASS / ✗ FAIL |
+| Reference Coverage | ✓ PASS / ⚠ WARN |
 | Diagram Accuracy | ✓ PASS / ✗ FAIL |
 | ADR Lifecycle | ✓ PASS / ⚠ WARN |
 

@@ -173,6 +173,7 @@ Key sections:
 - **Decision:** What we're doing (clear, direct)
 - **Rationale:** Why this approach over alternatives
 - **Affected Layers:** List all c3 IDs from scope
+- **References Affected:** Component IDs needing `## References` updates if code moved/added/removed
 - **Verification Checklist:** How to confirm success
 
 ### 4.2 Review
@@ -212,6 +213,8 @@ Example questions:
 
 Generate plan at `.c3/adr/adr-YYYYMMDD-{slug}.plan.md`.
 
+Include a pre-execution checklist item to update `## References` in affected components with code locations from the plan.
+
 ```
 ## Order of Operations
 
@@ -242,6 +245,7 @@ Present plan. User approves or adjusts.
 Follow plan order. For each item:
 1. Make the change (doc or code)
 2. Check for conflicts with earlier assumptions
+3. If code moved/added/removed, update `## References` in affected component docs
 
 ### 6.2 Handle Conflicts (Ascent)
 

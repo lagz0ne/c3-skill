@@ -22,6 +22,10 @@ summary: ${SUMMARY}
 
 <!-- AI: Which Foundation/Feature components follow this -->
 
+## References
+
+<!-- AI: Code references - symbols first, then patterns, then paths. 3-7 items typical. -->
+
 ## Testing
 
 | Convention | How to Test |

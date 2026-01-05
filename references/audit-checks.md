@@ -8,15 +8,10 @@ Detailed validation rules for Mode: Audit in the c3 agent.
 
 | Check | What It Validates | Pass/Fail Criteria |
 |-------|-------------------|-------------------|
-| **Frontmatter Validity** | Required fields per `v3-structure.md` | Missing id/title/type/parent = FAIL |
-| **ID Pattern Compliance** | IDs follow `c3-{N}`, `c3-{N}{NN}` patterns | Wrong format = FAIL |
-| **Inventory vs Code** | Significant code modules listed in inventory | Major module missing = FAIL |
-| **Inventory-First Compliance** | No orphan component docs | Doc without inventory entry = FAIL |
-| **Component Doc Completeness** | Existing docs have required sections | Missing required section = FAIL |
-| **No Code Blocks** | Component docs use tables, not code | JSON/YAML/code snippets = FAIL |
-| **Structure Integrity** | Parent exists before child | Container without Context = FAIL |
-| **Diagram Accuracy** | Diagrams reference existing items | Diagram shows deleted container = FAIL |
-| **ADR Lifecycle Integrity** | No orphan accepted ADRs | Accepted >30 days without implemented = WARN |
+| **Inventory vs Code** | Docs match reality | Module missing from inventory = FAIL |
+| **Component Categorization** | Foundation/Auxiliary/Feature | Wrong category = WARN |
+| **Diagram Accuracy** | Diagrams match inventory | Stale reference = FAIL |
+| **ADR Lifecycle** | No stale ADRs | Accepted >30 days without implemented = WARN |
 
 ---
 
@@ -25,101 +20,57 @@ Detailed validation rules for Mode: Audit in the c3 agent.
 ### Phase 1: Gather
 
 ```
-1. Read .c3/README.md (Context) - check frontmatter
-2. List all .c3/c3-*/ directories (Containers)
-3. For each Container:
-   - Read README.md - check frontmatter, inventory table
-   - List component docs (.c3/c3-*/c3-*.md)
-4. List all ADRs (.c3/adr/adr-*.md) - check lifecycle status
+1. Read .c3/README.md (Context)
+2. List .c3/c3-*/ directories (Containers)
+3. For each Container: read README.md, list component docs
+4. List ADRs (.c3/adr/adr-*.md)
 ```
 
-### Phase 2: Validate Structure (per v3-structure.md)
+### Phase 2: Inventory vs Code
 
 ```
-For each doc:
-  - Parse frontmatter: id, c3-version, title, type, parent, summary
-  - Validate ID pattern: lowercase, correct format
-  - Validate parent exists
-  - Validate folder-ID match (c3-1 in c3-1-*/)
-  - Validate slug format (lowercase-hyphenated)
+For Context:
+  - Compare Containers table ↔ actual directories
+  - Flag drift in either direction
+
+For each Container:
+  - Compare Components inventory ↔ actual code modules
+  - Flag: major module not in inventory → FAIL
 ```
 
-**Required frontmatter by layer:**
-
-| Layer | Required Fields |
-|-------|-----------------|
-| Context | id, c3-version, title, summary |
-| Container | id, c3-version, title, type, parent, summary |
-| Component | id, c3-version, title, type, parent, summary |
-| ADR | id, type, status, title, affects |
-
-### Phase 3: Cross-Reference Inventory
+### Phase 3: Component Categorization
 
 ```
 For each Container:
-  - Parse Components table (inventory)
-  - List component doc files that exist
-  - Flag: doc exists but NOT in inventory → FAIL (inventory-first violation)
-  - Note: inventory entry without doc → OK (inventory-first model)
+  - Verify components are in Foundation/Auxiliary/Feature sections
+  - Apply categorization test:
 
-For Context:
-  - Parse Containers table
-  - List container directories that exist
-  - Flag: directory exists but NOT in table → FAIL (drift)
-  - Flag: table entry but no directory → FAIL (drift)
+    Foundation: "Would changing this break many others?"
+    Auxiliary: "Is this HOW we use an external tool?"
+    Feature: "Is this specific to what this product DOES?"
+
+  - Flag: wrong category → WARN
 ```
 
-### Phase 4: Validate Required Sections
+| Category | Description | Examples |
+|----------|-------------|----------|
+| **Foundation** | Primitives, high impact | Layout, Button, Router |
+| **Auxiliary** | Tool conventions | API patterns, Tailwind usage |
+| **Feature** | Domain-specific | ProductCard, CheckoutScreen |
 
-**Context (c3-0) required sections:**
-
-| Section | Purpose |
-|---------|---------|
-| Overview | What the system does |
-| Containers | Table: ID, Name, Purpose |
-| Container Interactions | Mermaid diagram |
-| External Actors | Who/what interacts with system |
-
-**Container (c3-N) required sections:**
-
-| Section | Purpose |
-|---------|---------|
-| Technology Stack | Table: Layer, Tech, Purpose |
-| Components | Table: ID, Name, Responsibility |
-| Internal Structure | Mermaid diagram (optional but recommended) |
-
-**Component (c3-NNN) required sections:**
-
-| Section | Purpose |
-|---------|---------|
-| Contract | What this component provides |
-| Interface | IN/OUT boundary diagram (Mermaid) |
-| Hand-offs | Table: exchanges with other components |
-| Conventions | Rules for consumers |
-| Edge Cases | Error handling, failures |
-
-**Component prohibited content:**
-- No code blocks (except Mermaid)
-- No JSON/YAML examples
-- No interface definitions
-
-### Phase 5: ADR Lifecycle Check
+### Phase 4: Diagram Accuracy
 
 ```
-For each ADR:
-  - Parse status from frontmatter
-  - Parse Audit Record dates
-  - If status=accepted AND no implemented date:
-    - Calculate days since accepted
-    - If >30 days → WARN (orphan ADR)
+For each diagram:
+  - Verify all IDs exist in inventory
+  - Flag: stale reference → FAIL
 ```
 
-### Phase 6: Code Sampling (if significant codebase exists)
+### Phase 5: ADR Lifecycle
 
 ```
-- Sample major directories (src/, lib/, packages/)
-- Identify obvious modules not in any inventory
-- Note: Sanity check, not exhaustive
+For each ADR with status=accepted:
+  - If >30 days without implemented → WARN
 ```
 
 ---
@@ -129,38 +80,22 @@ For each ADR:
 ```
 **C3 Audit Report**
 
-**Scope:** [full / container:c3-1 / adr:adr-YYYYMMDD-slug]
+**Scope:** [full / container:c3-N]
 **Date:** YYYY-MM-DD
 
 ## Summary
 | Check | Status |
 |-------|--------|
-| Frontmatter Validity | ✓ PASS / ✗ FAIL |
-| ID Pattern Compliance | ✓ PASS / ✗ FAIL |
 | Inventory vs Code | ✓ PASS / ✗ FAIL |
-| Inventory-First Compliance | ✓ PASS / ✗ FAIL |
-| Component Doc Completeness | ✓ PASS / ✗ FAIL / ⚠ N/A (no docs) |
-| No Code Blocks | ✓ PASS / ✗ FAIL / ⚠ N/A |
-| Structure Integrity | ✓ PASS / ✗ FAIL |
+| Component Categorization | ✓ PASS / ⚠ WARN |
 | Diagram Accuracy | ✓ PASS / ✗ FAIL |
-| ADR Lifecycle Integrity | ✓ PASS / ⚠ WARN |
+| ADR Lifecycle | ✓ PASS / ⚠ WARN |
 
-## Issues Found
-
-### Critical (Must Fix)
+## Issues
 - [issue]: [details]
-
-### Warnings (Should Fix)
-- [issue]: [details]
-
-### Info
-- [observation]: [details]
 
 ## Recommendations
 - [actionable fix]
-
-## Next Steps
-[Based on findings - see Drift Resolution below]
 ```
 
 ---

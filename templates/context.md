@@ -54,3 +54,11 @@ graph LR
 | From | To | Protocol | Reasoning |
 |------|-----|----------|-----------|
 <!-- AI: WHY these connect, not just THAT they do -->
+
+## E2E Testing
+
+> Tests container ↔ container linkages. Critical user flows that cross boundaries.
+
+| Flow | Containers Involved | Verifies |
+|------|---------------------|----------|
+<!-- AI: Key user journeys that E2E tests cover -->

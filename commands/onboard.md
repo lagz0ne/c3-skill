@@ -67,13 +67,17 @@ Dispatch a subagent (Task tool, subagent_type: "Explore") to analyze codebase an
 
 **Subagent prompt:**
 ```
-You are filling C3 templates for <PROJECT>.
+## REQUIRED: Load Context First
 
-Templates are already in place at .c3/. Your job:
-1. Analyze codebase structure
-2. Fill inventory tables with actual components
-3. Create mermaid diagrams with IDs
-4. Add linkages with reasoning
+Before doing any work, read and understand:
+- The c3 skill at ${CLAUDE_PLUGIN_ROOT}/skills/c3/SKILL.md
+- The container patterns at ${CLAUDE_PLUGIN_ROOT}/references/container-patterns.md
+- Component templates by category:
+  - ${CLAUDE_PLUGIN_ROOT}/templates/component-foundation.md
+  - ${CLAUDE_PLUGIN_ROOT}/templates/component-auxiliary.md
+  - ${CLAUDE_PLUGIN_ROOT}/templates/component-feature.md
+
+This ensures you understand C3 patterns before generating documentation.
 
 ## Context (c3-0 - .c3/README.md):
 1. Identify actors (users, schedulers, webhooks, external triggers)
@@ -84,27 +88,30 @@ Templates are already in place at .c3/. Your job:
 
 ## Each Container (c3-N - .c3/c3-N-*/README.md):
 1. Analyze container scope for components
-2. Categorize by concern:
-   - Foundation: entry points, identity, integration
-   - Auxiliary: library wrappers, framework usage, utilities
-   - Business: domain services, business logic
-   - Presentation: styling, composition, state (or N/A if not applicable)
+2. Categorize by: Foundation (primitives) / Auxiliary (conventions) / Feature (domain-specific)
 3. Draw internal mermaid diagram with component IDs
 4. Fill fulfillment section (which components handle Context links)
 5. Fill linkages with REASONING
 
+## Each Component (c3-NNN):
+For each component discovered in Container inventory:
+1. Create file: .c3/c3-N-slug/c3-NNN-component-slug.md
+2. Use sequential IDs: c3-101, c3-102, c3-103...
+3. Use template by category:
+   - Foundation → Contract, Edge Cases
+   - Auxiliary → Conventions, Applies To
+   - Feature → Uses, Behavior
+
 ## ADR-000 (.c3/adr/adr-00000000-c3-adoption.md):
 1. Document why C3 was adopted
-2. List all containers created
+2. List all containers and components created
 3. Mark verification checklist items
 
 Rules:
 - Diagram goes FIRST in each file, uses IDs from inventory tables
 - Every linkage needs REASONING (why, not just that)
-- Foundation/Auxiliary/Business/Presentation categories for components
-- Fulfillment section maps Context links to specific components
 - Keep template structure, fill in actual content
-- Empty sections are OK if category doesn't apply
+- Empty sections are OK if not applicable
 ```
 
 ### Step 5: Confirm Completion

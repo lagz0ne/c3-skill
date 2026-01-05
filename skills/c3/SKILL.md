@@ -62,14 +62,18 @@ Dispatch subagent to analyze codebase and fill templates:
 
 **Each Container (c3-N):**
 1. Analyze container scope for components
-2. Categorize by concern:
-   - Foundation: entry, identity, integration
-   - Auxiliary: library wrappers, framework usage, utilities
-   - Business: domain services
-   - Presentation: styling, composition, state (or N/A)
+2. Categorize by: Foundation (primitives) / Auxiliary (conventions) / Feature (domain-specific)
 3. Draw internal mermaid diagram with component IDs
 4. Fill fulfillment section (which components handle Context links)
 5. Fill linkages with REASONING
+
+**Each Component (c3-NNN):**
+1. Create file: `.c3/c3-N-slug/c3-NNN-component-slug.md`
+2. Use sequential IDs: c3-101, c3-102, etc.
+3. Use template by category:
+   - Foundation → `templates/component-foundation.md`
+   - Auxiliary → `templates/component-auxiliary.md`
+   - Feature → `templates/component-feature.md`
 
 **ADR-000:**
 1. Document why C3 was adopted
@@ -81,20 +85,25 @@ Dispatch subagent to analyze codebase and fill templates:
 ### Subagent Prompt Template
 
 ```
+## REQUIRED: Load Context First
+
+Before doing any work, read and understand:
+- The c3 skill at ${CLAUDE_PLUGIN_ROOT}/skills/c3/SKILL.md
+- The container patterns at ${CLAUDE_PLUGIN_ROOT}/references/container-patterns.md
+
 You are filling C3 templates for {{PROJECT}}.
 
-Templates are already in place at .c3/. Your job:
+Your job:
 1. Analyze codebase
-2. Fill inventory tables
+2. Fill inventory tables (Foundation/Auxiliary/Feature)
 3. Create mermaid diagrams with IDs
 4. Add linkages with reasoning
+5. Create component files using category-specific templates
 
 Rules:
 - Diagram goes FIRST, uses IDs from tables
-- Every linkage needs REASONING (why, not just that)
-- Foundation/Auxiliary/Business/Presentation categories
-- Fulfillment section maps Context links to components
-- Keep structure, fill content
+- Every linkage needs REASONING
+- Sequential component IDs: c3-101, c3-102, etc.
 ```
 
 ## Mode: Design

@@ -28,7 +28,7 @@ description: |
 
 `proposed` → `accepted` → `implemented`
 
-See `references/adr-template.md` for template.
+See `../../references/adr-template.md` for template.
 
 ## Mode: Adopt
 
@@ -71,27 +71,28 @@ Dispatch subagent to analyze codebase and fill templates:
 1. Create file: `.c3/c3-N-slug/c3-NNN-component-slug.md`
 2. Use sequential IDs: c3-101, c3-102, etc.
 3. Use template by category:
-   - Foundation → `templates/component-foundation.md`
-   - Auxiliary → `templates/component-auxiliary.md`
-   - Feature → `templates/component-feature.md`
+   - Foundation → `../../templates/component-foundation.md`
+   - Auxiliary → `../../templates/component-auxiliary.md`
+   - Feature → `../../templates/component-feature.md`
 
 **ADR-000:**
 1. Document why C3 was adopted
 2. List all containers created
 3. Mark verification checklist
 
-**Reference:** See `references/container-patterns.md` for component categorization patterns.
+**Reference:** See container patterns reference below for component categorization.
 
 ### Subagent Prompt Template
 
-```
-## REQUIRED: Load Context First
+When dispatching a subagent, **you** (the main agent) must first read `../../references/container-patterns.md` and include its content in the prompt below:
 
-Before doing any work, read and understand:
-- The c3 skill at ${CLAUDE_PLUGIN_ROOT}/skills/c3/SKILL.md
-- The container patterns at ${CLAUDE_PLUGIN_ROOT}/references/container-patterns.md
+```
+## Context
 
 You are filling C3 templates for {{PROJECT}}.
+
+### Container Patterns (for reference)
+{{PASTE_CONTAINER_PATTERNS_CONTENT_HERE}}
 
 Your job:
 1. Analyze codebase
@@ -114,7 +115,7 @@ Rules:
 
 ## Mode: Audit
 
-**REQUIRED:** Load `references/audit-checks.md` for comprehensive audit procedures.
+**REQUIRED:** Load `../../references/audit-checks.md` for comprehensive audit procedures.
 
 Quick reference scopes:
 - `audit C3` - full system

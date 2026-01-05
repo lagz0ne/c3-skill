@@ -5,6 +5,25 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-01-05
+
+### Added
+- **Staged onboarding with recursive learning loop**: Adoption now progresses through 5 stages (Context → Containers → Auxiliary → Foundation → Feature) with analysis and validation at each level
+- **Socratic questioning**: All skills now use `AskUserQuestion` tool to clarify understanding before proceeding, continuing until confident (no open questions)
+- **Bidirectional navigation**: When conflicts are discovered at deeper levels, the system ascends to fix parent documentation, then re-descends
+- **Tiered assumptions**: High-impact changes (new External Systems, container boundaries) require user confirmation; low-impact changes (linkage reasoning, naming) auto-proceed
+- **Progress tracking in ADR-000**: Adoption ADR now includes a Progress section showing documented vs remaining items per level
+- **Intent clarification for queries**: c3-query now clarifies ambiguous queries before searching
+
+### Changed
+- `commands/onboard.md`: Complete rewrite implementing 5-stage recursive learning loop
+- `skills/c3-alter/SKILL.md`: Rewritten with 7-stage workflow (Intent → Understand → Scope → ADR → Plan → Execute → Verify) using same loop pattern
+- `skills/c3-query/SKILL.md`: Added Step 0 for Socratic intent clarification before navigation
+- `templates/adr-000.md`: Added Adoption Progress table and Open Questions section
+
+### Documentation
+- Added `docs/plans/2026-01-05-staged-onboarding-design.md` capturing the full design rationale
+
 ## [2.1.0] - 2026-01-05
 
 ### Added

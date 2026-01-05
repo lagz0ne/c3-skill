@@ -19,12 +19,19 @@ Navigate architecture docs AND explore corresponding code. Full context = docs +
 
 ## REQUIRED: Load Navigation Reference
 
-**Before navigating layers, you MUST read `references/layer-navigation.md`.**
+**Before navigating layers, you MUST read `../../references/layer-navigation.md`.**
 
 This reference contains:
 - Activation check
 - Traversal order (Context → Container → Component)
 - ID-to-path mapping
+
+## Critical: Always Use AskUserQuestionTool
+
+When clarifying intent, MUST use the `AskUserQuestion` tool - never plain text questions.
+- Structured questions get structured answers
+- Multiple-choice reduces ambiguity
+- User can select rather than type
 
 ## Core Principle
 
@@ -36,6 +43,9 @@ To understand fully, you need BOTH:
 
 ```
 Query
+  │
+  ├─→ 0. Clarify Intent (Socratic)
+  │      If ambiguous → ask until clear
   │
   ├─→ 1. Navigate Layers (per layer-navigation.md)
   │      Context → Container → Component
@@ -49,7 +59,30 @@ Query
          Use extracted references to read/search actual code
 ```
 
-### Step 3: Extract Code References
+## Step 0: Clarify Intent (Socratic)
+
+Before searching, ensure you understand what the user is looking for.
+
+**Ask clarifying questions when:**
+- Query is vague ("how does X work?" - which aspect?)
+- Multiple interpretations exist ("authentication" - login flow? token validation? session management?)
+- Scope is unclear ("frontend" - the whole container? a specific component?)
+
+**Example Socratic questions:**
+- "Are you looking for how it's documented or how it's implemented in code?"
+- "Which aspect of authentication: login flow, token refresh, or permission checks?"
+- "Do you need the high-level architecture or specific implementation details?"
+
+**Continue until intent is clear.** Don't guess - a wrong interpretation wastes time.
+
+**Skip clarification when:**
+- Query includes a C3 ID (c3-102) - direct lookup
+- Query is specific ("where is the login form submitted?")
+- User says "just show me everything about X"
+
+## Step 1-2: Navigate and Extract
+
+Follow layer-navigation.md to traverse layers, then extract code references:
 
 From C3 docs, extract keywords for code exploration:
 
@@ -67,7 +100,7 @@ Look for:
 - Keywords: class names, function names, route patterns
 - Config files: related configs, env vars
 
-### Step 4: Explore Code
+## Step 3: Explore Code
 
 Use Task tool with Explore agent OR direct tools:
 - **Glob**: Find files matching patterns from docs

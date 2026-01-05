@@ -70,12 +70,29 @@ for i in {1..9}; do
 done
 
 # Function to substitute variables in template
+# Falls back to sed if envsubst is not available
 substitute_template() {
     local template="$1"
     local output="$2"
 
-    # Use envsubst for variable substitution
-    envsubst < "$template" > "$output"
+    if command -v envsubst &> /dev/null; then
+        # Use envsubst (preferred - handles all env vars)
+        envsubst < "$template" > "$output"
+    else
+        # Fallback: use sed for known variables
+        # Note: Order matters - replace ${N}${NN} patterns before ${N}
+        sed -e "s|\${PROJECT}|${PROJECT:-}|g" \
+            -e "s|\${SUMMARY}|${SUMMARY:-}|g" \
+            -e "s|\${DATE}|${DATE:-}|g" \
+            -e "s|\${CONTAINER_NAME}|${CONTAINER_NAME:-}|g" \
+            -e "s|\${COMPONENT_NAME}|${COMPONENT_NAME:-}|g" \
+            -e "s|\${NN}|${NN:-}|g" \
+            -e "s|\${N}|${N:-}|g" \
+            -e "s|\${C1_NAME}|${C1_NAME:-}|g" \
+            -e "s|\${C2_NAME}|${C2_NAME:-}|g" \
+            -e "s|\${C3_NAME}|${C3_NAME:-}|g" \
+            < "$template" > "$output"
+    fi
 }
 
 # Create context (README.md)

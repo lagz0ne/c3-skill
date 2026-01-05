@@ -9,67 +9,73 @@ summary: ${SUMMARY}
 
 # ${CONTAINER_NAME}
 
-<!-- AI: 2-3 sentences on what this container does and its role in the system -->
+<!-- AI: 2-3 sentences on what this container does -->
 
 ## Overview
 
 ```mermaid
 graph TD
-    %% Foundation
-    c3-${N}01[Entry Point]
-
-    %% Auxiliary
-    c3-${N}02[Shared Utility]
-
-    %% Business
-    c3-${N}03[Domain Service]
-
-    %% Flows
-    c3-${N}01 -->|delegates| c3-${N}03
-    c3-${N}03 -->|uses| c3-${N}02
+    c3-${N}01[Component]
+    c3-${N}02[Component]
+    c3-${N}01 --> c3-${N}02
 ```
 
 ## Components
 
 ### Foundation
+> Primitives others build on. High impact when changed. Reusable within this container.
+> Examples: Layout, Button, EntryPoint, Router, AuthProvider
 
-| ID | Name | Concern | Status | Responsibility |
-|----|------|---------|--------|----------------|
-<!-- AI: Entry, identity, integration concerns -->
-<!-- Concern: entry | identity | integration -->
+| ID | Name | Status | Responsibility |
+|----|------|--------|----------------|
+<!-- AI: What are the building blocks? -->
 
 ### Auxiliary
+> Conventions for using external tools HERE. "This is how we use X in this project."
+> Examples: "We use Tailwind like this", "prefer type over interface", API client patterns
 
-| ID | Name | Concern | Status | Responsibility |
-|----|------|---------|--------|----------------|
-<!-- AI: Framework usage, library wrappers, shared utilities -->
-<!-- Concern: library-wrapper | framework | cross-cutting -->
-<!-- Other components MUST use these for consistency -->
+| ID | Name | Status | Responsibility |
+|----|------|--------|----------------|
+<!-- AI: What patterns/conventions do Feature components follow? -->
 
-### Business
+### Feature
+> Domain-specific. Uses Foundation + Auxiliary. Not reusable outside this context.
+> Examples: ProductCard, CheckoutScreen, useCart, OrderHistory
 
-| ID | Name | Concern | Status | Responsibility |
-|----|------|---------|--------|----------------|
-<!-- AI: Domain services, business flows -->
-<!-- Concern: domain -->
-
-### Presentation
-
-N/A
-<!-- For frontend containers, uncomment and fill: -->
-<!-- | ID | Name | Concern | Status | Responsibility | -->
-<!-- Concern: styling | composition | state -->
+| ID | Name | Status | Responsibility |
+|----|------|--------|----------------|
+<!-- AI: What does this container actually DO for users? -->
 
 ## Fulfillment
 
-<!-- How this container fulfills connections from Context (c3-0) -->
-
 | Link (from c3-0) | Fulfilled By | Constraints |
 |------------------|--------------|-------------|
-<!-- AI: Map context-level links to components -->
+<!-- AI: How does this container fulfill Context connections? -->
 
 ## Linkages
 
-| From | To | Contract | Reasoning |
-|------|-----|----------|-----------|
-<!-- AI: WHY components connect internally -->
+| From | To | Reasoning |
+|------|-----|-----------|
+<!-- AI: WHY do components connect? -->
+
+## Testing
+
+> Tests component ↔ component linkages within this container.
+
+### Integration Tests
+
+| Scenario | Components Involved | Verifies |
+|----------|---------------------|----------|
+<!-- AI: How components work together -->
+
+### Mocking
+
+| Dependency | How to Mock | When |
+|------------|-------------|------|
+<!-- AI: How to replace external dependencies in tests -->
+
+### Fixtures
+
+| Entity | Factory/Source | Notes |
+|--------|----------------|-------|
+<!-- AI: Test data for this container's domain -->

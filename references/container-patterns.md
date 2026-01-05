@@ -1,84 +1,84 @@
 # Container Component Patterns
 
-## Relationship to Content
+## Component Categories
 
-> **"What is this container's relationship to content?"**
+### Foundation
+> Primitives others build on. High impact when changed. Reusable within this container.
 
-| Relationship | Container... | Component Focus |
-|--------------|--------------|-----------------|
-| **Processes** | Creates, transforms, orchestrates | Logic, flows, rules |
-| **Stores** | Persists, structures, indexes | Schema, access patterns |
-| **Transports** | Moves between places | Channels, routing, delivery |
-| **Presents** | Displays to users | Views, interactions, state |
-| **Integrates** | Bridges to external | Contracts, adapters, fallbacks |
-| **Operates** | Manages other containers | Pipelines, config, observability |
+| Component | When Needed |
+|-----------|-------------|
+| **Layout** | Page/screen structure |
+| **Entry Point** | HTTP handler, CLI, event consumer |
+| **Router** | Request routing |
+| **Auth Provider** | Identity/authentication |
+| **Design Tokens** | Colors, spacing, typography |
+| **Base Components** | Button, Input, Card (UI primitives) |
 
-Most containers combine 2-3 relationships.
+**Categorization test:** "Would changing this break many other components?" → Yes = Foundation
 
 ---
 
-## Component Inventory
-
-Pick components based on what your container does.
-
-### Entry Points
+### Auxiliary
+> Conventions for using external tools HERE. "This is how we use X in this project."
 
 | Component | When Needed |
 |-----------|-------------|
-| **Routes/Handler** | HTTP/API entry |
-| **UI/Views** | User-facing |
-| **CLI** | Command-line entry |
-| **Consumer** | Async/event entry |
-| **Scheduler** | Time-triggered |
+| **API Client Pattern** | How we call external services |
+| **State Management** | "We use prop drilling / context / zustand like this" |
+| **Styling Conventions** | "We use Tailwind like this" |
+| **Type Patterns** | "Prefer type over interface" |
+| **Error Handling** | "This is how we handle errors" |
+| **Validation** | "This is how we validate inputs" |
 
-### Logic
-
-| Component | When Needed |
-|-----------|-------------|
-| **Service/Domain** | Business rules |
-| **Transform** | Data shaping |
-| **Workflow** | Multi-step processes |
-| **Calculation** | Computations |
-
-### State
-
-| Component | When Needed |
-|-----------|-------------|
-| **Schema** | Structured data |
-| **Cache** | Temporary storage |
-| **Session** | User state |
-| **Config** | Runtime settings |
-
-### Communication
-
-| Component | When Needed |
-|-----------|-------------|
-| **Client/Adapter** | Calls other services |
-| **Publisher** | Sends events/messages |
-| **Webhook** | Receives external events |
-| **Contract** | External API boundary |
-
-### Resilience
-
-| Component | When Needed |
-|-----------|-------------|
-| **Fallback** | Degraded operation |
-| **Validation** | Input protection |
-| **Error Handling** | Failure management |
-
-### Operations
-
-| Component | When Needed |
-|-----------|-------------|
-| **Deployment** | Release process |
-| **Observability** | Runtime insight |
-| **Pipeline** | Build/test/publish |
+**Categorization test:** "Is this documenting HOW we use an external tool/pattern?" → Yes = Auxiliary
 
 ---
 
-## Usage
+### Feature
+> Domain-specific. Uses Foundation + Auxiliary. Not reusable outside this context.
 
-1. Identify container's relationships (processes? stores? presents?)
-2. Scan inventory for matching components
-3. Add to Container's component inventory
-4. Create component docs when conventions mature
+| Component | When Needed |
+|-----------|-------------|
+| **Screen/Page** | CheckoutScreen, ProductListPage |
+| **Domain Component** | ProductCard, CartItem, OrderSummary |
+| **Domain Hook** | useCart, useCheckout, useProductSearch |
+| **Domain Service** | PaymentService, OrderService |
+| **Workflow** | CheckoutFlow, OnboardingFlow |
+
+**Categorization test:** "Is this specific to what this product DOES?" → Yes = Feature
+
+---
+
+## Decision Flow
+
+```
+Is this a reusable building block that others depend on?
+  → Yes: Foundation
+  → No: Continue
+
+Is this documenting how we use an external tool/pattern?
+  → Yes: Auxiliary
+  → No: Continue
+
+Is this specific to this product's domain/features?
+  → Yes: Feature
+```
+
+---
+
+## Examples by Container Type
+
+### Backend Container
+| Foundation | Auxiliary | Feature |
+|------------|-----------|---------|
+| Router, Middleware | DB access patterns, Error handling | OrderService, PaymentHandler |
+
+### Frontend Container
+| Foundation | Auxiliary | Feature |
+|------------|-----------|---------|
+| Layout, Button, Card | Tailwind usage, State patterns | ProductCard, CheckoutScreen |
+
+### Worker Container
+| Foundation | Auxiliary | Feature |
+|------------|-----------|---------|
+| Job runner, Queue consumer | Retry patterns, Logging | EmailSender, ReportGenerator |

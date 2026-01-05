@@ -24,6 +24,10 @@ summary: ${SUMMARY}
 |----------|----------|
 <!-- AI: What happens when things go wrong -->
 
+## References
+
+<!-- AI: Code references - symbols first, then patterns, then paths. 3-7 items typical. -->
+
 ## Testing
 
 | Scenario | Verifies |

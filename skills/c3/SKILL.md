@@ -74,6 +74,7 @@ Dispatch subagent to analyze codebase and fill templates:
    - Foundation → `../../templates/component-foundation.md`
    - Auxiliary → `../../templates/component-auxiliary.md`
    - Feature → `../../templates/component-feature.md`
+4. After drafting, add `## References` pointing to implementation code (symbols first, then patterns, then paths; 3-7 items typical)
 
 **ADR-000:**
 1. Document why C3 was adopted
@@ -136,3 +137,4 @@ The reference contains detailed checks for:
 - Container fulfills Context links (documents constraints)
 - Component documents implementation (technology, conventions, edge cases)
 - Inventory ready for growth (empty sections OK)
+- References are a lookup index from architecture to code; keep them concise (3-7 items)

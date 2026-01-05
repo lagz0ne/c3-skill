@@ -20,6 +20,10 @@ status: pending
 
 > Implements [adr-YYYYMMDD-{slug}](./adr-YYYYMMDD-{slug}.md)
 
+## Pre-execution checklist
+
+- [ ] Update `## References` in affected components with code locations from this plan
+
 ## Changes
 
 ### c3-0 (Context)

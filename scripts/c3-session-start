@@ -3,7 +3,7 @@
 # C3 SessionStart Hook
 #
 # Checks if .c3/README.md exists in the project.
-# If exists: outputs context message about using c3-skill
+# If exists: outputs harness message to activate C3 skill usage
 # If not: exits silently
 #
 # For SessionStart hooks, stdout is added to context when exit code is 0.
@@ -15,7 +15,38 @@ PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 
 # Check if .c3/README.md exists
 if [[ -f "$PROJECT_DIR/.c3/README.md" ]]; then
-    echo "C3 architecture documentation exists. Commands: /c3, /query, /alter. Skills: c3-skill:c3, c3-skill:c3-query, c3-skill:c3-alter"
+    cat << 'EOF'
+<c3-architecture-harness>
+This project has C3 architecture documentation (.c3/).
+
+## REQUIRED: Use C3 Skills for Architecture Work
+
+**When user asks about architecture, code structure, or "where is X":**
+→ Load skill: `c3-skill:c3-query` - Navigate C3 docs to find answers
+
+**When user asks to add, change, modify, or implement something:**
+→ Load skill: `c3-skill:c3-alter` - ADR-first workflow for changes
+
+**When user asks to audit, validate, or check C3 docs:**
+→ Load skill: `c3-skill:c3` - Run audit checks
+
+## C3 Capabilities
+
+- **Context (c3-0)**: System overview, actors, containers, external systems
+- **Containers (c3-N)**: Component inventory, technology stack, linkages
+- **Components (c3-NNN)**: Implementation details with code references
+- **ADRs**: Architectural decision records with implementation plans
+
+## Commands Available
+
+- `/c3` - Audit or adopt C3
+- `/query` - Navigate architecture docs
+- `/alter` - Change architecture (ADR-first)
+- `/onboard` - Initial C3 setup
+
+Load the appropriate skill BEFORE responding to architectural questions.
+</c3-architecture-harness>
+EOF
 fi
 
 exit 0

@@ -5,6 +5,24 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2026-01-06
+
+### Added
+- **Complexity-first documentation approach**: Assess container complexity BEFORE documenting aspects
+- **Harness complexity rules**: COMPLEXITY-BEFORE-ASPECTS, DISCOVERY-OVER-CHECKLIST, DEPTH-MATCHES-COMPLEXITY
+- **Type-specific container templates**: `container-service.md`, `container-database.md`, `container-queue.md` with discovery prompts
+- **External system templates**: `external.md` and `external-aspect.md` for documenting external dependencies
+- **Complexity levels**: trivial → simple → moderate → complex → critical with clear documentation depth rules
+
+### Changed
+- **Harness as single source**: All complexity rules defined in `skill-harness.md`, templates reference it
+- **Templates use discovery prompts**: No more pre-populated aspect checklists that bias AI
+- **Container templates simplified**: Type-specific signals to scan, not assumptions to check off
+- **c3 skill Adopt flow**: Now explicitly requires complexity-first and discovery-over-checklist
+
+### Rationale
+This release prevents AI bias from pre-populated checklists. By requiring complexity assessment first and discovery through code analysis, documentation reflects what actually exists rather than what templates assume.
+
 ## [2.4.0] - 2026-01-06
 
 ### Added

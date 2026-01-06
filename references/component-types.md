@@ -1,3 +1,35 @@
+# Component & Container Types
+
+Types organize elements by role. Complexity determines documentation depth.
+
+---
+
+# Container Types
+
+Use type-specific templates as **starting points**. Discover and adapt.
+
+## Container Selection
+
+| Container Type | Use For | Template |
+|----------------|---------|----------|
+| service | APIs, backends, code apps | `container-service.md` |
+| database | Databases, data stores | `container-database.md` |
+| queue | Message queues, event buses | `container-queue.md` |
+| generic | Anything else | `container.md` |
+
+## Complexity-First Documentation
+
+**Assess complexity BEFORE documenting aspects.**
+
+See `skill-harness.md` for:
+- Complexity levels (trivial → critical)
+- Documentation depth rules
+- Discovery-over-checklist requirements
+
+Templates include type-specific **discovery prompts** - signals to scan for when assessing complexity.
+
+---
+
 # Component Types
 
 Three categories organize components by role and impact.
@@ -72,6 +104,47 @@ graph TD
 - Domain-specific logic
 
 **Template:** `templates/component-feature.md`
+
+---
+
+# External Systems
+
+Externals follow container → aspect pattern when complex enough.
+
+## When to Expand
+
+```mermaid
+graph TD
+    Q1{Complex contract?}
+    Q1 -->|No| Inline[Table row in context.md]
+    Q1 -->|Yes| Q2{Multiple concerns?}
+    Q2 -->|No| README[externals/E1-name/README.md]
+    Q2 -->|Yes| Aspects[README + aspect files]
+```
+
+| Complexity | Documentation | Example |
+|------------|---------------|---------|
+| Simple | Table row only | Redis cache, simple API |
+| Moderate | README.md | Database with schema we control |
+| Complex | README + aspects | Postgres with complex schema, OAuth provider |
+
+## Common Aspect Types
+
+| Aspect | When | Captures |
+|--------|------|----------|
+| schema | Database, queue | Data model, constraints, relationships |
+| access-patterns | Database | Queries, indexes, performance notes |
+| lifecycle | Queue, storage | Retention, archival, cleanup |
+| workarounds | Any | Quirks, known issues, compensations |
+| versioning | API | Version history, migration notes |
+| auth-flow | Auth provider | OAuth sequence, token handling |
+
+## Templates
+
+- `templates/external.md` - External system overview
+- `templates/external-aspect.md` - Aspect detail file
+
+---
 
 ## Dependency Direction
 

@@ -3,23 +3,25 @@ id: c3-${N}
 c3-version: 3
 title: ${CONTAINER_NAME}
 type: container
-category: generic
+category: service
 parent: c3-0
 summary: ${SUMMARY}
 ---
-<!--
-TYPE-SPECIFIC TEMPLATES AVAILABLE:
-- container-service.md: APIs, backend services, code apps
-- container-database.md: Databases, data stores
-- container-queue.md: Message queues, event buses
-
-Use this generic template when type-specific doesn't fit.
-ADAPT: Add Aspects Inventory section if helpful.
--->
+<!-- USE: Code services, APIs, backend applications -->
+<!-- ADAPT: This is a starting point. Discover and document what actually exists. -->
 
 # ${CONTAINER_NAME}
 
-<!-- container purpose -->
+<!-- service purpose: one sentence -->
+
+## Complexity Assessment
+
+<!-- REQUIRED: See skill-harness.md for levels and rules -->
+
+**Level:** <!-- trivial | simple | moderate | complex | critical -->
+
+**Signals observed:**
+<!-- Scan for: external calls, state mgmt, security, error handling, caching -->
 
 ## Overview
 
@@ -63,13 +65,19 @@ graph TD
     %% Edge labels: "reasoning"
 ```
 
-## Testing (if warranted)
-
-<!-- SKIP IF: stateless, no component interactions, pure passthrough -->
+## Discovered Aspects
 
 <!--
-trivial: skip section
-simple: "Integration: A→B handoff. Mock: external APIs."
-moderate: scope + mocking + fixtures prose
-complex: + sequence diagram for critical paths
+SKIP THIS SECTION if complexity is trivial or simple.
+
+For moderate+, discover aspects through code analysis:
+- What patterns actually exist in the code?
+- What would a new developer miss?
+- What has non-trivial implementation worth documenting?
+
+Document only what exists and matters. Reference code locations.
 -->
+
+## Testing (if warranted)
+
+<!-- SKIP IF: trivial/simple complexity, no integration points -->

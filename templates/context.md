@@ -42,9 +42,10 @@ graph LR
 
 ## External Systems
 
-| ID | Name | Type | Purpose |
-|----|------|------|---------|
-<!-- database | cache | queue | api | storage -->
+| ID | Name | Type | Purpose | Docs |
+|----|------|------|---------|------|
+<!-- database | cache | queue | api | auth | storage -->
+<!-- Docs: "inline" for simple, "externals/E1-name/" for complex -->
 
 ## Linkages
 
@@ -54,6 +55,13 @@ graph LR
     %% Edge labels: "protocol: reasoning"
 ```
 
-## E2E Testing Strategy
+## E2E Testing (if warranted)
 
-<!-- boundaries tested, key user flows, what integration proves -->
+<!-- SKIP IF: single container, no critical user journeys, internal tool -->
+
+<!--
+trivial: skip section
+simple: "E2E covers: login flow, checkout"
+moderate: boundaries + key flows prose
+complex: sequence diagram showing cross-container flow
+-->

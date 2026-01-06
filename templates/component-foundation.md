@@ -27,6 +27,13 @@ summary: ${SUMMARY}
 
 <!-- symbols first, then patterns, then paths -->
 
-## Testing Strategy
+## Testing (if warranted)
 
-<!-- unit scope, key assertions, isolation approach -->
+<!-- SKIP IF: trivial getter/setter, no edge cases, delegator -->
+
+<!--
+trivial: skip section
+simple: "Test: null handling, boundary values"
+moderate: scope + assertions + mocking prose
+complex: + state diagram for lifecycle, sequence for flows
+-->

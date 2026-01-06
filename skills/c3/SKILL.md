@@ -39,13 +39,15 @@ Dispatch subagent with `../../references/container-patterns.md` to:
 | Layer | Task |
 |-------|------|
 | Context (c3-0) | Actors, containers, external systems, diagram, linkages |
-| Container (c3-N) | Components (Foundation/Auxiliary/Feature), diagram, fulfillment |
+| Container (c3-N) | **Assess complexity first**, then components, diagram, fulfillment |
 | Component (c3-NNN) | Create from category template, add `## References` |
 | ADR-000 | Document adoption, list containers, verification |
 
 **Templates:** `../../templates/component-{foundation,auxiliary,feature}.md`
 
 **Rules:**
+- **Complexity-first:** Assess container complexity BEFORE documenting aspects
+- **Discovery-over-checklist:** Find what exists, don't assume from templates
 - Diagram first, tables second, linkages third
 - Every linkage needs REASONING
 - Sequential IDs: c3-101, c3-102, etc.

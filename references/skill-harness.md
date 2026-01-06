@@ -2,16 +2,60 @@
 
 Shared behavioral constraints for all C3 skills.
 
-## Progressive Complexity
+## Complexity-First Documentation
+
+### Rule: COMPLEXITY-BEFORE-ASPECTS
+
+Assess container complexity BEFORE documenting aspects. Never assume aspects from templates.
+
+**Complexity Levels:**
+
+| Level | Signals | Documentation Depth |
+|-------|---------|---------------------|
+| trivial | Single purpose, stateless, no deps | Purpose + deps only |
+| simple | Few concerns, basic state | + key components |
+| moderate | Multiple concerns, caching, auth | + discovered aspects |
+| complex | Orchestration, security-critical | Full aspect discovery |
+| critical | Distributed txns, compliance | Comprehensive + rationale |
+
+**Required in every container doc:**
+```markdown
+## Complexity Assessment
+**Level:** [trivial|simple|moderate|complex|critical]
+**Why:** [signals observed from code analysis]
+```
+
+### Rule: DISCOVERY-OVER-CHECKLIST
+
+Aspects MUST be discovered through code analysis, not assumed from templates.
+
+| Wrong | Right |
+|-------|-------|
+| Tick "caching: N/A" without checking | Scan for cache patterns, document if found |
+| Copy aspect list from template | Analyze code, document what exists |
+| "Assumed standard" | "Discovered: retry logic in api-client.ts:45" |
+
+### Rule: DEPTH-MATCHES-COMPLEXITY
+
+| Level | Aspect Documentation |
+|-------|---------------------|
+| trivial/simple | Skip aspects section entirely |
+| moderate | Document 2-3 key discovered aspects |
+| complex | Full discovery with code references |
+| critical | + rationale for each aspect |
+
+---
+
+## Workflow Complexity
 
 ```
-Simple ─────────────────────────────────────────── Complex
+trivial ─────────────────────────────────────────── critical
 │                                                        │
 /onboard        /query         /alter add      /alter refactor
 (init)          (navigate)     (single ADR)    (cross-layer ADR)
 ```
 
-Match skill to complexity. Don't use c3-alter for simple questions.
+Match workflow depth to container complexity.
 
 ## STOP - Before Any Action
 

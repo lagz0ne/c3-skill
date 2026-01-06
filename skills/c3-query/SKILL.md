@@ -1,8 +1,9 @@
 ---
 name: c3-query
 description: |
-  Use when project has .c3/ and user asks about architecture or code location.
-  Triggers: "explain", "where is", "look for", "how does", "what is", "find", "show me", C3 IDs (c3-0, c3-1, adr-*).
+  This skill should be used when the user asks "where is X", "how does X work", "explain X",
+  "show me the architecture", "find component", "what handles X", or references C3 IDs (c3-0, c3-1, adr-*).
+  Requires .c3/ to exist. For changes, route to c3-alter instead.
 ---
 
 # C3 Query - Architecture Navigation

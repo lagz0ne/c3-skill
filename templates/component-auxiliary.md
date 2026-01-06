@@ -7,27 +7,25 @@ category: auxiliary
 parent: c3-${N}
 summary: ${SUMMARY}
 ---
+<!-- USE: Conventions (TailwindPatterns, TypeConventions, APIClientPatterns) -->
 
 # ${COMPONENT_NAME}
 
-<!-- AI: What convention/pattern this establishes. 1-2 sentences. -->
+<!-- what convention/pattern this establishes -->
 
 ## Conventions
 
 | Rule | Why |
 |------|-----|
-<!-- AI: Do/don't rules in words -->
 
 ## Applies To
 
-<!-- AI: Which Foundation/Feature components follow this -->
+<!-- which Foundation/Feature components follow this -->
 
 ## References
 
-<!-- AI: Code references - symbols first, then patterns, then paths. 3-7 items typical. -->
+<!-- symbols first, then patterns, then paths -->
 
-## Testing
+## Testing Strategy
 
-| Convention | How to Test |
-|------------|-------------|
-<!-- AI: How to test code that follows this pattern -->
+<!-- how to verify code follows conventions -->

@@ -7,7 +7,7 @@ summary: ${SUMMARY}
 
 # ${PROJECT}
 
-<!-- AI: 2-3 sentences on what this system does and why it exists -->
+<!-- system purpose -->
 
 ## Overview
 
@@ -29,36 +29,31 @@ graph LR
 
 ## Actors
 
-| ID | Actor | Type | Interacts With | Purpose |
-|----|-------|------|----------------|---------|
-<!-- AI: Who/what triggers this system -->
-<!-- Type: user | system | scheduled | external-service -->
+| ID | Actor | Type | Purpose |
+|----|-------|------|---------|
+<!-- user | system | scheduled | external-service -->
 
 ## Containers
 
 | ID | Name | Type | Status | Purpose |
 |----|------|------|--------|---------|
-| c3-1 | ${C1_NAME} | service | | <!-- AI: purpose --> |
-<!-- AI: Discover containers, assign IDs c3-1, c3-2, etc. -->
-<!-- Type: service | app | library | external -->
+| c3-1 | ${C1_NAME} | service | | <!-- purpose --> |
+<!-- service | app | library | external -->
 
 ## External Systems
 
 | ID | Name | Type | Purpose |
 |----|------|------|---------|
-<!-- AI: Databases, APIs, third-party services -->
-<!-- Type: database | cache | queue | api | storage -->
+<!-- database | cache | queue | api | storage -->
 
 ## Linkages
 
-| From | To | Protocol | Reasoning |
-|------|-----|----------|-----------|
-<!-- AI: WHY these connect, not just THAT they do -->
+```mermaid
+graph LR
+    %% Actor → Container → External flows
+    %% Edge labels: "protocol: reasoning"
+```
 
-## E2E Testing
+## E2E Testing Strategy
 
-> Tests container ↔ container linkages. Critical user flows that cross boundaries.
-
-| Flow | Containers Involved | Verifies |
-|------|---------------------|----------|
-<!-- AI: Key user journeys that E2E tests cover -->
+<!-- boundaries tested, key user flows, what integration proves -->

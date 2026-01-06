@@ -5,6 +5,21 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-01-05
+
+### Added
+- **Component references section**: All component templates now include `## References` section for explicit code-to-architecture links
+- **Reference validation in audit**: New Phase 4 validates reference validity (symbols/paths/globs exist) and coverage (major code areas referenced)
+- **Pre-execution checklist**: Plan template includes checklist item to update component references before implementation
+
+### Changed
+- Onboarding workflow now includes step to populate `## References` after drafting each component
+- ADR workflow tracks "References Affected" and updates references during execution when code moves
+- Audit procedure renumbered: References Validation (Phase 4), Diagram Accuracy (Phase 5), ADR Lifecycle (Phase 6)
+
+### Documentation
+- Added `docs/plans/2026-01-05-component-references-design.md` capturing the design rationale
+
 ## [2.2.0] - 2026-01-05
 
 ### Added

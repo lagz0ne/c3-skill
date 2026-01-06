@@ -5,6 +5,22 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-01-06
+
+### Added
+- **Component types reference**: New `references/component-types.md` consolidates Foundation/Feature/Auxiliary guidance with decision flowchart and dependency rules
+- **Progressive complexity diagram**: Skill harness now shows simple → complex skill selection visually
+- **Violation examples in harness**: Concrete wrong vs right examples for common mistakes
+
+### Changed
+- **Templates: diagram-first approach**: Linkage tables replaced with mermaid flowcharts, testing tables replaced with strategy prose
+- **Skill descriptions**: All three skills now use third-person format with specific trigger phrases per plugin-dev guidelines
+- **Template comments**: Multi-line AI hints consolidated to single-line format for token efficiency
+- **Component templates**: Added type selector hints at top (e.g., `<!-- USE: Core primitives -->`)
+
+### Documentation
+- Added `docs/plans/2026-01-06-diagram-first-templates-design.md` capturing the design rationale
+
 ## [2.3.0] - 2026-01-05
 
 ### Added

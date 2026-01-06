@@ -26,6 +26,13 @@ summary: ${SUMMARY}
 
 <!-- symbols first, then patterns, then paths -->
 
-## Testing Strategy
+## Testing (if warranted)
 
-<!-- how to verify code follows conventions -->
+<!-- SKIP IF: documentation-only, no enforceable rules, style guide -->
+
+<!--
+trivial: skip section
+simple: "Lint rule: prefer-type-over-interface"
+moderate: how to verify + automation approach
+complex: rarely needed - auxiliary is conventions, not logic
+-->

@@ -33,6 +33,13 @@ sequenceDiagram
 
 <!-- symbols first, then patterns, then paths -->
 
-## Testing Strategy
+## Testing (if warranted)
 
-<!-- user flow scope, integration points, key assertions -->
+<!-- SKIP IF: display-only, no user interactions, static content -->
+
+<!--
+trivial: skip section
+simple: "Test: happy path, error states"
+moderate: user flows + integration points prose
+complex: + sequence for multi-step flows, state for entity lifecycle
+-->

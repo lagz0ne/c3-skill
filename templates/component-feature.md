@@ -7,29 +7,32 @@ category: feature
 parent: c3-${N}
 summary: ${SUMMARY}
 ---
+<!-- USE: Domain features (ProductCard, CheckoutFlow, UserProfile, OrderHistory) -->
 
 # ${COMPONENT_NAME}
 
-<!-- AI: What this does for users. 1-2 sentences. -->
+<!-- what this does for users -->
 
-## Uses
+## Dependencies
 
-| Category | Component | For |
-|----------|-----------|-----|
-<!-- AI: What Foundation/Auxiliary this relies on -->
+```mermaid
+graph LR
+    ${COMPONENT_NAME} --> Foundation[foundation component]
+    ${COMPONENT_NAME} --> Auxiliary[auxiliary pattern]
+```
 
 ## Behavior
 
-| Trigger | Result |
-|---------|--------|
-<!-- AI: User actions → outcomes -->
+```mermaid
+sequenceDiagram
+    User->>+${COMPONENT_NAME}: action
+    ${COMPONENT_NAME}-->>-User: result
+```
 
 ## References
 
-<!-- AI: Code references - symbols first, then patterns, then paths. 3-7 items typical. -->
+<!-- symbols first, then patterns, then paths -->
 
-## Testing
+## Testing Strategy
 
-| Scenario | Verifies |
-|----------|----------|
-<!-- AI: Key test scenarios for this feature -->
+<!-- user flow scope, integration points, key assertions -->

@@ -7,29 +7,26 @@ category: foundation
 parent: c3-${N}
 summary: ${SUMMARY}
 ---
+<!-- USE: Core primitives (Layout, Button, Router, AuthProvider, DataStore) -->
 
 # ${COMPONENT_NAME}
 
-<!-- AI: What primitive this provides. 1-2 sentences. -->
+<!-- what primitive this provides -->
 
 ## Contract
 
-| Provides | Expects |
-|----------|---------|
-<!-- AI: What it gives, what it needs -->
+**Provides:** <!-- what it gives -->
+
+**Expects:** <!-- what it needs -->
 
 ## Edge Cases
 
-| Scenario | Behavior |
-|----------|----------|
-<!-- AI: What happens when things go wrong -->
+<!-- behavior when things go wrong -->
 
 ## References
 
-<!-- AI: Code references - symbols first, then patterns, then paths. 3-7 items typical. -->
+<!-- symbols first, then patterns, then paths -->
 
-## Testing
+## Testing Strategy
 
-| Scenario | Verifies |
-|----------|----------|
-<!-- AI: Key unit test scenarios for this primitive -->
+<!-- unit scope, key assertions, isolation approach -->

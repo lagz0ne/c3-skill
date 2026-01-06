@@ -1,9 +1,9 @@
 ---
 name: c3
 description: |
-  Use when project needs C3 adoption (no .c3/) or auditing existing C3 docs.
-  Triggers: "adopt C3", "onboard", "scaffold", "audit", "validate", "check C3", "init".
-  NOT for navigation (use c3-query) or changes (use c3-alter).
+  This skill should be used when the user asks to "adopt C3", "onboard me to architecture",
+  "scaffold C3 docs", "init C3", "audit architecture", "validate C3", or "check C3 docs".
+  Also triggers when no .c3/ directory exists. Routes to c3-query for navigation, c3-alter for changes.
 ---
 
 # C3 Architecture Assistant

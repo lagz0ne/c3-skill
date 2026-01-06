@@ -1,8 +1,9 @@
 ---
 name: c3-alter
 description: |
-  Use when project has .c3/ and user intends to change code or architecture.
-  Triggers: "add", "change", "modify", "update", "fix", "refactor", "remove", "implement", "create new", "rename", "new feature", "bug fix".
+  This skill should be used when the user asks to "add a component", "change architecture",
+  "refactor X", "implement feature", "fix bug", "create new service", "update diagram", or "remove component".
+  Requires .c3/ to exist. All changes flow through ADR process. For questions, route to c3-query instead.
 ---
 
 # C3 Alter - Change Through ADR

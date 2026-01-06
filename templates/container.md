@@ -9,7 +9,7 @@ summary: ${SUMMARY}
 
 # ${CONTAINER_NAME}
 
-<!-- AI: 2-3 sentences on what this container does -->
+<!-- container purpose -->
 
 ## Overview
 
@@ -23,59 +23,40 @@ graph TD
 ## Components
 
 ### Foundation
-> Primitives others build on. High impact when changed. Reusable within this container.
-> Examples: Layout, Button, EntryPoint, Router, AuthProvider
+> Primitives others build on. High impact when changed.
 
 | ID | Name | Status | Responsibility |
 |----|------|--------|----------------|
-<!-- AI: What are the building blocks? -->
 
 ### Auxiliary
-> Conventions for using external tools HERE. "This is how we use X in this project."
-> Examples: "We use Tailwind like this", "prefer type over interface", API client patterns
+> Conventions for using external tools. "How we use X here."
 
 | ID | Name | Status | Responsibility |
 |----|------|--------|----------------|
-<!-- AI: What patterns/conventions do Feature components follow? -->
 
 ### Feature
-> Domain-specific. Uses Foundation + Auxiliary. Not reusable outside this context.
-> Examples: ProductCard, CheckoutScreen, useCart, OrderHistory
+> Domain-specific. Uses Foundation + Auxiliary.
 
 | ID | Name | Status | Responsibility |
 |----|------|--------|----------------|
-<!-- AI: What does this container actually DO for users? -->
 
 ## Fulfillment
 
 | Link (from c3-0) | Fulfilled By | Constraints |
 |------------------|--------------|-------------|
-<!-- AI: How does this container fulfill Context connections? -->
 
 ## Linkages
 
-| From | To | Reasoning |
-|------|-----|-----------|
-<!-- AI: WHY do components connect? -->
+```mermaid
+graph TD
+    %% Component → Component flows
+    %% Edge labels: "reasoning"
+```
 
-## Testing
+## Testing Strategy
 
-> Tests component ↔ component linkages within this container.
+**Integration scope:** <!-- what component interactions to test -->
 
-### Integration Tests
+**Mocking approach:** <!-- how to isolate dependencies -->
 
-| Scenario | Components Involved | Verifies |
-|----------|---------------------|----------|
-<!-- AI: How components work together -->
-
-### Mocking
-
-| Dependency | How to Mock | When |
-|------------|-------------|------|
-<!-- AI: How to replace external dependencies in tests -->
-
-### Fixtures
-
-| Entity | Factory/Source | Notes |
-|--------|----------------|-------|
-<!-- AI: Test data for this container's domain -->
+**Fixtures:** <!-- test data sources and factories -->

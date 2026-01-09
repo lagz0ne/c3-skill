@@ -50,6 +50,12 @@ Follow layer navigation: **Context → Container → Component**
 | Technology | Framework patterns |
 | Entry points | Main files, handlers |
 
+### Reference Lookup
+
+If query relates to patterns/conventions:
+1. Check `.c3/refs/` for `ref-*` matching topic
+2. Return ref content + citing components
+
 ---
 
 ## Step 3: Explore Code

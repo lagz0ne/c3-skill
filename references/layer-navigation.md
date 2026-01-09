@@ -59,3 +59,17 @@ Read `.c3/c3-N-*/c3-NNN-*.md`:
 | `adr-*` | `.c3/adr/adr-*.md` |
 
 See `references/v3-structure.md` for complete patterns.
+
+## Reference Resolution
+
+When navigating and a pattern/convention is mentioned:
+
+1. Check if component cites a `ref-*`
+2. Look up ref in `.c3/refs/ref-{slug}.md`
+3. Refs explain patterns; components explain usage
+
+**Resolution hierarchy:**
+- Component: specific usage of patterns
+- Container: cross-component patterns
+- Context: system-wide patterns
+- Refs: pattern definitions and rationale

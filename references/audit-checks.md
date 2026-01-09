@@ -9,11 +9,12 @@ Detailed validation rules for Mode: Audit in the c3 agent.
 | Check | What It Validates | Pass/Fail Criteria |
 |-------|-------------------|-------------------|
 | **Inventory vs Code** | Docs match reality | Module missing from inventory = FAIL |
-| **Component Categorization** | Foundation/Auxiliary/Feature | Wrong category = WARN |
+| **Component Categorization** | Foundation/Feature | Wrong category = WARN |
 | **Reference Validity** | References resolve to code | Missing symbol/path/glob = FAIL |
 | **Reference Coverage** | Major code areas referenced | Major unreferenced area = WARN |
 | **Diagram Accuracy** | Diagrams match inventory | Stale reference = FAIL |
 | **ADR Lifecycle** | No stale ADRs | Accepted >30 days without implemented = WARN |
+| **Ref Files** | ref-* files valid and linked | Missing Goal or orphan ref = WARN |
 
 ---
 
@@ -44,11 +45,10 @@ For each Container:
 
 ```
 For each Container:
-  - Verify components are in Foundation/Auxiliary/Feature sections
+  - Verify components are in Foundation/Feature sections
   - Apply categorization test:
 
     Foundation: "Would changing this break many others?"
-    Auxiliary: "Is this HOW we use an external tool?"
     Feature: "Is this specific to what this product DOES?"
 
   - Flag: wrong category → WARN
@@ -57,7 +57,6 @@ For each Container:
 | Category | Description | Examples |
 |----------|-------------|----------|
 | **Foundation** | Primitives, high impact | Layout, Button, Router |
-| **Auxiliary** | Tool conventions | API patterns, Tailwind usage |
 | **Feature** | Domain-specific | ProductCard, CheckoutScreen |
 
 ### Phase 4: References Validation
@@ -91,6 +90,23 @@ For each ADR with status=accepted:
   - If >30 days without implemented → WARN
 ```
 
+### Phase 7: Reference Validation
+
+```
+For each ref-* file in .c3/refs/:
+  - Verify Goal section exists
+  - Verify ref is cited by at least one component doc (search for ref-* in c3-*/c3-*.md)
+
+For each component doc citing a ref:
+  - Verify cited ref-* file exists in .c3/refs/
+
+Check for:
+  - [ ] All ref-* files have Goal section
+  - [ ] All cited refs (ref-* in component docs) exist in .c3/refs/
+  - [ ] No orphan refs (refs not cited by any component)
+  - [ ] Refs don't duplicate component content
+```
+
 ---
 
 ## Audit Output Template
@@ -110,6 +126,7 @@ For each ADR with status=accepted:
 | Reference Coverage | ✓ PASS / ⚠ WARN |
 | Diagram Accuracy | ✓ PASS / ✗ FAIL |
 | ADR Lifecycle | ✓ PASS / ⚠ WARN |
+| Ref Files | ✓ PASS / ⚠ WARN |
 
 ## Issues
 - [issue]: [details]

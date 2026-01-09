@@ -7,61 +7,47 @@ summary: ${SUMMARY}
 
 # ${PROJECT}
 
-<!-- system purpose -->
+## Goal
 
-## Overview
+{Why does this system exist? What business problem does it solve?}
 
-```mermaid
-graph LR
-    %% Actors
-    A1[User]
+<!--
+WHY DOCUMENT:
+- Enforce consistency (current and future work)
+- Enforce quality (current and future work)
+- Support auditing (verifiable, cross-referenceable)
+- Be maintainable (worth the upkeep cost)
 
-    %% Containers
-    c3-1[${C1_NAME}]
+ANTI-GOALS:
+- Over-documenting → stale quickly, maintenance burden
+- Text walls → hard to review, hard to maintain
+- Isolated content → can't verify from multiple angles
 
-    %% External
-    E1[(Database)]
+PRINCIPLES:
+- Diagrams over text. Always.
+- Fewer meaningful sections > many shallow sections
+- Add sections that elaborate the Goal - remove those that don't
+- Cross-content integrity: same fact from different angles aids auditing
 
-    %% Connections
-    A1 -->|HTTP| c3-1
-    c3-1 -->|SQL| E1
-```
+GUARDRAILS:
+- Must have: Goal + Containers table
+- Prefer: 3-5 focused sections
+- This is the entry point - navigable, not exhaustive
 
-## Actors
+REF HYGIENE (context level = system-wide concerns):
+- Cite refs that govern cross-container behavior
+  (system-wide error strategy, auth patterns, inter-container data flow)
+- Container-specific patterns belong in container docs
+- If a ref only applies within one container, cite it there instead
 
-| ID | Actor | Type | Purpose |
-|----|-------|------|---------|
-<!-- user | system | scheduled | external-service -->
+Common sections (create whatever serves your Goal):
+- Overview (diagram), Actors, Containers, External Systems, Linkages
+
+Delete this comment block after drafting.
+-->
 
 ## Containers
 
 | ID | Name | Type | Status | Purpose |
 |----|------|------|--------|---------|
-| c3-1 | ${C1_NAME} | service | | <!-- purpose --> |
-<!-- service | app | library | external -->
-
-## External Systems
-
-| ID | Name | Type | Purpose | Docs |
-|----|------|------|---------|------|
-<!-- database | cache | queue | api | auth | storage -->
-<!-- Docs: "inline" for simple, "externals/E1-name/" for complex -->
-
-## Linkages
-
-```mermaid
-graph LR
-    %% Actor → Container → External flows
-    %% Edge labels: "protocol: reasoning"
-```
-
-## E2E Testing (if warranted)
-
-<!-- SKIP IF: single container, no critical user journeys, internal tool -->
-
-<!--
-trivial: skip section
-simple: "E2E covers: login flow, checkout"
-moderate: boundaries + key flows prose
-complex: sequence diagram showing cross-container flow
--->
+<!-- Type: service | app | library | external -->

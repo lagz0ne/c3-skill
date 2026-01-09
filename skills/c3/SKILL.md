@@ -43,7 +43,7 @@ Dispatch subagent with `../../references/container-patterns.md` to:
 | Component (c3-NNN) | Create from category template, add `## References` |
 | ADR-000 | Document adoption, list containers, verification |
 
-**Templates:** `../../templates/component-{foundation,auxiliary,feature}.md`
+**Templates:** `../../templates/component.md` (unified), `../../templates/ref.md`
 
 **Rules:**
 - **Complexity-first:** Assess container complexity BEFORE documenting aspects
@@ -52,6 +52,14 @@ Dispatch subagent with `../../references/container-patterns.md` to:
 - Every linkage needs REASONING
 - Sequential IDs: c3-101, c3-102, etc.
 - References: symbols first, patterns, then paths (3-7 items)
+- Categories: `foundation` or `feature` (no auxiliary)
+
+### Refs Discovery
+
+After components are documented:
+1. Identify repeated patterns across components
+2. Extract to `.c3/refs/ref-{pattern}.md`
+3. Update components to cite refs instead of duplicating
 
 ---
 

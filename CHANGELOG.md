@@ -5,6 +5,32 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-01-09
+
+### Breaking Changes
+- **Refs system replaces auxiliary category**: Components no longer have auxiliary category. Code references are now managed through explicit `refs/` documents that link architecture to code.
+- **Templates restructured**: Merged `component-foundation.md` and `component-feature.md` into unified `component.md` with Goal-first structure.
+
+### Added
+- **Refs system**: New `templates/ref.md` for creating explicit code-to-architecture references
+- **Ref lookup in c3-query**: Query skill now resolves refs to find relevant code locations
+- **Ref maintenance in c3-alter**: Alter skill updates refs when code moves or changes
+- **Goal-first template structure**: All templates now start with Goal section for clearer intent
+
+### Changed
+- **Context template**: Restructured with Goal-first approach, clearer actor/system sections
+- **Container templates**: Service, database, queue templates all use Goal-first structure
+- **Component template**: Unified template replaces separate foundation/feature templates
+- **Audit checks**: Updated to validate refs instead of auxiliary category
+
+### Documentation
+- Layer navigation updated for refs resolution
+- V3 structure documentation reflects refs system
+- Removed all auxiliary category references
+
+### Rationale
+The auxiliary category was ambiguous and led to inconsistent categorization. Refs provide explicit, traceable links between architecture documentation and actual code, improving maintainability and audit accuracy.
+
 ## [2.5.0] - 2026-01-06
 
 ### Added

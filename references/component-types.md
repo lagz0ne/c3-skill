@@ -32,28 +32,25 @@ Templates include type-specific **discovery prompts** - signals to scan for when
 
 # Component Types
 
-Three categories organize components by role and impact.
+Two categories organize components by role and impact.
 
 ## Quick Selection
 
 ```mermaid
 graph TD
-    Q1{Reusable within container?}
-    Q1 -->|Yes| Q2{Establishes conventions?}
+    Q1{Reusable primitives?}
+    Q1 -->|Yes| Foundation
     Q1 -->|No| Feature
-    Q2 -->|Yes| Auxiliary
-    Q2 -->|No| Foundation
 ```
 
 | Ask | If Yes → | If No → |
 |-----|----------|---------|
-| Is this reusable by other components? | Foundation or Auxiliary | Feature |
-| Does this establish HOW to use something? | Auxiliary | Foundation |
-| Does this deliver user-facing value directly? | Feature | Foundation or Auxiliary |
+| Is this a reusable primitive? | Foundation | Feature |
+| Does this deliver user-facing value? | Feature | Foundation |
 
 ## Foundation
 
-**What:** Core primitives that others build on. High impact when changed.
+**What:** Core primitives that others build on. High impact when changed. May cite refs for conventions.
 
 **Examples:**
 - Layout, Button, Input (UI primitives)
@@ -69,27 +66,9 @@ graph TD
 
 **Template:** `templates/component-foundation.md`
 
-## Auxiliary
-
-**What:** Conventions for using external tools. "How we use X here."
-
-**Examples:**
-- TailwindPatterns (CSS conventions)
-- TypeConventions (prefer type over interface)
-- APIClientPatterns (error handling, retries)
-- TestingPatterns (mocking approach)
-
-**Characteristics:**
-- Documents decisions, not code
-- Guides consistent usage
-- References external docs
-- Applied across Feature components
-
-**Template:** `templates/component-auxiliary.md`
-
 ## Feature
 
-**What:** Domain-specific. Delivers user value. Uses Foundation + Auxiliary.
+**What:** Domain-specific. Delivers user value. Uses Foundation + cites refs.
 
 **Examples:**
 - ProductCard, CheckoutFlow (e-commerce)
@@ -99,11 +78,28 @@ graph TD
 
 **Characteristics:**
 - Not reusable outside context
-- Combines Foundation + Auxiliary
+- Combines Foundation + refs
 - User-facing behavior
 - Domain-specific logic
 
 **Template:** `templates/component-feature.md`
+
+---
+
+## References (.c3/refs/)
+
+References are system-wide patterns and conventions cited by components at any level.
+
+**What belongs in refs:**
+- Design patterns (strategy choices)
+- Coding conventions
+- Data flow patterns
+- External standards references
+
+**Refs are NOT components** - they don't have code references or implementations.
+Components cite refs; refs explain patterns.
+
+**Template:** `templates/ref.md`
 
 ---
 
@@ -151,24 +147,22 @@ graph TD
 ```
 Feature
    │
-   ├──→ Foundation
-   │
-   └──→ Auxiliary (conventions)
+   └──→ Foundation
+
+Features cite ref-* for conventions.
 ```
 
 **Rules:**
 - Feature depends on Foundation (allowed)
-- Feature follows Auxiliary conventions (allowed)
+- Feature cites refs for conventions (allowed)
 - Foundation never depends on Feature (violation)
-- Auxiliary never depends on Feature (violation)
 
 ## Common Mistakes
 
 | Mistake | Why Wrong | Fix |
 |---------|-----------|-----|
 | Feature marked Foundation | Not reusable, domain-specific | Reclassify as Feature |
-| Helper functions as Auxiliary | Auxiliary is conventions, not code | Move to Foundation |
-| UI component as Auxiliary | Auxiliary has no visual output | Move to Foundation |
+| Conventions in component | Conventions belong in refs | Move to refs/ |
 | Config as Feature | Config is infrastructure | Move to Foundation |
 
 ## Migration Guide

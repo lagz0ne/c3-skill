@@ -14,6 +14,7 @@ Single source of truth for C3 v3 documentation structure.
 | Container | `c3-{N}` (N=1-9) | `.c3/c3-N-slug/README.md` | parent: c3-0 |
 | Component | `c3-{N}{NN}` (NN=01-99) | `.c3/c3-N-slug/c3-NNN-slug.md` | parent: c3-N |
 | ADR | `adr-{YYYYMMDD}-{slug}` | `.c3/adr/adr-*.md` | affects: [c3-N...] |
+| Refs | `ref-{slug}` | `.c3/refs/ref-{slug}.md` | system-wide |
 
 ## File Paths
 
@@ -23,6 +24,7 @@ Single source of truth for C3 v3 documentation structure.
 | Container | `.c3/c3-{N}-{slug}/README.md` |
 | Component | `.c3/c3-{N}-{slug}/c3-{N}{NN}-{slug}.md` |
 | ADR | `.c3/adr/adr-{YYYYMMDD}-{slug}.md` |
+| Refs | `.c3/refs/ref-{slug}.md` |
 | Settings | `.c3/settings.yaml` |
 | TOC | `.c3/TOC.md` |
 
@@ -33,6 +35,8 @@ Single source of truth for C3 v3 documentation structure.
 ├── README.md                        # Context (c3-0)
 ├── TOC.md                           # Table of contents
 ├── settings.yaml                    # Project settings
+├── refs/                            # References folder
+│   └── ref-{slug}.md               # Reference docs
 ├── c3-1-{slug}/                     # Container 1
 │   ├── README.md                    # Container doc
 │   ├── c3-101-{slug}.md             # Component
@@ -80,6 +84,7 @@ c3-version: 3               # REQUIRED
 title: {Component Name}     # REQUIRED
 type: component             # REQUIRED
 parent: c3-{N}              # REQUIRED: parent container
+category: foundation | feature  # REQUIRED
 summary: {One line}         # REQUIRED
 ---
 ```
@@ -93,6 +98,15 @@ type: adr                   # REQUIRED
 status: proposed            # REQUIRED: proposed|accepted|implemented
 title: {Decision Title}     # REQUIRED
 affects: [c3-1, c3-2]       # REQUIRED: affected containers
+---
+```
+
+### Reference (ref-slug)
+
+```yaml
+---
+id: ref-{slug}              # REQUIRED: ref-state-management, ref-logging, etc.
+title: {Reference Name}     # REQUIRED
 ---
 ```
 
@@ -127,11 +141,9 @@ affects: [c3-1, c3-2]       # REQUIRED: affected containers
 
 | Section | Purpose |
 |---------|---------|
-| Contract | What this component provides |
-| Interface | IN/OUT boundary diagram |
-| Hand-offs | Table: exchanges with other components |
-| Conventions | Rules for consumers |
-| Edge Cases | Error handling, failures |
+| Goal | Why this component exists |
+| (flexible) | Sections that serve the Goal |
+| References | Code symbols, ref-* citations |
 
 ### ADR
 

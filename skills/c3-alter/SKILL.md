@@ -100,6 +100,13 @@ Follow plan order:
 | High: scope expansion, breaking change, new layer | Ask user, update ADR if needed |
 | Low: wording fix, diagram update, ID fix | Auto-fix, note in log |
 
+### Ref Maintenance
+
+If change affects a pattern:
+1. Check if `ref-*` exists for pattern
+2. Update ref if pattern changes
+3. Create new ref if pattern is new and reusable
+
 ---
 
 ## Stage 7: Verify

@@ -1,13 +1,19 @@
 ---
 id: ref-${SLUG}
 title: ${TITLE}
+goal: ${GOAL}
 ---
 
 # ${TITLE}
 
 ## Goal
 
-{What problem does this reference solve? Be specific.}
+${GOAL}
+
+## Cited By
+
+<!-- Components/containers that cite this ref. Update when citations change. -->
+- (none yet)
 
 <!--
 WHY DOCUMENT:
@@ -40,3 +46,11 @@ But create whatever sections best elaborate your goal.
 
 Delete this comment block after drafting.
 -->
+
+## Criteria
+
+Before finalizing, verify:
+- [ ] Goal is specific and actionable
+- [ ] Each section directly serves the Goal
+- [ ] Cited By section is updated
+- [ ] No orphan ref (at least one citation)

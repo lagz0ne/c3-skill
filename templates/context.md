@@ -2,6 +2,7 @@
 id: c3-0
 c3-version: 3
 title: ${PROJECT}
+goal: ${GOAL}
 summary: ${SUMMARY}
 ---
 
@@ -9,7 +10,7 @@ summary: ${SUMMARY}
 
 ## Goal
 
-{Why does this system exist? What business problem does it solve?}
+${GOAL}
 
 <!--
 WHY DOCUMENT:
@@ -48,6 +49,15 @@ Delete this comment block after drafting.
 
 ## Containers
 
-| ID | Name | Type | Status | Purpose |
-|----|------|------|--------|---------|
+| ID | Name | Type | Status | Goal Contribution |
+|----|------|------|--------|-------------------|
 <!-- Type: service | app | library | external -->
+<!-- Goal Contribution: How this container advances the system Goal -->
+
+## Criteria
+
+Before finalizing, verify:
+- [ ] Goal is specific and measurable
+- [ ] Every container has Goal Contribution filled
+- [ ] Refs cited are system-wide (not container-specific)
+- [ ] Diagram matches Containers table

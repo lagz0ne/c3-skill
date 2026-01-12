@@ -4,6 +4,7 @@ c3-version: 3
 title: ${CONTAINER_NAME}
 type: container
 parent: c3-0
+goal: ${GOAL}
 summary: ${SUMMARY}
 ---
 
@@ -11,7 +12,12 @@ summary: ${SUMMARY}
 
 ## Goal
 
-{Why does this container exist? What bounded context does it own?}
+${GOAL}
+
+## Context Connection
+
+<!-- How does this container advance the parent context's Goal? -->
+<!-- What would break in the system without this container? -->
 
 <!--
 WHY DOCUMENT:
@@ -51,6 +57,15 @@ Delete this comment block after drafting.
 
 ## Components
 
-| ID | Name | Category | Status | Responsibility |
-|----|------|----------|--------|----------------|
+| ID | Name | Category | Status | Goal Contribution |
+|----|------|----------|--------|-------------------|
 <!-- Category: foundation | feature -->
+<!-- Goal Contribution: How this component advances the container Goal -->
+
+## Criteria
+
+Before finalizing, verify:
+- [ ] Goal is specific and bounded
+- [ ] Context Connection explains contribution to parent
+- [ ] Every component has Goal Contribution filled
+- [ ] Refs cited are container-wide (not component-specific)

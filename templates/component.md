@@ -3,8 +3,9 @@ id: c3-${N}${NN}
 c3-version: 3
 title: ${COMPONENT_NAME}
 type: component
-category: foundation | feature
+category: ${CATEGORY}
 parent: c3-${N}
+goal: ${GOAL}
 summary: ${SUMMARY}
 ---
 
@@ -12,7 +13,12 @@ summary: ${SUMMARY}
 
 ## Goal
 
-{Why does this component exist? What problem does it solve?}
+${GOAL}
+
+## Container Connection
+
+<!-- How does this component advance the parent container's Goal? -->
+<!-- What would break in the container without this component? -->
 
 <!--
 WHY DOCUMENT:
@@ -49,6 +55,20 @@ Common sections (create whatever serves your Goal):
 Delete this comment block after drafting.
 -->
 
-## References
+## Related Refs
 
-<!-- Code symbols, patterns, paths. Each ref-* cited should serve the Goal. -->
+<!-- ref-* documents that govern this component's behavior -->
+| Ref | How It Serves Goal |
+|-----|-------------------|
+
+## Code References
+
+<!-- Code symbols, patterns, paths -->
+
+## Criteria
+
+Before finalizing, verify:
+- [ ] Goal is specific and actionable
+- [ ] Container Connection explains contribution to parent
+- [ ] Each ref-* cited directly serves the Goal
+- [ ] No duplicated content from refs (cite instead)

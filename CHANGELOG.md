@@ -5,6 +5,14 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2026-01-14
+
+### Added
+- **Goal-driven templates with staged onboarding workflow**: Templates now guide through staged adoption with clear goals at each step
+
+### Fixed
+- **Removed auxiliary references**: Completed migration from auxiliary category to refs system throughout all documentation and skills
+
 ## [3.0.0] - 2026-01-09
 
 ### Breaking Changes

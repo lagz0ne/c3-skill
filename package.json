@@ -1,10 +1,16 @@
 {
   "name": "c3-design",
-  "version": "1.12.2",
+  "version": "3.1.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "build:opencode": "bun run scripts/build-opencode.ts"
+    "build:opencode": "bun run scripts/build-opencode.ts",
+    "eval": "bun eval/run.ts",
+    "eval:verbose": "bun eval/run.ts --verbose"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.5",
+    "yaml": "^2.7.0"
   },
   "devDependencies": {
     "bun-types": "latest",

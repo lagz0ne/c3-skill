@@ -19,40 +19,17 @@ if [[ -f "$PROJECT_DIR/.c3/README.md" ]]; then
 <c3-architecture-harness>
 This project has C3 architecture documentation (.c3/).
 
-## REQUIRED: Use C3 Agents for Architecture Work
+## C3 Agent Routing
 
-**When user asks about architecture, code structure, or "where is X":**
-→ Use agent: `c3-skill:c3-navigator` - Provides visual answers with diagrams
+https://diashort.apps.quickable.co/d/9df7bf9d
 
-**When user asks to add, change, modify, refactor, or implement something:**
-→ Use agent: `c3-skill:c3-orchestrator` - Guides through impact analysis with Socratic dialogue before ADR
+| Request Type | Use | Why |
+|--------------|-----|-----|
+| "where is X", "how does Y" | `c3-skill:c3-navigator` | Visual answers with diagrams |
+| "add", "change", "refactor" | `c3-skill:c3-orchestrator` | Impact analysis → ADR |
+| "audit", "validate" | `/c3` skill | Doc consistency checks |
 
-**When user asks to audit, validate, or check C3 docs:**
-→ Load skill: `/c3` - Run audit checks
-
-## Why Agents Over Skills?
-
-The c3-orchestrator agent provides:
-- **Dedicated context** for token-efficient analysis
-- **Parallel sub-agents** (analyzer, impact, patterns) for thorough understanding
-- **Iterative refinement** until user has clarity
-- **ADR with verification checklist** before any changes
-
-## C3 Capabilities
-
-- **Context (c3-0)**: System overview, actors, containers, external systems
-- **Containers (c3-N)**: Component inventory, technology stack, linkages
-- **Components (c3-NNN)**: Implementation details with code references
-- **ADRs**: Architectural decision records with implementation plans
-- **Refs**: Reusable patterns and conventions
-
-## Commands Available
-
-- `/c3` - Audit or adopt C3
-- `/query` - Navigate architecture docs
-- `/onboard` - Initial C3 setup
-
-Use the appropriate agent BEFORE responding to architectural questions or change requests.
+Use the appropriate agent BEFORE responding.
 </c3-architecture-harness>
 EOF
 fi

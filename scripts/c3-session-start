@@ -21,13 +21,28 @@ This project has C3 architecture documentation (.c3/).
 
 ## C3 Agent Routing
 
-https://diashort.apps.quickable.co/d/dd86da1c
+```mermaid
+flowchart TD
+    U[User Request] --> Q{Type?}
+    Q -->|question| NAV[c3-navigator]
+    Q -->|change| ORC[c3-orchestrator]
+    Q -->|audit| AUD[/c3 skill]
 
-| Request Type | Use | Why |
-|--------------|-----|-----|
-| "where is X", "how does Y" | `c3-skill:c3-navigator` | Visual answers with diagrams |
-| "add", "change", "refactor" | `c3-skill:c3-orchestrator` | Impact analysis → ADR |
-| "audit", "validate" | `/c3` skill | Doc consistency checks |
+    ORC --> P[Parallel Analysis]
+    P --> A[analyzer]
+    P --> I[impact]
+    P --> PT[patterns]
+    A --> S[synthesizer]
+    I --> S
+    PT --> S
+    S --> ADR[ADR + Plan]
+```
+
+| Request | Agent |
+|---------|-------|
+| question | `c3-skill:c3-navigator` |
+| change | `c3-skill:c3-orchestrator` |
+| audit | `/c3` |
 
 Use the appropriate agent BEFORE responding.
 </c3-architecture-harness>

@@ -5,6 +5,18 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - 2026-01-19
+
+### Added
+- **c3-navigator agent**: Dedicated agent that triggers on any question in projects with `.c3/` directory. Provides architecture answers with visual diagrams via diashort service. Runs in separate context window for token efficiency.
+- **c3-summarizer sub-agent**: Haiku-powered extraction agent that efficiently summarizes C3 documentation (~500 tokens output). Called by c3-navigator via Task tool for optimal token usage.
+
+### Architecture
+- Two-agent orchestration pattern: navigator identifies scope, summarizer extracts relevant facts
+- 70-90% token savings compared to reading all `.c3/` docs in main context
+- Auto-generated Mermaid diagrams rendered via diashort service
+- Adaptive output format based on query type (structural, behavioral, flow)
+
 ## [3.1.0] - 2026-01-14
 
 ### Added

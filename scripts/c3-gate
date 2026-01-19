@@ -1,20 +1,26 @@
 #!/usr/bin/env bash
 #
-# C3 Architecture Gate (Soft)
+# C3 Architecture Gate
+#
+# Gates Edit/Write operations in C3-adopted projects.
+# Files can only be modified if listed in an accepted ADR's approved-files.
 #
 # Behavior:
-# - Only active if .c3/README.md exists (project has adopted C3)
-# - If not adopted: Allow all operations silently
+# - If no .c3/README.md: Allow (not a C3 project)
+# - If file is in .c3/: Allow (documentation)
+# - If file is in accepted ADR's approved-files: Allow
+# - Otherwise: Block with guidance
 #
 # Exit codes:
 # - 0: Allow the operation
+# - 2: Block the operation (stderr shown to user)
 
 set -uo pipefail
 
 # Read JSON from stdin
 INPUT=$(cat)
 
-# Parse file_path using simple text extraction
+# Parse file_path
 FILE_PATH=$(echo "$INPUT" | grep -o '"file_path"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*:.*"\([^"]*\)".*/\1/' 2>/dev/null || echo "")
 
 # No file path means we can't check - allow
@@ -25,18 +31,56 @@ fi
 # Get project directory
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 
-# Skip gate for .c3/ documentation files themselves
+# Make path relative for matching
 REL_PATH="${FILE_PATH#$PROJECT_DIR/}"
+
+# Skip gate for .c3/ documentation files
 if [[ "$REL_PATH" == .c3/* ]]; then
     exit 0
 fi
 
-# Only active if project has adopted C3 (has .c3/README.md)
+# Only active if project has adopted C3
 if [[ ! -f "$PROJECT_DIR/.c3/README.md" ]]; then
-    # Not a C3 project - allow silently
     exit 0
 fi
 
-# C3 project - allow the operation
-# Could add soft nudges here in the future
-exit 0
+# Check if file is in any accepted ADR's approved-files
+ADR_DIR="$PROJECT_DIR/.c3/adr"
+
+if [[ -d "$ADR_DIR" ]]; then
+    for adr_file in "$ADR_DIR"/adr-*.md; do
+        [[ -f "$adr_file" ]] || continue
+        [[ "$adr_file" == *.plan.md ]] && continue
+
+        # Check if ADR is accepted
+        if grep -q "^status:[[:space:]]*accepted" "$adr_file" 2>/dev/null; then
+            # Extract approved-files from frontmatter
+            # Look for approved-files: [...] or approved-files:\n  - file
+            if grep -q "approved-files:" "$adr_file" 2>/dev/null; then
+                # Check if our file is listed
+                if grep -E "^\s*-\s*['\"]?${REL_PATH}['\"]?\s*$" "$adr_file" 2>/dev/null || \
+                   grep -E "approved-files:.*${REL_PATH}" "$adr_file" 2>/dev/null; then
+                    # File is approved in this ADR
+                    exit 0
+                fi
+            fi
+        fi
+    done
+fi
+
+# File not approved - block with guidance
+cat >&2 << EOF
+[c3-gate] Change blocked: ${REL_PATH}
+
+This file is not in any accepted ADR's approved-files list.
+
+To modify code in a C3 project:
+1. Use c3-orchestrator agent to analyze the change
+2. Create/update ADR with approved-files list
+3. Set ADR status to 'accepted'
+4. Then Edit/Write will be allowed
+
+Run: "I want to change ${REL_PATH}" to start analysis.
+EOF
+
+exit 2

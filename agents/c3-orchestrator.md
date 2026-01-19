@@ -236,6 +236,9 @@ title: [Decision Title from synthesis]
 status: proposed
 date: YYYY-MM-DD
 affects: [c3 IDs from analysis]
+approved-files:
+  - [path/to/file1.ts from analyzer]
+  - [path/to/file2.ts from analyzer]
 ---
 
 # [Decision Title]
@@ -267,6 +270,17 @@ affects: [c3 IDs from analysis]
 |-------|----------|--------|
 [From analyzer output - affected components]
 
+## Approved Files
+
+The following files are approved for modification under this ADR:
+
+```yaml
+approved-files:
+  - [exact paths from analyzer's code references]
+```
+
+**Gate behavior:** Only these files can be edited when status is `accepted`.
+
 ## Verification
 
 [From synthesizer - verification criteria]
@@ -275,9 +289,28 @@ affects: [c3 IDs from analysis]
 - [ ] [Criterion 3]
 ```
 
+## Phase 5b: ADR Acceptance
+
+Before any code changes can be made, the ADR must be accepted:
+
+```
+AskUserQuestion:
+  question: "Review the ADR. Ready to accept and enable code changes?"
+  options:
+    - "Accept ADR (enables editing approved files)"
+    - "Revise ADR (add/remove files, update scope)"
+    - "Cancel (no changes)"
+```
+
+**On Accept:**
+1. Update ADR `status: proposed` → `status: accepted`
+2. c3-gate will now allow Edit/Write to files in `approved-files`
+
+**On Revise:** Loop back to refine scope and approved-files list.
+
 ## Phase 6: Delegation
 
-After ADR is created, ask user for next action:
+After ADR is accepted, ask user for next action:
 
 ```
 AskUserQuestion:

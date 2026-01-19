@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+#
+# Pre-commit TOC rebuild hook
+# Runs before git commit to ensure TOC is up-to-date and staged
+# Only rebuilds if .c3/ documentation files have changed
+#
+# Hook input (stdin): {"tool_name": "Bash", "tool_input": {"command": "..."}}
+#
+
+set -uo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
+
+# Only run if project has adopted C3
+if [[ ! -f "$PROJECT_DIR/.c3/README.md" ]]; then
+    exit 0
+fi
+
+# Read hook input from stdin
+INPUT=$(cat)
+
+# Extract command from tool input
+COMMAND=$(echo "$INPUT" | grep -o '"command"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/"command"[[:space:]]*:[[:space:]]*"//' | sed 's/"$//')
+
+# Check if this is a git commit command
+if [[ "$COMMAND" =~ git[[:space:]]+commit ]]; then
+    cd "$PROJECT_DIR"
+
+    # Check if any .c3/ files (except TOC.md) are staged for commit
+    C3_STAGED=$(git diff --cached --name-only -- '.c3/' 2>/dev/null | grep -v 'TOC.md' || true)
+
+    # Only rebuild if .c3/ docs changed
+    if [[ -n "$C3_STAGED" ]]; then
+        # Rebuild TOC
+        "$SCRIPT_DIR/build-toc.sh" >/dev/null 2>&1 || true
+
+        # Stage TOC if it exists
+        if [[ -f "$PROJECT_DIR/.c3/TOC.md" ]]; then
+            git add "$PROJECT_DIR/.c3/TOC.md" 2>/dev/null || true
+        fi
+    fi
+fi
+
+exit 0

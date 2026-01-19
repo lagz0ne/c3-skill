@@ -11,14 +11,13 @@
             "timeout": 10
           }
         ]
-      }
-    ],
-    "Stop": [
+      },
       {
+        "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/rebuild-toc",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/pre-commit-toc",
             "timeout": 30
           }
         ]

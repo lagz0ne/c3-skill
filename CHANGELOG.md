@@ -5,6 +5,12 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.1] - 2026-01-19
+
+### Fixed
+- **TOC hook timing**: Moved TOC rebuild from Stop hook to PreToolUse on Bash (git commit) - ensures TOC changes are included in commits instead of being left behind
+- **build-toc.sh**: Removed timestamp from TOC header, added content comparison to skip updates when nothing changed
+
 ## [3.3.0] - 2026-01-19
 
 ### Added

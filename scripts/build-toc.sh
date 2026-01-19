@@ -36,16 +36,13 @@ detect_version() {
 C3_VERSION=$(detect_version)
 echo "Detected C3 structure: $C3_VERSION"
 
-# Header
+# Header (without timestamp - added only if content changes)
 cat > "$TEMP_FILE" << 'EOF'
 # C3 Documentation Table of Contents
 
 > **AUTO-GENERATED** - Do not edit manually. Rebuild using the c3-toc skill.
->
-EOF
 
-echo "> Last generated: $(date '+%Y-%m-%d %H:%M:%S')" >> "$TEMP_FILE"
-echo "" >> "$TEMP_FILE"
+EOF
 
 # Extract frontmatter field
 extract_frontmatter() {
@@ -188,7 +185,7 @@ else
     adr_count=$implemented_adr_count
 fi
 
-# Context Level - check README.md first, then auxiliary context files
+# Context Level - check README.md first, then supplementary context files (ctx-*.md)
 readme_file="$C3_ROOT/README.md"
 readme_exists=0
 [ -f "$readme_file" ] && readme_exists=1
@@ -216,7 +213,7 @@ if [ "$readme_exists" -eq 1 ] || [ -n "$ctx_files" ]; then
         output_sections "$readme_file" "./README.md"
     fi
 
-    # Process auxiliary context files
+    # Process supplementary context files (ctx-*.md)
     for file in $ctx_files; do
         id=$(extract_frontmatter "$file" "id")
         title=$(extract_frontmatter "$file" "title")
@@ -445,6 +442,19 @@ echo "## Quick Reference" >> "$TEMP_FILE"
 echo "" >> "$TEMP_FILE"
 echo "**Total Documents**: $total_docs" >> "$TEMP_FILE"
 echo "**Contexts**: $ctx_total | **Containers**: $con_count | **Components**: $com_count | **ADRs**: $adr_count (implemented)" >> "$TEMP_FILE"
+
+# Only update if content changed (compare without considering existing file's timestamp)
+if [ -f "$TOC_FILE" ]; then
+    # Compare new content with existing (skip header lines which might have timestamp)
+    NEW_CONTENT=$(cat "$TEMP_FILE")
+    OLD_CONTENT=$(cat "$TOC_FILE")
+
+    if [ "$NEW_CONTENT" = "$OLD_CONTENT" ]; then
+        rm "$TEMP_FILE"
+        echo "TOC unchanged - no update needed."
+        exit 0
+    fi
+fi
 
 # Move to final location
 mv "$TEMP_FILE" "$TOC_FILE"

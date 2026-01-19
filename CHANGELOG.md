@@ -5,6 +5,26 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.0] - 2026-01-19
+
+### Added
+- **c3-orchestrator agent**: Multi-agent system for orchestrating architectural changes with Socratic dialogue before ADR generation
+  - `c3-analyzer`: Current state extraction sub-agent (sonnet)
+  - `c3-impact`: Dependency tracing and risk assessment sub-agent (sonnet)
+  - `c3-patterns`: Convention checking against refs sub-agent (sonnet)
+  - `c3-synthesizer`: Critical thinking synthesis sub-agent (opus)
+- **ADR-gated code changes**: New `approved-files` field in ADR frontmatter
+  - c3-gate now blocks Edit/Write unless file is in accepted ADR's approved-files list
+  - Enforces analysis-before-change workflow in C3-adopted projects
+
+### Changed
+- **SessionStart hook**: Now routes to agents (c3-navigator for questions, c3-orchestrator for changes) instead of skills
+- **c3 skill routing**: Updated mode selection to use agents for navigation and changes
+- **Session harness**: Simplified with inline mermaid diagram showing routing flow
+
+### Fixed
+- Mermaid diagram syntax in session hooks (removed quotes in labels)
+
 ## [3.2.0] - 2026-01-19
 
 ### Added

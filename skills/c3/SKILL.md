@@ -1,65 +1,39 @@
 ---
 name: c3
 description: |
-  This skill should be used when the user asks to "adopt C3", "onboard me to architecture",
-  "scaffold C3 docs", "init C3", "audit architecture", "validate C3", or "check C3 docs".
-  Also triggers when no .c3/ directory exists. Routes to c3-query for navigation, c3-alter for changes.
+  Routes C3 architecture requests and audits existing C3 documentation for consistency.
+  Use when the user asks to "audit architecture", "validate C3", "check C3 docs", or when
+  no .c3/ directory exists (routes to onboarding). Routes navigation to c3-navigator agent, changes to c3-orchestrator agent.
 ---
 
 # C3 Architecture Assistant
 
-## REQUIRED: Load Harness First
+## REQUIRED: Load References
 
-Load `../../references/skill-harness.md` for routing and red flags.
+Before proceeding, load these files:
+1. `../../references/skill-harness.md` - Red flags and complexity rules
+2. `../../references/layer-navigation.md` - How to traverse C3 docs
 
 ## Mode Selection
 
 | Condition | Mode |
 |-----------|------|
-| No `.c3/README.md` | **Adopt** - Set up C3 |
+| No `.c3/README.md` | **Adopt** - Route to `/onboard` skill |
 | Has `.c3/` + "audit" intent | **Audit** - Validate docs |
-| Has `.c3/` + other intent | Route to `c3-query` or `c3-alter` |
+| Has `.c3/` + question/navigation | Use `c3-skill:c3-navigator` agent |
+| Has `.c3/` + change request | Use `c3-skill:c3-orchestrator` agent |
 
 ---
 
 ## Mode: Adopt
 
-**Two rounds:**
+Route to `onboarding-c3` skill for the full staged learning loop.
 
-### Round 1: Structure
-
-User runs: `PROJECT="MyApp" C1="backend" C2="frontend" ./scripts/c3-init.sh`
-
-Creates `.c3/` with Context, Containers, ADR-000.
-
-### Round 2: Fill (Subagent)
-
-Dispatch subagent with `../../references/container-patterns.md` to:
-
-| Layer | Task |
-|-------|------|
-| Context (c3-0) | Actors, containers, external systems, diagram, linkages |
-| Container (c3-N) | **Assess complexity first**, then components, diagram, fulfillment |
-| Component (c3-NNN) | Create from category template, add `## References` |
-| ADR-000 | Document adoption, list containers, verification |
-
-**Templates:** `../../templates/component.md` (unified), `../../templates/ref.md`
-
-**Rules:**
-- **Complexity-first:** Assess container complexity BEFORE documenting aspects
-- **Discovery-over-checklist:** Find what exists, don't assume from templates
-- Diagram first, tables second, linkages third
-- Every linkage needs REASONING
-- Sequential IDs: c3-101, c3-102, etc.
-- References: symbols first, patterns, then paths (3-7 items)
-- Categories: `foundation` or `feature` (no auxiliary)
-
-### Refs Discovery
-
-After components are documented:
-1. Identify repeated patterns across components
-2. Extract to `.c3/refs/ref-{pattern}.md`
-3. Update components to cite refs instead of duplicating
+The skill handles:
+1. Context discovery (actors, containers, externals)
+2. Container documentation (tech stack, components)
+3. Component documentation (Foundation then Feature)
+4. Refs discovery (shared patterns)
 
 ---
 
@@ -74,3 +48,14 @@ After components are documented:
 | ADR | `audit adr adr-YYYYMMDD-slug` |
 
 **Checks:** Inventory vs code, categorization, reference validity, diagrams, ADR lifecycle
+
+**Example:**
+```
+User: "Check if C3 docs are up to date"
+
+1. Load audit-checks.md
+2. Run Phase 1: Gather (list containers, components, ADRs)
+3. Run Phase 2-7: Validate each check
+4. Output audit report with PASS/FAIL/WARN per check
+5. List actionable fixes for any failures
+```

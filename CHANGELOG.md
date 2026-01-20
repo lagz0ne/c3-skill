@@ -5,6 +5,14 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.5] - 2026-01-20
+
+### Fixed
+- **plugin.json**: Added explicit `commands`, `skills`, `agents` declarations - auto-discovery wasn't working reliably, explicit declarations ensure Claude Code finds all components
+
+### Documentation
+- **CLAUDE.md**: Added comprehensive plugin structure checklist with pre-release requirements, plugin.json template, and common issues troubleshooting table
+
 ## [3.3.4] - 2026-01-20
 
 ### Fixed

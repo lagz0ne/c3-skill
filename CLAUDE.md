@@ -120,13 +120,49 @@ bun eval/test-question-eval.ts eval/fixtures/simple-express-app /tmp/output/.c3
 
 ---
 
-# Plugin Troubleshooting
+# Plugin Structure Checklist
 
-## When to Trigger
+## Pre-Release Checklist
 
-Run validation when **plugin behavior doesn't match expectations** - components not loading, invocations failing, or after structural changes.
+Run before every release to ensure plugin loads correctly:
 
-## How to Validate
+| Check | Required | File |
+|-------|----------|------|
+| `name` field exists | Yes | `.claude-plugin/plugin.json` |
+| `commands` declaration | Yes | `.claude-plugin/plugin.json` |
+| `skills` declaration | Yes | `.claude-plugin/plugin.json` |
+| `agents` declaration | Yes | `.claude-plugin/plugin.json` |
+| `hooks` declaration | Yes | `.claude-plugin/plugin.json` |
+| Commands have YAML frontmatter with `description` | Yes | `commands/*.md` |
+| Skills have `SKILL.md` with frontmatter | Yes | `skills/*/SKILL.md` |
+| Agents have YAML frontmatter with `name`, `description` | Yes | `agents/*.md` |
+| Hook scripts exist at referenced paths | Yes | `scripts/*` |
+| Hooks use `${CLAUDE_PLUGIN_ROOT}` for paths | Yes | `hooks/hooks.json` |
+
+## plugin.json Template
+
+```json
+{
+  "name": "c3-skill",
+  "version": "x.x.x",
+  "commands": "commands",
+  "skills": "skills",
+  "agents": "agents",
+  "hooks": "hooks/hooks.json"
+}
+```
+
+## Common Issues
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Commands not showing | Missing `commands` declaration | Add `"commands": "commands"` to plugin.json |
+| Hooks not firing | Missing `hooks` declaration or wrong path | Add `"hooks": "hooks/hooks.json"` |
+| Skills not available | Missing `skills` declaration | Add `"skills": "skills"` to plugin.json |
+| Plugin not loading | Version mismatch in `installed_plugins.json` | Update path/version in `~/.claude/plugins/installed_plugins.json` |
+| Plugin marked orphaned | `.orphaned_at` file in cache | Remove the file from cached plugin directory |
+
+## Validation Steps
 
 1. Load `plugin-dev:plugin-structure` skill for structure reference
 2. Run `plugin-dev:plugin-validator` agent on plugin root

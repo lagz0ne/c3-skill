@@ -31,6 +31,7 @@ Detailed validation rules for Mode: Audit in the c3 agent.
 | **Diagram Accuracy** | Diagrams match inventory | Stale reference = FAIL |
 | **ADR Lifecycle** | No stale ADRs | Accepted >30 days without implemented = WARN |
 | **Ref Files** | ref-* files valid and linked | Missing Goal or orphan ref = WARN |
+| **Abstraction Boundaries** | Layers stay in their lane | Container job/Ref bypass = FAIL, bleeding = WARN |
 
 ---
 
@@ -123,6 +124,53 @@ Check for:
   - [ ] Refs don't duplicate component content
 ```
 
+### Phase 8: Abstraction Boundaries
+
+**Goal:** Detect when layers take on responsibilities that belong to other layers.
+
+```
+For each Component:
+  1. Read component doc
+  2. Check code references for abstraction violations:
+
+  | Signal | Check Method | Violation Type |
+  |--------|--------------|----------------|
+  | Cross-container imports | Grep for imports from other c3-* paths | Container bleeding |
+  | Global config definition | Grep for exported constants used by 3+ files | Context bleeding |
+  | Multi-component orchestration | Read hand-offs, check if orchestrating vs handing off | Container job |
+  | Pattern redefinition | Compare to cited refs, check for reimplementation | Ref bypass |
+
+For each Container:
+  1. Read container doc
+  2. Check for context bleeding:
+
+  | Signal | Check Method | Violation Type |
+  |--------|--------------|----------------|
+  | System-wide policy definition | Check if container defines rules used by other containers | Context job |
+  | Cross-container coordination | Check if container orchestrates other containers | Context job |
+```
+
+**Severity levels:**
+
+| Violation | Severity | Reason |
+|-----------|----------|--------|
+| Container bleeding (component imports other containers) | WARN | May be valid cross-container dependency, review needed |
+| Context bleeding (component defines global config) | WARN | May indicate missing context documentation |
+| Container job (component orchestrates peers) | FAIL | Clear abstraction violation |
+| Ref bypass (component redefines pattern) | FAIL | Integrity violation |
+
+**Output format:**
+
+```
+## Abstraction Boundary Check
+
+| Layer | Violation | Evidence | Recommendation |
+|-------|-----------|----------|----------------|
+| c3-105 | Container bleeding | Imports `c3-2-api/auth` | Use container linkage or shared ref |
+| c3-103 | Container job | Orchestrates c3-104, c3-105 | Elevate to container coordination |
+| c3-201 | Ref bypass | Reimplements error handling | Cite ref-error-handling instead |
+```
+
 ---
 
 ## Audit Output Template
@@ -143,6 +191,7 @@ Check for:
 | Diagram Accuracy | ✓ PASS / ✗ FAIL |
 | ADR Lifecycle | ✓ PASS / ⚠ WARN |
 | Ref Files | ✓ PASS / ⚠ WARN |
+| Abstraction Boundaries | ✓ PASS / ⚠ WARN / ✗ FAIL |
 
 ## Issues
 - [issue]: [details]

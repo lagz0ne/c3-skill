@@ -87,6 +87,19 @@ approved-files:
 
 **Note:** The `approved-files` list in frontmatter gates Edit/Write operations. Only files listed can be changed when this ADR is `status: accepted`.
 
+## Pattern Overrides (if applicable)
+
+**Required when:** The change breaks an established pattern in `.c3/refs/`.
+
+| Ref | Override Reason | Impact |
+|-----|-----------------|--------|
+| ref-{slug} | [Why this change justifiably breaks the pattern] | [Components/areas affected by divergence] |
+
+**Rules:**
+- This section MUST be present if `c3-patterns` analysis returned `breaks`
+- Each override requires explicit justification (not just "we need to")
+- Impact must list what existing code may need updating later
+
 ## Verification
 
 - [ ] [Check 1]

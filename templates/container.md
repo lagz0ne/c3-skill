@@ -62,6 +62,21 @@ Delete this comment block after drafting.
 <!-- Category: foundation | feature -->
 <!-- Goal Contribution: How this component advances the container Goal -->
 
+## Layer Constraints
+
+This container operates within these boundaries:
+
+**MUST:**
+- Coordinate components within its boundary
+- Define how context linkages are fulfilled internally
+- Own its technology stack decisions
+
+**MUST NOT:**
+- Define system-wide policies (context responsibility)
+- Implement business logic directly (component responsibility)
+- Bypass refs for cross-cutting concerns
+- Orchestrate other containers (context responsibility)
+
 ## Criteria
 
 Before finalizing, verify:
@@ -69,3 +84,4 @@ Before finalizing, verify:
 - [ ] Context Connection explains contribution to parent
 - [ ] Every component has Goal Contribution filled
 - [ ] Refs cited are container-wide (not component-specific)
+- [ ] Layer Constraints are respected (no boundary violations)

@@ -225,6 +225,51 @@ AskUserQuestion:
     - "Scope is too large - let's narrow it"
 ```
 
+## Phase 4b: Pattern Violation Gate
+
+**REQUIRED** when `c3-patterns` analysis returned `breaks` status.
+
+Pattern violations are **blocking** - they cannot be silently bypassed.
+
+### When c3-patterns returns "breaks":
+
+1. **Surface the violation clearly:**
+
+```
+AskUserQuestion:
+  question: "This change breaks established pattern ref-{name}. How do you want to proceed?"
+  options:
+    - "Update the pattern (expands scope to modify ref)"
+    - "Override pattern (requires justification in ADR)"
+    - "Rethink the approach (return to Phase 1)"
+```
+
+2. **Handle each response:**
+
+| Response | Action |
+|----------|--------|
+| **Update the pattern** | Add ref modification to scope. Re-run Phase 2 with ref included in affected layers. |
+| **Override pattern** | Continue to Phase 5. ADR MUST include "Pattern Overrides" section with explicit justification. |
+| **Rethink** | Return to Phase 1 with learnings about pattern constraints. |
+
+3. **Validate override justification:**
+
+If user chooses "Override pattern", ask:
+
+```
+AskUserQuestion:
+  question: "Why does this change justify breaking ref-{name}? (This will be recorded in the ADR)"
+  options:
+    - [free text required - user must provide justification]
+```
+
+**The ADR cannot be generated without explicit justification for pattern overrides.**
+
+### Enforcement
+
+- ADR generation (Phase 5) MUST check: if `c3-patterns` returned `breaks`, does ADR have `## Pattern Overrides` section?
+- If missing, return error: "ADR requires Pattern Overrides section for changes that break ref-{name}"
+
 ## Phase 5: Generate ADR
 
 Create ADR at `.c3/adr/adr-YYYYMMDD-{slug}.md` using template:

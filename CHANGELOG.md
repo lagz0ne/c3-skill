@@ -5,6 +5,40 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.0] - 2026-01-20
+
+### Added
+- **c3-ref skill**: New skill for managing cross-cutting patterns as first-class architecture artifacts
+  - `add` mode: Create refs from discovered patterns with automatic citing component updates
+  - `update` mode: Modify refs with impact analysis across all citing components
+  - `list` mode: Show all refs with citation counts
+  - `usage` mode: Show which components cite a specific ref
+
+- **Constraint Chain Query**: New query type in c3-query skill
+  - Ask "what constraints apply to c3-XXX" to see full inheritance chain
+  - Shows Context → Container → Refs constraints with MAY/MUST NOT boundaries
+  - Generates visual diagram of constraint inheritance
+
+- **Phase 4b: Pattern Violation Gate** in c3-orchestrator
+  - Refs are now blocking constraints - violations cannot be silently bypassed
+  - Changes that break patterns require explicit override with justification in ADR
+  - Options: update the pattern, override with justification, or rethink approach
+
+- **Phase 8: Abstraction Boundaries** in audit-checks
+  - Detects when components take on container/context responsibilities
+  - Checks for: container bleeding, context bleeding, component orchestrating peers, ref bypass
+  - FAIL on clear violations, WARN on potential issues needing review
+
+- **Layer Constraints sections** in component.md and container.md templates
+  - Explicit MUST/MUST NOT boundaries for each layer
+  - Prevents abstraction violations through clear documentation
+
+### Changed
+- **ADR template**: Added "Pattern Overrides" section for documenting justified pattern violations
+
+### Documentation
+- **CLAUDE.md**: Updated plugin testing instructions with correct structure explanation
+
 ## [3.3.5] - 2026-01-20
 
 ### Fixed

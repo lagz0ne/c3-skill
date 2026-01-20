@@ -74,6 +74,21 @@ Delete this comment block after drafting.
 
 <!-- Don't code, show patterns using design tools, code doesn't age well -->
 
+## Layer Constraints
+
+This component operates within these boundaries:
+
+**MUST:**
+- Focus on single responsibility within its domain
+- Cite refs for patterns instead of re-implementing
+- Hand off cross-component concerns to container
+
+**MUST NOT:**
+- Import directly from other containers (use container linkages)
+- Define system-wide configuration (context responsibility)
+- Orchestrate multiple peer components (container responsibility)
+- Redefine patterns that exist in refs
+
 ## Criteria
 
 Before finalizing, verify:
@@ -81,3 +96,4 @@ Before finalizing, verify:
 - [ ] Container Connection explains contribution to parent
 - [ ] Each ref-* cited directly serves the Goal
 - [ ] No duplicated content from refs (cite instead)
+- [ ] Layer Constraints are respected (no boundary violations)

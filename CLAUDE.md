@@ -168,3 +168,44 @@ Run before every release to ensure plugin loads correctly:
 2. Run `plugin-dev:plugin-validator` agent on plugin root
 3. Fix issues reported by validator
 4. Restart Claude Code session (components load at startup)
+
+## Testing Plugin Behavior
+
+The plugin structure matches the installed format:
+
+```
+c3-design/                    # Repository root
+├── .claude-plugin/           # Plugin metadata
+│   ├── plugin.json          # Manifest with paths to content
+│   └── marketplace.json     # Marketplace publishing config
+├── skills/                  # Skill definitions (at root)
+├── agents/                  # Agent definitions (at root)
+├── commands/                # Slash commands (at root)
+├── hooks/                   # Hook configurations (at root)
+├── references/              # Shared reference docs
+├── templates/               # Doc templates
+└── scripts/                 # Helper scripts
+```
+
+**Testing locally with --plugin-dir:**
+
+Note: `--plugin-dir` conflicts with installed plugins of the same name. For local testing:
+
+```bash
+# Option 1: Temporarily uninstall the marketplace plugin
+claude plugin uninstall c3-skill
+
+# Then test with --plugin-dir
+claude --plugin-dir /path/to/c3-design -p "list skills"
+
+# Re-install when done
+claude plugin install c3-skill
+
+# Option 2: Just release and test the installed version
+# Run /release to bump version, then the plugin auto-updates
+```
+
+**Structure notes:**
+- `.claude-plugin/plugin.json` paths (`"skills": "skills"`) are relative to the repo root
+- When installed, the whole repo is copied to `~/.claude/plugins/cache/.../version/`
+- The directory name for `--plugin-dir` becomes the skill prefix

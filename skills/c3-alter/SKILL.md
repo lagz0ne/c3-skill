@@ -13,10 +13,10 @@ description: |
 
 ## REQUIRED: Load References
 
-Before proceeding, load these files:
-1. `../../references/skill-harness.md` - Red flags and complexity rules
-2. `../../references/layer-navigation.md` - How to traverse C3 docs
-3. `../../references/adr-template.md` - ADR structure (for Stage 4)
+Before proceeding, use Glob to find and Read these files:
+1. `**/references/skill-harness.md` - Red flags and complexity rules
+2. `**/references/layer-navigation.md` - How to traverse C3 docs
+3. `**/references/adr-template.md` - ADR structure (for Stage 4)
 
 ## Core Loop (All Stages)
 
@@ -83,7 +83,7 @@ Change Progress:
 
 ## Stage 4: Create ADR
 
-Generate at `.c3/adr/adr-YYYYMMDD-{slug}.md`. Use `../../references/adr-template.md`.
+Generate at `.c3/adr/adr-YYYYMMDD-{slug}.md`. Use `**/references/adr-template.md`.
 
 **Key sections:** Problem, Decision, Rationale, Affected Layers, References Affected, Verification
 

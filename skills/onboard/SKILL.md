@@ -48,16 +48,16 @@ Every onboarding MUST create this EXACT structure:
 
 ## REQUIRED: Load References
 
-**Load immediately:**
-1. `../../references/skill-harness.md` - Red flags and complexity rules
-2. `../../references/layer-navigation.md` - How to traverse C3 docs
+**Load immediately** (use Glob to find, then Read):
+1. `**/references/skill-harness.md` - Red flags and complexity rules
+2. `**/references/layer-navigation.md` - How to traverse C3 docs
 
-**Load for templating:**
-- `../../templates/adr-000.md` - Adoption ADR (drives the workflow)
-- `../../templates/context.md` - Context template
-- `../../templates/container.md` - Container template
-- `../../templates/component.md` - Component template
-- `../../templates/ref.md` - Reference template
+**Load for templating** (use Glob to find, then Read when needed):
+- `**/templates/adr-000.md` - Adoption ADR (drives the workflow)
+- `**/templates/context.md` - Context template
+- `**/templates/container.md` - Container template
+- `**/templates/component.md` - Component template
+- `**/templates/ref.md` - Reference template
 
 ---
 

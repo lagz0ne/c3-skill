@@ -14,9 +14,9 @@ Navigate C3 docs AND explore corresponding code. Full context = docs + code.
 
 ## REQUIRED: Load References
 
-Before proceeding, load these files:
-1. `../../references/skill-harness.md` - Red flags and complexity rules
-2. `../../references/layer-navigation.md` - How to traverse C3 docs
+Before proceeding, use Glob to find and Read these files:
+1. `**/references/skill-harness.md` - Red flags and complexity rules
+2. `**/references/layer-navigation.md` - How to traverse C3 docs
 
 ## Query Flow
 

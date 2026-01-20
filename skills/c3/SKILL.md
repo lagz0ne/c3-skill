@@ -10,9 +10,9 @@ description: |
 
 ## REQUIRED: Load References
 
-Before proceeding, load these files:
-1. `../../references/skill-harness.md` - Red flags and complexity rules
-2. `../../references/layer-navigation.md` - How to traverse C3 docs
+Before proceeding, use Glob to find and Read these files:
+1. `**/references/skill-harness.md` - Red flags and complexity rules
+2. `**/references/layer-navigation.md` - How to traverse C3 docs
 
 ## Mode Selection
 
@@ -39,7 +39,7 @@ The skill handles:
 
 ## Mode: Audit
 
-**REQUIRED:** Load `../../references/audit-checks.md` for full procedure.
+**REQUIRED:** Load `**/references/audit-checks.md` for full procedure.
 
 | Scope | Command |
 |-------|---------|

@@ -13,9 +13,9 @@ Cross-cutting patterns (refs) are **authoritative constraints**. They define how
 
 ## REQUIRED: Load References
 
-Before proceeding, load these files:
-1. `../../references/skill-harness.md` - Red flags and complexity rules
-2. `../../templates/ref.md` - Ref template structure
+Before proceeding, use Glob to find and Read these files:
+1. `**/references/skill-harness.md` - Red flags and complexity rules
+2. `**/templates/ref.md` - Ref template structure
 
 ## Mode Selection
 

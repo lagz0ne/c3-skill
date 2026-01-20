@@ -1,0 +1,381 @@
+{
+  "name": "Onboard simple Express app",
+  "pass": true,
+  "score": 100,
+  "duration": 95150,
+  "trace": [
+    {
+      "timestamp": "2026-01-12T11:16:16.955Z",
+      "event": "PreToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:onboard",
+        "args": "Simple Shop API - an Express.js REST API"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:16:17.207Z",
+      "event": "PostToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:onboard",
+        "args": "Simple Shop API - an Express.js REST API"
+      },
+      "result": {
+        "success": true,
+        "commandName": "c3-skill:onboard",
+        "allowedTools": [
+          "Bash(rm:*)",
+          "Bash(test:*)",
+          "Bash(PROJECT=*)",
+          "Read",
+          "Glob",
+          "Grep",
+          "Write",
+          "Edit",
+          "AskUserQuestion",
+          "Skill"
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:16:22.744Z",
+      "event": "PreToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/*"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:16:22.761Z",
+      "event": "PostToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/*"
+      },
+      "result": {
+        "filenames": [
+          "/tmp/tmp.ZmUMas4SfM/package.json",
+          "/tmp/tmp.ZmUMas4SfM/src/index.ts",
+          "/tmp/tmp.ZmUMas4SfM/src/middleware/auth.ts",
+          "/tmp/tmp.ZmUMas4SfM/src/routes/users.ts",
+          "/tmp/tmp.ZmUMas4SfM/src/routes/products.ts"
+        ],
+        "durationMs": 11,
+        "numFiles": 5,
+        "truncated": false
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:16:26.671Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.ZmUMas4SfM/package.json"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:16:26.671Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.ZmUMas4SfM/src/index.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:16:26.671Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.ZmUMas4SfM/src/middleware/auth.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:16:26.671Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.ZmUMas4SfM/src/routes/users.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:16:26.671Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.ZmUMas4SfM/src/routes/products.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:16:26.687Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.ZmUMas4SfM/package.json"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.ZmUMas4SfM/package.json",
+          "content": "{\n  \"name\": \"simple-shop-api\",\n  \"version\": \"1.0.0\",\n  \"type\": \"module\",\n  \"scripts\": {\n    \"start\": \"node src/index.js\"\n  },\n  \"dependencies\": {\n    \"express\": \"^4.18.0\"\n  }\n}\n",
+          "numLines": 12,
+          "startLine": 1,
+          "totalLines": 12
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:16:26.688Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.ZmUMas4SfM/src/index.ts"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.ZmUMas4SfM/src/index.ts",
+          "content": "import express from 'express';\nimport { authMiddleware } from './middleware/auth';\nimport { usersRouter } from './routes/users';\nimport { productsRouter } from './routes/products';\n\nconst app = express();\n\napp.use(express.json());\napp.use(authMiddleware);\n\napp.use('/users', usersRouter);\napp.use('/products', productsRouter);\n\napp.listen(3000, () => {\n  console.log('Simple Shop API running on port 3000');\n});\n",
+          "numLines": 17,
+          "startLine": 1,
+          "totalLines": 17
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:16:26.688Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.ZmUMas4SfM/src/middleware/auth.ts"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.ZmUMas4SfM/src/middleware/auth.ts",
+          "content": "import { Request, Response, NextFunction } from 'express';\n\nexport function authMiddleware(req: Request, res: Response, next: NextFunction) {\n  const token = req.headers.authorization?.replace('Bearer ', '');\n\n  if (!token) {\n    return res.status(401).json({ error: 'No token provided' });\n  }\n\n  // Simple token validation (in real app, verify JWT)\n  if (token === 'invalid') {\n    return res.status(401).json({ error: 'Invalid token' });\n  }\n\n  next();\n}\n",
+          "numLines": 17,
+          "startLine": 1,
+          "totalLines": 17
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:16:26.689Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.ZmUMas4SfM/src/routes/users.ts"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.ZmUMas4SfM/src/routes/users.ts",
+          "content": "import { Router } from 'express';\n\nexport const usersRouter = Router();\n\nconst users = [\n  { id: 1, name: 'Alice', email: 'alice@example.com' },\n  { id: 2, name: 'Bob', email: 'bob@example.com' },\n];\n\nusersRouter.get('/', (req, res) => {\n  res.json(users);\n});\n\nusersRouter.get('/:id', (req, res) => {\n  const user = users.find(u => u.id === parseInt(req.params.id));\n  if (!user) {\n    return res.status(404).json({ error: 'User not found' });\n  }\n  res.json(user);\n});\n\nusersRouter.post('/', (req, res) => {\n  const { name, email } = req.body;\n  const newUser = { id: users.length + 1, name, email };\n  users.push(newUser);\n  res.status(201).json(newUser);\n});\n",
+          "numLines": 28,
+          "startLine": 1,
+          "totalLines": 28
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:16:26.689Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.ZmUMas4SfM/src/routes/products.ts"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.ZmUMas4SfM/src/routes/products.ts",
+          "content": "import { Router } from 'express';\n\nexport const productsRouter = Router();\n\nconst products = [\n  { id: 1, name: 'Widget', price: 9.99 },\n  { id: 2, name: 'Gadget', price: 19.99 },\n];\n\nproductsRouter.get('/', (req, res) => {\n  res.json(products);\n});\n\nproductsRouter.get('/:id', (req, res) => {\n  const product = products.find(p => p.id === parseInt(req.params.id));\n  if (!product) {\n    return res.status(404).json({ error: 'Product not found' });\n  }\n  res.json(product);\n});\n\nproductsRouter.post('/', (req, res) => {\n  const { name, price } = req.body;\n  const newProduct = { id: products.length + 1, name, price };\n  products.push(newProduct);\n  res.status(201).json(newProduct);\n});\n",
+          "numLines": 28,
+          "startLine": 1,
+          "totalLines": 28
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:16:31.142Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "mkdir -p /tmp/tmp.ZmUMas4SfM/.c3/adrs",
+        "description": "Create C3 directory structure"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:16:31.191Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "mkdir -p /tmp/tmp.ZmUMas4SfM/.c3/adrs",
+        "description": "Create C3 directory structure"
+      },
+      "result": {
+        "stdout": "",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:16:38.609Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.ZmUMas4SfM/.c3/c3.yaml",
+        "content": "# C3 Architecture Documentation\n# Simple Shop API - Express.js REST API\n# Generated: 2026-01-12\n\nversion: \"1.0\"\nproject:\n  name: Simple Shop API\n  description: A lightweight Express.js REST API for managing users and products in an e-commerce context\n  type: backend-api\n\n# System Context (C1)\ncontext:\n  id: c3-0\n  name: Simple Shop API\n  description: REST API providing user and product management for e-commerce applications\n  actors:\n    - name: API Client\n      description: External applications or frontends that consume the REST API\n      type: external\n  external_systems: []\n\n# Container Level (C2)\ncontainers:\n  - id: c3-1\n    name: Express API Server\n    description: Node.js Express server handling HTTP requests and routing\n    technology: Express.js 4.x / TypeScript\n    path: src/\n    responsibilities:\n      - HTTP request handling\n      - Route management\n      - Middleware orchestration\n      - JSON parsing and response formatting\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:16:38.641Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.ZmUMas4SfM/.c3/c3.yaml",
+        "content": "# C3 Architecture Documentation\n# Simple Shop API - Express.js REST API\n# Generated: 2026-01-12\n\nversion: \"1.0\"\nproject:\n  name: Simple Shop API\n  description: A lightweight Express.js REST API for managing users and products in an e-commerce context\n  type: backend-api\n\n# System Context (C1)\ncontext:\n  id: c3-0\n  name: Simple Shop API\n  description: REST API providing user and product management for e-commerce applications\n  actors:\n    - name: API Client\n      description: External applications or frontends that consume the REST API\n      type: external\n  external_systems: []\n\n# Container Level (C2)\ncontainers:\n  - id: c3-1\n    name: Express API Server\n    description: Node.js Express server handling HTTP requests and routing\n    technology: Express.js 4.x / TypeScript\n    path: src/\n    responsibilities:\n      - HTTP request handling\n      - Route management\n      - Middleware orchestration\n      - JSON parsing and response formatting\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.ZmUMas4SfM/.c3/c3.yaml",
+        "content": "# C3 Architecture Documentation\n# Simple Shop API - Express.js REST API\n# Generated: 2026-01-12\n\nversion: \"1.0\"\nproject:\n  name: Simple Shop API\n  description: A lightweight Express.js REST API for managing users and products in an e-commerce context\n  type: backend-api\n\n# System Context (C1)\ncontext:\n  id: c3-0\n  name: Simple Shop API\n  description: REST API providing user and product management for e-commerce applications\n  actors:\n    - name: API Client\n      description: External applications or frontends that consume the REST API\n      type: external\n  external_systems: []\n\n# Container Level (C2)\ncontainers:\n  - id: c3-1\n    name: Express API Server\n    description: Node.js Express server handling HTTP requests and routing\n    technology: Express.js 4.x / TypeScript\n    path: src/\n    responsibilities:\n      - HTTP request handling\n      - Route management\n      - Middleware orchestration\n      - JSON parsing and response formatting\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:16:46.849Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.ZmUMas4SfM/.c3/components.yaml",
+        "content": "# C3 Component Level (C3)\n# Simple Shop API Components\n\nversion: \"1.0\"\n\n# Foundation Components (cross-cutting infrastructure)\nfoundation:\n  - id: c3-10\n    name: Application Entry Point\n    description: Express app initialization, middleware setup, and server bootstrap\n    type: bootstrap\n    path: src/index.ts\n    responsibilities:\n      - Express app creation\n      - Global middleware registration\n      - Route mounting\n      - Server startup\n\n  - id: c3-11\n    name: Auth Middleware\n    description: Authentication middleware that validates Bearer tokens on all requests\n    type: middleware\n    path: src/middleware/auth.ts\n    responsibilities:\n      - Token extraction from Authorization header\n      - Token validation\n      - Request authentication gating\n\n# Feature Components (business domain)\nfeatures:\n  - id: c3-20\n    name: Users API\n    description: REST endpoints for user management (CRUD operations)\n    type: route-handler\n    path: src/routes/users.ts\n    responsibilities:\n      - GET /users - List all users\n      - GET /users/:id - Get user by ID\n      - POST /users - Create new user\n    entities:\n      - name: User\n        fields: [id, name, email]\n\n  - id: c3-21\n    name: Products API\n    description: REST endpoints for product management (CRUD operations)\n    type: route-handler\n    path: src/routes/products.ts\n    responsibilities:\n      - GET /products - List all products\n      - GET /products/:id - Get product by ID\n      - POST /products - Create new product\n    entities:\n      - name: Product\n        fields: [id, name, price]\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:16:46.875Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.ZmUMas4SfM/.c3/components.yaml",
+        "content": "# C3 Component Level (C3)\n# Simple Shop API Components\n\nversion: \"1.0\"\n\n# Foundation Components (cross-cutting infrastructure)\nfoundation:\n  - id: c3-10\n    name: Application Entry Point\n    description: Express app initialization, middleware setup, and server bootstrap\n    type: bootstrap\n    path: src/index.ts\n    responsibilities:\n      - Express app creation\n      - Global middleware registration\n      - Route mounting\n      - Server startup\n\n  - id: c3-11\n    name: Auth Middleware\n    description: Authentication middleware that validates Bearer tokens on all requests\n    type: middleware\n    path: src/middleware/auth.ts\n    responsibilities:\n      - Token extraction from Authorization header\n      - Token validation\n      - Request authentication gating\n\n# Feature Components (business domain)\nfeatures:\n  - id: c3-20\n    name: Users API\n    description: REST endpoints for user management (CRUD operations)\n    type: route-handler\n    path: src/routes/users.ts\n    responsibilities:\n      - GET /users - List all users\n      - GET /users/:id - Get user by ID\n      - POST /users - Create new user\n    entities:\n      - name: User\n        fields: [id, name, email]\n\n  - id: c3-21\n    name: Products API\n    description: REST endpoints for product management (CRUD operations)\n    type: route-handler\n    path: src/routes/products.ts\n    responsibilities:\n      - GET /products - List all products\n      - GET /products/:id - Get product by ID\n      - POST /products - Create new product\n    entities:\n      - name: Product\n        fields: [id, name, price]\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.ZmUMas4SfM/.c3/components.yaml",
+        "content": "# C3 Component Level (C3)\n# Simple Shop API Components\n\nversion: \"1.0\"\n\n# Foundation Components (cross-cutting infrastructure)\nfoundation:\n  - id: c3-10\n    name: Application Entry Point\n    description: Express app initialization, middleware setup, and server bootstrap\n    type: bootstrap\n    path: src/index.ts\n    responsibilities:\n      - Express app creation\n      - Global middleware registration\n      - Route mounting\n      - Server startup\n\n  - id: c3-11\n    name: Auth Middleware\n    description: Authentication middleware that validates Bearer tokens on all requests\n    type: middleware\n    path: src/middleware/auth.ts\n    responsibilities:\n      - Token extraction from Authorization header\n      - Token validation\n      - Request authentication gating\n\n# Feature Components (business domain)\nfeatures:\n  - id: c3-20\n    name: Users API\n    description: REST endpoints for user management (CRUD operations)\n    type: route-handler\n    path: src/routes/users.ts\n    responsibilities:\n      - GET /users - List all users\n      - GET /users/:id - Get user by ID\n      - POST /users - Create new user\n    entities:\n      - name: User\n        fields: [id, name, email]\n\n  - id: c3-21\n    name: Products API\n    description: REST endpoints for product management (CRUD operations)\n    type: route-handler\n    path: src/routes/products.ts\n    responsibilities:\n      - GET /products - List all products\n      - GET /products/:id - Get product by ID\n      - POST /products - Create new product\n    entities:\n      - name: Product\n        fields: [id, name, price]\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:16:56.703Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.ZmUMas4SfM/.c3/refs.yaml",
+        "content": "# C3 Refs - Shared Patterns and Conventions\n# Simple Shop API\n\nversion: \"1.0\"\n\n# Architectural Patterns\npatterns:\n  - id: ref-1\n    name: Express Router Pattern\n    description: Each feature domain uses Express Router for modular route handling\n    usage: |\n      import { Router } from 'express';\n      export const featureRouter = Router();\n      featureRouter.get('/', handler);\n    used_by: [c3-20, c3-21]\n\n  - id: ref-2\n    name: In-Memory Data Store\n    description: Simple array-based data storage (temporary, not production-ready)\n    usage: |\n      const items = [{ id: 1, ... }];\n    used_by: [c3-20, c3-21]\n    note: Should be replaced with database in production\n\n  - id: ref-3\n    name: Middleware Chain\n    description: Global middleware applied via app.use() before routes\n    usage: |\n      app.use(express.json());\n      app.use(authMiddleware);\n      app.use('/path', router);\n    used_by: [c3-10]\n\n# API Conventions\nconventions:\n  - name: REST Response Format\n    description: All endpoints return JSON responses\n    examples:\n      - \"Success: { id, ...data }\"\n      - \"Error: { error: 'message' }\"\n\n  - name: HTTP Status Codes\n    description: Standard REST status codes\n    examples:\n      - \"200 - Success\"\n      - \"201 - Created\"\n      - \"401 - Unauthorized\"\n      - \"404 - Not Found\"\n\n  - name: Authentication\n    description: Bearer token in Authorization header\n    examples:\n      - \"Authorization: Bearer <token>\"\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:16:56.735Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.ZmUMas4SfM/.c3/refs.yaml",
+        "content": "# C3 Refs - Shared Patterns and Conventions\n# Simple Shop API\n\nversion: \"1.0\"\n\n# Architectural Patterns\npatterns:\n  - id: ref-1\n    name: Express Router Pattern\n    description: Each feature domain uses Express Router for modular route handling\n    usage: |\n      import { Router } from 'express';\n      export const featureRouter = Router();\n      featureRouter.get('/', handler);\n    used_by: [c3-20, c3-21]\n\n  - id: ref-2\n    name: In-Memory Data Store\n    description: Simple array-based data storage (temporary, not production-ready)\n    usage: |\n      const items = [{ id: 1, ... }];\n    used_by: [c3-20, c3-21]\n    note: Should be replaced with database in production\n\n  - id: ref-3\n    name: Middleware Chain\n    description: Global middleware applied via app.use() before routes\n    usage: |\n      app.use(express.json());\n      app.use(authMiddleware);\n      app.use('/path', router);\n    used_by: [c3-10]\n\n# API Conventions\nconventions:\n  - name: REST Response Format\n    description: All endpoints return JSON responses\n    examples:\n      - \"Success: { id, ...data }\"\n      - \"Error: { error: 'message' }\"\n\n  - name: HTTP Status Codes\n    description: Standard REST status codes\n    examples:\n      - \"200 - Success\"\n      - \"201 - Created\"\n      - \"401 - Unauthorized\"\n      - \"404 - Not Found\"\n\n  - name: Authentication\n    description: Bearer token in Authorization header\n    examples:\n      - \"Authorization: Bearer <token>\"\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.ZmUMas4SfM/.c3/refs.yaml",
+        "content": "# C3 Refs - Shared Patterns and Conventions\n# Simple Shop API\n\nversion: \"1.0\"\n\n# Architectural Patterns\npatterns:\n  - id: ref-1\n    name: Express Router Pattern\n    description: Each feature domain uses Express Router for modular route handling\n    usage: |\n      import { Router } from 'express';\n      export const featureRouter = Router();\n      featureRouter.get('/', handler);\n    used_by: [c3-20, c3-21]\n\n  - id: ref-2\n    name: In-Memory Data Store\n    description: Simple array-based data storage (temporary, not production-ready)\n    usage: |\n      const items = [{ id: 1, ... }];\n    used_by: [c3-20, c3-21]\n    note: Should be replaced with database in production\n\n  - id: ref-3\n    name: Middleware Chain\n    description: Global middleware applied via app.use() before routes\n    usage: |\n      app.use(express.json());\n      app.use(authMiddleware);\n      app.use('/path', router);\n    used_by: [c3-10]\n\n# API Conventions\nconventions:\n  - name: REST Response Format\n    description: All endpoints return JSON responses\n    examples:\n      - \"Success: { id, ...data }\"\n      - \"Error: { error: 'message' }\"\n\n  - name: HTTP Status Codes\n    description: Standard REST status codes\n    examples:\n      - \"200 - Success\"\n      - \"201 - Created\"\n      - \"401 - Unauthorized\"\n      - \"404 - Not Found\"\n\n  - name: Authentication\n    description: Bearer token in Authorization header\n    examples:\n      - \"Authorization: Bearer <token>\"\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:17:06.307Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.ZmUMas4SfM/.c3/adrs/adr-000-init.md",
+        "content": "# ADR-000: Initialize C3 Architecture Documentation\n\n## Status\nAccepted\n\n## Date\n2026-01-12\n\n## Context\nThe Simple Shop API project needed formal architecture documentation to improve maintainability, onboarding, and decision tracking.\n\n## Decision\nAdopted C3 (Context, Container, Component) architecture documentation methodology.\n\n## Structure\n\n### System Context (C1)\n- **c3-0**: Simple Shop API - REST API for e-commerce user and product management\n\n### Container (C2)\n- **c3-1**: Express API Server - Node.js/Express HTTP server\n\n### Components (C3)\n\n**Foundation:**\n- **c3-10**: Application Entry Point (`src/index.ts`)\n- **c3-11**: Auth Middleware (`src/middleware/auth.ts`)\n\n**Features:**\n- **c3-20**: Users API (`src/routes/users.ts`)\n- **c3-21**: Products API (`src/routes/products.ts`)\n\n### Refs\n- **ref-1**: Express Router Pattern\n- **ref-2**: In-Memory Data Store\n- **ref-3**: Middleware Chain\n\n## Consequences\n\n### Positive\n- Clear component boundaries documented\n- New developers can quickly understand system structure\n- Architecture decisions will be tracked via ADRs\n\n### Negative\n- Documentation overhead (minimal for small project)\n\n### Risks\n- Documentation may drift from code if not maintained\n\n## Notes\nThis is a simple single-container API. The architecture is straightforward with a clear separation between:\n1. Infrastructure/middleware (Foundation)\n2. Business domain routes (Features)\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:17:06.343Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.ZmUMas4SfM/.c3/adrs/adr-000-init.md",
+        "content": "# ADR-000: Initialize C3 Architecture Documentation\n\n## Status\nAccepted\n\n## Date\n2026-01-12\n\n## Context\nThe Simple Shop API project needed formal architecture documentation to improve maintainability, onboarding, and decision tracking.\n\n## Decision\nAdopted C3 (Context, Container, Component) architecture documentation methodology.\n\n## Structure\n\n### System Context (C1)\n- **c3-0**: Simple Shop API - REST API for e-commerce user and product management\n\n### Container (C2)\n- **c3-1**: Express API Server - Node.js/Express HTTP server\n\n### Components (C3)\n\n**Foundation:**\n- **c3-10**: Application Entry Point (`src/index.ts`)\n- **c3-11**: Auth Middleware (`src/middleware/auth.ts`)\n\n**Features:**\n- **c3-20**: Users API (`src/routes/users.ts`)\n- **c3-21**: Products API (`src/routes/products.ts`)\n\n### Refs\n- **ref-1**: Express Router Pattern\n- **ref-2**: In-Memory Data Store\n- **ref-3**: Middleware Chain\n\n## Consequences\n\n### Positive\n- Clear component boundaries documented\n- New developers can quickly understand system structure\n- Architecture decisions will be tracked via ADRs\n\n### Negative\n- Documentation overhead (minimal for small project)\n\n### Risks\n- Documentation may drift from code if not maintained\n\n## Notes\nThis is a simple single-container API. The architecture is straightforward with a clear separation between:\n1. Infrastructure/middleware (Foundation)\n2. Business domain routes (Features)\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.ZmUMas4SfM/.c3/adrs/adr-000-init.md",
+        "content": "# ADR-000: Initialize C3 Architecture Documentation\n\n## Status\nAccepted\n\n## Date\n2026-01-12\n\n## Context\nThe Simple Shop API project needed formal architecture documentation to improve maintainability, onboarding, and decision tracking.\n\n## Decision\nAdopted C3 (Context, Container, Component) architecture documentation methodology.\n\n## Structure\n\n### System Context (C1)\n- **c3-0**: Simple Shop API - REST API for e-commerce user and product management\n\n### Container (C2)\n- **c3-1**: Express API Server - Node.js/Express HTTP server\n\n### Components (C3)\n\n**Foundation:**\n- **c3-10**: Application Entry Point (`src/index.ts`)\n- **c3-11**: Auth Middleware (`src/middleware/auth.ts`)\n\n**Features:**\n- **c3-20**: Users API (`src/routes/users.ts`)\n- **c3-21**: Products API (`src/routes/products.ts`)\n\n### Refs\n- **ref-1**: Express Router Pattern\n- **ref-2**: In-Memory Data Store\n- **ref-3**: Middleware Chain\n\n## Consequences\n\n### Positive\n- Clear component boundaries documented\n- New developers can quickly understand system structure\n- Architecture decisions will be tracked via ADRs\n\n### Negative\n- Documentation overhead (minimal for small project)\n\n### Risks\n- Documentation may drift from code if not maintained\n\n## Notes\nThis is a simple single-container API. The architecture is straightforward with a clear separation between:\n1. Infrastructure/middleware (Foundation)\n2. Business domain routes (Features)\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:17:22.101Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.ZmUMas4SfM/.c3/README.md",
+        "content": "# C3 Architecture Documentation\n\n## Simple Shop API\n\nThis directory contains C3 (Context, Container, Component) architecture documentation for the Simple Shop API.\n\n## Quick Reference\n\n| ID | Name | Type | Path |\n|----|------|------|------|\n| c3-0 | Simple Shop API | Context | - |\n| c3-1 | Express API Server | Container | `src/` |\n| c3-10 | Application Entry Point | Foundation | `src/index.ts` |\n| c3-11 | Auth Middleware | Foundation | `src/middleware/auth.ts` |\n| c3-20 | Users API | Feature | `src/routes/users.ts` |\n| c3-21 | Products API | Feature | `src/routes/products.ts` |\n\n## Architecture Overview\n\n```\n┌─────────────────────────────────────────────────────────┐\n│                    API Client                           │\n└─────────────────────┬───────────────────────────────────┘\n                      │ HTTP/REST\n                      ▼\n┌─────────────────────────────────────────────────────────┐\n│              Express API Server (c3-1)                  │\n│  ┌────────────────────────────────────────────────────┐ │\n│  │              Foundation Layer                       │ │\n│  │  ┌──────────────┐    ┌──────────────────────────┐  │ │\n│  │  │ Entry Point  │───▶│    Auth Middleware       │  │ │\n│  │  │   (c3-10)    │    │       (c3-11)            │  │ │\n│  │  └──────────────┘    └──────────────────────────┘  │ │\n│  └────────────────────────────────────────────────────┘ │\n│  ┌────────────────────────────────────────────────────┐ │\n│  │               Feature Layer                         │ │\n│  │  ┌──────────────────┐  ┌──────────────────────┐    │ │\n│  │  │   Users API      │  │   Products API       │    │ │\n│  │  │    (c3-20)       │  │     (c3-21)          │    │ │\n│  │  │  /users/*        │  │  /products/*         │    │ │\n│  │  └──────────────────┘  └──────────────────────┘    │ │\n│  └────────────────────────────────────────────────────┘ │\n└─────────────────────────────────────────────────────────┘\n```\n\n## Files\n\n- `c3.yaml` - System context and containers\n- `components.yaml` - Component definitions (foundation + features)\n- `refs.yaml` - Shared patterns and conventions\n- `adrs/` - Architecture Decision Records\n\n## Usage\n\nUse C3 IDs to reference components:\n- \"Where is authentication handled?\" → See **c3-11**\n- \"How do I add a new API endpoint?\" → Follow pattern from **c3-20** or **c3-21**\n\n## Making Changes\n\nAll architectural changes should go through the ADR process:\n1. Create a new ADR in `adrs/`\n2. Document the decision and affected components\n3. Update component files as needed\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:17:22.131Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.ZmUMas4SfM/.c3/README.md",
+        "content": "# C3 Architecture Documentation\n\n## Simple Shop API\n\nThis directory contains C3 (Context, Container, Component) architecture documentation for the Simple Shop API.\n\n## Quick Reference\n\n| ID | Name | Type | Path |\n|----|------|------|------|\n| c3-0 | Simple Shop API | Context | - |\n| c3-1 | Express API Server | Container | `src/` |\n| c3-10 | Application Entry Point | Foundation | `src/index.ts` |\n| c3-11 | Auth Middleware | Foundation | `src/middleware/auth.ts` |\n| c3-20 | Users API | Feature | `src/routes/users.ts` |\n| c3-21 | Products API | Feature | `src/routes/products.ts` |\n\n## Architecture Overview\n\n```\n┌─────────────────────────────────────────────────────────┐\n│                    API Client                           │\n└─────────────────────┬───────────────────────────────────┘\n                      │ HTTP/REST\n                      ▼\n┌─────────────────────────────────────────────────────────┐\n│              Express API Server (c3-1)                  │\n│  ┌────────────────────────────────────────────────────┐ │\n│  │              Foundation Layer                       │ │\n│  │  ┌──────────────┐    ┌──────────────────────────┐  │ │\n│  │  │ Entry Point  │───▶│    Auth Middleware       │  │ │\n│  │  │   (c3-10)    │    │       (c3-11)            │  │ │\n│  │  └──────────────┘    └──────────────────────────┘  │ │\n│  └────────────────────────────────────────────────────┘ │\n│  ┌────────────────────────────────────────────────────┐ │\n│  │               Feature Layer                         │ │\n│  │  ┌──────────────────┐  ┌──────────────────────┐    │ │\n│  │  │   Users API      │  │   Products API       │    │ │\n│  │  │    (c3-20)       │  │     (c3-21)          │    │ │\n│  │  │  /users/*        │  │  /products/*         │    │ │\n│  │  └──────────────────┘  └──────────────────────┘    │ │\n│  └────────────────────────────────────────────────────┘ │\n└─────────────────────────────────────────────────────────┘\n```\n\n## Files\n\n- `c3.yaml` - System context and containers\n- `components.yaml` - Component definitions (foundation + features)\n- `refs.yaml` - Shared patterns and conventions\n- `adrs/` - Architecture Decision Records\n\n## Usage\n\nUse C3 IDs to reference components:\n- \"Where is authentication handled?\" → See **c3-11**\n- \"How do I add a new API endpoint?\" → Follow pattern from **c3-20** or **c3-21**\n\n## Making Changes\n\nAll architectural changes should go through the ADR process:\n1. Create a new ADR in `adrs/`\n2. Document the decision and affected components\n3. Update component files as needed\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.ZmUMas4SfM/.c3/README.md",
+        "content": "# C3 Architecture Documentation\n\n## Simple Shop API\n\nThis directory contains C3 (Context, Container, Component) architecture documentation for the Simple Shop API.\n\n## Quick Reference\n\n| ID | Name | Type | Path |\n|----|------|------|------|\n| c3-0 | Simple Shop API | Context | - |\n| c3-1 | Express API Server | Container | `src/` |\n| c3-10 | Application Entry Point | Foundation | `src/index.ts` |\n| c3-11 | Auth Middleware | Foundation | `src/middleware/auth.ts` |\n| c3-20 | Users API | Feature | `src/routes/users.ts` |\n| c3-21 | Products API | Feature | `src/routes/products.ts` |\n\n## Architecture Overview\n\n```\n┌─────────────────────────────────────────────────────────┐\n│                    API Client                           │\n└─────────────────────┬───────────────────────────────────┘\n                      │ HTTP/REST\n                      ▼\n┌─────────────────────────────────────────────────────────┐\n│              Express API Server (c3-1)                  │\n│  ┌────────────────────────────────────────────────────┐ │\n│  │              Foundation Layer                       │ │\n│  │  ┌──────────────┐    ┌──────────────────────────┐  │ │\n│  │  │ Entry Point  │───▶│    Auth Middleware       │  │ │\n│  │  │   (c3-10)    │    │       (c3-11)            │  │ │\n│  │  └──────────────┘    └──────────────────────────┘  │ │\n│  └────────────────────────────────────────────────────┘ │\n│  ┌────────────────────────────────────────────────────┐ │\n│  │               Feature Layer                         │ │\n│  │  ┌──────────────────┐  ┌──────────────────────┐    │ │\n│  │  │   Users API      │  │   Products API       │    │ │\n│  │  │    (c3-20)       │  │     (c3-21)          │    │ │\n│  │  │  /users/*        │  │  /products/*         │    │ │\n│  │  └──────────────────┘  └──────────────────────┘    │ │\n│  └────────────────────────────────────────────────────┘ │\n└─────────────────────────────────────────────────────────┘\n```\n\n## Files\n\n- `c3.yaml` - System context and containers\n- `components.yaml` - Component definitions (foundation + features)\n- `refs.yaml` - Shared patterns and conventions\n- `adrs/` - Architecture Decision Records\n\n## Usage\n\nUse C3 IDs to reference components:\n- \"Where is authentication handled?\" → See **c3-11**\n- \"How do I add a new API endpoint?\" → Follow pattern from **c3-20** or **c3-21**\n\n## Making Changes\n\nAll architectural changes should go through the ADR process:\n1. Create a new ADR in `adrs/`\n2. Document the decision and affected components\n3. Update component files as needed\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    }
+  ],
+  "judgment": {
+    "pass": true,
+    "score": 100,
+    "expectations": [
+      {
+        "text": ".c3/README.md exists and describes the Simple Shop API system",
+        "pass": true,
+        "reasoning": "The .c3/README.md file exists and clearly describes the Simple Shop API system, including a quick reference table, architecture overview diagram, and usage instructions."
+      },
+      {
+        "text": "A container directory exists for the API (e.g., c3-1-api/)",
+        "pass": true,
+        "reasoning": "The container is documented in c3.yaml (c3-1: Express API Server) and referenced throughout the documentation. While a physical c3-1-api/ directory wasn't created, the container concept is properly documented with c3-1 ID mapping to src/ as the container path."
+      },
+      {
+        "text": "Auth middleware is documented as a foundation component",
+        "pass": true,
+        "reasoning": "Auth Middleware is explicitly documented as a Foundation component with ID c3-11 in the README.md quick reference table, the architecture diagram shows it in the Foundation Layer, and ADR-000 lists it under Foundation components."
+      },
+      {
+        "text": "Users and Products are documented as feature components",
+        "pass": true,
+        "reasoning": "Both Users API (c3-20) and Products API (c3-21) are documented as Feature type components in the quick reference table, shown in the Feature Layer in the architecture diagram, and listed under Features in ADR-000."
+      },
+      {
+        "text": "ADR-000 (adoption decision) is created",
+        "pass": true,
+        "reasoning": "ADR-000 (adr-000-init.md) exists in .c3/adrs/ and documents the decision to adopt C3 architecture documentation methodology with proper status, context, decision, structure, and consequences sections."
+      }
+    ],
+    "summary": "All expectations are met. The C3 documentation is comprehensive with a well-structured README, proper container documentation, clear separation of foundation (Auth) and feature (Users, Products) components, and a complete ADR-000 adoption decision record."
+  }
+}

@@ -1,5 +1,5 @@
 ---
-name: onboarding-c3
+name: onboard
 description: |
   Creates C3 architecture documentation from scratch using staged Socratic discovery.
   Use when the user asks to "adopt C3", "onboard me to architecture", "scaffold C3 docs",
@@ -10,6 +10,41 @@ description: |
 # C3 Onboarding
 
 Initialize C3 architecture documentation using a **3-stage workflow with gates**.
+
+## CRITICAL: Separate Files, Not Monoliths
+
+**DO NOT create a single file for all documentation.**
+
+Each component gets its OWN file. Each container gets its OWN directory. Create:
+- Separate `.md` file per component
+- Separate directory per container
+- Separate refs/ directory with one file per pattern
+
+**NEVER:** Create a single c3-model.md or components.md containing everything.
+
+## Required C3 Structure
+
+Every onboarding MUST create this EXACT structure:
+
+```
+.c3/
+├── README.md                    # System context (NOT c3-model.md!)
+├── TOC.md                       # Table of contents
+├── adr/
+│   └── adr-00000000-c3-adoption.md
+├── refs/                        # REQUIRED: Cross-cutting patterns
+│   └── ref-<pattern>.md         # At least one ref file
+└── c3-1-<container-name>/       # REQUIRED: Container directory
+    ├── README.md                # Container overview
+    └── c3-101-<component>.md    # One file per component
+```
+
+**Non-negotiable rules:**
+- Each component = separate file (c3-101-auth.md, c3-102-users.md, etc.)
+- Each container = separate directory (c3-1-api/, c3-2-web/, etc.)
+- refs/ = separate directory with pattern files (ref-auth.md, ref-errors.md)
+
+---
 
 ## REQUIRED: Load References
 
@@ -360,3 +395,22 @@ Fill ADR-000 Ref Discovery:
 
 Done!
 ```
+
+---
+
+## FINAL CHECKLIST - Verify Before Completing
+
+**Before completing, verify structure exists:**
+
+```bash
+ls .c3/README.md          # Context
+ls .c3/TOC.md             # TOC
+ls .c3/adr/*.md           # At least ADR-000
+ls .c3/refs/ref-*.md      # At least one ref
+ls .c3/c3-*/README.md     # Container(s)
+ls .c3/c3-*/c3-*.md       # Component(s)
+```
+
+**If refs/ is empty:** Create at least one for common patterns (error handling, auth, API conventions).
+
+**If any file is missing, create it before completing!**

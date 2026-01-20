@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-12T05-35-29-891Z",
+  "total": 1,
+  "passed": 1,
+  "failed": 0,
+  "avgScore": 100,
+  "results": [
+    {
+      "name": "Onboard simple Express app",
+      "pass": true,
+      "score": 100,
+      "duration": 194349,
+      "summary": "All expectations met (simple file-check mode)"
+    }
+  ]
+}

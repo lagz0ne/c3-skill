@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-12T05-30-00-151Z",
+  "total": 1,
+  "passed": 0,
+  "failed": 1,
+  "avgScore": 0,
+  "results": [
+    {
+      "name": "Onboard simple Express app",
+      "pass": false,
+      "score": 0,
+      "duration": 181188,
+      "summary": "Error: Error: 401 {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CX2w7r4px86ydsU8XmReJ\"}"
+    }
+  ]
+}

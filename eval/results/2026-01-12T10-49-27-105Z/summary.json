@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-12T10-49-27-105Z",
+  "total": 1,
+  "passed": 0,
+  "failed": 1,
+  "avgScore": 60,
+  "results": [
+    {
+      "name": "Add new feature via C3 alter workflow",
+      "pass": false,
+      "score": 60,
+      "duration": 91346,
+      "summary": "The workflow correctly created an ADR first (following ADR-first approach) and the ADR properly describes the notification feature with correct dependencies. However, the workflow stopped after ADR approval and did not complete the implementation by creating the component documentation or updating the container README."
+    }
+  ]
+}

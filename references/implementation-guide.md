@@ -2,6 +2,15 @@
 
 Reference for Component level documentation.
 
+## Contents
+
+- [When to Create a Component Doc](#when-to-create-a-component-doc)
+- [NO CODE Enforcement](#no-code-enforcement)
+- [Required Sections](#required-sections)
+- [Optional Sections](#optional-sections)
+- [Foundation vs Business Components](#foundation-vs-business-components)
+- [Quick Verification](#quick-verification)
+
 ---
 
 ## When to Create a Component Doc
@@ -125,6 +134,6 @@ Before completing component doc:
 
 ## Related
 
-- `structure-guide.md` - Context and Container structure
 - `v3-structure.md` - Full structure reference with frontmatter
-- `diagram-patterns.md` - Mermaid diagram syntax
+- `component-types.md` - Component categorization
+- `container-patterns.md` - Container component patterns

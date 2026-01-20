@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-12T11-33-32-980Z",
+  "total": 1,
+  "passed": 0,
+  "failed": 1,
+  "avgScore": 80,
+  "results": [
+    {
+      "name": "Onboard simple Express app",
+      "pass": false,
+      "score": 80,
+      "duration": 107328,
+      "summary": "The documentation successfully covers the Simple Shop API with proper C3 structure, foundation/feature component classification, and container documentation. However, the required ADR-000 adoption decision record was not created, failing to complete the full onboarding workflow as specified in the constraints."
+    }
+  ]
+}

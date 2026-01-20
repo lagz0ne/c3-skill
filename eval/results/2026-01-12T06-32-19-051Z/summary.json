@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-12T06-32-19-051Z",
+  "total": 1,
+  "passed": 0,
+  "failed": 1,
+  "avgScore": 0,
+  "results": [
+    {
+      "name": "Design greenfield SaaS with C3",
+      "pass": false,
+      "score": 0,
+      "duration": 63695,
+      "summary": "The agent gathered requirements through a brainstorming skill and user questions but failed to produce any actual output. No .c3/ directory, ADR-000, README, or any architecture documentation was created despite the stated goal."
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "timestamp": "2026-01-13T05-29-07-948Z",
+  "total": 6,
+  "passed": 5,
+  "failed": 1,
+  "avgScore": 95.83333333333333,
+  "results": [
+    {
+      "name": "Onboard Turborepo monorepo",
+      "pass": true,
+      "score": 100,
+      "duration": 148093,
+      "summary": "The output fully satisfies all expectations. The C3 documentation comprehensively captures the Turborepo monorepo structure with well-defined containers for web and api apps, properly documents all three shared packages (ui, api-client, database), clearly shows container dependencies, and acknowledges the Turborepo build system throughout."
+    },
+    {
+      "name": "Design greenfield SaaS with C3",
+      "pass": true,
+      "score": 100,
+      "duration": 892593,
+      "summary": "All expectations are fully met. The output includes a comprehensive ADR-000 architectural blueprint, context documentation describing TaskFlow's purpose, 4 defined containers (frontend, API, database, Redis), extensive WebSocket/real-time documentation, and detailed component documentation for auth, tasks, and teams modules."
+    },
+    {
+      "name": "Onboard simple Express app",
+      "pass": true,
+      "score": 100,
+      "duration": 123362,
+      "summary": "The documentation comprehensively covers all architectural aspects. The README provides clear system context with diagrams, container responsibilities are documented, Auth is properly identified as a foundation component with no dependencies, Users and Products are documented as feature components depending on auth, and cross-cutting patterns are explicitly listed including auth, REST patterns, and error handling."
+    },
+    {
+      "name": "Query existing C3 architecture",
+      "pass": true,
+      "score": 100,
+      "duration": 63776,
+      "summary": "The agent successfully navigated the C3 documentation structure, reading only from the .c3/ directory to answer architecture questions. It properly referenced all required component IDs and correctly identified the foundation vs feature component categorization from the existing documentation."
+    },
+    {
+      "name": "Audit C3 docs for stale references",
+      "pass": false,
+      "score": 75,
+      "duration": 63547,
+      "summary": "The agent successfully identified all stale component references (c3-102 through c3-105) and recognized the v2 consolidation into index.ts. However, it failed to provide explicit actionable recommendations for updating the documentation, instead only displaying the current document states."
+    },
+    {
+      "name": "Add new feature via C3 alter workflow",
+      "pass": true,
+      "score": 100,
+      "duration": 136028,
+      "summary": "The agent successfully followed the C3 alter workflow by creating an ADR first (adr-20260113-notification-routes.md), then creating the component documentation (c3-106-notification-routes.md), updating the container README with the new component, and properly documenting dependencies on c3-102 and c3-105."
+    }
+  ]
+}

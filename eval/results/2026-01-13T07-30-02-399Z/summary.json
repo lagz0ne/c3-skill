@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-13T07-30-02-399Z",
+  "total": 1,
+  "passed": 0,
+  "failed": 1,
+  "avgScore": 50,
+  "results": [
+    {
+      "name": "Add new feature via C3 alter workflow",
+      "pass": false,
+      "score": 50,
+      "duration": 305405,
+      "summary": "Documentation is well-structured and actionable but lacks runtime verification checks and c3-101 integration details, making it conditional for safe execution."
+    }
+  ]
+}

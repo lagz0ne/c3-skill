@@ -1,0 +1,37 @@
+name: "Onboard Turborepo monorepo"
+
+fixtures: "fixtures/react-monorepo"
+
+command: |
+  This is a Turborepo monorepo for an e-commerce platform called "Acme Platform".
+  Please onboard this project to C3 architecture documentation.
+
+  Structure:
+  - apps/web: Next.js storefront
+  - apps/api: Hono API server
+  - packages/ui: Shared React components
+  - packages/api-client: API client for frontend
+  - packages/database: Database client wrapper
+
+  You must create at minimum:
+  - .c3/README.md (system overview describing the monorepo)
+  - .c3/adr/adr-00000000-c3-adoption.md (ADR-000)
+  - Container directories for web and api (e.g., .c3/c3-1-web/, .c3/c3-2-api/)
+
+goal: |
+  Document a Turborepo monorepo with multiple apps and shared packages.
+  The C3 documentation should properly represent the monorepo structure
+  with separate containers for each app and shared packages.
+
+constraints:
+  - Should identify at least 2 containers (web and api apps)
+  - Shared packages should be documented as dependencies
+  - Should capture the workspace/package relationships
+  - Keep it pragmatic - don't over-document simple packages
+
+expectations:
+  - ".c3/README.md exists and describes Acme Platform monorepo"
+  - "At least 2 containers are defined for the apps (web, api)"
+  - "Shared packages (ui, api-client, database) are documented or referenced"
+  - "Container dependencies on shared packages are captured"
+  - "The monorepo/Turborepo structure is acknowledged"

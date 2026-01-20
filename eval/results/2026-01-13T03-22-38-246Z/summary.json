@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-13T03-22-38-246Z",
+  "total": 1,
+  "passed": 0,
+  "failed": 1,
+  "avgScore": 60,
+  "results": [
+    {
+      "name": "Onboard simple Express app",
+      "pass": false,
+      "score": 60,
+      "duration": 206305,
+      "summary": "The agent created comprehensive documentation for the Simple Shop API with proper foundation/feature component classification, but failed to create the required .c3/README.md file, a container directory structure (c3-1-api/), and the mandatory ADR-000 adoption decision document. Only 3 of 5 expectations were met."
+    }
+  ]
+}

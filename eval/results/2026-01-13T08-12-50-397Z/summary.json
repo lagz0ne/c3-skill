@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-13T08-12-50-397Z",
+  "total": 1,
+  "passed": 1,
+  "failed": 0,
+  "avgScore": 75,
+  "results": [
+    {
+      "name": "Add new feature via C3 alter workflow",
+      "pass": true,
+      "score": 75,
+      "duration": 106204,
+      "summary": "Documentation fully addresses all template-required concerns across approval, execution, verification, and maintenance purposes with clear traceability, specific implementation guidance, and appropriate scope."
+    }
+  ]
+}

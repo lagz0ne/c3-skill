@@ -1,0 +1,645 @@
+{
+  "name": "Onboard Turborepo monorepo",
+  "pass": true,
+  "score": 100,
+  "duration": 91696,
+  "trace": [
+    {
+      "timestamp": "2026-01-12T12:25:25.919Z",
+      "event": "PreToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:onboard"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:26.119Z",
+      "event": "PostToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:onboard"
+      },
+      "result": {
+        "success": true,
+        "commandName": "c3-skill:onboard",
+        "allowedTools": [
+          "Bash(rm:*)",
+          "Bash(test:*)",
+          "Bash(PROJECT=*)",
+          "Read",
+          "Glob",
+          "Grep",
+          "Write",
+          "Edit",
+          "AskUserQuestion",
+          "Skill"
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:26.704Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "ls -la /tmp/tmp.W4KkTU4O9h",
+        "description": "List files in the working directory"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:26.745Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "ls -la /tmp/tmp.W4KkTU4O9h",
+        "description": "List files in the working directory"
+      },
+      "result": {
+        "stdout": "drwxr-xr-x   - lagz0ne 12 Jan 19:25 apps\n.rw-r--r-- 278 lagz0ne 12 Jan 19:25 package.json\ndrwxr-xr-x   - lagz0ne 12 Jan 19:25 packages\n.rw-r--r-- 267 lagz0ne 12 Jan 19:25 turbo.json",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:31.989Z",
+      "event": "PreToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/*"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:31.989Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "ls -la",
+        "description": "List root directory contents"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:32.006Z",
+      "event": "PostToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/*"
+      },
+      "result": {
+        "filenames": [
+          "/tmp/tmp.W4KkTU4O9h/package.json",
+          "/tmp/tmp.W4KkTU4O9h/apps/api/package.json",
+          "/tmp/tmp.W4KkTU4O9h/apps/api/src/index.ts",
+          "/tmp/tmp.W4KkTU4O9h/apps/web/package.json",
+          "/tmp/tmp.W4KkTU4O9h/apps/web/src/app/layout.tsx",
+          "/tmp/tmp.W4KkTU4O9h/apps/web/src/app/page.tsx",
+          "/tmp/tmp.W4KkTU4O9h/packages/ui/package.json",
+          "/tmp/tmp.W4KkTU4O9h/packages/ui/src/index.ts",
+          "/tmp/tmp.W4KkTU4O9h/packages/ui/src/button.tsx",
+          "/tmp/tmp.W4KkTU4O9h/packages/ui/src/input.tsx",
+          "/tmp/tmp.W4KkTU4O9h/packages/ui/src/card.tsx",
+          "/tmp/tmp.W4KkTU4O9h/turbo.json",
+          "/tmp/tmp.W4KkTU4O9h/packages/database/package.json",
+          "/tmp/tmp.W4KkTU4O9h/packages/database/src/index.ts",
+          "/tmp/tmp.W4KkTU4O9h/packages/api-client/package.json",
+          "/tmp/tmp.W4KkTU4O9h/packages/api-client/src/index.ts"
+        ],
+        "durationMs": 12,
+        "numFiles": 16,
+        "truncated": false
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:32.017Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "ls -la",
+        "description": "List root directory contents"
+      },
+      "result": {
+        "stdout": "",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.273Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/package.json"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.273Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/turbo.json"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.273Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/apps/web/package.json"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.273Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/apps/api/package.json"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.273Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/apps/api/src/index.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.274Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/apps/web/src/app/page.tsx"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.274Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/apps/web/src/app/layout.tsx"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.274Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/packages/ui/package.json"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.274Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/packages/ui/src/index.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.274Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/packages/database/package.json"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.301Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/package.json"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.W4KkTU4O9h/package.json",
+          "content": "{\n  \"name\": \"acme-platform\",\n  \"private\": true,\n  \"workspaces\": [\n    \"apps/*\",\n    \"packages/*\"\n  ],\n  \"scripts\": {\n    \"dev\": \"turbo dev\",\n    \"build\": \"turbo build\",\n    \"test\": \"turbo test\"\n  },\n  \"devDependencies\": {\n    \"turbo\": \"^2.0.0\",\n    \"typescript\": \"^5.0.0\"\n  }\n}\n",
+          "numLines": 18,
+          "startLine": 1,
+          "totalLines": 18
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.301Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/turbo.json"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.W4KkTU4O9h/turbo.json",
+          "content": "{\n  \"$schema\": \"https://turbo.build/schema.json\",\n  \"tasks\": {\n    \"build\": {\n      \"dependsOn\": [\"^build\"],\n      \"outputs\": [\"dist/**\"]\n    },\n    \"dev\": {\n      \"cache\": false,\n      \"persistent\": true\n    },\n    \"test\": {\n      \"dependsOn\": [\"build\"]\n    }\n  }\n}\n",
+          "numLines": 17,
+          "startLine": 1,
+          "totalLines": 17
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.301Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/apps/web/package.json"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.W4KkTU4O9h/apps/web/package.json",
+          "content": "{\n  \"name\": \"@acme/web\",\n  \"version\": \"1.0.0\",\n  \"private\": true,\n  \"scripts\": {\n    \"dev\": \"next dev\",\n    \"build\": \"next build\"\n  },\n  \"dependencies\": {\n    \"next\": \"^14.0.0\",\n    \"react\": \"^18.0.0\",\n    \"@acme/ui\": \"workspace:*\",\n    \"@acme/api-client\": \"workspace:*\"\n  }\n}\n",
+          "numLines": 16,
+          "startLine": 1,
+          "totalLines": 16
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.301Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/apps/api/package.json"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.W4KkTU4O9h/apps/api/package.json",
+          "content": "{\n  \"name\": \"@acme/api\",\n  \"version\": \"1.0.0\",\n  \"private\": true,\n  \"scripts\": {\n    \"dev\": \"bun --watch src/index.ts\",\n    \"build\": \"bun build src/index.ts --outdir dist\"\n  },\n  \"dependencies\": {\n    \"hono\": \"^4.0.0\",\n    \"@acme/database\": \"workspace:*\"\n  }\n}\n",
+          "numLines": 14,
+          "startLine": 1,
+          "totalLines": 14
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.302Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/apps/api/src/index.ts"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.W4KkTU4O9h/apps/api/src/index.ts",
+          "content": "import { Hono } from \"hono\";\nimport { cors } from \"hono/cors\";\nimport { db } from \"@acme/database\";\n\nconst app = new Hono();\n\napp.use(\"/*\", cors());\n\napp.get(\"/products\", async (c) => {\n  const products = await db.product.findMany();\n  return c.json(products);\n});\n\napp.get(\"/products/:id\", async (c) => {\n  const product = await db.product.findUnique({ where: { id: c.req.param(\"id\") } });\n  return c.json(product);\n});\n\napp.post(\"/orders\", async (c) => {\n  const { items } = await c.req.json();\n  const order = await db.order.create({ data: { items } });\n  return c.json(order);\n});\n\nexport default app;\n",
+          "numLines": 26,
+          "startLine": 1,
+          "totalLines": 26
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.302Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/apps/web/src/app/page.tsx"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.W4KkTU4O9h/apps/web/src/app/page.tsx",
+          "content": "import { Button } from \"@acme/ui\";\nimport { api } from \"@acme/api-client\";\n\nexport default async function Home() {\n  const products = await api.products.list();\n\n  return (\n    <main>\n      <h1>Acme Store</h1>\n      <div className=\"grid\">\n        {products.map((p) => (\n          <div key={p.id}>\n            <h2>{p.name}</h2>\n            <p>{p.price}</p>\n            <Button>Add to Cart</Button>\n          </div>\n        ))}\n      </div>\n    </main>\n  );\n}\n",
+          "numLines": 22,
+          "startLine": 1,
+          "totalLines": 22
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.302Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/apps/web/src/app/layout.tsx"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.W4KkTU4O9h/apps/web/src/app/layout.tsx",
+          "content": "import { ReactNode } from \"react\";\n\nexport default function RootLayout({ children }: { children: ReactNode }) {\n  return (\n    <html>\n      <body>{children}</body>\n    </html>\n  );\n}\n",
+          "numLines": 10,
+          "startLine": 1,
+          "totalLines": 10
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.302Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/packages/ui/package.json"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.W4KkTU4O9h/packages/ui/package.json",
+          "content": "{\n  \"name\": \"@acme/ui\",\n  \"version\": \"1.0.0\",\n  \"main\": \"./src/index.ts\",\n  \"types\": \"./src/index.ts\",\n  \"exports\": {\n    \".\": \"./src/index.ts\"\n  },\n  \"peerDependencies\": {\n    \"react\": \"^18.0.0\"\n  }\n}\n",
+          "numLines": 13,
+          "startLine": 1,
+          "totalLines": 13
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.303Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/packages/ui/src/index.ts"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.W4KkTU4O9h/packages/ui/src/index.ts",
+          "content": "export { Button } from \"./button\";\nexport { Card } from \"./card\";\nexport { Input } from \"./input\";\n",
+          "numLines": 4,
+          "startLine": 1,
+          "totalLines": 4
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.303Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/packages/database/package.json"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.W4KkTU4O9h/packages/database/package.json",
+          "content": "{\n  \"name\": \"@acme/database\",\n  \"version\": \"1.0.0\",\n  \"main\": \"./src/index.ts\",\n  \"types\": \"./src/index.ts\"\n}\n",
+          "numLines": 7,
+          "startLine": 1,
+          "totalLines": 7
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.353Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/packages/database/src/index.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.354Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/packages/api-client/package.json"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.354Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/packages/api-client/src/index.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.362Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/packages/database/src/index.ts"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.W4KkTU4O9h/packages/database/src/index.ts",
+          "content": "// Mock database client (would be Prisma in real app)\nexport const db = {\n  product: {\n    async findMany() {\n      return [\n        { id: \"1\", name: \"Widget\", price: 9.99 },\n        { id: \"2\", name: \"Gadget\", price: 19.99 },\n      ];\n    },\n    async findUnique({ where }: { where: { id: string } }) {\n      return { id: where.id, name: \"Widget\", price: 9.99 };\n    },\n  },\n  order: {\n    async create({ data }: { data: unknown }) {\n      return { id: \"order-1\", ...data };\n    },\n  },\n};\n",
+          "numLines": 20,
+          "startLine": 1,
+          "totalLines": 20
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.362Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/packages/api-client/package.json"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.W4KkTU4O9h/packages/api-client/package.json",
+          "content": "{\n  \"name\": \"@acme/api-client\",\n  \"version\": \"1.0.0\",\n  \"main\": \"./src/index.ts\",\n  \"types\": \"./src/index.ts\"\n}\n",
+          "numLines": 7,
+          "startLine": 1,
+          "totalLines": 7
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:39.362Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/packages/api-client/src/index.ts"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.W4KkTU4O9h/packages/api-client/src/index.ts",
+          "content": "const API_URL = process.env.API_URL || \"http://localhost:3001\";\n\nexport const api = {\n  products: {\n    async list() {\n      const res = await fetch(`${API_URL}/products`);\n      return res.json();\n    },\n    async get(id: string) {\n      const res = await fetch(`${API_URL}/products/${id}`);\n      return res.json();\n    },\n  },\n  orders: {\n    async create(items: { productId: string; quantity: number }[]) {\n      const res = await fetch(`${API_URL}/orders`, {\n        method: \"POST\",\n        headers: { \"Content-Type\": \"application/json\" },\n        body: JSON.stringify({ items }),\n      });\n      return res.json();\n    },\n  },\n};\n",
+          "numLines": 25,
+          "startLine": 1,
+          "totalLines": 25
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:44.614Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "mkdir -p /tmp/tmp.W4KkTU4O9h/.c3/adr /tmp/tmp.W4KkTU4O9h/.c3/c3-1-web /tmp/tmp.W4KkTU4O9h/.c3/c3-2-api",
+        "description": "Create C3 directory structure"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:25:44.646Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "mkdir -p /tmp/tmp.W4KkTU4O9h/.c3/adr /tmp/tmp.W4KkTU4O9h/.c3/c3-1-web /tmp/tmp.W4KkTU4O9h/.c3/c3-2-api",
+        "description": "Create C3 directory structure"
+      },
+      "result": {
+        "stdout": "",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:26:25.877Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/.c3/README.md",
+        "content": "# Acme Platform - C3 Architecture Documentation\n\n## System Overview\n\nAcme Platform is a modern e-commerce platform built as a Turborepo monorepo. The system provides a web-based storefront for customers to browse products and place orders, backed by a REST API that manages product catalog and order processing.\n\n## System Context (C3-0)\n\n```\n+------------------+          +---------------------------+\n|    Customers     |--------->|      Acme Platform        |\n| (Web Browsers)   |  HTTPS   |    (E-commerce System)    |\n+------------------+          +---------------------------+\n                                         |\n                                         v\n                              +------------------+\n                              |    Database      |\n                              | (Data Storage)   |\n                              +------------------+\n```\n\n**External Actors:**\n- **Customers**: End users who browse products and place orders via web browsers\n\n**External Systems:**\n- **Database**: Persistent data storage for products and orders\n\n## Container Diagram (C3-1/C3-2)\n\n```\n+------------------------------------------+\n|              Acme Platform               |\n|                                          |\n|  +-------------+      +---------------+  |\n|  |   c3-1-web  |----->|   c3-2-api    |  |\n|  | Next.js App | HTTP |  Hono Server  |  |\n|  | (Storefront)|      | (REST API)    |  |\n|  +-------------+      +---------------+  |\n|        |                     |           |\n|        v                     v           |\n|  +-------------+      +---------------+  |\n|  |  @acme/ui   |      | @acme/database|  |\n|  | (Components)|      |  (DB Client)  |  |\n|  +-------------+      +---------------+  |\n|        ^                                 |\n|        |                                 |\n|  +------------------+                    |\n|  | @acme/api-client |                    |\n|  | (HTTP Client)    |                    |\n|  +------------------+                    |\n+------------------------------------------+\n```\n\n## Containers\n\n| ID | Name | Technology | Description | Path |\n|----|------|------------|-------------|------|\n| c3-1 | Web Storefront | Next.js 14, React 18 | Customer-facing web application | `apps/web/` |\n| c3-2 | API Server | Hono 4, Bun | REST API for products and orders | `apps/api/` |\n\n## Shared Packages\n\n| Package | Purpose | Used By |\n|---------|---------|---------|\n| `@acme/ui` | Reusable React components (Button, Card, Input) | c3-1-web |\n| `@acme/api-client` | Type-safe HTTP client for API | c3-1-web |\n| `@acme/database` | Database client wrapper | c3-2-api |\n\n## Key Interactions\n\n1. **Product Browsing**: Web → API (`GET /products`) → Database\n2. **Product Details**: Web → API (`GET /products/:id`) → Database\n3. **Order Creation**: Web → API (`POST /orders`) → Database\n\n## Technology Stack\n\n- **Monorepo**: Turborepo 2.x\n- **Frontend**: Next.js 14, React 18\n- **Backend**: Hono 4 (Bun runtime)\n- **Build**: TypeScript 5.x\n- **Package Manager**: pnpm/yarn workspaces\n\n## Architecture Decision Records\n\nSee [adr/](./adr/) for architectural decisions.\n\n- [ADR-000: C3 Adoption](./adr/adr-00000000-c3-adoption.md)\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:26:25.909Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/.c3/README.md",
+        "content": "# Acme Platform - C3 Architecture Documentation\n\n## System Overview\n\nAcme Platform is a modern e-commerce platform built as a Turborepo monorepo. The system provides a web-based storefront for customers to browse products and place orders, backed by a REST API that manages product catalog and order processing.\n\n## System Context (C3-0)\n\n```\n+------------------+          +---------------------------+\n|    Customers     |--------->|      Acme Platform        |\n| (Web Browsers)   |  HTTPS   |    (E-commerce System)    |\n+------------------+          +---------------------------+\n                                         |\n                                         v\n                              +------------------+\n                              |    Database      |\n                              | (Data Storage)   |\n                              +------------------+\n```\n\n**External Actors:**\n- **Customers**: End users who browse products and place orders via web browsers\n\n**External Systems:**\n- **Database**: Persistent data storage for products and orders\n\n## Container Diagram (C3-1/C3-2)\n\n```\n+------------------------------------------+\n|              Acme Platform               |\n|                                          |\n|  +-------------+      +---------------+  |\n|  |   c3-1-web  |----->|   c3-2-api    |  |\n|  | Next.js App | HTTP |  Hono Server  |  |\n|  | (Storefront)|      | (REST API)    |  |\n|  +-------------+      +---------------+  |\n|        |                     |           |\n|        v                     v           |\n|  +-------------+      +---------------+  |\n|  |  @acme/ui   |      | @acme/database|  |\n|  | (Components)|      |  (DB Client)  |  |\n|  +-------------+      +---------------+  |\n|        ^                                 |\n|        |                                 |\n|  +------------------+                    |\n|  | @acme/api-client |                    |\n|  | (HTTP Client)    |                    |\n|  +------------------+                    |\n+------------------------------------------+\n```\n\n## Containers\n\n| ID | Name | Technology | Description | Path |\n|----|------|------------|-------------|------|\n| c3-1 | Web Storefront | Next.js 14, React 18 | Customer-facing web application | `apps/web/` |\n| c3-2 | API Server | Hono 4, Bun | REST API for products and orders | `apps/api/` |\n\n## Shared Packages\n\n| Package | Purpose | Used By |\n|---------|---------|---------|\n| `@acme/ui` | Reusable React components (Button, Card, Input) | c3-1-web |\n| `@acme/api-client` | Type-safe HTTP client for API | c3-1-web |\n| `@acme/database` | Database client wrapper | c3-2-api |\n\n## Key Interactions\n\n1. **Product Browsing**: Web → API (`GET /products`) → Database\n2. **Product Details**: Web → API (`GET /products/:id`) → Database\n3. **Order Creation**: Web → API (`POST /orders`) → Database\n\n## Technology Stack\n\n- **Monorepo**: Turborepo 2.x\n- **Frontend**: Next.js 14, React 18\n- **Backend**: Hono 4 (Bun runtime)\n- **Build**: TypeScript 5.x\n- **Package Manager**: pnpm/yarn workspaces\n\n## Architecture Decision Records\n\nSee [adr/](./adr/) for architectural decisions.\n\n- [ADR-000: C3 Adoption](./adr/adr-00000000-c3-adoption.md)\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.W4KkTU4O9h/.c3/README.md",
+        "content": "# Acme Platform - C3 Architecture Documentation\n\n## System Overview\n\nAcme Platform is a modern e-commerce platform built as a Turborepo monorepo. The system provides a web-based storefront for customers to browse products and place orders, backed by a REST API that manages product catalog and order processing.\n\n## System Context (C3-0)\n\n```\n+------------------+          +---------------------------+\n|    Customers     |--------->|      Acme Platform        |\n| (Web Browsers)   |  HTTPS   |    (E-commerce System)    |\n+------------------+          +---------------------------+\n                                         |\n                                         v\n                              +------------------+\n                              |    Database      |\n                              | (Data Storage)   |\n                              +------------------+\n```\n\n**External Actors:**\n- **Customers**: End users who browse products and place orders via web browsers\n\n**External Systems:**\n- **Database**: Persistent data storage for products and orders\n\n## Container Diagram (C3-1/C3-2)\n\n```\n+------------------------------------------+\n|              Acme Platform               |\n|                                          |\n|  +-------------+      +---------------+  |\n|  |   c3-1-web  |----->|   c3-2-api    |  |\n|  | Next.js App | HTTP |  Hono Server  |  |\n|  | (Storefront)|      | (REST API)    |  |\n|  +-------------+      +---------------+  |\n|        |                     |           |\n|        v                     v           |\n|  +-------------+      +---------------+  |\n|  |  @acme/ui   |      | @acme/database|  |\n|  | (Components)|      |  (DB Client)  |  |\n|  +-------------+      +---------------+  |\n|        ^                                 |\n|        |                                 |\n|  +------------------+                    |\n|  | @acme/api-client |                    |\n|  | (HTTP Client)    |                    |\n|  +------------------+                    |\n+------------------------------------------+\n```\n\n## Containers\n\n| ID | Name | Technology | Description | Path |\n|----|------|------------|-------------|------|\n| c3-1 | Web Storefront | Next.js 14, React 18 | Customer-facing web application | `apps/web/` |\n| c3-2 | API Server | Hono 4, Bun | REST API for products and orders | `apps/api/` |\n\n## Shared Packages\n\n| Package | Purpose | Used By |\n|---------|---------|---------|\n| `@acme/ui` | Reusable React components (Button, Card, Input) | c3-1-web |\n| `@acme/api-client` | Type-safe HTTP client for API | c3-1-web |\n| `@acme/database` | Database client wrapper | c3-2-api |\n\n## Key Interactions\n\n1. **Product Browsing**: Web → API (`GET /products`) → Database\n2. **Product Details**: Web → API (`GET /products/:id`) → Database\n3. **Order Creation**: Web → API (`POST /orders`) → Database\n\n## Technology Stack\n\n- **Monorepo**: Turborepo 2.x\n- **Frontend**: Next.js 14, React 18\n- **Backend**: Hono 4 (Bun runtime)\n- **Build**: TypeScript 5.x\n- **Package Manager**: pnpm/yarn workspaces\n\n## Architecture Decision Records\n\nSee [adr/](./adr/) for architectural decisions.\n\n- [ADR-000: C3 Adoption](./adr/adr-00000000-c3-adoption.md)\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:26:25.924Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/.c3/adr/adr-00000000-c3-adoption.md",
+        "content": "# ADR-000: Adopt C3 Architecture Documentation\n\n**ID:** adr-00000000-c3-adoption\n**Status:** Accepted\n**Date:** 2025-01-12\n\n## Context\n\nThe Acme Platform is an e-commerce monorepo that has grown to include multiple applications (web storefront, API server) and shared packages (UI components, API client, database wrapper). As the system evolves, we need a consistent way to:\n\n1. Document system architecture for new team members\n2. Track architectural decisions and their rationale\n3. Maintain alignment between documentation and code\n4. Enable AI-assisted development with clear context\n\n## Decision\n\nWe adopt the C3 (Context, Containers, Components) architecture documentation methodology. This approach provides:\n\n1. **Hierarchical Documentation**: System context → Containers → Components\n2. **Collocated Architecture Records**: ADRs live alongside architecture docs\n3. **Clear ID Scheme**: `c3-{n}` for containers, enabling precise references\n4. **Living Documentation**: Docs evolve with the codebase\n\n## Structure\n\n```\n.c3/\n├── README.md           # System overview (C3-0 Context)\n├── adr/                # Architecture Decision Records\n│   └── adr-00000000-c3-adoption.md\n├── c3-1-web/           # Web Storefront container docs\n│   └── README.md\n└── c3-2-api/           # API Server container docs\n    └── README.md\n```\n\n## Container Assignments\n\n| ID | Container | Path |\n|----|-----------|------|\n| c3-1 | Web Storefront (Next.js) | apps/web/ |\n| c3-2 | API Server (Hono) | apps/api/ |\n\n## Consequences\n\n### Positive\n\n- Single source of truth for architecture documentation\n- Clear mental model for system understanding\n- AI agents can navigate architecture efficiently\n- New developers onboard faster\n\n### Negative\n\n- Additional maintenance overhead for docs\n- Requires discipline to keep docs current\n\n### Mitigations\n\n- ADR process ensures decisions are captured when made\n- Container README templates reduce documentation friction\n- Periodic audits verify doc-code alignment\n\n## Related\n\n- [C3 Methodology](https://c4model.com/) - Inspired by C4 model\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:26:25.943Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/.c3/adr/adr-00000000-c3-adoption.md",
+        "content": "# ADR-000: Adopt C3 Architecture Documentation\n\n**ID:** adr-00000000-c3-adoption\n**Status:** Accepted\n**Date:** 2025-01-12\n\n## Context\n\nThe Acme Platform is an e-commerce monorepo that has grown to include multiple applications (web storefront, API server) and shared packages (UI components, API client, database wrapper). As the system evolves, we need a consistent way to:\n\n1. Document system architecture for new team members\n2. Track architectural decisions and their rationale\n3. Maintain alignment between documentation and code\n4. Enable AI-assisted development with clear context\n\n## Decision\n\nWe adopt the C3 (Context, Containers, Components) architecture documentation methodology. This approach provides:\n\n1. **Hierarchical Documentation**: System context → Containers → Components\n2. **Collocated Architecture Records**: ADRs live alongside architecture docs\n3. **Clear ID Scheme**: `c3-{n}` for containers, enabling precise references\n4. **Living Documentation**: Docs evolve with the codebase\n\n## Structure\n\n```\n.c3/\n├── README.md           # System overview (C3-0 Context)\n├── adr/                # Architecture Decision Records\n│   └── adr-00000000-c3-adoption.md\n├── c3-1-web/           # Web Storefront container docs\n│   └── README.md\n└── c3-2-api/           # API Server container docs\n    └── README.md\n```\n\n## Container Assignments\n\n| ID | Container | Path |\n|----|-----------|------|\n| c3-1 | Web Storefront (Next.js) | apps/web/ |\n| c3-2 | API Server (Hono) | apps/api/ |\n\n## Consequences\n\n### Positive\n\n- Single source of truth for architecture documentation\n- Clear mental model for system understanding\n- AI agents can navigate architecture efficiently\n- New developers onboard faster\n\n### Negative\n\n- Additional maintenance overhead for docs\n- Requires discipline to keep docs current\n\n### Mitigations\n\n- ADR process ensures decisions are captured when made\n- Container README templates reduce documentation friction\n- Periodic audits verify doc-code alignment\n\n## Related\n\n- [C3 Methodology](https://c4model.com/) - Inspired by C4 model\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.W4KkTU4O9h/.c3/adr/adr-00000000-c3-adoption.md",
+        "content": "# ADR-000: Adopt C3 Architecture Documentation\n\n**ID:** adr-00000000-c3-adoption\n**Status:** Accepted\n**Date:** 2025-01-12\n\n## Context\n\nThe Acme Platform is an e-commerce monorepo that has grown to include multiple applications (web storefront, API server) and shared packages (UI components, API client, database wrapper). As the system evolves, we need a consistent way to:\n\n1. Document system architecture for new team members\n2. Track architectural decisions and their rationale\n3. Maintain alignment between documentation and code\n4. Enable AI-assisted development with clear context\n\n## Decision\n\nWe adopt the C3 (Context, Containers, Components) architecture documentation methodology. This approach provides:\n\n1. **Hierarchical Documentation**: System context → Containers → Components\n2. **Collocated Architecture Records**: ADRs live alongside architecture docs\n3. **Clear ID Scheme**: `c3-{n}` for containers, enabling precise references\n4. **Living Documentation**: Docs evolve with the codebase\n\n## Structure\n\n```\n.c3/\n├── README.md           # System overview (C3-0 Context)\n├── adr/                # Architecture Decision Records\n│   └── adr-00000000-c3-adoption.md\n├── c3-1-web/           # Web Storefront container docs\n│   └── README.md\n└── c3-2-api/           # API Server container docs\n    └── README.md\n```\n\n## Container Assignments\n\n| ID | Container | Path |\n|----|-----------|------|\n| c3-1 | Web Storefront (Next.js) | apps/web/ |\n| c3-2 | API Server (Hono) | apps/api/ |\n\n## Consequences\n\n### Positive\n\n- Single source of truth for architecture documentation\n- Clear mental model for system understanding\n- AI agents can navigate architecture efficiently\n- New developers onboard faster\n\n### Negative\n\n- Additional maintenance overhead for docs\n- Requires discipline to keep docs current\n\n### Mitigations\n\n- ADR process ensures decisions are captured when made\n- Container README templates reduce documentation friction\n- Periodic audits verify doc-code alignment\n\n## Related\n\n- [C3 Methodology](https://c4model.com/) - Inspired by C4 model\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:26:25.956Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/.c3/c3-1-web/README.md",
+        "content": "# c3-1: Web Storefront\n\n**Container ID:** c3-1-web\n**Technology:** Next.js 14, React 18\n**Path:** `apps/web/`\n\n## Purpose\n\nCustomer-facing web application providing the e-commerce storefront experience. Users can browse products and add items to cart.\n\n## Dependencies\n\n| Package | Purpose |\n|---------|---------|\n| `@acme/ui` | Shared React components (Button, Card, Input) |\n| `@acme/api-client` | Type-safe HTTP client for communicating with c3-2-api |\n\n## Key Files\n\n| File | Purpose |\n|------|---------|\n| `src/app/layout.tsx` | Root layout component |\n| `src/app/page.tsx` | Homepage - displays product listing |\n\n## Interactions\n\n```\n[Browser] --> [c3-1-web] --> [c3-2-api]\n                  |\n                  v\n            [@acme/ui]\n            [@acme/api-client]\n```\n\n### Outbound\n\n- **c3-2-api**: Fetches product data, creates orders via `@acme/api-client`\n\n## Development\n\n```bash\n# Start development server\nturbo dev --filter=@acme/web\n\n# Build for production\nturbo build --filter=@acme/web\n```\n\n## Components\n\nThe container uses Next.js App Router with React Server Components.\n\n### Pages\n\n- `/` - Homepage with product grid\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:26:25.968Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/.c3/c3-1-web/README.md",
+        "content": "# c3-1: Web Storefront\n\n**Container ID:** c3-1-web\n**Technology:** Next.js 14, React 18\n**Path:** `apps/web/`\n\n## Purpose\n\nCustomer-facing web application providing the e-commerce storefront experience. Users can browse products and add items to cart.\n\n## Dependencies\n\n| Package | Purpose |\n|---------|---------|\n| `@acme/ui` | Shared React components (Button, Card, Input) |\n| `@acme/api-client` | Type-safe HTTP client for communicating with c3-2-api |\n\n## Key Files\n\n| File | Purpose |\n|------|---------|\n| `src/app/layout.tsx` | Root layout component |\n| `src/app/page.tsx` | Homepage - displays product listing |\n\n## Interactions\n\n```\n[Browser] --> [c3-1-web] --> [c3-2-api]\n                  |\n                  v\n            [@acme/ui]\n            [@acme/api-client]\n```\n\n### Outbound\n\n- **c3-2-api**: Fetches product data, creates orders via `@acme/api-client`\n\n## Development\n\n```bash\n# Start development server\nturbo dev --filter=@acme/web\n\n# Build for production\nturbo build --filter=@acme/web\n```\n\n## Components\n\nThe container uses Next.js App Router with React Server Components.\n\n### Pages\n\n- `/` - Homepage with product grid\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.W4KkTU4O9h/.c3/c3-1-web/README.md",
+        "content": "# c3-1: Web Storefront\n\n**Container ID:** c3-1-web\n**Technology:** Next.js 14, React 18\n**Path:** `apps/web/`\n\n## Purpose\n\nCustomer-facing web application providing the e-commerce storefront experience. Users can browse products and add items to cart.\n\n## Dependencies\n\n| Package | Purpose |\n|---------|---------|\n| `@acme/ui` | Shared React components (Button, Card, Input) |\n| `@acme/api-client` | Type-safe HTTP client for communicating with c3-2-api |\n\n## Key Files\n\n| File | Purpose |\n|------|---------|\n| `src/app/layout.tsx` | Root layout component |\n| `src/app/page.tsx` | Homepage - displays product listing |\n\n## Interactions\n\n```\n[Browser] --> [c3-1-web] --> [c3-2-api]\n                  |\n                  v\n            [@acme/ui]\n            [@acme/api-client]\n```\n\n### Outbound\n\n- **c3-2-api**: Fetches product data, creates orders via `@acme/api-client`\n\n## Development\n\n```bash\n# Start development server\nturbo dev --filter=@acme/web\n\n# Build for production\nturbo build --filter=@acme/web\n```\n\n## Components\n\nThe container uses Next.js App Router with React Server Components.\n\n### Pages\n\n- `/` - Homepage with product grid\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:26:25.980Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/.c3/c3-2-api/README.md",
+        "content": "# c3-2: API Server\n\n**Container ID:** c3-2-api\n**Technology:** Hono 4, Bun\n**Path:** `apps/api/`\n\n## Purpose\n\nREST API server providing endpoints for product catalog and order management. Serves as the backend for the web storefront (c3-1-web).\n\n## Dependencies\n\n| Package | Purpose |\n|---------|---------|\n| `@acme/database` | Database client wrapper for data persistence |\n\n## Key Files\n\n| File | Purpose |\n|------|---------|\n| `src/index.ts` | Main application entry, route definitions |\n\n## API Endpoints\n\n| Method | Path | Description |\n|--------|------|-------------|\n| `GET` | `/products` | List all products |\n| `GET` | `/products/:id` | Get product by ID |\n| `POST` | `/orders` | Create a new order |\n\n## Interactions\n\n```\n[c3-1-web] --> [c3-2-api] --> [Database]\n                  |\n                  v\n            [@acme/database]\n```\n\n### Inbound\n\n- **c3-1-web**: Receives HTTP requests for products and orders\n\n### Outbound\n\n- **Database**: Persists and retrieves data via `@acme/database`\n\n## Development\n\n```bash\n# Start development server (with hot reload)\nturbo dev --filter=@acme/api\n\n# Build for production\nturbo build --filter=@acme/api\n```\n\n## Middleware\n\n- **CORS**: Enabled globally for cross-origin requests from web storefront\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:26:25.996Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.W4KkTU4O9h/.c3/c3-2-api/README.md",
+        "content": "# c3-2: API Server\n\n**Container ID:** c3-2-api\n**Technology:** Hono 4, Bun\n**Path:** `apps/api/`\n\n## Purpose\n\nREST API server providing endpoints for product catalog and order management. Serves as the backend for the web storefront (c3-1-web).\n\n## Dependencies\n\n| Package | Purpose |\n|---------|---------|\n| `@acme/database` | Database client wrapper for data persistence |\n\n## Key Files\n\n| File | Purpose |\n|------|---------|\n| `src/index.ts` | Main application entry, route definitions |\n\n## API Endpoints\n\n| Method | Path | Description |\n|--------|------|-------------|\n| `GET` | `/products` | List all products |\n| `GET` | `/products/:id` | Get product by ID |\n| `POST` | `/orders` | Create a new order |\n\n## Interactions\n\n```\n[c3-1-web] --> [c3-2-api] --> [Database]\n                  |\n                  v\n            [@acme/database]\n```\n\n### Inbound\n\n- **c3-1-web**: Receives HTTP requests for products and orders\n\n### Outbound\n\n- **Database**: Persists and retrieves data via `@acme/database`\n\n## Development\n\n```bash\n# Start development server (with hot reload)\nturbo dev --filter=@acme/api\n\n# Build for production\nturbo build --filter=@acme/api\n```\n\n## Middleware\n\n- **CORS**: Enabled globally for cross-origin requests from web storefront\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.W4KkTU4O9h/.c3/c3-2-api/README.md",
+        "content": "# c3-2: API Server\n\n**Container ID:** c3-2-api\n**Technology:** Hono 4, Bun\n**Path:** `apps/api/`\n\n## Purpose\n\nREST API server providing endpoints for product catalog and order management. Serves as the backend for the web storefront (c3-1-web).\n\n## Dependencies\n\n| Package | Purpose |\n|---------|---------|\n| `@acme/database` | Database client wrapper for data persistence |\n\n## Key Files\n\n| File | Purpose |\n|------|---------|\n| `src/index.ts` | Main application entry, route definitions |\n\n## API Endpoints\n\n| Method | Path | Description |\n|--------|------|-------------|\n| `GET` | `/products` | List all products |\n| `GET` | `/products/:id` | Get product by ID |\n| `POST` | `/orders` | Create a new order |\n\n## Interactions\n\n```\n[c3-1-web] --> [c3-2-api] --> [Database]\n                  |\n                  v\n            [@acme/database]\n```\n\n### Inbound\n\n- **c3-1-web**: Receives HTTP requests for products and orders\n\n### Outbound\n\n- **Database**: Persists and retrieves data via `@acme/database`\n\n## Development\n\n```bash\n# Start development server (with hot reload)\nturbo dev --filter=@acme/api\n\n# Build for production\nturbo build --filter=@acme/api\n```\n\n## Middleware\n\n- **CORS**: Enabled globally for cross-origin requests from web storefront\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:26:28.593Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "find /tmp/tmp.W4KkTU4O9h/.c3 -type f | head -20",
+        "description": "Verify C3 structure was created"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:26:28.623Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "find /tmp/tmp.W4KkTU4O9h/.c3 -type f | head -20",
+        "description": "Verify C3 structure was created"
+      },
+      "result": {
+        "stdout": "/tmp/tmp.W4KkTU4O9h/.c3/c3-2-api/README.md\n/tmp/tmp.W4KkTU4O9h/.c3/README.md\n/tmp/tmp.W4KkTU4O9h/.c3/adr/adr-00000000-c3-adoption.md\n/tmp/tmp.W4KkTU4O9h/.c3/c3-1-web/README.md",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    }
+  ],
+  "judgment": {
+    "pass": true,
+    "score": 100,
+    "expectations": [
+      {
+        "text": ".c3/README.md exists and describes Acme Platform monorepo",
+        "pass": true,
+        "reasoning": "The .c3/README.md file exists and clearly describes 'Acme Platform is a modern e-commerce platform built as a Turborepo monorepo' with comprehensive system overview and architecture documentation."
+      },
+      {
+        "text": "At least 2 containers are defined for the apps (web, api)",
+        "pass": true,
+        "reasoning": "Two containers are clearly defined: c3-1-web (Web Storefront, Next.js) at apps/web/ and c3-2-api (API Server, Hono) at apps/api/. Each has its own README.md in dedicated directories."
+      },
+      {
+        "text": "Shared packages (ui, api-client, database) are documented or referenced",
+        "pass": true,
+        "reasoning": "All three shared packages are documented in the main README.md under 'Shared Packages' table: @acme/ui, @acme/api-client, and @acme/database. They are also referenced in the container diagrams and individual container documentation."
+      },
+      {
+        "text": "Container dependencies on shared packages are captured",
+        "pass": true,
+        "reasoning": "Dependencies are clearly captured: c3-1-web documents dependencies on @acme/ui and @acme/api-client in its README. c3-2-api documents dependency on @acme/database. The main README also shows 'Used By' column mapping packages to containers."
+      },
+      {
+        "text": "The monorepo/Turborepo structure is acknowledged",
+        "pass": true,
+        "reasoning": "Turborepo is explicitly mentioned multiple times: 'built as a Turborepo monorepo' in the overview, 'Monorepo: Turborepo 2.x' in Technology Stack, and development commands show 'turbo dev' and 'turbo build' usage patterns."
+      }
+    ],
+    "summary": "The C3 documentation comprehensively documents the Acme Platform Turborepo monorepo with well-structured container definitions for web and api apps, clear documentation of shared packages and their usage, and explicit acknowledgment of the monorepo architecture."
+  }
+}

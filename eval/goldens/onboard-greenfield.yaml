@@ -1,0 +1,59 @@
+name: "Onboard Greenfield SaaS"
+skill: "c3:onboard"
+category: "greenfield"
+
+description: |
+  Golden example for onboarding a greenfield SaaS project to C3 architecture.
+  This represents a complex, AI-powered knowledge management application with
+  spatial canvas, graph database, real-time collaboration, and multi-provider AI.
+
+input_context:
+  project_name: "expansive.ly"
+  domain: "AI-powered spatial knowledge canvas for knowledge management"
+
+  features:
+    - Spatial canvas (Miro/FigJam style) - nodes positioned freely in 2D
+    - Concepts as knowledge units (abstract ideas containing resources)
+    - Multi-mode linking (manual + AI-suggested + auto-inferred)
+    - Full AI layer (chat, suggestions, auto-enrichment)
+    - Hybrid onboarding paths (templates + AI personalization)
+    - Collaborative + import-heavy content
+    - Real-time collaboration (Figma-style live cursors)
+
+  tech_stack:
+    frontend: "TanStack Router (React)"
+    backend: "Bun runtime"
+    database: "Neo4j (graph database)"
+    ai: "Multiple providers (flexible)"
+    realtime: "WebSocket"
+    deployment: "Cloud SaaS (multi-tenant)"
+
+evaluation_dimensions:
+  architectural_clarity:
+    - "System boundaries are clear - what's in vs out"
+    - "Container responsibilities are distinct and non-overlapping"
+    - "Component roles explained in terms of goals, not just code"
+    - "Data flow between parts is understandable"
+
+  decision_capture:
+    - "Key architectural decisions are documented (ADR or equivalent)"
+    - "Rationale for choices is explained, not just what was chosen"
+    - "Trade-offs acknowledged where relevant"
+
+  maintainability:
+    - "Documentation enables new team members to navigate codebase"
+    - "Cross-cutting patterns are identified and reusable"
+
+  appropriate_depth:
+    - "Level of detail matches system complexity"
+    - "Not over-documented (no speculative futures)"
+    - "Not under-documented (core concepts explained)"
+
+created: "2026-01-13"
+source_session: "capture-and-refine"
+refinements:
+  - "Added missing type: adr to ADR frontmatter"
+  - "Created 4 missing reference files (keyboard-shortcuts, design-system, api-conventions, error-handling)"
+  - "Added Goal sections to all reference files"
+  - "Added Consequences and Audit Record sections to ADR"
+  - "Added Redis to External Systems"

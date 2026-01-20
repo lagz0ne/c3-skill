@@ -1,0 +1,14 @@
+{
+  "name": "Onboard simple Express app",
+  "pass": false,
+  "score": 0,
+  "duration": 887,
+  "trace": [],
+  "judgment": {
+    "pass": false,
+    "score": 0,
+    "expectations": [],
+    "summary": "Error: Error: Could not resolve authentication method. Expected either apiKey or authToken to be set. Or for one of the \"X-Api-Key\" or \"Authorization\" headers to be explicitly omitted"
+  },
+  "error": "Error: Could not resolve authentication method. Expected either apiKey or authToken to be set. Or for one of the \"X-Api-Key\" or \"Authorization\" headers to be explicitly omitted"
+}

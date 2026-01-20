@@ -2,6 +2,22 @@
 
 Detailed validation rules for Mode: Audit in the c3 agent.
 
+## Contents
+
+- [Checks Summary](#checks-summary)
+- [Audit Procedure](#audit-procedure)
+  - Phase 1: Gather
+  - Phase 2: Inventory vs Code
+  - Phase 3: Component Categorization
+  - Phase 4: References Validation
+  - Phase 5: Diagram Accuracy
+  - Phase 6: ADR Lifecycle
+  - Phase 7: Reference Validation
+- [Audit Output Template](#audit-output-template)
+- [Drift Resolution Guidance](#drift-resolution-guidance)
+- [Audit Scope Options](#audit-scope-options)
+- [Discovery-Based Audit](#discovery-based-audit-alternative-approach)
+
 ---
 
 ## Checks Summary

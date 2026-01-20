@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-12T10-38-24-123Z",
+  "total": 1,
+  "passed": 0,
+  "failed": 1,
+  "avgScore": 60,
+  "results": [
+    {
+      "name": "Add new feature via C3 alter workflow",
+      "pass": false,
+      "score": 60,
+      "duration": 76832,
+      "summary": "The workflow correctly created an ADR for the notification feature with proper structure and asked for user approval. However, after the user accepted the ADR, the implementation step failed to create the actual c3-106 component document and failed to update the container README with the new component entry."
+    }
+  ]
+}

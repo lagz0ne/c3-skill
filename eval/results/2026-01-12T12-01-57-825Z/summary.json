@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-12T12-01-57-825Z",
+  "total": 1,
+  "passed": 1,
+  "failed": 0,
+  "avgScore": 100,
+  "results": [
+    {
+      "name": "Onboard simple Express app",
+      "pass": true,
+      "score": 100,
+      "duration": 103265,
+      "summary": "All expectations are fully met. The output demonstrates a complete C3 architecture documentation setup for the Simple Shop API, including the system README, API container directory with README, foundation component (auth middleware), feature components (users and products routes), and the required ADR-000 adoption decision record."
+    }
+  ]
+}

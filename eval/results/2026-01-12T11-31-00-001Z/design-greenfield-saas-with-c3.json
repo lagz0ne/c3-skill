@@ -1,0 +1,1130 @@
+{
+  "name": "Design greenfield SaaS with C3",
+  "pass": true,
+  "score": 100,
+  "duration": 317263,
+  "trace": [
+    {
+      "timestamp": "2026-01-12T11:20:09.100Z",
+      "event": "PreToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:onboard"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:20:09.481Z",
+      "event": "PostToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:onboard"
+      },
+      "result": {
+        "success": true,
+        "commandName": "c3-skill:onboard",
+        "allowedTools": [
+          "Bash(rm:*)",
+          "Bash(test:*)",
+          "Bash(PROJECT=*)",
+          "Read",
+          "Glob",
+          "Grep",
+          "Write",
+          "Edit",
+          "AskUserQuestion",
+          "Skill"
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:20:12.855Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "ls -la /tmp/tmp.5QTchKEkSQ",
+        "description": "List contents of working directory"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:20:12.980Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "ls -la /tmp/tmp.5QTchKEkSQ",
+        "description": "List contents of working directory"
+      },
+      "result": {
+        "stdout": ".rw-r--r-- 128 lagz0ne 12 Jan 18:20 package.json\n.rw-r--r-- 350 lagz0ne 12 Jan 18:20 README.md\ndrwxr-xr-x   - lagz0ne 12 Jan 18:20 src",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:20:15.325Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "mkdir -p .c3/adr .c3/diagrams",
+        "description": "Create C3 directory structure"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:20:15.383Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "mkdir -p .c3/adr .c3/diagrams",
+        "description": "Create C3 directory structure"
+      },
+      "result": {
+        "stdout": "",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:20:19.517Z",
+      "event": "PreToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Create C3 Context diagram (c3-context.md)",
+            "status": "in_progress",
+            "activeForm": "Creating C3 Context diagram"
+          },
+          {
+            "content": "Create Container diagram (c3-container.md)",
+            "status": "pending",
+            "activeForm": "Creating Container diagram"
+          },
+          {
+            "content": "Create Component diagrams for each container",
+            "status": "pending",
+            "activeForm": "Creating Component diagrams"
+          },
+          {
+            "content": "Create ADR-000 System Blueprint",
+            "status": "pending",
+            "activeForm": "Creating ADR-000 System Blueprint"
+          },
+          {
+            "content": "Create c3-index.md as navigation hub",
+            "status": "pending",
+            "activeForm": "Creating c3-index.md navigation hub"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:20:19.528Z",
+      "event": "PostToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Create C3 Context diagram (c3-context.md)",
+            "status": "in_progress",
+            "activeForm": "Creating C3 Context diagram"
+          },
+          {
+            "content": "Create Container diagram (c3-container.md)",
+            "status": "pending",
+            "activeForm": "Creating Container diagram"
+          },
+          {
+            "content": "Create Component diagrams for each container",
+            "status": "pending",
+            "activeForm": "Creating Component diagrams"
+          },
+          {
+            "content": "Create ADR-000 System Blueprint",
+            "status": "pending",
+            "activeForm": "Creating ADR-000 System Blueprint"
+          },
+          {
+            "content": "Create c3-index.md as navigation hub",
+            "status": "pending",
+            "activeForm": "Creating c3-index.md navigation hub"
+          }
+        ]
+      },
+      "result": {
+        "oldTodos": [],
+        "newTodos": [
+          {
+            "content": "Create C3 Context diagram (c3-context.md)",
+            "status": "in_progress",
+            "activeForm": "Creating C3 Context diagram"
+          },
+          {
+            "content": "Create Container diagram (c3-container.md)",
+            "status": "pending",
+            "activeForm": "Creating Container diagram"
+          },
+          {
+            "content": "Create Component diagrams for each container",
+            "status": "pending",
+            "activeForm": "Creating Component diagrams"
+          },
+          {
+            "content": "Create ADR-000 System Blueprint",
+            "status": "pending",
+            "activeForm": "Creating ADR-000 System Blueprint"
+          },
+          {
+            "content": "Create c3-index.md as navigation hub",
+            "status": "pending",
+            "activeForm": "Creating c3-index.md navigation hub"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:20:34.907Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/Users/jmcmurry/taskflow/.c3/c3-context.md",
+        "content": "# C3 Context: TaskFlow\n\n> Task management SaaS for small teams with real-time collaboration\n\n## System Boundary\n\n```\n┌─────────────────────────────────────────────────────────────────────────────┐\n│                              TASKFLOW SYSTEM                                │\n│                                                                             │\n│  \"Collaborative task management platform enabling small teams to           │\n│   organize work, track progress, and collaborate in real-time\"             │\n│                                                                             │\n└─────────────────────────────────────────────────────────────────────────────┘\n         ▲                    ▲                    ▲\n         │                    │                    │\n    ┌────┴────┐          ┌────┴────┐          ┌────┴────┐\n    │  Team   │          │  Team   │          │ Future  │\n    │ Members │          │ Admins  │          │ Mobile  │\n    │ (Users) │          │         │          │  Apps   │\n    └─────────┘          └─────────┘          └─────────┘\n```\n\n## Actors\n\n| Actor | Description | Interactions |\n|-------|-------------|--------------|\n| **Team Member** | End user who manages tasks | Create/update tasks, collaborate on boards, receive notifications |\n| **Team Admin** | Workspace administrator | Manage team members, configure workspace settings, billing |\n| **Mobile App** (Future) | Native mobile applications | Consume REST API for task management on-the-go |\n\n## External Systems\n\n| System | Integration Type | Purpose |\n|--------|------------------|---------|\n| **Google OAuth** | OAuth 2.0 | User authentication and identity |\n| **Email Service** (Future) | SMTP/API | Notifications, invitations |\n| **File Storage** (Future) | S3-compatible | Task attachments |\n\n## Key Quality Attributes\n\n1. **Real-time Collaboration** - Changes reflect instantly across all connected clients\n2. **Multi-tenancy** - Strict data isolation between team workspaces\n3. **Scalability** - Modular monolith designed for future service extraction\n4. **API-first** - REST API supports web and future mobile clients\n\n---\n*C3 ID: c3-context | Updated: 2025-01-12*\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:20:34.907Z",
+      "event": "Blocked",
+      "tool": "Write",
+      "input": {
+        "file_path": "/Users/jmcmurry/taskflow/.c3/c3-context.md",
+        "content": "# C3 Context: TaskFlow\n\n> Task management SaaS for small teams with real-time collaboration\n\n## System Boundary\n\n```\n┌─────────────────────────────────────────────────────────────────────────────┐\n│                              TASKFLOW SYSTEM                                │\n│                                                                             │\n│  \"Collaborative task management platform enabling small teams to           │\n│   organize work, track progress, and collaborate in real-time\"             │\n│                                                                             │\n└─────────────────────────────────────────────────────────────────────────────┘\n         ▲                    ▲                    ▲\n         │                    │                    │\n    ┌────┴────┐          ┌────┴────┐          ┌────┴────┐\n    │  Team   │          │  Team   │          │ Future  │\n    │ Members │          │ Admins  │          │ Mobile  │\n    │ (Users) │          │         │          │  Apps   │\n    └─────────┘          └─────────┘          └─────────┘\n```\n\n## Actors\n\n| Actor | Description | Interactions |\n|-------|-------------|--------------|\n| **Team Member** | End user who manages tasks | Create/update tasks, collaborate on boards, receive notifications |\n| **Team Admin** | Workspace administrator | Manage team members, configure workspace settings, billing |\n| **Mobile App** (Future) | Native mobile applications | Consume REST API for task management on-the-go |\n\n## External Systems\n\n| System | Integration Type | Purpose |\n|--------|------------------|---------|\n| **Google OAuth** | OAuth 2.0 | User authentication and identity |\n| **Email Service** (Future) | SMTP/API | Notifications, invitations |\n| **File Storage** (Future) | S3-compatible | Task attachments |\n\n## Key Quality Attributes\n\n1. **Real-time Collaboration** - Changes reflect instantly across all connected clients\n2. **Multi-tenancy** - Strict data isolation between team workspaces\n3. **Scalability** - Modular monolith designed for future service extraction\n4. **API-first** - REST API supports web and future mobile clients\n\n---\n*C3 ID: c3-context | Updated: 2025-01-12*\n"
+      },
+      "blocked": true,
+      "reason": "Path outside sandbox: /Users/jmcmurry/taskflow/.c3/c3-context.md"
+    },
+    {
+      "timestamp": "2026-01-12T11:20:38.460Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "pwd",
+        "description": "Check current working directory"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:20:38.505Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "pwd",
+        "description": "Check current working directory"
+      },
+      "result": {
+        "stdout": "/tmp/tmp.5QTchKEkSQ",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:20:40.891Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "mkdir -p .c3/adr .c3/diagrams && ls -la .c3/",
+        "description": "Create C3 directory structure in current directory"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:20:40.931Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "mkdir -p .c3/adr .c3/diagrams && ls -la .c3/",
+        "description": "Create C3 directory structure in current directory"
+      },
+      "result": {
+        "stdout": "drwxr-xr-x - lagz0ne 12 Jan 18:20 adr\ndrwxr-xr-x - lagz0ne 12 Jan 18:20 diagrams",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:20:47.122Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.5QTchKEkSQ/.c3/c3-context.md",
+        "content": "# C3 Context: TaskFlow\n\n> Task management SaaS for small teams with real-time collaboration\n\n## System Boundary\n\n```\n┌─────────────────────────────────────────────────────────────────────────────┐\n│                              TASKFLOW SYSTEM                                │\n│                                                                             │\n│  \"Collaborative task management platform enabling small teams to           │\n│   organize work, track progress, and collaborate in real-time\"             │\n│                                                                             │\n└─────────────────────────────────────────────────────────────────────────────┘\n         ▲                    ▲                    ▲\n         │                    │                    │\n    ┌────┴────┐          ┌────┴────┐          ┌────┴────┐\n    │  Team   │          │  Team   │          │ Future  │\n    │ Members │          │ Admins  │          │  Mobile │\n    │ (Users) │          │         │          │  Apps   │\n    └─────────┘          └─────────┘          └─────────┘\n```\n\n## Actors\n\n| Actor | Description | Interactions |\n|-------|-------------|--------------|\n| **Team Member** | End user who manages tasks | Create/update tasks, collaborate on boards, receive notifications |\n| **Team Admin** | Workspace administrator | Manage team members, configure workspace settings, billing |\n| **Mobile App** (Future) | Native mobile applications | Consume REST API for task management on-the-go |\n\n## External Systems\n\n| System | Integration Type | Purpose |\n|--------|------------------|---------|\n| **Google OAuth** | OAuth 2.0 | User authentication and identity |\n| **Email Service** (Future) | SMTP/API | Notifications, invitations |\n| **File Storage** (Future) | S3-compatible | Task attachments |\n\n## Key Quality Attributes\n\n1. **Real-time Collaboration** - Changes reflect instantly across all connected clients\n2. **Multi-tenancy** - Strict data isolation between team workspaces\n3. **Scalability** - Modular monolith designed for future service extraction\n4. **API-first** - REST API supports web and future mobile clients\n\n---\n*C3 ID: c3-context | Updated: 2025-01-12*\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:20:47.180Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.5QTchKEkSQ/.c3/c3-context.md",
+        "content": "# C3 Context: TaskFlow\n\n> Task management SaaS for small teams with real-time collaboration\n\n## System Boundary\n\n```\n┌─────────────────────────────────────────────────────────────────────────────┐\n│                              TASKFLOW SYSTEM                                │\n│                                                                             │\n│  \"Collaborative task management platform enabling small teams to           │\n│   organize work, track progress, and collaborate in real-time\"             │\n│                                                                             │\n└─────────────────────────────────────────────────────────────────────────────┘\n         ▲                    ▲                    ▲\n         │                    │                    │\n    ┌────┴────┐          ┌────┴────┐          ┌────┴────┐\n    │  Team   │          │  Team   │          │ Future  │\n    │ Members │          │ Admins  │          │  Mobile │\n    │ (Users) │          │         │          │  Apps   │\n    └─────────┘          └─────────┘          └─────────┘\n```\n\n## Actors\n\n| Actor | Description | Interactions |\n|-------|-------------|--------------|\n| **Team Member** | End user who manages tasks | Create/update tasks, collaborate on boards, receive notifications |\n| **Team Admin** | Workspace administrator | Manage team members, configure workspace settings, billing |\n| **Mobile App** (Future) | Native mobile applications | Consume REST API for task management on-the-go |\n\n## External Systems\n\n| System | Integration Type | Purpose |\n|--------|------------------|---------|\n| **Google OAuth** | OAuth 2.0 | User authentication and identity |\n| **Email Service** (Future) | SMTP/API | Notifications, invitations |\n| **File Storage** (Future) | S3-compatible | Task attachments |\n\n## Key Quality Attributes\n\n1. **Real-time Collaboration** - Changes reflect instantly across all connected clients\n2. **Multi-tenancy** - Strict data isolation between team workspaces\n3. **Scalability** - Modular monolith designed for future service extraction\n4. **API-first** - REST API supports web and future mobile clients\n\n---\n*C3 ID: c3-context | Updated: 2025-01-12*\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.5QTchKEkSQ/.c3/c3-context.md",
+        "content": "# C3 Context: TaskFlow\n\n> Task management SaaS for small teams with real-time collaboration\n\n## System Boundary\n\n```\n┌─────────────────────────────────────────────────────────────────────────────┐\n│                              TASKFLOW SYSTEM                                │\n│                                                                             │\n│  \"Collaborative task management platform enabling small teams to           │\n│   organize work, track progress, and collaborate in real-time\"             │\n│                                                                             │\n└─────────────────────────────────────────────────────────────────────────────┘\n         ▲                    ▲                    ▲\n         │                    │                    │\n    ┌────┴────┐          ┌────┴────┐          ┌────┴────┐\n    │  Team   │          │  Team   │          │ Future  │\n    │ Members │          │ Admins  │          │  Mobile │\n    │ (Users) │          │         │          │  Apps   │\n    └─────────┘          └─────────┘          └─────────┘\n```\n\n## Actors\n\n| Actor | Description | Interactions |\n|-------|-------------|--------------|\n| **Team Member** | End user who manages tasks | Create/update tasks, collaborate on boards, receive notifications |\n| **Team Admin** | Workspace administrator | Manage team members, configure workspace settings, billing |\n| **Mobile App** (Future) | Native mobile applications | Consume REST API for task management on-the-go |\n\n## External Systems\n\n| System | Integration Type | Purpose |\n|--------|------------------|---------|\n| **Google OAuth** | OAuth 2.0 | User authentication and identity |\n| **Email Service** (Future) | SMTP/API | Notifications, invitations |\n| **File Storage** (Future) | S3-compatible | Task attachments |\n\n## Key Quality Attributes\n\n1. **Real-time Collaboration** - Changes reflect instantly across all connected clients\n2. **Multi-tenancy** - Strict data isolation between team workspaces\n3. **Scalability** - Modular monolith designed for future service extraction\n4. **API-first** - REST API supports web and future mobile clients\n\n---\n*C3 ID: c3-context | Updated: 2025-01-12*\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:20:51.587Z",
+      "event": "PreToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Create C3 Context diagram (c3-context.md)",
+            "status": "completed",
+            "activeForm": "Creating C3 Context diagram"
+          },
+          {
+            "content": "Create Container diagram (c3-container.md)",
+            "status": "in_progress",
+            "activeForm": "Creating Container diagram"
+          },
+          {
+            "content": "Create Component diagrams for each container",
+            "status": "pending",
+            "activeForm": "Creating Component diagrams"
+          },
+          {
+            "content": "Create ADR-000 System Blueprint",
+            "status": "pending",
+            "activeForm": "Creating ADR-000 System Blueprint"
+          },
+          {
+            "content": "Create c3-index.md as navigation hub",
+            "status": "pending",
+            "activeForm": "Creating c3-index.md navigation hub"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:20:51.608Z",
+      "event": "PostToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Create C3 Context diagram (c3-context.md)",
+            "status": "completed",
+            "activeForm": "Creating C3 Context diagram"
+          },
+          {
+            "content": "Create Container diagram (c3-container.md)",
+            "status": "in_progress",
+            "activeForm": "Creating Container diagram"
+          },
+          {
+            "content": "Create Component diagrams for each container",
+            "status": "pending",
+            "activeForm": "Creating Component diagrams"
+          },
+          {
+            "content": "Create ADR-000 System Blueprint",
+            "status": "pending",
+            "activeForm": "Creating ADR-000 System Blueprint"
+          },
+          {
+            "content": "Create c3-index.md as navigation hub",
+            "status": "pending",
+            "activeForm": "Creating c3-index.md navigation hub"
+          }
+        ]
+      },
+      "result": {
+        "oldTodos": [
+          {
+            "content": "Create C3 Context diagram (c3-context.md)",
+            "status": "in_progress",
+            "activeForm": "Creating C3 Context diagram"
+          },
+          {
+            "content": "Create Container diagram (c3-container.md)",
+            "status": "pending",
+            "activeForm": "Creating Container diagram"
+          },
+          {
+            "content": "Create Component diagrams for each container",
+            "status": "pending",
+            "activeForm": "Creating Component diagrams"
+          },
+          {
+            "content": "Create ADR-000 System Blueprint",
+            "status": "pending",
+            "activeForm": "Creating ADR-000 System Blueprint"
+          },
+          {
+            "content": "Create c3-index.md as navigation hub",
+            "status": "pending",
+            "activeForm": "Creating c3-index.md navigation hub"
+          }
+        ],
+        "newTodos": [
+          {
+            "content": "Create C3 Context diagram (c3-context.md)",
+            "status": "completed",
+            "activeForm": "Creating C3 Context diagram"
+          },
+          {
+            "content": "Create Container diagram (c3-container.md)",
+            "status": "in_progress",
+            "activeForm": "Creating Container diagram"
+          },
+          {
+            "content": "Create Component diagrams for each container",
+            "status": "pending",
+            "activeForm": "Creating Component diagrams"
+          },
+          {
+            "content": "Create ADR-000 System Blueprint",
+            "status": "pending",
+            "activeForm": "Creating ADR-000 System Blueprint"
+          },
+          {
+            "content": "Create c3-index.md as navigation hub",
+            "status": "pending",
+            "activeForm": "Creating c3-index.md navigation hub"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:21:15.960Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.5QTchKEkSQ/.c3/c3-container.md",
+        "content": "# C3 Containers: TaskFlow\n\n> Deployable units that compose the TaskFlow system\n\n## Container Diagram\n\n```\n┌──────────────────────────────────────────────────────────────────────────────────┐\n│                                   TASKFLOW                                        │\n│                                                                                   │\n│  ┌─────────────────┐     ┌─────────────────────────────────────────────────────┐ │\n│  │                 │     │                  API SERVER                          │ │\n│  │   WEB CLIENT    │────▶│              (Node.js/Express)                       │ │\n│  │   (React SPA)   │ REST│                                                      │ │\n│  │                 │     │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌─────────┐ │ │\n│  │  c3-1: web-app  │◀────│  │   Auth   │ │  Tasks   │ │  Boards  │ │  Teams  │ │ │\n│  │                 │  WS │  │  Module  │ │  Module  │ │  Module  │ │  Module │ │ │\n│  └─────────────────┘     │  └──────────┘ └──────────┘ └──────────┘ └─────────┘ │ │\n│                          │                                                      │ │\n│                          │  c3-2: api-server                                    │ │\n│                          └───────────────────┬──────────────────┬───────────────┘ │\n│                                              │                  │                 │\n│                          ┌───────────────────┼──────────────────┼───────────────┐ │\n│                          │                   ▼                  ▼               │ │\n│                          │  ┌─────────────────────┐  ┌─────────────────────┐   │ │\n│                          │  │     PostgreSQL      │  │       Redis         │   │ │\n│                          │  │    (Primary DB)     │  │  (Cache + Pub/Sub)  │   │ │\n│                          │  │                     │  │                     │   │ │\n│                          │  │  c3-3: postgres     │  │  c3-4: redis        │   │ │\n│                          │  └─────────────────────┘  └─────────────────────┘   │ │\n│                          │                  DATA LAYER                          │ │\n│                          └──────────────────────────────────────────────────────┘ │\n│                                                                                   │\n└──────────────────────────────────────────────────────────────────────────────────┘\n                                              │\n                                              │ OAuth 2.0\n                                              ▼\n                                    ┌─────────────────────┐\n                                    │    Google OAuth     │\n                                    │   (External IdP)    │\n                                    └─────────────────────┘\n```\n\n## Containers\n\n### c3-1: Web Client (React SPA)\n\n| Attribute | Value |\n|-----------|-------|\n| **Technology** | React 18, TypeScript, Vite |\n| **Responsibilities** | User interface, real-time updates, offline-capable |\n| **Communication** | REST API (HTTPS), WebSocket (WSS) |\n| **Deployment** | Static hosting (CDN) |\n\n**Key Libraries:**\n- React Query (server state)\n- Zustand (client state)\n- Socket.io-client (real-time)\n- React Router (navigation)\n\n→ Components: [c3-1-components.md](./c3-1-components.md)\n\n---\n\n### c3-2: API Server (Node.js/Express)\n\n| Attribute | Value |\n|-----------|-------|\n| **Technology** | Node.js 20, TypeScript, Express |\n| **Architecture** | Modular Monolith |\n| **Responsibilities** | Business logic, API, real-time coordination |\n| **Communication** | REST API, WebSocket, PostgreSQL, Redis |\n| **Deployment** | Container (Docker) |\n\n**Modules:**\n- `auth` - Authentication (Google OAuth), session management\n- `tasks` - Task CRUD, assignments, due dates\n- `boards` - Kanban boards, columns, card ordering\n- `teams` - Workspaces, members, invitations\n- `realtime` - WebSocket connections, presence, events\n\n→ Components: [c3-2-components.md](./c3-2-components.md)\n\n---\n\n### c3-3: PostgreSQL\n\n| Attribute | Value |\n|-----------|-------|\n| **Technology** | PostgreSQL 16 |\n| **Responsibilities** | Primary data persistence, ACID transactions |\n| **Multi-tenancy** | Row-level security with workspace_id |\n| **Deployment** | Managed service or container |\n\n**Key Design Decisions:**\n- UUID primary keys for all entities\n- `workspace_id` on all tenant-scoped tables\n- Soft deletes with `deleted_at` timestamps\n- JSON columns for flexible metadata\n\n---\n\n### c3-4: Redis\n\n| Attribute | Value |\n|-----------|-------|\n| **Technology** | Redis 7 |\n| **Responsibilities** | Caching, session storage, pub/sub |\n| **Deployment** | Managed service or container |\n\n**Use Cases:**\n- Session storage (express-session)\n- API response caching\n- Real-time pub/sub for WebSocket scaling\n- Rate limiting\n\n---\n\n## Communication Patterns\n\n| From | To | Protocol | Purpose |\n|------|-----|----------|---------|\n| Web Client | API Server | HTTPS/REST | CRUD operations |\n| Web Client | API Server | WSS | Real-time updates, presence |\n| API Server | PostgreSQL | TCP/5432 | Data persistence |\n| API Server | Redis | TCP/6379 | Cache, sessions, pub/sub |\n| API Server | Google OAuth | HTTPS | Authentication |\n\n---\n*C3 ID: c3-container | Updated: 2025-01-12*\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:21:16.014Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.5QTchKEkSQ/.c3/c3-container.md",
+        "content": "# C3 Containers: TaskFlow\n\n> Deployable units that compose the TaskFlow system\n\n## Container Diagram\n\n```\n┌──────────────────────────────────────────────────────────────────────────────────┐\n│                                   TASKFLOW                                        │\n│                                                                                   │\n│  ┌─────────────────┐     ┌─────────────────────────────────────────────────────┐ │\n│  │                 │     │                  API SERVER                          │ │\n│  │   WEB CLIENT    │────▶│              (Node.js/Express)                       │ │\n│  │   (React SPA)   │ REST│                                                      │ │\n│  │                 │     │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌─────────┐ │ │\n│  │  c3-1: web-app  │◀────│  │   Auth   │ │  Tasks   │ │  Boards  │ │  Teams  │ │ │\n│  │                 │  WS │  │  Module  │ │  Module  │ │  Module  │ │  Module │ │ │\n│  └─────────────────┘     │  └──────────┘ └──────────┘ └──────────┘ └─────────┘ │ │\n│                          │                                                      │ │\n│                          │  c3-2: api-server                                    │ │\n│                          └───────────────────┬──────────────────┬───────────────┘ │\n│                                              │                  │                 │\n│                          ┌───────────────────┼──────────────────┼───────────────┐ │\n│                          │                   ▼                  ▼               │ │\n│                          │  ┌─────────────────────┐  ┌─────────────────────┐   │ │\n│                          │  │     PostgreSQL      │  │       Redis         │   │ │\n│                          │  │    (Primary DB)     │  │  (Cache + Pub/Sub)  │   │ │\n│                          │  │                     │  │                     │   │ │\n│                          │  │  c3-3: postgres     │  │  c3-4: redis        │   │ │\n│                          │  └─────────────────────┘  └─────────────────────┘   │ │\n│                          │                  DATA LAYER                          │ │\n│                          └──────────────────────────────────────────────────────┘ │\n│                                                                                   │\n└──────────────────────────────────────────────────────────────────────────────────┘\n                                              │\n                                              │ OAuth 2.0\n                                              ▼\n                                    ┌─────────────────────┐\n                                    │    Google OAuth     │\n                                    │   (External IdP)    │\n                                    └─────────────────────┘\n```\n\n## Containers\n\n### c3-1: Web Client (React SPA)\n\n| Attribute | Value |\n|-----------|-------|\n| **Technology** | React 18, TypeScript, Vite |\n| **Responsibilities** | User interface, real-time updates, offline-capable |\n| **Communication** | REST API (HTTPS), WebSocket (WSS) |\n| **Deployment** | Static hosting (CDN) |\n\n**Key Libraries:**\n- React Query (server state)\n- Zustand (client state)\n- Socket.io-client (real-time)\n- React Router (navigation)\n\n→ Components: [c3-1-components.md](./c3-1-components.md)\n\n---\n\n### c3-2: API Server (Node.js/Express)\n\n| Attribute | Value |\n|-----------|-------|\n| **Technology** | Node.js 20, TypeScript, Express |\n| **Architecture** | Modular Monolith |\n| **Responsibilities** | Business logic, API, real-time coordination |\n| **Communication** | REST API, WebSocket, PostgreSQL, Redis |\n| **Deployment** | Container (Docker) |\n\n**Modules:**\n- `auth` - Authentication (Google OAuth), session management\n- `tasks` - Task CRUD, assignments, due dates\n- `boards` - Kanban boards, columns, card ordering\n- `teams` - Workspaces, members, invitations\n- `realtime` - WebSocket connections, presence, events\n\n→ Components: [c3-2-components.md](./c3-2-components.md)\n\n---\n\n### c3-3: PostgreSQL\n\n| Attribute | Value |\n|-----------|-------|\n| **Technology** | PostgreSQL 16 |\n| **Responsibilities** | Primary data persistence, ACID transactions |\n| **Multi-tenancy** | Row-level security with workspace_id |\n| **Deployment** | Managed service or container |\n\n**Key Design Decisions:**\n- UUID primary keys for all entities\n- `workspace_id` on all tenant-scoped tables\n- Soft deletes with `deleted_at` timestamps\n- JSON columns for flexible metadata\n\n---\n\n### c3-4: Redis\n\n| Attribute | Value |\n|-----------|-------|\n| **Technology** | Redis 7 |\n| **Responsibilities** | Caching, session storage, pub/sub |\n| **Deployment** | Managed service or container |\n\n**Use Cases:**\n- Session storage (express-session)\n- API response caching\n- Real-time pub/sub for WebSocket scaling\n- Rate limiting\n\n---\n\n## Communication Patterns\n\n| From | To | Protocol | Purpose |\n|------|-----|----------|---------|\n| Web Client | API Server | HTTPS/REST | CRUD operations |\n| Web Client | API Server | WSS | Real-time updates, presence |\n| API Server | PostgreSQL | TCP/5432 | Data persistence |\n| API Server | Redis | TCP/6379 | Cache, sessions, pub/sub |\n| API Server | Google OAuth | HTTPS | Authentication |\n\n---\n*C3 ID: c3-container | Updated: 2025-01-12*\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.5QTchKEkSQ/.c3/c3-container.md",
+        "content": "# C3 Containers: TaskFlow\n\n> Deployable units that compose the TaskFlow system\n\n## Container Diagram\n\n```\n┌──────────────────────────────────────────────────────────────────────────────────┐\n│                                   TASKFLOW                                        │\n│                                                                                   │\n│  ┌─────────────────┐     ┌─────────────────────────────────────────────────────┐ │\n│  │                 │     │                  API SERVER                          │ │\n│  │   WEB CLIENT    │────▶│              (Node.js/Express)                       │ │\n│  │   (React SPA)   │ REST│                                                      │ │\n│  │                 │     │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌─────────┐ │ │\n│  │  c3-1: web-app  │◀────│  │   Auth   │ │  Tasks   │ │  Boards  │ │  Teams  │ │ │\n│  │                 │  WS │  │  Module  │ │  Module  │ │  Module  │ │  Module │ │ │\n│  └─────────────────┘     │  └──────────┘ └──────────┘ └──────────┘ └─────────┘ │ │\n│                          │                                                      │ │\n│                          │  c3-2: api-server                                    │ │\n│                          └───────────────────┬──────────────────┬───────────────┘ │\n│                                              │                  │                 │\n│                          ┌───────────────────┼──────────────────┼───────────────┐ │\n│                          │                   ▼                  ▼               │ │\n│                          │  ┌─────────────────────┐  ┌─────────────────────┐   │ │\n│                          │  │     PostgreSQL      │  │       Redis         │   │ │\n│                          │  │    (Primary DB)     │  │  (Cache + Pub/Sub)  │   │ │\n│                          │  │                     │  │                     │   │ │\n│                          │  │  c3-3: postgres     │  │  c3-4: redis        │   │ │\n│                          │  └─────────────────────┘  └─────────────────────┘   │ │\n│                          │                  DATA LAYER                          │ │\n│                          └──────────────────────────────────────────────────────┘ │\n│                                                                                   │\n└──────────────────────────────────────────────────────────────────────────────────┘\n                                              │\n                                              │ OAuth 2.0\n                                              ▼\n                                    ┌─────────────────────┐\n                                    │    Google OAuth     │\n                                    │   (External IdP)    │\n                                    └─────────────────────┘\n```\n\n## Containers\n\n### c3-1: Web Client (React SPA)\n\n| Attribute | Value |\n|-----------|-------|\n| **Technology** | React 18, TypeScript, Vite |\n| **Responsibilities** | User interface, real-time updates, offline-capable |\n| **Communication** | REST API (HTTPS), WebSocket (WSS) |\n| **Deployment** | Static hosting (CDN) |\n\n**Key Libraries:**\n- React Query (server state)\n- Zustand (client state)\n- Socket.io-client (real-time)\n- React Router (navigation)\n\n→ Components: [c3-1-components.md](./c3-1-components.md)\n\n---\n\n### c3-2: API Server (Node.js/Express)\n\n| Attribute | Value |\n|-----------|-------|\n| **Technology** | Node.js 20, TypeScript, Express |\n| **Architecture** | Modular Monolith |\n| **Responsibilities** | Business logic, API, real-time coordination |\n| **Communication** | REST API, WebSocket, PostgreSQL, Redis |\n| **Deployment** | Container (Docker) |\n\n**Modules:**\n- `auth` - Authentication (Google OAuth), session management\n- `tasks` - Task CRUD, assignments, due dates\n- `boards` - Kanban boards, columns, card ordering\n- `teams` - Workspaces, members, invitations\n- `realtime` - WebSocket connections, presence, events\n\n→ Components: [c3-2-components.md](./c3-2-components.md)\n\n---\n\n### c3-3: PostgreSQL\n\n| Attribute | Value |\n|-----------|-------|\n| **Technology** | PostgreSQL 16 |\n| **Responsibilities** | Primary data persistence, ACID transactions |\n| **Multi-tenancy** | Row-level security with workspace_id |\n| **Deployment** | Managed service or container |\n\n**Key Design Decisions:**\n- UUID primary keys for all entities\n- `workspace_id` on all tenant-scoped tables\n- Soft deletes with `deleted_at` timestamps\n- JSON columns for flexible metadata\n\n---\n\n### c3-4: Redis\n\n| Attribute | Value |\n|-----------|-------|\n| **Technology** | Redis 7 |\n| **Responsibilities** | Caching, session storage, pub/sub |\n| **Deployment** | Managed service or container |\n\n**Use Cases:**\n- Session storage (express-session)\n- API response caching\n- Real-time pub/sub for WebSocket scaling\n- Rate limiting\n\n---\n\n## Communication Patterns\n\n| From | To | Protocol | Purpose |\n|------|-----|----------|---------|\n| Web Client | API Server | HTTPS/REST | CRUD operations |\n| Web Client | API Server | WSS | Real-time updates, presence |\n| API Server | PostgreSQL | TCP/5432 | Data persistence |\n| API Server | Redis | TCP/6379 | Cache, sessions, pub/sub |\n| API Server | Google OAuth | HTTPS | Authentication |\n\n---\n*C3 ID: c3-container | Updated: 2025-01-12*\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:21:20.601Z",
+      "event": "PreToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Create C3 Context diagram (c3-context.md)",
+            "status": "completed",
+            "activeForm": "Creating C3 Context diagram"
+          },
+          {
+            "content": "Create Container diagram (c3-container.md)",
+            "status": "completed",
+            "activeForm": "Creating Container diagram"
+          },
+          {
+            "content": "Create Component diagrams for each container",
+            "status": "in_progress",
+            "activeForm": "Creating Component diagrams"
+          },
+          {
+            "content": "Create ADR-000 System Blueprint",
+            "status": "pending",
+            "activeForm": "Creating ADR-000 System Blueprint"
+          },
+          {
+            "content": "Create c3-index.md as navigation hub",
+            "status": "pending",
+            "activeForm": "Creating c3-index.md navigation hub"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:21:20.620Z",
+      "event": "PostToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Create C3 Context diagram (c3-context.md)",
+            "status": "completed",
+            "activeForm": "Creating C3 Context diagram"
+          },
+          {
+            "content": "Create Container diagram (c3-container.md)",
+            "status": "completed",
+            "activeForm": "Creating Container diagram"
+          },
+          {
+            "content": "Create Component diagrams for each container",
+            "status": "in_progress",
+            "activeForm": "Creating Component diagrams"
+          },
+          {
+            "content": "Create ADR-000 System Blueprint",
+            "status": "pending",
+            "activeForm": "Creating ADR-000 System Blueprint"
+          },
+          {
+            "content": "Create c3-index.md as navigation hub",
+            "status": "pending",
+            "activeForm": "Creating c3-index.md navigation hub"
+          }
+        ]
+      },
+      "result": {
+        "oldTodos": [
+          {
+            "content": "Create C3 Context diagram (c3-context.md)",
+            "status": "completed",
+            "activeForm": "Creating C3 Context diagram"
+          },
+          {
+            "content": "Create Container diagram (c3-container.md)",
+            "status": "in_progress",
+            "activeForm": "Creating Container diagram"
+          },
+          {
+            "content": "Create Component diagrams for each container",
+            "status": "pending",
+            "activeForm": "Creating Component diagrams"
+          },
+          {
+            "content": "Create ADR-000 System Blueprint",
+            "status": "pending",
+            "activeForm": "Creating ADR-000 System Blueprint"
+          },
+          {
+            "content": "Create c3-index.md as navigation hub",
+            "status": "pending",
+            "activeForm": "Creating c3-index.md navigation hub"
+          }
+        ],
+        "newTodos": [
+          {
+            "content": "Create C3 Context diagram (c3-context.md)",
+            "status": "completed",
+            "activeForm": "Creating C3 Context diagram"
+          },
+          {
+            "content": "Create Container diagram (c3-container.md)",
+            "status": "completed",
+            "activeForm": "Creating Container diagram"
+          },
+          {
+            "content": "Create Component diagrams for each container",
+            "status": "in_progress",
+            "activeForm": "Creating Component diagrams"
+          },
+          {
+            "content": "Create ADR-000 System Blueprint",
+            "status": "pending",
+            "activeForm": "Creating ADR-000 System Blueprint"
+          },
+          {
+            "content": "Create c3-index.md as navigation hub",
+            "status": "pending",
+            "activeForm": "Creating c3-index.md navigation hub"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:21:44.066Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.5QTchKEkSQ/.c3/c3-1-components.md",
+        "content": "# C3 Components: Web Client (c3-1)\n\n> React SPA providing the user interface for TaskFlow\n\n## Component Diagram\n\n```\n┌───────────────────────────────────────────────────────────────────────────────────┐\n│                            WEB CLIENT (c3-1)                                       │\n│                                                                                    │\n│  ┌─────────────────────────────────────────────────────────────────────────────┐  │\n│  │                              PAGES                                           │  │\n│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐          │  │\n│  │  │  Login   │ │Dashboard │ │  Board   │ │  Task    │ │ Settings │          │  │\n│  │  │  Page    │ │  Page    │ │   View   │ │  Detail  │ │   Page   │          │  │\n│  │  └──────────┘ └──────────┘ └──────────┘ └──────────┘ └──────────┘          │  │\n│  └─────────────────────────────────────────────────────────────────────────────┘  │\n│                                      │                                             │\n│  ┌─────────────────────────────────────────────────────────────────────────────┐  │\n│  │                            FEATURES                                          │  │\n│  │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐       │  │\n│  │  │    Auth      │ │   Boards     │ │    Tasks     │ │    Teams     │       │  │\n│  │  │  - Login     │ │  - BoardList │ │  - TaskCard  │ │  - Members   │       │  │\n│  │  │  - OAuth     │ │  - Column    │ │  - TaskForm  │ │  - Invites   │       │  │\n│  │  │  - Session   │ │  - DragDrop  │ │  - Filters   │ │  - Roles     │       │  │\n│  │  └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘       │  │\n│  └─────────────────────────────────────────────────────────────────────────────┘  │\n│                                      │                                             │\n│  ┌─────────────────────────────────────────────────────────────────────────────┐  │\n│  │                          FOUNDATION                                          │  │\n│  │  ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐     │  │\n│  │  │   API     │ │  Socket   │ │   Store   │ │    UI     │ │   Hooks   │     │  │\n│  │  │  Client   │ │  Client   │ │  (Zustand)│ │Components │ │  Library  │     │  │\n│  │  └───────────┘ └───────────┘ └───────────┘ └───────────┘ └───────────┘     │  │\n│  └─────────────────────────────────────────────────────────────────────────────┘  │\n│                                                                                    │\n└───────────────────────────────────────────────────────────────────────────────────┘\n```\n\n## Foundation Components\n\n### API Client (c3-1-api)\nHTTP client for REST API communication.\n\n| Aspect | Detail |\n|--------|--------|\n| **Library** | Axios with React Query |\n| **Features** | Auth headers, error handling, retry logic |\n| **Location** | `src/lib/api/` |\n\n### Socket Client (c3-1-socket)\nWebSocket client for real-time updates.\n\n| Aspect | Detail |\n|--------|--------|\n| **Library** | Socket.io-client |\n| **Features** | Auto-reconnect, room management, presence |\n| **Location** | `src/lib/socket/` |\n\n### Store (c3-1-store)\nClient-side state management.\n\n| Aspect | Detail |\n|--------|--------|\n| **Library** | Zustand |\n| **Slices** | auth, ui, notifications |\n| **Location** | `src/store/` |\n\n### UI Components (c3-1-ui)\nReusable design system components.\n\n| Aspect | Detail |\n|--------|--------|\n| **Library** | Tailwind CSS, Headless UI |\n| **Components** | Button, Modal, Input, Card, Avatar, etc. |\n| **Location** | `src/components/ui/` |\n\n---\n\n## Feature Components\n\n### Auth Feature (c3-1-auth)\nAuthentication flows and session management.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `LoginPage` | Google OAuth initiation |\n| `AuthProvider` | Session context, token refresh |\n| `ProtectedRoute` | Route guard for authenticated pages |\n\n### Boards Feature (c3-1-boards)\nKanban board functionality.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `BoardList` | Display all boards in workspace |\n| `BoardView` | Full kanban board with columns |\n| `Column` | Single column with task cards |\n| `DragDropContext` | Drag-and-drop task reordering |\n\n### Tasks Feature (c3-1-tasks)\nTask management UI.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `TaskCard` | Compact task display in board |\n| `TaskDetail` | Full task view with all fields |\n| `TaskForm` | Create/edit task modal |\n| `TaskFilters` | Filter/search tasks |\n\n### Teams Feature (c3-1-teams)\nTeam and workspace management.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `MemberList` | Show workspace members |\n| `InviteModal` | Invite new members |\n| `RoleSelector` | Assign member roles |\n| `WorkspaceSettings` | Configure workspace |\n\n---\n\n## Directory Structure\n\n```\nsrc/\n├── components/\n│   ├── ui/              # Design system\n│   ├── auth/            # Auth components\n│   ├── boards/          # Board components\n│   ├── tasks/           # Task components\n│   └── teams/           # Team components\n├── pages/               # Route pages\n├── lib/\n│   ├── api/             # API client\n│   └── socket/          # WebSocket client\n├── store/               # Zustand stores\n├── hooks/               # Custom hooks\n└── types/               # TypeScript types\n```\n\n---\n*C3 ID: c3-1 | Updated: 2025-01-12*\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:21:44.092Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.5QTchKEkSQ/.c3/c3-1-components.md",
+        "content": "# C3 Components: Web Client (c3-1)\n\n> React SPA providing the user interface for TaskFlow\n\n## Component Diagram\n\n```\n┌───────────────────────────────────────────────────────────────────────────────────┐\n│                            WEB CLIENT (c3-1)                                       │\n│                                                                                    │\n│  ┌─────────────────────────────────────────────────────────────────────────────┐  │\n│  │                              PAGES                                           │  │\n│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐          │  │\n│  │  │  Login   │ │Dashboard │ │  Board   │ │  Task    │ │ Settings │          │  │\n│  │  │  Page    │ │  Page    │ │   View   │ │  Detail  │ │   Page   │          │  │\n│  │  └──────────┘ └──────────┘ └──────────┘ └──────────┘ └──────────┘          │  │\n│  └─────────────────────────────────────────────────────────────────────────────┘  │\n│                                      │                                             │\n│  ┌─────────────────────────────────────────────────────────────────────────────┐  │\n│  │                            FEATURES                                          │  │\n│  │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐       │  │\n│  │  │    Auth      │ │   Boards     │ │    Tasks     │ │    Teams     │       │  │\n│  │  │  - Login     │ │  - BoardList │ │  - TaskCard  │ │  - Members   │       │  │\n│  │  │  - OAuth     │ │  - Column    │ │  - TaskForm  │ │  - Invites   │       │  │\n│  │  │  - Session   │ │  - DragDrop  │ │  - Filters   │ │  - Roles     │       │  │\n│  │  └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘       │  │\n│  └─────────────────────────────────────────────────────────────────────────────┘  │\n│                                      │                                             │\n│  ┌─────────────────────────────────────────────────────────────────────────────┐  │\n│  │                          FOUNDATION                                          │  │\n│  │  ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐     │  │\n│  │  │   API     │ │  Socket   │ │   Store   │ │    UI     │ │   Hooks   │     │  │\n│  │  │  Client   │ │  Client   │ │  (Zustand)│ │Components │ │  Library  │     │  │\n│  │  └───────────┘ └───────────┘ └───────────┘ └───────────┘ └───────────┘     │  │\n│  └─────────────────────────────────────────────────────────────────────────────┘  │\n│                                                                                    │\n└───────────────────────────────────────────────────────────────────────────────────┘\n```\n\n## Foundation Components\n\n### API Client (c3-1-api)\nHTTP client for REST API communication.\n\n| Aspect | Detail |\n|--------|--------|\n| **Library** | Axios with React Query |\n| **Features** | Auth headers, error handling, retry logic |\n| **Location** | `src/lib/api/` |\n\n### Socket Client (c3-1-socket)\nWebSocket client for real-time updates.\n\n| Aspect | Detail |\n|--------|--------|\n| **Library** | Socket.io-client |\n| **Features** | Auto-reconnect, room management, presence |\n| **Location** | `src/lib/socket/` |\n\n### Store (c3-1-store)\nClient-side state management.\n\n| Aspect | Detail |\n|--------|--------|\n| **Library** | Zustand |\n| **Slices** | auth, ui, notifications |\n| **Location** | `src/store/` |\n\n### UI Components (c3-1-ui)\nReusable design system components.\n\n| Aspect | Detail |\n|--------|--------|\n| **Library** | Tailwind CSS, Headless UI |\n| **Components** | Button, Modal, Input, Card, Avatar, etc. |\n| **Location** | `src/components/ui/` |\n\n---\n\n## Feature Components\n\n### Auth Feature (c3-1-auth)\nAuthentication flows and session management.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `LoginPage` | Google OAuth initiation |\n| `AuthProvider` | Session context, token refresh |\n| `ProtectedRoute` | Route guard for authenticated pages |\n\n### Boards Feature (c3-1-boards)\nKanban board functionality.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `BoardList` | Display all boards in workspace |\n| `BoardView` | Full kanban board with columns |\n| `Column` | Single column with task cards |\n| `DragDropContext` | Drag-and-drop task reordering |\n\n### Tasks Feature (c3-1-tasks)\nTask management UI.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `TaskCard` | Compact task display in board |\n| `TaskDetail` | Full task view with all fields |\n| `TaskForm` | Create/edit task modal |\n| `TaskFilters` | Filter/search tasks |\n\n### Teams Feature (c3-1-teams)\nTeam and workspace management.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `MemberList` | Show workspace members |\n| `InviteModal` | Invite new members |\n| `RoleSelector` | Assign member roles |\n| `WorkspaceSettings` | Configure workspace |\n\n---\n\n## Directory Structure\n\n```\nsrc/\n├── components/\n│   ├── ui/              # Design system\n│   ├── auth/            # Auth components\n│   ├── boards/          # Board components\n│   ├── tasks/           # Task components\n│   └── teams/           # Team components\n├── pages/               # Route pages\n├── lib/\n│   ├── api/             # API client\n│   └── socket/          # WebSocket client\n├── store/               # Zustand stores\n├── hooks/               # Custom hooks\n└── types/               # TypeScript types\n```\n\n---\n*C3 ID: c3-1 | Updated: 2025-01-12*\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.5QTchKEkSQ/.c3/c3-1-components.md",
+        "content": "# C3 Components: Web Client (c3-1)\n\n> React SPA providing the user interface for TaskFlow\n\n## Component Diagram\n\n```\n┌───────────────────────────────────────────────────────────────────────────────────┐\n│                            WEB CLIENT (c3-1)                                       │\n│                                                                                    │\n│  ┌─────────────────────────────────────────────────────────────────────────────┐  │\n│  │                              PAGES                                           │  │\n│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐          │  │\n│  │  │  Login   │ │Dashboard │ │  Board   │ │  Task    │ │ Settings │          │  │\n│  │  │  Page    │ │  Page    │ │   View   │ │  Detail  │ │   Page   │          │  │\n│  │  └──────────┘ └──────────┘ └──────────┘ └──────────┘ └──────────┘          │  │\n│  └─────────────────────────────────────────────────────────────────────────────┘  │\n│                                      │                                             │\n│  ┌─────────────────────────────────────────────────────────────────────────────┐  │\n│  │                            FEATURES                                          │  │\n│  │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐       │  │\n│  │  │    Auth      │ │   Boards     │ │    Tasks     │ │    Teams     │       │  │\n│  │  │  - Login     │ │  - BoardList │ │  - TaskCard  │ │  - Members   │       │  │\n│  │  │  - OAuth     │ │  - Column    │ │  - TaskForm  │ │  - Invites   │       │  │\n│  │  │  - Session   │ │  - DragDrop  │ │  - Filters   │ │  - Roles     │       │  │\n│  │  └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘       │  │\n│  └─────────────────────────────────────────────────────────────────────────────┘  │\n│                                      │                                             │\n│  ┌─────────────────────────────────────────────────────────────────────────────┐  │\n│  │                          FOUNDATION                                          │  │\n│  │  ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐     │  │\n│  │  │   API     │ │  Socket   │ │   Store   │ │    UI     │ │   Hooks   │     │  │\n│  │  │  Client   │ │  Client   │ │  (Zustand)│ │Components │ │  Library  │     │  │\n│  │  └───────────┘ └───────────┘ └───────────┘ └───────────┘ └───────────┘     │  │\n│  └─────────────────────────────────────────────────────────────────────────────┘  │\n│                                                                                    │\n└───────────────────────────────────────────────────────────────────────────────────┘\n```\n\n## Foundation Components\n\n### API Client (c3-1-api)\nHTTP client for REST API communication.\n\n| Aspect | Detail |\n|--------|--------|\n| **Library** | Axios with React Query |\n| **Features** | Auth headers, error handling, retry logic |\n| **Location** | `src/lib/api/` |\n\n### Socket Client (c3-1-socket)\nWebSocket client for real-time updates.\n\n| Aspect | Detail |\n|--------|--------|\n| **Library** | Socket.io-client |\n| **Features** | Auto-reconnect, room management, presence |\n| **Location** | `src/lib/socket/` |\n\n### Store (c3-1-store)\nClient-side state management.\n\n| Aspect | Detail |\n|--------|--------|\n| **Library** | Zustand |\n| **Slices** | auth, ui, notifications |\n| **Location** | `src/store/` |\n\n### UI Components (c3-1-ui)\nReusable design system components.\n\n| Aspect | Detail |\n|--------|--------|\n| **Library** | Tailwind CSS, Headless UI |\n| **Components** | Button, Modal, Input, Card, Avatar, etc. |\n| **Location** | `src/components/ui/` |\n\n---\n\n## Feature Components\n\n### Auth Feature (c3-1-auth)\nAuthentication flows and session management.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `LoginPage` | Google OAuth initiation |\n| `AuthProvider` | Session context, token refresh |\n| `ProtectedRoute` | Route guard for authenticated pages |\n\n### Boards Feature (c3-1-boards)\nKanban board functionality.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `BoardList` | Display all boards in workspace |\n| `BoardView` | Full kanban board with columns |\n| `Column` | Single column with task cards |\n| `DragDropContext` | Drag-and-drop task reordering |\n\n### Tasks Feature (c3-1-tasks)\nTask management UI.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `TaskCard` | Compact task display in board |\n| `TaskDetail` | Full task view with all fields |\n| `TaskForm` | Create/edit task modal |\n| `TaskFilters` | Filter/search tasks |\n\n### Teams Feature (c3-1-teams)\nTeam and workspace management.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `MemberList` | Show workspace members |\n| `InviteModal` | Invite new members |\n| `RoleSelector` | Assign member roles |\n| `WorkspaceSettings` | Configure workspace |\n\n---\n\n## Directory Structure\n\n```\nsrc/\n├── components/\n│   ├── ui/              # Design system\n│   ├── auth/            # Auth components\n│   ├── boards/          # Board components\n│   ├── tasks/           # Task components\n│   └── teams/           # Team components\n├── pages/               # Route pages\n├── lib/\n│   ├── api/             # API client\n│   └── socket/          # WebSocket client\n├── store/               # Zustand stores\n├── hooks/               # Custom hooks\n└── types/               # TypeScript types\n```\n\n---\n*C3 ID: c3-1 | Updated: 2025-01-12*\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:22:21.320Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.5QTchKEkSQ/.c3/c3-2-components.md",
+        "content": "# C3 Components: API Server (c3-2)\n\n> Node.js/Express modular monolith serving the TaskFlow API\n\n## Component Diagram\n\n```\n┌──────────────────────────────────────────────────────────────────────────────────────┐\n│                              API SERVER (c3-2)                                        │\n│                                                                                       │\n│  ┌────────────────────────────────────────────────────────────────────────────────┐  │\n│  │                               HTTP LAYER                                        │  │\n│  │  ┌─────────────────────────────────────────────────────────────────────────┐   │  │\n│  │  │                          Express App                                     │   │  │\n│  │  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐      │   │  │\n│  │  │  │  Auth    │ │  CORS    │ │  Rate    │ │  Error   │ │  Tenant  │      │   │  │\n│  │  │  │Middleware│ │Middleware│ │ Limiter  │ │ Handler  │ │  Scope   │      │   │  │\n│  │  │  └──────────┘ └──────────┘ └──────────┘ └──────────┘ └──────────┘      │   │  │\n│  │  └─────────────────────────────────────────────────────────────────────────┘   │  │\n│  │  ┌─────────────────────────────────────────────────────────────────────────┐   │  │\n│  │  │                         WebSocket Server                                 │   │  │\n│  │  │  ┌──────────┐ ┌──────────┐ ┌──────────┐                                 │   │  │\n│  │  │  │  Socket  │ │  Room    │ │ Presence │                                 │   │  │\n│  │  │  │  Auth    │ │  Manager │ │  Tracker │                                 │   │  │\n│  │  │  └──────────┘ └──────────┘ └──────────┘                                 │   │  │\n│  │  └─────────────────────────────────────────────────────────────────────────┘   │  │\n│  └────────────────────────────────────────────────────────────────────────────────┘  │\n│                                          │                                            │\n│  ┌────────────────────────────────────────────────────────────────────────────────┐  │\n│  │                            DOMAIN MODULES                                       │  │\n│  │                                                                                 │  │\n│  │  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐             │  │\n│  │  │   AUTH MODULE    │  │   TASKS MODULE   │  │  BOARDS MODULE   │             │  │\n│  │  │  ┌────────────┐  │  │  ┌────────────┐  │  │  ┌────────────┐  │             │  │\n│  │  │  │  Routes    │  │  │  │  Routes    │  │  │  │  Routes    │  │             │  │\n│  │  │  │  Service   │  │  │  │  Service   │  │  │  │  Service   │  │             │  │\n│  │  │  │  Model     │  │  │  │  Model     │  │  │  │  Model     │  │             │  │\n│  │  │  └────────────┘  │  │  └────────────┘  │  │  └────────────┘  │             │  │\n│  │  └──────────────────┘  └──────────────────┘  └──────────────────┘             │  │\n│  │                                                                                 │  │\n│  │  ┌──────────────────┐  ┌──────────────────┐                                    │  │\n│  │  │   TEAMS MODULE   │  │ REALTIME MODULE  │                                    │  │\n│  │  │  ┌────────────┐  │  │  ┌────────────┐  │                                    │  │\n│  │  │  │  Routes    │  │  │  │  Events    │  │                                    │  │\n│  │  │  │  Service   │  │  │  │  Handlers  │  │                                    │  │\n│  │  │  │  Model     │  │  │  │  Publisher │  │                                    │  │\n│  │  │  └────────────┘  │  │  └────────────┘  │                                    │  │\n│  │  └──────────────────┘  └──────────────────┘                                    │  │\n│  └────────────────────────────────────────────────────────────────────────────────┘  │\n│                                          │                                            │\n│  ┌────────────────────────────────────────────────────────────────────────────────┐  │\n│  │                              FOUNDATION                                         │  │\n│  │  ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐        │  │\n│  │  │ Database  │ │   Cache   │ │   Logger  │ │  Config   │ │  Errors   │        │  │\n│  │  │  (Knex)   │ │  (Redis)  │ │ (Winston) │ │  (Env)    │ │ (Custom)  │        │  │\n│  │  └───────────┘ └───────────┘ └───────────┘ └───────────┘ └───────────┘        │  │\n│  └────────────────────────────────────────────────────────────────────────────────┘  │\n│                                                                                       │\n└──────────────────────────────────────────────────────────────────────────────────────┘\n```\n\n## Foundation Layer\n\n### Database Client (c3-2-db)\nPostgreSQL connection and query builder.\n\n| Aspect | Detail |\n|--------|--------|\n| **Library** | Knex.js |\n| **Features** | Migrations, connection pooling, transactions |\n| **Location** | `src/lib/database/` |\n\n### Cache Client (c3-2-cache)\nRedis client for caching and pub/sub.\n\n| Aspect | Detail |\n|--------|--------|\n| **Library** | ioredis |\n| **Features** | Caching, sessions, pub/sub |\n| **Location** | `src/lib/cache/` |\n\n### Logger (c3-2-logger)\nStructured logging.\n\n| Aspect | Detail |\n|--------|--------|\n| **Library** | Winston |\n| **Features** | Request logging, error tracking |\n| **Location** | `src/lib/logger/` |\n\n### Config (c3-2-config)\nEnvironment configuration.\n\n| Aspect | Detail |\n|--------|--------|\n| **Library** | dotenv, zod |\n| **Features** | Env validation, typed config |\n| **Location** | `src/config/` |\n\n---\n\n## HTTP Layer\n\n### Express Middleware Stack\n\n| Middleware | Purpose |\n|------------|---------|\n| `cors` | Cross-origin resource sharing |\n| `helmet` | Security headers |\n| `express-session` | Session management (Redis store) |\n| `passport` | OAuth authentication |\n| `rateLimiter` | API rate limiting |\n| `tenantScope` | Inject workspace context |\n| `errorHandler` | Global error handling |\n\n### WebSocket Server (c3-2-ws)\nReal-time communication layer.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `SocketAuth` | Authenticate WebSocket connections |\n| `RoomManager` | Manage board/workspace rooms |\n| `PresenceTracker` | Track online users |\n\n---\n\n## Domain Modules\n\n### Auth Module (c3-2-auth)\nAuthentication and authorization.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `auth.routes.ts` | `/auth/*` endpoints |\n| `auth.service.ts` | OAuth flow, session management |\n| `user.model.ts` | User entity and queries |\n\n**Endpoints:**\n- `GET /auth/google` - Initiate OAuth\n- `GET /auth/google/callback` - OAuth callback\n- `POST /auth/logout` - End session\n- `GET /auth/me` - Current user\n\n### Tasks Module (c3-2-tasks)\nTask CRUD and business logic.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `tasks.routes.ts` | `/tasks/*` endpoints |\n| `tasks.service.ts` | Task business logic |\n| `task.model.ts` | Task entity and queries |\n\n**Endpoints:**\n- `GET /tasks` - List tasks (with filters)\n- `POST /tasks` - Create task\n- `GET /tasks/:id` - Get task\n- `PATCH /tasks/:id` - Update task\n- `DELETE /tasks/:id` - Delete task\n\n### Boards Module (c3-2-boards)\nKanban board management.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `boards.routes.ts` | `/boards/*` endpoints |\n| `boards.service.ts` | Board business logic |\n| `board.model.ts` | Board/Column entities |\n\n**Endpoints:**\n- `GET /boards` - List boards\n- `POST /boards` - Create board\n- `GET /boards/:id` - Get board with columns/tasks\n- `PATCH /boards/:id/reorder` - Reorder tasks\n\n### Teams Module (c3-2-teams)\nWorkspace and member management.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `teams.routes.ts` | `/workspaces/*` endpoints |\n| `teams.service.ts` | Team business logic |\n| `workspace.model.ts` | Workspace entity |\n| `member.model.ts` | Member entity |\n\n**Endpoints:**\n- `GET /workspaces` - List user's workspaces\n- `POST /workspaces` - Create workspace\n- `GET /workspaces/:id/members` - List members\n- `POST /workspaces/:id/invites` - Invite member\n\n### Realtime Module (c3-2-realtime)\nWebSocket event handling.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `events.ts` | Event type definitions |\n| `handlers.ts` | Socket event handlers |\n| `publisher.ts` | Broadcast events via Redis |\n\n**Events:**\n- `task:created`, `task:updated`, `task:deleted`\n- `board:updated`, `board:reordered`\n- `presence:join`, `presence:leave`\n\n---\n\n## Directory Structure\n\n```\nsrc/\n├── modules/\n│   ├── auth/\n│   │   ├── auth.routes.ts\n│   │   ├── auth.service.ts\n│   │   └── user.model.ts\n│   ├── tasks/\n│   │   ├── tasks.routes.ts\n│   │   ├── tasks.service.ts\n│   │   └── task.model.ts\n│   ├── boards/\n│   │   ├── boards.routes.ts\n│   │   ├── boards.service.ts\n│   │   └── board.model.ts\n│   ├── teams/\n│   │   ├── teams.routes.ts\n│   │   ├── teams.service.ts\n│   │   └── workspace.model.ts\n│   └── realtime/\n│       ├── events.ts\n│       ├── handlers.ts\n│       └── publisher.ts\n├── middleware/\n│   ├── auth.ts\n│   ├── tenantScope.ts\n│   ├── rateLimiter.ts\n│   └── errorHandler.ts\n├── lib/\n│   ├── database/\n│   ├── cache/\n│   └── logger/\n├── config/\n│   └── index.ts\n└── app.ts\n```\n\n---\n*C3 ID: c3-2 | Updated: 2025-01-12*\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:22:21.367Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.5QTchKEkSQ/.c3/c3-2-components.md",
+        "content": "# C3 Components: API Server (c3-2)\n\n> Node.js/Express modular monolith serving the TaskFlow API\n\n## Component Diagram\n\n```\n┌──────────────────────────────────────────────────────────────────────────────────────┐\n│                              API SERVER (c3-2)                                        │\n│                                                                                       │\n│  ┌────────────────────────────────────────────────────────────────────────────────┐  │\n│  │                               HTTP LAYER                                        │  │\n│  │  ┌─────────────────────────────────────────────────────────────────────────┐   │  │\n│  │  │                          Express App                                     │   │  │\n│  │  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐      │   │  │\n│  │  │  │  Auth    │ │  CORS    │ │  Rate    │ │  Error   │ │  Tenant  │      │   │  │\n│  │  │  │Middleware│ │Middleware│ │ Limiter  │ │ Handler  │ │  Scope   │      │   │  │\n│  │  │  └──────────┘ └──────────┘ └──────────┘ └──────────┘ └──────────┘      │   │  │\n│  │  └─────────────────────────────────────────────────────────────────────────┘   │  │\n│  │  ┌─────────────────────────────────────────────────────────────────────────┐   │  │\n│  │  │                         WebSocket Server                                 │   │  │\n│  │  │  ┌──────────┐ ┌──────────┐ ┌──────────┐                                 │   │  │\n│  │  │  │  Socket  │ │  Room    │ │ Presence │                                 │   │  │\n│  │  │  │  Auth    │ │  Manager │ │  Tracker │                                 │   │  │\n│  │  │  └──────────┘ └──────────┘ └──────────┘                                 │   │  │\n│  │  └─────────────────────────────────────────────────────────────────────────┘   │  │\n│  └────────────────────────────────────────────────────────────────────────────────┘  │\n│                                          │                                            │\n│  ┌────────────────────────────────────────────────────────────────────────────────┐  │\n│  │                            DOMAIN MODULES                                       │  │\n│  │                                                                                 │  │\n│  │  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐             │  │\n│  │  │   AUTH MODULE    │  │   TASKS MODULE   │  │  BOARDS MODULE   │             │  │\n│  │  │  ┌────────────┐  │  │  ┌────────────┐  │  │  ┌────────────┐  │             │  │\n│  │  │  │  Routes    │  │  │  │  Routes    │  │  │  │  Routes    │  │             │  │\n│  │  │  │  Service   │  │  │  │  Service   │  │  │  │  Service   │  │             │  │\n│  │  │  │  Model     │  │  │  │  Model     │  │  │  │  Model     │  │             │  │\n│  │  │  └────────────┘  │  │  └────────────┘  │  │  └────────────┘  │             │  │\n│  │  └──────────────────┘  └──────────────────┘  └──────────────────┘             │  │\n│  │                                                                                 │  │\n│  │  ┌──────────────────┐  ┌──────────────────┐                                    │  │\n│  │  │   TEAMS MODULE   │  │ REALTIME MODULE  │                                    │  │\n│  │  │  ┌────────────┐  │  │  ┌────────────┐  │                                    │  │\n│  │  │  │  Routes    │  │  │  │  Events    │  │                                    │  │\n│  │  │  │  Service   │  │  │  │  Handlers  │  │                                    │  │\n│  │  │  │  Model     │  │  │  │  Publisher │  │                                    │  │\n│  │  │  └────────────┘  │  │  └────────────┘  │                                    │  │\n│  │  └──────────────────┘  └──────────────────┘                                    │  │\n│  └────────────────────────────────────────────────────────────────────────────────┘  │\n│                                          │                                            │\n│  ┌────────────────────────────────────────────────────────────────────────────────┐  │\n│  │                              FOUNDATION                                         │  │\n│  │  ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐        │  │\n│  │  │ Database  │ │   Cache   │ │   Logger  │ │  Config   │ │  Errors   │        │  │\n│  │  │  (Knex)   │ │  (Redis)  │ │ (Winston) │ │  (Env)    │ │ (Custom)  │        │  │\n│  │  └───────────┘ └───────────┘ └───────────┘ └───────────┘ └───────────┘        │  │\n│  └────────────────────────────────────────────────────────────────────────────────┘  │\n│                                                                                       │\n└──────────────────────────────────────────────────────────────────────────────────────┘\n```\n\n## Foundation Layer\n\n### Database Client (c3-2-db)\nPostgreSQL connection and query builder.\n\n| Aspect | Detail |\n|--------|--------|\n| **Library** | Knex.js |\n| **Features** | Migrations, connection pooling, transactions |\n| **Location** | `src/lib/database/` |\n\n### Cache Client (c3-2-cache)\nRedis client for caching and pub/sub.\n\n| Aspect | Detail |\n|--------|--------|\n| **Library** | ioredis |\n| **Features** | Caching, sessions, pub/sub |\n| **Location** | `src/lib/cache/` |\n\n### Logger (c3-2-logger)\nStructured logging.\n\n| Aspect | Detail |\n|--------|--------|\n| **Library** | Winston |\n| **Features** | Request logging, error tracking |\n| **Location** | `src/lib/logger/` |\n\n### Config (c3-2-config)\nEnvironment configuration.\n\n| Aspect | Detail |\n|--------|--------|\n| **Library** | dotenv, zod |\n| **Features** | Env validation, typed config |\n| **Location** | `src/config/` |\n\n---\n\n## HTTP Layer\n\n### Express Middleware Stack\n\n| Middleware | Purpose |\n|------------|---------|\n| `cors` | Cross-origin resource sharing |\n| `helmet` | Security headers |\n| `express-session` | Session management (Redis store) |\n| `passport` | OAuth authentication |\n| `rateLimiter` | API rate limiting |\n| `tenantScope` | Inject workspace context |\n| `errorHandler` | Global error handling |\n\n### WebSocket Server (c3-2-ws)\nReal-time communication layer.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `SocketAuth` | Authenticate WebSocket connections |\n| `RoomManager` | Manage board/workspace rooms |\n| `PresenceTracker` | Track online users |\n\n---\n\n## Domain Modules\n\n### Auth Module (c3-2-auth)\nAuthentication and authorization.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `auth.routes.ts` | `/auth/*` endpoints |\n| `auth.service.ts` | OAuth flow, session management |\n| `user.model.ts` | User entity and queries |\n\n**Endpoints:**\n- `GET /auth/google` - Initiate OAuth\n- `GET /auth/google/callback` - OAuth callback\n- `POST /auth/logout` - End session\n- `GET /auth/me` - Current user\n\n### Tasks Module (c3-2-tasks)\nTask CRUD and business logic.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `tasks.routes.ts` | `/tasks/*` endpoints |\n| `tasks.service.ts` | Task business logic |\n| `task.model.ts` | Task entity and queries |\n\n**Endpoints:**\n- `GET /tasks` - List tasks (with filters)\n- `POST /tasks` - Create task\n- `GET /tasks/:id` - Get task\n- `PATCH /tasks/:id` - Update task\n- `DELETE /tasks/:id` - Delete task\n\n### Boards Module (c3-2-boards)\nKanban board management.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `boards.routes.ts` | `/boards/*` endpoints |\n| `boards.service.ts` | Board business logic |\n| `board.model.ts` | Board/Column entities |\n\n**Endpoints:**\n- `GET /boards` - List boards\n- `POST /boards` - Create board\n- `GET /boards/:id` - Get board with columns/tasks\n- `PATCH /boards/:id/reorder` - Reorder tasks\n\n### Teams Module (c3-2-teams)\nWorkspace and member management.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `teams.routes.ts` | `/workspaces/*` endpoints |\n| `teams.service.ts` | Team business logic |\n| `workspace.model.ts` | Workspace entity |\n| `member.model.ts` | Member entity |\n\n**Endpoints:**\n- `GET /workspaces` - List user's workspaces\n- `POST /workspaces` - Create workspace\n- `GET /workspaces/:id/members` - List members\n- `POST /workspaces/:id/invites` - Invite member\n\n### Realtime Module (c3-2-realtime)\nWebSocket event handling.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `events.ts` | Event type definitions |\n| `handlers.ts` | Socket event handlers |\n| `publisher.ts` | Broadcast events via Redis |\n\n**Events:**\n- `task:created`, `task:updated`, `task:deleted`\n- `board:updated`, `board:reordered`\n- `presence:join`, `presence:leave`\n\n---\n\n## Directory Structure\n\n```\nsrc/\n├── modules/\n│   ├── auth/\n│   │   ├── auth.routes.ts\n│   │   ├── auth.service.ts\n│   │   └── user.model.ts\n│   ├── tasks/\n│   │   ├── tasks.routes.ts\n│   │   ├── tasks.service.ts\n│   │   └── task.model.ts\n│   ├── boards/\n│   │   ├── boards.routes.ts\n│   │   ├── boards.service.ts\n│   │   └── board.model.ts\n│   ├── teams/\n│   │   ├── teams.routes.ts\n│   │   ├── teams.service.ts\n│   │   └── workspace.model.ts\n│   └── realtime/\n│       ├── events.ts\n│       ├── handlers.ts\n│       └── publisher.ts\n├── middleware/\n│   ├── auth.ts\n│   ├── tenantScope.ts\n│   ├── rateLimiter.ts\n│   └── errorHandler.ts\n├── lib/\n│   ├── database/\n│   ├── cache/\n│   └── logger/\n├── config/\n│   └── index.ts\n└── app.ts\n```\n\n---\n*C3 ID: c3-2 | Updated: 2025-01-12*\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.5QTchKEkSQ/.c3/c3-2-components.md",
+        "content": "# C3 Components: API Server (c3-2)\n\n> Node.js/Express modular monolith serving the TaskFlow API\n\n## Component Diagram\n\n```\n┌──────────────────────────────────────────────────────────────────────────────────────┐\n│                              API SERVER (c3-2)                                        │\n│                                                                                       │\n│  ┌────────────────────────────────────────────────────────────────────────────────┐  │\n│  │                               HTTP LAYER                                        │  │\n│  │  ┌─────────────────────────────────────────────────────────────────────────┐   │  │\n│  │  │                          Express App                                     │   │  │\n│  │  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐      │   │  │\n│  │  │  │  Auth    │ │  CORS    │ │  Rate    │ │  Error   │ │  Tenant  │      │   │  │\n│  │  │  │Middleware│ │Middleware│ │ Limiter  │ │ Handler  │ │  Scope   │      │   │  │\n│  │  │  └──────────┘ └──────────┘ └──────────┘ └──────────┘ └──────────┘      │   │  │\n│  │  └─────────────────────────────────────────────────────────────────────────┘   │  │\n│  │  ┌─────────────────────────────────────────────────────────────────────────┐   │  │\n│  │  │                         WebSocket Server                                 │   │  │\n│  │  │  ┌──────────┐ ┌──────────┐ ┌──────────┐                                 │   │  │\n│  │  │  │  Socket  │ │  Room    │ │ Presence │                                 │   │  │\n│  │  │  │  Auth    │ │  Manager │ │  Tracker │                                 │   │  │\n│  │  │  └──────────┘ └──────────┘ └──────────┘                                 │   │  │\n│  │  └─────────────────────────────────────────────────────────────────────────┘   │  │\n│  └────────────────────────────────────────────────────────────────────────────────┘  │\n│                                          │                                            │\n│  ┌────────────────────────────────────────────────────────────────────────────────┐  │\n│  │                            DOMAIN MODULES                                       │  │\n│  │                                                                                 │  │\n│  │  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐             │  │\n│  │  │   AUTH MODULE    │  │   TASKS MODULE   │  │  BOARDS MODULE   │             │  │\n│  │  │  ┌────────────┐  │  │  ┌────────────┐  │  │  ┌────────────┐  │             │  │\n│  │  │  │  Routes    │  │  │  │  Routes    │  │  │  │  Routes    │  │             │  │\n│  │  │  │  Service   │  │  │  │  Service   │  │  │  │  Service   │  │             │  │\n│  │  │  │  Model     │  │  │  │  Model     │  │  │  │  Model     │  │             │  │\n│  │  │  └────────────┘  │  │  └────────────┘  │  │  └────────────┘  │             │  │\n│  │  └──────────────────┘  └──────────────────┘  └──────────────────┘             │  │\n│  │                                                                                 │  │\n│  │  ┌──────────────────┐  ┌──────────────────┐                                    │  │\n│  │  │   TEAMS MODULE   │  │ REALTIME MODULE  │                                    │  │\n│  │  │  ┌────────────┐  │  │  ┌────────────┐  │                                    │  │\n│  │  │  │  Routes    │  │  │  │  Events    │  │                                    │  │\n│  │  │  │  Service   │  │  │  │  Handlers  │  │                                    │  │\n│  │  │  │  Model     │  │  │  │  Publisher │  │                                    │  │\n│  │  │  └────────────┘  │  │  └────────────┘  │                                    │  │\n│  │  └──────────────────┘  └──────────────────┘                                    │  │\n│  └────────────────────────────────────────────────────────────────────────────────┘  │\n│                                          │                                            │\n│  ┌────────────────────────────────────────────────────────────────────────────────┐  │\n│  │                              FOUNDATION                                         │  │\n│  │  ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐        │  │\n│  │  │ Database  │ │   Cache   │ │   Logger  │ │  Config   │ │  Errors   │        │  │\n│  │  │  (Knex)   │ │  (Redis)  │ │ (Winston) │ │  (Env)    │ │ (Custom)  │        │  │\n│  │  └───────────┘ └───────────┘ └───────────┘ └───────────┘ └───────────┘        │  │\n│  └────────────────────────────────────────────────────────────────────────────────┘  │\n│                                                                                       │\n└──────────────────────────────────────────────────────────────────────────────────────┘\n```\n\n## Foundation Layer\n\n### Database Client (c3-2-db)\nPostgreSQL connection and query builder.\n\n| Aspect | Detail |\n|--------|--------|\n| **Library** | Knex.js |\n| **Features** | Migrations, connection pooling, transactions |\n| **Location** | `src/lib/database/` |\n\n### Cache Client (c3-2-cache)\nRedis client for caching and pub/sub.\n\n| Aspect | Detail |\n|--------|--------|\n| **Library** | ioredis |\n| **Features** | Caching, sessions, pub/sub |\n| **Location** | `src/lib/cache/` |\n\n### Logger (c3-2-logger)\nStructured logging.\n\n| Aspect | Detail |\n|--------|--------|\n| **Library** | Winston |\n| **Features** | Request logging, error tracking |\n| **Location** | `src/lib/logger/` |\n\n### Config (c3-2-config)\nEnvironment configuration.\n\n| Aspect | Detail |\n|--------|--------|\n| **Library** | dotenv, zod |\n| **Features** | Env validation, typed config |\n| **Location** | `src/config/` |\n\n---\n\n## HTTP Layer\n\n### Express Middleware Stack\n\n| Middleware | Purpose |\n|------------|---------|\n| `cors` | Cross-origin resource sharing |\n| `helmet` | Security headers |\n| `express-session` | Session management (Redis store) |\n| `passport` | OAuth authentication |\n| `rateLimiter` | API rate limiting |\n| `tenantScope` | Inject workspace context |\n| `errorHandler` | Global error handling |\n\n### WebSocket Server (c3-2-ws)\nReal-time communication layer.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `SocketAuth` | Authenticate WebSocket connections |\n| `RoomManager` | Manage board/workspace rooms |\n| `PresenceTracker` | Track online users |\n\n---\n\n## Domain Modules\n\n### Auth Module (c3-2-auth)\nAuthentication and authorization.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `auth.routes.ts` | `/auth/*` endpoints |\n| `auth.service.ts` | OAuth flow, session management |\n| `user.model.ts` | User entity and queries |\n\n**Endpoints:**\n- `GET /auth/google` - Initiate OAuth\n- `GET /auth/google/callback` - OAuth callback\n- `POST /auth/logout` - End session\n- `GET /auth/me` - Current user\n\n### Tasks Module (c3-2-tasks)\nTask CRUD and business logic.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `tasks.routes.ts` | `/tasks/*` endpoints |\n| `tasks.service.ts` | Task business logic |\n| `task.model.ts` | Task entity and queries |\n\n**Endpoints:**\n- `GET /tasks` - List tasks (with filters)\n- `POST /tasks` - Create task\n- `GET /tasks/:id` - Get task\n- `PATCH /tasks/:id` - Update task\n- `DELETE /tasks/:id` - Delete task\n\n### Boards Module (c3-2-boards)\nKanban board management.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `boards.routes.ts` | `/boards/*` endpoints |\n| `boards.service.ts` | Board business logic |\n| `board.model.ts` | Board/Column entities |\n\n**Endpoints:**\n- `GET /boards` - List boards\n- `POST /boards` - Create board\n- `GET /boards/:id` - Get board with columns/tasks\n- `PATCH /boards/:id/reorder` - Reorder tasks\n\n### Teams Module (c3-2-teams)\nWorkspace and member management.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `teams.routes.ts` | `/workspaces/*` endpoints |\n| `teams.service.ts` | Team business logic |\n| `workspace.model.ts` | Workspace entity |\n| `member.model.ts` | Member entity |\n\n**Endpoints:**\n- `GET /workspaces` - List user's workspaces\n- `POST /workspaces` - Create workspace\n- `GET /workspaces/:id/members` - List members\n- `POST /workspaces/:id/invites` - Invite member\n\n### Realtime Module (c3-2-realtime)\nWebSocket event handling.\n\n| Component | Responsibility |\n|-----------|----------------|\n| `events.ts` | Event type definitions |\n| `handlers.ts` | Socket event handlers |\n| `publisher.ts` | Broadcast events via Redis |\n\n**Events:**\n- `task:created`, `task:updated`, `task:deleted`\n- `board:updated`, `board:reordered`\n- `presence:join`, `presence:leave`\n\n---\n\n## Directory Structure\n\n```\nsrc/\n├── modules/\n│   ├── auth/\n│   │   ├── auth.routes.ts\n│   │   ├── auth.service.ts\n│   │   └── user.model.ts\n│   ├── tasks/\n│   │   ├── tasks.routes.ts\n│   │   ├── tasks.service.ts\n│   │   └── task.model.ts\n│   ├── boards/\n│   │   ├── boards.routes.ts\n│   │   ├── boards.service.ts\n│   │   └── board.model.ts\n│   ├── teams/\n│   │   ├── teams.routes.ts\n│   │   ├── teams.service.ts\n│   │   └── workspace.model.ts\n│   └── realtime/\n│       ├── events.ts\n│       ├── handlers.ts\n│       └── publisher.ts\n├── middleware/\n│   ├── auth.ts\n│   ├── tenantScope.ts\n│   ├── rateLimiter.ts\n│   └── errorHandler.ts\n├── lib/\n│   ├── database/\n│   ├── cache/\n│   └── logger/\n├── config/\n│   └── index.ts\n└── app.ts\n```\n\n---\n*C3 ID: c3-2 | Updated: 2025-01-12*\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:22:49.645Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.5QTchKEkSQ/.c3/c3-3-components.md",
+        "content": "# C3 Components: PostgreSQL (c3-3)\n\n> Primary data store for TaskFlow\n\n## Schema Overview\n\n```\n┌─────────────────────────────────────────────────────────────────────────────┐\n│                           POSTGRESQL SCHEMA                                  │\n│                                                                              │\n│  ┌─────────────────────────────────────────────────────────────────────┐    │\n│  │                        TENANT BOUNDARY                               │    │\n│  │  ┌─────────────┐                                                     │    │\n│  │  │  workspaces │◀─────────────────┐                                  │    │\n│  │  │  (tenant)   │                  │                                  │    │\n│  │  └──────┬──────┘                  │                                  │    │\n│  │         │                         │                                  │    │\n│  │         │ 1:N                     │                                  │    │\n│  │         ▼                         │                                  │    │\n│  │  ┌─────────────┐           ┌─────────────┐                          │    │\n│  │  │   members   │           │   boards    │                          │    │\n│  │  │             │           │             │                          │    │\n│  │  └──────┬──────┘           └──────┬──────┘                          │    │\n│  │         │                         │                                  │    │\n│  │         │                         │ 1:N                              │    │\n│  │         │                         ▼                                  │    │\n│  │         │                  ┌─────────────┐                          │    │\n│  │         │                  │   columns   │                          │    │\n│  │         │                  │             │                          │    │\n│  │         │                  └──────┬──────┘                          │    │\n│  │         │                         │                                  │    │\n│  │         │                         │ 1:N                              │    │\n│  │         │                         ▼                                  │    │\n│  │         │                  ┌─────────────┐                          │    │\n│  │         └─────────────────▶│    tasks    │                          │    │\n│  │           (assignee)       │             │                          │    │\n│  │                            └─────────────┘                          │    │\n│  └─────────────────────────────────────────────────────────────────────┘    │\n│                                                                              │\n│  ┌─────────────────────────────────────────────────────────────────────┐    │\n│  │                        IDENTITY (Global)                             │    │\n│  │  ┌─────────────┐                                                     │    │\n│  │  │    users    │──────────────────────▶ members (junction)          │    │\n│  │  │  (accounts) │                                                     │    │\n│  │  └─────────────┘                                                     │    │\n│  └─────────────────────────────────────────────────────────────────────┘    │\n│                                                                              │\n└─────────────────────────────────────────────────────────────────────────────┘\n```\n\n## Tables\n\n### users\nGlobal user accounts (identity).\n\n```sql\nCREATE TABLE users (\n  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  email         VARCHAR(255) UNIQUE NOT NULL,\n  name          VARCHAR(255) NOT NULL,\n  avatar_url    TEXT,\n  google_id     VARCHAR(255) UNIQUE NOT NULL,\n  created_at    TIMESTAMPTZ DEFAULT NOW(),\n  updated_at    TIMESTAMPTZ DEFAULT NOW()\n);\n```\n\n### workspaces\nMulti-tenant workspace (team).\n\n```sql\nCREATE TABLE workspaces (\n  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  name          VARCHAR(255) NOT NULL,\n  slug          VARCHAR(100) UNIQUE NOT NULL,\n  owner_id      UUID REFERENCES users(id) NOT NULL,\n  settings      JSONB DEFAULT '{}',\n  created_at    TIMESTAMPTZ DEFAULT NOW(),\n  updated_at    TIMESTAMPTZ DEFAULT NOW(),\n  deleted_at    TIMESTAMPTZ\n);\n```\n\n### members\nWorkspace membership (junction).\n\n```sql\nCREATE TABLE members (\n  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  workspace_id  UUID REFERENCES workspaces(id) NOT NULL,\n  user_id       UUID REFERENCES users(id) NOT NULL,\n  role          VARCHAR(50) DEFAULT 'member', -- 'owner', 'admin', 'member'\n  joined_at     TIMESTAMPTZ DEFAULT NOW(),\n  UNIQUE(workspace_id, user_id)\n);\n\nCREATE INDEX idx_members_workspace ON members(workspace_id);\nCREATE INDEX idx_members_user ON members(user_id);\n```\n\n### boards\nKanban boards within a workspace.\n\n```sql\nCREATE TABLE boards (\n  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  workspace_id  UUID REFERENCES workspaces(id) NOT NULL,\n  name          VARCHAR(255) NOT NULL,\n  description   TEXT,\n  settings      JSONB DEFAULT '{}',\n  created_at    TIMESTAMPTZ DEFAULT NOW(),\n  updated_at    TIMESTAMPTZ DEFAULT NOW(),\n  deleted_at    TIMESTAMPTZ\n);\n\nCREATE INDEX idx_boards_workspace ON boards(workspace_id);\n```\n\n### columns\nBoard columns (e.g., To Do, In Progress, Done).\n\n```sql\nCREATE TABLE columns (\n  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  board_id      UUID REFERENCES boards(id) NOT NULL,\n  name          VARCHAR(255) NOT NULL,\n  position      INTEGER NOT NULL,\n  color         VARCHAR(7), -- hex color\n  created_at    TIMESTAMPTZ DEFAULT NOW(),\n  updated_at    TIMESTAMPTZ DEFAULT NOW()\n);\n\nCREATE INDEX idx_columns_board ON columns(board_id);\n```\n\n### tasks\nIndividual task items.\n\n```sql\nCREATE TABLE tasks (\n  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  workspace_id  UUID REFERENCES workspaces(id) NOT NULL,\n  board_id      UUID REFERENCES boards(id),\n  column_id     UUID REFERENCES columns(id),\n  title         VARCHAR(500) NOT NULL,\n  description   TEXT,\n  position      INTEGER NOT NULL DEFAULT 0,\n  priority      VARCHAR(20) DEFAULT 'medium', -- 'low', 'medium', 'high', 'urgent'\n  due_date      DATE,\n  assignee_id   UUID REFERENCES members(id),\n  labels        JSONB DEFAULT '[]',\n  metadata      JSONB DEFAULT '{}',\n  created_by    UUID REFERENCES members(id) NOT NULL,\n  created_at    TIMESTAMPTZ DEFAULT NOW(),\n  updated_at    TIMESTAMPTZ DEFAULT NOW(),\n  deleted_at    TIMESTAMPTZ\n);\n\nCREATE INDEX idx_tasks_workspace ON tasks(workspace_id);\nCREATE INDEX idx_tasks_board ON tasks(board_id);\nCREATE INDEX idx_tasks_column ON tasks(column_id);\nCREATE INDEX idx_tasks_assignee ON tasks(assignee_id);\n```\n\n---\n\n## Multi-Tenancy Strategy\n\n**Row-Level Security (RLS) Pattern:**\n\n```sql\n-- Enable RLS on tenant-scoped tables\nALTER TABLE boards ENABLE ROW LEVEL SECURITY;\nALTER TABLE tasks ENABLE ROW LEVEL SECURITY;\n\n-- Policy: Users can only see data in their workspaces\nCREATE POLICY workspace_isolation ON tasks\n  USING (workspace_id IN (\n    SELECT workspace_id FROM members\n    WHERE user_id = current_setting('app.current_user_id')::uuid\n  ));\n```\n\n**Application-Level Enforcement:**\n- All queries include `workspace_id` filter\n- Middleware injects workspace context\n- Services validate workspace membership\n\n---\n\n## Indexes Strategy\n\n| Table | Index | Purpose |\n|-------|-------|---------|\n| `members` | `(workspace_id, user_id)` | Membership lookups |\n| `tasks` | `(workspace_id)` | Tenant isolation |\n| `tasks` | `(board_id, column_id, position)` | Board ordering |\n| `tasks` | `(assignee_id)` | My tasks queries |\n| `boards` | `(workspace_id)` | Workspace boards |\n\n---\n\n## Migrations\n\nManaged via Knex.js migrations:\n\n```\nmigrations/\n├── 20250101000001_create_users.ts\n├── 20250101000002_create_workspaces.ts\n├── 20250101000003_create_members.ts\n├── 20250101000004_create_boards.ts\n├── 20250101000005_create_columns.ts\n└── 20250101000006_create_tasks.ts\n```\n\n---\n*C3 ID: c3-3 | Updated: 2025-01-12*\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:22:49.669Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.5QTchKEkSQ/.c3/c3-3-components.md",
+        "content": "# C3 Components: PostgreSQL (c3-3)\n\n> Primary data store for TaskFlow\n\n## Schema Overview\n\n```\n┌─────────────────────────────────────────────────────────────────────────────┐\n│                           POSTGRESQL SCHEMA                                  │\n│                                                                              │\n│  ┌─────────────────────────────────────────────────────────────────────┐    │\n│  │                        TENANT BOUNDARY                               │    │\n│  │  ┌─────────────┐                                                     │    │\n│  │  │  workspaces │◀─────────────────┐                                  │    │\n│  │  │  (tenant)   │                  │                                  │    │\n│  │  └──────┬──────┘                  │                                  │    │\n│  │         │                         │                                  │    │\n│  │         │ 1:N                     │                                  │    │\n│  │         ▼                         │                                  │    │\n│  │  ┌─────────────┐           ┌─────────────┐                          │    │\n│  │  │   members   │           │   boards    │                          │    │\n│  │  │             │           │             │                          │    │\n│  │  └──────┬──────┘           └──────┬──────┘                          │    │\n│  │         │                         │                                  │    │\n│  │         │                         │ 1:N                              │    │\n│  │         │                         ▼                                  │    │\n│  │         │                  ┌─────────────┐                          │    │\n│  │         │                  │   columns   │                          │    │\n│  │         │                  │             │                          │    │\n│  │         │                  └──────┬──────┘                          │    │\n│  │         │                         │                                  │    │\n│  │         │                         │ 1:N                              │    │\n│  │         │                         ▼                                  │    │\n│  │         │                  ┌─────────────┐                          │    │\n│  │         └─────────────────▶│    tasks    │                          │    │\n│  │           (assignee)       │             │                          │    │\n│  │                            └─────────────┘                          │    │\n│  └─────────────────────────────────────────────────────────────────────┘    │\n│                                                                              │\n│  ┌─────────────────────────────────────────────────────────────────────┐    │\n│  │                        IDENTITY (Global)                             │    │\n│  │  ┌─────────────┐                                                     │    │\n│  │  │    users    │──────────────────────▶ members (junction)          │    │\n│  │  │  (accounts) │                                                     │    │\n│  │  └─────────────┘                                                     │    │\n│  └─────────────────────────────────────────────────────────────────────┘    │\n│                                                                              │\n└─────────────────────────────────────────────────────────────────────────────┘\n```\n\n## Tables\n\n### users\nGlobal user accounts (identity).\n\n```sql\nCREATE TABLE users (\n  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  email         VARCHAR(255) UNIQUE NOT NULL,\n  name          VARCHAR(255) NOT NULL,\n  avatar_url    TEXT,\n  google_id     VARCHAR(255) UNIQUE NOT NULL,\n  created_at    TIMESTAMPTZ DEFAULT NOW(),\n  updated_at    TIMESTAMPTZ DEFAULT NOW()\n);\n```\n\n### workspaces\nMulti-tenant workspace (team).\n\n```sql\nCREATE TABLE workspaces (\n  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  name          VARCHAR(255) NOT NULL,\n  slug          VARCHAR(100) UNIQUE NOT NULL,\n  owner_id      UUID REFERENCES users(id) NOT NULL,\n  settings      JSONB DEFAULT '{}',\n  created_at    TIMESTAMPTZ DEFAULT NOW(),\n  updated_at    TIMESTAMPTZ DEFAULT NOW(),\n  deleted_at    TIMESTAMPTZ\n);\n```\n\n### members\nWorkspace membership (junction).\n\n```sql\nCREATE TABLE members (\n  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  workspace_id  UUID REFERENCES workspaces(id) NOT NULL,\n  user_id       UUID REFERENCES users(id) NOT NULL,\n  role          VARCHAR(50) DEFAULT 'member', -- 'owner', 'admin', 'member'\n  joined_at     TIMESTAMPTZ DEFAULT NOW(),\n  UNIQUE(workspace_id, user_id)\n);\n\nCREATE INDEX idx_members_workspace ON members(workspace_id);\nCREATE INDEX idx_members_user ON members(user_id);\n```\n\n### boards\nKanban boards within a workspace.\n\n```sql\nCREATE TABLE boards (\n  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  workspace_id  UUID REFERENCES workspaces(id) NOT NULL,\n  name          VARCHAR(255) NOT NULL,\n  description   TEXT,\n  settings      JSONB DEFAULT '{}',\n  created_at    TIMESTAMPTZ DEFAULT NOW(),\n  updated_at    TIMESTAMPTZ DEFAULT NOW(),\n  deleted_at    TIMESTAMPTZ\n);\n\nCREATE INDEX idx_boards_workspace ON boards(workspace_id);\n```\n\n### columns\nBoard columns (e.g., To Do, In Progress, Done).\n\n```sql\nCREATE TABLE columns (\n  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  board_id      UUID REFERENCES boards(id) NOT NULL,\n  name          VARCHAR(255) NOT NULL,\n  position      INTEGER NOT NULL,\n  color         VARCHAR(7), -- hex color\n  created_at    TIMESTAMPTZ DEFAULT NOW(),\n  updated_at    TIMESTAMPTZ DEFAULT NOW()\n);\n\nCREATE INDEX idx_columns_board ON columns(board_id);\n```\n\n### tasks\nIndividual task items.\n\n```sql\nCREATE TABLE tasks (\n  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  workspace_id  UUID REFERENCES workspaces(id) NOT NULL,\n  board_id      UUID REFERENCES boards(id),\n  column_id     UUID REFERENCES columns(id),\n  title         VARCHAR(500) NOT NULL,\n  description   TEXT,\n  position      INTEGER NOT NULL DEFAULT 0,\n  priority      VARCHAR(20) DEFAULT 'medium', -- 'low', 'medium', 'high', 'urgent'\n  due_date      DATE,\n  assignee_id   UUID REFERENCES members(id),\n  labels        JSONB DEFAULT '[]',\n  metadata      JSONB DEFAULT '{}',\n  created_by    UUID REFERENCES members(id) NOT NULL,\n  created_at    TIMESTAMPTZ DEFAULT NOW(),\n  updated_at    TIMESTAMPTZ DEFAULT NOW(),\n  deleted_at    TIMESTAMPTZ\n);\n\nCREATE INDEX idx_tasks_workspace ON tasks(workspace_id);\nCREATE INDEX idx_tasks_board ON tasks(board_id);\nCREATE INDEX idx_tasks_column ON tasks(column_id);\nCREATE INDEX idx_tasks_assignee ON tasks(assignee_id);\n```\n\n---\n\n## Multi-Tenancy Strategy\n\n**Row-Level Security (RLS) Pattern:**\n\n```sql\n-- Enable RLS on tenant-scoped tables\nALTER TABLE boards ENABLE ROW LEVEL SECURITY;\nALTER TABLE tasks ENABLE ROW LEVEL SECURITY;\n\n-- Policy: Users can only see data in their workspaces\nCREATE POLICY workspace_isolation ON tasks\n  USING (workspace_id IN (\n    SELECT workspace_id FROM members\n    WHERE user_id = current_setting('app.current_user_id')::uuid\n  ));\n```\n\n**Application-Level Enforcement:**\n- All queries include `workspace_id` filter\n- Middleware injects workspace context\n- Services validate workspace membership\n\n---\n\n## Indexes Strategy\n\n| Table | Index | Purpose |\n|-------|-------|---------|\n| `members` | `(workspace_id, user_id)` | Membership lookups |\n| `tasks` | `(workspace_id)` | Tenant isolation |\n| `tasks` | `(board_id, column_id, position)` | Board ordering |\n| `tasks` | `(assignee_id)` | My tasks queries |\n| `boards` | `(workspace_id)` | Workspace boards |\n\n---\n\n## Migrations\n\nManaged via Knex.js migrations:\n\n```\nmigrations/\n├── 20250101000001_create_users.ts\n├── 20250101000002_create_workspaces.ts\n├── 20250101000003_create_members.ts\n├── 20250101000004_create_boards.ts\n├── 20250101000005_create_columns.ts\n└── 20250101000006_create_tasks.ts\n```\n\n---\n*C3 ID: c3-3 | Updated: 2025-01-12*\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.5QTchKEkSQ/.c3/c3-3-components.md",
+        "content": "# C3 Components: PostgreSQL (c3-3)\n\n> Primary data store for TaskFlow\n\n## Schema Overview\n\n```\n┌─────────────────────────────────────────────────────────────────────────────┐\n│                           POSTGRESQL SCHEMA                                  │\n│                                                                              │\n│  ┌─────────────────────────────────────────────────────────────────────┐    │\n│  │                        TENANT BOUNDARY                               │    │\n│  │  ┌─────────────┐                                                     │    │\n│  │  │  workspaces │◀─────────────────┐                                  │    │\n│  │  │  (tenant)   │                  │                                  │    │\n│  │  └──────┬──────┘                  │                                  │    │\n│  │         │                         │                                  │    │\n│  │         │ 1:N                     │                                  │    │\n│  │         ▼                         │                                  │    │\n│  │  ┌─────────────┐           ┌─────────────┐                          │    │\n│  │  │   members   │           │   boards    │                          │    │\n│  │  │             │           │             │                          │    │\n│  │  └──────┬──────┘           └──────┬──────┘                          │    │\n│  │         │                         │                                  │    │\n│  │         │                         │ 1:N                              │    │\n│  │         │                         ▼                                  │    │\n│  │         │                  ┌─────────────┐                          │    │\n│  │         │                  │   columns   │                          │    │\n│  │         │                  │             │                          │    │\n│  │         │                  └──────┬──────┘                          │    │\n│  │         │                         │                                  │    │\n│  │         │                         │ 1:N                              │    │\n│  │         │                         ▼                                  │    │\n│  │         │                  ┌─────────────┐                          │    │\n│  │         └─────────────────▶│    tasks    │                          │    │\n│  │           (assignee)       │             │                          │    │\n│  │                            └─────────────┘                          │    │\n│  └─────────────────────────────────────────────────────────────────────┘    │\n│                                                                              │\n│  ┌─────────────────────────────────────────────────────────────────────┐    │\n│  │                        IDENTITY (Global)                             │    │\n│  │  ┌─────────────┐                                                     │    │\n│  │  │    users    │──────────────────────▶ members (junction)          │    │\n│  │  │  (accounts) │                                                     │    │\n│  │  └─────────────┘                                                     │    │\n│  └─────────────────────────────────────────────────────────────────────┘    │\n│                                                                              │\n└─────────────────────────────────────────────────────────────────────────────┘\n```\n\n## Tables\n\n### users\nGlobal user accounts (identity).\n\n```sql\nCREATE TABLE users (\n  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  email         VARCHAR(255) UNIQUE NOT NULL,\n  name          VARCHAR(255) NOT NULL,\n  avatar_url    TEXT,\n  google_id     VARCHAR(255) UNIQUE NOT NULL,\n  created_at    TIMESTAMPTZ DEFAULT NOW(),\n  updated_at    TIMESTAMPTZ DEFAULT NOW()\n);\n```\n\n### workspaces\nMulti-tenant workspace (team).\n\n```sql\nCREATE TABLE workspaces (\n  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  name          VARCHAR(255) NOT NULL,\n  slug          VARCHAR(100) UNIQUE NOT NULL,\n  owner_id      UUID REFERENCES users(id) NOT NULL,\n  settings      JSONB DEFAULT '{}',\n  created_at    TIMESTAMPTZ DEFAULT NOW(),\n  updated_at    TIMESTAMPTZ DEFAULT NOW(),\n  deleted_at    TIMESTAMPTZ\n);\n```\n\n### members\nWorkspace membership (junction).\n\n```sql\nCREATE TABLE members (\n  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  workspace_id  UUID REFERENCES workspaces(id) NOT NULL,\n  user_id       UUID REFERENCES users(id) NOT NULL,\n  role          VARCHAR(50) DEFAULT 'member', -- 'owner', 'admin', 'member'\n  joined_at     TIMESTAMPTZ DEFAULT NOW(),\n  UNIQUE(workspace_id, user_id)\n);\n\nCREATE INDEX idx_members_workspace ON members(workspace_id);\nCREATE INDEX idx_members_user ON members(user_id);\n```\n\n### boards\nKanban boards within a workspace.\n\n```sql\nCREATE TABLE boards (\n  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  workspace_id  UUID REFERENCES workspaces(id) NOT NULL,\n  name          VARCHAR(255) NOT NULL,\n  description   TEXT,\n  settings      JSONB DEFAULT '{}',\n  created_at    TIMESTAMPTZ DEFAULT NOW(),\n  updated_at    TIMESTAMPTZ DEFAULT NOW(),\n  deleted_at    TIMESTAMPTZ\n);\n\nCREATE INDEX idx_boards_workspace ON boards(workspace_id);\n```\n\n### columns\nBoard columns (e.g., To Do, In Progress, Done).\n\n```sql\nCREATE TABLE columns (\n  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  board_id      UUID REFERENCES boards(id) NOT NULL,\n  name          VARCHAR(255) NOT NULL,\n  position      INTEGER NOT NULL,\n  color         VARCHAR(7), -- hex color\n  created_at    TIMESTAMPTZ DEFAULT NOW(),\n  updated_at    TIMESTAMPTZ DEFAULT NOW()\n);\n\nCREATE INDEX idx_columns_board ON columns(board_id);\n```\n\n### tasks\nIndividual task items.\n\n```sql\nCREATE TABLE tasks (\n  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n  workspace_id  UUID REFERENCES workspaces(id) NOT NULL,\n  board_id      UUID REFERENCES boards(id),\n  column_id     UUID REFERENCES columns(id),\n  title         VARCHAR(500) NOT NULL,\n  description   TEXT,\n  position      INTEGER NOT NULL DEFAULT 0,\n  priority      VARCHAR(20) DEFAULT 'medium', -- 'low', 'medium', 'high', 'urgent'\n  due_date      DATE,\n  assignee_id   UUID REFERENCES members(id),\n  labels        JSONB DEFAULT '[]',\n  metadata      JSONB DEFAULT '{}',\n  created_by    UUID REFERENCES members(id) NOT NULL,\n  created_at    TIMESTAMPTZ DEFAULT NOW(),\n  updated_at    TIMESTAMPTZ DEFAULT NOW(),\n  deleted_at    TIMESTAMPTZ\n);\n\nCREATE INDEX idx_tasks_workspace ON tasks(workspace_id);\nCREATE INDEX idx_tasks_board ON tasks(board_id);\nCREATE INDEX idx_tasks_column ON tasks(column_id);\nCREATE INDEX idx_tasks_assignee ON tasks(assignee_id);\n```\n\n---\n\n## Multi-Tenancy Strategy\n\n**Row-Level Security (RLS) Pattern:**\n\n```sql\n-- Enable RLS on tenant-scoped tables\nALTER TABLE boards ENABLE ROW LEVEL SECURITY;\nALTER TABLE tasks ENABLE ROW LEVEL SECURITY;\n\n-- Policy: Users can only see data in their workspaces\nCREATE POLICY workspace_isolation ON tasks\n  USING (workspace_id IN (\n    SELECT workspace_id FROM members\n    WHERE user_id = current_setting('app.current_user_id')::uuid\n  ));\n```\n\n**Application-Level Enforcement:**\n- All queries include `workspace_id` filter\n- Middleware injects workspace context\n- Services validate workspace membership\n\n---\n\n## Indexes Strategy\n\n| Table | Index | Purpose |\n|-------|-------|---------|\n| `members` | `(workspace_id, user_id)` | Membership lookups |\n| `tasks` | `(workspace_id)` | Tenant isolation |\n| `tasks` | `(board_id, column_id, position)` | Board ordering |\n| `tasks` | `(assignee_id)` | My tasks queries |\n| `boards` | `(workspace_id)` | Workspace boards |\n\n---\n\n## Migrations\n\nManaged via Knex.js migrations:\n\n```\nmigrations/\n├── 20250101000001_create_users.ts\n├── 20250101000002_create_workspaces.ts\n├── 20250101000003_create_members.ts\n├── 20250101000004_create_boards.ts\n├── 20250101000005_create_columns.ts\n└── 20250101000006_create_tasks.ts\n```\n\n---\n*C3 ID: c3-3 | Updated: 2025-01-12*\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:23:20.973Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.5QTchKEkSQ/.c3/c3-4-components.md",
+        "content": "# C3 Components: Redis (c3-4)\n\n> Caching, session storage, and real-time pub/sub for TaskFlow\n\n## Architecture Overview\n\n```\n┌─────────────────────────────────────────────────────────────────────────────┐\n│                               REDIS (c3-4)                                   │\n│                                                                              │\n│  ┌─────────────────────────────────────────────────────────────────────┐    │\n│  │                          KEY NAMESPACES                              │    │\n│  │                                                                       │    │\n│  │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐            │    │\n│  │  │   sessions:   │  │    cache:     │  │   presence:   │            │    │\n│  │  │  {sessionId}  │  │   {pattern}   │  │  {boardId}    │            │    │\n│  │  └───────────────┘  └───────────────┘  └───────────────┘            │    │\n│  │                                                                       │    │\n│  │  ┌───────────────┐  ┌───────────────┐                                │    │\n│  │  │  ratelimit:   │  │   locks:      │                                │    │\n│  │  │   {ip/user}   │  │  {resource}   │                                │    │\n│  │  └───────────────┘  └───────────────┘                                │    │\n│  └─────────────────────────────────────────────────────────────────────┘    │\n│                                                                              │\n│  ┌─────────────────────────────────────────────────────────────────────┐    │\n│  │                          PUB/SUB CHANNELS                            │    │\n│  │                                                                       │    │\n│  │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐            │    │\n│  │  │  board:{id}   │  │ workspace:{id}│  │   global      │            │    │\n│  │  │   (events)    │  │   (events)    │  │  (broadcasts) │            │    │\n│  │  └───────────────┘  └───────────────┘  └───────────────┘            │    │\n│  └─────────────────────────────────────────────────────────────────────┘    │\n│                                                                              │\n└─────────────────────────────────────────────────────────────────────────────┘\n```\n\n## Use Cases\n\n### 1. Session Storage\n\nStore express-session data in Redis for horizontal scaling.\n\n**Key Pattern:** `sessions:{sessionId}`\n\n```typescript\n// Session configuration\nimport RedisStore from 'connect-redis';\nimport session from 'express-session';\n\napp.use(session({\n  store: new RedisStore({ client: redisClient }),\n  secret: config.sessionSecret,\n  resave: false,\n  saveUninitialized: false,\n  cookie: {\n    secure: true,\n    httpOnly: true,\n    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days\n  }\n}));\n```\n\n**TTL:** 7 days (matches cookie expiry)\n\n---\n\n### 2. API Response Caching\n\nCache expensive queries and API responses.\n\n**Key Patterns:**\n- `cache:board:{boardId}` - Full board with tasks\n- `cache:workspace:{workspaceId}:boards` - Workspace board list\n- `cache:user:{userId}:workspaces` - User workspace list\n\n```typescript\n// Cache wrapper example\nasync function getCachedBoard(boardId: string) {\n  const cacheKey = `cache:board:${boardId}`;\n\n  // Try cache first\n  const cached = await redis.get(cacheKey);\n  if (cached) return JSON.parse(cached);\n\n  // Fetch from DB\n  const board = await boardService.getFullBoard(boardId);\n\n  // Cache for 5 minutes\n  await redis.setex(cacheKey, 300, JSON.stringify(board));\n\n  return board;\n}\n```\n\n**TTL:** 5 minutes (invalidated on mutations)\n\n**Cache Invalidation Events:**\n- `task:created` → Invalidate board cache\n- `task:updated` → Invalidate board cache\n- `board:updated` → Invalidate board + workspace list cache\n\n---\n\n### 3. Real-Time Pub/Sub\n\nScale WebSocket events across multiple API server instances.\n\n**Channels:**\n- `board:{boardId}` - Board-specific events (task changes)\n- `workspace:{workspaceId}` - Workspace events (member changes)\n- `user:{userId}` - User-specific notifications\n\n```typescript\n// Publishing an event\nasync function publishTaskUpdate(task: Task) {\n  const event = {\n    type: 'task:updated',\n    payload: task,\n    timestamp: Date.now()\n  };\n\n  await redis.publish(`board:${task.boardId}`, JSON.stringify(event));\n}\n\n// Subscribing (on each API server instance)\nconst subscriber = redis.duplicate();\n\nsubscriber.subscribe(`board:${boardId}`);\nsubscriber.on('message', (channel, message) => {\n  const event = JSON.parse(message);\n  // Broadcast to connected WebSocket clients in this room\n  io.to(channel).emit(event.type, event.payload);\n});\n```\n\n---\n\n### 4. Presence Tracking\n\nTrack which users are viewing which boards.\n\n**Key Pattern:** `presence:board:{boardId}` (Redis Set)\n\n```typescript\n// User joins board\nasync function joinBoard(boardId: string, userId: string) {\n  await redis.sadd(`presence:board:${boardId}`, userId);\n  await redis.expire(`presence:board:${boardId}`, 3600); // 1 hour TTL\n\n  // Broadcast presence update\n  const members = await redis.smembers(`presence:board:${boardId}`);\n  io.to(`board:${boardId}`).emit('presence:update', members);\n}\n\n// User leaves board\nasync function leaveBoard(boardId: string, userId: string) {\n  await redis.srem(`presence:board:${boardId}`, userId);\n\n  const members = await redis.smembers(`presence:board:${boardId}`);\n  io.to(`board:${boardId}`).emit('presence:update', members);\n}\n```\n\n---\n\n### 5. Rate Limiting\n\nProtect API endpoints from abuse.\n\n**Key Pattern:** `ratelimit:{ip}:{endpoint}` or `ratelimit:{userId}:{endpoint}`\n\n```typescript\n// Sliding window rate limiter\nimport { RateLimiterRedis } from 'rate-limiter-flexible';\n\nconst rateLimiter = new RateLimiterRedis({\n  storeClient: redisClient,\n  keyPrefix: 'ratelimit',\n  points: 100,        // requests\n  duration: 60,       // per 60 seconds\n  blockDuration: 60   // block for 60 seconds if exceeded\n});\n\napp.use(async (req, res, next) => {\n  try {\n    await rateLimiter.consume(req.ip);\n    next();\n  } catch {\n    res.status(429).json({ error: 'Too many requests' });\n  }\n});\n```\n\n---\n\n### 6. Distributed Locks\n\nPrevent race conditions in critical operations.\n\n**Key Pattern:** `lock:{resource}:{id}`\n\n```typescript\nimport Redlock from 'redlock';\n\nconst redlock = new Redlock([redisClient]);\n\n// Lock during board reorder to prevent conflicts\nasync function reorderTasks(boardId: string, newOrder: TaskOrder[]) {\n  const lock = await redlock.acquire([`lock:board:${boardId}`], 5000);\n\n  try {\n    await boardService.applyReorder(boardId, newOrder);\n  } finally {\n    await lock.release();\n  }\n}\n```\n\n---\n\n## Key Naming Convention\n\n```\n{namespace}:{entity}:{id}[:{subkey}]\n\nExamples:\n- sessions:abc123\n- cache:board:uuid-here\n- presence:board:uuid-here\n- ratelimit:192.168.1.1:api\n- lock:board:uuid-here\n```\n\n## TTL Strategy\n\n| Namespace | TTL | Reason |\n|-----------|-----|--------|\n| `sessions:*` | 7 days | Match cookie expiry |\n| `cache:*` | 5 minutes | Balance freshness vs DB load |\n| `presence:*` | 1 hour | Cleanup stale presence |\n| `ratelimit:*` | 1 minute | Sliding window |\n| `lock:*` | 5-30 seconds | Short-lived operation locks |\n\n---\n*C3 ID: c3-4 | Updated: 2025-01-12*\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:23:21.032Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.5QTchKEkSQ/.c3/c3-4-components.md",
+        "content": "# C3 Components: Redis (c3-4)\n\n> Caching, session storage, and real-time pub/sub for TaskFlow\n\n## Architecture Overview\n\n```\n┌─────────────────────────────────────────────────────────────────────────────┐\n│                               REDIS (c3-4)                                   │\n│                                                                              │\n│  ┌─────────────────────────────────────────────────────────────────────┐    │\n│  │                          KEY NAMESPACES                              │    │\n│  │                                                                       │    │\n│  │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐            │    │\n│  │  │   sessions:   │  │    cache:     │  │   presence:   │            │    │\n│  │  │  {sessionId}  │  │   {pattern}   │  │  {boardId}    │            │    │\n│  │  └───────────────┘  └───────────────┘  └───────────────┘            │    │\n│  │                                                                       │    │\n│  │  ┌───────────────┐  ┌───────────────┐                                │    │\n│  │  │  ratelimit:   │  │   locks:      │                                │    │\n│  │  │   {ip/user}   │  │  {resource}   │                                │    │\n│  │  └───────────────┘  └───────────────┘                                │    │\n│  └─────────────────────────────────────────────────────────────────────┘    │\n│                                                                              │\n│  ┌─────────────────────────────────────────────────────────────────────┐    │\n│  │                          PUB/SUB CHANNELS                            │    │\n│  │                                                                       │    │\n│  │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐            │    │\n│  │  │  board:{id}   │  │ workspace:{id}│  │   global      │            │    │\n│  │  │   (events)    │  │   (events)    │  │  (broadcasts) │            │    │\n│  │  └───────────────┘  └───────────────┘  └───────────────┘            │    │\n│  └─────────────────────────────────────────────────────────────────────┘    │\n│                                                                              │\n└─────────────────────────────────────────────────────────────────────────────┘\n```\n\n## Use Cases\n\n### 1. Session Storage\n\nStore express-session data in Redis for horizontal scaling.\n\n**Key Pattern:** `sessions:{sessionId}`\n\n```typescript\n// Session configuration\nimport RedisStore from 'connect-redis';\nimport session from 'express-session';\n\napp.use(session({\n  store: new RedisStore({ client: redisClient }),\n  secret: config.sessionSecret,\n  resave: false,\n  saveUninitialized: false,\n  cookie: {\n    secure: true,\n    httpOnly: true,\n    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days\n  }\n}));\n```\n\n**TTL:** 7 days (matches cookie expiry)\n\n---\n\n### 2. API Response Caching\n\nCache expensive queries and API responses.\n\n**Key Patterns:**\n- `cache:board:{boardId}` - Full board with tasks\n- `cache:workspace:{workspaceId}:boards` - Workspace board list\n- `cache:user:{userId}:workspaces` - User workspace list\n\n```typescript\n// Cache wrapper example\nasync function getCachedBoard(boardId: string) {\n  const cacheKey = `cache:board:${boardId}`;\n\n  // Try cache first\n  const cached = await redis.get(cacheKey);\n  if (cached) return JSON.parse(cached);\n\n  // Fetch from DB\n  const board = await boardService.getFullBoard(boardId);\n\n  // Cache for 5 minutes\n  await redis.setex(cacheKey, 300, JSON.stringify(board));\n\n  return board;\n}\n```\n\n**TTL:** 5 minutes (invalidated on mutations)\n\n**Cache Invalidation Events:**\n- `task:created` → Invalidate board cache\n- `task:updated` → Invalidate board cache\n- `board:updated` → Invalidate board + workspace list cache\n\n---\n\n### 3. Real-Time Pub/Sub\n\nScale WebSocket events across multiple API server instances.\n\n**Channels:**\n- `board:{boardId}` - Board-specific events (task changes)\n- `workspace:{workspaceId}` - Workspace events (member changes)\n- `user:{userId}` - User-specific notifications\n\n```typescript\n// Publishing an event\nasync function publishTaskUpdate(task: Task) {\n  const event = {\n    type: 'task:updated',\n    payload: task,\n    timestamp: Date.now()\n  };\n\n  await redis.publish(`board:${task.boardId}`, JSON.stringify(event));\n}\n\n// Subscribing (on each API server instance)\nconst subscriber = redis.duplicate();\n\nsubscriber.subscribe(`board:${boardId}`);\nsubscriber.on('message', (channel, message) => {\n  const event = JSON.parse(message);\n  // Broadcast to connected WebSocket clients in this room\n  io.to(channel).emit(event.type, event.payload);\n});\n```\n\n---\n\n### 4. Presence Tracking\n\nTrack which users are viewing which boards.\n\n**Key Pattern:** `presence:board:{boardId}` (Redis Set)\n\n```typescript\n// User joins board\nasync function joinBoard(boardId: string, userId: string) {\n  await redis.sadd(`presence:board:${boardId}`, userId);\n  await redis.expire(`presence:board:${boardId}`, 3600); // 1 hour TTL\n\n  // Broadcast presence update\n  const members = await redis.smembers(`presence:board:${boardId}`);\n  io.to(`board:${boardId}`).emit('presence:update', members);\n}\n\n// User leaves board\nasync function leaveBoard(boardId: string, userId: string) {\n  await redis.srem(`presence:board:${boardId}`, userId);\n\n  const members = await redis.smembers(`presence:board:${boardId}`);\n  io.to(`board:${boardId}`).emit('presence:update', members);\n}\n```\n\n---\n\n### 5. Rate Limiting\n\nProtect API endpoints from abuse.\n\n**Key Pattern:** `ratelimit:{ip}:{endpoint}` or `ratelimit:{userId}:{endpoint}`\n\n```typescript\n// Sliding window rate limiter\nimport { RateLimiterRedis } from 'rate-limiter-flexible';\n\nconst rateLimiter = new RateLimiterRedis({\n  storeClient: redisClient,\n  keyPrefix: 'ratelimit',\n  points: 100,        // requests\n  duration: 60,       // per 60 seconds\n  blockDuration: 60   // block for 60 seconds if exceeded\n});\n\napp.use(async (req, res, next) => {\n  try {\n    await rateLimiter.consume(req.ip);\n    next();\n  } catch {\n    res.status(429).json({ error: 'Too many requests' });\n  }\n});\n```\n\n---\n\n### 6. Distributed Locks\n\nPrevent race conditions in critical operations.\n\n**Key Pattern:** `lock:{resource}:{id}`\n\n```typescript\nimport Redlock from 'redlock';\n\nconst redlock = new Redlock([redisClient]);\n\n// Lock during board reorder to prevent conflicts\nasync function reorderTasks(boardId: string, newOrder: TaskOrder[]) {\n  const lock = await redlock.acquire([`lock:board:${boardId}`], 5000);\n\n  try {\n    await boardService.applyReorder(boardId, newOrder);\n  } finally {\n    await lock.release();\n  }\n}\n```\n\n---\n\n## Key Naming Convention\n\n```\n{namespace}:{entity}:{id}[:{subkey}]\n\nExamples:\n- sessions:abc123\n- cache:board:uuid-here\n- presence:board:uuid-here\n- ratelimit:192.168.1.1:api\n- lock:board:uuid-here\n```\n\n## TTL Strategy\n\n| Namespace | TTL | Reason |\n|-----------|-----|--------|\n| `sessions:*` | 7 days | Match cookie expiry |\n| `cache:*` | 5 minutes | Balance freshness vs DB load |\n| `presence:*` | 1 hour | Cleanup stale presence |\n| `ratelimit:*` | 1 minute | Sliding window |\n| `lock:*` | 5-30 seconds | Short-lived operation locks |\n\n---\n*C3 ID: c3-4 | Updated: 2025-01-12*\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.5QTchKEkSQ/.c3/c3-4-components.md",
+        "content": "# C3 Components: Redis (c3-4)\n\n> Caching, session storage, and real-time pub/sub for TaskFlow\n\n## Architecture Overview\n\n```\n┌─────────────────────────────────────────────────────────────────────────────┐\n│                               REDIS (c3-4)                                   │\n│                                                                              │\n│  ┌─────────────────────────────────────────────────────────────────────┐    │\n│  │                          KEY NAMESPACES                              │    │\n│  │                                                                       │    │\n│  │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐            │    │\n│  │  │   sessions:   │  │    cache:     │  │   presence:   │            │    │\n│  │  │  {sessionId}  │  │   {pattern}   │  │  {boardId}    │            │    │\n│  │  └───────────────┘  └───────────────┘  └───────────────┘            │    │\n│  │                                                                       │    │\n│  │  ┌───────────────┐  ┌───────────────┐                                │    │\n│  │  │  ratelimit:   │  │   locks:      │                                │    │\n│  │  │   {ip/user}   │  │  {resource}   │                                │    │\n│  │  └───────────────┘  └───────────────┘                                │    │\n│  └─────────────────────────────────────────────────────────────────────┘    │\n│                                                                              │\n│  ┌─────────────────────────────────────────────────────────────────────┐    │\n│  │                          PUB/SUB CHANNELS                            │    │\n│  │                                                                       │    │\n│  │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐            │    │\n│  │  │  board:{id}   │  │ workspace:{id}│  │   global      │            │    │\n│  │  │   (events)    │  │   (events)    │  │  (broadcasts) │            │    │\n│  │  └───────────────┘  └───────────────┘  └───────────────┘            │    │\n│  └─────────────────────────────────────────────────────────────────────┘    │\n│                                                                              │\n└─────────────────────────────────────────────────────────────────────────────┘\n```\n\n## Use Cases\n\n### 1. Session Storage\n\nStore express-session data in Redis for horizontal scaling.\n\n**Key Pattern:** `sessions:{sessionId}`\n\n```typescript\n// Session configuration\nimport RedisStore from 'connect-redis';\nimport session from 'express-session';\n\napp.use(session({\n  store: new RedisStore({ client: redisClient }),\n  secret: config.sessionSecret,\n  resave: false,\n  saveUninitialized: false,\n  cookie: {\n    secure: true,\n    httpOnly: true,\n    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days\n  }\n}));\n```\n\n**TTL:** 7 days (matches cookie expiry)\n\n---\n\n### 2. API Response Caching\n\nCache expensive queries and API responses.\n\n**Key Patterns:**\n- `cache:board:{boardId}` - Full board with tasks\n- `cache:workspace:{workspaceId}:boards` - Workspace board list\n- `cache:user:{userId}:workspaces` - User workspace list\n\n```typescript\n// Cache wrapper example\nasync function getCachedBoard(boardId: string) {\n  const cacheKey = `cache:board:${boardId}`;\n\n  // Try cache first\n  const cached = await redis.get(cacheKey);\n  if (cached) return JSON.parse(cached);\n\n  // Fetch from DB\n  const board = await boardService.getFullBoard(boardId);\n\n  // Cache for 5 minutes\n  await redis.setex(cacheKey, 300, JSON.stringify(board));\n\n  return board;\n}\n```\n\n**TTL:** 5 minutes (invalidated on mutations)\n\n**Cache Invalidation Events:**\n- `task:created` → Invalidate board cache\n- `task:updated` → Invalidate board cache\n- `board:updated` → Invalidate board + workspace list cache\n\n---\n\n### 3. Real-Time Pub/Sub\n\nScale WebSocket events across multiple API server instances.\n\n**Channels:**\n- `board:{boardId}` - Board-specific events (task changes)\n- `workspace:{workspaceId}` - Workspace events (member changes)\n- `user:{userId}` - User-specific notifications\n\n```typescript\n// Publishing an event\nasync function publishTaskUpdate(task: Task) {\n  const event = {\n    type: 'task:updated',\n    payload: task,\n    timestamp: Date.now()\n  };\n\n  await redis.publish(`board:${task.boardId}`, JSON.stringify(event));\n}\n\n// Subscribing (on each API server instance)\nconst subscriber = redis.duplicate();\n\nsubscriber.subscribe(`board:${boardId}`);\nsubscriber.on('message', (channel, message) => {\n  const event = JSON.parse(message);\n  // Broadcast to connected WebSocket clients in this room\n  io.to(channel).emit(event.type, event.payload);\n});\n```\n\n---\n\n### 4. Presence Tracking\n\nTrack which users are viewing which boards.\n\n**Key Pattern:** `presence:board:{boardId}` (Redis Set)\n\n```typescript\n// User joins board\nasync function joinBoard(boardId: string, userId: string) {\n  await redis.sadd(`presence:board:${boardId}`, userId);\n  await redis.expire(`presence:board:${boardId}`, 3600); // 1 hour TTL\n\n  // Broadcast presence update\n  const members = await redis.smembers(`presence:board:${boardId}`);\n  io.to(`board:${boardId}`).emit('presence:update', members);\n}\n\n// User leaves board\nasync function leaveBoard(boardId: string, userId: string) {\n  await redis.srem(`presence:board:${boardId}`, userId);\n\n  const members = await redis.smembers(`presence:board:${boardId}`);\n  io.to(`board:${boardId}`).emit('presence:update', members);\n}\n```\n\n---\n\n### 5. Rate Limiting\n\nProtect API endpoints from abuse.\n\n**Key Pattern:** `ratelimit:{ip}:{endpoint}` or `ratelimit:{userId}:{endpoint}`\n\n```typescript\n// Sliding window rate limiter\nimport { RateLimiterRedis } from 'rate-limiter-flexible';\n\nconst rateLimiter = new RateLimiterRedis({\n  storeClient: redisClient,\n  keyPrefix: 'ratelimit',\n  points: 100,        // requests\n  duration: 60,       // per 60 seconds\n  blockDuration: 60   // block for 60 seconds if exceeded\n});\n\napp.use(async (req, res, next) => {\n  try {\n    await rateLimiter.consume(req.ip);\n    next();\n  } catch {\n    res.status(429).json({ error: 'Too many requests' });\n  }\n});\n```\n\n---\n\n### 6. Distributed Locks\n\nPrevent race conditions in critical operations.\n\n**Key Pattern:** `lock:{resource}:{id}`\n\n```typescript\nimport Redlock from 'redlock';\n\nconst redlock = new Redlock([redisClient]);\n\n// Lock during board reorder to prevent conflicts\nasync function reorderTasks(boardId: string, newOrder: TaskOrder[]) {\n  const lock = await redlock.acquire([`lock:board:${boardId}`], 5000);\n\n  try {\n    await boardService.applyReorder(boardId, newOrder);\n  } finally {\n    await lock.release();\n  }\n}\n```\n\n---\n\n## Key Naming Convention\n\n```\n{namespace}:{entity}:{id}[:{subkey}]\n\nExamples:\n- sessions:abc123\n- cache:board:uuid-here\n- presence:board:uuid-here\n- ratelimit:192.168.1.1:api\n- lock:board:uuid-here\n```\n\n## TTL Strategy\n\n| Namespace | TTL | Reason |\n|-----------|-----|--------|\n| `sessions:*` | 7 days | Match cookie expiry |\n| `cache:*` | 5 minutes | Balance freshness vs DB load |\n| `presence:*` | 1 hour | Cleanup stale presence |\n| `ratelimit:*` | 1 minute | Sliding window |\n| `lock:*` | 5-30 seconds | Short-lived operation locks |\n\n---\n*C3 ID: c3-4 | Updated: 2025-01-12*\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:23:25.969Z",
+      "event": "PreToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Create C3 Context diagram (c3-context.md)",
+            "status": "completed",
+            "activeForm": "Creating C3 Context diagram"
+          },
+          {
+            "content": "Create Container diagram (c3-container.md)",
+            "status": "completed",
+            "activeForm": "Creating Container diagram"
+          },
+          {
+            "content": "Create Component diagrams for each container",
+            "status": "completed",
+            "activeForm": "Creating Component diagrams"
+          },
+          {
+            "content": "Create ADR-000 System Blueprint",
+            "status": "in_progress",
+            "activeForm": "Creating ADR-000 System Blueprint"
+          },
+          {
+            "content": "Create c3-index.md as navigation hub",
+            "status": "pending",
+            "activeForm": "Creating c3-index.md navigation hub"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:23:25.990Z",
+      "event": "PostToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Create C3 Context diagram (c3-context.md)",
+            "status": "completed",
+            "activeForm": "Creating C3 Context diagram"
+          },
+          {
+            "content": "Create Container diagram (c3-container.md)",
+            "status": "completed",
+            "activeForm": "Creating Container diagram"
+          },
+          {
+            "content": "Create Component diagrams for each container",
+            "status": "completed",
+            "activeForm": "Creating Component diagrams"
+          },
+          {
+            "content": "Create ADR-000 System Blueprint",
+            "status": "in_progress",
+            "activeForm": "Creating ADR-000 System Blueprint"
+          },
+          {
+            "content": "Create c3-index.md as navigation hub",
+            "status": "pending",
+            "activeForm": "Creating c3-index.md navigation hub"
+          }
+        ]
+      },
+      "result": {
+        "oldTodos": [
+          {
+            "content": "Create C3 Context diagram (c3-context.md)",
+            "status": "completed",
+            "activeForm": "Creating C3 Context diagram"
+          },
+          {
+            "content": "Create Container diagram (c3-container.md)",
+            "status": "completed",
+            "activeForm": "Creating Container diagram"
+          },
+          {
+            "content": "Create Component diagrams for each container",
+            "status": "in_progress",
+            "activeForm": "Creating Component diagrams"
+          },
+          {
+            "content": "Create ADR-000 System Blueprint",
+            "status": "pending",
+            "activeForm": "Creating ADR-000 System Blueprint"
+          },
+          {
+            "content": "Create c3-index.md as navigation hub",
+            "status": "pending",
+            "activeForm": "Creating c3-index.md navigation hub"
+          }
+        ],
+        "newTodos": [
+          {
+            "content": "Create C3 Context diagram (c3-context.md)",
+            "status": "completed",
+            "activeForm": "Creating C3 Context diagram"
+          },
+          {
+            "content": "Create Container diagram (c3-container.md)",
+            "status": "completed",
+            "activeForm": "Creating Container diagram"
+          },
+          {
+            "content": "Create Component diagrams for each container",
+            "status": "completed",
+            "activeForm": "Creating Component diagrams"
+          },
+          {
+            "content": "Create ADR-000 System Blueprint",
+            "status": "in_progress",
+            "activeForm": "Creating ADR-000 System Blueprint"
+          },
+          {
+            "content": "Create c3-index.md as navigation hub",
+            "status": "pending",
+            "activeForm": "Creating c3-index.md navigation hub"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:24:17.274Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.5QTchKEkSQ/.c3/adr/adr-000-system-blueprint.md",
+        "content": "# ADR-000: TaskFlow System Blueprint\n\n**Status:** Accepted\n**Date:** 2025-01-12\n**Deciders:** Product Team\n\n## Context\n\nWe are building TaskFlow, a task management SaaS for small teams. The system needs to support:\n\n- Real-time collaboration on task boards\n- Multi-tenant workspaces with data isolation\n- Modern web experience with future mobile support\n- Rapid iteration while maintaining code quality\n- Cost-effective infrastructure for a startup\n\n## Decision\n\nWe will build TaskFlow as a **modular monolith** with the following architecture:\n\n### Technology Stack\n\n| Layer | Technology | Rationale |\n|-------|------------|-----------|\n| **Frontend** | React 18 + TypeScript + Vite | Industry standard, great DX, strong ecosystem |\n| **Backend** | Node.js 20 + TypeScript + Express | Shared language with frontend, mature ecosystem |\n| **Database** | PostgreSQL 16 | ACID compliance, JSON support, proven reliability |\n| **Cache/Pub-Sub** | Redis 7 | Session storage, caching, real-time event distribution |\n| **Real-time** | Socket.io (WebSocket) | Bi-directional communication, room support |\n| **Auth** | Google OAuth 2.0 via Passport.js | Secure, familiar to users, no password management |\n\n### Architecture Pattern: Modular Monolith\n\n```\n┌─────────────────────────────────────────────────────────────────┐\n│                         API SERVER                               │\n│                                                                  │\n│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐        │\n│  │   Auth   │  │  Tasks   │  │  Boards  │  │  Teams   │        │\n│  │  Module  │  │  Module  │  │  Module  │  │  Module  │        │\n│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘        │\n│       │             │             │             │               │\n│       └─────────────┴─────────────┴─────────────┘               │\n│                           │                                      │\n│                    Shared Foundation                             │\n│              (DB, Cache, Logger, Config)                        │\n└─────────────────────────────────────────────────────────────────┘\n```\n\n**Why Modular Monolith:**\n- Simpler deployment and operations for a small team\n- Clear module boundaries enable future service extraction\n- Shared infrastructure reduces complexity\n- Easy local development and debugging\n\n### Multi-Tenancy Strategy\n\n**Row-Level Isolation with `workspace_id`:**\n- All tenant-scoped tables include `workspace_id` column\n- Application-level enforcement in all queries\n- Future option: PostgreSQL Row-Level Security (RLS)\n\n```sql\n-- Every query includes workspace context\nSELECT * FROM tasks WHERE workspace_id = $1 AND ...\n```\n\n**Benefits:**\n- Single database instance (cost-effective)\n- Simpler backup and maintenance\n- Easy to add RLS later for defense-in-depth\n\n### Real-Time Architecture\n\n```\n┌─────────┐     WebSocket      ┌─────────────────────────────┐\n│ Client  │◀──────────────────▶│       API Server 1          │\n└─────────┘                    │  ┌─────────────────────┐    │\n                               │  │   Socket.io Server  │    │\n┌─────────┐     WebSocket      │  └──────────┬──────────┘    │\n│ Client  │◀──────────────────▶│             │               │\n└─────────┘                    └─────────────┼───────────────┘\n                                             │\n                                    Redis Pub/Sub\n                                             │\n                               ┌─────────────┼───────────────┐\n┌─────────┐     WebSocket      │             │               │\n│ Client  │◀──────────────────▶│  ┌──────────┴──────────┐    │\n└─────────┘                    │  │   Socket.io Server  │    │\n                               │  └─────────────────────┘    │\n                               │       API Server 2          │\n                               └─────────────────────────────┘\n```\n\n**Event Flow:**\n1. Client performs action (e.g., update task)\n2. API server processes and persists change\n3. Server publishes event to Redis channel\n4. All API server instances receive event\n5. Each server broadcasts to connected clients in that room\n\n### API Design\n\n**RESTful with resource-based URLs:**\n\n```\n# Workspaces\nGET    /api/workspaces\nPOST   /api/workspaces\nGET    /api/workspaces/:id\n\n# Boards (scoped to workspace via context)\nGET    /api/boards\nPOST   /api/boards\nGET    /api/boards/:id\nPATCH  /api/boards/:id/reorder\n\n# Tasks\nGET    /api/tasks\nPOST   /api/tasks\nPATCH  /api/tasks/:id\nDELETE /api/tasks/:id\n\n# Auth\nGET    /api/auth/google\nGET    /api/auth/google/callback\nPOST   /api/auth/logout\nGET    /api/auth/me\n```\n\n### Frontend Architecture\n\n**Feature-based structure with clear boundaries:**\n\n```\nsrc/\n├── components/\n│   ├── ui/           # Design system (Button, Modal, etc.)\n│   ├── auth/         # Login, OAuth handling\n│   ├── boards/       # Board, Column, DragDrop\n│   ├── tasks/        # TaskCard, TaskForm, TaskDetail\n│   └── teams/        # Members, Invites\n├── pages/            # Route-level components\n├── lib/\n│   ├── api/          # Axios + React Query\n│   └── socket/       # Socket.io client\n├── store/            # Zustand for client state\n└── hooks/            # Shared custom hooks\n```\n\n**State Management Strategy:**\n- **Server state:** React Query (caching, sync)\n- **Client state:** Zustand (UI state, notifications)\n- **Real-time:** Socket.io events update React Query cache\n\n### Data Model (Core Entities)\n\n```\n┌──────────────┐       ┌──────────────┐       ┌──────────────┐\n│    users     │       │  workspaces  │       │    boards    │\n│──────────────│       │──────────────│       │──────────────│\n│ id           │       │ id           │       │ id           │\n│ email        │       │ name         │       │ workspace_id │\n│ name         │       │ slug         │       │ name         │\n│ google_id    │       │ owner_id     │───┐   │ description  │\n└──────────────┘       └──────────────┘   │   └──────────────┘\n       │                      │           │          │\n       │                      │           │          │\n       ▼                      ▼           │          ▼\n┌──────────────┐       ┌──────────────┐   │   ┌──────────────┐\n│   members    │◀──────│  (junction)  │   │   │   columns    │\n│──────────────│       └──────────────┘   │   │──────────────│\n│ id           │                          │   │ id           │\n│ workspace_id │                          │   │ board_id     │\n│ user_id      │                          │   │ name         │\n│ role         │                          │   │ position     │\n└──────────────┘                          │   └──────────────┘\n       │                                  │          │\n       │                                  │          │\n       │     ┌────────────────────────────┘          │\n       │     │                                       │\n       ▼     ▼                                       ▼\n┌──────────────────────────────────────────────────────────┐\n│                          tasks                            │\n│──────────────────────────────────────────────────────────│\n│ id, workspace_id, board_id, column_id                    │\n│ title, description, position, priority                   │\n│ due_date, assignee_id, labels, metadata                  │\n│ created_by, created_at, updated_at, deleted_at           │\n└──────────────────────────────────────────────────────────┘\n```\n\n## Alternatives Considered\n\n### 1. Microservices from Day One\n**Rejected because:**\n- Operational overhead too high for small team\n- Network latency between services\n- Distributed transactions complexity\n- Modular monolith provides extraction path later\n\n### 2. Firebase/Supabase (BaaS)\n**Rejected because:**\n- Less control over business logic\n- Vendor lock-in concerns\n- Complex real-time requirements need custom handling\n- Harder to migrate later\n\n### 3. GraphQL instead of REST\n**Rejected because:**\n- REST sufficient for our use case\n- Simpler caching strategy\n- Team more familiar with REST\n- Can add GraphQL later if needed\n\n### 4. JWT instead of Sessions\n**Rejected because:**\n- Sessions provide instant revocation\n- Simpler token refresh handling\n- Redis session store scales horizontally\n- Better security for web applications\n\n## Consequences\n\n### Positive\n- **Fast development:** Single codebase, shared types, simple deployment\n- **Real-time ready:** WebSocket + Redis pub/sub architecture from start\n- **Future-proof:** Module boundaries enable microservice extraction\n- **Cost-effective:** Single database, simple infrastructure\n- **Great DX:** TypeScript end-to-end, hot reload, shared tooling\n\n### Negative\n- **Scaling limits:** Eventually need to split high-load modules\n- **Deployment coupling:** All modules deploy together\n- **Memory footprint:** Single process runs all code\n\n### Risks & Mitigations\n\n| Risk | Mitigation |\n|------|------------|\n| Database becomes bottleneck | Read replicas, caching layer, eventual sharding |\n| WebSocket scaling | Redis pub/sub already enables horizontal scaling |\n| Module coupling creeps in | Enforce module boundaries via linting, code reviews |\n| Team grows beyond monolith | Clear boundaries enable gradual extraction |\n\n## Implementation Phases\n\n### Phase 1: Foundation (Weeks 1-2)\n- [ ] Project scaffolding (monorepo with packages/)\n- [ ] Database schema and migrations\n- [ ] Auth module (Google OAuth)\n- [ ] Basic Express server with middleware\n\n### Phase 2: Core Features (Weeks 3-5)\n- [ ] Teams/Workspaces module\n- [ ] Boards module (CRUD)\n- [ ] Tasks module (CRUD)\n- [ ] Basic React frontend with routing\n\n### Phase 3: Real-Time (Weeks 6-7)\n- [ ] WebSocket server setup\n- [ ] Real-time task updates\n- [ ] Presence (who's viewing board)\n- [ ] Optimistic updates in frontend\n\n### Phase 4: Polish (Weeks 8-10)\n- [ ] Drag-and-drop board reordering\n- [ ] Task filtering and search\n- [ ] Notifications\n- [ ] Performance optimization\n\n## References\n\n- [C3 Context](../c3-context.md)\n- [C3 Container](../c3-container.md)\n- [API Server Components](../c3-2-components.md)\n- [Database Schema](../c3-3-components.md)\n- [Redis Architecture](../c3-4-components.md)\n\n---\n*ADR ID: adr-000 | C3 Architecture Decision Record*\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:24:17.296Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.5QTchKEkSQ/.c3/adr/adr-000-system-blueprint.md",
+        "content": "# ADR-000: TaskFlow System Blueprint\n\n**Status:** Accepted\n**Date:** 2025-01-12\n**Deciders:** Product Team\n\n## Context\n\nWe are building TaskFlow, a task management SaaS for small teams. The system needs to support:\n\n- Real-time collaboration on task boards\n- Multi-tenant workspaces with data isolation\n- Modern web experience with future mobile support\n- Rapid iteration while maintaining code quality\n- Cost-effective infrastructure for a startup\n\n## Decision\n\nWe will build TaskFlow as a **modular monolith** with the following architecture:\n\n### Technology Stack\n\n| Layer | Technology | Rationale |\n|-------|------------|-----------|\n| **Frontend** | React 18 + TypeScript + Vite | Industry standard, great DX, strong ecosystem |\n| **Backend** | Node.js 20 + TypeScript + Express | Shared language with frontend, mature ecosystem |\n| **Database** | PostgreSQL 16 | ACID compliance, JSON support, proven reliability |\n| **Cache/Pub-Sub** | Redis 7 | Session storage, caching, real-time event distribution |\n| **Real-time** | Socket.io (WebSocket) | Bi-directional communication, room support |\n| **Auth** | Google OAuth 2.0 via Passport.js | Secure, familiar to users, no password management |\n\n### Architecture Pattern: Modular Monolith\n\n```\n┌─────────────────────────────────────────────────────────────────┐\n│                         API SERVER                               │\n│                                                                  │\n│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐        │\n│  │   Auth   │  │  Tasks   │  │  Boards  │  │  Teams   │        │\n│  │  Module  │  │  Module  │  │  Module  │  │  Module  │        │\n│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘        │\n│       │             │             │             │               │\n│       └─────────────┴─────────────┴─────────────┘               │\n│                           │                                      │\n│                    Shared Foundation                             │\n│              (DB, Cache, Logger, Config)                        │\n└─────────────────────────────────────────────────────────────────┘\n```\n\n**Why Modular Monolith:**\n- Simpler deployment and operations for a small team\n- Clear module boundaries enable future service extraction\n- Shared infrastructure reduces complexity\n- Easy local development and debugging\n\n### Multi-Tenancy Strategy\n\n**Row-Level Isolation with `workspace_id`:**\n- All tenant-scoped tables include `workspace_id` column\n- Application-level enforcement in all queries\n- Future option: PostgreSQL Row-Level Security (RLS)\n\n```sql\n-- Every query includes workspace context\nSELECT * FROM tasks WHERE workspace_id = $1 AND ...\n```\n\n**Benefits:**\n- Single database instance (cost-effective)\n- Simpler backup and maintenance\n- Easy to add RLS later for defense-in-depth\n\n### Real-Time Architecture\n\n```\n┌─────────┐     WebSocket      ┌─────────────────────────────┐\n│ Client  │◀──────────────────▶│       API Server 1          │\n└─────────┘                    │  ┌─────────────────────┐    │\n                               │  │   Socket.io Server  │    │\n┌─────────┐     WebSocket      │  └──────────┬──────────┘    │\n│ Client  │◀──────────────────▶│             │               │\n└─────────┘                    └─────────────┼───────────────┘\n                                             │\n                                    Redis Pub/Sub\n                                             │\n                               ┌─────────────┼───────────────┐\n┌─────────┐     WebSocket      │             │               │\n│ Client  │◀──────────────────▶│  ┌──────────┴──────────┐    │\n└─────────┘                    │  │   Socket.io Server  │    │\n                               │  └─────────────────────┘    │\n                               │       API Server 2          │\n                               └─────────────────────────────┘\n```\n\n**Event Flow:**\n1. Client performs action (e.g., update task)\n2. API server processes and persists change\n3. Server publishes event to Redis channel\n4. All API server instances receive event\n5. Each server broadcasts to connected clients in that room\n\n### API Design\n\n**RESTful with resource-based URLs:**\n\n```\n# Workspaces\nGET    /api/workspaces\nPOST   /api/workspaces\nGET    /api/workspaces/:id\n\n# Boards (scoped to workspace via context)\nGET    /api/boards\nPOST   /api/boards\nGET    /api/boards/:id\nPATCH  /api/boards/:id/reorder\n\n# Tasks\nGET    /api/tasks\nPOST   /api/tasks\nPATCH  /api/tasks/:id\nDELETE /api/tasks/:id\n\n# Auth\nGET    /api/auth/google\nGET    /api/auth/google/callback\nPOST   /api/auth/logout\nGET    /api/auth/me\n```\n\n### Frontend Architecture\n\n**Feature-based structure with clear boundaries:**\n\n```\nsrc/\n├── components/\n│   ├── ui/           # Design system (Button, Modal, etc.)\n│   ├── auth/         # Login, OAuth handling\n│   ├── boards/       # Board, Column, DragDrop\n│   ├── tasks/        # TaskCard, TaskForm, TaskDetail\n│   └── teams/        # Members, Invites\n├── pages/            # Route-level components\n├── lib/\n│   ├── api/          # Axios + React Query\n│   └── socket/       # Socket.io client\n├── store/            # Zustand for client state\n└── hooks/            # Shared custom hooks\n```\n\n**State Management Strategy:**\n- **Server state:** React Query (caching, sync)\n- **Client state:** Zustand (UI state, notifications)\n- **Real-time:** Socket.io events update React Query cache\n\n### Data Model (Core Entities)\n\n```\n┌──────────────┐       ┌──────────────┐       ┌──────────────┐\n│    users     │       │  workspaces  │       │    boards    │\n│──────────────│       │──────────────│       │──────────────│\n│ id           │       │ id           │       │ id           │\n│ email        │       │ name         │       │ workspace_id │\n│ name         │       │ slug         │       │ name         │\n│ google_id    │       │ owner_id     │───┐   │ description  │\n└──────────────┘       └──────────────┘   │   └──────────────┘\n       │                      │           │          │\n       │                      │           │          │\n       ▼                      ▼           │          ▼\n┌──────────────┐       ┌──────────────┐   │   ┌──────────────┐\n│   members    │◀──────│  (junction)  │   │   │   columns    │\n│──────────────│       └──────────────┘   │   │──────────────│\n│ id           │                          │   │ id           │\n│ workspace_id │                          │   │ board_id     │\n│ user_id      │                          │   │ name         │\n│ role         │                          │   │ position     │\n└──────────────┘                          │   └──────────────┘\n       │                                  │          │\n       │                                  │          │\n       │     ┌────────────────────────────┘          │\n       │     │                                       │\n       ▼     ▼                                       ▼\n┌──────────────────────────────────────────────────────────┐\n│                          tasks                            │\n│──────────────────────────────────────────────────────────│\n│ id, workspace_id, board_id, column_id                    │\n│ title, description, position, priority                   │\n│ due_date, assignee_id, labels, metadata                  │\n│ created_by, created_at, updated_at, deleted_at           │\n└──────────────────────────────────────────────────────────┘\n```\n\n## Alternatives Considered\n\n### 1. Microservices from Day One\n**Rejected because:**\n- Operational overhead too high for small team\n- Network latency between services\n- Distributed transactions complexity\n- Modular monolith provides extraction path later\n\n### 2. Firebase/Supabase (BaaS)\n**Rejected because:**\n- Less control over business logic\n- Vendor lock-in concerns\n- Complex real-time requirements need custom handling\n- Harder to migrate later\n\n### 3. GraphQL instead of REST\n**Rejected because:**\n- REST sufficient for our use case\n- Simpler caching strategy\n- Team more familiar with REST\n- Can add GraphQL later if needed\n\n### 4. JWT instead of Sessions\n**Rejected because:**\n- Sessions provide instant revocation\n- Simpler token refresh handling\n- Redis session store scales horizontally\n- Better security for web applications\n\n## Consequences\n\n### Positive\n- **Fast development:** Single codebase, shared types, simple deployment\n- **Real-time ready:** WebSocket + Redis pub/sub architecture from start\n- **Future-proof:** Module boundaries enable microservice extraction\n- **Cost-effective:** Single database, simple infrastructure\n- **Great DX:** TypeScript end-to-end, hot reload, shared tooling\n\n### Negative\n- **Scaling limits:** Eventually need to split high-load modules\n- **Deployment coupling:** All modules deploy together\n- **Memory footprint:** Single process runs all code\n\n### Risks & Mitigations\n\n| Risk | Mitigation |\n|------|------------|\n| Database becomes bottleneck | Read replicas, caching layer, eventual sharding |\n| WebSocket scaling | Redis pub/sub already enables horizontal scaling |\n| Module coupling creeps in | Enforce module boundaries via linting, code reviews |\n| Team grows beyond monolith | Clear boundaries enable gradual extraction |\n\n## Implementation Phases\n\n### Phase 1: Foundation (Weeks 1-2)\n- [ ] Project scaffolding (monorepo with packages/)\n- [ ] Database schema and migrations\n- [ ] Auth module (Google OAuth)\n- [ ] Basic Express server with middleware\n\n### Phase 2: Core Features (Weeks 3-5)\n- [ ] Teams/Workspaces module\n- [ ] Boards module (CRUD)\n- [ ] Tasks module (CRUD)\n- [ ] Basic React frontend with routing\n\n### Phase 3: Real-Time (Weeks 6-7)\n- [ ] WebSocket server setup\n- [ ] Real-time task updates\n- [ ] Presence (who's viewing board)\n- [ ] Optimistic updates in frontend\n\n### Phase 4: Polish (Weeks 8-10)\n- [ ] Drag-and-drop board reordering\n- [ ] Task filtering and search\n- [ ] Notifications\n- [ ] Performance optimization\n\n## References\n\n- [C3 Context](../c3-context.md)\n- [C3 Container](../c3-container.md)\n- [API Server Components](../c3-2-components.md)\n- [Database Schema](../c3-3-components.md)\n- [Redis Architecture](../c3-4-components.md)\n\n---\n*ADR ID: adr-000 | C3 Architecture Decision Record*\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.5QTchKEkSQ/.c3/adr/adr-000-system-blueprint.md",
+        "content": "# ADR-000: TaskFlow System Blueprint\n\n**Status:** Accepted\n**Date:** 2025-01-12\n**Deciders:** Product Team\n\n## Context\n\nWe are building TaskFlow, a task management SaaS for small teams. The system needs to support:\n\n- Real-time collaboration on task boards\n- Multi-tenant workspaces with data isolation\n- Modern web experience with future mobile support\n- Rapid iteration while maintaining code quality\n- Cost-effective infrastructure for a startup\n\n## Decision\n\nWe will build TaskFlow as a **modular monolith** with the following architecture:\n\n### Technology Stack\n\n| Layer | Technology | Rationale |\n|-------|------------|-----------|\n| **Frontend** | React 18 + TypeScript + Vite | Industry standard, great DX, strong ecosystem |\n| **Backend** | Node.js 20 + TypeScript + Express | Shared language with frontend, mature ecosystem |\n| **Database** | PostgreSQL 16 | ACID compliance, JSON support, proven reliability |\n| **Cache/Pub-Sub** | Redis 7 | Session storage, caching, real-time event distribution |\n| **Real-time** | Socket.io (WebSocket) | Bi-directional communication, room support |\n| **Auth** | Google OAuth 2.0 via Passport.js | Secure, familiar to users, no password management |\n\n### Architecture Pattern: Modular Monolith\n\n```\n┌─────────────────────────────────────────────────────────────────┐\n│                         API SERVER                               │\n│                                                                  │\n│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐        │\n│  │   Auth   │  │  Tasks   │  │  Boards  │  │  Teams   │        │\n│  │  Module  │  │  Module  │  │  Module  │  │  Module  │        │\n│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘        │\n│       │             │             │             │               │\n│       └─────────────┴─────────────┴─────────────┘               │\n│                           │                                      │\n│                    Shared Foundation                             │\n│              (DB, Cache, Logger, Config)                        │\n└─────────────────────────────────────────────────────────────────┘\n```\n\n**Why Modular Monolith:**\n- Simpler deployment and operations for a small team\n- Clear module boundaries enable future service extraction\n- Shared infrastructure reduces complexity\n- Easy local development and debugging\n\n### Multi-Tenancy Strategy\n\n**Row-Level Isolation with `workspace_id`:**\n- All tenant-scoped tables include `workspace_id` column\n- Application-level enforcement in all queries\n- Future option: PostgreSQL Row-Level Security (RLS)\n\n```sql\n-- Every query includes workspace context\nSELECT * FROM tasks WHERE workspace_id = $1 AND ...\n```\n\n**Benefits:**\n- Single database instance (cost-effective)\n- Simpler backup and maintenance\n- Easy to add RLS later for defense-in-depth\n\n### Real-Time Architecture\n\n```\n┌─────────┐     WebSocket      ┌─────────────────────────────┐\n│ Client  │◀──────────────────▶│       API Server 1          │\n└─────────┘                    │  ┌─────────────────────┐    │\n                               │  │   Socket.io Server  │    │\n┌─────────┐     WebSocket      │  └──────────┬──────────┘    │\n│ Client  │◀──────────────────▶│             │               │\n└─────────┘                    └─────────────┼───────────────┘\n                                             │\n                                    Redis Pub/Sub\n                                             │\n                               ┌─────────────┼───────────────┐\n┌─────────┐     WebSocket      │             │               │\n│ Client  │◀──────────────────▶│  ┌──────────┴──────────┐    │\n└─────────┘                    │  │   Socket.io Server  │    │\n                               │  └─────────────────────┘    │\n                               │       API Server 2          │\n                               └─────────────────────────────┘\n```\n\n**Event Flow:**\n1. Client performs action (e.g., update task)\n2. API server processes and persists change\n3. Server publishes event to Redis channel\n4. All API server instances receive event\n5. Each server broadcasts to connected clients in that room\n\n### API Design\n\n**RESTful with resource-based URLs:**\n\n```\n# Workspaces\nGET    /api/workspaces\nPOST   /api/workspaces\nGET    /api/workspaces/:id\n\n# Boards (scoped to workspace via context)\nGET    /api/boards\nPOST   /api/boards\nGET    /api/boards/:id\nPATCH  /api/boards/:id/reorder\n\n# Tasks\nGET    /api/tasks\nPOST   /api/tasks\nPATCH  /api/tasks/:id\nDELETE /api/tasks/:id\n\n# Auth\nGET    /api/auth/google\nGET    /api/auth/google/callback\nPOST   /api/auth/logout\nGET    /api/auth/me\n```\n\n### Frontend Architecture\n\n**Feature-based structure with clear boundaries:**\n\n```\nsrc/\n├── components/\n│   ├── ui/           # Design system (Button, Modal, etc.)\n│   ├── auth/         # Login, OAuth handling\n│   ├── boards/       # Board, Column, DragDrop\n│   ├── tasks/        # TaskCard, TaskForm, TaskDetail\n│   └── teams/        # Members, Invites\n├── pages/            # Route-level components\n├── lib/\n│   ├── api/          # Axios + React Query\n│   └── socket/       # Socket.io client\n├── store/            # Zustand for client state\n└── hooks/            # Shared custom hooks\n```\n\n**State Management Strategy:**\n- **Server state:** React Query (caching, sync)\n- **Client state:** Zustand (UI state, notifications)\n- **Real-time:** Socket.io events update React Query cache\n\n### Data Model (Core Entities)\n\n```\n┌──────────────┐       ┌──────────────┐       ┌──────────────┐\n│    users     │       │  workspaces  │       │    boards    │\n│──────────────│       │──────────────│       │──────────────│\n│ id           │       │ id           │       │ id           │\n│ email        │       │ name         │       │ workspace_id │\n│ name         │       │ slug         │       │ name         │\n│ google_id    │       │ owner_id     │───┐   │ description  │\n└──────────────┘       └──────────────┘   │   └──────────────┘\n       │                      │           │          │\n       │                      │           │          │\n       ▼                      ▼           │          ▼\n┌──────────────┐       ┌──────────────┐   │   ┌──────────────┐\n│   members    │◀──────│  (junction)  │   │   │   columns    │\n│──────────────│       └──────────────┘   │   │──────────────│\n│ id           │                          │   │ id           │\n│ workspace_id │                          │   │ board_id     │\n│ user_id      │                          │   │ name         │\n│ role         │                          │   │ position     │\n└──────────────┘                          │   └──────────────┘\n       │                                  │          │\n       │                                  │          │\n       │     ┌────────────────────────────┘          │\n       │     │                                       │\n       ▼     ▼                                       ▼\n┌──────────────────────────────────────────────────────────┐\n│                          tasks                            │\n│──────────────────────────────────────────────────────────│\n│ id, workspace_id, board_id, column_id                    │\n│ title, description, position, priority                   │\n│ due_date, assignee_id, labels, metadata                  │\n│ created_by, created_at, updated_at, deleted_at           │\n└──────────────────────────────────────────────────────────┘\n```\n\n## Alternatives Considered\n\n### 1. Microservices from Day One\n**Rejected because:**\n- Operational overhead too high for small team\n- Network latency between services\n- Distributed transactions complexity\n- Modular monolith provides extraction path later\n\n### 2. Firebase/Supabase (BaaS)\n**Rejected because:**\n- Less control over business logic\n- Vendor lock-in concerns\n- Complex real-time requirements need custom handling\n- Harder to migrate later\n\n### 3. GraphQL instead of REST\n**Rejected because:**\n- REST sufficient for our use case\n- Simpler caching strategy\n- Team more familiar with REST\n- Can add GraphQL later if needed\n\n### 4. JWT instead of Sessions\n**Rejected because:**\n- Sessions provide instant revocation\n- Simpler token refresh handling\n- Redis session store scales horizontally\n- Better security for web applications\n\n## Consequences\n\n### Positive\n- **Fast development:** Single codebase, shared types, simple deployment\n- **Real-time ready:** WebSocket + Redis pub/sub architecture from start\n- **Future-proof:** Module boundaries enable microservice extraction\n- **Cost-effective:** Single database, simple infrastructure\n- **Great DX:** TypeScript end-to-end, hot reload, shared tooling\n\n### Negative\n- **Scaling limits:** Eventually need to split high-load modules\n- **Deployment coupling:** All modules deploy together\n- **Memory footprint:** Single process runs all code\n\n### Risks & Mitigations\n\n| Risk | Mitigation |\n|------|------------|\n| Database becomes bottleneck | Read replicas, caching layer, eventual sharding |\n| WebSocket scaling | Redis pub/sub already enables horizontal scaling |\n| Module coupling creeps in | Enforce module boundaries via linting, code reviews |\n| Team grows beyond monolith | Clear boundaries enable gradual extraction |\n\n## Implementation Phases\n\n### Phase 1: Foundation (Weeks 1-2)\n- [ ] Project scaffolding (monorepo with packages/)\n- [ ] Database schema and migrations\n- [ ] Auth module (Google OAuth)\n- [ ] Basic Express server with middleware\n\n### Phase 2: Core Features (Weeks 3-5)\n- [ ] Teams/Workspaces module\n- [ ] Boards module (CRUD)\n- [ ] Tasks module (CRUD)\n- [ ] Basic React frontend with routing\n\n### Phase 3: Real-Time (Weeks 6-7)\n- [ ] WebSocket server setup\n- [ ] Real-time task updates\n- [ ] Presence (who's viewing board)\n- [ ] Optimistic updates in frontend\n\n### Phase 4: Polish (Weeks 8-10)\n- [ ] Drag-and-drop board reordering\n- [ ] Task filtering and search\n- [ ] Notifications\n- [ ] Performance optimization\n\n## References\n\n- [C3 Context](../c3-context.md)\n- [C3 Container](../c3-container.md)\n- [API Server Components](../c3-2-components.md)\n- [Database Schema](../c3-3-components.md)\n- [Redis Architecture](../c3-4-components.md)\n\n---\n*ADR ID: adr-000 | C3 Architecture Decision Record*\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:24:21.810Z",
+      "event": "PreToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Create C3 Context diagram (c3-context.md)",
+            "status": "completed",
+            "activeForm": "Creating C3 Context diagram"
+          },
+          {
+            "content": "Create Container diagram (c3-container.md)",
+            "status": "completed",
+            "activeForm": "Creating Container diagram"
+          },
+          {
+            "content": "Create Component diagrams for each container",
+            "status": "completed",
+            "activeForm": "Creating Component diagrams"
+          },
+          {
+            "content": "Create ADR-000 System Blueprint",
+            "status": "completed",
+            "activeForm": "Creating ADR-000 System Blueprint"
+          },
+          {
+            "content": "Create c3-index.md as navigation hub",
+            "status": "in_progress",
+            "activeForm": "Creating c3-index.md navigation hub"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:24:21.821Z",
+      "event": "PostToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Create C3 Context diagram (c3-context.md)",
+            "status": "completed",
+            "activeForm": "Creating C3 Context diagram"
+          },
+          {
+            "content": "Create Container diagram (c3-container.md)",
+            "status": "completed",
+            "activeForm": "Creating Container diagram"
+          },
+          {
+            "content": "Create Component diagrams for each container",
+            "status": "completed",
+            "activeForm": "Creating Component diagrams"
+          },
+          {
+            "content": "Create ADR-000 System Blueprint",
+            "status": "completed",
+            "activeForm": "Creating ADR-000 System Blueprint"
+          },
+          {
+            "content": "Create c3-index.md as navigation hub",
+            "status": "in_progress",
+            "activeForm": "Creating c3-index.md navigation hub"
+          }
+        ]
+      },
+      "result": {
+        "oldTodos": [
+          {
+            "content": "Create C3 Context diagram (c3-context.md)",
+            "status": "completed",
+            "activeForm": "Creating C3 Context diagram"
+          },
+          {
+            "content": "Create Container diagram (c3-container.md)",
+            "status": "completed",
+            "activeForm": "Creating Container diagram"
+          },
+          {
+            "content": "Create Component diagrams for each container",
+            "status": "completed",
+            "activeForm": "Creating Component diagrams"
+          },
+          {
+            "content": "Create ADR-000 System Blueprint",
+            "status": "in_progress",
+            "activeForm": "Creating ADR-000 System Blueprint"
+          },
+          {
+            "content": "Create c3-index.md as navigation hub",
+            "status": "pending",
+            "activeForm": "Creating c3-index.md navigation hub"
+          }
+        ],
+        "newTodos": [
+          {
+            "content": "Create C3 Context diagram (c3-context.md)",
+            "status": "completed",
+            "activeForm": "Creating C3 Context diagram"
+          },
+          {
+            "content": "Create Container diagram (c3-container.md)",
+            "status": "completed",
+            "activeForm": "Creating Container diagram"
+          },
+          {
+            "content": "Create Component diagrams for each container",
+            "status": "completed",
+            "activeForm": "Creating Component diagrams"
+          },
+          {
+            "content": "Create ADR-000 System Blueprint",
+            "status": "completed",
+            "activeForm": "Creating ADR-000 System Blueprint"
+          },
+          {
+            "content": "Create c3-index.md as navigation hub",
+            "status": "in_progress",
+            "activeForm": "Creating c3-index.md navigation hub"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:24:40.730Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.5QTchKEkSQ/.c3/c3-index.md",
+        "content": "# C3 Architecture Index: TaskFlow\n\n> Task management SaaS for small teams with real-time collaboration\n\n## Quick Navigation\n\n| Document | Description |\n|----------|-------------|\n| [**System Context**](./c3-context.md) | System boundary, actors, external systems |\n| [**Containers**](./c3-container.md) | Deployable units (Web, API, DB, Cache) |\n| [**ADR-000 Blueprint**](./adr/adr-000-system-blueprint.md) | Master architectural decisions |\n\n## Container Components\n\n| Container | Components Doc | Technology |\n|-----------|----------------|------------|\n| **c3-1: Web Client** | [c3-1-components.md](./c3-1-components.md) | React, TypeScript, Vite |\n| **c3-2: API Server** | [c3-2-components.md](./c3-2-components.md) | Node.js, Express, TypeScript |\n| **c3-3: PostgreSQL** | [c3-3-components.md](./c3-3-components.md) | PostgreSQL 16 |\n| **c3-4: Redis** | [c3-4-components.md](./c3-4-components.md) | Redis 7 |\n\n## Architecture Decision Records\n\n| ADR | Title | Status |\n|-----|-------|--------|\n| [ADR-000](./adr/adr-000-system-blueprint.md) | System Blueprint | Accepted |\n\n## C3 ID Reference\n\n| ID | Type | Description | Doc Link |\n|----|------|-------------|----------|\n| `c3-context` | Context | System boundary | [c3-context.md](./c3-context.md) |\n| `c3-container` | Container | All containers | [c3-container.md](./c3-container.md) |\n| `c3-1` | Container | Web Client (React SPA) | [c3-1-components.md](./c3-1-components.md) |\n| `c3-2` | Container | API Server (Node.js) | [c3-2-components.md](./c3-2-components.md) |\n| `c3-3` | Container | PostgreSQL Database | [c3-3-components.md](./c3-3-components.md) |\n| `c3-4` | Container | Redis Cache/Pub-Sub | [c3-4-components.md](./c3-4-components.md) |\n| `adr-000` | ADR | System Blueprint | [adr-000-system-blueprint.md](./adr/adr-000-system-blueprint.md) |\n\n## Key Architectural Decisions Summary\n\n1. **Modular Monolith** - Single deployable with clear module boundaries\n2. **Multi-tenant via workspace_id** - Row-level isolation in PostgreSQL\n3. **Real-time via Redis Pub/Sub** - Scales WebSocket across instances\n4. **Google OAuth** - No password management, secure auth\n5. **React Query + Zustand** - Server state vs client state separation\n\n## Directory Structure\n\n```\n.c3/\n├── c3-index.md              # This file (navigation hub)\n├── c3-context.md            # System context diagram\n├── c3-container.md          # Container diagram\n├── c3-1-components.md       # Web Client components\n├── c3-2-components.md       # API Server components\n├── c3-3-components.md       # PostgreSQL schema\n├── c3-4-components.md       # Redis architecture\n├── adr/\n│   └── adr-000-system-blueprint.md\n└── diagrams/                # (future: generated diagrams)\n```\n\n---\n\n## How to Use This Documentation\n\n### For New Team Members\n1. Start with [System Context](./c3-context.md) to understand the big picture\n2. Read [ADR-000 Blueprint](./adr/adr-000-system-blueprint.md) for design rationale\n3. Dive into container docs based on your area of work\n\n### For Architecture Questions\n- Use C3 IDs (e.g., `c3-2`) to reference specific components\n- Check ADRs for \"why\" decisions were made\n- Component docs show \"how\" things are structured\n\n### For Making Changes\n1. Create a new ADR for significant architectural changes\n2. Update relevant component docs\n3. Keep this index updated\n\n---\n*C3 Architecture Documentation | TaskFlow | Updated: 2025-01-12*\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:24:40.762Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.5QTchKEkSQ/.c3/c3-index.md",
+        "content": "# C3 Architecture Index: TaskFlow\n\n> Task management SaaS for small teams with real-time collaboration\n\n## Quick Navigation\n\n| Document | Description |\n|----------|-------------|\n| [**System Context**](./c3-context.md) | System boundary, actors, external systems |\n| [**Containers**](./c3-container.md) | Deployable units (Web, API, DB, Cache) |\n| [**ADR-000 Blueprint**](./adr/adr-000-system-blueprint.md) | Master architectural decisions |\n\n## Container Components\n\n| Container | Components Doc | Technology |\n|-----------|----------------|------------|\n| **c3-1: Web Client** | [c3-1-components.md](./c3-1-components.md) | React, TypeScript, Vite |\n| **c3-2: API Server** | [c3-2-components.md](./c3-2-components.md) | Node.js, Express, TypeScript |\n| **c3-3: PostgreSQL** | [c3-3-components.md](./c3-3-components.md) | PostgreSQL 16 |\n| **c3-4: Redis** | [c3-4-components.md](./c3-4-components.md) | Redis 7 |\n\n## Architecture Decision Records\n\n| ADR | Title | Status |\n|-----|-------|--------|\n| [ADR-000](./adr/adr-000-system-blueprint.md) | System Blueprint | Accepted |\n\n## C3 ID Reference\n\n| ID | Type | Description | Doc Link |\n|----|------|-------------|----------|\n| `c3-context` | Context | System boundary | [c3-context.md](./c3-context.md) |\n| `c3-container` | Container | All containers | [c3-container.md](./c3-container.md) |\n| `c3-1` | Container | Web Client (React SPA) | [c3-1-components.md](./c3-1-components.md) |\n| `c3-2` | Container | API Server (Node.js) | [c3-2-components.md](./c3-2-components.md) |\n| `c3-3` | Container | PostgreSQL Database | [c3-3-components.md](./c3-3-components.md) |\n| `c3-4` | Container | Redis Cache/Pub-Sub | [c3-4-components.md](./c3-4-components.md) |\n| `adr-000` | ADR | System Blueprint | [adr-000-system-blueprint.md](./adr/adr-000-system-blueprint.md) |\n\n## Key Architectural Decisions Summary\n\n1. **Modular Monolith** - Single deployable with clear module boundaries\n2. **Multi-tenant via workspace_id** - Row-level isolation in PostgreSQL\n3. **Real-time via Redis Pub/Sub** - Scales WebSocket across instances\n4. **Google OAuth** - No password management, secure auth\n5. **React Query + Zustand** - Server state vs client state separation\n\n## Directory Structure\n\n```\n.c3/\n├── c3-index.md              # This file (navigation hub)\n├── c3-context.md            # System context diagram\n├── c3-container.md          # Container diagram\n├── c3-1-components.md       # Web Client components\n├── c3-2-components.md       # API Server components\n├── c3-3-components.md       # PostgreSQL schema\n├── c3-4-components.md       # Redis architecture\n├── adr/\n│   └── adr-000-system-blueprint.md\n└── diagrams/                # (future: generated diagrams)\n```\n\n---\n\n## How to Use This Documentation\n\n### For New Team Members\n1. Start with [System Context](./c3-context.md) to understand the big picture\n2. Read [ADR-000 Blueprint](./adr/adr-000-system-blueprint.md) for design rationale\n3. Dive into container docs based on your area of work\n\n### For Architecture Questions\n- Use C3 IDs (e.g., `c3-2`) to reference specific components\n- Check ADRs for \"why\" decisions were made\n- Component docs show \"how\" things are structured\n\n### For Making Changes\n1. Create a new ADR for significant architectural changes\n2. Update relevant component docs\n3. Keep this index updated\n\n---\n*C3 Architecture Documentation | TaskFlow | Updated: 2025-01-12*\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.5QTchKEkSQ/.c3/c3-index.md",
+        "content": "# C3 Architecture Index: TaskFlow\n\n> Task management SaaS for small teams with real-time collaboration\n\n## Quick Navigation\n\n| Document | Description |\n|----------|-------------|\n| [**System Context**](./c3-context.md) | System boundary, actors, external systems |\n| [**Containers**](./c3-container.md) | Deployable units (Web, API, DB, Cache) |\n| [**ADR-000 Blueprint**](./adr/adr-000-system-blueprint.md) | Master architectural decisions |\n\n## Container Components\n\n| Container | Components Doc | Technology |\n|-----------|----------------|------------|\n| **c3-1: Web Client** | [c3-1-components.md](./c3-1-components.md) | React, TypeScript, Vite |\n| **c3-2: API Server** | [c3-2-components.md](./c3-2-components.md) | Node.js, Express, TypeScript |\n| **c3-3: PostgreSQL** | [c3-3-components.md](./c3-3-components.md) | PostgreSQL 16 |\n| **c3-4: Redis** | [c3-4-components.md](./c3-4-components.md) | Redis 7 |\n\n## Architecture Decision Records\n\n| ADR | Title | Status |\n|-----|-------|--------|\n| [ADR-000](./adr/adr-000-system-blueprint.md) | System Blueprint | Accepted |\n\n## C3 ID Reference\n\n| ID | Type | Description | Doc Link |\n|----|------|-------------|----------|\n| `c3-context` | Context | System boundary | [c3-context.md](./c3-context.md) |\n| `c3-container` | Container | All containers | [c3-container.md](./c3-container.md) |\n| `c3-1` | Container | Web Client (React SPA) | [c3-1-components.md](./c3-1-components.md) |\n| `c3-2` | Container | API Server (Node.js) | [c3-2-components.md](./c3-2-components.md) |\n| `c3-3` | Container | PostgreSQL Database | [c3-3-components.md](./c3-3-components.md) |\n| `c3-4` | Container | Redis Cache/Pub-Sub | [c3-4-components.md](./c3-4-components.md) |\n| `adr-000` | ADR | System Blueprint | [adr-000-system-blueprint.md](./adr/adr-000-system-blueprint.md) |\n\n## Key Architectural Decisions Summary\n\n1. **Modular Monolith** - Single deployable with clear module boundaries\n2. **Multi-tenant via workspace_id** - Row-level isolation in PostgreSQL\n3. **Real-time via Redis Pub/Sub** - Scales WebSocket across instances\n4. **Google OAuth** - No password management, secure auth\n5. **React Query + Zustand** - Server state vs client state separation\n\n## Directory Structure\n\n```\n.c3/\n├── c3-index.md              # This file (navigation hub)\n├── c3-context.md            # System context diagram\n├── c3-container.md          # Container diagram\n├── c3-1-components.md       # Web Client components\n├── c3-2-components.md       # API Server components\n├── c3-3-components.md       # PostgreSQL schema\n├── c3-4-components.md       # Redis architecture\n├── adr/\n│   └── adr-000-system-blueprint.md\n└── diagrams/                # (future: generated diagrams)\n```\n\n---\n\n## How to Use This Documentation\n\n### For New Team Members\n1. Start with [System Context](./c3-context.md) to understand the big picture\n2. Read [ADR-000 Blueprint](./adr/adr-000-system-blueprint.md) for design rationale\n3. Dive into container docs based on your area of work\n\n### For Architecture Questions\n- Use C3 IDs (e.g., `c3-2`) to reference specific components\n- Check ADRs for \"why\" decisions were made\n- Component docs show \"how\" things are structured\n\n### For Making Changes\n1. Create a new ADR for significant architectural changes\n2. Update relevant component docs\n3. Keep this index updated\n\n---\n*C3 Architecture Documentation | TaskFlow | Updated: 2025-01-12*\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:24:45.959Z",
+      "event": "PreToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Create C3 Context diagram (c3-context.md)",
+            "status": "completed",
+            "activeForm": "Creating C3 Context diagram"
+          },
+          {
+            "content": "Create Container diagram (c3-container.md)",
+            "status": "completed",
+            "activeForm": "Creating Container diagram"
+          },
+          {
+            "content": "Create Component diagrams for each container",
+            "status": "completed",
+            "activeForm": "Creating Component diagrams"
+          },
+          {
+            "content": "Create ADR-000 System Blueprint",
+            "status": "completed",
+            "activeForm": "Creating ADR-000 System Blueprint"
+          },
+          {
+            "content": "Create c3-index.md as navigation hub",
+            "status": "completed",
+            "activeForm": "Creating c3-index.md navigation hub"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:24:45.980Z",
+      "event": "PostToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Create C3 Context diagram (c3-context.md)",
+            "status": "completed",
+            "activeForm": "Creating C3 Context diagram"
+          },
+          {
+            "content": "Create Container diagram (c3-container.md)",
+            "status": "completed",
+            "activeForm": "Creating Container diagram"
+          },
+          {
+            "content": "Create Component diagrams for each container",
+            "status": "completed",
+            "activeForm": "Creating Component diagrams"
+          },
+          {
+            "content": "Create ADR-000 System Blueprint",
+            "status": "completed",
+            "activeForm": "Creating ADR-000 System Blueprint"
+          },
+          {
+            "content": "Create c3-index.md as navigation hub",
+            "status": "completed",
+            "activeForm": "Creating c3-index.md navigation hub"
+          }
+        ]
+      },
+      "result": {
+        "oldTodos": [
+          {
+            "content": "Create C3 Context diagram (c3-context.md)",
+            "status": "completed",
+            "activeForm": "Creating C3 Context diagram"
+          },
+          {
+            "content": "Create Container diagram (c3-container.md)",
+            "status": "completed",
+            "activeForm": "Creating Container diagram"
+          },
+          {
+            "content": "Create Component diagrams for each container",
+            "status": "completed",
+            "activeForm": "Creating Component diagrams"
+          },
+          {
+            "content": "Create ADR-000 System Blueprint",
+            "status": "completed",
+            "activeForm": "Creating ADR-000 System Blueprint"
+          },
+          {
+            "content": "Create c3-index.md as navigation hub",
+            "status": "in_progress",
+            "activeForm": "Creating c3-index.md navigation hub"
+          }
+        ],
+        "newTodos": [
+          {
+            "content": "Create C3 Context diagram (c3-context.md)",
+            "status": "completed",
+            "activeForm": "Creating C3 Context diagram"
+          },
+          {
+            "content": "Create Container diagram (c3-container.md)",
+            "status": "completed",
+            "activeForm": "Creating Container diagram"
+          },
+          {
+            "content": "Create Component diagrams for each container",
+            "status": "completed",
+            "activeForm": "Creating Component diagrams"
+          },
+          {
+            "content": "Create ADR-000 System Blueprint",
+            "status": "completed",
+            "activeForm": "Creating ADR-000 System Blueprint"
+          },
+          {
+            "content": "Create c3-index.md as navigation hub",
+            "status": "completed",
+            "activeForm": "Creating c3-index.md navigation hub"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:24:48.796Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "find .c3 -type f -name \"*.md\" | head -20",
+        "description": "List all created C3 documentation files"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:24:48.819Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "find .c3 -type f -name \"*.md\" | head -20",
+        "description": "List all created C3 documentation files"
+      },
+      "result": {
+        "stdout": ".c3/c3-3-components.md\n.c3/c3-context.md\n.c3/c3-4-components.md\n.c3/c3-1-components.md\n.c3/adr/adr-000-system-blueprint.md\n.c3/c3-index.md\n.c3/c3-2-components.md\n.c3/c3-container.md",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    }
+  ],
+  "judgment": {
+    "pass": true,
+    "score": 100,
+    "expectations": [
+      {
+        "text": "ADR-000 exists and serves as the architectural blueprint",
+        "pass": true,
+        "reasoning": "ADR-000 (adr-000-system-blueprint.md) exists in .c3/adr/ and comprehensively documents the system architecture including technology stack, architecture patterns, multi-tenancy strategy, real-time architecture, API design, frontend architecture, data model, alternatives considered, consequences, and implementation phases. It clearly serves as the primary architectural blueprint."
+      },
+      {
+        "text": "Context README describes TaskFlow's purpose and high-level architecture",
+        "pass": true,
+        "reasoning": "c3-context.md exists and describes TaskFlow as a 'Task management SaaS for small teams with real-time collaboration', defines the system boundary, lists actors (Team Member, Team Admin, Future Mobile Apps), documents external systems (Google OAuth), and outlines key quality attributes. This effectively serves as the context documentation."
+      },
+      {
+        "text": "At least 3 containers are defined (frontend, API, database or similar)",
+        "pass": true,
+        "reasoning": "Four containers are clearly defined in c3-container.md: c3-1 (Web Client - React SPA), c3-2 (API Server - Node.js/Express), c3-3 (PostgreSQL database), and c3-4 (Redis for cache/pub-sub). Each has dedicated component documentation files."
+      },
+      {
+        "text": "Real-time/WebSocket considerations are documented",
+        "pass": true,
+        "reasoning": "Real-time features are extensively documented across multiple files: ADR-000 includes a detailed 'Real-Time Architecture' section with diagrams showing Redis pub/sub for WebSocket scaling, event flow description, and Socket.io usage. c3-2-components.md has a WebSocket Server section with SocketAuth, RoomManager, and PresenceTracker components. c3-4-components.md documents Redis pub/sub channels and presence tracking patterns."
+      },
+      {
+        "text": "Component placeholders exist for key features (auth, tasks, teams)",
+        "pass": true,
+        "reasoning": "Component documentation exists for all key features: Auth components are documented in c3-1-components.md (Auth Feature with LoginPage, AuthProvider, ProtectedRoute) and c3-2-components.md (Auth Module with routes, service, model). Tasks components in both frontend (TaskCard, TaskDetail, TaskForm, TaskFilters) and backend (tasks module). Teams components documented (Members, Invites, Roles, WorkspaceSettings, teams module). Boards module is also included."
+      }
+    ],
+    "summary": "The C3 onboarding documentation is comprehensive and well-structured. All five expectations are met: ADR-000 serves as an excellent architectural blueprint, the context document describes TaskFlow's purpose, four containers are defined (exceeding the minimum of 3), real-time/WebSocket features are thoroughly documented, and component placeholders exist for auth, tasks, teams, and boards features."
+  }
+}

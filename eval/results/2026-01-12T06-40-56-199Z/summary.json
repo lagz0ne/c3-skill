@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-12T06-40-56-199Z",
+  "total": 1,
+  "passed": 1,
+  "failed": 0,
+  "avgScore": 100,
+  "results": [
+    {
+      "name": "Design greenfield SaaS with C3",
+      "pass": true,
+      "score": 100,
+      "duration": 484743,
+      "summary": "The output fully meets all expectations for a greenfield architecture design. ADR-000 serves as a comprehensive blueprint with detailed diagrams, and the three containers (API, Web, Worker) are well-documented with component inventories covering auth, tasks, teams, and real-time collaboration features."
+    }
+  ]
+}

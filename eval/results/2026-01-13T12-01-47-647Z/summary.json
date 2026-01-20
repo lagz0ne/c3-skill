@@ -1,0 +1,65 @@
+{
+  "timestamp": "2026-01-13T12-01-47-647Z",
+  "total": 8,
+  "passed": 8,
+  "failed": 0,
+  "avgScore": 100,
+  "results": [
+    {
+      "name": "Onboard Turborepo monorepo",
+      "pass": true,
+      "score": 100,
+      "duration": 83371,
+      "summary": "The C3 documentation comprehensively captures the Turborepo monorepo structure with proper container definitions for both apps, well-documented shared package dependencies, and clear acknowledgment of the monorepo architecture. The documentation follows a pragmatic approach without over-documenting simple packages."
+    },
+    {
+      "name": "Design greenfield SaaS with C3",
+      "pass": true,
+      "score": 100,
+      "duration": 639112,
+      "summary": "All expectations are fully met. The C3 architecture documentation is comprehensive with ADR-000 as the blueprint, proper context documentation, 4 containers defined (exceeding the 3 minimum), extensive real-time/WebSocket documentation, and detailed component placeholders for auth, tasks, teams, and notifications."
+    },
+    {
+      "name": "Onboard simple Express app",
+      "pass": true,
+      "score": 100,
+      "duration": 106587,
+      "summary": "The documentation comprehensively covers all expectations. The system context, container responsibilities, component classifications (foundation vs feature), dependencies, and cross-cutting patterns (auth, error handling) are all clearly documented in the ADR and INDEX files."
+    },
+    {
+      "name": "Query existing C3 architecture",
+      "pass": true,
+      "score": 100,
+      "duration": 47843,
+      "summary": "The agent successfully navigated the C3 documentation to answer all architecture questions. It properly referenced c3-102 for authentication, c3-103 for task CRUD, correctly identified the foundation vs feature component distinction, and relied exclusively on existing .c3/ documentation rather than re-analyzing source code."
+    },
+    {
+      "name": "Fix bug via C3 alter workflow",
+      "pass": true,
+      "score": 100,
+      "duration": 100177,
+      "summary": "All documentation follows template requirements with clear problem definition, actionable decision, traceable rationale, explicit file paths, concrete verification checks, and proper cross-referencing between ADR and component docs."
+    },
+    {
+      "name": "Audit C3 docs for stale references",
+      "pass": true,
+      "score": 100,
+      "duration": 45733,
+      "summary": "The agent successfully identified all stale component references (c3-102 through c3-105) and recognized that functionality was consolidated into index.ts during v2 refactoring. The documentation audit clearly marks each stale component with its status and notes how the code has been reorganized."
+    },
+    {
+      "name": "Add new feature via C3 alter workflow",
+      "pass": true,
+      "score": 100,
+      "duration": 123453,
+      "summary": "Documentation fully addresses all template requirements with clear problem statement, actionable decisions, explicit execution steps, concrete verification, and traceable rationale."
+    },
+    {
+      "name": "Container-level change via C3 alter workflow",
+      "pass": true,
+      "score": 100,
+      "duration": 143039,
+      "summary": "All documentation fully addresses template requirements with clear problem-decision-rationale flow, explicit implementation paths, concrete verification checks, and complete traceability."
+    }
+  ]
+}

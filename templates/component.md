@@ -20,6 +20,15 @@ ${GOAL}
 <!-- How does this component advance the parent container's Goal? -->
 <!-- What would break in the container without this component? -->
 
+## Hand-offs
+
+<!-- What data/control flows IN and OUT of this component -->
+
+| Direction | What | From/To |
+|-----------|------|---------|
+| IN | | |
+| OUT | | |
+
 <!--
 WHY DOCUMENT:
 - Enforce consistency (current and future work)
@@ -61,9 +70,9 @@ Delete this comment block after drafting.
 | Ref | How It Serves Goal |
 |-----|-------------------|
 
-## Code References
+## Applicable atterns
 
-<!-- Code symbols, patterns, paths -->
+<!-- Don't code, show patterns using design tools, code doesn't age well -->
 
 ## Criteria
 

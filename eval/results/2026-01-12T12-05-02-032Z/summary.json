@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-12T12-05-02-032Z",
+  "total": 1,
+  "passed": 1,
+  "failed": 0,
+  "avgScore": 100,
+  "results": [
+    {
+      "name": "Onboard simple Express app",
+      "pass": true,
+      "score": 100,
+      "duration": 87449,
+      "summary": "All expectations are fully met. The agent created a complete C3 documentation structure for the Simple Shop API, properly classifying auth as foundation and users/products as feature components, with a well-structured ADR-000 adoption document."
+    }
+  ]
+}

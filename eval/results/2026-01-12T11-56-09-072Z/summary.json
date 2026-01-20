@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-12T11-56-09-072Z",
+  "total": 1,
+  "passed": 0,
+  "failed": 1,
+  "avgScore": 40,
+  "results": [
+    {
+      "name": "Onboard simple Express app",
+      "pass": false,
+      "score": 40,
+      "duration": 87139,
+      "summary": "The agent successfully created ADR-000 and documented components with foundation/feature distinctions, but failed to create the required .c3/README.md file and did not create a container directory structure as specified (used YAML files instead)."
+    }
+  ]
+}

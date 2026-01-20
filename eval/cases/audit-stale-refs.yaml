@@ -1,0 +1,34 @@
+name: "Audit C3 docs for stale references"
+
+fixtures: "fixtures/stale-project"
+
+command: |
+  This project has C3 documentation but the code was refactored in v2.
+  Many documented components reference files that no longer exist.
+
+  Please audit the C3 documentation and:
+  1. List each component doc that references non-existent files
+  2. Explain what the current code structure actually looks like (all consolidated into index.ts)
+  3. At the end, provide a "Recommendations" section with concrete steps to fix each stale doc
+
+  Example recommendation format:
+  ## Recommendations
+  - c3-102: Update Location from src/middleware/auth.ts to src/index.ts (auth logic consolidated)
+  - c3-103: Update Location from src/routes/posts.ts to src/index.ts (routes consolidated)
+
+goal: |
+  Audit existing C3 documentation against the actual codebase to find
+  stale references. The agent should identify components that reference
+  files that no longer exist and suggest how to update the docs.
+
+constraints:
+  - Should identify at least 3 stale component references
+  - Should note that c3-102 through c3-105 reference missing files
+  - Should recognize the v2 consolidation into index.ts
+  - Should provide actionable recommendations
+
+expectations:
+  - "Agent identifies c3-102 (auth-middleware) references non-existent src/middleware/auth.ts"
+  - "Agent identifies c3-103 (post-routes) references non-existent src/routes/posts.ts"
+  - "Agent identifies c3-104 (comment-routes) references non-existent src/routes/comments.ts"
+  - "Agent recommends updating docs to reflect consolidated index.ts structure"

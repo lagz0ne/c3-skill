@@ -1,0 +1,845 @@
+{
+  "name": "Add new feature via C3 alter workflow",
+  "pass": false,
+  "score": 50,
+  "duration": 305405,
+  "trace": [
+    {
+      "timestamp": "2026-01-13T07:27:07.139Z",
+      "event": "PreToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:c3-alter",
+        "args": "Add notification routes feature: GET /api/notifications (list user notifications), POST /api/notifications/:id/read (mark as read). Dependencies: auth middleware (c3-102), database (c3-105)"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:27:07.162Z",
+      "event": "PostToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:c3-alter",
+        "args": "Add notification routes feature: GET /api/notifications (list user notifications), POST /api/notifications/:id/read (mark as read). Dependencies: auth middleware (c3-102), database (c3-105)"
+      },
+      "result": {
+        "success": true,
+        "commandName": "c3-skill:c3-alter"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:27:08.676Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "ls -la /tmp/tmp.yGdyqeDBV6",
+        "description": "List contents of working directory"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:27:08.717Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "ls -la /tmp/tmp.yGdyqeDBV6",
+        "description": "List contents of working directory"
+      },
+      "result": {
+        "stdout": "drwxr-xr-x   - lagz0ne 13 Jan 14:23 .c3\n.rw-r--r-- 241 lagz0ne 13 Jan 14:23 package.json\ndrwxr-xr-x   - lagz0ne 13 Jan 14:23 src",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:27:12.205Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/home/lagz0ne/c3-design/skills/c3-alter/../../references/skill-harness.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:27:12.205Z",
+      "event": "Blocked",
+      "tool": "Read",
+      "input": {
+        "file_path": "/home/lagz0ne/c3-design/skills/c3-alter/../../references/skill-harness.md"
+      },
+      "blocked": true,
+      "reason": "Path outside sandbox: /home/lagz0ne/c3-design/skills/c3-alter/../../references/skill-harness.md"
+    },
+    {
+      "timestamp": "2026-01-13T07:27:12.205Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/home/lagz0ne/c3-design/skills/c3-alter/../../references/layer-navigation.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:27:12.205Z",
+      "event": "Blocked",
+      "tool": "Read",
+      "input": {
+        "file_path": "/home/lagz0ne/c3-design/skills/c3-alter/../../references/layer-navigation.md"
+      },
+      "blocked": true,
+      "reason": "Path outside sandbox: /home/lagz0ne/c3-design/skills/c3-alter/../../references/layer-navigation.md"
+    },
+    {
+      "timestamp": "2026-01-13T07:27:12.205Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/home/lagz0ne/c3-design/skills/c3-alter/../../references/adr-template.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:27:12.205Z",
+      "event": "Blocked",
+      "tool": "Read",
+      "input": {
+        "file_path": "/home/lagz0ne/c3-design/skills/c3-alter/../../references/adr-template.md"
+      },
+      "blocked": true,
+      "reason": "Path outside sandbox: /home/lagz0ne/c3-design/skills/c3-alter/../../references/adr-template.md"
+    },
+    {
+      "timestamp": "2026-01-13T07:27:16.771Z",
+      "event": "PreToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/.c3/**/*.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:27:16.771Z",
+      "event": "PreToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/c3-*/**/*.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:27:16.780Z",
+      "event": "PostToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/.c3/**/*.md"
+      },
+      "result": {
+        "filenames": [
+          "/tmp/tmp.yGdyqeDBV6/.c3/TOC.md",
+          "/tmp/tmp.yGdyqeDBV6/.c3/README.md",
+          "/tmp/tmp.yGdyqeDBV6/.c3/adr/adr-00000000-c3-adoption.md",
+          "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/c3-103-task-routes.md",
+          "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/c3-101-entry-point.md",
+          "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/README.md",
+          "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/c3-102-auth-middleware.md",
+          "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/c3-105-database.md",
+          "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/c3-104-user-routes.md"
+        ],
+        "durationMs": 6,
+        "numFiles": 9,
+        "truncated": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:27:16.788Z",
+      "event": "PostToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/c3-*/**/*.md"
+      },
+      "result": {
+        "filenames": [
+          "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/c3-103-task-routes.md",
+          "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/c3-101-entry-point.md",
+          "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/README.md",
+          "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/c3-102-auth-middleware.md",
+          "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/c3-105-database.md",
+          "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/c3-104-user-routes.md"
+        ],
+        "durationMs": 10,
+        "numFiles": 6,
+        "truncated": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:27:22.892Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/README.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:27:22.892Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/README.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:27:22.892Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/c3-102-auth-middleware.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:27:22.892Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/c3-105-database.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:27:22.892Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/c3-103-task-routes.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:27:22.892Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/TOC.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:27:22.913Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/README.md"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.yGdyqeDBV6/.c3/README.md",
+          "content": "# Task API - C3 Architecture\n\n## Overview\n\nTask API is a RESTful backend service for task management. Built with Hono framework on Bun runtime.\n\n## Architecture Style\n\n- **Type**: Modular Monolith\n- **Framework**: Hono (lightweight web framework)\n- **Runtime**: Bun\n- **Database**: SQL (abstracted)\n\n## Key Decisions\n\n- JWT-based authentication\n- Route-based modularization\n- Middleware for cross-cutting concerns\n\n## Containers\n\n| ID | Name | Purpose |\n|----|------|---------|\n| c3-1 | api | REST API server |\n\n## Quick Links\n\n- [API Container](c3-1-api/README.md)\n- [ADR: Initial Architecture](adr/adr-00000000-c3-adoption.md)\n",
+          "numLines": 30,
+          "startLine": 1,
+          "totalLines": 30
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:27:22.913Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/README.md"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/README.md",
+          "content": "# c3-1-api: REST API Server\n\n## Purpose\n\nMain API server handling all HTTP requests for task management.\n\n## Technology\n\n- **Framework**: Hono\n- **Runtime**: Bun\n- **Auth**: JWT tokens\n\n## Components\n\n| ID | Name | Type | Purpose |\n|----|------|------|---------|\n| c3-101 | entry-point | Foundation | App bootstrap and route mounting |\n| c3-102 | auth-middleware | Foundation | JWT verification |\n| c3-103 | task-routes | Feature | Task CRUD operations |\n| c3-104 | user-routes | Feature | User profile management |\n| c3-105 | database | Foundation | Database abstraction layer |\n\n## Data Flow\n\n```\nRequest → Auth Middleware → Route Handler → Database → Response\n```\n\n## External Dependencies\n\n- Database (SQL)\n- JWT secret (environment)\n",
+          "numLines": 33,
+          "startLine": 1,
+          "totalLines": 33
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:27:22.914Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/c3-102-auth-middleware.md"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/c3-102-auth-middleware.md",
+          "content": "# c3-102: Auth Middleware\n\n## Purpose\n\nJWT-based authentication middleware that protects API routes.\n\n## Location\n\n`src/middleware/auth.ts`\n\n## Responsibilities\n\n- Extract Bearer token from Authorization header\n- Verify JWT signature\n- Set userId in request context\n- Return 401 for invalid/missing tokens\n\n## Dependencies\n\n- `src/lib/jwt.ts` for token verification\n\n## Security Notes\n\n- Tokens must be passed as `Bearer <token>`\n- Invalid tokens result in 401 response\n- User ID is extracted from token's `sub` claim\n",
+          "numLines": 27,
+          "startLine": 1,
+          "totalLines": 27
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:27:22.914Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/c3-105-database.md"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/c3-105-database.md",
+          "content": "# c3-105: Database Layer\n\n## Purpose\n\nDatabase abstraction for SQL operations.\n\n## Location\n\n`src/db.ts`\n\n## Responsibilities\n\n- Provide query interface\n- Handle connection pooling (in production)\n- Abstract database-specific syntax\n\n## Interface\n\n```typescript\ndb.query(sql: string, params?: unknown[]): Promise<any[]>\n```\n\n## Notes\n\nCurrent implementation is a stub. Production would use:\n- MySQL, PostgreSQL, or SQLite\n- Connection pooling\n- Prepared statements\n",
+          "numLines": 29,
+          "startLine": 1,
+          "totalLines": 29
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:27:22.915Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/c3-103-task-routes.md"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/c3-103-task-routes.md",
+          "content": "# c3-103: Task Routes\n\n## Purpose\n\nCRUD operations for task management.\n\n## Location\n\n`src/routes/tasks.ts`\n\n## Endpoints\n\n| Method | Path | Description |\n|--------|------|-------------|\n| GET | /api/tasks | List user's tasks |\n| POST | /api/tasks | Create new task |\n| PATCH | /api/tasks/:id | Update task |\n| DELETE | /api/tasks/:id | Delete task |\n\n## Dependencies\n\n- c3-102 (auth-middleware) - for userId\n- c3-105 (database) - for persistence\n\n## Data Model\n\n```typescript\ninterface Task {\n  id: number;\n  title: string;\n  description: string;\n  user_id: string;\n}\n```\n",
+          "numLines": 35,
+          "startLine": 1,
+          "totalLines": 35
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:27:22.915Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/TOC.md"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.yGdyqeDBV6/.c3/TOC.md",
+          "content": "# Table of Contents\n\n## Containers\n\n- [c3-1-api](c3-1-api/README.md) - REST API server\n\n## Components\n\n### c3-1-api\n- [c3-101-entry-point](c3-1-api/c3-101-entry-point.md) - Application entry and routing\n- [c3-102-auth-middleware](c3-1-api/c3-102-auth-middleware.md) - JWT authentication\n- [c3-103-task-routes](c3-1-api/c3-103-task-routes.md) - Task CRUD operations\n- [c3-104-user-routes](c3-1-api/c3-104-user-routes.md) - User profile operations\n- [c3-105-database](c3-1-api/c3-105-database.md) - Database abstraction\n\n## ADRs\n\n- [ADR-000: C3 Adoption](adr/adr-00000000-c3-adoption.md)\n",
+          "numLines": 19,
+          "startLine": 1,
+          "totalLines": 19
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:27:50.908Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/adr/adr-20260113-notification-routes.md",
+        "content": "# ADR-20260113: Notification Routes\n\n## Status\n\nproposed\n\n## Context\n\nThe Task API needs notification functionality to send task reminders to users. Users need to:\n1. View their notifications (task reminders)\n2. Mark notifications as read\n\nCurrently, the API has no notification system. Users cannot receive or manage reminders for their tasks.\n\n## Decision\n\nAdd a new `c3-106-notification-routes` component to handle notification endpoints:\n\n| Method | Path | Description |\n|--------|------|-------------|\n| GET | /api/notifications | List all notifications for authenticated user |\n| POST | /api/notifications/:id/read | Mark a specific notification as read |\n\n### Data Model\n\n```typescript\ninterface Notification {\n  id: number;\n  user_id: string;\n  message: string;\n  read: boolean;\n  created_at: Date;\n}\n```\n\n### Dependencies\n\n- **c3-102 (auth-middleware)**: JWT authentication to identify user and protect routes\n- **c3-105 (database)**: Persistence layer for notification storage and retrieval\n\n## Rationale\n\n1. **Follows existing patterns**: Mirrors c3-103 (task-routes) structure for consistency\n2. **Minimal dependencies**: Reuses existing auth and database components\n3. **Simple API**: Two endpoints cover core notification needs (list + mark read)\n4. **User-scoped**: Notifications filtered by authenticated user ID\n\n## Affected Layers\n\n| Layer | Change |\n|-------|--------|\n| c3-1-api container | Add c3-106 to component inventory |\n| TOC.md | Add link to new component |\n\n## References Affected\n\n| File | Change |\n|------|--------|\n| `.c3/c3-1-api/README.md` | Add c3-106 to Components table |\n| `.c3/c3-1-api/c3-106-notification-routes.md` | Create new component doc |\n| `.c3/TOC.md` | Add c3-106 link |\n\n## Verification\n\n- [ ] Component doc created at `.c3/c3-1-api/c3-106-notification-routes.md`\n- [ ] Container README updated with c3-106 entry\n- [ ] TOC updated with c3-106 link\n- [ ] Dependencies correctly reference c3-102 and c3-105\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:27:50.941Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/adr/adr-20260113-notification-routes.md",
+        "content": "# ADR-20260113: Notification Routes\n\n## Status\n\nproposed\n\n## Context\n\nThe Task API needs notification functionality to send task reminders to users. Users need to:\n1. View their notifications (task reminders)\n2. Mark notifications as read\n\nCurrently, the API has no notification system. Users cannot receive or manage reminders for their tasks.\n\n## Decision\n\nAdd a new `c3-106-notification-routes` component to handle notification endpoints:\n\n| Method | Path | Description |\n|--------|------|-------------|\n| GET | /api/notifications | List all notifications for authenticated user |\n| POST | /api/notifications/:id/read | Mark a specific notification as read |\n\n### Data Model\n\n```typescript\ninterface Notification {\n  id: number;\n  user_id: string;\n  message: string;\n  read: boolean;\n  created_at: Date;\n}\n```\n\n### Dependencies\n\n- **c3-102 (auth-middleware)**: JWT authentication to identify user and protect routes\n- **c3-105 (database)**: Persistence layer for notification storage and retrieval\n\n## Rationale\n\n1. **Follows existing patterns**: Mirrors c3-103 (task-routes) structure for consistency\n2. **Minimal dependencies**: Reuses existing auth and database components\n3. **Simple API**: Two endpoints cover core notification needs (list + mark read)\n4. **User-scoped**: Notifications filtered by authenticated user ID\n\n## Affected Layers\n\n| Layer | Change |\n|-------|--------|\n| c3-1-api container | Add c3-106 to component inventory |\n| TOC.md | Add link to new component |\n\n## References Affected\n\n| File | Change |\n|------|--------|\n| `.c3/c3-1-api/README.md` | Add c3-106 to Components table |\n| `.c3/c3-1-api/c3-106-notification-routes.md` | Create new component doc |\n| `.c3/TOC.md` | Add c3-106 link |\n\n## Verification\n\n- [ ] Component doc created at `.c3/c3-1-api/c3-106-notification-routes.md`\n- [ ] Container README updated with c3-106 entry\n- [ ] TOC updated with c3-106 link\n- [ ] Dependencies correctly reference c3-102 and c3-105\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.yGdyqeDBV6/.c3/adr/adr-20260113-notification-routes.md",
+        "content": "# ADR-20260113: Notification Routes\n\n## Status\n\nproposed\n\n## Context\n\nThe Task API needs notification functionality to send task reminders to users. Users need to:\n1. View their notifications (task reminders)\n2. Mark notifications as read\n\nCurrently, the API has no notification system. Users cannot receive or manage reminders for their tasks.\n\n## Decision\n\nAdd a new `c3-106-notification-routes` component to handle notification endpoints:\n\n| Method | Path | Description |\n|--------|------|-------------|\n| GET | /api/notifications | List all notifications for authenticated user |\n| POST | /api/notifications/:id/read | Mark a specific notification as read |\n\n### Data Model\n\n```typescript\ninterface Notification {\n  id: number;\n  user_id: string;\n  message: string;\n  read: boolean;\n  created_at: Date;\n}\n```\n\n### Dependencies\n\n- **c3-102 (auth-middleware)**: JWT authentication to identify user and protect routes\n- **c3-105 (database)**: Persistence layer for notification storage and retrieval\n\n## Rationale\n\n1. **Follows existing patterns**: Mirrors c3-103 (task-routes) structure for consistency\n2. **Minimal dependencies**: Reuses existing auth and database components\n3. **Simple API**: Two endpoints cover core notification needs (list + mark read)\n4. **User-scoped**: Notifications filtered by authenticated user ID\n\n## Affected Layers\n\n| Layer | Change |\n|-------|--------|\n| c3-1-api container | Add c3-106 to component inventory |\n| TOC.md | Add link to new component |\n\n## References Affected\n\n| File | Change |\n|------|--------|\n| `.c3/c3-1-api/README.md` | Add c3-106 to Components table |\n| `.c3/c3-1-api/c3-106-notification-routes.md` | Create new component doc |\n| `.c3/TOC.md` | Add c3-106 link |\n\n## Verification\n\n- [ ] Component doc created at `.c3/c3-1-api/c3-106-notification-routes.md`\n- [ ] Container README updated with c3-106 entry\n- [ ] TOC updated with c3-106 link\n- [ ] Dependencies correctly reference c3-102 and c3-105\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:27:56.283Z",
+      "event": "PreToolUse",
+      "tool": "AskUserQuestion",
+      "input": {
+        "questions": [
+          {
+            "question": "Do you approve this ADR for adding notification routes (c3-106) with GET /api/notifications and POST /api/notifications/:id/read endpoints?",
+            "header": "ADR Approval",
+            "options": [
+              {
+                "label": "Accept ADR",
+                "description": "Approve the ADR and proceed with creating component documentation"
+              },
+              {
+                "label": "Reject ADR",
+                "description": "Reject and provide feedback for revisions"
+              }
+            ],
+            "multiSelect": false
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:28:01.617Z",
+      "event": "HumanAnswer",
+      "tool": "AskUserQuestion",
+      "input": {
+        "questions": [
+          {
+            "question": "Do you approve this ADR for adding notification routes (c3-106) with GET /api/notifications and POST /api/notifications/:id/read endpoints?",
+            "header": "ADR Approval",
+            "options": [
+              {
+                "label": "Accept ADR",
+                "description": "Approve the ADR and proceed with creating component documentation"
+              },
+              {
+                "label": "Reject ADR",
+                "description": "Reject and provide feedback for revisions"
+              }
+            ],
+            "multiSelect": false
+          }
+        ]
+      },
+      "result": {
+        "Do you approve this ADR for adding notification routes (c3-106) with GET /api/notifications and POST /api/notifications/:id/read endpoints?": "Accept ADR - Approve the ADR and proceed with creating component documentation"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:28:09.973Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/adr/adr-20260113-notification-routes.plan.md",
+        "content": "# Plan: ADR-20260113 Notification Routes\n\n## Pre-execution Checklist\n\n- [x] ADR approved\n- [x] Next available component ID confirmed: c3-106\n- [x] Dependencies identified: c3-102, c3-105\n\n## Execution Steps\n\n### Step 1: Create Component Documentation\n- **File**: `.c3/c3-1-api/c3-106-notification-routes.md`\n- **Action**: Create new component doc following c3-103 pattern\n\n### Step 2: Update Container README\n- **File**: `.c3/c3-1-api/README.md`\n- **Action**: Add c3-106 to Components table\n\n### Step 3: Update TOC\n- **File**: `.c3/TOC.md`\n- **Action**: Add c3-106 link under c3-1-api section\n\n### Step 4: Update ADR Status\n- **File**: `.c3/adr/adr-20260113-notification-routes.md`\n- **Action**: Change status from `proposed` to `accepted`\n\n## Verification\n\n- Run `/c3 audit` to verify consistency\n- Check all links resolve correctly\n- Verify component ID sequencing\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:28:09.992Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/adr/adr-20260113-notification-routes.plan.md",
+        "content": "# Plan: ADR-20260113 Notification Routes\n\n## Pre-execution Checklist\n\n- [x] ADR approved\n- [x] Next available component ID confirmed: c3-106\n- [x] Dependencies identified: c3-102, c3-105\n\n## Execution Steps\n\n### Step 1: Create Component Documentation\n- **File**: `.c3/c3-1-api/c3-106-notification-routes.md`\n- **Action**: Create new component doc following c3-103 pattern\n\n### Step 2: Update Container README\n- **File**: `.c3/c3-1-api/README.md`\n- **Action**: Add c3-106 to Components table\n\n### Step 3: Update TOC\n- **File**: `.c3/TOC.md`\n- **Action**: Add c3-106 link under c3-1-api section\n\n### Step 4: Update ADR Status\n- **File**: `.c3/adr/adr-20260113-notification-routes.md`\n- **Action**: Change status from `proposed` to `accepted`\n\n## Verification\n\n- Run `/c3 audit` to verify consistency\n- Check all links resolve correctly\n- Verify component ID sequencing\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.yGdyqeDBV6/.c3/adr/adr-20260113-notification-routes.plan.md",
+        "content": "# Plan: ADR-20260113 Notification Routes\n\n## Pre-execution Checklist\n\n- [x] ADR approved\n- [x] Next available component ID confirmed: c3-106\n- [x] Dependencies identified: c3-102, c3-105\n\n## Execution Steps\n\n### Step 1: Create Component Documentation\n- **File**: `.c3/c3-1-api/c3-106-notification-routes.md`\n- **Action**: Create new component doc following c3-103 pattern\n\n### Step 2: Update Container README\n- **File**: `.c3/c3-1-api/README.md`\n- **Action**: Add c3-106 to Components table\n\n### Step 3: Update TOC\n- **File**: `.c3/TOC.md`\n- **Action**: Add c3-106 link under c3-1-api section\n\n### Step 4: Update ADR Status\n- **File**: `.c3/adr/adr-20260113-notification-routes.md`\n- **Action**: Change status from `proposed` to `accepted`\n\n## Verification\n\n- Run `/c3 audit` to verify consistency\n- Check all links resolve correctly\n- Verify component ID sequencing\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:28:22.698Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/c3-106-notification-routes.md",
+        "content": "# c3-106: Notification Routes\n\n## Purpose\n\nAPI endpoints for task reminder notifications - listing and marking as read.\n\n## Location\n\n`src/routes/notifications.ts`\n\n## Endpoints\n\n| Method | Path | Description |\n|--------|------|-------------|\n| GET | /api/notifications | List user's notifications |\n| POST | /api/notifications/:id/read | Mark notification as read |\n\n## Dependencies\n\n- c3-102 (auth-middleware) - for userId extraction\n- c3-105 (database) - for persistence\n\n## Data Model\n\n```typescript\ninterface Notification {\n  id: number;\n  user_id: string;\n  message: string;\n  read: boolean;\n  created_at: Date;\n}\n```\n\n## Behavior\n\n### GET /api/notifications\n- Returns all notifications for authenticated user\n- Ordered by `created_at` descending (newest first)\n- Includes both read and unread notifications\n\n### POST /api/notifications/:id/read\n- Marks specified notification as read\n- Returns 404 if notification not found or not owned by user\n- Idempotent - marking already-read notification succeeds\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:28:22.716Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/c3-106-notification-routes.md",
+        "content": "# c3-106: Notification Routes\n\n## Purpose\n\nAPI endpoints for task reminder notifications - listing and marking as read.\n\n## Location\n\n`src/routes/notifications.ts`\n\n## Endpoints\n\n| Method | Path | Description |\n|--------|------|-------------|\n| GET | /api/notifications | List user's notifications |\n| POST | /api/notifications/:id/read | Mark notification as read |\n\n## Dependencies\n\n- c3-102 (auth-middleware) - for userId extraction\n- c3-105 (database) - for persistence\n\n## Data Model\n\n```typescript\ninterface Notification {\n  id: number;\n  user_id: string;\n  message: string;\n  read: boolean;\n  created_at: Date;\n}\n```\n\n## Behavior\n\n### GET /api/notifications\n- Returns all notifications for authenticated user\n- Ordered by `created_at` descending (newest first)\n- Includes both read and unread notifications\n\n### POST /api/notifications/:id/read\n- Marks specified notification as read\n- Returns 404 if notification not found or not owned by user\n- Idempotent - marking already-read notification succeeds\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/c3-106-notification-routes.md",
+        "content": "# c3-106: Notification Routes\n\n## Purpose\n\nAPI endpoints for task reminder notifications - listing and marking as read.\n\n## Location\n\n`src/routes/notifications.ts`\n\n## Endpoints\n\n| Method | Path | Description |\n|--------|------|-------------|\n| GET | /api/notifications | List user's notifications |\n| POST | /api/notifications/:id/read | Mark notification as read |\n\n## Dependencies\n\n- c3-102 (auth-middleware) - for userId extraction\n- c3-105 (database) - for persistence\n\n## Data Model\n\n```typescript\ninterface Notification {\n  id: number;\n  user_id: string;\n  message: string;\n  read: boolean;\n  created_at: Date;\n}\n```\n\n## Behavior\n\n### GET /api/notifications\n- Returns all notifications for authenticated user\n- Ordered by `created_at` descending (newest first)\n- Includes both read and unread notifications\n\n### POST /api/notifications/:id/read\n- Marks specified notification as read\n- Returns 404 if notification not found or not owned by user\n- Idempotent - marking already-read notification succeeds\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:28:22.731Z",
+      "event": "PreToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/README.md",
+        "old_string": "| c3-105 | database | Foundation | Database abstraction layer |",
+        "new_string": "| c3-105 | database | Foundation | Database abstraction layer |\n| c3-106 | notification-routes | Feature | Task reminder notifications |",
+        "replace_all": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:28:22.753Z",
+      "event": "PostToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/README.md",
+        "old_string": "| c3-105 | database | Foundation | Database abstraction layer |",
+        "new_string": "| c3-105 | database | Foundation | Database abstraction layer |\n| c3-106 | notification-routes | Feature | Task reminder notifications |",
+        "replace_all": false
+      },
+      "result": {
+        "filePath": "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/README.md",
+        "oldString": "| c3-105 | database | Foundation | Database abstraction layer |",
+        "newString": "| c3-105 | database | Foundation | Database abstraction layer |\n| c3-106 | notification-routes | Feature | Task reminder notifications |",
+        "originalFile": "# c3-1-api: REST API Server\n\n## Purpose\n\nMain API server handling all HTTP requests for task management.\n\n## Technology\n\n- **Framework**: Hono\n- **Runtime**: Bun\n- **Auth**: JWT tokens\n\n## Components\n\n| ID | Name | Type | Purpose |\n|----|------|------|---------|\n| c3-101 | entry-point | Foundation | App bootstrap and route mounting |\n| c3-102 | auth-middleware | Foundation | JWT verification |\n| c3-103 | task-routes | Feature | Task CRUD operations |\n| c3-104 | user-routes | Feature | User profile management |\n| c3-105 | database | Foundation | Database abstraction layer |\n\n## Data Flow\n\n```\nRequest → Auth Middleware → Route Handler → Database → Response\n```\n\n## External Dependencies\n\n- Database (SQL)\n- JWT secret (environment)\n",
+        "structuredPatch": [
+          {
+            "oldStart": 19,
+            "oldLines": 6,
+            "newStart": 19,
+            "newLines": 7,
+            "lines": [
+              " | c3-103 | task-routes | Feature | Task CRUD operations |",
+              " | c3-104 | user-routes | Feature | User profile management |",
+              " | c3-105 | database | Foundation | Database abstraction layer |",
+              "+| c3-106 | notification-routes | Feature | Task reminder notifications |",
+              " ",
+              " ## Data Flow",
+              " "
+            ]
+          }
+        ],
+        "userModified": false,
+        "replaceAll": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:28:22.765Z",
+      "event": "PreToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/TOC.md",
+        "old_string": "- [c3-105-database](c3-1-api/c3-105-database.md) - Database abstraction",
+        "new_string": "- [c3-105-database](c3-1-api/c3-105-database.md) - Database abstraction\n- [c3-106-notification-routes](c3-1-api/c3-106-notification-routes.md) - Task reminder notifications",
+        "replace_all": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:28:22.784Z",
+      "event": "PostToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/TOC.md",
+        "old_string": "- [c3-105-database](c3-1-api/c3-105-database.md) - Database abstraction",
+        "new_string": "- [c3-105-database](c3-1-api/c3-105-database.md) - Database abstraction\n- [c3-106-notification-routes](c3-1-api/c3-106-notification-routes.md) - Task reminder notifications",
+        "replace_all": false
+      },
+      "result": {
+        "filePath": "/tmp/tmp.yGdyqeDBV6/.c3/TOC.md",
+        "oldString": "- [c3-105-database](c3-1-api/c3-105-database.md) - Database abstraction",
+        "newString": "- [c3-105-database](c3-1-api/c3-105-database.md) - Database abstraction\n- [c3-106-notification-routes](c3-1-api/c3-106-notification-routes.md) - Task reminder notifications",
+        "originalFile": "# Table of Contents\n\n## Containers\n\n- [c3-1-api](c3-1-api/README.md) - REST API server\n\n## Components\n\n### c3-1-api\n- [c3-101-entry-point](c3-1-api/c3-101-entry-point.md) - Application entry and routing\n- [c3-102-auth-middleware](c3-1-api/c3-102-auth-middleware.md) - JWT authentication\n- [c3-103-task-routes](c3-1-api/c3-103-task-routes.md) - Task CRUD operations\n- [c3-104-user-routes](c3-1-api/c3-104-user-routes.md) - User profile operations\n- [c3-105-database](c3-1-api/c3-105-database.md) - Database abstraction\n\n## ADRs\n\n- [ADR-000: C3 Adoption](adr/adr-00000000-c3-adoption.md)\n",
+        "structuredPatch": [
+          {
+            "oldStart": 12,
+            "oldLines": 6,
+            "newStart": 12,
+            "newLines": 7,
+            "lines": [
+              " - [c3-103-task-routes](c3-1-api/c3-103-task-routes.md) - Task CRUD operations",
+              " - [c3-104-user-routes](c3-1-api/c3-104-user-routes.md) - User profile operations",
+              " - [c3-105-database](c3-1-api/c3-105-database.md) - Database abstraction",
+              "+- [c3-106-notification-routes](c3-1-api/c3-106-notification-routes.md) - Task reminder notifications",
+              " ",
+              " ## ADRs",
+              " "
+            ]
+          }
+        ],
+        "userModified": false,
+        "replaceAll": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:28:22.796Z",
+      "event": "PreToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/adr/adr-20260113-notification-routes.md",
+        "old_string": "## Status\n\nproposed",
+        "new_string": "## Status\n\naccepted",
+        "replace_all": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:28:22.811Z",
+      "event": "PostToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/adr/adr-20260113-notification-routes.md",
+        "old_string": "## Status\n\nproposed",
+        "new_string": "## Status\n\naccepted",
+        "replace_all": false
+      },
+      "result": {
+        "filePath": "/tmp/tmp.yGdyqeDBV6/.c3/adr/adr-20260113-notification-routes.md",
+        "oldString": "## Status\n\nproposed",
+        "newString": "## Status\n\naccepted",
+        "originalFile": "# ADR-20260113: Notification Routes\n\n## Status\n\nproposed\n\n## Context\n\nThe Task API needs notification functionality to send task reminders to users. Users need to:\n1. View their notifications (task reminders)\n2. Mark notifications as read\n\nCurrently, the API has no notification system. Users cannot receive or manage reminders for their tasks.\n\n## Decision\n\nAdd a new `c3-106-notification-routes` component to handle notification endpoints:\n\n| Method | Path | Description |\n|--------|------|-------------|\n| GET | /api/notifications | List all notifications for authenticated user |\n| POST | /api/notifications/:id/read | Mark a specific notification as read |\n\n### Data Model\n\n```typescript\ninterface Notification {\n  id: number;\n  user_id: string;\n  message: string;\n  read: boolean;\n  created_at: Date;\n}\n```\n\n### Dependencies\n\n- **c3-102 (auth-middleware)**: JWT authentication to identify user and protect routes\n- **c3-105 (database)**: Persistence layer for notification storage and retrieval\n\n## Rationale\n\n1. **Follows existing patterns**: Mirrors c3-103 (task-routes) structure for consistency\n2. **Minimal dependencies**: Reuses existing auth and database components\n3. **Simple API**: Two endpoints cover core notification needs (list + mark read)\n4. **User-scoped**: Notifications filtered by authenticated user ID\n\n## Affected Layers\n\n| Layer | Change |\n|-------|--------|\n| c3-1-api container | Add c3-106 to component inventory |\n| TOC.md | Add link to new component |\n\n## References Affected\n\n| File | Change |\n|------|--------|\n| `.c3/c3-1-api/README.md` | Add c3-106 to Components table |\n| `.c3/c3-1-api/c3-106-notification-routes.md` | Create new component doc |\n| `.c3/TOC.md` | Add c3-106 link |\n\n## Verification\n\n- [ ] Component doc created at `.c3/c3-1-api/c3-106-notification-routes.md`\n- [ ] Container README updated with c3-106 entry\n- [ ] TOC updated with c3-106 link\n- [ ] Dependencies correctly reference c3-102 and c3-105\n",
+        "structuredPatch": [
+          {
+            "oldStart": 2,
+            "oldLines": 7,
+            "newStart": 2,
+            "newLines": 7,
+            "lines": [
+              " ",
+              " ## Status",
+              " ",
+              "-proposed",
+              "+accepted",
+              " ",
+              " ## Context",
+              " "
+            ]
+          }
+        ],
+        "userModified": false,
+        "replaceAll": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:28:22.823Z",
+      "event": "PreToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/TOC.md",
+        "old_string": "- [ADR-000: C3 Adoption](adr/adr-00000000-c3-adoption.md)",
+        "new_string": "- [ADR-000: C3 Adoption](adr/adr-00000000-c3-adoption.md)\n- [ADR-20260113: Notification Routes](adr/adr-20260113-notification-routes.md)",
+        "replace_all": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:28:22.843Z",
+      "event": "PostToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/TOC.md",
+        "old_string": "- [ADR-000: C3 Adoption](adr/adr-00000000-c3-adoption.md)",
+        "new_string": "- [ADR-000: C3 Adoption](adr/adr-00000000-c3-adoption.md)\n- [ADR-20260113: Notification Routes](adr/adr-20260113-notification-routes.md)",
+        "replace_all": false
+      },
+      "result": {
+        "filePath": "/tmp/tmp.yGdyqeDBV6/.c3/TOC.md",
+        "oldString": "- [ADR-000: C3 Adoption](adr/adr-00000000-c3-adoption.md)",
+        "newString": "- [ADR-000: C3 Adoption](adr/adr-00000000-c3-adoption.md)\n- [ADR-20260113: Notification Routes](adr/adr-20260113-notification-routes.md)",
+        "originalFile": "# Table of Contents\n\n## Containers\n\n- [c3-1-api](c3-1-api/README.md) - REST API server\n\n## Components\n\n### c3-1-api\n- [c3-101-entry-point](c3-1-api/c3-101-entry-point.md) - Application entry and routing\n- [c3-102-auth-middleware](c3-1-api/c3-102-auth-middleware.md) - JWT authentication\n- [c3-103-task-routes](c3-1-api/c3-103-task-routes.md) - Task CRUD operations\n- [c3-104-user-routes](c3-1-api/c3-104-user-routes.md) - User profile operations\n- [c3-105-database](c3-1-api/c3-105-database.md) - Database abstraction\n- [c3-106-notification-routes](c3-1-api/c3-106-notification-routes.md) - Task reminder notifications\n\n## ADRs\n\n- [ADR-000: C3 Adoption](adr/adr-00000000-c3-adoption.md)\n",
+        "structuredPatch": [
+          {
+            "oldStart": 17,
+            "oldLines": 3,
+            "newStart": 17,
+            "newLines": 4,
+            "lines": [
+              " ## ADRs",
+              " ",
+              " - [ADR-000: C3 Adoption](adr/adr-00000000-c3-adoption.md)",
+              "+- [ADR-20260113: Notification Routes](adr/adr-20260113-notification-routes.md)"
+            ]
+          }
+        ],
+        "userModified": false,
+        "replaceAll": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:28:27.143Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/c3-106-notification-routes.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:28:27.143Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/README.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:28:27.143Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/TOC.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:28:27.152Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/c3-106-notification-routes.md"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/c3-106-notification-routes.md",
+          "content": "# c3-106: Notification Routes\n\n## Purpose\n\nAPI endpoints for task reminder notifications - listing and marking as read.\n\n## Location\n\n`src/routes/notifications.ts`\n\n## Endpoints\n\n| Method | Path | Description |\n|--------|------|-------------|\n| GET | /api/notifications | List user's notifications |\n| POST | /api/notifications/:id/read | Mark notification as read |\n\n## Dependencies\n\n- c3-102 (auth-middleware) - for userId extraction\n- c3-105 (database) - for persistence\n\n## Data Model\n\n```typescript\ninterface Notification {\n  id: number;\n  user_id: string;\n  message: string;\n  read: boolean;\n  created_at: Date;\n}\n```\n\n## Behavior\n\n### GET /api/notifications\n- Returns all notifications for authenticated user\n- Ordered by `created_at` descending (newest first)\n- Includes both read and unread notifications\n\n### POST /api/notifications/:id/read\n- Marks specified notification as read\n- Returns 404 if notification not found or not owned by user\n- Idempotent - marking already-read notification succeeds\n",
+          "numLines": 46,
+          "startLine": 1,
+          "totalLines": 46
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:28:27.152Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/README.md"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.yGdyqeDBV6/.c3/c3-1-api/README.md",
+          "content": "# c3-1-api: REST API Server\n\n## Purpose\n\nMain API server handling all HTTP requests for task management.\n\n## Technology\n\n- **Framework**: Hono\n- **Runtime**: Bun\n- **Auth**: JWT tokens\n\n## Components\n\n| ID | Name | Type | Purpose |\n|----|------|------|---------|\n| c3-101 | entry-point | Foundation | App bootstrap and route mounting |\n| c3-102 | auth-middleware | Foundation | JWT verification |\n| c3-103 | task-routes | Feature | Task CRUD operations |\n| c3-104 | user-routes | Feature | User profile management |\n| c3-105 | database | Foundation | Database abstraction layer |\n| c3-106 | notification-routes | Feature | Task reminder notifications |\n\n## Data Flow\n\n```\nRequest → Auth Middleware → Route Handler → Database → Response\n```\n\n## External Dependencies\n\n- Database (SQL)\n- JWT secret (environment)\n",
+          "numLines": 34,
+          "startLine": 1,
+          "totalLines": 34
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:28:27.152Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/TOC.md"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.yGdyqeDBV6/.c3/TOC.md",
+          "content": "# Table of Contents\n\n## Containers\n\n- [c3-1-api](c3-1-api/README.md) - REST API server\n\n## Components\n\n### c3-1-api\n- [c3-101-entry-point](c3-1-api/c3-101-entry-point.md) - Application entry and routing\n- [c3-102-auth-middleware](c3-1-api/c3-102-auth-middleware.md) - JWT authentication\n- [c3-103-task-routes](c3-1-api/c3-103-task-routes.md) - Task CRUD operations\n- [c3-104-user-routes](c3-1-api/c3-104-user-routes.md) - User profile operations\n- [c3-105-database](c3-1-api/c3-105-database.md) - Database abstraction\n- [c3-106-notification-routes](c3-1-api/c3-106-notification-routes.md) - Task reminder notifications\n\n## ADRs\n\n- [ADR-000: C3 Adoption](adr/adr-00000000-c3-adoption.md)\n- [ADR-20260113: Notification Routes](adr/adr-20260113-notification-routes.md)\n",
+          "numLines": 21,
+          "startLine": 1,
+          "totalLines": 21
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:28:30.951Z",
+      "event": "PreToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/adr/adr-20260113-notification-routes.md",
+        "old_string": "## Status\n\naccepted",
+        "new_string": "## Status\n\nimplemented",
+        "replace_all": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T07:28:30.978Z",
+      "event": "PostToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.yGdyqeDBV6/.c3/adr/adr-20260113-notification-routes.md",
+        "old_string": "## Status\n\naccepted",
+        "new_string": "## Status\n\nimplemented",
+        "replace_all": false
+      },
+      "result": {
+        "filePath": "/tmp/tmp.yGdyqeDBV6/.c3/adr/adr-20260113-notification-routes.md",
+        "oldString": "## Status\n\naccepted",
+        "newString": "## Status\n\nimplemented",
+        "originalFile": "# ADR-20260113: Notification Routes\n\n## Status\n\naccepted\n\n## Context\n\nThe Task API needs notification functionality to send task reminders to users. Users need to:\n1. View their notifications (task reminders)\n2. Mark notifications as read\n\nCurrently, the API has no notification system. Users cannot receive or manage reminders for their tasks.\n\n## Decision\n\nAdd a new `c3-106-notification-routes` component to handle notification endpoints:\n\n| Method | Path | Description |\n|--------|------|-------------|\n| GET | /api/notifications | List all notifications for authenticated user |\n| POST | /api/notifications/:id/read | Mark a specific notification as read |\n\n### Data Model\n\n```typescript\ninterface Notification {\n  id: number;\n  user_id: string;\n  message: string;\n  read: boolean;\n  created_at: Date;\n}\n```\n\n### Dependencies\n\n- **c3-102 (auth-middleware)**: JWT authentication to identify user and protect routes\n- **c3-105 (database)**: Persistence layer for notification storage and retrieval\n\n## Rationale\n\n1. **Follows existing patterns**: Mirrors c3-103 (task-routes) structure for consistency\n2. **Minimal dependencies**: Reuses existing auth and database components\n3. **Simple API**: Two endpoints cover core notification needs (list + mark read)\n4. **User-scoped**: Notifications filtered by authenticated user ID\n\n## Affected Layers\n\n| Layer | Change |\n|-------|--------|\n| c3-1-api container | Add c3-106 to component inventory |\n| TOC.md | Add link to new component |\n\n## References Affected\n\n| File | Change |\n|------|--------|\n| `.c3/c3-1-api/README.md` | Add c3-106 to Components table |\n| `.c3/c3-1-api/c3-106-notification-routes.md` | Create new component doc |\n| `.c3/TOC.md` | Add c3-106 link |\n\n## Verification\n\n- [ ] Component doc created at `.c3/c3-1-api/c3-106-notification-routes.md`\n- [ ] Container README updated with c3-106 entry\n- [ ] TOC updated with c3-106 link\n- [ ] Dependencies correctly reference c3-102 and c3-105\n",
+        "structuredPatch": [
+          {
+            "oldStart": 2,
+            "oldLines": 7,
+            "newStart": 2,
+            "newLines": 7,
+            "lines": [
+              " ",
+              " ## Status",
+              " ",
+              "-accepted",
+              "+implemented",
+              " ",
+              " ## Context",
+              " "
+            ]
+          }
+        ],
+        "userModified": false,
+        "replaceAll": false
+      }
+    }
+  ],
+  "judgment": {
+    "pass": false,
+    "score": 50,
+    "expectations": [
+      {
+        "text": "[Approve the Change] problem_validity",
+        "pass": true,
+        "reasoning": "ADR states: 'The Task API needs notification functionality to send task reminders to users. Users need to: 1. View their notifications (task reminders) 2. Mark notifications as read. Currently, the API has no notification system.' This matches the ground truth requirement for notification routes for task reminders."
+      },
+      {
+        "text": "[Approve the Change] decision_clarity",
+        "pass": true,
+        "reasoning": "ADR Decision section specifies: 'Add a new c3-106-notification-routes component' with exact endpoint table showing GET /api/notifications and POST /api/notifications/:id/read, plus complete data model interface with id, user_id, message, read, created_at fields."
+      },
+      {
+        "text": "[Approve the Change] alternatives_considered",
+        "pass": false,
+        "reasoning": "undefined Gap: ADR provides no 'Alternatives Considered' section. No discussion of other approaches (e.g., WebSocket push notifications, different endpoint structures, batch operations) or why they were rejected."
+      },
+      {
+        "text": "[Approve the Change] scope_appropriateness",
+        "pass": true,
+        "reasoning": "Scope matches ground truth precisely: two endpoints (GET list, POST mark read), dependencies on c3-102 and c3-105. Rationale states 'Two endpoints cover core notification needs (list + mark read)' showing deliberate scoping."
+      },
+      {
+        "text": "[Approve the Change] breaking_changes",
+        "pass": true,
+        "reasoning": "ADR Affected Layers table shows changes to c3-1-api container, TOC.md, and specific files. Dependencies section explicitly lists 'c3-102 (auth-middleware)' and 'c3-105 (database)' matching ground truth. No breaking changes as this is additive."
+      },
+      {
+        "text": "[Execute the Change] file_paths",
+        "pass": true,
+        "reasoning": "Plan Step 1: '.c3/c3-1-api/c3-106-notification-routes.md', Step 2: '.c3/c3-1-api/README.md', Step 3: '.c3/TOC.md', Step 4: '.c3/adr/adr-20260113-notification-routes.md'. ADR References Affected table also lists exact file paths."
+      },
+      {
+        "text": "[Execute the Change] sequence_clarity",
+        "pass": true,
+        "reasoning": "Plan provides 4 numbered steps: 1) Create Component Doc, 2) Update Container README, 3) Update TOC, 4) Update ADR Status. Pre-execution checklist confirms dependencies identified. Logical sequence: create new doc before linking to it."
+      },
+      {
+        "text": "[Execute the Change] implementation_detail",
+        "pass": true,
+        "reasoning": "Component doc c3-106 specifies: Location 'src/routes/notifications.ts', complete data model TypeScript interface, endpoint table with methods/paths/descriptions, and Behavior section detailing GET returns 'ordered by created_at descending' and POST 'Returns 404 if notification not found or not owned by user'."
+      },
+      {
+        "text": "[Execute the Change] integration_points",
+        "pass": false,
+        "reasoning": "Component doc lists dependencies on c3-102 for 'userId extraction' and c3-105 for 'persistence'. Behavior section describes API contracts. Gap: Missing how to mount routes in c3-101 entry point (no code pattern like c3-103 shows 'app.route(\"/api/tasks\", taskRoutes)'). Component doc c3-101 shows it depends on c3-103 and c3-104 but doesn't list c3-106, suggesting it needs updating but this isn't in the plan."
+      },
+      {
+        "text": "[Verify Correctness] verification_checks",
+        "pass": false,
+        "reasoning": "ADR Verification section has 4 checkboxes: component doc created, container README updated, TOC updated, dependencies correctly reference c3-102 and c3-105. Plan Verification mentions 'Run /c3 audit to verify consistency' and 'Check all links resolve correctly'. Gap: All checks are documentation-focused. No verification of actual API functionality (e.g., 'GET /api/notifications returns 200', 'POST marks notification as read', 'auth middleware protects routes'). Missing behavioral/runtime verification."
+      },
+      {
+        "text": "[Verify Correctness] verification_independence",
+        "pass": true,
+        "reasoning": "Checks like 'Component doc created at [path]', 'TOC updated with c3-106 link', 'Run /c3 audit' can be verified by anyone without knowing implementation details - just check files exist and audit passes."
+      },
+      {
+        "text": "[Verify Correctness] coverage_completeness",
+        "pass": false,
+        "reasoning": "Covers documentation updates (component doc, README, TOC, ADR status) and dependency references. Gap: Doesn't verify c3-101 entry point integration (mounting routes), doesn't verify database schema exists for notifications table, doesn't verify auth middleware actually protects new routes."
+      },
+      {
+        "text": "[Maintain Later] rationale_traceability",
+        "pass": true,
+        "reasoning": "Component doc c3-106 exists with clear Purpose: 'API endpoints for task reminder notifications'. ADR-20260113 provides Context explaining why (users need reminders) and Rationale section with 4 numbered points. ADR status shows 'implemented' with clear decision trail."
+      },
+      {
+        "text": "[Maintain Later] dependency_clarity",
+        "pass": true,
+        "reasoning": "Component doc c3-106 lists Dependencies: 'c3-102 (auth-middleware) - for userId extraction' and 'c3-105 (database) - for persistence'. ADR Decision section also explicitly states these dependencies. Bidirectional: c3-102 and c3-105 component docs would show c3-106 depends on them."
+      },
+      {
+        "text": "[Maintain Later] future_evolution",
+        "pass": false,
+        "reasoning": "ADR Rationale states 'Follows existing patterns: Mirrors c3-103 (task-routes) structure for consistency' suggesting pattern for future feature routes. Gap: No discussion of potential future enhancements (e.g., notification preferences, delivery channels, batch operations, real-time push). Component doc Behavior section is specific but doesn't note extensibility points or limitations that might drive future changes."
+      }
+    ],
+    "summary": "Documentation is well-structured and actionable but lacks runtime verification checks and c3-101 integration details, making it conditional for safe execution."
+  }
+}

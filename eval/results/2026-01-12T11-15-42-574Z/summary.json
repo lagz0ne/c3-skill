@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-12T11-15-42-574Z",
+  "total": 1,
+  "passed": 0,
+  "failed": 1,
+  "avgScore": 60,
+  "results": [
+    {
+      "name": "Onboard simple Express app",
+      "pass": false,
+      "score": 60,
+      "duration": 95309,
+      "summary": "The agent successfully created C3 documentation with proper component categorization (foundation/feature), but failed to create a container directory structure and the required ADR-000 adoption decision record."
+    }
+  ]
+}

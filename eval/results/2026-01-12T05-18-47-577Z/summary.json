@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-12T05-18-47-577Z",
+  "total": 1,
+  "passed": 0,
+  "failed": 1,
+  "avgScore": 0,
+  "results": [
+    {
+      "name": "Onboard simple Express app",
+      "pass": false,
+      "score": 0,
+      "duration": 887,
+      "summary": "Error: Error: Could not resolve authentication method. Expected either apiKey or authToken to be set. Or for one of the \"X-Api-Key\" or \"Authorization\" headers to be explicitly omitted"
+    }
+  ]
+}

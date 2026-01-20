@@ -1,0 +1,6 @@
+{
+  "name": "blog-api",
+  "version": "2.0.0",
+  "description": "Blog API - refactored in v2",
+  "main": "src/index.ts"
+}

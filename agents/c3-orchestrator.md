@@ -33,7 +33,7 @@ description: |
   </commentary>
   </example>
 model: opus
-color: orange
+color: yellow
 tools: ["Read", "Glob", "Grep", "Bash", "Task", "Write", "AskUserQuestion"]
 ---
 

@@ -1,0 +1,421 @@
+{
+  "name": "Audit C3 docs for stale references",
+  "pass": true,
+  "score": 100,
+  "duration": 54430,
+  "trace": [
+    {
+      "timestamp": "2026-01-12T11:05:59.141Z",
+      "event": "PreToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:c3",
+        "args": "audit"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:05:59.191Z",
+      "event": "PostToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:c3",
+        "args": "audit"
+      },
+      "result": {
+        "success": true,
+        "commandName": "c3-skill:c3",
+        "allowedTools": [
+          "Skill"
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:02.681Z",
+      "event": "PreToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": ".c3/**/*.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:02.681Z",
+      "event": "PreToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "src/**/*"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:02.681Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "ls -la",
+        "description": "List root directory structure"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:02.730Z",
+      "event": "PostToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": ".c3/**/*.md"
+      },
+      "result": {
+        "filenames": [
+          "/tmp/tmp.zdauJfQAUU/.c3/TOC.md",
+          "/tmp/tmp.zdauJfQAUU/.c3/README.md",
+          "/tmp/tmp.zdauJfQAUU/.c3/c3-1-api/c3-104-comment-routes.md",
+          "/tmp/tmp.zdauJfQAUU/.c3/c3-1-api/c3-101-entry-point.md",
+          "/tmp/tmp.zdauJfQAUU/.c3/c3-1-api/README.md",
+          "/tmp/tmp.zdauJfQAUU/.c3/c3-1-api/c3-102-auth-middleware.md",
+          "/tmp/tmp.zdauJfQAUU/.c3/c3-1-api/c3-103-post-routes.md",
+          "/tmp/tmp.zdauJfQAUU/.c3/c3-1-api/c3-105-database.md"
+        ],
+        "durationMs": 35,
+        "numFiles": 8,
+        "truncated": false
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:02.734Z",
+      "event": "PostToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "src/**/*"
+      },
+      "result": {
+        "filenames": [
+          "/tmp/tmp.zdauJfQAUU/src/index.ts"
+        ],
+        "durationMs": 41,
+        "numFiles": 1,
+        "truncated": false
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:02.783Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "ls -la",
+        "description": "List root directory structure"
+      },
+      "result": {
+        "stdout": "",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:03.554Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "ls -la /tmp/tmp.zdauJfQAUU",
+        "description": "List contents of working directory"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:03.631Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "ls -la /tmp/tmp.zdauJfQAUU",
+        "description": "List contents of working directory"
+      },
+      "result": {
+        "stdout": "drwxr-xr-x   - lagz0ne 12 Jan 18:05 .c3\n.rw-r--r-- 121 lagz0ne 12 Jan 18:05 package.json\ndrwxr-xr-x   - lagz0ne 12 Jan 18:05 src",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:05.863Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "ls -laR /tmp/tmp.zdauJfQAUU",
+        "description": "List full directory structure"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:05.864Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.zdauJfQAUU/.c3/TOC.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:05.864Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.zdauJfQAUU/.c3/README.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:05.891Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.zdauJfQAUU/.c3/TOC.md"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.zdauJfQAUU/.c3/TOC.md",
+          "content": "# Table of Contents\n\n## Containers\n\n- [c3-1-api](c3-1-api/README.md)\n\n## Components\n\n### c3-1-api\n- [c3-101-entry-point](c3-1-api/c3-101-entry-point.md)\n- [c3-102-auth-middleware](c3-1-api/c3-102-auth-middleware.md) - STALE: file removed in v2\n- [c3-103-post-routes](c3-1-api/c3-103-post-routes.md) - STALE: consolidated into index.ts\n- [c3-104-comment-routes](c3-1-api/c3-104-comment-routes.md) - STALE: consolidated into index.ts\n- [c3-105-database](c3-1-api/c3-105-database.md) - STALE: removed, using inline data\n",
+          "numLines": 15,
+          "startLine": 1,
+          "totalLines": 15
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:05.891Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.zdauJfQAUU/.c3/README.md"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.zdauJfQAUU/.c3/README.md",
+          "content": "# Blog API - C3 Architecture\n\n## Overview\n\nBlog API provides endpoints for blog posts and comments.\n\n## Containers\n\n| ID | Name | Purpose |\n|----|------|---------|\n| c3-1 | api | REST API server |\n\n## Quick Links\n\n- [API Container](c3-1-api/README.md)\n",
+          "numLines": 16,
+          "startLine": 1,
+          "totalLines": 16
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:05.940Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "ls -laR /tmp/tmp.zdauJfQAUU",
+        "description": "List full directory structure"
+      },
+      "result": {
+        "stdout": "drwxr-xr-x   - lagz0ne 12 Jan 18:05 .c3\n.rw-r--r-- 121 lagz0ne 12 Jan 18:05 package.json\ndrwxr-xr-x   - lagz0ne 12 Jan 18:05 src\n\n/tmp/tmp.zdauJfQAUU/.c3:\ndrwxr-xr-x   - lagz0ne 12 Jan 18:05 c3-1-api\n.rw-r--r-- 252 lagz0ne 12 Jan 18:05 README.md\n.rw-r--r-- 517 lagz0ne 12 Jan 18:05 TOC.md\n\n/tmp/tmp.zdauJfQAUU/.c3/c3-1-api:\n.rw-r--r-- 128 lagz0ne 12 Jan 18:05 c3-101-entry-point.md\n.rw-r--r-- 261 lagz0ne 12 Jan 18:05 c3-102-auth-middleware.md\n.rw-r--r-- 316 lagz0ne 12 Jan 18:05 c3-103-post-routes.md\n.rw-r--r-- 220 lagz0ne 12 Jan 18:05 c3-104-comment-routes.md\n.rw-r--r-- 190 lagz0ne 12 Jan 18:05 c3-105-database.md\n.rw-r--r-- 494 lagz0ne 12 Jan 18:05 README.md\n\n/tmp/tmp.zdauJfQAUU/src:\n.rw-r--r-- 520 lagz0ne 12 Jan 18:05 index.ts",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:11.664Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.zdauJfQAUU/.c3/c3-1-api/README.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:11.665Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.zdauJfQAUU/.c3/c3-1-api/c3-101-entry-point.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:11.665Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.zdauJfQAUU/.c3/c3-1-api/c3-102-auth-middleware.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:11.665Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.zdauJfQAUU/.c3/c3-1-api/c3-103-post-routes.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:11.665Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.zdauJfQAUU/.c3/c3-1-api/c3-104-comment-routes.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:11.665Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.zdauJfQAUU/.c3/c3-1-api/c3-105-database.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:11.665Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.zdauJfQAUU/src/index.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:11.687Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.zdauJfQAUU/.c3/c3-1-api/README.md"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.zdauJfQAUU/.c3/c3-1-api/README.md",
+          "content": "# c3-1-api: REST API Server\n\n## Purpose\n\nMain API server for blog functionality.\n\n## Components\n\n| ID | Name | Location | Status |\n|----|------|----------|--------|\n| c3-101 | entry-point | src/index.ts | Active |\n| c3-102 | auth-middleware | src/middleware/auth.ts | STALE - file removed |\n| c3-103 | post-routes | src/routes/posts.ts | STALE - file removed |\n| c3-104 | comment-routes | src/routes/comments.ts | STALE - file removed |\n| c3-105 | database | src/db.ts | STALE - file removed |\n",
+          "numLines": 16,
+          "startLine": 1,
+          "totalLines": 16
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:11.688Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.zdauJfQAUU/.c3/c3-1-api/c3-101-entry-point.md"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.zdauJfQAUU/.c3/c3-1-api/c3-101-entry-point.md",
+          "content": "# c3-101: Entry Point\n\n## Purpose\n\nApplication entry point.\n\n## Location\n\n`src/index.ts`\n\n## Status\n\nActive - this file exists.\n",
+          "numLines": 14,
+          "startLine": 1,
+          "totalLines": 14
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:11.688Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.zdauJfQAUU/.c3/c3-1-api/c3-102-auth-middleware.md"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.zdauJfQAUU/.c3/c3-1-api/c3-102-auth-middleware.md",
+          "content": "# c3-102: Auth Middleware\n\n## Purpose\n\nJWT authentication middleware.\n\n## Location\n\n`src/middleware/auth.ts`\n\n## Status\n\nSTALE - This file was removed in v2 refactoring.\nAuth is now handled inline in index.ts.\n\n## Dependencies\n\n- jsonwebtoken library (removed)\n",
+          "numLines": 19,
+          "startLine": 1,
+          "totalLines": 19
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:11.689Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.zdauJfQAUU/.c3/c3-1-api/c3-103-post-routes.md"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.zdauJfQAUU/.c3/c3-1-api/c3-103-post-routes.md",
+          "content": "# c3-103: Post Routes\n\n## Purpose\n\nCRUD operations for blog posts.\n\n## Location\n\n`src/routes/posts.ts`\n\n## Status\n\nSTALE - This file was removed in v2 refactoring.\nRoutes are now defined inline in index.ts.\n\n## Endpoints (historical)\n\n- GET /posts\n- POST /posts\n- GET /posts/:id\n- PUT /posts/:id\n- DELETE /posts/:id\n",
+          "numLines": 23,
+          "startLine": 1,
+          "totalLines": 23
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:11.689Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.zdauJfQAUU/.c3/c3-1-api/c3-104-comment-routes.md"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.zdauJfQAUU/.c3/c3-1-api/c3-104-comment-routes.md",
+          "content": "# c3-104: Comment Routes\n\n## Purpose\n\nCRUD operations for comments on posts.\n\n## Location\n\n`src/routes/comments.ts`\n\n## Status\n\nSTALE - This file was removed in v2 refactoring.\nRoutes are now defined inline in index.ts.\n",
+          "numLines": 15,
+          "startLine": 1,
+          "totalLines": 15
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:11.689Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.zdauJfQAUU/.c3/c3-1-api/c3-105-database.md"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.zdauJfQAUU/.c3/c3-1-api/c3-105-database.md",
+          "content": "# c3-105: Database Layer\n\n## Purpose\n\nDatabase abstraction for persistence.\n\n## Location\n\n`src/db.ts`\n\n## Status\n\nSTALE - This file was removed in v2 refactoring.\nData is now mocked inline.\n",
+          "numLines": 15,
+          "startLine": 1,
+          "totalLines": 15
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:06:11.690Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.zdauJfQAUU/src/index.ts"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.zdauJfQAUU/src/index.ts",
+          "content": "// v2: Consolidated into single file\nimport { Hono } from \"hono\";\n\nconst app = new Hono();\n\n// Posts API\napp.get(\"/posts\", (c) => c.json([]));\napp.post(\"/posts\", (c) => c.json({ id: 1 }));\napp.get(\"/posts/:id\", (c) => c.json({ id: c.req.param(\"id\") }));\n\n// Comments API (was separate, now inline)\napp.get(\"/posts/:id/comments\", (c) => c.json([]));\napp.post(\"/posts/:id/comments\", (c) => c.json({ id: 1 }));\n\n// Auth (simplified, was middleware)\napp.post(\"/login\", (c) => c.json({ token: \"xxx\" }));\n\nexport default app;\n",
+          "numLines": 19,
+          "startLine": 1,
+          "totalLines": 19
+        }
+      }
+    }
+  ],
+  "judgment": {
+    "pass": true,
+    "score": 100,
+    "expectations": [
+      {
+        "text": "Agent identifies c3-102 (auth-middleware) references non-existent src/middleware/auth.ts",
+        "pass": true,
+        "reasoning": "The output clearly shows c3-102-auth-middleware.md with Location 'src/middleware/auth.ts' and Status 'STALE - This file was removed in v2 refactoring. Auth is now handled inline in index.ts.'"
+      },
+      {
+        "text": "Agent identifies c3-103 (post-routes) references non-existent src/routes/posts.ts",
+        "pass": true,
+        "reasoning": "The output clearly shows c3-103-post-routes.md with Location 'src/routes/posts.ts' and Status 'STALE - This file was removed in v2 refactoring. Routes are now defined inline in index.ts.'"
+      },
+      {
+        "text": "Agent identifies c3-104 (comment-routes) references non-existent src/routes/comments.ts",
+        "pass": true,
+        "reasoning": "The output clearly shows c3-104-comment-routes.md with Location 'src/routes/comments.ts' and Status 'STALE - This file was removed in v2 refactoring. Routes are now defined inline in index.ts.'"
+      },
+      {
+        "text": "Agent recommends updating docs to reflect consolidated index.ts structure",
+        "pass": true,
+        "reasoning": "Multiple documentation entries explicitly state that functionality has moved to index.ts (e.g., 'Auth is now handled inline in index.ts', 'Routes are now defined inline in index.ts', 'Data is now mocked inline'). The README also marks these as STALE with 'file removed' status. This clearly indicates the v2 consolidation into index.ts and provides actionable information for updating the docs."
+      }
+    ],
+    "summary": "The agent successfully identified all four stale component references (c3-102 through c3-105) that reference non-existent files, and clearly documented that the v2 refactoring consolidated these into index.ts. The output provides clear status updates and explanations that serve as actionable recommendations."
+  }
+}

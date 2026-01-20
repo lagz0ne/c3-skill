@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-12T11-59-49-193Z",
+  "total": 1,
+  "passed": 0,
+  "failed": 1,
+  "avgScore": 40,
+  "results": [
+    {
+      "name": "Onboard simple Express app",
+      "pass": false,
+      "score": 40,
+      "duration": 90566,
+      "summary": "The agent created documentation files but failed key requirements: no .c3/README.md, no container directory, Auth middleware incorrectly classified as a feature component instead of foundation, and ADR-000 was not created despite being required for the onboarding workflow."
+    }
+  ]
+}

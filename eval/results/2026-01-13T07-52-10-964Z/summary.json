@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-13T07-52-10-964Z",
+  "total": 1,
+  "passed": 1,
+  "failed": 0,
+  "avgScore": 75,
+  "results": [
+    {
+      "name": "Fix bug via C3 alter workflow",
+      "pass": true,
+      "score": 75,
+      "duration": 401276,
+      "summary": "Documentation fully addresses all template requirements with clear problem statement, specific decision, concrete verification steps, and proper traceability between ADR and component documentation."
+    }
+  ]
+}

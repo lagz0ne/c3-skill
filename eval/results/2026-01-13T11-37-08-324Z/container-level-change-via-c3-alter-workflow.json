@@ -1,0 +1,977 @@
+{
+  "name": "Container-level change via C3 alter workflow",
+  "pass": true,
+  "score": 100,
+  "duration": 199393,
+  "trace": [
+    {
+      "timestamp": "2026-01-13T11:33:27.477Z",
+      "event": "PreToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:c3-alter",
+        "args": "Add Redis caching layer to API - create ADR, add c3-106-cache component, update c3-103 and c3-104 to use cache, with graceful fallback if Redis unavailable"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:33:27.548Z",
+      "event": "PostToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:c3-alter",
+        "args": "Add Redis caching layer to API - create ADR, add c3-106-cache component, update c3-103 and c3-104 to use cache, with graceful fallback if Redis unavailable"
+      },
+      "result": {
+        "success": true,
+        "commandName": "c3-skill:c3-alter"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:33:31.078Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "ls -la /tmp/tmp.kSgYndLDCw",
+        "description": "List contents of working directory"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:33:31.296Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "ls -la /tmp/tmp.kSgYndLDCw",
+        "description": "List contents of working directory"
+      },
+      "result": {
+        "stdout": "drwxr-xr-x   - lagz0ne 13 Jan 18:33 .c3\n.rw-r--r-- 241 lagz0ne 13 Jan 18:33 package.json\ndrwxr-xr-x   - lagz0ne 13 Jan 18:33 src",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:33:33.043Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/home/lagz0ne/c3-design/skills/c3-alter/../../references/skill-harness.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:33:33.043Z",
+      "event": "Blocked",
+      "tool": "Read",
+      "input": {
+        "file_path": "/home/lagz0ne/c3-design/skills/c3-alter/../../references/skill-harness.md"
+      },
+      "blocked": true,
+      "reason": "Path outside sandbox: /home/lagz0ne/c3-design/skills/c3-alter/../../references/skill-harness.md"
+    },
+    {
+      "timestamp": "2026-01-13T11:33:33.044Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/home/lagz0ne/c3-design/skills/c3-alter/../../references/layer-navigation.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:33:33.044Z",
+      "event": "Blocked",
+      "tool": "Read",
+      "input": {
+        "file_path": "/home/lagz0ne/c3-design/skills/c3-alter/../../references/layer-navigation.md"
+      },
+      "blocked": true,
+      "reason": "Path outside sandbox: /home/lagz0ne/c3-design/skills/c3-alter/../../references/layer-navigation.md"
+    },
+    {
+      "timestamp": "2026-01-13T11:33:33.044Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/home/lagz0ne/c3-design/skills/c3-alter/../../references/adr-template.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:33:33.044Z",
+      "event": "Blocked",
+      "tool": "Read",
+      "input": {
+        "file_path": "/home/lagz0ne/c3-design/skills/c3-alter/../../references/adr-template.md"
+      },
+      "blocked": true,
+      "reason": "Path outside sandbox: /home/lagz0ne/c3-design/skills/c3-alter/../../references/adr-template.md"
+    },
+    {
+      "timestamp": "2026-01-13T11:33:45.850Z",
+      "event": "PreToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/.c3/**/*.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:33:45.850Z",
+      "event": "PreToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/c3-0*.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:33:45.883Z",
+      "event": "PostToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/.c3/**/*.md"
+      },
+      "result": {
+        "filenames": [
+          "/tmp/tmp.kSgYndLDCw/.c3/TOC.md",
+          "/tmp/tmp.kSgYndLDCw/.c3/README.md",
+          "/tmp/tmp.kSgYndLDCw/.c3/adr/adr-00000000-c3-adoption.md",
+          "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/c3-103-task-routes.md",
+          "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/c3-101-entry-point.md",
+          "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/README.md",
+          "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/c3-102-auth-middleware.md",
+          "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/c3-105-database.md",
+          "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/c3-104-user-routes.md"
+        ],
+        "durationMs": 24,
+        "numFiles": 9,
+        "truncated": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:33:45.886Z",
+      "event": "PostToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/c3-0*.md"
+      },
+      "result": {
+        "filenames": [],
+        "durationMs": 25,
+        "numFiles": 0,
+        "truncated": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:33:50.297Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/README.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:33:50.297Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/README.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:33:50.297Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/c3-103-task-routes.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:33:50.297Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/c3-104-user-routes.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:33:50.297Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/c3-105-database.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:33:50.297Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/TOC.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:33:50.328Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/README.md"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.kSgYndLDCw/.c3/README.md",
+          "content": "# Task API - C3 Architecture\n\n## Overview\n\nTask API is a RESTful backend service for task management. Built with Hono framework on Bun runtime.\n\n## Architecture Style\n\n- **Type**: Modular Monolith\n- **Framework**: Hono (lightweight web framework)\n- **Runtime**: Bun\n- **Database**: SQL (abstracted)\n\n## Key Decisions\n\n- JWT-based authentication\n- Route-based modularization\n- Middleware for cross-cutting concerns\n\n## Containers\n\n| ID | Name | Purpose |\n|----|------|---------|\n| c3-1 | api | REST API server |\n\n## Quick Links\n\n- [API Container](c3-1-api/README.md)\n- [ADR: Initial Architecture](adr/adr-00000000-c3-adoption.md)\n",
+          "numLines": 30,
+          "startLine": 1,
+          "totalLines": 30
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:33:50.328Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/README.md"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/README.md",
+          "content": "# c3-1-api: REST API Server\n\n## Purpose\n\nMain API server handling all HTTP requests for task management.\n\n## Technology\n\n- **Framework**: Hono\n- **Runtime**: Bun\n- **Auth**: JWT tokens\n\n## Components\n\n| ID | Name | Type | Purpose |\n|----|------|------|---------|\n| c3-101 | entry-point | Foundation | App bootstrap and route mounting |\n| c3-102 | auth-middleware | Foundation | JWT verification |\n| c3-103 | task-routes | Feature | Task CRUD operations |\n| c3-104 | user-routes | Feature | User profile management |\n| c3-105 | database | Foundation | Database abstraction layer |\n\n## Data Flow\n\n```\nRequest → Auth Middleware → Route Handler → Database → Response\n```\n\n## External Dependencies\n\n- Database (SQL)\n- JWT secret (environment)\n",
+          "numLines": 33,
+          "startLine": 1,
+          "totalLines": 33
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:33:50.329Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/c3-103-task-routes.md"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/c3-103-task-routes.md",
+          "content": "# c3-103: Task Routes\n\n## Purpose\n\nCRUD operations for task management.\n\n## Location\n\n`src/routes/tasks.ts`\n\n## Endpoints\n\n| Method | Path | Description |\n|--------|------|-------------|\n| GET | /api/tasks | List user's tasks |\n| POST | /api/tasks | Create new task |\n| PATCH | /api/tasks/:id | Update task |\n| DELETE | /api/tasks/:id | Delete task |\n\n## Dependencies\n\n- c3-102 (auth-middleware) - for userId\n- c3-105 (database) - for persistence\n\n## Data Model\n\n```typescript\ninterface Task {\n  id: number;\n  title: string;\n  description: string;\n  user_id: string;\n}\n```\n",
+          "numLines": 35,
+          "startLine": 1,
+          "totalLines": 35
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:33:50.329Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/c3-104-user-routes.md"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/c3-104-user-routes.md",
+          "content": "# c3-104: User Routes\n\n## Purpose\n\nUser profile management endpoints.\n\n## Location\n\n`src/routes/users.ts`\n\n## Endpoints\n\n| Method | Path | Description |\n|--------|------|-------------|\n| GET | /api/users/me | Get current user profile |\n| PATCH | /api/users/me | Update current user profile |\n\n## Dependencies\n\n- c3-102 (auth-middleware) - for userId\n- c3-105 (database) - for persistence\n",
+          "numLines": 22,
+          "startLine": 1,
+          "totalLines": 22
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:33:50.330Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/c3-105-database.md"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/c3-105-database.md",
+          "content": "# c3-105: Database Layer\n\n## Purpose\n\nDatabase abstraction for SQL operations.\n\n## Location\n\n`src/db.ts`\n\n## Responsibilities\n\n- Provide query interface\n- Handle connection pooling (in production)\n- Abstract database-specific syntax\n\n## Interface\n\n```typescript\ndb.query(sql: string, params?: unknown[]): Promise<any[]>\n```\n\n## Notes\n\nCurrent implementation is a stub. Production would use:\n- MySQL, PostgreSQL, or SQLite\n- Connection pooling\n- Prepared statements\n",
+          "numLines": 29,
+          "startLine": 1,
+          "totalLines": 29
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:33:50.330Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/TOC.md"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.kSgYndLDCw/.c3/TOC.md",
+          "content": "# Table of Contents\n\n## Containers\n\n- [c3-1-api](c3-1-api/README.md) - REST API server\n\n## Components\n\n### c3-1-api\n- [c3-101-entry-point](c3-1-api/c3-101-entry-point.md) - Application entry and routing\n- [c3-102-auth-middleware](c3-1-api/c3-102-auth-middleware.md) - JWT authentication\n- [c3-103-task-routes](c3-1-api/c3-103-task-routes.md) - Task CRUD operations\n- [c3-104-user-routes](c3-1-api/c3-104-user-routes.md) - User profile operations\n- [c3-105-database](c3-1-api/c3-105-database.md) - Database abstraction\n\n## ADRs\n\n- [ADR-000: C3 Adoption](adr/adr-00000000-c3-adoption.md)\n",
+          "numLines": 19,
+          "startLine": 1,
+          "totalLines": 19
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:34:08.924Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "date +%Y%m%d",
+        "description": "Get current date for ADR filename"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:34:08.966Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "date +%Y%m%d",
+        "description": "Get current date for ADR filename"
+      },
+      "result": {
+        "stdout": "20260113",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:34:30.887Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/adr/adr-20260113-redis-cache.md",
+        "content": "# ADR-20260113: Add Redis Caching Layer\n\n## Status\n\nproposed\n\n## Context\n\nThe Task API currently queries the database directly for every request. As usage grows, this creates unnecessary database load for data that changes infrequently (e.g., user profiles, task lists).\n\n**Current flow:**\n```\nRoute Handler → Database → Response\n```\n\n**Problem:**\n- Repeated identical queries for the same data\n- Database becomes bottleneck under load\n- No caching strategy exists\n\n## Decision\n\nAdd a **cache abstraction layer (c3-106-cache)** with:\n\n1. **Redis as primary cache** - Fast, production-ready caching\n2. **Graceful fallback** - If Redis is unavailable, operations pass through to database without error\n3. **Cache-aside pattern** - Routes check cache first, populate on miss\n\n### Design Principles\n\n- **Optional dependency**: Redis being down doesn't break the API\n- **Transparent integration**: Routes use cache without knowing Redis details\n- **Configurable TTL**: Different data types can have different expiration\n\n### Interface\n\n```typescript\ninterface CacheService {\n  get<T>(key: string): Promise<T | null>;\n  set(key: string, value: unknown, ttlSeconds?: number): Promise<void>;\n  del(key: string): Promise<void>;\n  isAvailable(): boolean;\n}\n```\n\n### Integration Points\n\n| Component | Cache Usage |\n|-----------|-------------|\n| c3-103-task-routes | Cache task lists per user (TTL: 60s) |\n| c3-104-user-routes | Cache user profile (TTL: 300s) |\n\n### Fallback Behavior\n\n```typescript\n// If Redis unavailable:\nget() → returns null (cache miss)\nset() → no-op (silent)\ndel() → no-op (silent)\n```\n\n## Rationale\n\n### Why Redis?\n- Industry standard for caching\n- Supports TTL natively\n- Can scale horizontally\n- Bun has good Redis client support\n\n### Why graceful fallback?\n- Development doesn't require Redis\n- Production resilience - cache failure ≠ API failure\n- Gradual adoption - can roll out without infrastructure dependency\n\n### Alternatives Considered\n\n| Option | Rejected Because |\n|--------|-----------------|\n| In-memory Map | Lost on restart, no TTL, memory limits |\n| Database query cache | Still hits database, limited control |\n| Memcached | Less feature-rich than Redis |\n\n## Affected Layers\n\n| Layer | Change |\n|-------|--------|\n| c3-1-api | Add c3-106-cache component |\n| c3-103 | Import and use cache for reads |\n| c3-104 | Import and use cache for reads |\n\n## References Affected\n\n| File | Change |\n|------|--------|\n| `.c3/c3-1-api/README.md` | Add c3-106 to components table |\n| `.c3/c3-1-api/c3-106-cache.md` | New component doc |\n| `.c3/c3-1-api/c3-103-task-routes.md` | Add c3-106 to dependencies |\n| `.c3/c3-1-api/c3-104-user-routes.md` | Add c3-106 to dependencies |\n| `.c3/TOC.md` | Add c3-106 link |\n\n## Verification\n\n- [ ] c3-106-cache.md created with interface docs\n- [ ] Container README updated with c3-106 entry\n- [ ] c3-103 and c3-104 list c3-106 as dependency\n- [ ] TOC includes c3-106 link\n- [ ] `/c3 audit` passes\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:34:30.928Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/adr/adr-20260113-redis-cache.md",
+        "content": "# ADR-20260113: Add Redis Caching Layer\n\n## Status\n\nproposed\n\n## Context\n\nThe Task API currently queries the database directly for every request. As usage grows, this creates unnecessary database load for data that changes infrequently (e.g., user profiles, task lists).\n\n**Current flow:**\n```\nRoute Handler → Database → Response\n```\n\n**Problem:**\n- Repeated identical queries for the same data\n- Database becomes bottleneck under load\n- No caching strategy exists\n\n## Decision\n\nAdd a **cache abstraction layer (c3-106-cache)** with:\n\n1. **Redis as primary cache** - Fast, production-ready caching\n2. **Graceful fallback** - If Redis is unavailable, operations pass through to database without error\n3. **Cache-aside pattern** - Routes check cache first, populate on miss\n\n### Design Principles\n\n- **Optional dependency**: Redis being down doesn't break the API\n- **Transparent integration**: Routes use cache without knowing Redis details\n- **Configurable TTL**: Different data types can have different expiration\n\n### Interface\n\n```typescript\ninterface CacheService {\n  get<T>(key: string): Promise<T | null>;\n  set(key: string, value: unknown, ttlSeconds?: number): Promise<void>;\n  del(key: string): Promise<void>;\n  isAvailable(): boolean;\n}\n```\n\n### Integration Points\n\n| Component | Cache Usage |\n|-----------|-------------|\n| c3-103-task-routes | Cache task lists per user (TTL: 60s) |\n| c3-104-user-routes | Cache user profile (TTL: 300s) |\n\n### Fallback Behavior\n\n```typescript\n// If Redis unavailable:\nget() → returns null (cache miss)\nset() → no-op (silent)\ndel() → no-op (silent)\n```\n\n## Rationale\n\n### Why Redis?\n- Industry standard for caching\n- Supports TTL natively\n- Can scale horizontally\n- Bun has good Redis client support\n\n### Why graceful fallback?\n- Development doesn't require Redis\n- Production resilience - cache failure ≠ API failure\n- Gradual adoption - can roll out without infrastructure dependency\n\n### Alternatives Considered\n\n| Option | Rejected Because |\n|--------|-----------------|\n| In-memory Map | Lost on restart, no TTL, memory limits |\n| Database query cache | Still hits database, limited control |\n| Memcached | Less feature-rich than Redis |\n\n## Affected Layers\n\n| Layer | Change |\n|-------|--------|\n| c3-1-api | Add c3-106-cache component |\n| c3-103 | Import and use cache for reads |\n| c3-104 | Import and use cache for reads |\n\n## References Affected\n\n| File | Change |\n|------|--------|\n| `.c3/c3-1-api/README.md` | Add c3-106 to components table |\n| `.c3/c3-1-api/c3-106-cache.md` | New component doc |\n| `.c3/c3-1-api/c3-103-task-routes.md` | Add c3-106 to dependencies |\n| `.c3/c3-1-api/c3-104-user-routes.md` | Add c3-106 to dependencies |\n| `.c3/TOC.md` | Add c3-106 link |\n\n## Verification\n\n- [ ] c3-106-cache.md created with interface docs\n- [ ] Container README updated with c3-106 entry\n- [ ] c3-103 and c3-104 list c3-106 as dependency\n- [ ] TOC includes c3-106 link\n- [ ] `/c3 audit` passes\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.kSgYndLDCw/.c3/adr/adr-20260113-redis-cache.md",
+        "content": "# ADR-20260113: Add Redis Caching Layer\n\n## Status\n\nproposed\n\n## Context\n\nThe Task API currently queries the database directly for every request. As usage grows, this creates unnecessary database load for data that changes infrequently (e.g., user profiles, task lists).\n\n**Current flow:**\n```\nRoute Handler → Database → Response\n```\n\n**Problem:**\n- Repeated identical queries for the same data\n- Database becomes bottleneck under load\n- No caching strategy exists\n\n## Decision\n\nAdd a **cache abstraction layer (c3-106-cache)** with:\n\n1. **Redis as primary cache** - Fast, production-ready caching\n2. **Graceful fallback** - If Redis is unavailable, operations pass through to database without error\n3. **Cache-aside pattern** - Routes check cache first, populate on miss\n\n### Design Principles\n\n- **Optional dependency**: Redis being down doesn't break the API\n- **Transparent integration**: Routes use cache without knowing Redis details\n- **Configurable TTL**: Different data types can have different expiration\n\n### Interface\n\n```typescript\ninterface CacheService {\n  get<T>(key: string): Promise<T | null>;\n  set(key: string, value: unknown, ttlSeconds?: number): Promise<void>;\n  del(key: string): Promise<void>;\n  isAvailable(): boolean;\n}\n```\n\n### Integration Points\n\n| Component | Cache Usage |\n|-----------|-------------|\n| c3-103-task-routes | Cache task lists per user (TTL: 60s) |\n| c3-104-user-routes | Cache user profile (TTL: 300s) |\n\n### Fallback Behavior\n\n```typescript\n// If Redis unavailable:\nget() → returns null (cache miss)\nset() → no-op (silent)\ndel() → no-op (silent)\n```\n\n## Rationale\n\n### Why Redis?\n- Industry standard for caching\n- Supports TTL natively\n- Can scale horizontally\n- Bun has good Redis client support\n\n### Why graceful fallback?\n- Development doesn't require Redis\n- Production resilience - cache failure ≠ API failure\n- Gradual adoption - can roll out without infrastructure dependency\n\n### Alternatives Considered\n\n| Option | Rejected Because |\n|--------|-----------------|\n| In-memory Map | Lost on restart, no TTL, memory limits |\n| Database query cache | Still hits database, limited control |\n| Memcached | Less feature-rich than Redis |\n\n## Affected Layers\n\n| Layer | Change |\n|-------|--------|\n| c3-1-api | Add c3-106-cache component |\n| c3-103 | Import and use cache for reads |\n| c3-104 | Import and use cache for reads |\n\n## References Affected\n\n| File | Change |\n|------|--------|\n| `.c3/c3-1-api/README.md` | Add c3-106 to components table |\n| `.c3/c3-1-api/c3-106-cache.md` | New component doc |\n| `.c3/c3-1-api/c3-103-task-routes.md` | Add c3-106 to dependencies |\n| `.c3/c3-1-api/c3-104-user-routes.md` | Add c3-106 to dependencies |\n| `.c3/TOC.md` | Add c3-106 link |\n\n## Verification\n\n- [ ] c3-106-cache.md created with interface docs\n- [ ] Container README updated with c3-106 entry\n- [ ] c3-103 and c3-104 list c3-106 as dependency\n- [ ] TOC includes c3-106 link\n- [ ] `/c3 audit` passes\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:34:42.265Z",
+      "event": "PreToolUse",
+      "tool": "AskUserQuestion",
+      "input": {
+        "questions": [
+          {
+            "question": "Do you approve the ADR for adding Redis caching layer? (Review: .c3/adr/adr-20260113-redis-cache.md)",
+            "header": "ADR Approval",
+            "options": [
+              {
+                "label": "Accept ADR",
+                "description": "Approve the proposed caching architecture and proceed with implementation"
+              },
+              {
+                "label": "Reject ADR",
+                "description": "Return to earlier stages to revise the approach"
+              }
+            ],
+            "multiSelect": false
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:34:48.726Z",
+      "event": "HumanAnswer",
+      "tool": "AskUserQuestion",
+      "input": {
+        "questions": [
+          {
+            "question": "Do you approve the ADR for adding Redis caching layer? (Review: .c3/adr/adr-20260113-redis-cache.md)",
+            "header": "ADR Approval",
+            "options": [
+              {
+                "label": "Accept ADR",
+                "description": "Approve the proposed caching architecture and proceed with implementation"
+              },
+              {
+                "label": "Reject ADR",
+                "description": "Return to earlier stages to revise the approach"
+              }
+            ],
+            "multiSelect": false
+          }
+        ]
+      },
+      "result": {
+        "Do you approve the ADR for adding Redis caching layer? (Review: .c3/adr/adr-20260113-redis-cache.md)": "Accept ADR - Approve the proposed caching architecture and proceed with implementation"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:34:53.748Z",
+      "event": "PreToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/adr/adr-20260113-redis-cache.md",
+        "old_string": "## Status\n\nproposed",
+        "new_string": "## Status\n\naccepted",
+        "replace_all": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:34:53.822Z",
+      "event": "PostToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/adr/adr-20260113-redis-cache.md",
+        "old_string": "## Status\n\nproposed",
+        "new_string": "## Status\n\naccepted",
+        "replace_all": false
+      },
+      "result": {
+        "filePath": "/tmp/tmp.kSgYndLDCw/.c3/adr/adr-20260113-redis-cache.md",
+        "oldString": "## Status\n\nproposed",
+        "newString": "## Status\n\naccepted",
+        "originalFile": "# ADR-20260113: Add Redis Caching Layer\n\n## Status\n\nproposed\n\n## Context\n\nThe Task API currently queries the database directly for every request. As usage grows, this creates unnecessary database load for data that changes infrequently (e.g., user profiles, task lists).\n\n**Current flow:**\n```\nRoute Handler → Database → Response\n```\n\n**Problem:**\n- Repeated identical queries for the same data\n- Database becomes bottleneck under load\n- No caching strategy exists\n\n## Decision\n\nAdd a **cache abstraction layer (c3-106-cache)** with:\n\n1. **Redis as primary cache** - Fast, production-ready caching\n2. **Graceful fallback** - If Redis is unavailable, operations pass through to database without error\n3. **Cache-aside pattern** - Routes check cache first, populate on miss\n\n### Design Principles\n\n- **Optional dependency**: Redis being down doesn't break the API\n- **Transparent integration**: Routes use cache without knowing Redis details\n- **Configurable TTL**: Different data types can have different expiration\n\n### Interface\n\n```typescript\ninterface CacheService {\n  get<T>(key: string): Promise<T | null>;\n  set(key: string, value: unknown, ttlSeconds?: number): Promise<void>;\n  del(key: string): Promise<void>;\n  isAvailable(): boolean;\n}\n```\n\n### Integration Points\n\n| Component | Cache Usage |\n|-----------|-------------|\n| c3-103-task-routes | Cache task lists per user (TTL: 60s) |\n| c3-104-user-routes | Cache user profile (TTL: 300s) |\n\n### Fallback Behavior\n\n```typescript\n// If Redis unavailable:\nget() → returns null (cache miss)\nset() → no-op (silent)\ndel() → no-op (silent)\n```\n\n## Rationale\n\n### Why Redis?\n- Industry standard for caching\n- Supports TTL natively\n- Can scale horizontally\n- Bun has good Redis client support\n\n### Why graceful fallback?\n- Development doesn't require Redis\n- Production resilience - cache failure ≠ API failure\n- Gradual adoption - can roll out without infrastructure dependency\n\n### Alternatives Considered\n\n| Option | Rejected Because |\n|--------|-----------------|\n| In-memory Map | Lost on restart, no TTL, memory limits |\n| Database query cache | Still hits database, limited control |\n| Memcached | Less feature-rich than Redis |\n\n## Affected Layers\n\n| Layer | Change |\n|-------|--------|\n| c3-1-api | Add c3-106-cache component |\n| c3-103 | Import and use cache for reads |\n| c3-104 | Import and use cache for reads |\n\n## References Affected\n\n| File | Change |\n|------|--------|\n| `.c3/c3-1-api/README.md` | Add c3-106 to components table |\n| `.c3/c3-1-api/c3-106-cache.md` | New component doc |\n| `.c3/c3-1-api/c3-103-task-routes.md` | Add c3-106 to dependencies |\n| `.c3/c3-1-api/c3-104-user-routes.md` | Add c3-106 to dependencies |\n| `.c3/TOC.md` | Add c3-106 link |\n\n## Verification\n\n- [ ] c3-106-cache.md created with interface docs\n- [ ] Container README updated with c3-106 entry\n- [ ] c3-103 and c3-104 list c3-106 as dependency\n- [ ] TOC includes c3-106 link\n- [ ] `/c3 audit` passes\n",
+        "structuredPatch": [
+          {
+            "oldStart": 2,
+            "oldLines": 7,
+            "newStart": 2,
+            "newLines": 7,
+            "lines": [
+              " ",
+              " ## Status",
+              " ",
+              "-proposed",
+              "+accepted",
+              " ",
+              " ## Context",
+              " "
+            ]
+          }
+        ],
+        "userModified": false,
+        "replaceAll": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:35:09.115Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/adr/adr-20260113-redis-cache.plan.md",
+        "content": "# Plan: ADR-20260113 Redis Cache Implementation\n\n## Pre-Execution Checklist\n\n- [x] ADR accepted\n- [ ] All affected component docs identified\n\n## Execution Steps\n\n### 1. Create c3-106-cache component documentation\n- File: `.c3/c3-1-api/c3-106-cache.md`\n- Content: Purpose, location, interface, fallback behavior\n\n### 2. Update container README\n- File: `.c3/c3-1-api/README.md`\n- Add c3-106 to Components table\n- Update Data Flow diagram\n\n### 3. Update c3-103-task-routes dependencies\n- File: `.c3/c3-1-api/c3-103-task-routes.md`\n- Add c3-106 to Dependencies section\n\n### 4. Update c3-104-user-routes dependencies\n- File: `.c3/c3-1-api/c3-104-user-routes.md`\n- Add c3-106 to Dependencies section\n\n### 5. Update TOC\n- File: `.c3/TOC.md`\n- Add c3-106-cache link\n\n### 6. Verification\n- Run `/c3 audit` to validate changes\n\n## Notes\n\nThis plan covers **documentation only**. Code implementation (src/cache.ts) would follow in a separate phase if requested.\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:35:09.153Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/adr/adr-20260113-redis-cache.plan.md",
+        "content": "# Plan: ADR-20260113 Redis Cache Implementation\n\n## Pre-Execution Checklist\n\n- [x] ADR accepted\n- [ ] All affected component docs identified\n\n## Execution Steps\n\n### 1. Create c3-106-cache component documentation\n- File: `.c3/c3-1-api/c3-106-cache.md`\n- Content: Purpose, location, interface, fallback behavior\n\n### 2. Update container README\n- File: `.c3/c3-1-api/README.md`\n- Add c3-106 to Components table\n- Update Data Flow diagram\n\n### 3. Update c3-103-task-routes dependencies\n- File: `.c3/c3-1-api/c3-103-task-routes.md`\n- Add c3-106 to Dependencies section\n\n### 4. Update c3-104-user-routes dependencies\n- File: `.c3/c3-1-api/c3-104-user-routes.md`\n- Add c3-106 to Dependencies section\n\n### 5. Update TOC\n- File: `.c3/TOC.md`\n- Add c3-106-cache link\n\n### 6. Verification\n- Run `/c3 audit` to validate changes\n\n## Notes\n\nThis plan covers **documentation only**. Code implementation (src/cache.ts) would follow in a separate phase if requested.\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.kSgYndLDCw/.c3/adr/adr-20260113-redis-cache.plan.md",
+        "content": "# Plan: ADR-20260113 Redis Cache Implementation\n\n## Pre-Execution Checklist\n\n- [x] ADR accepted\n- [ ] All affected component docs identified\n\n## Execution Steps\n\n### 1. Create c3-106-cache component documentation\n- File: `.c3/c3-1-api/c3-106-cache.md`\n- Content: Purpose, location, interface, fallback behavior\n\n### 2. Update container README\n- File: `.c3/c3-1-api/README.md`\n- Add c3-106 to Components table\n- Update Data Flow diagram\n\n### 3. Update c3-103-task-routes dependencies\n- File: `.c3/c3-1-api/c3-103-task-routes.md`\n- Add c3-106 to Dependencies section\n\n### 4. Update c3-104-user-routes dependencies\n- File: `.c3/c3-1-api/c3-104-user-routes.md`\n- Add c3-106 to Dependencies section\n\n### 5. Update TOC\n- File: `.c3/TOC.md`\n- Add c3-106-cache link\n\n### 6. Verification\n- Run `/c3 audit` to validate changes\n\n## Notes\n\nThis plan covers **documentation only**. Code implementation (src/cache.ts) would follow in a separate phase if requested.\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:35:22.109Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/c3-106-cache.md",
+        "content": "# c3-106: Cache Layer\n\n## Purpose\n\nCache abstraction providing Redis-backed caching with graceful fallback when Redis is unavailable.\n\n## Location\n\n`src/cache.ts`\n\n## Interface\n\n```typescript\ninterface CacheService {\n  get<T>(key: string): Promise<T | null>;\n  set(key: string, value: unknown, ttlSeconds?: number): Promise<void>;\n  del(key: string): Promise<void>;\n  isAvailable(): boolean;\n}\n```\n\n## Behavior\n\n### Normal Operation (Redis available)\n- `get()` - Returns cached value or null if not found\n- `set()` - Stores value with optional TTL (default: 60s)\n- `del()` - Removes key from cache\n\n### Fallback Mode (Redis unavailable)\n- `get()` - Returns null (cache miss)\n- `set()` - No-op (silent)\n- `del()` - No-op (silent)\n- `isAvailable()` - Returns false\n\n## Configuration\n\n| Environment Variable | Description | Default |\n|---------------------|-------------|---------|\n| `REDIS_URL` | Redis connection string | `redis://localhost:6379` |\n| `CACHE_DEFAULT_TTL` | Default TTL in seconds | `60` |\n\n## Usage Patterns\n\n### Cache-aside pattern\n\n```typescript\nasync function getTasks(userId: string) {\n  const cacheKey = `tasks:${userId}`;\n\n  // Try cache first\n  const cached = await cache.get<Task[]>(cacheKey);\n  if (cached) return cached;\n\n  // Cache miss - fetch from database\n  const tasks = await db.query('SELECT * FROM tasks WHERE user_id = ?', [userId]);\n\n  // Populate cache for next time\n  await cache.set(cacheKey, tasks, 60);\n\n  return tasks;\n}\n```\n\n### Cache invalidation\n\n```typescript\nasync function updateTask(taskId: number, userId: string, data: Partial<Task>) {\n  await db.query('UPDATE tasks SET ... WHERE id = ?', [taskId]);\n\n  // Invalidate user's task list cache\n  await cache.del(`tasks:${userId}`);\n}\n```\n\n## Dependencies\n\n- Redis (optional - graceful fallback if unavailable)\n\n## Consumers\n\n| Component | Cache Keys | TTL |\n|-----------|-----------|-----|\n| c3-103 (task-routes) | `tasks:{userId}` | 60s |\n| c3-104 (user-routes) | `user:{userId}` | 300s |\n\n## References\n\n- [ADR-20260113: Redis Cache](../adr/adr-20260113-redis-cache.md)\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:35:22.137Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/c3-106-cache.md",
+        "content": "# c3-106: Cache Layer\n\n## Purpose\n\nCache abstraction providing Redis-backed caching with graceful fallback when Redis is unavailable.\n\n## Location\n\n`src/cache.ts`\n\n## Interface\n\n```typescript\ninterface CacheService {\n  get<T>(key: string): Promise<T | null>;\n  set(key: string, value: unknown, ttlSeconds?: number): Promise<void>;\n  del(key: string): Promise<void>;\n  isAvailable(): boolean;\n}\n```\n\n## Behavior\n\n### Normal Operation (Redis available)\n- `get()` - Returns cached value or null if not found\n- `set()` - Stores value with optional TTL (default: 60s)\n- `del()` - Removes key from cache\n\n### Fallback Mode (Redis unavailable)\n- `get()` - Returns null (cache miss)\n- `set()` - No-op (silent)\n- `del()` - No-op (silent)\n- `isAvailable()` - Returns false\n\n## Configuration\n\n| Environment Variable | Description | Default |\n|---------------------|-------------|---------|\n| `REDIS_URL` | Redis connection string | `redis://localhost:6379` |\n| `CACHE_DEFAULT_TTL` | Default TTL in seconds | `60` |\n\n## Usage Patterns\n\n### Cache-aside pattern\n\n```typescript\nasync function getTasks(userId: string) {\n  const cacheKey = `tasks:${userId}`;\n\n  // Try cache first\n  const cached = await cache.get<Task[]>(cacheKey);\n  if (cached) return cached;\n\n  // Cache miss - fetch from database\n  const tasks = await db.query('SELECT * FROM tasks WHERE user_id = ?', [userId]);\n\n  // Populate cache for next time\n  await cache.set(cacheKey, tasks, 60);\n\n  return tasks;\n}\n```\n\n### Cache invalidation\n\n```typescript\nasync function updateTask(taskId: number, userId: string, data: Partial<Task>) {\n  await db.query('UPDATE tasks SET ... WHERE id = ?', [taskId]);\n\n  // Invalidate user's task list cache\n  await cache.del(`tasks:${userId}`);\n}\n```\n\n## Dependencies\n\n- Redis (optional - graceful fallback if unavailable)\n\n## Consumers\n\n| Component | Cache Keys | TTL |\n|-----------|-----------|-----|\n| c3-103 (task-routes) | `tasks:{userId}` | 60s |\n| c3-104 (user-routes) | `user:{userId}` | 300s |\n\n## References\n\n- [ADR-20260113: Redis Cache](../adr/adr-20260113-redis-cache.md)\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/c3-106-cache.md",
+        "content": "# c3-106: Cache Layer\n\n## Purpose\n\nCache abstraction providing Redis-backed caching with graceful fallback when Redis is unavailable.\n\n## Location\n\n`src/cache.ts`\n\n## Interface\n\n```typescript\ninterface CacheService {\n  get<T>(key: string): Promise<T | null>;\n  set(key: string, value: unknown, ttlSeconds?: number): Promise<void>;\n  del(key: string): Promise<void>;\n  isAvailable(): boolean;\n}\n```\n\n## Behavior\n\n### Normal Operation (Redis available)\n- `get()` - Returns cached value or null if not found\n- `set()` - Stores value with optional TTL (default: 60s)\n- `del()` - Removes key from cache\n\n### Fallback Mode (Redis unavailable)\n- `get()` - Returns null (cache miss)\n- `set()` - No-op (silent)\n- `del()` - No-op (silent)\n- `isAvailable()` - Returns false\n\n## Configuration\n\n| Environment Variable | Description | Default |\n|---------------------|-------------|---------|\n| `REDIS_URL` | Redis connection string | `redis://localhost:6379` |\n| `CACHE_DEFAULT_TTL` | Default TTL in seconds | `60` |\n\n## Usage Patterns\n\n### Cache-aside pattern\n\n```typescript\nasync function getTasks(userId: string) {\n  const cacheKey = `tasks:${userId}`;\n\n  // Try cache first\n  const cached = await cache.get<Task[]>(cacheKey);\n  if (cached) return cached;\n\n  // Cache miss - fetch from database\n  const tasks = await db.query('SELECT * FROM tasks WHERE user_id = ?', [userId]);\n\n  // Populate cache for next time\n  await cache.set(cacheKey, tasks, 60);\n\n  return tasks;\n}\n```\n\n### Cache invalidation\n\n```typescript\nasync function updateTask(taskId: number, userId: string, data: Partial<Task>) {\n  await db.query('UPDATE tasks SET ... WHERE id = ?', [taskId]);\n\n  // Invalidate user's task list cache\n  await cache.del(`tasks:${userId}`);\n}\n```\n\n## Dependencies\n\n- Redis (optional - graceful fallback if unavailable)\n\n## Consumers\n\n| Component | Cache Keys | TTL |\n|-----------|-----------|-----|\n| c3-103 (task-routes) | `tasks:{userId}` | 60s |\n| c3-104 (user-routes) | `user:{userId}` | 300s |\n\n## References\n\n- [ADR-20260113: Redis Cache](../adr/adr-20260113-redis-cache.md)\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:35:27.188Z",
+      "event": "PreToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/README.md",
+        "old_string": "| c3-105 | database | Foundation | Database abstraction layer |\n\n## Data Flow\n\n```\nRequest → Auth Middleware → Route Handler → Database → Response\n```",
+        "new_string": "| c3-105 | database | Foundation | Database abstraction layer |\n| c3-106 | cache | Foundation | Redis cache with graceful fallback |\n\n## Data Flow\n\n```\nRequest → Auth Middleware → Route Handler → Cache → (miss?) → Database → Response\n```",
+        "replace_all": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:35:27.211Z",
+      "event": "PostToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/README.md",
+        "old_string": "| c3-105 | database | Foundation | Database abstraction layer |\n\n## Data Flow\n\n```\nRequest → Auth Middleware → Route Handler → Database → Response\n```",
+        "new_string": "| c3-105 | database | Foundation | Database abstraction layer |\n| c3-106 | cache | Foundation | Redis cache with graceful fallback |\n\n## Data Flow\n\n```\nRequest → Auth Middleware → Route Handler → Cache → (miss?) → Database → Response\n```",
+        "replace_all": false
+      },
+      "result": {
+        "filePath": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/README.md",
+        "oldString": "| c3-105 | database | Foundation | Database abstraction layer |\n\n## Data Flow\n\n```\nRequest → Auth Middleware → Route Handler → Database → Response\n```",
+        "newString": "| c3-105 | database | Foundation | Database abstraction layer |\n| c3-106 | cache | Foundation | Redis cache with graceful fallback |\n\n## Data Flow\n\n```\nRequest → Auth Middleware → Route Handler → Cache → (miss?) → Database → Response\n```",
+        "originalFile": "# c3-1-api: REST API Server\n\n## Purpose\n\nMain API server handling all HTTP requests for task management.\n\n## Technology\n\n- **Framework**: Hono\n- **Runtime**: Bun\n- **Auth**: JWT tokens\n\n## Components\n\n| ID | Name | Type | Purpose |\n|----|------|------|---------|\n| c3-101 | entry-point | Foundation | App bootstrap and route mounting |\n| c3-102 | auth-middleware | Foundation | JWT verification |\n| c3-103 | task-routes | Feature | Task CRUD operations |\n| c3-104 | user-routes | Feature | User profile management |\n| c3-105 | database | Foundation | Database abstraction layer |\n\n## Data Flow\n\n```\nRequest → Auth Middleware → Route Handler → Database → Response\n```\n\n## External Dependencies\n\n- Database (SQL)\n- JWT secret (environment)\n",
+        "structuredPatch": [
+          {
+            "oldStart": 19,
+            "oldLines": 11,
+            "newStart": 19,
+            "newLines": 12,
+            "lines": [
+              " | c3-103 | task-routes | Feature | Task CRUD operations |",
+              " | c3-104 | user-routes | Feature | User profile management |",
+              " | c3-105 | database | Foundation | Database abstraction layer |",
+              "+| c3-106 | cache | Foundation | Redis cache with graceful fallback |",
+              " ",
+              " ## Data Flow",
+              " ",
+              " ```",
+              "-Request → Auth Middleware → Route Handler → Database → Response",
+              "+Request → Auth Middleware → Route Handler → Cache → (miss?) → Database → Response",
+              " ```",
+              " ",
+              " ## External Dependencies"
+            ]
+          }
+        ],
+        "userModified": false,
+        "replaceAll": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:35:32.369Z",
+      "event": "PreToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/README.md",
+        "old_string": "## External Dependencies\n\n- Database (SQL)\n- JWT secret (environment)",
+        "new_string": "## External Dependencies\n\n- Database (SQL)\n- JWT secret (environment)\n- Redis (optional - graceful fallback if unavailable)",
+        "replace_all": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:35:32.407Z",
+      "event": "PostToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/README.md",
+        "old_string": "## External Dependencies\n\n- Database (SQL)\n- JWT secret (environment)",
+        "new_string": "## External Dependencies\n\n- Database (SQL)\n- JWT secret (environment)\n- Redis (optional - graceful fallback if unavailable)",
+        "replace_all": false
+      },
+      "result": {
+        "filePath": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/README.md",
+        "oldString": "## External Dependencies\n\n- Database (SQL)\n- JWT secret (environment)",
+        "newString": "## External Dependencies\n\n- Database (SQL)\n- JWT secret (environment)\n- Redis (optional - graceful fallback if unavailable)",
+        "originalFile": "# c3-1-api: REST API Server\n\n## Purpose\n\nMain API server handling all HTTP requests for task management.\n\n## Technology\n\n- **Framework**: Hono\n- **Runtime**: Bun\n- **Auth**: JWT tokens\n\n## Components\n\n| ID | Name | Type | Purpose |\n|----|------|------|---------|\n| c3-101 | entry-point | Foundation | App bootstrap and route mounting |\n| c3-102 | auth-middleware | Foundation | JWT verification |\n| c3-103 | task-routes | Feature | Task CRUD operations |\n| c3-104 | user-routes | Feature | User profile management |\n| c3-105 | database | Foundation | Database abstraction layer |\n| c3-106 | cache | Foundation | Redis cache with graceful fallback |\n\n## Data Flow\n\n```\nRequest → Auth Middleware → Route Handler → Cache → (miss?) → Database → Response\n```\n\n## External Dependencies\n\n- Database (SQL)\n- JWT secret (environment)\n",
+        "structuredPatch": [
+          {
+            "oldStart": 31,
+            "oldLines": 3,
+            "newStart": 31,
+            "newLines": 4,
+            "lines": [
+              " ",
+              " - Database (SQL)",
+              " - JWT secret (environment)",
+              "+- Redis (optional - graceful fallback if unavailable)"
+            ]
+          }
+        ],
+        "userModified": false,
+        "replaceAll": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:35:38.771Z",
+      "event": "PreToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/c3-103-task-routes.md",
+        "old_string": "## Dependencies\n\n- c3-102 (auth-middleware) - for userId\n- c3-105 (database) - for persistence",
+        "new_string": "## Dependencies\n\n- c3-102 (auth-middleware) - for userId\n- c3-105 (database) - for persistence\n- c3-106 (cache) - for caching task lists (TTL: 60s)",
+        "replace_all": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:35:38.823Z",
+      "event": "PostToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/c3-103-task-routes.md",
+        "old_string": "## Dependencies\n\n- c3-102 (auth-middleware) - for userId\n- c3-105 (database) - for persistence",
+        "new_string": "## Dependencies\n\n- c3-102 (auth-middleware) - for userId\n- c3-105 (database) - for persistence\n- c3-106 (cache) - for caching task lists (TTL: 60s)",
+        "replace_all": false
+      },
+      "result": {
+        "filePath": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/c3-103-task-routes.md",
+        "oldString": "## Dependencies\n\n- c3-102 (auth-middleware) - for userId\n- c3-105 (database) - for persistence",
+        "newString": "## Dependencies\n\n- c3-102 (auth-middleware) - for userId\n- c3-105 (database) - for persistence\n- c3-106 (cache) - for caching task lists (TTL: 60s)",
+        "originalFile": "# c3-103: Task Routes\n\n## Purpose\n\nCRUD operations for task management.\n\n## Location\n\n`src/routes/tasks.ts`\n\n## Endpoints\n\n| Method | Path | Description |\n|--------|------|-------------|\n| GET | /api/tasks | List user's tasks |\n| POST | /api/tasks | Create new task |\n| PATCH | /api/tasks/:id | Update task |\n| DELETE | /api/tasks/:id | Delete task |\n\n## Dependencies\n\n- c3-102 (auth-middleware) - for userId\n- c3-105 (database) - for persistence\n\n## Data Model\n\n```typescript\ninterface Task {\n  id: number;\n  title: string;\n  description: string;\n  user_id: string;\n}\n```\n",
+        "structuredPatch": [
+          {
+            "oldStart": 21,
+            "oldLines": 6,
+            "newStart": 21,
+            "newLines": 7,
+            "lines": [
+              " ",
+              " - c3-102 (auth-middleware) - for userId",
+              " - c3-105 (database) - for persistence",
+              "+- c3-106 (cache) - for caching task lists (TTL: 60s)",
+              " ",
+              " ## Data Model",
+              " "
+            ]
+          }
+        ],
+        "userModified": false,
+        "replaceAll": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:35:42.429Z",
+      "event": "PreToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/c3-104-user-routes.md",
+        "old_string": "## Dependencies\n\n- c3-102 (auth-middleware) - for userId\n- c3-105 (database) - for persistence",
+        "new_string": "## Dependencies\n\n- c3-102 (auth-middleware) - for userId\n- c3-105 (database) - for persistence\n- c3-106 (cache) - for caching user profiles (TTL: 300s)",
+        "replace_all": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:35:42.475Z",
+      "event": "PostToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/c3-104-user-routes.md",
+        "old_string": "## Dependencies\n\n- c3-102 (auth-middleware) - for userId\n- c3-105 (database) - for persistence",
+        "new_string": "## Dependencies\n\n- c3-102 (auth-middleware) - for userId\n- c3-105 (database) - for persistence\n- c3-106 (cache) - for caching user profiles (TTL: 300s)",
+        "replace_all": false
+      },
+      "result": {
+        "filePath": "/tmp/tmp.kSgYndLDCw/.c3/c3-1-api/c3-104-user-routes.md",
+        "oldString": "## Dependencies\n\n- c3-102 (auth-middleware) - for userId\n- c3-105 (database) - for persistence",
+        "newString": "## Dependencies\n\n- c3-102 (auth-middleware) - for userId\n- c3-105 (database) - for persistence\n- c3-106 (cache) - for caching user profiles (TTL: 300s)",
+        "originalFile": "# c3-104: User Routes\n\n## Purpose\n\nUser profile management endpoints.\n\n## Location\n\n`src/routes/users.ts`\n\n## Endpoints\n\n| Method | Path | Description |\n|--------|------|-------------|\n| GET | /api/users/me | Get current user profile |\n| PATCH | /api/users/me | Update current user profile |\n\n## Dependencies\n\n- c3-102 (auth-middleware) - for userId\n- c3-105 (database) - for persistence\n",
+        "structuredPatch": [
+          {
+            "oldStart": 19,
+            "oldLines": 3,
+            "newStart": 19,
+            "newLines": 4,
+            "lines": [
+              " ",
+              " - c3-102 (auth-middleware) - for userId",
+              " - c3-105 (database) - for persistence",
+              "+- c3-106 (cache) - for caching user profiles (TTL: 300s)"
+            ]
+          }
+        ],
+        "userModified": false,
+        "replaceAll": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:35:56.550Z",
+      "event": "PreToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/TOC.md",
+        "old_string": "- [c3-105-database](c3-1-api/c3-105-database.md) - Database abstraction\n\n## ADRs",
+        "new_string": "- [c3-105-database](c3-1-api/c3-105-database.md) - Database abstraction\n- [c3-106-cache](c3-1-api/c3-106-cache.md) - Redis cache with graceful fallback\n\n## ADRs",
+        "replace_all": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:35:56.572Z",
+      "event": "PostToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/TOC.md",
+        "old_string": "- [c3-105-database](c3-1-api/c3-105-database.md) - Database abstraction\n\n## ADRs",
+        "new_string": "- [c3-105-database](c3-1-api/c3-105-database.md) - Database abstraction\n- [c3-106-cache](c3-1-api/c3-106-cache.md) - Redis cache with graceful fallback\n\n## ADRs",
+        "replace_all": false
+      },
+      "result": {
+        "filePath": "/tmp/tmp.kSgYndLDCw/.c3/TOC.md",
+        "oldString": "- [c3-105-database](c3-1-api/c3-105-database.md) - Database abstraction\n\n## ADRs",
+        "newString": "- [c3-105-database](c3-1-api/c3-105-database.md) - Database abstraction\n- [c3-106-cache](c3-1-api/c3-106-cache.md) - Redis cache with graceful fallback\n\n## ADRs",
+        "originalFile": "# Table of Contents\n\n## Containers\n\n- [c3-1-api](c3-1-api/README.md) - REST API server\n\n## Components\n\n### c3-1-api\n- [c3-101-entry-point](c3-1-api/c3-101-entry-point.md) - Application entry and routing\n- [c3-102-auth-middleware](c3-1-api/c3-102-auth-middleware.md) - JWT authentication\n- [c3-103-task-routes](c3-1-api/c3-103-task-routes.md) - Task CRUD operations\n- [c3-104-user-routes](c3-1-api/c3-104-user-routes.md) - User profile operations\n- [c3-105-database](c3-1-api/c3-105-database.md) - Database abstraction\n\n## ADRs\n\n- [ADR-000: C3 Adoption](adr/adr-00000000-c3-adoption.md)\n",
+        "structuredPatch": [
+          {
+            "oldStart": 12,
+            "oldLines": 6,
+            "newStart": 12,
+            "newLines": 7,
+            "lines": [
+              " - [c3-103-task-routes](c3-1-api/c3-103-task-routes.md) - Task CRUD operations",
+              " - [c3-104-user-routes](c3-1-api/c3-104-user-routes.md) - User profile operations",
+              " - [c3-105-database](c3-1-api/c3-105-database.md) - Database abstraction",
+              "+- [c3-106-cache](c3-1-api/c3-106-cache.md) - Redis cache with graceful fallback",
+              " ",
+              " ## ADRs",
+              " "
+            ]
+          }
+        ],
+        "userModified": false,
+        "replaceAll": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:36:07.943Z",
+      "event": "PreToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/TOC.md",
+        "old_string": "## ADRs\n\n- [ADR-000: C3 Adoption](adr/adr-00000000-c3-adoption.md)",
+        "new_string": "## ADRs\n\n- [ADR-000: C3 Adoption](adr/adr-00000000-c3-adoption.md)\n- [ADR-20260113: Redis Cache](adr/adr-20260113-redis-cache.md)",
+        "replace_all": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:36:07.965Z",
+      "event": "PostToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/TOC.md",
+        "old_string": "## ADRs\n\n- [ADR-000: C3 Adoption](adr/adr-00000000-c3-adoption.md)",
+        "new_string": "## ADRs\n\n- [ADR-000: C3 Adoption](adr/adr-00000000-c3-adoption.md)\n- [ADR-20260113: Redis Cache](adr/adr-20260113-redis-cache.md)",
+        "replace_all": false
+      },
+      "result": {
+        "filePath": "/tmp/tmp.kSgYndLDCw/.c3/TOC.md",
+        "oldString": "## ADRs\n\n- [ADR-000: C3 Adoption](adr/adr-00000000-c3-adoption.md)",
+        "newString": "## ADRs\n\n- [ADR-000: C3 Adoption](adr/adr-00000000-c3-adoption.md)\n- [ADR-20260113: Redis Cache](adr/adr-20260113-redis-cache.md)",
+        "originalFile": "# Table of Contents\n\n## Containers\n\n- [c3-1-api](c3-1-api/README.md) - REST API server\n\n## Components\n\n### c3-1-api\n- [c3-101-entry-point](c3-1-api/c3-101-entry-point.md) - Application entry and routing\n- [c3-102-auth-middleware](c3-1-api/c3-102-auth-middleware.md) - JWT authentication\n- [c3-103-task-routes](c3-1-api/c3-103-task-routes.md) - Task CRUD operations\n- [c3-104-user-routes](c3-1-api/c3-104-user-routes.md) - User profile operations\n- [c3-105-database](c3-1-api/c3-105-database.md) - Database abstraction\n- [c3-106-cache](c3-1-api/c3-106-cache.md) - Redis cache with graceful fallback\n\n## ADRs\n\n- [ADR-000: C3 Adoption](adr/adr-00000000-c3-adoption.md)\n",
+        "structuredPatch": [
+          {
+            "oldStart": 17,
+            "oldLines": 3,
+            "newStart": 17,
+            "newLines": 4,
+            "lines": [
+              " ## ADRs",
+              " ",
+              " - [ADR-000: C3 Adoption](adr/adr-00000000-c3-adoption.md)",
+              "+- [ADR-20260113: Redis Cache](adr/adr-20260113-redis-cache.md)"
+            ]
+          }
+        ],
+        "userModified": false,
+        "replaceAll": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:36:19.490Z",
+      "event": "PreToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/adr/adr-20260113-redis-cache.md",
+        "old_string": "## Verification\n\n- [ ] c3-106-cache.md created with interface docs\n- [ ] Container README updated with c3-106 entry\n- [ ] c3-103 and c3-104 list c3-106 as dependency\n- [ ] TOC includes c3-106 link\n- [ ] `/c3 audit` passes",
+        "new_string": "## Verification\n\n- [x] c3-106-cache.md created with interface docs\n- [x] Container README updated with c3-106 entry\n- [x] c3-103 and c3-104 list c3-106 as dependency\n- [x] TOC includes c3-106 link\n- [ ] `/c3 audit` passes",
+        "replace_all": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:36:19.508Z",
+      "event": "PostToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/adr/adr-20260113-redis-cache.md",
+        "old_string": "## Verification\n\n- [ ] c3-106-cache.md created with interface docs\n- [ ] Container README updated with c3-106 entry\n- [ ] c3-103 and c3-104 list c3-106 as dependency\n- [ ] TOC includes c3-106 link\n- [ ] `/c3 audit` passes",
+        "new_string": "## Verification\n\n- [x] c3-106-cache.md created with interface docs\n- [x] Container README updated with c3-106 entry\n- [x] c3-103 and c3-104 list c3-106 as dependency\n- [x] TOC includes c3-106 link\n- [ ] `/c3 audit` passes",
+        "replace_all": false
+      },
+      "result": {
+        "filePath": "/tmp/tmp.kSgYndLDCw/.c3/adr/adr-20260113-redis-cache.md",
+        "oldString": "## Verification\n\n- [ ] c3-106-cache.md created with interface docs\n- [ ] Container README updated with c3-106 entry\n- [ ] c3-103 and c3-104 list c3-106 as dependency\n- [ ] TOC includes c3-106 link\n- [ ] `/c3 audit` passes",
+        "newString": "## Verification\n\n- [x] c3-106-cache.md created with interface docs\n- [x] Container README updated with c3-106 entry\n- [x] c3-103 and c3-104 list c3-106 as dependency\n- [x] TOC includes c3-106 link\n- [ ] `/c3 audit` passes",
+        "originalFile": "# ADR-20260113: Add Redis Caching Layer\n\n## Status\n\naccepted\n\n## Context\n\nThe Task API currently queries the database directly for every request. As usage grows, this creates unnecessary database load for data that changes infrequently (e.g., user profiles, task lists).\n\n**Current flow:**\n```\nRoute Handler → Database → Response\n```\n\n**Problem:**\n- Repeated identical queries for the same data\n- Database becomes bottleneck under load\n- No caching strategy exists\n\n## Decision\n\nAdd a **cache abstraction layer (c3-106-cache)** with:\n\n1. **Redis as primary cache** - Fast, production-ready caching\n2. **Graceful fallback** - If Redis is unavailable, operations pass through to database without error\n3. **Cache-aside pattern** - Routes check cache first, populate on miss\n\n### Design Principles\n\n- **Optional dependency**: Redis being down doesn't break the API\n- **Transparent integration**: Routes use cache without knowing Redis details\n- **Configurable TTL**: Different data types can have different expiration\n\n### Interface\n\n```typescript\ninterface CacheService {\n  get<T>(key: string): Promise<T | null>;\n  set(key: string, value: unknown, ttlSeconds?: number): Promise<void>;\n  del(key: string): Promise<void>;\n  isAvailable(): boolean;\n}\n```\n\n### Integration Points\n\n| Component | Cache Usage |\n|-----------|-------------|\n| c3-103-task-routes | Cache task lists per user (TTL: 60s) |\n| c3-104-user-routes | Cache user profile (TTL: 300s) |\n\n### Fallback Behavior\n\n```typescript\n// If Redis unavailable:\nget() → returns null (cache miss)\nset() → no-op (silent)\ndel() → no-op (silent)\n```\n\n## Rationale\n\n### Why Redis?\n- Industry standard for caching\n- Supports TTL natively\n- Can scale horizontally\n- Bun has good Redis client support\n\n### Why graceful fallback?\n- Development doesn't require Redis\n- Production resilience - cache failure ≠ API failure\n- Gradual adoption - can roll out without infrastructure dependency\n\n### Alternatives Considered\n\n| Option | Rejected Because |\n|--------|-----------------|\n| In-memory Map | Lost on restart, no TTL, memory limits |\n| Database query cache | Still hits database, limited control |\n| Memcached | Less feature-rich than Redis |\n\n## Affected Layers\n\n| Layer | Change |\n|-------|--------|\n| c3-1-api | Add c3-106-cache component |\n| c3-103 | Import and use cache for reads |\n| c3-104 | Import and use cache for reads |\n\n## References Affected\n\n| File | Change |\n|------|--------|\n| `.c3/c3-1-api/README.md` | Add c3-106 to components table |\n| `.c3/c3-1-api/c3-106-cache.md` | New component doc |\n| `.c3/c3-1-api/c3-103-task-routes.md` | Add c3-106 to dependencies |\n| `.c3/c3-1-api/c3-104-user-routes.md` | Add c3-106 to dependencies |\n| `.c3/TOC.md` | Add c3-106 link |\n\n## Verification\n\n- [ ] c3-106-cache.md created with interface docs\n- [ ] Container README updated with c3-106 entry\n- [ ] c3-103 and c3-104 list c3-106 as dependency\n- [ ] TOC includes c3-106 link\n- [ ] `/c3 audit` passes\n",
+        "structuredPatch": [
+          {
+            "oldStart": 100,
+            "oldLines": 8,
+            "newStart": 100,
+            "newLines": 8,
+            "lines": [
+              " ",
+              " ## Verification",
+              " ",
+              "-- [ ] c3-106-cache.md created with interface docs",
+              "-- [ ] Container README updated with c3-106 entry",
+              "-- [ ] c3-103 and c3-104 list c3-106 as dependency",
+              "-- [ ] TOC includes c3-106 link",
+              "+- [x] c3-106-cache.md created with interface docs",
+              "+- [x] Container README updated with c3-106 entry",
+              "+- [x] c3-103 and c3-104 list c3-106 as dependency",
+              "+- [x] TOC includes c3-106 link",
+              " - [ ] `/c3 audit` passes"
+            ]
+          }
+        ],
+        "userModified": false,
+        "replaceAll": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:36:24.950Z",
+      "event": "PreToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/adr/adr-20260113-redis-cache.md",
+        "old_string": "## Status\n\naccepted",
+        "new_string": "## Status\n\nimplemented",
+        "replace_all": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T11:36:24.978Z",
+      "event": "PostToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.kSgYndLDCw/.c3/adr/adr-20260113-redis-cache.md",
+        "old_string": "## Status\n\naccepted",
+        "new_string": "## Status\n\nimplemented",
+        "replace_all": false
+      },
+      "result": {
+        "filePath": "/tmp/tmp.kSgYndLDCw/.c3/adr/adr-20260113-redis-cache.md",
+        "oldString": "## Status\n\naccepted",
+        "newString": "## Status\n\nimplemented",
+        "originalFile": "# ADR-20260113: Add Redis Caching Layer\n\n## Status\n\naccepted\n\n## Context\n\nThe Task API currently queries the database directly for every request. As usage grows, this creates unnecessary database load for data that changes infrequently (e.g., user profiles, task lists).\n\n**Current flow:**\n```\nRoute Handler → Database → Response\n```\n\n**Problem:**\n- Repeated identical queries for the same data\n- Database becomes bottleneck under load\n- No caching strategy exists\n\n## Decision\n\nAdd a **cache abstraction layer (c3-106-cache)** with:\n\n1. **Redis as primary cache** - Fast, production-ready caching\n2. **Graceful fallback** - If Redis is unavailable, operations pass through to database without error\n3. **Cache-aside pattern** - Routes check cache first, populate on miss\n\n### Design Principles\n\n- **Optional dependency**: Redis being down doesn't break the API\n- **Transparent integration**: Routes use cache without knowing Redis details\n- **Configurable TTL**: Different data types can have different expiration\n\n### Interface\n\n```typescript\ninterface CacheService {\n  get<T>(key: string): Promise<T | null>;\n  set(key: string, value: unknown, ttlSeconds?: number): Promise<void>;\n  del(key: string): Promise<void>;\n  isAvailable(): boolean;\n}\n```\n\n### Integration Points\n\n| Component | Cache Usage |\n|-----------|-------------|\n| c3-103-task-routes | Cache task lists per user (TTL: 60s) |\n| c3-104-user-routes | Cache user profile (TTL: 300s) |\n\n### Fallback Behavior\n\n```typescript\n// If Redis unavailable:\nget() → returns null (cache miss)\nset() → no-op (silent)\ndel() → no-op (silent)\n```\n\n## Rationale\n\n### Why Redis?\n- Industry standard for caching\n- Supports TTL natively\n- Can scale horizontally\n- Bun has good Redis client support\n\n### Why graceful fallback?\n- Development doesn't require Redis\n- Production resilience - cache failure ≠ API failure\n- Gradual adoption - can roll out without infrastructure dependency\n\n### Alternatives Considered\n\n| Option | Rejected Because |\n|--------|-----------------|\n| In-memory Map | Lost on restart, no TTL, memory limits |\n| Database query cache | Still hits database, limited control |\n| Memcached | Less feature-rich than Redis |\n\n## Affected Layers\n\n| Layer | Change |\n|-------|--------|\n| c3-1-api | Add c3-106-cache component |\n| c3-103 | Import and use cache for reads |\n| c3-104 | Import and use cache for reads |\n\n## References Affected\n\n| File | Change |\n|------|--------|\n| `.c3/c3-1-api/README.md` | Add c3-106 to components table |\n| `.c3/c3-1-api/c3-106-cache.md` | New component doc |\n| `.c3/c3-1-api/c3-103-task-routes.md` | Add c3-106 to dependencies |\n| `.c3/c3-1-api/c3-104-user-routes.md` | Add c3-106 to dependencies |\n| `.c3/TOC.md` | Add c3-106 link |\n\n## Verification\n\n- [x] c3-106-cache.md created with interface docs\n- [x] Container README updated with c3-106 entry\n- [x] c3-103 and c3-104 list c3-106 as dependency\n- [x] TOC includes c3-106 link\n- [ ] `/c3 audit` passes\n",
+        "structuredPatch": [
+          {
+            "oldStart": 2,
+            "oldLines": 7,
+            "newStart": 2,
+            "newLines": 7,
+            "lines": [
+              " ",
+              " ## Status",
+              " ",
+              "-accepted",
+              "+implemented",
+              " ",
+              " ## Context",
+              " "
+            ]
+          }
+        ],
+        "userModified": false,
+        "replaceAll": false
+      }
+    }
+  ],
+  "judgment": {
+    "pass": true,
+    "score": 100,
+    "expectations": [
+      {
+        "text": "[Approve the Change] problem_validity",
+        "pass": true,
+        "reasoning": "ADR Context section states 'The Task API currently queries the database directly for every request. As usage grows, this creates unnecessary database load for data that changes infrequently' - matches the change request's goal to 'reduce database load'"
+      },
+      {
+        "text": "[Approve the Change] decision_clarity",
+        "pass": true,
+        "reasoning": "ADR Decision section provides specific, actionable decision: 'Add a cache abstraction layer (c3-106-cache)' with clear interface, fallback behavior, and integration points table showing c3-103 and c3-104 usage"
+      },
+      {
+        "text": "[Approve the Change] reasoning_for_approach",
+        "pass": true,
+        "reasoning": "ADR Rationale section includes 'Why Redis?' and 'Why graceful fallback?' explanations. Alternatives Considered table compares In-memory Map, Database query cache, and Memcached with rejection reasons"
+      },
+      {
+        "text": "[Approve the Change] appropriate_scope",
+        "pass": true,
+        "reasoning": "Scope matches request: new component c3-106-cache, used by c3-103 and c3-104, with graceful fallback. Affected Layers table shows c3-1-api, c3-103, c3-104. Plan notes 'This plan covers documentation only' - appropriate separation"
+      },
+      {
+        "text": "[Approve the Change] breaking_changes_and_dependencies",
+        "pass": true,
+        "reasoning": "ADR specifies 'Optional dependency: Redis being down doesn't break the API' - no breaking changes. Dependencies clearly shown in Integration Points table and References Affected table listing all 5 files to update"
+      },
+      {
+        "text": "[Execute the Change] files_and_paths",
+        "pass": true,
+        "reasoning": "Plan Execution Steps list 5 specific files with full paths: .c3/c3-1-api/c3-106-cache.md, .c3/c3-1-api/README.md, .c3/c3-1-api/c3-103-task-routes.md, .c3/c3-1-api/c3-104-user-routes.md, .c3/TOC.md. ADR References Affected table also lists all files."
+      },
+      {
+        "text": "[Execute the Change] sequence_and_dependencies",
+        "pass": true,
+        "reasoning": "Plan Execution Steps numbered 1-6 in logical order: create c3-106 docs first, update container README, update dependent components (c3-103, c3-104), update TOC, then verify. Pre-Execution Checklist included."
+      },
+      {
+        "text": "[Execute the Change] file_content_detail",
+        "pass": true,
+        "reasoning": "Component doc c3-106-cache.md includes complete interface definition, behavior specifications for normal/fallback modes, configuration table, usage patterns with code examples (cache-aside pattern, invalidation), and consumers table. Plan steps specify what to add (e.g., 'Add c3-106 to Components table', 'Add c3-106 to Dependencies section')"
+      },
+      {
+        "text": "[Execute the Change] integration_hand_offs",
+        "pass": true,
+        "reasoning": "c3-106-cache.md Consumers table specifies exact cache keys (tasks:{userId}, user:{userId}) and TTLs (60s, 300s) for c3-103 and c3-104. Updated component docs (c3-103, c3-104) both list 'c3-106 (cache)' in Dependencies with usage notes (TTL values)"
+      },
+      {
+        "text": "[Verify Correctness] concrete_verification_checks",
+        "pass": true,
+        "reasoning": "ADR Verification section lists 5 concrete checks: 'c3-106-cache.md created with interface docs', 'Container README updated with c3-106 entry', 'c3-103 and c3-104 list c3-106 as dependency', 'TOC includes c3-106 link', '/c3 audit passes'. Plan step 6 references '/c3 audit' for validation."
+      },
+      {
+        "text": "[Verify Correctness] verification_without_implementation_details",
+        "pass": true,
+        "reasoning": "All verification checks are documentation-focused (file exists, tables updated, dependencies listed, audit passes) - appropriate for documentation-only change. No code-level verification required as Plan explicitly notes 'This plan covers documentation only.'"
+      },
+      {
+        "text": "[Verify Correctness] all_affected_areas_verified",
+        "pass": true,
+        "reasoning": "Verification covers all 5 files from References Affected table: c3-106-cache.md creation, container README update, c3-103 dependency, c3-104 dependency, TOC link. Final '/c3 audit' check validates overall consistency."
+      },
+      {
+        "text": "[Maintain Later] change_rationale_traceability",
+        "pass": true,
+        "reasoning": "Component doc c3-106-cache.md includes 'References: [ADR-20260113: Redis Cache](../adr/adr-20260113-redis-cache.md)' - clear traceability. ADR provides full context including problem statement and alternatives considered."
+      },
+      {
+        "text": "[Maintain Later] impact_tracking",
+        "pass": true,
+        "reasoning": "c3-106-cache.md Consumers table documents what affects this (c3-103, c3-104 use it). Updated c3-103 and c3-104 docs show they depend on c3-106. ADR Affected Layers and References Affected tables provide complete impact view."
+      },
+      {
+        "text": "[Maintain Later] future_evolution",
+        "pass": true,
+        "reasoning": "Component doc includes Configuration table with REDIS_URL and CACHE_DEFAULT_TTL environment variables showing extensibility points. Fallback behavior documented enables Redis to be optional. Interface definition supports future cache implementations."
+      }
+    ],
+    "summary": "All documentation artifacts are complete, well-structured, and follow templates correctly with clear traceability, actionable detail, and comprehensive verification."
+  }
+}

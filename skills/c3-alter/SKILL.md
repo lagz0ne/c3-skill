@@ -1,8 +1,9 @@
 ---
 name: c3-alter
 description: |
-  This skill should be used when the user asks to "add a component", "change architecture",
-  "refactor X", "implement feature", "fix bug", "create new service", "update diagram", or "remove component".
+  Makes architectural changes through ADR-first workflow with staged intent clarification.
+  Use when the user asks to "add a component", "change architecture", "refactor X", "implement feature",
+  "fix bug", "create new service", "update diagram", or "remove component".
   Requires .c3/ to exist. All changes flow through ADR process. For questions, route to c3-query instead.
 ---
 
@@ -10,10 +11,12 @@ description: |
 
 **Every change flows through an ADR.** No exceptions.
 
-## REQUIRED: Load References First
+## REQUIRED: Load References
 
-1. `../../references/skill-harness.md` - Routing and red flags
+Before proceeding, load these files:
+1. `../../references/skill-harness.md` - Red flags and complexity rules
 2. `../../references/layer-navigation.md` - How to traverse C3 docs
+3. `../../references/adr-template.md` - ADR structure (for Stage 4)
 
 ## Core Loop (All Stages)
 
@@ -27,6 +30,21 @@ On conflict: ASCEND → fix earlier stage → re-descend
 ```
 
 **Confident = No open questions.** Don't proceed with "TODO" or unclear fields.
+
+## Progress Checklist
+
+Copy and track as you work:
+
+```
+Change Progress:
+- [ ] Stage 1: Intent clarified (type, goal confirmed)
+- [ ] Stage 2: Current state documented (affected components listed)
+- [ ] Stage 3: Scope assessed (all c3 IDs, breaking changes noted)
+- [ ] Stage 4: ADR created and accepted
+- [ ] Stage 5: Plan created with ordered steps
+- [ ] Stage 6: Execution complete (docs, code, diagrams)
+- [ ] Stage 7: Audit passed, ADR marked implemented
+```
 
 ---
 
@@ -69,9 +87,13 @@ Generate at `.c3/adr/adr-YYYYMMDD-{slug}.md`. Use `../../references/adr-template
 
 **Key sections:** Problem, Decision, Rationale, Affected Layers, References Affected, Verification
 
-| On Accept | Update status to `accepted`, proceed to Plan |
+**After creating the ADR:** Use AskUserQuestion to ask the user to approve or reject the ADR.
+
+| On Accept | Update status to `accepted`, **then immediately execute Stage 5 and 6** |
 |-----------|---------------------------------------------|
 | On Reject | Return to Stage 1/3 based on what changed |
+
+**CRITICAL - After user accepts ADR:** You MUST continue executing without stopping. Create the component documentation file(s) and update the container README. Do NOT end after receiving approval.
 
 ---
 
@@ -84,9 +106,17 @@ Generate at `.c3/adr/adr-YYYYMMDD-{slug}.plan.md`.
 - Ordered steps: docs first, then code, then diagrams
 - Verification commands
 
+**After ADR acceptance, immediately create the plan and continue to execution.**
+
 ---
 
 ## Stage 6: Execute
+
+**Execute the plan immediately after creating it.** For documentation-only changes (no code implementation requested), this means:
+
+1. **Create component documentation** - Write the new component file (e.g., `c3-106-*.md`)
+2. **Update container README** - Add new component to the Components table
+3. **Update TOC** - Add link to new component
 
 Follow plan order:
 1. Make change (doc or code)
@@ -107,6 +137,23 @@ If change affects a pattern:
 2. Update ref if pattern changes
 3. Create new ref if pattern is new and reusable
 
+**Critical: Components vs Refs**
+
+| Documenting... | Use | Path |
+|----------------|-----|------|
+| Code that runs | Component | `.c3/c3-N-*/c3-NNN-*.md` |
+| Conventions/patterns | Ref | `.c3/refs/ref-*.md` |
+
+**NEVER** create component files for:
+- Information architecture
+- User flows
+- Design systems
+- UI patterns
+- Error handling conventions
+- Form patterns
+
+These are **refs**, not components.
+
 ---
 
 ## Stage 7: Verify
@@ -116,6 +163,69 @@ Run `/c3 audit`. Check diagrams, IDs, linkages, code-doc match.
 | On Pass | Update ADR status to `implemented` |
 |---------|-----------------------------------|
 | On Fail | Fix issue, re-audit, loop until pass |
+
+---
+
+## Examples
+
+**Example 1: Add feature**
+```
+User: "Add rate limiting to the API"
+
+Stage 1 - Intent:
+  Intent: Add rate limiting
+  Goal: Prevent API abuse
+  Type: Feature
+
+Stage 2 - Current State:
+  Affected: c3-2-api (API Backend)
+  Current: No rate limiting exists
+  Depends on: c3-201-auth-middleware (good injection point)
+
+Stage 3 - Scope:
+  Changes: Add c3-206-rate-limiter component
+  Affects: c3-201 (middleware chain)
+  Breaking: No
+
+Stage 4 - ADR:
+  Created: .c3/adr/adr-20260109-rate-limiting.md
+  Status: proposed → user accepts → accepted
+
+Stage 5 - Plan:
+  1. Create c3-206-rate-limiter.md
+  2. Update c3-2-api/README.md inventory
+  3. Implement src/api/middleware/rate-limiter.ts
+  4. Update c3-201 hand-offs
+
+Stage 6 - Execute: Follow plan
+Stage 7 - Verify: /c3 audit
+```
+
+**Example 2: Fix bug**
+```
+User: "Fix the login timeout issue"
+
+Stage 1 - Intent:
+  Intent: Fix bug
+  Goal: Login doesn't timeout prematurely
+  Type: Fix
+
+Stage 2 - Current State:
+  Affected: c3-201-auth-middleware
+  Current: Session TTL hardcoded to 15min
+  Issue: Users report logout after 10min
+
+Stage 3 - Scope:
+  Changes: Modify existing component
+  Affects: c3-201 only
+  Breaking: No
+
+Stage 4 - ADR:
+  Created: .c3/adr/adr-20260109-login-timeout-fix.md
+  (simpler ADR for bugfix)
+
+Stage 5-7: Execute and verify
+```
 
 ---
 

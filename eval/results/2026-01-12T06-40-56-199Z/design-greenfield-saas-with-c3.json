@@ -1,0 +1,1453 @@
+{
+  "name": "Design greenfield SaaS with C3",
+  "pass": true,
+  "score": 100,
+  "duration": 484743,
+  "trace": [
+    {
+      "timestamp": "2026-01-12T06:33:01.658Z",
+      "event": "PreToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:c3"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:33:01.820Z",
+      "event": "PostToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:c3"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:33:05.999Z",
+      "event": "PreToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:onboard"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:33:06.312Z",
+      "event": "PostToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:onboard"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:33:15.491Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/home/lagz0ne/.claude/plugins/cache/c3-skill-marketplace/c3-skill/3.0.0/references/container-patterns.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:33:15.521Z",
+      "event": "Blocked",
+      "tool": "Read",
+      "input": {
+        "file_path": "/home/lagz0ne/.claude/plugins/cache/c3-skill-marketplace/c3-skill/3.0.0/references/container-patterns.md"
+      },
+      "blocked": true,
+      "reason": "Path outside sandbox: /home/lagz0ne/.claude/plugins/cache/c3-skill-marketplace/c3-skill/3.0.0/references/container-patterns.md"
+    },
+    {
+      "timestamp": "2026-01-12T06:33:15.495Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/home/lagz0ne/.claude/plugins/cache/c3-skill-marketplace/c3-skill/3.0.0/references/implementation-guide.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:33:15.524Z",
+      "event": "Blocked",
+      "tool": "Read",
+      "input": {
+        "file_path": "/home/lagz0ne/.claude/plugins/cache/c3-skill-marketplace/c3-skill/3.0.0/references/implementation-guide.md"
+      },
+      "blocked": true,
+      "reason": "Path outside sandbox: /home/lagz0ne/.claude/plugins/cache/c3-skill-marketplace/c3-skill/3.0.0/references/implementation-guide.md"
+    },
+    {
+      "timestamp": "2026-01-12T06:33:15.642Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/home/lagz0ne/.claude/plugins/cache/c3-skill-marketplace/c3-skill/3.0.0/references/container-patterns.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:33:15.678Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/home/lagz0ne/.claude/plugins/cache/c3-skill-marketplace/c3-skill/3.0.0/references/implementation-guide.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:33:31.801Z",
+      "event": "PreToolUse",
+      "tool": "AskUserQuestion",
+      "input": {
+        "questions": [
+          {
+            "question": "For the modular monolith, how do you want to structure the containers? Should we have separate deployable units (API + Web + Worker) or a single monolith with internal modules?",
+            "header": "Containers",
+            "options": [
+              {
+                "label": "API + Web SPA + Worker",
+                "description": "Three containers: API server, React SPA (static), background worker for async jobs"
+              },
+              {
+                "label": "API + Web SPA",
+                "description": "Two containers: API server (handles everything including async), React SPA (static)"
+              },
+              {
+                "label": "Single Monolith",
+                "description": "One container with internal modules, serves both API and static files"
+              }
+            ],
+            "multiSelect": false
+          },
+          {
+            "question": "What external systems will TaskFlow integrate with besides Google OAuth?",
+            "header": "Integrations",
+            "options": [
+              {
+                "label": "Email service only",
+                "description": "SendGrid/SES for notifications and invites"
+              },
+              {
+                "label": "Email + File storage",
+                "description": "Email service plus S3/GCS for task attachments"
+              },
+              {
+                "label": "Email + Files + Webhooks",
+                "description": "Email, file storage, and outbound webhooks for integrations"
+              },
+              {
+                "label": "None initially",
+                "description": "Only Google OAuth, add integrations later"
+              }
+            ],
+            "multiSelect": false
+          },
+          {
+            "question": "For real-time collaboration, what level of granularity do you need?",
+            "header": "Real-time",
+            "options": [
+              {
+                "label": "Board-level presence",
+                "description": "See who's viewing a board, live task updates"
+              },
+              {
+                "label": "Task-level collaboration",
+                "description": "Real-time editing of task descriptions, comments, live cursors"
+              },
+              {
+                "label": "Notifications only",
+                "description": "Push notifications for changes, no live editing"
+              }
+            ],
+            "multiSelect": false
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:33:42.383Z",
+      "event": "HumanAnswer",
+      "tool": "AskUserQuestion",
+      "input": {
+        "questions": [
+          {
+            "question": "For the modular monolith, how do you want to structure the containers? Should we have separate deployable units (API + Web + Worker) or a single monolith with internal modules?",
+            "header": "Containers",
+            "options": [
+              {
+                "label": "API + Web SPA + Worker",
+                "description": "Three containers: API server, React SPA (static), background worker for async jobs"
+              },
+              {
+                "label": "API + Web SPA",
+                "description": "Two containers: API server (handles everything including async), React SPA (static)"
+              },
+              {
+                "label": "Single Monolith",
+                "description": "One container with internal modules, serves both API and static files"
+              }
+            ],
+            "multiSelect": false
+          },
+          {
+            "question": "What external systems will TaskFlow integrate with besides Google OAuth?",
+            "header": "Integrations",
+            "options": [
+              {
+                "label": "Email service only",
+                "description": "SendGrid/SES for notifications and invites"
+              },
+              {
+                "label": "Email + File storage",
+                "description": "Email service plus S3/GCS for task attachments"
+              },
+              {
+                "label": "Email + Files + Webhooks",
+                "description": "Email, file storage, and outbound webhooks for integrations"
+              },
+              {
+                "label": "None initially",
+                "description": "Only Google OAuth, add integrations later"
+              }
+            ],
+            "multiSelect": false
+          },
+          {
+            "question": "For real-time collaboration, what level of granularity do you need?",
+            "header": "Real-time",
+            "options": [
+              {
+                "label": "Board-level presence",
+                "description": "See who's viewing a board, live task updates"
+              },
+              {
+                "label": "Task-level collaboration",
+                "description": "Real-time editing of task descriptions, comments, live cursors"
+              },
+              {
+                "label": "Notifications only",
+                "description": "Push notifications for changes, no live editing"
+              }
+            ],
+            "multiSelect": false
+          }
+        ]
+      },
+      "result": {
+        "For the modular monolith, how do you want to structure the containers? Should we have separate deployable units (API + Web + Worker) or a single monolith with internal modules?": "API + Web SPA + Worker - Three containers: API server, React SPA (static), background worker for async jobs",
+        "What external systems will TaskFlow integrate with besides Google OAuth?": "Email + Files + Webhooks - Email, file storage, and outbound webhooks for integrations",
+        "For real-time collaboration, what level of granularity do you need?": "Board-level presence - See who's viewing a board, live task updates"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:33:50.235Z",
+      "event": "PreToolUse",
+      "tool": "AskUserQuestion",
+      "input": {
+        "questions": [
+          {
+            "question": "For the modular monolith, how do you want to structure the containers? Should we have separate deployable units (API + Web + Worker) or a single monolith with internal modules?",
+            "header": "Containers",
+            "options": [
+              {
+                "label": "API + Web SPA + Worker",
+                "description": "Three containers: API server, React SPA (static), background worker for async jobs"
+              },
+              {
+                "label": "API + Web SPA",
+                "description": "Two containers: API server (handles everything including async), React SPA (static)"
+              },
+              {
+                "label": "Single Monolith",
+                "description": "One container with internal modules, serves both API and static files"
+              }
+            ],
+            "multiSelect": false
+          },
+          {
+            "question": "What external systems will TaskFlow integrate with besides Google OAuth?",
+            "header": "Integrations",
+            "options": [
+              {
+                "label": "Email service only",
+                "description": "SendGrid/SES for notifications and invites"
+              },
+              {
+                "label": "Email + File storage",
+                "description": "Email service plus S3/GCS for task attachments"
+              },
+              {
+                "label": "Email + Files + Webhooks",
+                "description": "Email, file storage, and outbound webhooks for integrations"
+              },
+              {
+                "label": "None initially",
+                "description": "Only Google OAuth, add integrations later"
+              }
+            ],
+            "multiSelect": false
+          },
+          {
+            "question": "For real-time collaboration, what level of granularity do you need?",
+            "header": "Real-time",
+            "options": [
+              {
+                "label": "Board-level presence",
+                "description": "See who's viewing a board, live task updates"
+              },
+              {
+                "label": "Task-level collaboration",
+                "description": "Real-time editing of task descriptions, comments, live cursors"
+              },
+              {
+                "label": "Notifications only",
+                "description": "Push notifications for changes, no live editing"
+              }
+            ],
+            "multiSelect": false
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:34:01.121Z",
+      "event": "HumanAnswer",
+      "tool": "AskUserQuestion",
+      "input": {
+        "questions": [
+          {
+            "question": "For the modular monolith, how do you want to structure the containers? Should we have separate deployable units (API + Web + Worker) or a single monolith with internal modules?",
+            "header": "Containers",
+            "options": [
+              {
+                "label": "API + Web SPA + Worker",
+                "description": "Three containers: API server, React SPA (static), background worker for async jobs"
+              },
+              {
+                "label": "API + Web SPA",
+                "description": "Two containers: API server (handles everything including async), React SPA (static)"
+              },
+              {
+                "label": "Single Monolith",
+                "description": "One container with internal modules, serves both API and static files"
+              }
+            ],
+            "multiSelect": false
+          },
+          {
+            "question": "What external systems will TaskFlow integrate with besides Google OAuth?",
+            "header": "Integrations",
+            "options": [
+              {
+                "label": "Email service only",
+                "description": "SendGrid/SES for notifications and invites"
+              },
+              {
+                "label": "Email + File storage",
+                "description": "Email service plus S3/GCS for task attachments"
+              },
+              {
+                "label": "Email + Files + Webhooks",
+                "description": "Email, file storage, and outbound webhooks for integrations"
+              },
+              {
+                "label": "None initially",
+                "description": "Only Google OAuth, add integrations later"
+              }
+            ],
+            "multiSelect": false
+          },
+          {
+            "question": "For real-time collaboration, what level of granularity do you need?",
+            "header": "Real-time",
+            "options": [
+              {
+                "label": "Board-level presence",
+                "description": "See who's viewing a board, live task updates"
+              },
+              {
+                "label": "Task-level collaboration",
+                "description": "Real-time editing of task descriptions, comments, live cursors"
+              },
+              {
+                "label": "Notifications only",
+                "description": "Push notifications for changes, no live editing"
+              }
+            ],
+            "multiSelect": false
+          }
+        ]
+      },
+      "result": {
+        "For the modular monolith, how do you want to structure the containers? Should we have separate deployable units (API + Web + Worker) or a single monolith with internal modules?": "API + Web SPA + Worker - Three containers: API server, React SPA (static), background worker for async jobs",
+        "What external systems will TaskFlow integrate with besides Google OAuth?": "Email + Files + Webhooks - Email, file storage, and outbound webhooks for integrations",
+        "For real-time collaboration, what level of granularity do you need?": "Board-level presence - See who's viewing a board, live task updates"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:34:06.814Z",
+      "event": "PreToolUse",
+      "tool": "AskUserQuestion",
+      "input": {
+        "questions": [
+          {
+            "question": "For the modular monolith, how do you want to structure the containers?",
+            "header": "Containers",
+            "options": [
+              {
+                "label": "API + Web SPA + Worker",
+                "description": "Three containers: API server, React SPA (static), background worker for async jobs"
+              },
+              {
+                "label": "API + Web SPA",
+                "description": "Two containers: API handles everything including async, React SPA static"
+              },
+              {
+                "label": "Single Monolith",
+                "description": "One container with internal modules, serves both API and static files"
+              }
+            ],
+            "multiSelect": false
+          },
+          {
+            "question": "What external systems will TaskFlow integrate with besides Google OAuth?",
+            "header": "Integrations",
+            "options": [
+              {
+                "label": "Email service only",
+                "description": "SendGrid/SES for notifications and invites"
+              },
+              {
+                "label": "Email + File storage",
+                "description": "Email service plus S3/GCS for task attachments"
+              },
+              {
+                "label": "None initially",
+                "description": "Only Google OAuth, add integrations later"
+              }
+            ],
+            "multiSelect": false
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:34:16.193Z",
+      "event": "HumanAnswer",
+      "tool": "AskUserQuestion",
+      "input": {
+        "questions": [
+          {
+            "question": "For the modular monolith, how do you want to structure the containers?",
+            "header": "Containers",
+            "options": [
+              {
+                "label": "API + Web SPA + Worker",
+                "description": "Three containers: API server, React SPA (static), background worker for async jobs"
+              },
+              {
+                "label": "API + Web SPA",
+                "description": "Two containers: API handles everything including async, React SPA static"
+              },
+              {
+                "label": "Single Monolith",
+                "description": "One container with internal modules, serves both API and static files"
+              }
+            ],
+            "multiSelect": false
+          },
+          {
+            "question": "What external systems will TaskFlow integrate with besides Google OAuth?",
+            "header": "Integrations",
+            "options": [
+              {
+                "label": "Email service only",
+                "description": "SendGrid/SES for notifications and invites"
+              },
+              {
+                "label": "Email + File storage",
+                "description": "Email service plus S3/GCS for task attachments"
+              },
+              {
+                "label": "None initially",
+                "description": "Only Google OAuth, add integrations later"
+              }
+            ],
+            "multiSelect": false
+          }
+        ]
+      },
+      "result": {
+        "For the modular monolith, how do you want to structure the containers?": "API + Web SPA + Worker - Three containers: API server, React SPA (static), background worker for async jobs",
+        "What external systems will TaskFlow integrate with besides Google OAuth?": "Email + File storage - Email service plus S3/GCS for task attachments"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:34:21.040Z",
+      "event": "PreToolUse",
+      "tool": "AskUserQuestion",
+      "input": {
+        "questions": [
+          {
+            "question": "How should we structure the deployable containers?",
+            "header": "Containers",
+            "options": [
+              {
+                "label": "API + Web + Worker",
+                "description": "Three containers: API, React SPA, background worker"
+              },
+              {
+                "label": "API + Web SPA",
+                "description": "Two containers: API with async, React SPA"
+              }
+            ],
+            "multiSelect": false
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:34:30.084Z",
+      "event": "HumanAnswer",
+      "tool": "AskUserQuestion",
+      "input": {
+        "questions": [
+          {
+            "question": "How should we structure the deployable containers?",
+            "header": "Containers",
+            "options": [
+              {
+                "label": "API + Web + Worker",
+                "description": "Three containers: API, React SPA, background worker"
+              },
+              {
+                "label": "API + Web SPA",
+                "description": "Two containers: API with async, React SPA"
+              }
+            ],
+            "multiSelect": false
+          }
+        ]
+      },
+      "result": {
+        "How should we structure the deployable containers?": "API + Web + Worker - Three containers: API, React SPA, background worker"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:34:36.071Z",
+      "event": "PreToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Initialize C3 directory structure for TaskFlow",
+            "status": "in_progress",
+            "activeForm": "Initializing C3 directory structure"
+          },
+          {
+            "content": "Create Context-level documentation (README.md)",
+            "status": "pending",
+            "activeForm": "Creating Context-level documentation"
+          },
+          {
+            "content": "Create ADR-000 architecture blueprint",
+            "status": "pending",
+            "activeForm": "Creating ADR-000 blueprint"
+          },
+          {
+            "content": "Document API container (c3-1)",
+            "status": "pending",
+            "activeForm": "Documenting API container"
+          },
+          {
+            "content": "Document Web SPA container (c3-2)",
+            "status": "pending",
+            "activeForm": "Documenting Web SPA container"
+          },
+          {
+            "content": "Document Worker container (c3-3)",
+            "status": "pending",
+            "activeForm": "Documenting Worker container"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:34:36.188Z",
+      "event": "PostToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Initialize C3 directory structure for TaskFlow",
+            "status": "in_progress",
+            "activeForm": "Initializing C3 directory structure"
+          },
+          {
+            "content": "Create Context-level documentation (README.md)",
+            "status": "pending",
+            "activeForm": "Creating Context-level documentation"
+          },
+          {
+            "content": "Create ADR-000 architecture blueprint",
+            "status": "pending",
+            "activeForm": "Creating ADR-000 blueprint"
+          },
+          {
+            "content": "Document API container (c3-1)",
+            "status": "pending",
+            "activeForm": "Documenting API container"
+          },
+          {
+            "content": "Document Web SPA container (c3-2)",
+            "status": "pending",
+            "activeForm": "Documenting Web SPA container"
+          },
+          {
+            "content": "Document Worker container (c3-3)",
+            "status": "pending",
+            "activeForm": "Documenting Worker container"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:34:44.854Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "PROJECT=\"TaskFlow\" C1=\"api\" C2=\"web\" C3=\"worker\" \"/home/lagz0ne/.claude/plugins/cache/c3-skill-marketplace/c3-skill/3.0.0/scripts/c3-init.sh\"",
+        "description": "Initialize C3 directory structure for TaskFlow"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:34:45.006Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "PROJECT=\"TaskFlow\" C1=\"api\" C2=\"web\" C3=\"worker\" \"/home/lagz0ne/.claude/plugins/cache/c3-skill-marketplace/c3-skill/3.0.0/scripts/c3-init.sh\"",
+        "description": "Initialize C3 directory structure for TaskFlow"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:34:50.516Z",
+      "event": "PreToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Initialize C3 directory structure for TaskFlow",
+            "status": "completed",
+            "activeForm": "Initializing C3 directory structure"
+          },
+          {
+            "content": "Create Context-level documentation (README.md)",
+            "status": "in_progress",
+            "activeForm": "Creating Context-level documentation"
+          },
+          {
+            "content": "Create ADR-000 architecture blueprint",
+            "status": "pending",
+            "activeForm": "Creating ADR-000 blueprint"
+          },
+          {
+            "content": "Document API container (c3-1)",
+            "status": "pending",
+            "activeForm": "Documenting API container"
+          },
+          {
+            "content": "Document Web SPA container (c3-2)",
+            "status": "pending",
+            "activeForm": "Documenting Web SPA container"
+          },
+          {
+            "content": "Document Worker container (c3-3)",
+            "status": "pending",
+            "activeForm": "Documenting Worker container"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:34:50.624Z",
+      "event": "PostToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Initialize C3 directory structure for TaskFlow",
+            "status": "completed",
+            "activeForm": "Initializing C3 directory structure"
+          },
+          {
+            "content": "Create Context-level documentation (README.md)",
+            "status": "in_progress",
+            "activeForm": "Creating Context-level documentation"
+          },
+          {
+            "content": "Create ADR-000 architecture blueprint",
+            "status": "pending",
+            "activeForm": "Creating ADR-000 blueprint"
+          },
+          {
+            "content": "Document API container (c3-1)",
+            "status": "pending",
+            "activeForm": "Documenting API container"
+          },
+          {
+            "content": "Document Web SPA container (c3-2)",
+            "status": "pending",
+            "activeForm": "Documenting Web SPA container"
+          },
+          {
+            "content": "Document Worker container (c3-3)",
+            "status": "pending",
+            "activeForm": "Documenting Worker container"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:34:55.994Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.xVDUmpSK7j/.c3/README.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:34:55.997Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.xVDUmpSK7j/.c3/adr/adr-00000000-c3-adoption.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:34:56.119Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.xVDUmpSK7j/.c3/README.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:34:56.121Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.xVDUmpSK7j/.c3/adr/adr-00000000-c3-adoption.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:35:25.193Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.xVDUmpSK7j/.c3/README.md",
+        "content": "---\nid: c3-0\nc3-version: 3\ntitle: TaskFlow\nsummary: Task management SaaS for small teams with real-time collaboration\n---\n\n# TaskFlow\n\n## Goal\n\nTaskFlow enables small teams to organize work through collaborative task boards with real-time updates, workspaces for multi-tenant isolation, and seamless integration for future mobile expansion.\n\n## Overview\n\n```mermaid\ngraph TB\n    subgraph Actors\n        A1[Team Member]\n        A2[Workspace Admin]\n        A3[Mobile App - Future]\n    end\n\n    subgraph TaskFlow System\n        C1[c3-1: API Server]\n        C2[c3-2: Web SPA]\n        C3[c3-3: Worker]\n    end\n\n    subgraph External Systems\n        E1[Google OAuth]\n        E2[PostgreSQL]\n        E3[Redis]\n        E4[Email Service]\n        E5[File Storage]\n    end\n\n    A1 --> C2\n    A2 --> C2\n    A3 -.-> C1\n\n    C2 -->|REST + WebSocket| C1\n    C1 -->|Jobs| C3\n\n    C1 --> E1\n    C1 --> E2\n    C1 --> E3\n    C3 --> E2\n    C3 --> E3\n    C3 --> E4\n    C3 --> E5\n```\n\n## Actors\n\n| ID | Actor | Description |\n|----|-------|-------------|\n| A1 | Team Member | Creates, updates, and collaborates on tasks within assigned workspaces |\n| A2 | Workspace Admin | Manages workspace settings, invites members, controls permissions |\n| A3 | Mobile App | Future: Native mobile clients consuming the API |\n\n## Containers\n\n| ID | Name | Type | Status | Purpose |\n|----|------|------|--------|---------|\n| c3-1 | API Server | service | planned | Node.js/Express backend handling REST API, WebSocket connections, and business logic |\n| c3-2 | Web SPA | app | planned | React single-page application for browser-based access |\n| c3-3 | Worker | service | planned | Background job processor for async tasks (emails, file processing) |\n\n## External Systems\n\n| ID | System | Purpose | Integration Type |\n|----|--------|---------|------------------|\n| E1 | Google OAuth | User authentication and identity | OAuth 2.0 |\n| E2 | PostgreSQL | Primary data store for all domain entities | Direct connection |\n| E3 | Redis | Session cache, real-time pub/sub, job queue | Direct connection |\n| E4 | Email Service | Transactional emails (invites, notifications) | API (SendGrid/SES) |\n| E5 | File Storage | Task attachments and team assets | S3-compatible API |\n\n## Linkages\n\n| From | To | Interaction | Reasoning |\n|------|-----|-------------|-----------|\n| C2 | C1 | REST API calls | Web SPA fetches data and submits actions through typed API endpoints |\n| C2 | C1 | WebSocket | Real-time board updates, presence, and live task changes |\n| C1 | C3 | Redis job queue | Async work offloaded to maintain API responsiveness |\n| C1 | E1 | OAuth flow | Delegated authentication avoids password management complexity |\n| C1 | E2 | SQL queries | Structured data requires relational integrity |\n| C1 | E3 | Cache + Pub/Sub | Redis provides both caching and WebSocket message fanout |\n| C3 | E4 | Email API | Worker handles email delivery outside request cycle |\n| C3 | E5 | File upload | Worker processes/stores attachments asynchronously |\n\n## Multi-Tenancy Model\n\nTaskFlow uses a workspace-based multi-tenancy model:\n\n| Concept | Scope | Description |\n|---------|-------|-------------|\n| User | Global | Authenticated individual, can belong to multiple workspaces |\n| Workspace | Tenant boundary | Isolated team environment with its own boards and settings |\n| Board | Workspace | Kanban-style task board within a workspace |\n| Task | Board | Individual work item with assignees, labels, attachments |\n\n## Key Architectural Decisions\n\n| Decision | Choice | Rationale |\n|----------|--------|-----------|\n| Architecture | Modular monolith | Start simple, split when scaling demands it |\n| Auth | Google OAuth only | Faster MVP, add more providers later |\n| Real-time | WebSocket + Redis pub/sub | Enables horizontal scaling of API servers |\n| Background jobs | Redis-backed queue | Same Redis instance reduces infrastructure complexity |\n| API design | REST + WebSocket | REST for CRUD, WebSocket for live updates |\n\n## References\n\n- ADR-000: [C3 Adoption](adr/adr-00000000-c3-adoption.md) - Initial architecture documentation\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:35:25.283Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.xVDUmpSK7j/.c3/README.md",
+        "content": "---\nid: c3-0\nc3-version: 3\ntitle: TaskFlow\nsummary: Task management SaaS for small teams with real-time collaboration\n---\n\n# TaskFlow\n\n## Goal\n\nTaskFlow enables small teams to organize work through collaborative task boards with real-time updates, workspaces for multi-tenant isolation, and seamless integration for future mobile expansion.\n\n## Overview\n\n```mermaid\ngraph TB\n    subgraph Actors\n        A1[Team Member]\n        A2[Workspace Admin]\n        A3[Mobile App - Future]\n    end\n\n    subgraph TaskFlow System\n        C1[c3-1: API Server]\n        C2[c3-2: Web SPA]\n        C3[c3-3: Worker]\n    end\n\n    subgraph External Systems\n        E1[Google OAuth]\n        E2[PostgreSQL]\n        E3[Redis]\n        E4[Email Service]\n        E5[File Storage]\n    end\n\n    A1 --> C2\n    A2 --> C2\n    A3 -.-> C1\n\n    C2 -->|REST + WebSocket| C1\n    C1 -->|Jobs| C3\n\n    C1 --> E1\n    C1 --> E2\n    C1 --> E3\n    C3 --> E2\n    C3 --> E3\n    C3 --> E4\n    C3 --> E5\n```\n\n## Actors\n\n| ID | Actor | Description |\n|----|-------|-------------|\n| A1 | Team Member | Creates, updates, and collaborates on tasks within assigned workspaces |\n| A2 | Workspace Admin | Manages workspace settings, invites members, controls permissions |\n| A3 | Mobile App | Future: Native mobile clients consuming the API |\n\n## Containers\n\n| ID | Name | Type | Status | Purpose |\n|----|------|------|--------|---------|\n| c3-1 | API Server | service | planned | Node.js/Express backend handling REST API, WebSocket connections, and business logic |\n| c3-2 | Web SPA | app | planned | React single-page application for browser-based access |\n| c3-3 | Worker | service | planned | Background job processor for async tasks (emails, file processing) |\n\n## External Systems\n\n| ID | System | Purpose | Integration Type |\n|----|--------|---------|------------------|\n| E1 | Google OAuth | User authentication and identity | OAuth 2.0 |\n| E2 | PostgreSQL | Primary data store for all domain entities | Direct connection |\n| E3 | Redis | Session cache, real-time pub/sub, job queue | Direct connection |\n| E4 | Email Service | Transactional emails (invites, notifications) | API (SendGrid/SES) |\n| E5 | File Storage | Task attachments and team assets | S3-compatible API |\n\n## Linkages\n\n| From | To | Interaction | Reasoning |\n|------|-----|-------------|-----------|\n| C2 | C1 | REST API calls | Web SPA fetches data and submits actions through typed API endpoints |\n| C2 | C1 | WebSocket | Real-time board updates, presence, and live task changes |\n| C1 | C3 | Redis job queue | Async work offloaded to maintain API responsiveness |\n| C1 | E1 | OAuth flow | Delegated authentication avoids password management complexity |\n| C1 | E2 | SQL queries | Structured data requires relational integrity |\n| C1 | E3 | Cache + Pub/Sub | Redis provides both caching and WebSocket message fanout |\n| C3 | E4 | Email API | Worker handles email delivery outside request cycle |\n| C3 | E5 | File upload | Worker processes/stores attachments asynchronously |\n\n## Multi-Tenancy Model\n\nTaskFlow uses a workspace-based multi-tenancy model:\n\n| Concept | Scope | Description |\n|---------|-------|-------------|\n| User | Global | Authenticated individual, can belong to multiple workspaces |\n| Workspace | Tenant boundary | Isolated team environment with its own boards and settings |\n| Board | Workspace | Kanban-style task board within a workspace |\n| Task | Board | Individual work item with assignees, labels, attachments |\n\n## Key Architectural Decisions\n\n| Decision | Choice | Rationale |\n|----------|--------|-----------|\n| Architecture | Modular monolith | Start simple, split when scaling demands it |\n| Auth | Google OAuth only | Faster MVP, add more providers later |\n| Real-time | WebSocket + Redis pub/sub | Enables horizontal scaling of API servers |\n| Background jobs | Redis-backed queue | Same Redis instance reduces infrastructure complexity |\n| API design | REST + WebSocket | REST for CRUD, WebSocket for live updates |\n\n## References\n\n- ADR-000: [C3 Adoption](adr/adr-00000000-c3-adoption.md) - Initial architecture documentation\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:35:33.043Z",
+      "event": "PreToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Initialize C3 directory structure for TaskFlow",
+            "status": "completed",
+            "activeForm": "Initializing C3 directory structure"
+          },
+          {
+            "content": "Create Context-level documentation (README.md)",
+            "status": "completed",
+            "activeForm": "Creating Context-level documentation"
+          },
+          {
+            "content": "Create ADR-000 architecture blueprint",
+            "status": "in_progress",
+            "activeForm": "Creating ADR-000 blueprint"
+          },
+          {
+            "content": "Document API container (c3-1)",
+            "status": "pending",
+            "activeForm": "Documenting API container"
+          },
+          {
+            "content": "Document Web SPA container (c3-2)",
+            "status": "pending",
+            "activeForm": "Documenting Web SPA container"
+          },
+          {
+            "content": "Document Worker container (c3-3)",
+            "status": "pending",
+            "activeForm": "Documenting Worker container"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:35:33.132Z",
+      "event": "PostToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Initialize C3 directory structure for TaskFlow",
+            "status": "completed",
+            "activeForm": "Initializing C3 directory structure"
+          },
+          {
+            "content": "Create Context-level documentation (README.md)",
+            "status": "completed",
+            "activeForm": "Creating Context-level documentation"
+          },
+          {
+            "content": "Create ADR-000 architecture blueprint",
+            "status": "in_progress",
+            "activeForm": "Creating ADR-000 blueprint"
+          },
+          {
+            "content": "Document API container (c3-1)",
+            "status": "pending",
+            "activeForm": "Documenting API container"
+          },
+          {
+            "content": "Document Web SPA container (c3-2)",
+            "status": "pending",
+            "activeForm": "Documenting Web SPA container"
+          },
+          {
+            "content": "Document Worker container (c3-3)",
+            "status": "pending",
+            "activeForm": "Documenting Worker container"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:36:22.626Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.xVDUmpSK7j/.c3/adr/adr-00000000-c3-adoption.md",
+        "content": "---\nid: adr-00000000-c3-adoption\nc3-version: 3\ntitle: TaskFlow Architecture Blueprint\ntype: adr\nstatus: accepted\ndate: 2026-01-12\naffects: [c3-0, c3-1, c3-2, c3-3]\n---\n\n# TaskFlow Architecture Blueprint\n\n## Overview\n\n```mermaid\ngraph TB\n    subgraph Frontend\n        WEB[Web SPA - React]\n    end\n\n    subgraph Backend\n        API[API Server - Express]\n        WS[WebSocket Handler]\n        WORKER[Background Worker]\n    end\n\n    subgraph Data\n        PG[(PostgreSQL)]\n        REDIS[(Redis)]\n    end\n\n    subgraph External\n        GOOGLE[Google OAuth]\n        EMAIL[Email Service]\n        S3[File Storage]\n    end\n\n    WEB -->|REST| API\n    WEB -->|WS| WS\n    API --> PG\n    API --> REDIS\n    WS --> REDIS\n    API --> GOOGLE\n    API -.->|queue| WORKER\n    WORKER --> PG\n    WORKER --> EMAIL\n    WORKER --> S3\n```\n\n## Status\n\n**Accepted** - 2026-01-12\n\nThis ADR serves as the foundational blueprint for TaskFlow's architecture. All implementation work should reference this document.\n\n## Problem\n\n| Challenge | Impact |\n|-----------|--------|\n| Small teams lack affordable task management tools | Market opportunity |\n| Existing tools don't offer real-time collaboration | Poor team coordination |\n| No clear architecture for new SaaS project | Risk of ad-hoc decisions |\n\n## Decision Drivers\n\n| Driver | Priority | Notes |\n|--------|----------|-------|\n| Time to MVP | High | Need to validate market quickly |\n| Future scalability | Medium | Design for growth but don't over-engineer |\n| Developer experience | High | Small team, need productivity |\n| Operational simplicity | High | Minimize infrastructure complexity initially |\n\n## Decision\n\nBuild TaskFlow as a modular monolith with clear boundaries, enabling future decomposition if needed.\n\n### Technology Stack\n\n| Layer | Technology | Rationale |\n|-------|------------|-----------|\n| Frontend | React + TypeScript | Strong ecosystem, type safety |\n| Backend | Node.js + Express + TypeScript | Shared language with frontend, async-friendly |\n| Database | PostgreSQL | Relational integrity for domain data |\n| Cache/Queue | Redis | Multi-purpose: caching, pub/sub, job queue |\n| Real-time | WebSocket (ws) | Native support, Redis pub/sub for scaling |\n| Auth | Google OAuth | Fast MVP, no password management |\n| Email | SendGrid/SES | Reliable transactional email |\n| Storage | S3-compatible | Industry standard for file storage |\n\n### Container Responsibilities\n\n| Container | Primary Responsibility | Key Modules |\n|-----------|----------------------|-------------|\n| c3-1: API Server | Business logic, data access, auth | Auth, Workspace, Board, Task, Collaboration |\n| c3-2: Web SPA | User interface, client state | Auth UI, Boards, Tasks, Real-time sync |\n| c3-3: Worker | Background processing | Email, File processing, Cleanup jobs |\n\n### Domain Model\n\n```mermaid\nerDiagram\n    User ||--o{ WorkspaceMember : \"belongs to\"\n    Workspace ||--o{ WorkspaceMember : \"has\"\n    Workspace ||--o{ Board : \"contains\"\n    Board ||--o{ Column : \"has\"\n    Column ||--o{ Task : \"contains\"\n    Task ||--o{ Comment : \"has\"\n    Task ||--o{ Attachment : \"has\"\n    Task }o--o{ Label : \"tagged with\"\n    Task }o--o| User : \"assigned to\"\n\n    User {\n        uuid id PK\n        string email UK\n        string name\n        string google_id UK\n        timestamp created_at\n    }\n\n    Workspace {\n        uuid id PK\n        string name\n        string slug UK\n        uuid owner_id FK\n        timestamp created_at\n    }\n\n    WorkspaceMember {\n        uuid workspace_id FK\n        uuid user_id FK\n        enum role\n        timestamp joined_at\n    }\n\n    Board {\n        uuid id PK\n        uuid workspace_id FK\n        string name\n        int position\n        timestamp created_at\n    }\n\n    Column {\n        uuid id PK\n        uuid board_id FK\n        string name\n        int position\n    }\n\n    Task {\n        uuid id PK\n        uuid column_id FK\n        string title\n        text description\n        uuid assignee_id FK\n        date due_date\n        int position\n        timestamp created_at\n    }\n\n    Label {\n        uuid id PK\n        uuid workspace_id FK\n        string name\n        string color\n    }\n\n    Comment {\n        uuid id PK\n        uuid task_id FK\n        uuid author_id FK\n        text content\n        timestamp created_at\n    }\n\n    Attachment {\n        uuid id PK\n        uuid task_id FK\n        string filename\n        string storage_key\n        int size_bytes\n        timestamp created_at\n    }\n```\n\n### API Structure\n\n| Module | Endpoints | Purpose |\n|--------|-----------|---------|\n| Auth | /auth/google, /auth/logout, /auth/me | Authentication flow |\n| Workspaces | /workspaces/* | Workspace CRUD, member management |\n| Boards | /workspaces/:id/boards/* | Board CRUD |\n| Tasks | /boards/:id/tasks/* | Task CRUD, assignments, labels |\n| Comments | /tasks/:id/comments/* | Task comments |\n| Attachments | /tasks/:id/attachments/* | File uploads |\n| Real-time | WebSocket /ws | Board subscriptions, presence |\n\n### Real-time Architecture\n\n```mermaid\nsequenceDiagram\n    participant Client1 as Web Client 1\n    participant Client2 as Web Client 2\n    participant API as API Server\n    participant Redis as Redis Pub/Sub\n\n    Client1->>API: WS Connect (board-123)\n    API->>Redis: SUBSCRIBE board:123\n    Client2->>API: WS Connect (board-123)\n    API->>Redis: SUBSCRIBE board:123\n\n    Client1->>API: Update Task\n    API->>Redis: PUBLISH board:123 {task updated}\n    Redis-->>API: Message to all subscribers\n    API-->>Client1: Task updated\n    API-->>Client2: Task updated\n```\n\n### Security Considerations\n\n| Concern | Approach |\n|---------|----------|\n| Authentication | OAuth 2.0 via Google, JWT for sessions |\n| Authorization | Role-based (Owner, Admin, Member) per workspace |\n| Data isolation | All queries scoped to workspace, enforced at DB layer |\n| API security | Rate limiting, input validation, CORS |\n| File uploads | Presigned URLs, content-type validation, size limits |\n\n### Module Boundaries (Modular Monolith)\n\n| Module | Dependencies | Can Call | Cannot Call |\n|--------|--------------|----------|-------------|\n| Auth | - | User | Workspace, Board, Task |\n| Workspace | Auth, User | User | Board, Task directly |\n| Board | Auth, Workspace | Workspace, Column | Task directly |\n| Task | Auth, Board | Board, Column, User, Label | - |\n| Collaboration | Auth, Board | Board, Task | Workspace |\n\nThese boundaries enable future service extraction if scaling demands it.\n\n## Consequences\n\n### Positive\n\n| Benefit | Explanation |\n|---------|-------------|\n| Fast MVP | Single deployable unit simplifies ops |\n| Type safety | Full-stack TypeScript catches errors early |\n| Scalable design | Redis pub/sub enables horizontal API scaling |\n| Clear boundaries | Modular structure supports future decomposition |\n| Real-time ready | WebSocket + Redis architecture from day one |\n\n### Negative\n\n| Trade-off | Mitigation |\n|-----------|------------|\n| Single point of failure | Design stateless API, use managed DB |\n| Redis complexity | Start with single Redis, document failover later |\n| OAuth-only limits users | Add email/password auth if needed post-MVP |\n| Monolith coupling risk | Enforce module boundaries in code reviews |\n\n## Implementation Phases\n\n| Phase | Focus | Key Deliverables |\n|-------|-------|------------------|\n| 1 | Foundation | Auth, User, Workspace CRUD, basic UI |\n| 2 | Core Features | Boards, Columns, Tasks, drag-drop |\n| 3 | Collaboration | Real-time updates, presence, comments |\n| 4 | Productivity | Labels, attachments, search, notifications |\n| 5 | Polish | Mobile-responsive, performance, onboarding |\n\n## Verification\n\n- [x] Context documentation complete (c3-0)\n- [ ] Container documentation complete (c3-1, c3-2, c3-3)\n- [ ] Component documentation started\n- [ ] Diagrams use consistent IDs\n- [ ] All linkages have reasoning\n\n## Adoption Progress\n\n| Level | Category | Status | Documented | Remaining |\n|-------|----------|--------|------------|-----------|\n| Context | - | Complete | 1 | 0 |\n| Containers | - | In Progress | 0 | 3 |\n| Components | Foundation | Pending | 0 | TBD |\n| Components | Auxiliary | Pending | 0 | TBD |\n| Components | Feature | Pending | 0 | TBD |\n\n## Audit Record\n\n| Phase | Date | Notes |\n|-------|------|-------|\n| Blueprint created | 2026-01-12 | Initial architecture design |\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:36:22.728Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.xVDUmpSK7j/.c3/adr/adr-00000000-c3-adoption.md",
+        "content": "---\nid: adr-00000000-c3-adoption\nc3-version: 3\ntitle: TaskFlow Architecture Blueprint\ntype: adr\nstatus: accepted\ndate: 2026-01-12\naffects: [c3-0, c3-1, c3-2, c3-3]\n---\n\n# TaskFlow Architecture Blueprint\n\n## Overview\n\n```mermaid\ngraph TB\n    subgraph Frontend\n        WEB[Web SPA - React]\n    end\n\n    subgraph Backend\n        API[API Server - Express]\n        WS[WebSocket Handler]\n        WORKER[Background Worker]\n    end\n\n    subgraph Data\n        PG[(PostgreSQL)]\n        REDIS[(Redis)]\n    end\n\n    subgraph External\n        GOOGLE[Google OAuth]\n        EMAIL[Email Service]\n        S3[File Storage]\n    end\n\n    WEB -->|REST| API\n    WEB -->|WS| WS\n    API --> PG\n    API --> REDIS\n    WS --> REDIS\n    API --> GOOGLE\n    API -.->|queue| WORKER\n    WORKER --> PG\n    WORKER --> EMAIL\n    WORKER --> S3\n```\n\n## Status\n\n**Accepted** - 2026-01-12\n\nThis ADR serves as the foundational blueprint for TaskFlow's architecture. All implementation work should reference this document.\n\n## Problem\n\n| Challenge | Impact |\n|-----------|--------|\n| Small teams lack affordable task management tools | Market opportunity |\n| Existing tools don't offer real-time collaboration | Poor team coordination |\n| No clear architecture for new SaaS project | Risk of ad-hoc decisions |\n\n## Decision Drivers\n\n| Driver | Priority | Notes |\n|--------|----------|-------|\n| Time to MVP | High | Need to validate market quickly |\n| Future scalability | Medium | Design for growth but don't over-engineer |\n| Developer experience | High | Small team, need productivity |\n| Operational simplicity | High | Minimize infrastructure complexity initially |\n\n## Decision\n\nBuild TaskFlow as a modular monolith with clear boundaries, enabling future decomposition if needed.\n\n### Technology Stack\n\n| Layer | Technology | Rationale |\n|-------|------------|-----------|\n| Frontend | React + TypeScript | Strong ecosystem, type safety |\n| Backend | Node.js + Express + TypeScript | Shared language with frontend, async-friendly |\n| Database | PostgreSQL | Relational integrity for domain data |\n| Cache/Queue | Redis | Multi-purpose: caching, pub/sub, job queue |\n| Real-time | WebSocket (ws) | Native support, Redis pub/sub for scaling |\n| Auth | Google OAuth | Fast MVP, no password management |\n| Email | SendGrid/SES | Reliable transactional email |\n| Storage | S3-compatible | Industry standard for file storage |\n\n### Container Responsibilities\n\n| Container | Primary Responsibility | Key Modules |\n|-----------|----------------------|-------------|\n| c3-1: API Server | Business logic, data access, auth | Auth, Workspace, Board, Task, Collaboration |\n| c3-2: Web SPA | User interface, client state | Auth UI, Boards, Tasks, Real-time sync |\n| c3-3: Worker | Background processing | Email, File processing, Cleanup jobs |\n\n### Domain Model\n\n```mermaid\nerDiagram\n    User ||--o{ WorkspaceMember : \"belongs to\"\n    Workspace ||--o{ WorkspaceMember : \"has\"\n    Workspace ||--o{ Board : \"contains\"\n    Board ||--o{ Column : \"has\"\n    Column ||--o{ Task : \"contains\"\n    Task ||--o{ Comment : \"has\"\n    Task ||--o{ Attachment : \"has\"\n    Task }o--o{ Label : \"tagged with\"\n    Task }o--o| User : \"assigned to\"\n\n    User {\n        uuid id PK\n        string email UK\n        string name\n        string google_id UK\n        timestamp created_at\n    }\n\n    Workspace {\n        uuid id PK\n        string name\n        string slug UK\n        uuid owner_id FK\n        timestamp created_at\n    }\n\n    WorkspaceMember {\n        uuid workspace_id FK\n        uuid user_id FK\n        enum role\n        timestamp joined_at\n    }\n\n    Board {\n        uuid id PK\n        uuid workspace_id FK\n        string name\n        int position\n        timestamp created_at\n    }\n\n    Column {\n        uuid id PK\n        uuid board_id FK\n        string name\n        int position\n    }\n\n    Task {\n        uuid id PK\n        uuid column_id FK\n        string title\n        text description\n        uuid assignee_id FK\n        date due_date\n        int position\n        timestamp created_at\n    }\n\n    Label {\n        uuid id PK\n        uuid workspace_id FK\n        string name\n        string color\n    }\n\n    Comment {\n        uuid id PK\n        uuid task_id FK\n        uuid author_id FK\n        text content\n        timestamp created_at\n    }\n\n    Attachment {\n        uuid id PK\n        uuid task_id FK\n        string filename\n        string storage_key\n        int size_bytes\n        timestamp created_at\n    }\n```\n\n### API Structure\n\n| Module | Endpoints | Purpose |\n|--------|-----------|---------|\n| Auth | /auth/google, /auth/logout, /auth/me | Authentication flow |\n| Workspaces | /workspaces/* | Workspace CRUD, member management |\n| Boards | /workspaces/:id/boards/* | Board CRUD |\n| Tasks | /boards/:id/tasks/* | Task CRUD, assignments, labels |\n| Comments | /tasks/:id/comments/* | Task comments |\n| Attachments | /tasks/:id/attachments/* | File uploads |\n| Real-time | WebSocket /ws | Board subscriptions, presence |\n\n### Real-time Architecture\n\n```mermaid\nsequenceDiagram\n    participant Client1 as Web Client 1\n    participant Client2 as Web Client 2\n    participant API as API Server\n    participant Redis as Redis Pub/Sub\n\n    Client1->>API: WS Connect (board-123)\n    API->>Redis: SUBSCRIBE board:123\n    Client2->>API: WS Connect (board-123)\n    API->>Redis: SUBSCRIBE board:123\n\n    Client1->>API: Update Task\n    API->>Redis: PUBLISH board:123 {task updated}\n    Redis-->>API: Message to all subscribers\n    API-->>Client1: Task updated\n    API-->>Client2: Task updated\n```\n\n### Security Considerations\n\n| Concern | Approach |\n|---------|----------|\n| Authentication | OAuth 2.0 via Google, JWT for sessions |\n| Authorization | Role-based (Owner, Admin, Member) per workspace |\n| Data isolation | All queries scoped to workspace, enforced at DB layer |\n| API security | Rate limiting, input validation, CORS |\n| File uploads | Presigned URLs, content-type validation, size limits |\n\n### Module Boundaries (Modular Monolith)\n\n| Module | Dependencies | Can Call | Cannot Call |\n|--------|--------------|----------|-------------|\n| Auth | - | User | Workspace, Board, Task |\n| Workspace | Auth, User | User | Board, Task directly |\n| Board | Auth, Workspace | Workspace, Column | Task directly |\n| Task | Auth, Board | Board, Column, User, Label | - |\n| Collaboration | Auth, Board | Board, Task | Workspace |\n\nThese boundaries enable future service extraction if scaling demands it.\n\n## Consequences\n\n### Positive\n\n| Benefit | Explanation |\n|---------|-------------|\n| Fast MVP | Single deployable unit simplifies ops |\n| Type safety | Full-stack TypeScript catches errors early |\n| Scalable design | Redis pub/sub enables horizontal API scaling |\n| Clear boundaries | Modular structure supports future decomposition |\n| Real-time ready | WebSocket + Redis architecture from day one |\n\n### Negative\n\n| Trade-off | Mitigation |\n|-----------|------------|\n| Single point of failure | Design stateless API, use managed DB |\n| Redis complexity | Start with single Redis, document failover later |\n| OAuth-only limits users | Add email/password auth if needed post-MVP |\n| Monolith coupling risk | Enforce module boundaries in code reviews |\n\n## Implementation Phases\n\n| Phase | Focus | Key Deliverables |\n|-------|-------|------------------|\n| 1 | Foundation | Auth, User, Workspace CRUD, basic UI |\n| 2 | Core Features | Boards, Columns, Tasks, drag-drop |\n| 3 | Collaboration | Real-time updates, presence, comments |\n| 4 | Productivity | Labels, attachments, search, notifications |\n| 5 | Polish | Mobile-responsive, performance, onboarding |\n\n## Verification\n\n- [x] Context documentation complete (c3-0)\n- [ ] Container documentation complete (c3-1, c3-2, c3-3)\n- [ ] Component documentation started\n- [ ] Diagrams use consistent IDs\n- [ ] All linkages have reasoning\n\n## Adoption Progress\n\n| Level | Category | Status | Documented | Remaining |\n|-------|----------|--------|------------|-----------|\n| Context | - | Complete | 1 | 0 |\n| Containers | - | In Progress | 0 | 3 |\n| Components | Foundation | Pending | 0 | TBD |\n| Components | Auxiliary | Pending | 0 | TBD |\n| Components | Feature | Pending | 0 | TBD |\n\n## Audit Record\n\n| Phase | Date | Notes |\n|-------|------|-------|\n| Blueprint created | 2026-01-12 | Initial architecture design |\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:36:29.792Z",
+      "event": "PreToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Initialize C3 directory structure for TaskFlow",
+            "status": "completed",
+            "activeForm": "Initializing C3 directory structure"
+          },
+          {
+            "content": "Create Context-level documentation (README.md)",
+            "status": "completed",
+            "activeForm": "Creating Context-level documentation"
+          },
+          {
+            "content": "Create ADR-000 architecture blueprint",
+            "status": "completed",
+            "activeForm": "Creating ADR-000 blueprint"
+          },
+          {
+            "content": "Document API container (c3-1)",
+            "status": "in_progress",
+            "activeForm": "Documenting API container"
+          },
+          {
+            "content": "Document Web SPA container (c3-2)",
+            "status": "pending",
+            "activeForm": "Documenting Web SPA container"
+          },
+          {
+            "content": "Document Worker container (c3-3)",
+            "status": "pending",
+            "activeForm": "Documenting Worker container"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:36:30.099Z",
+      "event": "PostToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Initialize C3 directory structure for TaskFlow",
+            "status": "completed",
+            "activeForm": "Initializing C3 directory structure"
+          },
+          {
+            "content": "Create Context-level documentation (README.md)",
+            "status": "completed",
+            "activeForm": "Creating Context-level documentation"
+          },
+          {
+            "content": "Create ADR-000 architecture blueprint",
+            "status": "completed",
+            "activeForm": "Creating ADR-000 blueprint"
+          },
+          {
+            "content": "Document API container (c3-1)",
+            "status": "in_progress",
+            "activeForm": "Documenting API container"
+          },
+          {
+            "content": "Document Web SPA container (c3-2)",
+            "status": "pending",
+            "activeForm": "Documenting Web SPA container"
+          },
+          {
+            "content": "Document Worker container (c3-3)",
+            "status": "pending",
+            "activeForm": "Documenting Worker container"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:36:34.412Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.xVDUmpSK7j/.c3/c3-1-api/README.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:36:34.740Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.xVDUmpSK7j/.c3/c3-1-api/README.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:37:09.534Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.xVDUmpSK7j/.c3/c3-1-api/README.md",
+        "content": "---\nid: c3-1\nc3-version: 3\ntitle: API Server\ntype: container\nparent: c3-0\nsummary: Node.js/Express backend handling REST API, WebSocket, and business logic\n---\n\n# API Server\n\n## Goal\n\nThe API Server owns all business logic, data access, authentication, and real-time communication. It serves as the single backend for the Web SPA and future mobile clients.\n\n## Overview\n\n```mermaid\ngraph TB\n    subgraph Clients\n        WEB[Web SPA]\n        MOBILE[Mobile - Future]\n    end\n\n    subgraph API Server\n        subgraph Foundation\n            F1[Router]\n            F2[Auth Middleware]\n            F3[Error Handler]\n            F4[WebSocket Manager]\n            F5[Database Pool]\n            F6[Redis Client]\n        end\n\n        subgraph Feature Modules\n            M1[Auth Module]\n            M2[Workspace Module]\n            M3[Board Module]\n            M4[Task Module]\n            M5[Collaboration Module]\n        end\n    end\n\n    subgraph External\n        PG[(PostgreSQL)]\n        REDIS[(Redis)]\n        GOOGLE[Google OAuth]\n        WORKER[Worker - c3-3]\n    end\n\n    WEB -->|REST| F1\n    WEB -->|WS| F4\n    MOBILE -.->|REST| F1\n\n    F1 --> F2\n    F2 --> M1\n    F2 --> M2\n    F2 --> M3\n    F2 --> M4\n    F4 --> M5\n\n    M1 --> GOOGLE\n    M1 --> F5\n    M2 --> F5\n    M3 --> F5\n    M4 --> F5\n    M5 --> F6\n\n    F5 --> PG\n    F6 --> REDIS\n    M2 -.->|queue jobs| WORKER\n    M4 -.->|queue jobs| WORKER\n```\n\n## Components\n\n| ID | Name | Category | Status | Responsibility |\n|----|------|----------|--------|----------------|\n| c3-101 | Router | foundation | planned | Express router setup, route registration, request parsing |\n| c3-102 | Auth Middleware | foundation | planned | JWT validation, session handling, request context |\n| c3-103 | Error Handler | foundation | planned | Consistent error responses, logging, error transformation |\n| c3-104 | WebSocket Manager | foundation | planned | Connection lifecycle, room management, message routing |\n| c3-105 | Database Pool | foundation | planned | PostgreSQL connection pooling, query execution |\n| c3-106 | Redis Client | foundation | planned | Redis connection, pub/sub, caching operations |\n| c3-110 | Auth Module | feature | planned | Google OAuth flow, JWT issuance, user registration |\n| c3-111 | Workspace Module | feature | planned | Workspace CRUD, member management, invitations |\n| c3-112 | Board Module | feature | planned | Board CRUD, column management, position ordering |\n| c3-113 | Task Module | feature | planned | Task CRUD, assignments, labels, attachments, comments |\n| c3-114 | Collaboration Module | feature | planned | Real-time updates, presence tracking, board subscriptions |\n\n### Auxiliary Conventions\n\n| Convention | Description | Applies To |\n|------------|-------------|------------|\n| Request Validation | Zod schemas for all input validation | All modules |\n| Response Format | Consistent JSON envelope with data/error structure | All endpoints |\n| Workspace Scoping | All data queries include workspace_id filter | All feature modules |\n| Audit Logging | Mutations logged with user, workspace, action | All mutations |\n\n## Fulfillment\n\nHow this container fulfills Context-level linkages:\n\n| Context Link | Fulfilling Components | Notes |\n|--------------|----------------------|-------|\n| C2 → C1 REST | Router, Auth Middleware, Feature Modules | All REST endpoints |\n| C2 → C1 WebSocket | WebSocket Manager, Collaboration Module | Real-time channel |\n| C1 → E1 (Google OAuth) | Auth Module | OAuth flow and token exchange |\n| C1 → E2 (PostgreSQL) | Database Pool → Feature Modules | All data persistence |\n| C1 → E3 (Redis) | Redis Client, WebSocket Manager | Caching and pub/sub |\n| C1 → C3 (Worker) | Workspace Module, Task Module | Job queue via Redis |\n\n## Module Boundaries\n\n```mermaid\ngraph LR\n    subgraph Public API\n        AUTH[Auth]\n        WS[Workspace]\n        BOARD[Board]\n        TASK[Task]\n        COLLAB[Collaboration]\n    end\n\n    AUTH -->|user context| WS\n    WS -->|workspace context| BOARD\n    BOARD -->|board context| TASK\n    BOARD -->|board context| COLLAB\n    TASK -->|task events| COLLAB\n```\n\n| Module | Owns | Depends On | Notes |\n|--------|------|------------|-------|\n| Auth | User entity, sessions | None | Entry point, provides user context |\n| Workspace | Workspace, WorkspaceMember | Auth | Provides workspace context |\n| Board | Board, Column | Auth, Workspace | Requires workspace scope |\n| Task | Task, Comment, Attachment, Label | Auth, Board | Requires board scope |\n| Collaboration | Subscriptions, presence | Auth, Board | Read-only, event-driven |\n\n## API Versioning\n\n| Strategy | Implementation |\n|----------|----------------|\n| URL prefix | /api/v1/* for all endpoints |\n| Breaking changes | New version path /api/v2/* |\n| Deprecation | X-API-Deprecated header, 6-month sunset |\n\n## Error Codes\n\n| Range | Category | Example |\n|-------|----------|---------|\n| 400-499 | Client errors | 401 Unauthorized, 403 Forbidden, 404 Not Found |\n| 500-599 | Server errors | 500 Internal Error, 503 Service Unavailable |\n\nAll errors follow structure:\n- error.code: Machine-readable code\n- error.message: Human-readable message\n- error.details: Optional field-level errors\n\n## Linkages\n\n| From | To | Interaction | Reasoning |\n|------|-----|-------------|-----------|\n| Router | Auth Middleware | Middleware chain | All routes pass through auth check |\n| Auth Middleware | Feature Modules | Decorated request | User/workspace context attached |\n| Feature Modules | Database Pool | Query execution | Data persistence |\n| Collaboration Module | Redis Client | Pub/Sub | Real-time message distribution |\n| Feature Modules | Worker (c3-3) | Job queue | Async processing via Redis |\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:37:09.729Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.xVDUmpSK7j/.c3/c3-1-api/README.md",
+        "content": "---\nid: c3-1\nc3-version: 3\ntitle: API Server\ntype: container\nparent: c3-0\nsummary: Node.js/Express backend handling REST API, WebSocket, and business logic\n---\n\n# API Server\n\n## Goal\n\nThe API Server owns all business logic, data access, authentication, and real-time communication. It serves as the single backend for the Web SPA and future mobile clients.\n\n## Overview\n\n```mermaid\ngraph TB\n    subgraph Clients\n        WEB[Web SPA]\n        MOBILE[Mobile - Future]\n    end\n\n    subgraph API Server\n        subgraph Foundation\n            F1[Router]\n            F2[Auth Middleware]\n            F3[Error Handler]\n            F4[WebSocket Manager]\n            F5[Database Pool]\n            F6[Redis Client]\n        end\n\n        subgraph Feature Modules\n            M1[Auth Module]\n            M2[Workspace Module]\n            M3[Board Module]\n            M4[Task Module]\n            M5[Collaboration Module]\n        end\n    end\n\n    subgraph External\n        PG[(PostgreSQL)]\n        REDIS[(Redis)]\n        GOOGLE[Google OAuth]\n        WORKER[Worker - c3-3]\n    end\n\n    WEB -->|REST| F1\n    WEB -->|WS| F4\n    MOBILE -.->|REST| F1\n\n    F1 --> F2\n    F2 --> M1\n    F2 --> M2\n    F2 --> M3\n    F2 --> M4\n    F4 --> M5\n\n    M1 --> GOOGLE\n    M1 --> F5\n    M2 --> F5\n    M3 --> F5\n    M4 --> F5\n    M5 --> F6\n\n    F5 --> PG\n    F6 --> REDIS\n    M2 -.->|queue jobs| WORKER\n    M4 -.->|queue jobs| WORKER\n```\n\n## Components\n\n| ID | Name | Category | Status | Responsibility |\n|----|------|----------|--------|----------------|\n| c3-101 | Router | foundation | planned | Express router setup, route registration, request parsing |\n| c3-102 | Auth Middleware | foundation | planned | JWT validation, session handling, request context |\n| c3-103 | Error Handler | foundation | planned | Consistent error responses, logging, error transformation |\n| c3-104 | WebSocket Manager | foundation | planned | Connection lifecycle, room management, message routing |\n| c3-105 | Database Pool | foundation | planned | PostgreSQL connection pooling, query execution |\n| c3-106 | Redis Client | foundation | planned | Redis connection, pub/sub, caching operations |\n| c3-110 | Auth Module | feature | planned | Google OAuth flow, JWT issuance, user registration |\n| c3-111 | Workspace Module | feature | planned | Workspace CRUD, member management, invitations |\n| c3-112 | Board Module | feature | planned | Board CRUD, column management, position ordering |\n| c3-113 | Task Module | feature | planned | Task CRUD, assignments, labels, attachments, comments |\n| c3-114 | Collaboration Module | feature | planned | Real-time updates, presence tracking, board subscriptions |\n\n### Auxiliary Conventions\n\n| Convention | Description | Applies To |\n|------------|-------------|------------|\n| Request Validation | Zod schemas for all input validation | All modules |\n| Response Format | Consistent JSON envelope with data/error structure | All endpoints |\n| Workspace Scoping | All data queries include workspace_id filter | All feature modules |\n| Audit Logging | Mutations logged with user, workspace, action | All mutations |\n\n## Fulfillment\n\nHow this container fulfills Context-level linkages:\n\n| Context Link | Fulfilling Components | Notes |\n|--------------|----------------------|-------|\n| C2 → C1 REST | Router, Auth Middleware, Feature Modules | All REST endpoints |\n| C2 → C1 WebSocket | WebSocket Manager, Collaboration Module | Real-time channel |\n| C1 → E1 (Google OAuth) | Auth Module | OAuth flow and token exchange |\n| C1 → E2 (PostgreSQL) | Database Pool → Feature Modules | All data persistence |\n| C1 → E3 (Redis) | Redis Client, WebSocket Manager | Caching and pub/sub |\n| C1 → C3 (Worker) | Workspace Module, Task Module | Job queue via Redis |\n\n## Module Boundaries\n\n```mermaid\ngraph LR\n    subgraph Public API\n        AUTH[Auth]\n        WS[Workspace]\n        BOARD[Board]\n        TASK[Task]\n        COLLAB[Collaboration]\n    end\n\n    AUTH -->|user context| WS\n    WS -->|workspace context| BOARD\n    BOARD -->|board context| TASK\n    BOARD -->|board context| COLLAB\n    TASK -->|task events| COLLAB\n```\n\n| Module | Owns | Depends On | Notes |\n|--------|------|------------|-------|\n| Auth | User entity, sessions | None | Entry point, provides user context |\n| Workspace | Workspace, WorkspaceMember | Auth | Provides workspace context |\n| Board | Board, Column | Auth, Workspace | Requires workspace scope |\n| Task | Task, Comment, Attachment, Label | Auth, Board | Requires board scope |\n| Collaboration | Subscriptions, presence | Auth, Board | Read-only, event-driven |\n\n## API Versioning\n\n| Strategy | Implementation |\n|----------|----------------|\n| URL prefix | /api/v1/* for all endpoints |\n| Breaking changes | New version path /api/v2/* |\n| Deprecation | X-API-Deprecated header, 6-month sunset |\n\n## Error Codes\n\n| Range | Category | Example |\n|-------|----------|---------|\n| 400-499 | Client errors | 401 Unauthorized, 403 Forbidden, 404 Not Found |\n| 500-599 | Server errors | 500 Internal Error, 503 Service Unavailable |\n\nAll errors follow structure:\n- error.code: Machine-readable code\n- error.message: Human-readable message\n- error.details: Optional field-level errors\n\n## Linkages\n\n| From | To | Interaction | Reasoning |\n|------|-----|-------------|-----------|\n| Router | Auth Middleware | Middleware chain | All routes pass through auth check |\n| Auth Middleware | Feature Modules | Decorated request | User/workspace context attached |\n| Feature Modules | Database Pool | Query execution | Data persistence |\n| Collaboration Module | Redis Client | Pub/Sub | Real-time message distribution |\n| Feature Modules | Worker (c3-3) | Job queue | Async processing via Redis |\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:37:17.563Z",
+      "event": "PreToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Initialize C3 directory structure for TaskFlow",
+            "status": "completed",
+            "activeForm": "Initializing C3 directory structure"
+          },
+          {
+            "content": "Create Context-level documentation (README.md)",
+            "status": "completed",
+            "activeForm": "Creating Context-level documentation"
+          },
+          {
+            "content": "Create ADR-000 architecture blueprint",
+            "status": "completed",
+            "activeForm": "Creating ADR-000 blueprint"
+          },
+          {
+            "content": "Document API container (c3-1)",
+            "status": "completed",
+            "activeForm": "Documenting API container"
+          },
+          {
+            "content": "Document Web SPA container (c3-2)",
+            "status": "in_progress",
+            "activeForm": "Documenting Web SPA container"
+          },
+          {
+            "content": "Document Worker container (c3-3)",
+            "status": "pending",
+            "activeForm": "Documenting Worker container"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:37:17.757Z",
+      "event": "PostToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Initialize C3 directory structure for TaskFlow",
+            "status": "completed",
+            "activeForm": "Initializing C3 directory structure"
+          },
+          {
+            "content": "Create Context-level documentation (README.md)",
+            "status": "completed",
+            "activeForm": "Creating Context-level documentation"
+          },
+          {
+            "content": "Create ADR-000 architecture blueprint",
+            "status": "completed",
+            "activeForm": "Creating ADR-000 blueprint"
+          },
+          {
+            "content": "Document API container (c3-1)",
+            "status": "completed",
+            "activeForm": "Documenting API container"
+          },
+          {
+            "content": "Document Web SPA container (c3-2)",
+            "status": "in_progress",
+            "activeForm": "Documenting Web SPA container"
+          },
+          {
+            "content": "Document Worker container (c3-3)",
+            "status": "pending",
+            "activeForm": "Documenting Worker container"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:38:00.844Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.xVDUmpSK7j/.c3/c3-2-web/README.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:38:01.001Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.xVDUmpSK7j/.c3/c3-2-web/README.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:38:36.576Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.xVDUmpSK7j/.c3/c3-2-web/README.md",
+        "content": "---\nid: c3-2\nc3-version: 3\ntitle: Web SPA\ntype: container\nparent: c3-0\nsummary: React single-page application for browser-based access\n---\n\n# Web SPA\n\n## Goal\n\nThe Web SPA provides a responsive, real-time collaborative interface for team task management. It handles all user interactions, maintains client-side state, and synchronizes with the API Server.\n\n## Overview\n\n```mermaid\ngraph TB\n    subgraph Browser\n        subgraph Foundation\n            F1[App Shell]\n            F2[Router]\n            F3[Auth Provider]\n            F4[API Client]\n            F5[WebSocket Client]\n            F6[State Store]\n        end\n\n        subgraph Feature UI\n            UI1[Auth Pages]\n            UI2[Workspace Pages]\n            UI3[Board View]\n            UI4[Task Panel]\n        end\n\n        subgraph Shared\n            S1[Design System]\n            S2[Form Components]\n        end\n    end\n\n    subgraph External\n        API[API Server - c3-1]\n    end\n\n    F1 --> F2\n    F2 --> F3\n    F3 --> UI1\n    F3 --> UI2\n    F3 --> UI3\n    F3 --> UI4\n\n    UI1 --> F4\n    UI2 --> F4\n    UI3 --> F4\n    UI4 --> F4\n    UI3 --> F5\n\n    F4 -->|REST| API\n    F5 -->|WebSocket| API\n\n    UI1 --> S1\n    UI2 --> S1\n    UI3 --> S1\n    UI4 --> S1\n    UI2 --> S2\n    UI4 --> S2\n```\n\n## Components\n\n| ID | Name | Category | Status | Responsibility |\n|----|------|----------|--------|----------------|\n| c3-201 | App Shell | foundation | planned | Root layout, error boundaries, suspense boundaries |\n| c3-202 | Router | foundation | planned | Route definitions, guards, navigation |\n| c3-203 | Auth Provider | foundation | planned | Auth state, token storage, protected routes |\n| c3-204 | API Client | foundation | planned | REST requests, error handling, request/response transforms |\n| c3-205 | WebSocket Client | foundation | planned | Connection management, reconnection, message handling |\n| c3-206 | State Store | foundation | planned | Global state (Zustand), server state (React Query) |\n| c3-210 | Design System | foundation | planned | Tokens, primitives (Button, Input, Card, etc.) |\n| c3-211 | Form Components | foundation | planned | Form state, validation, field components |\n| c3-220 | Auth Pages | feature | planned | Login, OAuth callback, logout |\n| c3-221 | Workspace Pages | feature | planned | Workspace list, create, settings, members |\n| c3-222 | Board View | feature | planned | Kanban board, columns, drag-drop, real-time sync |\n| c3-223 | Task Panel | feature | planned | Task detail, comments, attachments, assignments |\n\n### Auxiliary Conventions\n\n| Convention | Description | Applies To |\n|------------|-------------|------------|\n| Component Structure | Feature folder pattern with index, types, hooks, components | All features |\n| State Management | React Query for server state, Zustand for UI state | All features |\n| Styling | Tailwind CSS with design token classes | All components |\n| Error Handling | Error boundaries per feature, toast notifications | All features |\n| Loading States | Skeleton components for async content | All features |\n\n## Fulfillment\n\nHow this container fulfills Context-level linkages:\n\n| Context Link | Fulfilling Components | Notes |\n|--------------|----------------------|-------|\n| A1/A2 → C2 | All UI components | User-facing interface |\n| C2 → C1 REST | API Client → Feature Pages | Data fetching and mutations |\n| C2 → C1 WebSocket | WebSocket Client → Board View | Real-time updates |\n\n## Route Structure\n\n```mermaid\ngraph TD\n    ROOT[\"/\"] --> AUTH[\"/auth/*\"]\n    ROOT --> APP[\"/app/*\"]\n\n    AUTH --> LOGIN[\"/auth/login\"]\n    AUTH --> CALLBACK[\"/auth/callback\"]\n\n    APP --> WORKSPACES[\"/app/workspaces\"]\n    APP --> WS_DETAIL[\"/app/workspaces/:id\"]\n    WS_DETAIL --> BOARDS[\"/app/workspaces/:id/boards\"]\n    WS_DETAIL --> SETTINGS[\"/app/workspaces/:id/settings\"]\n    BOARDS --> BOARD[\"/app/workspaces/:wid/boards/:bid\"]\n    BOARD --> TASK[\"/app/.../boards/:bid/tasks/:tid\"]\n```\n\n| Route | Component | Auth Required | Description |\n|-------|-----------|---------------|-------------|\n| / | Landing | No | Marketing page, redirects if logged in |\n| /auth/login | Auth Pages | No | Login with Google |\n| /auth/callback | Auth Pages | No | OAuth callback handler |\n| /app/workspaces | Workspace Pages | Yes | List user's workspaces |\n| /app/workspaces/:id | Workspace Pages | Yes | Workspace dashboard |\n| /app/.../boards/:id | Board View | Yes | Kanban board with tasks |\n| /app/.../tasks/:id | Task Panel | Yes | Task detail (modal/panel) |\n\n## State Architecture\n\n```mermaid\ngraph LR\n    subgraph Server State\n        RQ[React Query Cache]\n    end\n\n    subgraph UI State\n        ZS[Zustand Store]\n    end\n\n    subgraph Local\n        LS[LocalStorage]\n    end\n\n    API[API Server] -->|fetch| RQ\n    RQ -->|mutations| API\n    WS[WebSocket] -->|events| RQ\n\n    ZS -->|theme, sidebar| UI[UI Components]\n    LS -->|persist| ZS\n    LS -->|tokens| AUTH[Auth Provider]\n```\n\n| State Type | Solution | Examples |\n|------------|----------|----------|\n| Server data | React Query | Workspaces, boards, tasks |\n| Real-time sync | React Query + WebSocket | Task updates, presence |\n| UI preferences | Zustand + localStorage | Theme, sidebar collapsed |\n| Auth tokens | localStorage + Auth Provider | JWT, refresh token |\n| Form state | React Hook Form | Create task, edit workspace |\n\n## Real-time Integration\n\n| Event | Source | Handler | UI Update |\n|-------|--------|---------|-----------|\n| task.created | WebSocket | React Query invalidation | Add to column |\n| task.updated | WebSocket | React Query cache update | Update in place |\n| task.moved | WebSocket | React Query cache update | Animate to new position |\n| task.deleted | WebSocket | React Query cache removal | Remove from column |\n| presence.join | WebSocket | Zustand update | Show avatar |\n| presence.leave | WebSocket | Zustand update | Remove avatar |\n\n## Linkages\n\n| From | To | Interaction | Reasoning |\n|------|-----|-------------|-----------|\n| Router | Auth Provider | Route guards | Protected routes check auth state |\n| Auth Provider | API Client | Token injection | All requests include auth header |\n| Feature Pages | API Client | Data fetching | CRUD operations via REST |\n| Board View | WebSocket Client | Real-time sync | Live updates for collaboration |\n| All Components | Design System | UI primitives | Consistent look and feel |\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:38:36.727Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.xVDUmpSK7j/.c3/c3-2-web/README.md",
+        "content": "---\nid: c3-2\nc3-version: 3\ntitle: Web SPA\ntype: container\nparent: c3-0\nsummary: React single-page application for browser-based access\n---\n\n# Web SPA\n\n## Goal\n\nThe Web SPA provides a responsive, real-time collaborative interface for team task management. It handles all user interactions, maintains client-side state, and synchronizes with the API Server.\n\n## Overview\n\n```mermaid\ngraph TB\n    subgraph Browser\n        subgraph Foundation\n            F1[App Shell]\n            F2[Router]\n            F3[Auth Provider]\n            F4[API Client]\n            F5[WebSocket Client]\n            F6[State Store]\n        end\n\n        subgraph Feature UI\n            UI1[Auth Pages]\n            UI2[Workspace Pages]\n            UI3[Board View]\n            UI4[Task Panel]\n        end\n\n        subgraph Shared\n            S1[Design System]\n            S2[Form Components]\n        end\n    end\n\n    subgraph External\n        API[API Server - c3-1]\n    end\n\n    F1 --> F2\n    F2 --> F3\n    F3 --> UI1\n    F3 --> UI2\n    F3 --> UI3\n    F3 --> UI4\n\n    UI1 --> F4\n    UI2 --> F4\n    UI3 --> F4\n    UI4 --> F4\n    UI3 --> F5\n\n    F4 -->|REST| API\n    F5 -->|WebSocket| API\n\n    UI1 --> S1\n    UI2 --> S1\n    UI3 --> S1\n    UI4 --> S1\n    UI2 --> S2\n    UI4 --> S2\n```\n\n## Components\n\n| ID | Name | Category | Status | Responsibility |\n|----|------|----------|--------|----------------|\n| c3-201 | App Shell | foundation | planned | Root layout, error boundaries, suspense boundaries |\n| c3-202 | Router | foundation | planned | Route definitions, guards, navigation |\n| c3-203 | Auth Provider | foundation | planned | Auth state, token storage, protected routes |\n| c3-204 | API Client | foundation | planned | REST requests, error handling, request/response transforms |\n| c3-205 | WebSocket Client | foundation | planned | Connection management, reconnection, message handling |\n| c3-206 | State Store | foundation | planned | Global state (Zustand), server state (React Query) |\n| c3-210 | Design System | foundation | planned | Tokens, primitives (Button, Input, Card, etc.) |\n| c3-211 | Form Components | foundation | planned | Form state, validation, field components |\n| c3-220 | Auth Pages | feature | planned | Login, OAuth callback, logout |\n| c3-221 | Workspace Pages | feature | planned | Workspace list, create, settings, members |\n| c3-222 | Board View | feature | planned | Kanban board, columns, drag-drop, real-time sync |\n| c3-223 | Task Panel | feature | planned | Task detail, comments, attachments, assignments |\n\n### Auxiliary Conventions\n\n| Convention | Description | Applies To |\n|------------|-------------|------------|\n| Component Structure | Feature folder pattern with index, types, hooks, components | All features |\n| State Management | React Query for server state, Zustand for UI state | All features |\n| Styling | Tailwind CSS with design token classes | All components |\n| Error Handling | Error boundaries per feature, toast notifications | All features |\n| Loading States | Skeleton components for async content | All features |\n\n## Fulfillment\n\nHow this container fulfills Context-level linkages:\n\n| Context Link | Fulfilling Components | Notes |\n|--------------|----------------------|-------|\n| A1/A2 → C2 | All UI components | User-facing interface |\n| C2 → C1 REST | API Client → Feature Pages | Data fetching and mutations |\n| C2 → C1 WebSocket | WebSocket Client → Board View | Real-time updates |\n\n## Route Structure\n\n```mermaid\ngraph TD\n    ROOT[\"/\"] --> AUTH[\"/auth/*\"]\n    ROOT --> APP[\"/app/*\"]\n\n    AUTH --> LOGIN[\"/auth/login\"]\n    AUTH --> CALLBACK[\"/auth/callback\"]\n\n    APP --> WORKSPACES[\"/app/workspaces\"]\n    APP --> WS_DETAIL[\"/app/workspaces/:id\"]\n    WS_DETAIL --> BOARDS[\"/app/workspaces/:id/boards\"]\n    WS_DETAIL --> SETTINGS[\"/app/workspaces/:id/settings\"]\n    BOARDS --> BOARD[\"/app/workspaces/:wid/boards/:bid\"]\n    BOARD --> TASK[\"/app/.../boards/:bid/tasks/:tid\"]\n```\n\n| Route | Component | Auth Required | Description |\n|-------|-----------|---------------|-------------|\n| / | Landing | No | Marketing page, redirects if logged in |\n| /auth/login | Auth Pages | No | Login with Google |\n| /auth/callback | Auth Pages | No | OAuth callback handler |\n| /app/workspaces | Workspace Pages | Yes | List user's workspaces |\n| /app/workspaces/:id | Workspace Pages | Yes | Workspace dashboard |\n| /app/.../boards/:id | Board View | Yes | Kanban board with tasks |\n| /app/.../tasks/:id | Task Panel | Yes | Task detail (modal/panel) |\n\n## State Architecture\n\n```mermaid\ngraph LR\n    subgraph Server State\n        RQ[React Query Cache]\n    end\n\n    subgraph UI State\n        ZS[Zustand Store]\n    end\n\n    subgraph Local\n        LS[LocalStorage]\n    end\n\n    API[API Server] -->|fetch| RQ\n    RQ -->|mutations| API\n    WS[WebSocket] -->|events| RQ\n\n    ZS -->|theme, sidebar| UI[UI Components]\n    LS -->|persist| ZS\n    LS -->|tokens| AUTH[Auth Provider]\n```\n\n| State Type | Solution | Examples |\n|------------|----------|----------|\n| Server data | React Query | Workspaces, boards, tasks |\n| Real-time sync | React Query + WebSocket | Task updates, presence |\n| UI preferences | Zustand + localStorage | Theme, sidebar collapsed |\n| Auth tokens | localStorage + Auth Provider | JWT, refresh token |\n| Form state | React Hook Form | Create task, edit workspace |\n\n## Real-time Integration\n\n| Event | Source | Handler | UI Update |\n|-------|--------|---------|-----------|\n| task.created | WebSocket | React Query invalidation | Add to column |\n| task.updated | WebSocket | React Query cache update | Update in place |\n| task.moved | WebSocket | React Query cache update | Animate to new position |\n| task.deleted | WebSocket | React Query cache removal | Remove from column |\n| presence.join | WebSocket | Zustand update | Show avatar |\n| presence.leave | WebSocket | Zustand update | Remove avatar |\n\n## Linkages\n\n| From | To | Interaction | Reasoning |\n|------|-----|-------------|-----------|\n| Router | Auth Provider | Route guards | Protected routes check auth state |\n| Auth Provider | API Client | Token injection | All requests include auth header |\n| Feature Pages | API Client | Data fetching | CRUD operations via REST |\n| Board View | WebSocket Client | Real-time sync | Live updates for collaboration |\n| All Components | Design System | UI primitives | Consistent look and feel |\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:38:43.782Z",
+      "event": "PreToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Initialize C3 directory structure for TaskFlow",
+            "status": "completed",
+            "activeForm": "Initializing C3 directory structure"
+          },
+          {
+            "content": "Create Context-level documentation (README.md)",
+            "status": "completed",
+            "activeForm": "Creating Context-level documentation"
+          },
+          {
+            "content": "Create ADR-000 architecture blueprint",
+            "status": "completed",
+            "activeForm": "Creating ADR-000 blueprint"
+          },
+          {
+            "content": "Document API container (c3-1)",
+            "status": "completed",
+            "activeForm": "Documenting API container"
+          },
+          {
+            "content": "Document Web SPA container (c3-2)",
+            "status": "completed",
+            "activeForm": "Documenting Web SPA container"
+          },
+          {
+            "content": "Document Worker container (c3-3)",
+            "status": "in_progress",
+            "activeForm": "Documenting Worker container"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:38:43.918Z",
+      "event": "PostToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Initialize C3 directory structure for TaskFlow",
+            "status": "completed",
+            "activeForm": "Initializing C3 directory structure"
+          },
+          {
+            "content": "Create Context-level documentation (README.md)",
+            "status": "completed",
+            "activeForm": "Creating Context-level documentation"
+          },
+          {
+            "content": "Create ADR-000 architecture blueprint",
+            "status": "completed",
+            "activeForm": "Creating ADR-000 blueprint"
+          },
+          {
+            "content": "Document API container (c3-1)",
+            "status": "completed",
+            "activeForm": "Documenting API container"
+          },
+          {
+            "content": "Document Web SPA container (c3-2)",
+            "status": "completed",
+            "activeForm": "Documenting Web SPA container"
+          },
+          {
+            "content": "Document Worker container (c3-3)",
+            "status": "in_progress",
+            "activeForm": "Documenting Worker container"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:38:48.045Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.xVDUmpSK7j/.c3/c3-3-worker/README.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:38:48.193Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.xVDUmpSK7j/.c3/c3-3-worker/README.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:39:24.427Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.xVDUmpSK7j/.c3/c3-3-worker/README.md",
+        "content": "---\nid: c3-3\nc3-version: 3\ntitle: Background Worker\ntype: container\nparent: c3-0\nsummary: Background job processor for async tasks (emails, file processing)\n---\n\n# Background Worker\n\n## Goal\n\nThe Background Worker handles asynchronous operations that should not block API responses. It processes jobs from a Redis queue for email delivery, file processing, and scheduled maintenance tasks.\n\n## Overview\n\n```mermaid\ngraph TB\n    subgraph Worker Process\n        subgraph Foundation\n            F1[Job Runner]\n            F2[Redis Queue Client]\n            F3[Database Pool]\n            F4[Logger]\n        end\n\n        subgraph Job Handlers\n            J1[Email Handler]\n            J2[File Handler]\n            J3[Cleanup Handler]\n            J4[Notification Handler]\n        end\n    end\n\n    subgraph External\n        REDIS[(Redis Queue)]\n        PG[(PostgreSQL)]\n        EMAIL[Email Service]\n        S3[File Storage]\n    end\n\n    subgraph Source\n        API[API Server - c3-1]\n    end\n\n    API -->|enqueue| REDIS\n    F2 -->|poll| REDIS\n    F1 --> F2\n    F1 --> J1\n    F1 --> J2\n    F1 --> J3\n    F1 --> J4\n\n    J1 --> EMAIL\n    J2 --> S3\n    J2 --> F3\n    J3 --> F3\n    J4 --> F3\n\n    F3 --> PG\n```\n\n## Components\n\n| ID | Name | Category | Status | Responsibility |\n|----|------|----------|--------|----------------|\n| c3-301 | Job Runner | foundation | planned | Job polling, execution, retry logic, concurrency control |\n| c3-302 | Redis Queue Client | foundation | planned | Queue connection, job dequeue, completion/failure reporting |\n| c3-303 | Database Pool | foundation | planned | PostgreSQL connection pooling (shared with API) |\n| c3-304 | Logger | foundation | planned | Structured logging for job execution and failures |\n| c3-310 | Email Handler | feature | planned | Send workspace invites, task notifications, digests |\n| c3-311 | File Handler | feature | planned | Process uploads, generate thumbnails, virus scan |\n| c3-312 | Cleanup Handler | feature | planned | Delete orphaned files, expire old sessions, archive data |\n| c3-313 | Notification Handler | feature | planned | Build and send in-app notification digests |\n\n### Auxiliary Conventions\n\n| Convention | Description | Applies To |\n|------------|-------------|------------|\n| Job Idempotency | All jobs must be safe to retry | All handlers |\n| Structured Logging | Every job logs start, completion, failure with job_id | All handlers |\n| Timeout Handling | Jobs have max execution time, configurable per type | Job Runner |\n| Dead Letter Queue | Failed jobs after max retries go to DLQ | Job Runner |\n\n## Fulfillment\n\nHow this container fulfills Context-level linkages:\n\n| Context Link | Fulfilling Components | Notes |\n|--------------|----------------------|-------|\n| C1 → C3 (job queue) | Redis Queue Client, Job Runner | Receives jobs from API |\n| C3 → E2 (PostgreSQL) | Database Pool → Handlers | Data access for job processing |\n| C3 → E3 (Redis) | Redis Queue Client | Queue operations |\n| C3 → E4 (Email) | Email Handler | Transactional email delivery |\n| C3 → E5 (Storage) | File Handler | Attachment processing |\n\n## Job Types\n\n```mermaid\ngraph LR\n    subgraph Priority High\n        H1[workspace.invite]\n        H2[task.assigned]\n    end\n\n    subgraph Priority Normal\n        N1[file.process]\n        N2[notification.digest]\n    end\n\n    subgraph Priority Low\n        L1[cleanup.sessions]\n        L2[cleanup.orphaned_files]\n    end\n```\n\n| Job Type | Handler | Priority | Max Retries | Timeout |\n|----------|---------|----------|-------------|---------|\n| workspace.invite | Email | high | 3 | 30s |\n| task.assigned | Email | high | 3 | 30s |\n| task.commented | Email | normal | 3 | 30s |\n| file.process | File | normal | 2 | 120s |\n| file.delete | File | normal | 3 | 30s |\n| notification.digest | Notification | normal | 2 | 60s |\n| cleanup.sessions | Cleanup | low | 1 | 300s |\n| cleanup.orphaned_files | Cleanup | low | 1 | 300s |\n\n## Job Payload Structure\n\n| Field | Type | Description |\n|-------|------|-------------|\n| id | UUID | Unique job identifier |\n| type | string | Job type (e.g., workspace.invite) |\n| payload | object | Type-specific data |\n| attempts | number | Current attempt count |\n| created_at | timestamp | Job creation time |\n| scheduled_for | timestamp | Optional: delayed execution |\n\n## Retry Strategy\n\n```mermaid\nstateDiagram-v2\n    [*] --> Queued\n    Queued --> Processing: dequeue\n    Processing --> Completed: success\n    Processing --> Failed: error\n    Failed --> Queued: retry (attempts < max)\n    Failed --> DeadLetter: retry (attempts >= max)\n    Completed --> [*]\n    DeadLetter --> [*]\n```\n\n| Failure Type | Behavior |\n|--------------|----------|\n| Transient (network, timeout) | Exponential backoff retry |\n| Permanent (invalid data) | Move to DLQ immediately |\n| Rate limited | Retry after rate limit window |\n\n## Scaling Considerations\n\n| Aspect | Current | Future |\n|--------|---------|--------|\n| Concurrency | Single process, configurable workers | Multiple processes |\n| Queue | Single Redis queue | Priority queues per type |\n| Monitoring | Logs + metrics | Dashboard, alerting |\n\n## Linkages\n\n| From | To | Interaction | Reasoning |\n|------|-----|-------------|-----------|\n| Job Runner | Redis Queue Client | Poll for jobs | Centralized job dequeue |\n| Job Runner | Handlers | Execute jobs | Route by job type |\n| Email Handler | Email Service (E4) | Send emails | External API call |\n| File Handler | File Storage (E5) | Store/retrieve files | S3 API |\n| All Handlers | Database Pool | Data queries | Job-related data access |\n| All Handlers | Logger | Structured logs | Observability |\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:39:24.583Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.xVDUmpSK7j/.c3/c3-3-worker/README.md",
+        "content": "---\nid: c3-3\nc3-version: 3\ntitle: Background Worker\ntype: container\nparent: c3-0\nsummary: Background job processor for async tasks (emails, file processing)\n---\n\n# Background Worker\n\n## Goal\n\nThe Background Worker handles asynchronous operations that should not block API responses. It processes jobs from a Redis queue for email delivery, file processing, and scheduled maintenance tasks.\n\n## Overview\n\n```mermaid\ngraph TB\n    subgraph Worker Process\n        subgraph Foundation\n            F1[Job Runner]\n            F2[Redis Queue Client]\n            F3[Database Pool]\n            F4[Logger]\n        end\n\n        subgraph Job Handlers\n            J1[Email Handler]\n            J2[File Handler]\n            J3[Cleanup Handler]\n            J4[Notification Handler]\n        end\n    end\n\n    subgraph External\n        REDIS[(Redis Queue)]\n        PG[(PostgreSQL)]\n        EMAIL[Email Service]\n        S3[File Storage]\n    end\n\n    subgraph Source\n        API[API Server - c3-1]\n    end\n\n    API -->|enqueue| REDIS\n    F2 -->|poll| REDIS\n    F1 --> F2\n    F1 --> J1\n    F1 --> J2\n    F1 --> J3\n    F1 --> J4\n\n    J1 --> EMAIL\n    J2 --> S3\n    J2 --> F3\n    J3 --> F3\n    J4 --> F3\n\n    F3 --> PG\n```\n\n## Components\n\n| ID | Name | Category | Status | Responsibility |\n|----|------|----------|--------|----------------|\n| c3-301 | Job Runner | foundation | planned | Job polling, execution, retry logic, concurrency control |\n| c3-302 | Redis Queue Client | foundation | planned | Queue connection, job dequeue, completion/failure reporting |\n| c3-303 | Database Pool | foundation | planned | PostgreSQL connection pooling (shared with API) |\n| c3-304 | Logger | foundation | planned | Structured logging for job execution and failures |\n| c3-310 | Email Handler | feature | planned | Send workspace invites, task notifications, digests |\n| c3-311 | File Handler | feature | planned | Process uploads, generate thumbnails, virus scan |\n| c3-312 | Cleanup Handler | feature | planned | Delete orphaned files, expire old sessions, archive data |\n| c3-313 | Notification Handler | feature | planned | Build and send in-app notification digests |\n\n### Auxiliary Conventions\n\n| Convention | Description | Applies To |\n|------------|-------------|------------|\n| Job Idempotency | All jobs must be safe to retry | All handlers |\n| Structured Logging | Every job logs start, completion, failure with job_id | All handlers |\n| Timeout Handling | Jobs have max execution time, configurable per type | Job Runner |\n| Dead Letter Queue | Failed jobs after max retries go to DLQ | Job Runner |\n\n## Fulfillment\n\nHow this container fulfills Context-level linkages:\n\n| Context Link | Fulfilling Components | Notes |\n|--------------|----------------------|-------|\n| C1 → C3 (job queue) | Redis Queue Client, Job Runner | Receives jobs from API |\n| C3 → E2 (PostgreSQL) | Database Pool → Handlers | Data access for job processing |\n| C3 → E3 (Redis) | Redis Queue Client | Queue operations |\n| C3 → E4 (Email) | Email Handler | Transactional email delivery |\n| C3 → E5 (Storage) | File Handler | Attachment processing |\n\n## Job Types\n\n```mermaid\ngraph LR\n    subgraph Priority High\n        H1[workspace.invite]\n        H2[task.assigned]\n    end\n\n    subgraph Priority Normal\n        N1[file.process]\n        N2[notification.digest]\n    end\n\n    subgraph Priority Low\n        L1[cleanup.sessions]\n        L2[cleanup.orphaned_files]\n    end\n```\n\n| Job Type | Handler | Priority | Max Retries | Timeout |\n|----------|---------|----------|-------------|---------|\n| workspace.invite | Email | high | 3 | 30s |\n| task.assigned | Email | high | 3 | 30s |\n| task.commented | Email | normal | 3 | 30s |\n| file.process | File | normal | 2 | 120s |\n| file.delete | File | normal | 3 | 30s |\n| notification.digest | Notification | normal | 2 | 60s |\n| cleanup.sessions | Cleanup | low | 1 | 300s |\n| cleanup.orphaned_files | Cleanup | low | 1 | 300s |\n\n## Job Payload Structure\n\n| Field | Type | Description |\n|-------|------|-------------|\n| id | UUID | Unique job identifier |\n| type | string | Job type (e.g., workspace.invite) |\n| payload | object | Type-specific data |\n| attempts | number | Current attempt count |\n| created_at | timestamp | Job creation time |\n| scheduled_for | timestamp | Optional: delayed execution |\n\n## Retry Strategy\n\n```mermaid\nstateDiagram-v2\n    [*] --> Queued\n    Queued --> Processing: dequeue\n    Processing --> Completed: success\n    Processing --> Failed: error\n    Failed --> Queued: retry (attempts < max)\n    Failed --> DeadLetter: retry (attempts >= max)\n    Completed --> [*]\n    DeadLetter --> [*]\n```\n\n| Failure Type | Behavior |\n|--------------|----------|\n| Transient (network, timeout) | Exponential backoff retry |\n| Permanent (invalid data) | Move to DLQ immediately |\n| Rate limited | Retry after rate limit window |\n\n## Scaling Considerations\n\n| Aspect | Current | Future |\n|--------|---------|--------|\n| Concurrency | Single process, configurable workers | Multiple processes |\n| Queue | Single Redis queue | Priority queues per type |\n| Monitoring | Logs + metrics | Dashboard, alerting |\n\n## Linkages\n\n| From | To | Interaction | Reasoning |\n|------|-----|-------------|-----------|\n| Job Runner | Redis Queue Client | Poll for jobs | Centralized job dequeue |\n| Job Runner | Handlers | Execute jobs | Route by job type |\n| Email Handler | Email Service (E4) | Send emails | External API call |\n| File Handler | File Storage (E5) | Store/retrieve files | S3 API |\n| All Handlers | Database Pool | Data queries | Job-related data access |\n| All Handlers | Logger | Structured logs | Observability |\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:39:32.463Z",
+      "event": "PreToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Initialize C3 directory structure for TaskFlow",
+            "status": "completed",
+            "activeForm": "Initializing C3 directory structure"
+          },
+          {
+            "content": "Create Context-level documentation (README.md)",
+            "status": "completed",
+            "activeForm": "Creating Context-level documentation"
+          },
+          {
+            "content": "Create ADR-000 architecture blueprint",
+            "status": "completed",
+            "activeForm": "Creating ADR-000 blueprint"
+          },
+          {
+            "content": "Document API container (c3-1)",
+            "status": "completed",
+            "activeForm": "Documenting API container"
+          },
+          {
+            "content": "Document Web SPA container (c3-2)",
+            "status": "completed",
+            "activeForm": "Documenting Web SPA container"
+          },
+          {
+            "content": "Document Worker container (c3-3)",
+            "status": "completed",
+            "activeForm": "Documenting Worker container"
+          },
+          {
+            "content": "Update ADR-000 progress and verification",
+            "status": "in_progress",
+            "activeForm": "Updating ADR-000 progress"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:39:32.602Z",
+      "event": "PostToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Initialize C3 directory structure for TaskFlow",
+            "status": "completed",
+            "activeForm": "Initializing C3 directory structure"
+          },
+          {
+            "content": "Create Context-level documentation (README.md)",
+            "status": "completed",
+            "activeForm": "Creating Context-level documentation"
+          },
+          {
+            "content": "Create ADR-000 architecture blueprint",
+            "status": "completed",
+            "activeForm": "Creating ADR-000 blueprint"
+          },
+          {
+            "content": "Document API container (c3-1)",
+            "status": "completed",
+            "activeForm": "Documenting API container"
+          },
+          {
+            "content": "Document Web SPA container (c3-2)",
+            "status": "completed",
+            "activeForm": "Documenting Web SPA container"
+          },
+          {
+            "content": "Document Worker container (c3-3)",
+            "status": "completed",
+            "activeForm": "Documenting Worker container"
+          },
+          {
+            "content": "Update ADR-000 progress and verification",
+            "status": "in_progress",
+            "activeForm": "Updating ADR-000 progress"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:39:52.362Z",
+      "event": "PreToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.xVDUmpSK7j/.c3/adr/adr-00000000-c3-adoption.md",
+        "old_string": "## Verification\n\n- [x] Context documentation complete (c3-0)\n- [ ] Container documentation complete (c3-1, c3-2, c3-3)\n- [ ] Component documentation started\n- [ ] Diagrams use consistent IDs\n- [ ] All linkages have reasoning\n\n## Adoption Progress\n\n| Level | Category | Status | Documented | Remaining |\n|-------|----------|--------|------------|-----------|\n| Context | - | Complete | 1 | 0 |\n| Containers | - | In Progress | 0 | 3 |\n| Components | Foundation | Pending | 0 | TBD |\n| Components | Auxiliary | Pending | 0 | TBD |\n| Components | Feature | Pending | 0 | TBD |\n\n## Audit Record\n\n| Phase | Date | Notes |\n|-------|------|-------|\n| Blueprint created | 2026-01-12 | Initial architecture design |",
+        "new_string": "## Verification\n\n- [x] Context documentation complete (c3-0)\n- [x] Container documentation complete (c3-1, c3-2, c3-3)\n- [ ] Component documentation started\n- [x] Diagrams use consistent IDs\n- [x] All linkages have reasoning\n\n## Adoption Progress\n\n| Level | Category | Status | Documented | Remaining |\n|-------|----------|--------|------------|-----------|\n| Context | - | Complete | 1 | 0 |\n| Containers | - | Complete | 3 | 0 |\n| Components | Foundation | Pending | 0 | 18 |\n| Components | Auxiliary | Pending | 0 | (inline) |\n| Components | Feature | Pending | 0 | 15 |\n\n## Component Inventory Summary\n\n| Container | Foundation | Feature | Total |\n|-----------|------------|---------|-------|\n| c3-1: API | 6 | 5 | 11 |\n| c3-2: Web | 8 | 4 | 12 |\n| c3-3: Worker | 4 | 4 | 8 |\n| **Total** | **18** | **13** | **31** |\n\n## Audit Record\n\n| Phase | Date | Notes |\n|-------|------|-------|\n| Blueprint created | 2026-01-12 | Initial architecture design |\n| Containers documented | 2026-01-12 | All 3 containers with component inventories |",
+        "replace_all": false
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:39:52.455Z",
+      "event": "PostToolUse",
+      "tool": "Edit",
+      "input": {
+        "file_path": "/tmp/tmp.xVDUmpSK7j/.c3/adr/adr-00000000-c3-adoption.md",
+        "old_string": "## Verification\n\n- [x] Context documentation complete (c3-0)\n- [ ] Container documentation complete (c3-1, c3-2, c3-3)\n- [ ] Component documentation started\n- [ ] Diagrams use consistent IDs\n- [ ] All linkages have reasoning\n\n## Adoption Progress\n\n| Level | Category | Status | Documented | Remaining |\n|-------|----------|--------|------------|-----------|\n| Context | - | Complete | 1 | 0 |\n| Containers | - | In Progress | 0 | 3 |\n| Components | Foundation | Pending | 0 | TBD |\n| Components | Auxiliary | Pending | 0 | TBD |\n| Components | Feature | Pending | 0 | TBD |\n\n## Audit Record\n\n| Phase | Date | Notes |\n|-------|------|-------|\n| Blueprint created | 2026-01-12 | Initial architecture design |",
+        "new_string": "## Verification\n\n- [x] Context documentation complete (c3-0)\n- [x] Container documentation complete (c3-1, c3-2, c3-3)\n- [ ] Component documentation started\n- [x] Diagrams use consistent IDs\n- [x] All linkages have reasoning\n\n## Adoption Progress\n\n| Level | Category | Status | Documented | Remaining |\n|-------|----------|--------|------------|-----------|\n| Context | - | Complete | 1 | 0 |\n| Containers | - | Complete | 3 | 0 |\n| Components | Foundation | Pending | 0 | 18 |\n| Components | Auxiliary | Pending | 0 | (inline) |\n| Components | Feature | Pending | 0 | 15 |\n\n## Component Inventory Summary\n\n| Container | Foundation | Feature | Total |\n|-----------|------------|---------|-------|\n| c3-1: API | 6 | 5 | 11 |\n| c3-2: Web | 8 | 4 | 12 |\n| c3-3: Worker | 4 | 4 | 8 |\n| **Total** | **18** | **13** | **31** |\n\n## Audit Record\n\n| Phase | Date | Notes |\n|-------|------|-------|\n| Blueprint created | 2026-01-12 | Initial architecture design |\n| Containers documented | 2026-01-12 | All 3 containers with component inventories |",
+        "replace_all": false
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:39:59.113Z",
+      "event": "PreToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Initialize C3 directory structure for TaskFlow",
+            "status": "completed",
+            "activeForm": "Initializing C3 directory structure"
+          },
+          {
+            "content": "Create Context-level documentation (README.md)",
+            "status": "completed",
+            "activeForm": "Creating Context-level documentation"
+          },
+          {
+            "content": "Create ADR-000 architecture blueprint",
+            "status": "completed",
+            "activeForm": "Creating ADR-000 blueprint"
+          },
+          {
+            "content": "Document API container (c3-1)",
+            "status": "completed",
+            "activeForm": "Documenting API container"
+          },
+          {
+            "content": "Document Web SPA container (c3-2)",
+            "status": "completed",
+            "activeForm": "Documenting Web SPA container"
+          },
+          {
+            "content": "Document Worker container (c3-3)",
+            "status": "completed",
+            "activeForm": "Documenting Worker container"
+          },
+          {
+            "content": "Update ADR-000 progress and verification",
+            "status": "completed",
+            "activeForm": "Updating ADR-000 progress"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:39:59.236Z",
+      "event": "PostToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Initialize C3 directory structure for TaskFlow",
+            "status": "completed",
+            "activeForm": "Initializing C3 directory structure"
+          },
+          {
+            "content": "Create Context-level documentation (README.md)",
+            "status": "completed",
+            "activeForm": "Creating Context-level documentation"
+          },
+          {
+            "content": "Create ADR-000 architecture blueprint",
+            "status": "completed",
+            "activeForm": "Creating ADR-000 blueprint"
+          },
+          {
+            "content": "Document API container (c3-1)",
+            "status": "completed",
+            "activeForm": "Documenting API container"
+          },
+          {
+            "content": "Document Web SPA container (c3-2)",
+            "status": "completed",
+            "activeForm": "Documenting Web SPA container"
+          },
+          {
+            "content": "Document Worker container (c3-3)",
+            "status": "completed",
+            "activeForm": "Documenting Worker container"
+          },
+          {
+            "content": "Update ADR-000 progress and verification",
+            "status": "completed",
+            "activeForm": "Updating ADR-000 progress"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:40:10.094Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "curl -s -X POST https://diashort.apps.quickable.co/render \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"source\": \"graph TB\\n    subgraph Actors\\n        A1[Team Member]\\n        A2[Workspace Admin]\\n        A3[Mobile App - Future]\\n    end\\n\\n    subgraph TaskFlow System\\n        C1[c3-1: API Server]\\n        C2[c3-2: Web SPA]\\n        C3[c3-3: Worker]\\n    end\\n\\n    subgraph External Systems\\n        E1[Google OAuth]\\n        E2[(PostgreSQL)]\\n        E3[(Redis)]\\n        E4[Email Service]\\n        E5[File Storage]\\n    end\\n\\n    A1 --> C2\\n    A2 --> C2\\n    A3 -.-> C1\\n\\n    C2 -->|REST + WebSocket| C1\\n    C1 -->|Jobs| C3\\n\\n    C1 --> E1\\n    C1 --> E2\\n    C1 --> E3\\n    C3 --> E2\\n    C3 --> E3\\n    C3 --> E4\\n    C3 --> E5\",\n    \"format\": \"mermaid\"\n  }'",
+        "description": "Generate visual diagram of TaskFlow architecture"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:40:11.474Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "curl -s -X POST https://diashort.apps.quickable.co/render \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"source\": \"graph TB\\n    subgraph Actors\\n        A1[Team Member]\\n        A2[Workspace Admin]\\n        A3[Mobile App - Future]\\n    end\\n\\n    subgraph TaskFlow System\\n        C1[c3-1: API Server]\\n        C2[c3-2: Web SPA]\\n        C3[c3-3: Worker]\\n    end\\n\\n    subgraph External Systems\\n        E1[Google OAuth]\\n        E2[(PostgreSQL)]\\n        E3[(Redis)]\\n        E4[Email Service]\\n        E5[File Storage]\\n    end\\n\\n    A1 --> C2\\n    A2 --> C2\\n    A3 -.-> C1\\n\\n    C2 -->|REST + WebSocket| C1\\n    C1 -->|Jobs| C3\\n\\n    C1 --> E1\\n    C1 --> E2\\n    C1 --> E3\\n    C3 --> E2\\n    C3 --> E3\\n    C3 --> E4\\n    C3 --> E5\",\n    \"format\": \"mermaid\"\n  }'",
+        "description": "Generate visual diagram of TaskFlow architecture"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:40:18.530Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "tree /tmp/tmp.xVDUmpSK7j/.c3",
+        "description": "Show C3 directory structure"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:40:19.308Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "tree /tmp/tmp.xVDUmpSK7j/.c3",
+        "description": "Show C3 directory structure"
+      }
+    }
+  ],
+  "judgment": {
+    "pass": true,
+    "score": 100,
+    "expectations": [
+      {
+        "text": "ADR-000 exists and serves as the architectural blueprint",
+        "pass": true,
+        "reasoning": "ADR-00000000-c3-adoption.md exists and serves as a comprehensive architectural blueprint. It includes the technology stack, container responsibilities, domain model with ER diagram, API structure, real-time architecture, security considerations, module boundaries, implementation phases, and consequences analysis."
+      },
+      {
+        "text": "Context README describes TaskFlow's purpose and high-level architecture",
+        "pass": true,
+        "reasoning": ".c3/README.md (c3-0) clearly describes TaskFlow as a 'Task management SaaS for small teams with real-time collaboration' and includes a high-level architecture diagram showing actors, containers (API Server, Web SPA, Worker), and external systems (Google OAuth, PostgreSQL, Redis, Email Service, File Storage)."
+      },
+      {
+        "text": "At least 3 containers are defined (frontend, API, database or similar)",
+        "pass": true,
+        "reasoning": "Three containers are fully documented: c3-1 (API Server - Node.js/Express backend), c3-2 (Web SPA - React single-page application), and c3-3 (Background Worker - job processor). Each has its own README.md with detailed component inventories, responsibilities, and linkages."
+      },
+      {
+        "text": "Real-time/WebSocket considerations are documented",
+        "pass": true,
+        "reasoning": "Real-time architecture is extensively documented across multiple files. The ADR includes a WebSocket sequence diagram showing Redis pub/sub for scaling. The API container (c3-1) has WebSocket Manager and Collaboration Module components. The Web SPA (c3-2) has WebSocket Client and real-time integration table documenting events like task.created, task.moved, presence.join, etc."
+      },
+      {
+        "text": "Component placeholders exist for key features (auth, tasks, teams)",
+        "pass": true,
+        "reasoning": "Component placeholders are documented in each container README: API has Auth Module (c3-110), Workspace Module (c3-111), Board Module (c3-112), Task Module (c3-113), and Collaboration Module (c3-114). Web SPA has Auth Pages (c3-220), Workspace Pages (c3-221), Board View (c3-222), and Task Panel (c3-223). Worker has Email Handler (c3-310), File Handler (c3-311), etc. All are marked with 'planned' status."
+      }
+    ],
+    "summary": "The output fully meets all expectations for a greenfield architecture design. ADR-000 serves as a comprehensive blueprint with detailed diagrams, and the three containers (API, Web, Worker) are well-documented with component inventories covering auth, tasks, teams, and real-time collaboration features."
+  }
+}

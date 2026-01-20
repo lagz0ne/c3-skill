@@ -1,0 +1,329 @@
+{
+  "name": "Onboard simple Express app",
+  "pass": false,
+  "score": 40,
+  "duration": 91420,
+  "trace": [
+    {
+      "timestamp": "2026-01-12T11:25:27.252Z",
+      "event": "PreToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:onboard"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:25:27.914Z",
+      "event": "PostToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:onboard"
+      },
+      "result": {
+        "success": true,
+        "commandName": "c3-skill:onboard",
+        "allowedTools": [
+          "Bash(rm:*)",
+          "Bash(test:*)",
+          "Bash(PROJECT=*)",
+          "Read",
+          "Glob",
+          "Grep",
+          "Write",
+          "Edit",
+          "AskUserQuestion",
+          "Skill"
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:25:36.451Z",
+      "event": "PreToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/*"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:25:36.507Z",
+      "event": "PostToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/*"
+      },
+      "result": {
+        "filenames": [
+          "/tmp/tmp.81mtTvqlRY/package.json",
+          "/tmp/tmp.81mtTvqlRY/src/middleware/auth.ts",
+          "/tmp/tmp.81mtTvqlRY/src/index.ts",
+          "/tmp/tmp.81mtTvqlRY/src/routes/users.ts",
+          "/tmp/tmp.81mtTvqlRY/src/routes/products.ts"
+        ],
+        "durationMs": 11,
+        "numFiles": 5,
+        "truncated": false
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:25:40.105Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.81mtTvqlRY/package.json"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:25:40.105Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.81mtTvqlRY/src/index.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:25:40.106Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.81mtTvqlRY/src/middleware/auth.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:25:40.106Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.81mtTvqlRY/src/routes/users.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:25:40.106Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.81mtTvqlRY/src/routes/products.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:25:40.134Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.81mtTvqlRY/package.json"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.81mtTvqlRY/package.json",
+          "content": "{\n  \"name\": \"simple-shop-api\",\n  \"version\": \"1.0.0\",\n  \"type\": \"module\",\n  \"scripts\": {\n    \"start\": \"node src/index.js\"\n  },\n  \"dependencies\": {\n    \"express\": \"^4.18.0\"\n  }\n}\n",
+          "numLines": 12,
+          "startLine": 1,
+          "totalLines": 12
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:25:40.135Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.81mtTvqlRY/src/index.ts"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.81mtTvqlRY/src/index.ts",
+          "content": "import express from 'express';\nimport { authMiddleware } from './middleware/auth';\nimport { usersRouter } from './routes/users';\nimport { productsRouter } from './routes/products';\n\nconst app = express();\n\napp.use(express.json());\napp.use(authMiddleware);\n\napp.use('/users', usersRouter);\napp.use('/products', productsRouter);\n\napp.listen(3000, () => {\n  console.log('Simple Shop API running on port 3000');\n});\n",
+          "numLines": 17,
+          "startLine": 1,
+          "totalLines": 17
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:25:40.135Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.81mtTvqlRY/src/middleware/auth.ts"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.81mtTvqlRY/src/middleware/auth.ts",
+          "content": "import { Request, Response, NextFunction } from 'express';\n\nexport function authMiddleware(req: Request, res: Response, next: NextFunction) {\n  const token = req.headers.authorization?.replace('Bearer ', '');\n\n  if (!token) {\n    return res.status(401).json({ error: 'No token provided' });\n  }\n\n  // Simple token validation (in real app, verify JWT)\n  if (token === 'invalid') {\n    return res.status(401).json({ error: 'Invalid token' });\n  }\n\n  next();\n}\n",
+          "numLines": 17,
+          "startLine": 1,
+          "totalLines": 17
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:25:40.136Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.81mtTvqlRY/src/routes/users.ts"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.81mtTvqlRY/src/routes/users.ts",
+          "content": "import { Router } from 'express';\n\nexport const usersRouter = Router();\n\nconst users = [\n  { id: 1, name: 'Alice', email: 'alice@example.com' },\n  { id: 2, name: 'Bob', email: 'bob@example.com' },\n];\n\nusersRouter.get('/', (req, res) => {\n  res.json(users);\n});\n\nusersRouter.get('/:id', (req, res) => {\n  const user = users.find(u => u.id === parseInt(req.params.id));\n  if (!user) {\n    return res.status(404).json({ error: 'User not found' });\n  }\n  res.json(user);\n});\n\nusersRouter.post('/', (req, res) => {\n  const { name, email } = req.body;\n  const newUser = { id: users.length + 1, name, email };\n  users.push(newUser);\n  res.status(201).json(newUser);\n});\n",
+          "numLines": 28,
+          "startLine": 1,
+          "totalLines": 28
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:25:40.137Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.81mtTvqlRY/src/routes/products.ts"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.81mtTvqlRY/src/routes/products.ts",
+          "content": "import { Router } from 'express';\n\nexport const productsRouter = Router();\n\nconst products = [\n  { id: 1, name: 'Widget', price: 9.99 },\n  { id: 2, name: 'Gadget', price: 19.99 },\n];\n\nproductsRouter.get('/', (req, res) => {\n  res.json(products);\n});\n\nproductsRouter.get('/:id', (req, res) => {\n  const product = products.find(p => p.id === parseInt(req.params.id));\n  if (!product) {\n    return res.status(404).json({ error: 'Product not found' });\n  }\n  res.json(product);\n});\n\nproductsRouter.post('/', (req, res) => {\n  const { name, price } = req.body;\n  const newProduct = { id: products.length + 1, name, price };\n  products.push(newProduct);\n  res.status(201).json(newProduct);\n});\n",
+          "numLines": 28,
+          "startLine": 1,
+          "totalLines": 28
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:25:44.223Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "mkdir -p /tmp/tmp.81mtTvqlRY/.c3/adr",
+        "description": "Create C3 directory structure"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:25:44.262Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "mkdir -p /tmp/tmp.81mtTvqlRY/.c3/adr",
+        "description": "Create C3 directory structure"
+      },
+      "result": {
+        "stdout": "",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:26:26.417Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.81mtTvqlRY/.c3/architecture.yaml",
+        "content": "# C3 Architecture Documentation\n# Simple Shop API - Express.js REST API\n# Generated: 2024\n\n# =============================================================================\n# CONTEXT LEVEL (C1) - System Boundary\n# =============================================================================\nsystem:\n  id: simple-shop-api\n  name: Simple Shop API\n  description: |\n    A lightweight Express.js REST API providing user and product management\n    capabilities for e-commerce applications. Exposes RESTful endpoints for\n    CRUD operations on users and products with bearer token authentication.\n  type: api\n\n  # External actors that interact with this system\n  actors:\n    - id: api-client\n      name: API Client\n      description: External applications or services consuming the REST API\n      type: external\n\n# =============================================================================\n# CONTAINER LEVEL (C2) - Deployable Units\n# =============================================================================\ncontainers:\n  - id: express-server\n    name: Express Server\n    description: |\n      Node.js Express application serving REST API endpoints.\n      Single deployable unit handling all HTTP requests.\n    technology: Node.js / Express.js 4.18\n    type: api\n    port: 3000\n    entrypoint: src/index.ts\n\n# =============================================================================\n# COMPONENT LEVEL (C3) - Internal Structure\n# =============================================================================\n\n# -----------------------------------------------------------------------------\n# Foundation Components (Infrastructure / Cross-cutting)\n# -----------------------------------------------------------------------------\nfoundation:\n  - id: c3-app\n    name: Application Bootstrap\n    description: |\n      Express application initialization and configuration.\n      Sets up middleware chain, mounts routers, and starts HTTP server.\n    type: entrypoint\n    path: src/index.ts\n    responsibilities:\n      - Initialize Express application\n      - Configure JSON body parsing\n      - Apply global middleware\n      - Mount feature routers\n      - Start HTTP server on port 3000\n    dependencies:\n      - c3-auth-middleware\n      - c3-users-router\n      - c3-products-router\n\n  - id: c3-auth-middleware\n    name: Auth Middleware\n    description: |\n      Global authentication middleware that validates bearer tokens\n      on all incoming requests before they reach route handlers.\n    type: middleware\n    path: src/middleware/auth.ts\n    responsibilities:\n      - Extract bearer token from Authorization header\n      - Validate token presence\n      - Reject requests with missing or invalid tokens\n      - Allow authenticated requests to proceed\n    security:\n      - Bearer token validation\n      - 401 response for unauthenticated requests\n\n# -----------------------------------------------------------------------------\n# Feature Components (Business Domains)\n# -----------------------------------------------------------------------------\nfeatures:\n  - id: c3-users\n    name: Users Feature\n    description: User management domain\n    components:\n      - id: c3-users-router\n        name: Users Router\n        description: |\n          RESTful API endpoints for user management.\n          Handles CRUD operations on user resources.\n        type: router\n        path: src/routes/users.ts\n        basePath: /users\n        endpoints:\n          - method: GET\n            path: /\n            description: List all users\n          - method: GET\n            path: /:id\n            description: Get user by ID\n          - method: POST\n            path: /\n            description: Create new user\n        dataModel:\n          entity: User\n          fields:\n            - name: id\n              type: number\n            - name: name\n              type: string\n            - name: email\n              type: string\n\n  - id: c3-products\n    name: Products Feature\n    description: Product catalog domain\n    components:\n      - id: c3-products-router\n        name: Products Router\n        description: |\n          RESTful API endpoints for product management.\n          Handles CRUD operations on product resources.\n        type: router\n        path: src/routes/products.ts\n        basePath: /products\n        endpoints:\n          - method: GET\n            path: /\n            description: List all products\n          - method: GET\n            path: /:id\n            description: Get product by ID\n          - method: POST\n            path: /\n            description: Create new product\n        dataModel:\n          entity: Product\n          fields:\n            - name: id\n              type: number\n            - name: name\n              type: string\n            - name: price\n              type: number\n\n# =============================================================================\n# ARCHITECTURAL PATTERNS & REFS\n# =============================================================================\nrefs:\n  patterns:\n    - id: ref-express-router\n      name: Express Router Pattern\n      description: |\n        Standard pattern for organizing Express routes.\n        Each feature domain gets its own Router instance mounted at a base path.\n      appliesTo:\n        - c3-users-router\n        - c3-products-router\n      example: |\n        export const featureRouter = Router();\n        featureRouter.get('/', handler);\n        featureRouter.get('/:id', handler);\n        featureRouter.post('/', handler);\n\n    - id: ref-middleware-chain\n      name: Middleware Chain Pattern\n      description: |\n        Express middleware applied globally via app.use().\n        Executes before route handlers in declaration order.\n      appliesTo:\n        - c3-auth-middleware\n\n    - id: ref-in-memory-store\n      name: In-Memory Data Store\n      description: |\n        Simple array-based data storage for development/demo.\n        Data persists only for the lifetime of the process.\n      appliesTo:\n        - c3-users-router\n        - c3-products-router\n      note: Replace with database in production\n\n# =============================================================================\n# DEPENDENCY GRAPH\n# =============================================================================\ndependencies:\n  external:\n    - name: express\n      version: ^4.18.0\n      purpose: Web framework for HTTP server and routing\n\n  internal:\n    - from: c3-app\n      to: c3-auth-middleware\n      type: uses\n      description: Applies auth middleware globally\n    - from: c3-app\n      to: c3-users-router\n      type: mounts\n      description: Mounts at /users\n    - from: c3-app\n      to: c3-products-router\n      type: mounts\n      description: Mounts at /products\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:26:26.452Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.81mtTvqlRY/.c3/architecture.yaml",
+        "content": "# C3 Architecture Documentation\n# Simple Shop API - Express.js REST API\n# Generated: 2024\n\n# =============================================================================\n# CONTEXT LEVEL (C1) - System Boundary\n# =============================================================================\nsystem:\n  id: simple-shop-api\n  name: Simple Shop API\n  description: |\n    A lightweight Express.js REST API providing user and product management\n    capabilities for e-commerce applications. Exposes RESTful endpoints for\n    CRUD operations on users and products with bearer token authentication.\n  type: api\n\n  # External actors that interact with this system\n  actors:\n    - id: api-client\n      name: API Client\n      description: External applications or services consuming the REST API\n      type: external\n\n# =============================================================================\n# CONTAINER LEVEL (C2) - Deployable Units\n# =============================================================================\ncontainers:\n  - id: express-server\n    name: Express Server\n    description: |\n      Node.js Express application serving REST API endpoints.\n      Single deployable unit handling all HTTP requests.\n    technology: Node.js / Express.js 4.18\n    type: api\n    port: 3000\n    entrypoint: src/index.ts\n\n# =============================================================================\n# COMPONENT LEVEL (C3) - Internal Structure\n# =============================================================================\n\n# -----------------------------------------------------------------------------\n# Foundation Components (Infrastructure / Cross-cutting)\n# -----------------------------------------------------------------------------\nfoundation:\n  - id: c3-app\n    name: Application Bootstrap\n    description: |\n      Express application initialization and configuration.\n      Sets up middleware chain, mounts routers, and starts HTTP server.\n    type: entrypoint\n    path: src/index.ts\n    responsibilities:\n      - Initialize Express application\n      - Configure JSON body parsing\n      - Apply global middleware\n      - Mount feature routers\n      - Start HTTP server on port 3000\n    dependencies:\n      - c3-auth-middleware\n      - c3-users-router\n      - c3-products-router\n\n  - id: c3-auth-middleware\n    name: Auth Middleware\n    description: |\n      Global authentication middleware that validates bearer tokens\n      on all incoming requests before they reach route handlers.\n    type: middleware\n    path: src/middleware/auth.ts\n    responsibilities:\n      - Extract bearer token from Authorization header\n      - Validate token presence\n      - Reject requests with missing or invalid tokens\n      - Allow authenticated requests to proceed\n    security:\n      - Bearer token validation\n      - 401 response for unauthenticated requests\n\n# -----------------------------------------------------------------------------\n# Feature Components (Business Domains)\n# -----------------------------------------------------------------------------\nfeatures:\n  - id: c3-users\n    name: Users Feature\n    description: User management domain\n    components:\n      - id: c3-users-router\n        name: Users Router\n        description: |\n          RESTful API endpoints for user management.\n          Handles CRUD operations on user resources.\n        type: router\n        path: src/routes/users.ts\n        basePath: /users\n        endpoints:\n          - method: GET\n            path: /\n            description: List all users\n          - method: GET\n            path: /:id\n            description: Get user by ID\n          - method: POST\n            path: /\n            description: Create new user\n        dataModel:\n          entity: User\n          fields:\n            - name: id\n              type: number\n            - name: name\n              type: string\n            - name: email\n              type: string\n\n  - id: c3-products\n    name: Products Feature\n    description: Product catalog domain\n    components:\n      - id: c3-products-router\n        name: Products Router\n        description: |\n          RESTful API endpoints for product management.\n          Handles CRUD operations on product resources.\n        type: router\n        path: src/routes/products.ts\n        basePath: /products\n        endpoints:\n          - method: GET\n            path: /\n            description: List all products\n          - method: GET\n            path: /:id\n            description: Get product by ID\n          - method: POST\n            path: /\n            description: Create new product\n        dataModel:\n          entity: Product\n          fields:\n            - name: id\n              type: number\n            - name: name\n              type: string\n            - name: price\n              type: number\n\n# =============================================================================\n# ARCHITECTURAL PATTERNS & REFS\n# =============================================================================\nrefs:\n  patterns:\n    - id: ref-express-router\n      name: Express Router Pattern\n      description: |\n        Standard pattern for organizing Express routes.\n        Each feature domain gets its own Router instance mounted at a base path.\n      appliesTo:\n        - c3-users-router\n        - c3-products-router\n      example: |\n        export const featureRouter = Router();\n        featureRouter.get('/', handler);\n        featureRouter.get('/:id', handler);\n        featureRouter.post('/', handler);\n\n    - id: ref-middleware-chain\n      name: Middleware Chain Pattern\n      description: |\n        Express middleware applied globally via app.use().\n        Executes before route handlers in declaration order.\n      appliesTo:\n        - c3-auth-middleware\n\n    - id: ref-in-memory-store\n      name: In-Memory Data Store\n      description: |\n        Simple array-based data storage for development/demo.\n        Data persists only for the lifetime of the process.\n      appliesTo:\n        - c3-users-router\n        - c3-products-router\n      note: Replace with database in production\n\n# =============================================================================\n# DEPENDENCY GRAPH\n# =============================================================================\ndependencies:\n  external:\n    - name: express\n      version: ^4.18.0\n      purpose: Web framework for HTTP server and routing\n\n  internal:\n    - from: c3-app\n      to: c3-auth-middleware\n      type: uses\n      description: Applies auth middleware globally\n    - from: c3-app\n      to: c3-users-router\n      type: mounts\n      description: Mounts at /users\n    - from: c3-app\n      to: c3-products-router\n      type: mounts\n      description: Mounts at /products\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.81mtTvqlRY/.c3/architecture.yaml",
+        "content": "# C3 Architecture Documentation\n# Simple Shop API - Express.js REST API\n# Generated: 2024\n\n# =============================================================================\n# CONTEXT LEVEL (C1) - System Boundary\n# =============================================================================\nsystem:\n  id: simple-shop-api\n  name: Simple Shop API\n  description: |\n    A lightweight Express.js REST API providing user and product management\n    capabilities for e-commerce applications. Exposes RESTful endpoints for\n    CRUD operations on users and products with bearer token authentication.\n  type: api\n\n  # External actors that interact with this system\n  actors:\n    - id: api-client\n      name: API Client\n      description: External applications or services consuming the REST API\n      type: external\n\n# =============================================================================\n# CONTAINER LEVEL (C2) - Deployable Units\n# =============================================================================\ncontainers:\n  - id: express-server\n    name: Express Server\n    description: |\n      Node.js Express application serving REST API endpoints.\n      Single deployable unit handling all HTTP requests.\n    technology: Node.js / Express.js 4.18\n    type: api\n    port: 3000\n    entrypoint: src/index.ts\n\n# =============================================================================\n# COMPONENT LEVEL (C3) - Internal Structure\n# =============================================================================\n\n# -----------------------------------------------------------------------------\n# Foundation Components (Infrastructure / Cross-cutting)\n# -----------------------------------------------------------------------------\nfoundation:\n  - id: c3-app\n    name: Application Bootstrap\n    description: |\n      Express application initialization and configuration.\n      Sets up middleware chain, mounts routers, and starts HTTP server.\n    type: entrypoint\n    path: src/index.ts\n    responsibilities:\n      - Initialize Express application\n      - Configure JSON body parsing\n      - Apply global middleware\n      - Mount feature routers\n      - Start HTTP server on port 3000\n    dependencies:\n      - c3-auth-middleware\n      - c3-users-router\n      - c3-products-router\n\n  - id: c3-auth-middleware\n    name: Auth Middleware\n    description: |\n      Global authentication middleware that validates bearer tokens\n      on all incoming requests before they reach route handlers.\n    type: middleware\n    path: src/middleware/auth.ts\n    responsibilities:\n      - Extract bearer token from Authorization header\n      - Validate token presence\n      - Reject requests with missing or invalid tokens\n      - Allow authenticated requests to proceed\n    security:\n      - Bearer token validation\n      - 401 response for unauthenticated requests\n\n# -----------------------------------------------------------------------------\n# Feature Components (Business Domains)\n# -----------------------------------------------------------------------------\nfeatures:\n  - id: c3-users\n    name: Users Feature\n    description: User management domain\n    components:\n      - id: c3-users-router\n        name: Users Router\n        description: |\n          RESTful API endpoints for user management.\n          Handles CRUD operations on user resources.\n        type: router\n        path: src/routes/users.ts\n        basePath: /users\n        endpoints:\n          - method: GET\n            path: /\n            description: List all users\n          - method: GET\n            path: /:id\n            description: Get user by ID\n          - method: POST\n            path: /\n            description: Create new user\n        dataModel:\n          entity: User\n          fields:\n            - name: id\n              type: number\n            - name: name\n              type: string\n            - name: email\n              type: string\n\n  - id: c3-products\n    name: Products Feature\n    description: Product catalog domain\n    components:\n      - id: c3-products-router\n        name: Products Router\n        description: |\n          RESTful API endpoints for product management.\n          Handles CRUD operations on product resources.\n        type: router\n        path: src/routes/products.ts\n        basePath: /products\n        endpoints:\n          - method: GET\n            path: /\n            description: List all products\n          - method: GET\n            path: /:id\n            description: Get product by ID\n          - method: POST\n            path: /\n            description: Create new product\n        dataModel:\n          entity: Product\n          fields:\n            - name: id\n              type: number\n            - name: name\n              type: string\n            - name: price\n              type: number\n\n# =============================================================================\n# ARCHITECTURAL PATTERNS & REFS\n# =============================================================================\nrefs:\n  patterns:\n    - id: ref-express-router\n      name: Express Router Pattern\n      description: |\n        Standard pattern for organizing Express routes.\n        Each feature domain gets its own Router instance mounted at a base path.\n      appliesTo:\n        - c3-users-router\n        - c3-products-router\n      example: |\n        export const featureRouter = Router();\n        featureRouter.get('/', handler);\n        featureRouter.get('/:id', handler);\n        featureRouter.post('/', handler);\n\n    - id: ref-middleware-chain\n      name: Middleware Chain Pattern\n      description: |\n        Express middleware applied globally via app.use().\n        Executes before route handlers in declaration order.\n      appliesTo:\n        - c3-auth-middleware\n\n    - id: ref-in-memory-store\n      name: In-Memory Data Store\n      description: |\n        Simple array-based data storage for development/demo.\n        Data persists only for the lifetime of the process.\n      appliesTo:\n        - c3-users-router\n        - c3-products-router\n      note: Replace with database in production\n\n# =============================================================================\n# DEPENDENCY GRAPH\n# =============================================================================\ndependencies:\n  external:\n    - name: express\n      version: ^4.18.0\n      purpose: Web framework for HTTP server and routing\n\n  internal:\n    - from: c3-app\n      to: c3-auth-middleware\n      type: uses\n      description: Applies auth middleware globally\n    - from: c3-app\n      to: c3-users-router\n      type: mounts\n      description: Mounts at /users\n    - from: c3-app\n      to: c3-products-router\n      type: mounts\n      description: Mounts at /products\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:26:26.467Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.81mtTvqlRY/.c3/README.md",
+        "content": "# C3 Architecture Documentation\n\n## Simple Shop API\n\nThis directory contains the C3 (Context, Container, Component) architecture documentation for the Simple Shop API.\n\n## Quick Reference\n\n| ID | Component | Type | Path |\n|----|-----------|------|------|\n| `c3-app` | Application Bootstrap | entrypoint | `src/index.ts` |\n| `c3-auth-middleware` | Auth Middleware | middleware | `src/middleware/auth.ts` |\n| `c3-users-router` | Users Router | router | `src/routes/users.ts` |\n| `c3-products-router` | Products Router | router | `src/routes/products.ts` |\n\n## Architecture Overview\n\n```\n┌─────────────────────────────────────────────────────────────┐\n│                     API Client                               │\n└─────────────────────────┬───────────────────────────────────┘\n                          │\n                          ▼\n┌─────────────────────────────────────────────────────────────┐\n│                  Express Server (:3000)                      │\n│  ┌───────────────────────────────────────────────────────┐  │\n│  │                   c3-app (index.ts)                    │  │\n│  │  ┌─────────────────────────────────────────────────┐  │  │\n│  │  │            c3-auth-middleware                    │  │  │\n│  │  │         (Bearer Token Validation)                │  │  │\n│  │  └─────────────────────────────────────────────────┘  │  │\n│  │                         │                              │  │\n│  │         ┌───────────────┴───────────────┐             │  │\n│  │         ▼                               ▼             │  │\n│  │  ┌─────────────────┐           ┌─────────────────┐   │  │\n│  │  │ c3-users-router │           │c3-products-router│   │  │\n│  │  │    /users/*     │           │   /products/*   │   │  │\n│  │  └─────────────────┘           └─────────────────┘   │  │\n│  └───────────────────────────────────────────────────────┘  │\n└─────────────────────────────────────────────────────────────┘\n```\n\n## Files\n\n- `architecture.yaml` - Complete C3 architecture specification\n- `adr/` - Architecture Decision Records (empty - add ADRs as decisions are made)\n\n## Usage\n\nQuery architecture:\n```bash\n# Using Claude Code\n/c3 query \"how does authentication work?\"\n/c3 query \"what handles product endpoints?\"\n```\n\nMake changes:\n```bash\n# All architectural changes should go through ADR process\n/c3 alter \"add order management feature\"\n```\n\n## API Endpoints\n\n### Users (`/users`)\n- `GET /users` - List all users\n- `GET /users/:id` - Get user by ID\n- `POST /users` - Create new user\n\n### Products (`/products`)\n- `GET /products` - List all products\n- `GET /products/:id` - Get product by ID\n- `POST /products` - Create new product\n\n## Authentication\n\nAll endpoints require a Bearer token in the Authorization header:\n```\nAuthorization: Bearer <token>\n```\n\nRequests without a valid token receive a 401 Unauthorized response.\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:26:26.485Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.81mtTvqlRY/.c3/README.md",
+        "content": "# C3 Architecture Documentation\n\n## Simple Shop API\n\nThis directory contains the C3 (Context, Container, Component) architecture documentation for the Simple Shop API.\n\n## Quick Reference\n\n| ID | Component | Type | Path |\n|----|-----------|------|------|\n| `c3-app` | Application Bootstrap | entrypoint | `src/index.ts` |\n| `c3-auth-middleware` | Auth Middleware | middleware | `src/middleware/auth.ts` |\n| `c3-users-router` | Users Router | router | `src/routes/users.ts` |\n| `c3-products-router` | Products Router | router | `src/routes/products.ts` |\n\n## Architecture Overview\n\n```\n┌─────────────────────────────────────────────────────────────┐\n│                     API Client                               │\n└─────────────────────────┬───────────────────────────────────┘\n                          │\n                          ▼\n┌─────────────────────────────────────────────────────────────┐\n│                  Express Server (:3000)                      │\n│  ┌───────────────────────────────────────────────────────┐  │\n│  │                   c3-app (index.ts)                    │  │\n│  │  ┌─────────────────────────────────────────────────┐  │  │\n│  │  │            c3-auth-middleware                    │  │  │\n│  │  │         (Bearer Token Validation)                │  │  │\n│  │  └─────────────────────────────────────────────────┘  │  │\n│  │                         │                              │  │\n│  │         ┌───────────────┴───────────────┐             │  │\n│  │         ▼                               ▼             │  │\n│  │  ┌─────────────────┐           ┌─────────────────┐   │  │\n│  │  │ c3-users-router │           │c3-products-router│   │  │\n│  │  │    /users/*     │           │   /products/*   │   │  │\n│  │  └─────────────────┘           └─────────────────┘   │  │\n│  └───────────────────────────────────────────────────────┘  │\n└─────────────────────────────────────────────────────────────┘\n```\n\n## Files\n\n- `architecture.yaml` - Complete C3 architecture specification\n- `adr/` - Architecture Decision Records (empty - add ADRs as decisions are made)\n\n## Usage\n\nQuery architecture:\n```bash\n# Using Claude Code\n/c3 query \"how does authentication work?\"\n/c3 query \"what handles product endpoints?\"\n```\n\nMake changes:\n```bash\n# All architectural changes should go through ADR process\n/c3 alter \"add order management feature\"\n```\n\n## API Endpoints\n\n### Users (`/users`)\n- `GET /users` - List all users\n- `GET /users/:id` - Get user by ID\n- `POST /users` - Create new user\n\n### Products (`/products`)\n- `GET /products` - List all products\n- `GET /products/:id` - Get product by ID\n- `POST /products` - Create new product\n\n## Authentication\n\nAll endpoints require a Bearer token in the Authorization header:\n```\nAuthorization: Bearer <token>\n```\n\nRequests without a valid token receive a 401 Unauthorized response.\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.81mtTvqlRY/.c3/README.md",
+        "content": "# C3 Architecture Documentation\n\n## Simple Shop API\n\nThis directory contains the C3 (Context, Container, Component) architecture documentation for the Simple Shop API.\n\n## Quick Reference\n\n| ID | Component | Type | Path |\n|----|-----------|------|------|\n| `c3-app` | Application Bootstrap | entrypoint | `src/index.ts` |\n| `c3-auth-middleware` | Auth Middleware | middleware | `src/middleware/auth.ts` |\n| `c3-users-router` | Users Router | router | `src/routes/users.ts` |\n| `c3-products-router` | Products Router | router | `src/routes/products.ts` |\n\n## Architecture Overview\n\n```\n┌─────────────────────────────────────────────────────────────┐\n│                     API Client                               │\n└─────────────────────────┬───────────────────────────────────┘\n                          │\n                          ▼\n┌─────────────────────────────────────────────────────────────┐\n│                  Express Server (:3000)                      │\n│  ┌───────────────────────────────────────────────────────┐  │\n│  │                   c3-app (index.ts)                    │  │\n│  │  ┌─────────────────────────────────────────────────┐  │  │\n│  │  │            c3-auth-middleware                    │  │  │\n│  │  │         (Bearer Token Validation)                │  │  │\n│  │  └─────────────────────────────────────────────────┘  │  │\n│  │                         │                              │  │\n│  │         ┌───────────────┴───────────────┐             │  │\n│  │         ▼                               ▼             │  │\n│  │  ┌─────────────────┐           ┌─────────────────┐   │  │\n│  │  │ c3-users-router │           │c3-products-router│   │  │\n│  │  │    /users/*     │           │   /products/*   │   │  │\n│  │  └─────────────────┘           └─────────────────┘   │  │\n│  └───────────────────────────────────────────────────────┘  │\n└─────────────────────────────────────────────────────────────┘\n```\n\n## Files\n\n- `architecture.yaml` - Complete C3 architecture specification\n- `adr/` - Architecture Decision Records (empty - add ADRs as decisions are made)\n\n## Usage\n\nQuery architecture:\n```bash\n# Using Claude Code\n/c3 query \"how does authentication work?\"\n/c3 query \"what handles product endpoints?\"\n```\n\nMake changes:\n```bash\n# All architectural changes should go through ADR process\n/c3 alter \"add order management feature\"\n```\n\n## API Endpoints\n\n### Users (`/users`)\n- `GET /users` - List all users\n- `GET /users/:id` - Get user by ID\n- `POST /users` - Create new user\n\n### Products (`/products`)\n- `GET /products` - List all products\n- `GET /products/:id` - Get product by ID\n- `POST /products` - Create new product\n\n## Authentication\n\nAll endpoints require a Bearer token in the Authorization header:\n```\nAuthorization: Bearer <token>\n```\n\nRequests without a valid token receive a 401 Unauthorized response.\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:26:26.501Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.81mtTvqlRY/.c3/adr/.gitkeep",
+        "content": "# Architecture Decision Records\n# Add ADR files here as architectural decisions are made\n# Format: adr-NNN-title.md\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T11:26:26.523Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.81mtTvqlRY/.c3/adr/.gitkeep",
+        "content": "# Architecture Decision Records\n# Add ADR files here as architectural decisions are made\n# Format: adr-NNN-title.md\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.81mtTvqlRY/.c3/adr/.gitkeep",
+        "content": "# Architecture Decision Records\n# Add ADR files here as architectural decisions are made\n# Format: adr-NNN-title.md\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    }
+  ],
+  "judgment": {
+    "pass": false,
+    "score": 40,
+    "expectations": [
+      {
+        "text": ".c3/README.md exists and describes the Simple Shop API system",
+        "pass": true,
+        "reasoning": "The .c3/README.md file exists and provides a comprehensive description of the Simple Shop API, including architecture overview, components, endpoints, and authentication details."
+      },
+      {
+        "text": "A container directory exists for the API (e.g., c3-1-api/)",
+        "pass": false,
+        "reasoning": "No container directory was created. The constraint specified 'Single container (the API itself)' which should have resulted in a container directory like 'c3-1-api/' being created. Only the base .c3/ directory with adr/ subdirectory was created."
+      },
+      {
+        "text": "Auth middleware is documented as a foundation component",
+        "pass": false,
+        "reasoning": "While auth middleware is documented in the README and architecture.yaml, it is typed as 'middleware' not as a 'foundation' component. The constraint explicitly stated 'Auth middleware is a foundation component (others depend on it)' but this categorization was not applied."
+      },
+      {
+        "text": "Users and Products are documented as feature components",
+        "pass": false,
+        "reasoning": "Users and Products routers are documented but typed as 'router' not as 'feature' components. The constraint explicitly stated they should be feature components."
+      },
+      {
+        "text": "ADR-000 (adoption decision) is created",
+        "pass": false,
+        "reasoning": "No ADR-000 was created. The adr/ directory was created with only a .gitkeep file. The README even states 'adr/ - Architecture Decision Records (empty - add ADRs as decisions are made)' but the constraint required completing the full onboarding workflow with ADR-000."
+      }
+    ],
+    "summary": "The output created a basic README describing the API but failed to follow C3 conventions: no container directory was created, components were not properly typed as foundation/feature, and the required ADR-000 adoption decision was not created."
+  }
+}

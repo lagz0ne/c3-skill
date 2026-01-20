@@ -1,0 +1,34 @@
+# C3 Settings for expansive.ly
+# https://github.com/c3-architecture/c3
+
+version: 3
+project: expansive.ly
+description: AI-powered spatial knowledge canvas for knowledge management
+
+# Container naming
+containers:
+  c3-1: web-frontend
+  c3-2: api-backend
+  c3-3: graph-database
+  c3-4: realtime-service
+  c3-5: ai-service
+
+# External systems
+externals:
+  E1: ai-providers
+  E2: oauth-providers
+
+# Technology choices
+tech:
+  frontend: react
+  routing: tanstack-router
+  backend: bun
+  database: neo4j
+  realtime: websocket
+  ai: multi-provider
+
+# Audit settings
+audit:
+  require_frontmatter: true
+  require_parent: true
+  check_refs: true

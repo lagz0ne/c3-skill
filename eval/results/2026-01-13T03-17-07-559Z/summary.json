@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-13T03-17-07-559Z",
+  "total": 1,
+  "passed": 1,
+  "failed": 0,
+  "avgScore": 100,
+  "results": [
+    {
+      "name": "Onboard simple Express app",
+      "pass": true,
+      "score": 100,
+      "duration": 113579,
+      "summary": "All expectations are fully met. The output includes comprehensive C3 documentation with a system README, API container directory, foundation component (auth middleware), feature components (users and products routes), and the required ADR-000 adoption decision record."
+    }
+  ]
+}

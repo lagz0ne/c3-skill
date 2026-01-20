@@ -1,0 +1,13 @@
+{
+  "name": "task-api",
+  "version": "1.0.0",
+  "description": "Task management API",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "hono": "^4.0.0"
+  }
+}

@@ -2,6 +2,20 @@
 
 Types organize elements by role. Complexity determines documentation depth.
 
+## Contents
+
+- [Container Types](#container-types)
+  - Container Selection
+  - Complexity-First Documentation
+- [Component Types](#component-types)
+  - Foundation
+  - Feature
+  - References
+- [External Systems](#external-systems)
+- [Dependency Direction](#dependency-direction)
+- [Common Mistakes](#common-mistakes)
+- [Migration Guide](#migration-guide)
+
 ---
 
 # Container Types
@@ -64,7 +78,7 @@ graph TD
 - Minimal external dependencies
 - Well-tested edge cases
 
-**Template:** `templates/component-foundation.md`
+**Template:** `templates/component.md`
 
 ## Feature
 
@@ -82,7 +96,7 @@ graph TD
 - User-facing behavior
 - Domain-specific logic
 
-**Template:** `templates/component-feature.md`
+**Template:** `templates/component.md`
 
 ---
 
@@ -94,10 +108,25 @@ References are system-wide patterns and conventions cited by components at any l
 - Design patterns (strategy choices)
 - Coding conventions
 - Data flow patterns
+- Information architecture
+- User flows
+- Design systems
+- UI patterns
+- Error handling conventions
+- Form patterns
+- Query patterns
 - External standards references
 
 **Refs are NOT components** - they don't have code references or implementations.
 Components cite refs; refs explain patterns.
+
+**CRITICAL: Never create component files for conventions.**
+
+| Wrong | Right |
+|-------|-------|
+| `c3-131-information-architecture.md` | `ref-information-architecture.md` |
+| `c3-132-user-flows.md` | `ref-user-flows.md` |
+| `c3-133-design-system.md` | `ref-design-system.md` |
 
 **Template:** `templates/ref.md`
 

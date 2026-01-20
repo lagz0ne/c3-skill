@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-12T11-17-44-841Z",
+  "total": 1,
+  "passed": 1,
+  "failed": 0,
+  "avgScore": 100,
+  "results": [
+    {
+      "name": "Onboard simple Express app",
+      "pass": true,
+      "score": 100,
+      "duration": 95150,
+      "summary": "All expectations are met. The C3 documentation is comprehensive with a well-structured README, proper container documentation, clear separation of foundation (Auth) and feature (Users, Products) components, and a complete ADR-000 adoption decision record."
+    }
+  ]
+}

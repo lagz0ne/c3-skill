@@ -43,7 +43,7 @@ status: pending
 | Section | Action | Change |
 |---------|--------|--------|
 | Overview diagram | Edit | Add `c3-103[Cache Client]` node |
-| Auxiliary table | Add row | `c3-103 | Cache Client | library-wrapper | | Redis abstraction` |
+| Foundation table | Add row | `c3-103 | Cache Client | library-wrapper | | Redis abstraction` |
 | Fulfillment | Add row | `c3-1 → E2 | c3-103 | Redis client, connection pooling` |
 | Linkages | Add row | `c3-105 | c3-103 | cache-read | Reduce DB load for hot paths` |
 

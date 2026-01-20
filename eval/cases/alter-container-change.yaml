@@ -1,0 +1,39 @@
+name: "Container-level change via C3 alter workflow"
+
+fixtures: "fixtures/documented-api"
+
+eval_type: alter
+
+change_request: |
+  We need to add caching to the API to reduce database load.
+
+  Add a Redis cache layer:
+  - New component c3-106-cache for cache abstraction
+  - c3-103 (task-routes) and c3-104 (user-routes) should use the cache
+  - Cache should be optional (graceful fallback if Redis unavailable)
+
+command: |
+  This project has existing C3 documentation. I want to add a caching layer:
+
+  We need to add caching to the API to reduce database load.
+
+  Please use the C3 alter workflow to:
+  1. Create an ADR for adding Redis caching
+  2. Add documentation for a new cache component (c3-106)
+  3. Document how existing components (c3-103, c3-104) will use it
+  4. Update the container README
+
+  Requirements:
+  - New component c3-106-cache for cache abstraction
+  - c3-103 (task-routes) and c3-104 (user-routes) should use the cache
+  - Cache should be optional (graceful fallback if Redis unavailable)
+
+goal: |
+  Use the C3 alter workflow to add a cross-cutting concern that affects
+  multiple existing components. This tests container-level impact analysis.
+
+constraints:
+  - Must identify impact on multiple existing components
+  - Should document the new external dependency (Redis)
+  - Should explain the fallback behavior
+  - Container README should be updated

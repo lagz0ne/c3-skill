@@ -18,24 +18,8 @@
 
 ---
 
-### Auxiliary
-> Conventions for using external tools HERE. "This is how we use X in this project."
-
-| Component | When Needed |
-|-----------|-------------|
-| **API Client Pattern** | How we call external services |
-| **State Management** | "We use prop drilling / context / zustand like this" |
-| **Styling Conventions** | "We use Tailwind like this" |
-| **Type Patterns** | "Prefer type over interface" |
-| **Error Handling** | "This is how we handle errors" |
-| **Validation** | "This is how we validate inputs" |
-
-**Categorization test:** "Is this documenting HOW we use an external tool/pattern?" → Yes = Auxiliary
-
----
-
 ### Feature
-> Domain-specific. Uses Foundation + Auxiliary. Not reusable outside this context.
+> Domain-specific. Uses Foundation + cites refs for patterns. Not reusable outside this context.
 
 | Component | When Needed |
 |-----------|-------------|
@@ -49,6 +33,22 @@
 
 ---
 
+## References (refs/)
+
+> Conventions and patterns live in `.c3/refs/`, not as components.
+
+| Pattern Type | Examples |
+|--------------|----------|
+| **API Client Pattern** | How we call external services |
+| **State Management** | Context usage, store patterns |
+| **Styling Conventions** | Tailwind/CSS patterns |
+| **Error Handling** | Error boundary patterns |
+| **Validation** | Input validation patterns |
+
+**When to create a ref:** "Is this documenting HOW we use an external tool/pattern?" → Yes = ref
+
+---
+
 ## Decision Flow
 
 ```
@@ -56,12 +56,12 @@ Is this a reusable building block that others depend on?
   → Yes: Foundation
   → No: Continue
 
-Is this documenting how we use an external tool/pattern?
-  → Yes: Auxiliary
-  → No: Continue
-
 Is this specific to this product's domain/features?
   → Yes: Feature
+  → No: Continue
+
+Is this documenting how we use an external tool/pattern?
+  → Yes: Create a ref in .c3/refs/
 ```
 
 ---
@@ -69,16 +69,16 @@ Is this specific to this product's domain/features?
 ## Examples by Container Type
 
 ### Backend Container
-| Foundation | Auxiliary | Feature |
-|------------|-----------|---------|
-| Router, Middleware | DB access patterns, Error handling | OrderService, PaymentHandler |
+| Foundation | Feature | Refs Used |
+|------------|---------|-----------|
+| Router, Middleware | OrderService, PaymentHandler | ref-error-handling, ref-db-patterns |
 
 ### Frontend Container
-| Foundation | Auxiliary | Feature |
-|------------|-----------|---------|
-| Layout, Button, Card | Tailwind usage, State patterns | ProductCard, CheckoutScreen |
+| Foundation | Feature | Refs Used |
+|------------|---------|-----------|
+| Layout, Button, Card | ProductCard, CheckoutScreen | ref-tailwind, ref-state-management |
 
 ### Worker Container
-| Foundation | Auxiliary | Feature |
-|------------|-----------|---------|
-| Job runner, Queue consumer | Retry patterns, Logging | EmailSender, ReportGenerator |
+| Foundation | Feature | Refs Used |
+|------------|---------|-----------|
+| Job runner, Queue consumer | EmailSender, ReportGenerator | ref-retry-patterns, ref-logging |

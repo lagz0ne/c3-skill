@@ -1,0 +1,1139 @@
+{
+  "name": "Onboard simple Express app",
+  "pass": true,
+  "score": 100,
+  "duration": 259342,
+  "trace": [
+    {
+      "timestamp": "2026-01-12T06:22:52.504Z",
+      "event": "PreToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:onboard"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:22:53.107Z",
+      "event": "PostToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:onboard"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:22:57.585Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "ls -la",
+        "description": "List root directory contents"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:22:57.593Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "find . -type f -name \"*.js\" -o -name \"*.ts\" -o -name \"*.json\" 2>/dev/null | head -50",
+        "description": "Find JavaScript/TypeScript files"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:22:57.849Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "ls -la",
+        "description": "List root directory contents"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:22:57.883Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "find . -type f -name \"*.js\" -o -name \"*.ts\" -o -name \"*.json\" 2>/dev/null | head -50",
+        "description": "Find JavaScript/TypeScript files"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:23:02.871Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/src/middleware/auth.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:23:02.883Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/src/index.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:23:02.887Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/package.json"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:23:02.887Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/src/routes/users.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:23:02.909Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/src/routes/products.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:23:03.135Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/src/middleware/auth.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:23:03.152Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/src/index.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:23:03.168Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/src/routes/users.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:23:03.191Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/package.json"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:23:03.245Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/src/routes/products.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:23:10.282Z",
+      "event": "PreToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Complete Context level (c3-0) documentation",
+            "status": "in_progress",
+            "activeForm": "Completing Context level documentation"
+          },
+          {
+            "content": "Complete Container level documentation",
+            "status": "pending",
+            "activeForm": "Completing Container level documentation"
+          },
+          {
+            "content": "Document Auxiliary components",
+            "status": "pending",
+            "activeForm": "Documenting Auxiliary components"
+          },
+          {
+            "content": "Document Foundation components",
+            "status": "pending",
+            "activeForm": "Documenting Foundation components"
+          },
+          {
+            "content": "Document Feature components",
+            "status": "pending",
+            "activeForm": "Documenting Feature components"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:23:10.470Z",
+      "event": "PostToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Complete Context level (c3-0) documentation",
+            "status": "in_progress",
+            "activeForm": "Completing Context level documentation"
+          },
+          {
+            "content": "Complete Container level documentation",
+            "status": "pending",
+            "activeForm": "Completing Container level documentation"
+          },
+          {
+            "content": "Document Auxiliary components",
+            "status": "pending",
+            "activeForm": "Documenting Auxiliary components"
+          },
+          {
+            "content": "Document Foundation components",
+            "status": "pending",
+            "activeForm": "Documenting Foundation components"
+          },
+          {
+            "content": "Document Feature components",
+            "status": "pending",
+            "activeForm": "Documenting Feature components"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:23:19.279Z",
+      "event": "PreToolUse",
+      "tool": "AskUserQuestion",
+      "input": {
+        "questions": [
+          {
+            "question": "Who are the primary consumers of this API? (e.g., web frontend, mobile app, other services)",
+            "header": "API Consumers",
+            "options": [
+              {
+                "label": "Web Frontend",
+                "description": "Browser-based single-page application or website"
+              },
+              {
+                "label": "Mobile App",
+                "description": "iOS/Android native or hybrid mobile application"
+              },
+              {
+                "label": "Both Web & Mobile",
+                "description": "Multiple client types consume this API"
+              },
+              {
+                "label": "Internal Services",
+                "description": "Other backend services or microservices"
+              }
+            ],
+            "multiSelect": true
+          },
+          {
+            "question": "Is there a persistent database planned or in use? Currently using in-memory storage.",
+            "header": "Data Storage",
+            "options": [
+              {
+                "label": "In-memory only",
+                "description": "Keep as-is with in-memory arrays (demo/prototype)"
+              },
+              {
+                "label": "PostgreSQL",
+                "description": "Relational database for persistent storage"
+              },
+              {
+                "label": "MongoDB",
+                "description": "Document database for flexible schemas"
+              },
+              {
+                "label": "SQLite",
+                "description": "File-based database for simplicity"
+              }
+            ],
+            "multiSelect": false
+          },
+          {
+            "question": "Is this API deployed as a single service or part of a larger system?",
+            "header": "Deployment",
+            "options": [
+              {
+                "label": "Standalone API",
+                "description": "Single deployable unit, independent service"
+              },
+              {
+                "label": "Part of Microservices",
+                "description": "One service among several in a distributed system"
+              }
+            ],
+            "multiSelect": false
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:23:32.201Z",
+      "event": "HumanAnswer",
+      "tool": "AskUserQuestion",
+      "input": {
+        "questions": [
+          {
+            "question": "Who are the primary consumers of this API? (e.g., web frontend, mobile app, other services)",
+            "header": "API Consumers",
+            "options": [
+              {
+                "label": "Web Frontend",
+                "description": "Browser-based single-page application or website"
+              },
+              {
+                "label": "Mobile App",
+                "description": "iOS/Android native or hybrid mobile application"
+              },
+              {
+                "label": "Both Web & Mobile",
+                "description": "Multiple client types consume this API"
+              },
+              {
+                "label": "Internal Services",
+                "description": "Other backend services or microservices"
+              }
+            ],
+            "multiSelect": true
+          },
+          {
+            "question": "Is there a persistent database planned or in use? Currently using in-memory storage.",
+            "header": "Data Storage",
+            "options": [
+              {
+                "label": "In-memory only",
+                "description": "Keep as-is with in-memory arrays (demo/prototype)"
+              },
+              {
+                "label": "PostgreSQL",
+                "description": "Relational database for persistent storage"
+              },
+              {
+                "label": "MongoDB",
+                "description": "Document database for flexible schemas"
+              },
+              {
+                "label": "SQLite",
+                "description": "File-based database for simplicity"
+              }
+            ],
+            "multiSelect": false
+          },
+          {
+            "question": "Is this API deployed as a single service or part of a larger system?",
+            "header": "Deployment",
+            "options": [
+              {
+                "label": "Standalone API",
+                "description": "Single deployable unit, independent service"
+              },
+              {
+                "label": "Part of Microservices",
+                "description": "One service among several in a distributed system"
+              }
+            ],
+            "multiSelect": false
+          }
+        ]
+      },
+      "result": {
+        "Who are the primary consumers of this API? (e.g., web frontend, mobile app, other services)": "Web Frontend - Browser-based single-page application or website",
+        "Is there a persistent database planned or in use? Currently using in-memory storage.": "In-memory only - Keep as-is with in-memory arrays (demo/prototype)",
+        "Is this API deployed as a single service or part of a larger system?": "Standalone API - Single deployable unit, independent service"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:23:35.342Z",
+      "event": "PreToolUse",
+      "tool": "AskUserQuestion",
+      "input": {
+        "questions": [
+          {
+            "question": "Who are the primary consumers of this API?",
+            "header": "API Consumers",
+            "options": [
+              {
+                "label": "Web Frontend",
+                "description": "Browser-based SPA or website"
+              },
+              {
+                "label": "Mobile App",
+                "description": "iOS/Android application"
+              },
+              {
+                "label": "Both Web & Mobile",
+                "description": "Multiple client types"
+              },
+              {
+                "label": "Internal Services",
+                "description": "Other backend services"
+              }
+            ],
+            "multiSelect": false
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:23:47.554Z",
+      "event": "HumanAnswer",
+      "tool": "AskUserQuestion",
+      "input": {
+        "questions": [
+          {
+            "question": "Who are the primary consumers of this API?",
+            "header": "API Consumers",
+            "options": [
+              {
+                "label": "Web Frontend",
+                "description": "Browser-based SPA or website"
+              },
+              {
+                "label": "Mobile App",
+                "description": "iOS/Android application"
+              },
+              {
+                "label": "Both Web & Mobile",
+                "description": "Multiple client types"
+              },
+              {
+                "label": "Internal Services",
+                "description": "Other backend services"
+              }
+            ],
+            "multiSelect": false
+          }
+        ]
+      },
+      "result": {
+        "Who are the primary consumers of this API?": "Both Web & Mobile - Multiple client types"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:23:50.855Z",
+      "event": "PreToolUse",
+      "tool": "AskUserQuestion",
+      "input": {
+        "questions": [
+          {
+            "question": "Who consumes this Simple Shop API?",
+            "header": "Consumers",
+            "options": [
+              {
+                "label": "Web Frontend",
+                "description": "Browser-based application"
+              },
+              {
+                "label": "Mobile App",
+                "description": "Native mobile app"
+              },
+              {
+                "label": "Multiple Clients",
+                "description": "Web, mobile, or other services"
+              }
+            ],
+            "multiSelect": false
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:24:05.462Z",
+      "event": "HumanAnswer",
+      "tool": "AskUserQuestion",
+      "input": {
+        "questions": [
+          {
+            "question": "Who consumes this Simple Shop API?",
+            "header": "Consumers",
+            "options": [
+              {
+                "label": "Web Frontend",
+                "description": "Browser-based application"
+              },
+              {
+                "label": "Mobile App",
+                "description": "Native mobile app"
+              },
+              {
+                "label": "Multiple Clients",
+                "description": "Web, mobile, or other services"
+              }
+            ],
+            "multiSelect": false
+          }
+        ]
+      },
+      "result": {
+        "Who consumes this Simple Shop API?": "Multiple Clients - Web, mobile, or other services"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:24:09.914Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/home/lagz0ne/.claude/plugins/cache/c3-skill-marketplace/c3-skill/3.0.0/references/container-patterns.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:24:10.009Z",
+      "event": "Blocked",
+      "tool": "Read",
+      "input": {
+        "file_path": "/home/lagz0ne/.claude/plugins/cache/c3-skill-marketplace/c3-skill/3.0.0/references/container-patterns.md"
+      },
+      "blocked": true,
+      "reason": "Path outside sandbox: /home/lagz0ne/.claude/plugins/cache/c3-skill-marketplace/c3-skill/3.0.0/references/container-patterns.md"
+    },
+    {
+      "timestamp": "2026-01-12T06:24:10.297Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/home/lagz0ne/.claude/plugins/cache/c3-skill-marketplace/c3-skill/3.0.0/references/container-patterns.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:24:14.901Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "PROJECT=\"simple-shop-api\" C1=\"api\" \"/home/lagz0ne/.claude/plugins/cache/c3-skill-marketplace/c3-skill/3.0.0/scripts/c3-init.sh\"",
+        "description": "Initialize C3 directory structure"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:24:15.357Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "PROJECT=\"simple-shop-api\" C1=\"api\" \"/home/lagz0ne/.claude/plugins/cache/c3-skill-marketplace/c3-skill/3.0.0/scripts/c3-init.sh\"",
+        "description": "Initialize C3 directory structure"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:24:20.282Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/README.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:24:20.290Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/adr/adr-00000000-c3-adoption.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:24:20.282Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/c3-1-api/README.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:24:20.609Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/README.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:24:20.639Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/adr/adr-00000000-c3-adoption.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:24:20.643Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/c3-1-api/README.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:24:29.935Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/README.md",
+        "content": "---\nid: c3-0\nc3-version: 3\ntitle: Simple Shop API\nsummary: Express.js REST API for a simple e-commerce shop with user and product management\n---\n\n# Simple Shop API\n\n## Goal\n\nProvide a RESTful API backend for a simple e-commerce shop, enabling client applications to manage users and products.\n\n## Overview\n\n```mermaid\ngraph TB\n    subgraph Actors\n        A1[Client App]\n    end\n\n    subgraph \"Simple Shop API\"\n        C1[c3-1: API Server]\n    end\n\n    A1 -->|HTTP/REST| C1\n```\n\n## Actors\n\n| ID | Name | Description |\n|----|------|-------------|\n| A1 | Client App | Web or mobile application consuming the API |\n\n## Containers\n\n| ID | Name | Type | Status | Purpose |\n|----|------|------|--------|---------|\n| c3-1 | [API Server](./c3-1-api/README.md) | service | active | Express.js REST API handling HTTP requests |\n\n## External Systems\n\n| ID | Name | Description |\n|----|------|-------------|\n| - | None | Currently uses in-memory storage only |\n\n## Linkages\n\n| From | To | Protocol | Reasoning |\n|------|-----|----------|-----------|\n| A1 | c3-1 | HTTP/REST | Clients send authenticated requests to manage users and products |\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:24:30.263Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/README.md",
+        "content": "---\nid: c3-0\nc3-version: 3\ntitle: Simple Shop API\nsummary: Express.js REST API for a simple e-commerce shop with user and product management\n---\n\n# Simple Shop API\n\n## Goal\n\nProvide a RESTful API backend for a simple e-commerce shop, enabling client applications to manage users and products.\n\n## Overview\n\n```mermaid\ngraph TB\n    subgraph Actors\n        A1[Client App]\n    end\n\n    subgraph \"Simple Shop API\"\n        C1[c3-1: API Server]\n    end\n\n    A1 -->|HTTP/REST| C1\n```\n\n## Actors\n\n| ID | Name | Description |\n|----|------|-------------|\n| A1 | Client App | Web or mobile application consuming the API |\n\n## Containers\n\n| ID | Name | Type | Status | Purpose |\n|----|------|------|--------|---------|\n| c3-1 | [API Server](./c3-1-api/README.md) | service | active | Express.js REST API handling HTTP requests |\n\n## External Systems\n\n| ID | Name | Description |\n|----|------|-------------|\n| - | None | Currently uses in-memory storage only |\n\n## Linkages\n\n| From | To | Protocol | Reasoning |\n|------|-----|----------|-----------|\n| A1 | c3-1 | HTTP/REST | Clients send authenticated requests to manage users and products |\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:24:35.287Z",
+      "event": "PreToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Complete Context level (c3-0) documentation",
+            "status": "completed",
+            "activeForm": "Completing Context level documentation"
+          },
+          {
+            "content": "Complete Container level documentation",
+            "status": "in_progress",
+            "activeForm": "Completing Container level documentation"
+          },
+          {
+            "content": "Document Auxiliary components",
+            "status": "pending",
+            "activeForm": "Documenting Auxiliary components"
+          },
+          {
+            "content": "Document Foundation components",
+            "status": "pending",
+            "activeForm": "Documenting Foundation components"
+          },
+          {
+            "content": "Document Feature components",
+            "status": "pending",
+            "activeForm": "Documenting Feature components"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:24:35.522Z",
+      "event": "PostToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Complete Context level (c3-0) documentation",
+            "status": "completed",
+            "activeForm": "Completing Context level documentation"
+          },
+          {
+            "content": "Complete Container level documentation",
+            "status": "in_progress",
+            "activeForm": "Completing Container level documentation"
+          },
+          {
+            "content": "Document Auxiliary components",
+            "status": "pending",
+            "activeForm": "Documenting Auxiliary components"
+          },
+          {
+            "content": "Document Foundation components",
+            "status": "pending",
+            "activeForm": "Documenting Foundation components"
+          },
+          {
+            "content": "Document Feature components",
+            "status": "pending",
+            "activeForm": "Documenting Feature components"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:24:46.501Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/c3-1-api/README.md",
+        "content": "---\nid: c3-1\nc3-version: 3\ntitle: API Server\ntype: container\nparent: c3-0\nsummary: Express.js REST API handling user and product management\n---\n\n# API Server\n\n## Goal\n\nHandle HTTP requests for the Simple Shop, providing authenticated endpoints to manage users and products.\n\n## Overview\n\n```mermaid\ngraph TB\n    subgraph \"API Server (c3-1)\"\n        subgraph Foundation\n            C101[c3-101: Express App]\n            C102[c3-102: Auth Middleware]\n        end\n\n        subgraph Feature\n            C103[c3-103: Users Router]\n            C104[c3-104: Products Router]\n        end\n    end\n\n    REQ[HTTP Request] --> C101\n    C101 --> C102\n    C102 --> C103\n    C102 --> C104\n```\n\n## Components\n\n| ID | Name | Category | Status | Responsibility |\n|----|------|----------|--------|----------------|\n| c3-101 | [Express App](./c3-101-express-app.md) | foundation | active | Application entry point, middleware chain |\n| c3-102 | [Auth Middleware](./c3-102-auth-middleware.md) | foundation | active | Token validation for all requests |\n| c3-103 | [Users Router](./c3-103-users-router.md) | feature | active | CRUD operations for user resources |\n| c3-104 | [Products Router](./c3-104-products-router.md) | feature | active | CRUD operations for product resources |\n\n## Auxiliary Conventions\n\n| ID | Name | Description |\n|----|------|-------------|\n| c3-105 | [Error Handling](./c3-105-error-handling.md) | Standard JSON error response format |\n| c3-106 | [Route Pattern](./c3-106-route-pattern.md) | RESTful route structure conventions |\n\n## Fulfillment\n\n| Context Link | Fulfilled By | Notes |\n|--------------|--------------|-------|\n| A1 → c3-1 | c3-101 | Express app receives all HTTP requests |\n\n## Linkages\n\n| From | To | Relationship | Reasoning |\n|------|-----|--------------|-----------|\n| c3-101 | c3-102 | uses | All requests pass through auth middleware |\n| c3-102 | c3-103 | gates | Protected user endpoints |\n| c3-102 | c3-104 | gates | Protected product endpoints |\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:24:46.733Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/c3-1-api/README.md",
+        "content": "---\nid: c3-1\nc3-version: 3\ntitle: API Server\ntype: container\nparent: c3-0\nsummary: Express.js REST API handling user and product management\n---\n\n# API Server\n\n## Goal\n\nHandle HTTP requests for the Simple Shop, providing authenticated endpoints to manage users and products.\n\n## Overview\n\n```mermaid\ngraph TB\n    subgraph \"API Server (c3-1)\"\n        subgraph Foundation\n            C101[c3-101: Express App]\n            C102[c3-102: Auth Middleware]\n        end\n\n        subgraph Feature\n            C103[c3-103: Users Router]\n            C104[c3-104: Products Router]\n        end\n    end\n\n    REQ[HTTP Request] --> C101\n    C101 --> C102\n    C102 --> C103\n    C102 --> C104\n```\n\n## Components\n\n| ID | Name | Category | Status | Responsibility |\n|----|------|----------|--------|----------------|\n| c3-101 | [Express App](./c3-101-express-app.md) | foundation | active | Application entry point, middleware chain |\n| c3-102 | [Auth Middleware](./c3-102-auth-middleware.md) | foundation | active | Token validation for all requests |\n| c3-103 | [Users Router](./c3-103-users-router.md) | feature | active | CRUD operations for user resources |\n| c3-104 | [Products Router](./c3-104-products-router.md) | feature | active | CRUD operations for product resources |\n\n## Auxiliary Conventions\n\n| ID | Name | Description |\n|----|------|-------------|\n| c3-105 | [Error Handling](./c3-105-error-handling.md) | Standard JSON error response format |\n| c3-106 | [Route Pattern](./c3-106-route-pattern.md) | RESTful route structure conventions |\n\n## Fulfillment\n\n| Context Link | Fulfilled By | Notes |\n|--------------|--------------|-------|\n| A1 → c3-1 | c3-101 | Express app receives all HTTP requests |\n\n## Linkages\n\n| From | To | Relationship | Reasoning |\n|------|-----|--------------|-----------|\n| c3-101 | c3-102 | uses | All requests pass through auth middleware |\n| c3-102 | c3-103 | gates | Protected user endpoints |\n| c3-102 | c3-104 | gates | Protected product endpoints |\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:24:51.458Z",
+      "event": "PreToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Complete Context level (c3-0) documentation",
+            "status": "completed",
+            "activeForm": "Completing Context level documentation"
+          },
+          {
+            "content": "Complete Container level documentation",
+            "status": "completed",
+            "activeForm": "Completing Container level documentation"
+          },
+          {
+            "content": "Document Auxiliary components",
+            "status": "in_progress",
+            "activeForm": "Documenting Auxiliary components"
+          },
+          {
+            "content": "Document Foundation components",
+            "status": "pending",
+            "activeForm": "Documenting Foundation components"
+          },
+          {
+            "content": "Document Feature components",
+            "status": "pending",
+            "activeForm": "Documenting Feature components"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:24:51.719Z",
+      "event": "PostToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Complete Context level (c3-0) documentation",
+            "status": "completed",
+            "activeForm": "Completing Context level documentation"
+          },
+          {
+            "content": "Complete Container level documentation",
+            "status": "completed",
+            "activeForm": "Completing Container level documentation"
+          },
+          {
+            "content": "Document Auxiliary components",
+            "status": "in_progress",
+            "activeForm": "Documenting Auxiliary components"
+          },
+          {
+            "content": "Document Foundation components",
+            "status": "pending",
+            "activeForm": "Documenting Foundation components"
+          },
+          {
+            "content": "Document Feature components",
+            "status": "pending",
+            "activeForm": "Documenting Feature components"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:25:07.631Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/c3-1-api/c3-105-error-handling.md",
+        "content": "---\nid: c3-105\nc3-version: 3\ntitle: Error Handling\ntype: auxiliary\nparent: c3-1\nsummary: Standard JSON error response format convention\n---\n\n# Error Handling\n\n## Goal\n\nEstablish a consistent error response format across all API endpoints.\n\n## Convention\n\n| Rule | Implementation |\n|------|----------------|\n| Error responses use JSON | `res.status(code).json({ error: message })` |\n| HTTP status codes are semantic | 401 for auth, 404 for not found |\n| Error field is always `error` | Single string message |\n\n## Applies To\n\n| Component | How Applied |\n|-----------|-------------|\n| c3-102 Auth Middleware | Returns `{ error: 'No token provided' }` or `{ error: 'Invalid token' }` |\n| c3-103 Users Router | Returns `{ error: 'User not found' }` |\n| c3-104 Products Router | Returns `{ error: 'Product not found' }` |\n\n## Examples\n\n```typescript\n// 401 Unauthorized\nres.status(401).json({ error: 'No token provided' });\n\n// 404 Not Found\nres.status(404).json({ error: 'User not found' });\n```\n\n## Testing\n\n| Scenario | Expected |\n|----------|----------|\n| Missing auth token | 401 with error message |\n| Invalid resource ID | 404 with error message |\n\n## Source Files\n\n- `src/middleware/auth.ts:6-12`\n- `src/routes/users.ts:16-18`\n- `src/routes/products.ts:15-17`\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:25:09.019Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/c3-1-api/c3-105-error-handling.md",
+        "content": "---\nid: c3-105\nc3-version: 3\ntitle: Error Handling\ntype: auxiliary\nparent: c3-1\nsummary: Standard JSON error response format convention\n---\n\n# Error Handling\n\n## Goal\n\nEstablish a consistent error response format across all API endpoints.\n\n## Convention\n\n| Rule | Implementation |\n|------|----------------|\n| Error responses use JSON | `res.status(code).json({ error: message })` |\n| HTTP status codes are semantic | 401 for auth, 404 for not found |\n| Error field is always `error` | Single string message |\n\n## Applies To\n\n| Component | How Applied |\n|-----------|-------------|\n| c3-102 Auth Middleware | Returns `{ error: 'No token provided' }` or `{ error: 'Invalid token' }` |\n| c3-103 Users Router | Returns `{ error: 'User not found' }` |\n| c3-104 Products Router | Returns `{ error: 'Product not found' }` |\n\n## Examples\n\n```typescript\n// 401 Unauthorized\nres.status(401).json({ error: 'No token provided' });\n\n// 404 Not Found\nres.status(404).json({ error: 'User not found' });\n```\n\n## Testing\n\n| Scenario | Expected |\n|----------|----------|\n| Missing auth token | 401 with error message |\n| Invalid resource ID | 404 with error message |\n\n## Source Files\n\n- `src/middleware/auth.ts:6-12`\n- `src/routes/users.ts:16-18`\n- `src/routes/products.ts:15-17`\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:25:09.320Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/c3-1-api/c3-106-route-pattern.md",
+        "content": "---\nid: c3-106\nc3-version: 3\ntitle: Route Pattern\ntype: auxiliary\nparent: c3-1\nsummary: RESTful route structure conventions\n---\n\n# Route Pattern\n\n## Goal\n\nEstablish consistent RESTful route structure for all resource endpoints.\n\n## Convention\n\n| Rule | Implementation |\n|------|----------------|\n| Resource routers are mounted at `/<resource>` | `app.use('/users', usersRouter)` |\n| List endpoint at `GET /` | Returns array of all resources |\n| Single resource at `GET /:id` | Returns one resource by ID |\n| Create at `POST /` | Creates new resource, returns 201 |\n| ID parsing uses `parseInt` | `parseInt(req.params.id)` |\n\n## Applies To\n\n| Component | Routes |\n|-----------|--------|\n| c3-103 Users Router | `/users`, `/users/:id` |\n| c3-104 Products Router | `/products`, `/products/:id` |\n\n## Pattern Template\n\n```typescript\nimport { Router } from 'express';\n\nexport const resourceRouter = Router();\n\n// List all\nresourceRouter.get('/', (req, res) => {\n  res.json(resources);\n});\n\n// Get by ID\nresourceRouter.get('/:id', (req, res) => {\n  const resource = resources.find(r => r.id === parseInt(req.params.id));\n  if (!resource) {\n    return res.status(404).json({ error: 'Resource not found' });\n  }\n  res.json(resource);\n});\n\n// Create\nresourceRouter.post('/', (req, res) => {\n  const newResource = { id: resources.length + 1, ...req.body };\n  resources.push(newResource);\n  res.status(201).json(newResource);\n});\n```\n\n## Source Files\n\n- `src/routes/users.ts`\n- `src/routes/products.ts`\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:25:09.614Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/c3-1-api/c3-106-route-pattern.md",
+        "content": "---\nid: c3-106\nc3-version: 3\ntitle: Route Pattern\ntype: auxiliary\nparent: c3-1\nsummary: RESTful route structure conventions\n---\n\n# Route Pattern\n\n## Goal\n\nEstablish consistent RESTful route structure for all resource endpoints.\n\n## Convention\n\n| Rule | Implementation |\n|------|----------------|\n| Resource routers are mounted at `/<resource>` | `app.use('/users', usersRouter)` |\n| List endpoint at `GET /` | Returns array of all resources |\n| Single resource at `GET /:id` | Returns one resource by ID |\n| Create at `POST /` | Creates new resource, returns 201 |\n| ID parsing uses `parseInt` | `parseInt(req.params.id)` |\n\n## Applies To\n\n| Component | Routes |\n|-----------|--------|\n| c3-103 Users Router | `/users`, `/users/:id` |\n| c3-104 Products Router | `/products`, `/products/:id` |\n\n## Pattern Template\n\n```typescript\nimport { Router } from 'express';\n\nexport const resourceRouter = Router();\n\n// List all\nresourceRouter.get('/', (req, res) => {\n  res.json(resources);\n});\n\n// Get by ID\nresourceRouter.get('/:id', (req, res) => {\n  const resource = resources.find(r => r.id === parseInt(req.params.id));\n  if (!resource) {\n    return res.status(404).json({ error: 'Resource not found' });\n  }\n  res.json(resource);\n});\n\n// Create\nresourceRouter.post('/', (req, res) => {\n  const newResource = { id: resources.length + 1, ...req.body };\n  resources.push(newResource);\n  res.status(201).json(newResource);\n});\n```\n\n## Source Files\n\n- `src/routes/users.ts`\n- `src/routes/products.ts`\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:25:14.440Z",
+      "event": "PreToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Complete Context level (c3-0) documentation",
+            "status": "completed",
+            "activeForm": "Completing Context level documentation"
+          },
+          {
+            "content": "Complete Container level documentation",
+            "status": "completed",
+            "activeForm": "Completing Container level documentation"
+          },
+          {
+            "content": "Document Auxiliary components",
+            "status": "completed",
+            "activeForm": "Documenting Auxiliary components"
+          },
+          {
+            "content": "Document Foundation components",
+            "status": "in_progress",
+            "activeForm": "Documenting Foundation components"
+          },
+          {
+            "content": "Document Feature components",
+            "status": "pending",
+            "activeForm": "Documenting Feature components"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:25:14.825Z",
+      "event": "PostToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Complete Context level (c3-0) documentation",
+            "status": "completed",
+            "activeForm": "Completing Context level documentation"
+          },
+          {
+            "content": "Complete Container level documentation",
+            "status": "completed",
+            "activeForm": "Completing Container level documentation"
+          },
+          {
+            "content": "Document Auxiliary components",
+            "status": "completed",
+            "activeForm": "Documenting Auxiliary components"
+          },
+          {
+            "content": "Document Foundation components",
+            "status": "in_progress",
+            "activeForm": "Documenting Foundation components"
+          },
+          {
+            "content": "Document Feature components",
+            "status": "pending",
+            "activeForm": "Documenting Feature components"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:25:31.844Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/c3-1-api/c3-101-express-app.md",
+        "content": "---\nid: c3-101\nc3-version: 3\ntitle: Express App\ntype: foundation\nparent: c3-1\nsummary: Application entry point and middleware chain orchestration\n---\n\n# Express App\n\n## Goal\n\nInitialize and configure the Express application, setting up middleware chain and route mounting.\n\n## Contract\n\n| Provides | Expects |\n|----------|---------|\n| HTTP server on port 3000 | Valid route handlers |\n| JSON body parsing | Valid JSON in request bodies |\n| Middleware chain execution | Middleware calls `next()` |\n\n## Implementation\n\n```typescript\nconst app = express();\n\napp.use(express.json());      // JSON body parsing\napp.use(authMiddleware);      // Authentication gate\n\napp.use('/users', usersRouter);\napp.use('/products', productsRouter);\n\napp.listen(3000);\n```\n\n## Edge Cases\n\n| Scenario | Behavior |\n|----------|----------|\n| Invalid JSON body | Express returns 400 Bad Request |\n| Unhandled route | Express returns 404 |\n| Middleware rejects | Request stops, error response sent |\n\n## Dependencies\n\n| Component | Relationship |\n|-----------|--------------|\n| c3-102 Auth Middleware | Applied to all routes |\n| c3-103 Users Router | Mounted at `/users` |\n| c3-104 Products Router | Mounted at `/products` |\n\n## Testing\n\n| Scenario | Expectation |\n|----------|-------------|\n| Server starts | Logs \"running on port 3000\" |\n| Valid request | Passes through middleware chain |\n| Invalid JSON | Returns 400 |\n\n## Source Files\n\n- `src/index.ts`\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:25:32.024Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/c3-1-api/c3-101-express-app.md",
+        "content": "---\nid: c3-101\nc3-version: 3\ntitle: Express App\ntype: foundation\nparent: c3-1\nsummary: Application entry point and middleware chain orchestration\n---\n\n# Express App\n\n## Goal\n\nInitialize and configure the Express application, setting up middleware chain and route mounting.\n\n## Contract\n\n| Provides | Expects |\n|----------|---------|\n| HTTP server on port 3000 | Valid route handlers |\n| JSON body parsing | Valid JSON in request bodies |\n| Middleware chain execution | Middleware calls `next()` |\n\n## Implementation\n\n```typescript\nconst app = express();\n\napp.use(express.json());      // JSON body parsing\napp.use(authMiddleware);      // Authentication gate\n\napp.use('/users', usersRouter);\napp.use('/products', productsRouter);\n\napp.listen(3000);\n```\n\n## Edge Cases\n\n| Scenario | Behavior |\n|----------|----------|\n| Invalid JSON body | Express returns 400 Bad Request |\n| Unhandled route | Express returns 404 |\n| Middleware rejects | Request stops, error response sent |\n\n## Dependencies\n\n| Component | Relationship |\n|-----------|--------------|\n| c3-102 Auth Middleware | Applied to all routes |\n| c3-103 Users Router | Mounted at `/users` |\n| c3-104 Products Router | Mounted at `/products` |\n\n## Testing\n\n| Scenario | Expectation |\n|----------|-------------|\n| Server starts | Logs \"running on port 3000\" |\n| Valid request | Passes through middleware chain |\n| Invalid JSON | Returns 400 |\n\n## Source Files\n\n- `src/index.ts`\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:25:32.239Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/c3-1-api/c3-102-auth-middleware.md",
+        "content": "---\nid: c3-102\nc3-version: 3\ntitle: Auth Middleware\ntype: foundation\nparent: c3-1\nsummary: Token validation middleware for request authentication\n---\n\n# Auth Middleware\n\n## Goal\n\nValidate authentication tokens on all incoming requests before they reach route handlers.\n\n## Contract\n\n| Provides | Expects |\n|----------|---------|\n| Request authentication gate | `Authorization: Bearer <token>` header |\n| Early rejection of unauthenticated requests | Token not equal to \"invalid\" |\n| Pass-through for valid tokens | Express middleware signature |\n\n## Implementation\n\n```typescript\nexport function authMiddleware(req: Request, res: Response, next: NextFunction) {\n  const token = req.headers.authorization?.replace('Bearer ', '');\n\n  if (!token) {\n    return res.status(401).json({ error: 'No token provided' });\n  }\n\n  if (token === 'invalid') {\n    return res.status(401).json({ error: 'Invalid token' });\n  }\n\n  next();\n}\n```\n\n## Edge Cases\n\n| Scenario | Behavior |\n|----------|----------|\n| Missing Authorization header | 401 \"No token provided\" |\n| Token equals \"invalid\" | 401 \"Invalid token\" |\n| Any other token | Request proceeds |\n| Malformed header (no \"Bearer \") | Token extracted as-is |\n\n## Used By\n\n| Component | Context |\n|-----------|---------|\n| c3-101 Express App | Applied globally to all routes |\n\n## Conventions Applied\n\n| Convention | How |\n|------------|-----|\n| c3-105 Error Handling | Returns `{ error: message }` format |\n\n## Testing\n\n| Scenario | Expectation |\n|----------|-------------|\n| No auth header | 401 with error message |\n| `Bearer invalid` | 401 with error message |\n| `Bearer anytoken` | Next middleware called |\n\n## Source Files\n\n- `src/middleware/auth.ts`\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:25:32.446Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/c3-1-api/c3-102-auth-middleware.md",
+        "content": "---\nid: c3-102\nc3-version: 3\ntitle: Auth Middleware\ntype: foundation\nparent: c3-1\nsummary: Token validation middleware for request authentication\n---\n\n# Auth Middleware\n\n## Goal\n\nValidate authentication tokens on all incoming requests before they reach route handlers.\n\n## Contract\n\n| Provides | Expects |\n|----------|---------|\n| Request authentication gate | `Authorization: Bearer <token>` header |\n| Early rejection of unauthenticated requests | Token not equal to \"invalid\" |\n| Pass-through for valid tokens | Express middleware signature |\n\n## Implementation\n\n```typescript\nexport function authMiddleware(req: Request, res: Response, next: NextFunction) {\n  const token = req.headers.authorization?.replace('Bearer ', '');\n\n  if (!token) {\n    return res.status(401).json({ error: 'No token provided' });\n  }\n\n  if (token === 'invalid') {\n    return res.status(401).json({ error: 'Invalid token' });\n  }\n\n  next();\n}\n```\n\n## Edge Cases\n\n| Scenario | Behavior |\n|----------|----------|\n| Missing Authorization header | 401 \"No token provided\" |\n| Token equals \"invalid\" | 401 \"Invalid token\" |\n| Any other token | Request proceeds |\n| Malformed header (no \"Bearer \") | Token extracted as-is |\n\n## Used By\n\n| Component | Context |\n|-----------|---------|\n| c3-101 Express App | Applied globally to all routes |\n\n## Conventions Applied\n\n| Convention | How |\n|------------|-----|\n| c3-105 Error Handling | Returns `{ error: message }` format |\n\n## Testing\n\n| Scenario | Expectation |\n|----------|-------------|\n| No auth header | 401 with error message |\n| `Bearer invalid` | 401 with error message |\n| `Bearer anytoken` | Next middleware called |\n\n## Source Files\n\n- `src/middleware/auth.ts`\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:25:37.561Z",
+      "event": "PreToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Complete Context level (c3-0) documentation",
+            "status": "completed",
+            "activeForm": "Completing Context level documentation"
+          },
+          {
+            "content": "Complete Container level documentation",
+            "status": "completed",
+            "activeForm": "Completing Container level documentation"
+          },
+          {
+            "content": "Document Auxiliary components",
+            "status": "completed",
+            "activeForm": "Documenting Auxiliary components"
+          },
+          {
+            "content": "Document Foundation components",
+            "status": "completed",
+            "activeForm": "Documenting Foundation components"
+          },
+          {
+            "content": "Document Feature components",
+            "status": "in_progress",
+            "activeForm": "Documenting Feature components"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:25:37.694Z",
+      "event": "PostToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Complete Context level (c3-0) documentation",
+            "status": "completed",
+            "activeForm": "Completing Context level documentation"
+          },
+          {
+            "content": "Complete Container level documentation",
+            "status": "completed",
+            "activeForm": "Completing Container level documentation"
+          },
+          {
+            "content": "Document Auxiliary components",
+            "status": "completed",
+            "activeForm": "Documenting Auxiliary components"
+          },
+          {
+            "content": "Document Foundation components",
+            "status": "completed",
+            "activeForm": "Documenting Foundation components"
+          },
+          {
+            "content": "Document Feature components",
+            "status": "in_progress",
+            "activeForm": "Documenting Feature components"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:25:50.907Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/c3-1-api/c3-103-users-router.md",
+        "content": "---\nid: c3-103\nc3-version: 3\ntitle: Users Router\ntype: feature\nparent: c3-1\nsummary: CRUD operations for user resources\n---\n\n# Users Router\n\n## Goal\n\nProvide RESTful endpoints for managing user data (list, get, create).\n\n## Uses\n\n| Category | Component | For |\n|----------|-----------|-----|\n| Foundation | c3-102 Auth Middleware | All routes require authentication |\n| Auxiliary | c3-105 Error Handling | 404 responses |\n| Auxiliary | c3-106 Route Pattern | RESTful structure |\n\n## Behavior\n\n| Trigger | Result |\n|---------|--------|\n| `GET /users` | Returns array of all users |\n| `GET /users/:id` | Returns single user or 404 |\n| `POST /users` | Creates user, returns 201 |\n\n## Data Model\n\n```typescript\ninterface User {\n  id: number;\n  name: string;\n  email: string;\n}\n```\n\n## Storage\n\nIn-memory array (non-persistent):\n```typescript\nconst users = [\n  { id: 1, name: 'Alice', email: 'alice@example.com' },\n  { id: 2, name: 'Bob', email: 'bob@example.com' },\n];\n```\n\n## Endpoints\n\n| Method | Path | Request | Response |\n|--------|------|---------|----------|\n| GET | `/users` | - | `User[]` |\n| GET | `/users/:id` | - | `User` or 404 |\n| POST | `/users` | `{ name, email }` | `User` (201) |\n\n## Testing\n\n| Scenario | Expectation |\n|----------|-------------|\n| GET /users | Returns all seeded users |\n| GET /users/1 | Returns Alice |\n| GET /users/999 | Returns 404 |\n| POST /users with body | Creates and returns new user |\n\n## Source Files\n\n- `src/routes/users.ts`\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:25:51.020Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/c3-1-api/c3-103-users-router.md",
+        "content": "---\nid: c3-103\nc3-version: 3\ntitle: Users Router\ntype: feature\nparent: c3-1\nsummary: CRUD operations for user resources\n---\n\n# Users Router\n\n## Goal\n\nProvide RESTful endpoints for managing user data (list, get, create).\n\n## Uses\n\n| Category | Component | For |\n|----------|-----------|-----|\n| Foundation | c3-102 Auth Middleware | All routes require authentication |\n| Auxiliary | c3-105 Error Handling | 404 responses |\n| Auxiliary | c3-106 Route Pattern | RESTful structure |\n\n## Behavior\n\n| Trigger | Result |\n|---------|--------|\n| `GET /users` | Returns array of all users |\n| `GET /users/:id` | Returns single user or 404 |\n| `POST /users` | Creates user, returns 201 |\n\n## Data Model\n\n```typescript\ninterface User {\n  id: number;\n  name: string;\n  email: string;\n}\n```\n\n## Storage\n\nIn-memory array (non-persistent):\n```typescript\nconst users = [\n  { id: 1, name: 'Alice', email: 'alice@example.com' },\n  { id: 2, name: 'Bob', email: 'bob@example.com' },\n];\n```\n\n## Endpoints\n\n| Method | Path | Request | Response |\n|--------|------|---------|----------|\n| GET | `/users` | - | `User[]` |\n| GET | `/users/:id` | - | `User` or 404 |\n| POST | `/users` | `{ name, email }` | `User` (201) |\n\n## Testing\n\n| Scenario | Expectation |\n|----------|-------------|\n| GET /users | Returns all seeded users |\n| GET /users/1 | Returns Alice |\n| GET /users/999 | Returns 404 |\n| POST /users with body | Creates and returns new user |\n\n## Source Files\n\n- `src/routes/users.ts`\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:25:51.130Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/c3-1-api/c3-104-products-router.md",
+        "content": "---\nid: c3-104\nc3-version: 3\ntitle: Products Router\ntype: feature\nparent: c3-1\nsummary: CRUD operations for product resources\n---\n\n# Products Router\n\n## Goal\n\nProvide RESTful endpoints for managing product data (list, get, create).\n\n## Uses\n\n| Category | Component | For |\n|----------|-----------|-----|\n| Foundation | c3-102 Auth Middleware | All routes require authentication |\n| Auxiliary | c3-105 Error Handling | 404 responses |\n| Auxiliary | c3-106 Route Pattern | RESTful structure |\n\n## Behavior\n\n| Trigger | Result |\n|---------|--------|\n| `GET /products` | Returns array of all products |\n| `GET /products/:id` | Returns single product or 404 |\n| `POST /products` | Creates product, returns 201 |\n\n## Data Model\n\n```typescript\ninterface Product {\n  id: number;\n  name: string;\n  price: number;\n}\n```\n\n## Storage\n\nIn-memory array (non-persistent):\n```typescript\nconst products = [\n  { id: 1, name: 'Widget', price: 9.99 },\n  { id: 2, name: 'Gadget', price: 19.99 },\n];\n```\n\n## Endpoints\n\n| Method | Path | Request | Response |\n|--------|------|---------|----------|\n| GET | `/products` | - | `Product[]` |\n| GET | `/products/:id` | - | `Product` or 404 |\n| POST | `/products` | `{ name, price }` | `Product` (201) |\n\n## Testing\n\n| Scenario | Expectation |\n|----------|-------------|\n| GET /products | Returns all seeded products |\n| GET /products/1 | Returns Widget |\n| GET /products/999 | Returns 404 |\n| POST /products with body | Creates and returns new product |\n\n## Source Files\n\n- `src/routes/products.ts`\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:25:51.232Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/c3-1-api/c3-104-products-router.md",
+        "content": "---\nid: c3-104\nc3-version: 3\ntitle: Products Router\ntype: feature\nparent: c3-1\nsummary: CRUD operations for product resources\n---\n\n# Products Router\n\n## Goal\n\nProvide RESTful endpoints for managing product data (list, get, create).\n\n## Uses\n\n| Category | Component | For |\n|----------|-----------|-----|\n| Foundation | c3-102 Auth Middleware | All routes require authentication |\n| Auxiliary | c3-105 Error Handling | 404 responses |\n| Auxiliary | c3-106 Route Pattern | RESTful structure |\n\n## Behavior\n\n| Trigger | Result |\n|---------|--------|\n| `GET /products` | Returns array of all products |\n| `GET /products/:id` | Returns single product or 404 |\n| `POST /products` | Creates product, returns 201 |\n\n## Data Model\n\n```typescript\ninterface Product {\n  id: number;\n  name: string;\n  price: number;\n}\n```\n\n## Storage\n\nIn-memory array (non-persistent):\n```typescript\nconst products = [\n  { id: 1, name: 'Widget', price: 9.99 },\n  { id: 2, name: 'Gadget', price: 19.99 },\n];\n```\n\n## Endpoints\n\n| Method | Path | Request | Response |\n|--------|------|---------|----------|\n| GET | `/products` | - | `Product[]` |\n| GET | `/products/:id` | - | `Product` or 404 |\n| POST | `/products` | `{ name, price }` | `Product` (201) |\n\n## Testing\n\n| Scenario | Expectation |\n|----------|-------------|\n| GET /products | Returns all seeded products |\n| GET /products/1 | Returns Widget |\n| GET /products/999 | Returns 404 |\n| POST /products with body | Creates and returns new product |\n\n## Source Files\n\n- `src/routes/products.ts`\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:26:11.091Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/adr/adr-00000000-c3-adoption.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:26:11.191Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/adr/adr-00000000-c3-adoption.md"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:26:21.383Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/adr/adr-00000000-c3-adoption.md",
+        "content": "---\nid: adr-00000000-c3-adoption\nc3-version: 3\ntitle: C3 Architecture Documentation Adoption\ntype: adr\nstatus: implemented\ndate: 2026-01-12\naffects: [c3-0]\n---\n\n# C3 Architecture Documentation Adoption\n\n## Overview\n\n```mermaid\ngraph TD\n    ADR[This ADR] -->|establishes| C3[C3 Structure]\n    C3 -->|contains| CTX[c3-0 Context]\n    CTX -->|contains| CON[Containers]\n    CON -->|contains| CMP[Components]\n```\n\n## Status\n\n**Implemented** - 2026-01-12\n\n## Problem\n\n| Situation | Impact |\n|-----------|--------|\n| No architecture docs | Onboarding takes weeks |\n| Knowledge in heads | Bus factor risk |\n| Ad-hoc decisions | Inconsistent patterns |\n\n## Decision Drivers\n\n- Need for consistent API development patterns\n- Single-developer project growing in complexity\n- Future team onboarding considerations\n\n## Decision\n\nAdopt C3 (Context-Container-Component) methodology for architecture documentation.\n\n## Structure Created\n\n| Level | ID | Name | Purpose |\n|-------|-----|------|---------|\n| Context | c3-0 | Simple Shop API | System overview |\n| Container | c3-1 | API Server | Express.js REST API |\n\n## Rationale\n\n| Consideration | C3 Approach |\n|---------------|-------------|\n| Layered abstraction | Context → Container → Component |\n| Change isolation | Strategic vs tactical separation |\n| Growth-ready | Structure exists before content |\n| Decision tracking | ADRs capture evolution |\n\n## Consequences\n\n### Positive\n\n- Architecture visible and navigable\n- Onboarding accelerated\n- Decisions documented with reasoning\n\n### Negative\n\n- Maintenance overhead (docs can drift)\n- Initial time investment\n\n## Verification\n\n- [x] `.c3/README.md` exists (c3-0)\n- [x] All containers have `README.md`\n- [x] Diagrams use consistent IDs\n- [x] Linkages have reasoning\n\n## Adoption Progress\n\n| Level | Category | Status | Documented | Remaining |\n|-------|----------|--------|------------|-----------|\n| Context | - | ✅ Complete | 1 | 0 |\n| Containers | - | ✅ Complete | 1 | 0 |\n| Components | Auxiliary | ✅ Complete | 2 | 0 |\n| Components | Foundation | ✅ Complete | 2 | 0 |\n| Components | Feature | ✅ Complete | 2 | 0 |\n\n## Audit Record\n\n| Phase | Date | Notes |\n|-------|------|-------|\n| Adopted | 2026-01-12 | Initial C3 structure created |\n| Completed | 2026-01-12 | All levels documented |\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:26:21.517Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.evcBfMw446/.c3/adr/adr-00000000-c3-adoption.md",
+        "content": "---\nid: adr-00000000-c3-adoption\nc3-version: 3\ntitle: C3 Architecture Documentation Adoption\ntype: adr\nstatus: implemented\ndate: 2026-01-12\naffects: [c3-0]\n---\n\n# C3 Architecture Documentation Adoption\n\n## Overview\n\n```mermaid\ngraph TD\n    ADR[This ADR] -->|establishes| C3[C3 Structure]\n    C3 -->|contains| CTX[c3-0 Context]\n    CTX -->|contains| CON[Containers]\n    CON -->|contains| CMP[Components]\n```\n\n## Status\n\n**Implemented** - 2026-01-12\n\n## Problem\n\n| Situation | Impact |\n|-----------|--------|\n| No architecture docs | Onboarding takes weeks |\n| Knowledge in heads | Bus factor risk |\n| Ad-hoc decisions | Inconsistent patterns |\n\n## Decision Drivers\n\n- Need for consistent API development patterns\n- Single-developer project growing in complexity\n- Future team onboarding considerations\n\n## Decision\n\nAdopt C3 (Context-Container-Component) methodology for architecture documentation.\n\n## Structure Created\n\n| Level | ID | Name | Purpose |\n|-------|-----|------|---------|\n| Context | c3-0 | Simple Shop API | System overview |\n| Container | c3-1 | API Server | Express.js REST API |\n\n## Rationale\n\n| Consideration | C3 Approach |\n|---------------|-------------|\n| Layered abstraction | Context → Container → Component |\n| Change isolation | Strategic vs tactical separation |\n| Growth-ready | Structure exists before content |\n| Decision tracking | ADRs capture evolution |\n\n## Consequences\n\n### Positive\n\n- Architecture visible and navigable\n- Onboarding accelerated\n- Decisions documented with reasoning\n\n### Negative\n\n- Maintenance overhead (docs can drift)\n- Initial time investment\n\n## Verification\n\n- [x] `.c3/README.md` exists (c3-0)\n- [x] All containers have `README.md`\n- [x] Diagrams use consistent IDs\n- [x] Linkages have reasoning\n\n## Adoption Progress\n\n| Level | Category | Status | Documented | Remaining |\n|-------|----------|--------|------------|-----------|\n| Context | - | ✅ Complete | 1 | 0 |\n| Containers | - | ✅ Complete | 1 | 0 |\n| Components | Auxiliary | ✅ Complete | 2 | 0 |\n| Components | Foundation | ✅ Complete | 2 | 0 |\n| Components | Feature | ✅ Complete | 2 | 0 |\n\n## Audit Record\n\n| Phase | Date | Notes |\n|-------|------|-------|\n| Adopted | 2026-01-12 | Initial C3 structure created |\n| Completed | 2026-01-12 | All levels documented |\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:26:25.496Z",
+      "event": "PreToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Complete Context level (c3-0) documentation",
+            "status": "completed",
+            "activeForm": "Completing Context level documentation"
+          },
+          {
+            "content": "Complete Container level documentation",
+            "status": "completed",
+            "activeForm": "Completing Container level documentation"
+          },
+          {
+            "content": "Document Auxiliary components",
+            "status": "completed",
+            "activeForm": "Documenting Auxiliary components"
+          },
+          {
+            "content": "Document Foundation components",
+            "status": "completed",
+            "activeForm": "Documenting Foundation components"
+          },
+          {
+            "content": "Document Feature components",
+            "status": "completed",
+            "activeForm": "Documenting Feature components"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:26:25.634Z",
+      "event": "PostToolUse",
+      "tool": "TodoWrite",
+      "input": {
+        "todos": [
+          {
+            "content": "Complete Context level (c3-0) documentation",
+            "status": "completed",
+            "activeForm": "Completing Context level documentation"
+          },
+          {
+            "content": "Complete Container level documentation",
+            "status": "completed",
+            "activeForm": "Completing Container level documentation"
+          },
+          {
+            "content": "Document Auxiliary components",
+            "status": "completed",
+            "activeForm": "Documenting Auxiliary components"
+          },
+          {
+            "content": "Document Foundation components",
+            "status": "completed",
+            "activeForm": "Documenting Foundation components"
+          },
+          {
+            "content": "Document Feature components",
+            "status": "completed",
+            "activeForm": "Documenting Feature components"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:26:28.932Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "find .c3 -type f -name \"*.md\" | sort",
+        "description": "List all created C3 documentation files"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T06:26:29.323Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "find .c3 -type f -name \"*.md\" | sort",
+        "description": "List all created C3 documentation files"
+      }
+    }
+  ],
+  "judgment": {
+    "pass": true,
+    "score": 100,
+    "expectations": [
+      {
+        "text": ".c3/README.md exists and describes the Simple Shop API system",
+        "pass": true,
+        "reasoning": ".c3/README.md exists with id c3-0, title 'Simple Shop API', and a summary describing it as 'Express.js REST API for a simple e-commerce shop with user and product management'. It includes a goal statement, overview diagram, actors, and containers sections."
+      },
+      {
+        "text": "A container directory exists for the API (e.g., c3-1-api/)",
+        "pass": true,
+        "reasoning": "The directory .c3/c3-1-api/ exists and contains a README.md with id c3-1, title 'API Server', and type 'container'. Multiple component files are also present in this directory."
+      },
+      {
+        "text": "Auth middleware is documented as a foundation component",
+        "pass": true,
+        "reasoning": ".c3/c3-1-api/c3-102-auth-middleware.md exists with type: foundation in the frontmatter. It documents the auth middleware including its goal, contract, implementation, edge cases, and testing scenarios."
+      },
+      {
+        "text": "Users and Products are documented as feature components",
+        "pass": true,
+        "reasoning": "Both .c3/c3-1-api/c3-103-users-router.md and .c3/c3-1-api/c3-104-products-router.md exist with type: feature in their frontmatter. They document CRUD operations for their respective resources."
+      },
+      {
+        "text": "ADR-000 (adoption decision) is created",
+        "pass": true,
+        "reasoning": ".c3/adr/adr-00000000-c3-adoption.md exists with status: implemented. It documents the C3 adoption decision including problem statement, decision drivers, rationale, consequences, and verification checklist."
+      }
+    ],
+    "summary": "All expectations are met. The output includes a complete C3 documentation structure with the context README, an API container directory, properly categorized foundation and feature components, and an adoption ADR."
+  }
+}

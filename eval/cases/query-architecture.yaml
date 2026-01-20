@@ -1,0 +1,28 @@
+name: "Query existing C3 architecture"
+
+fixtures: "fixtures/documented-api"
+
+command: |
+  This project already has C3 documentation. I need to understand the architecture.
+
+  Please answer these questions:
+  1. What components handle authentication?
+  2. How does the task CRUD flow work?
+  3. What are the foundation vs feature components?
+
+goal: |
+  Navigate and query an existing C3-documented codebase to answer
+  architecture questions. The agent should use c3-query to find
+  relevant documentation and provide accurate answers.
+
+constraints:
+  - Must use existing .c3/ documentation, not re-analyze code
+  - Answers should reference specific component IDs (c3-xxx)
+  - Should identify the auth middleware (c3-102) for auth questions
+  - Should identify task routes (c3-103) for task flow questions
+
+expectations:
+  - "Agent references c3-102 (auth-middleware) when discussing authentication"
+  - "Agent references c3-103 (task-routes) when discussing task CRUD"
+  - "Agent correctly distinguishes foundation components (c3-101, c3-102, c3-105) from feature components (c3-103, c3-104)"
+  - "Agent uses existing C3 docs rather than re-analyzing source code"

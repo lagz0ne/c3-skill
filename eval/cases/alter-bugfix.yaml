@@ -1,0 +1,34 @@
+name: "Fix bug via C3 alter workflow"
+
+fixtures: "fixtures/documented-api"
+
+eval_type: alter
+
+change_request: |
+  The login timeout is too short - users are getting logged out after 15 minutes
+  of inactivity. The session should last 1 hour.
+
+  This is in the auth middleware (c3-102).
+
+command: |
+  This project has existing C3 documentation. I need to fix a bug:
+
+  The login timeout is too short - users are getting logged out after 15 minutes
+  of inactivity. The session should last 1 hour.
+
+  This affects the auth middleware (c3-102).
+
+  Please use the C3 alter workflow to:
+  1. Create an ADR documenting this fix
+  2. Update the component documentation if needed
+
+  This is a bugfix, so the scope should be minimal.
+
+goal: |
+  Use the C3 alter workflow to document a bugfix. This tests that alter
+  produces appropriately scoped documentation for small changes.
+
+constraints:
+  - Scope should be minimal (single component)
+  - ADR should be simpler than for new features
+  - Should identify c3-102 as the only affected component

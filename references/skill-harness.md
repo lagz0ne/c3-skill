@@ -61,18 +61,8 @@ Match workflow depth to container complexity.
 
 | Check | Action |
 |-------|--------|
-| No `.c3/README.md`? | Route to `c3` skill (Adopt mode) |
-| Wrong intent? | Route to correct skill (see routing table) |
+| No `.c3/README.md`? | Suggest `/onboard` to user |
 | Uncertain about user intent? | Use `AskUserQuestion` until clear |
-
-## Skill Routing
-
-| User Intent | Skill | Example |
-|-------------|-------|---------|
-| Explore / Explain / Find | `c3-query` | "where is auth?" |
-| Add / Change / Implement | `c3-alter` | "add payment service" |
-| Audit / Validate | `c3` | "check C3 docs" |
-| Adopt / Onboard / Init | `c3` | "set up C3" |
 
 ## Red Flags - STOP Immediately
 
@@ -106,11 +96,3 @@ All clarification MUST use `AskUserQuestion` tool:
 - Intent unclear (feature vs fix?)
 - Scope ambiguous (which component?)
 - Impact uncertain (breaking change?)
-
-## Layer Navigation
-
-Always load `layer-navigation.md` before traversing C3 docs.
-
-Traversal order: **Context (c3-0) → Container (c3-N) → Component (c3-NNN)**
-
-Never skip layers. Context provides container relationships. Container provides component inventory.

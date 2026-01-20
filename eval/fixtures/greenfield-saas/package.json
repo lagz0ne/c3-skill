@@ -1,0 +1,6 @@
+{
+  "name": "taskflow-saas",
+  "version": "0.0.1",
+  "description": "Task management SaaS for small teams",
+  "private": true
+}

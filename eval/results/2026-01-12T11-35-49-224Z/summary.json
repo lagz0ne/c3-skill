@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-12T11-35-49-224Z",
+  "total": 1,
+  "passed": 1,
+  "failed": 0,
+  "avgScore": 100,
+  "results": [
+    {
+      "name": "Onboard simple Express app",
+      "pass": true,
+      "score": 100,
+      "duration": 117550,
+      "summary": "All expectations are met. The C3 architecture documentation is complete with index.md serving as the README, a single container documented for the API, Auth middleware as a foundation component, Users and Products as feature components, and ADR-000 recording the adoption decision."
+    }
+  ]
+}

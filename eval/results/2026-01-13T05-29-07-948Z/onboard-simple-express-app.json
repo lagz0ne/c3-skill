@@ -1,0 +1,329 @@
+{
+  "name": "Onboard simple Express app",
+  "pass": true,
+  "score": 100,
+  "duration": 123362,
+  "trace": [
+    {
+      "timestamp": "2026-01-13T05:22:48.714Z",
+      "event": "PreToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:onboard"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T05:22:49.506Z",
+      "event": "PostToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:onboard"
+      },
+      "result": {
+        "success": true,
+        "commandName": "c3-skill:onboard",
+        "allowedTools": [
+          "Bash(rm:*)",
+          "Bash(test:*)",
+          "Bash(PROJECT=*)",
+          "Read",
+          "Glob",
+          "Grep",
+          "Write",
+          "Edit",
+          "AskUserQuestion",
+          "Skill"
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-13T05:22:58.122Z",
+      "event": "PreToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/*.{js,ts,json,md}"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T05:22:58.168Z",
+      "event": "PostToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/*.{js,ts,json,md}"
+      },
+      "result": {
+        "filenames": [
+          "/tmp/tmp.1U571NKs3l/package.json",
+          "/tmp/tmp.1U571NKs3l/src/middleware/auth.ts",
+          "/tmp/tmp.1U571NKs3l/src/routes/users.ts",
+          "/tmp/tmp.1U571NKs3l/src/index.ts",
+          "/tmp/tmp.1U571NKs3l/src/routes/products.ts"
+        ],
+        "durationMs": 28,
+        "numFiles": 5,
+        "truncated": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T05:23:03.053Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.1U571NKs3l/package.json"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T05:23:03.053Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.1U571NKs3l/src/index.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T05:23:03.053Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.1U571NKs3l/src/middleware/auth.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T05:23:03.054Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.1U571NKs3l/src/routes/users.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T05:23:03.054Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.1U571NKs3l/src/routes/products.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T05:23:03.114Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.1U571NKs3l/package.json"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.1U571NKs3l/package.json",
+          "content": "{\n  \"name\": \"simple-shop-api\",\n  \"version\": \"1.0.0\",\n  \"type\": \"module\",\n  \"scripts\": {\n    \"start\": \"node src/index.js\"\n  },\n  \"dependencies\": {\n    \"express\": \"^4.18.0\"\n  }\n}\n",
+          "numLines": 12,
+          "startLine": 1,
+          "totalLines": 12
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-13T05:23:03.115Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.1U571NKs3l/src/index.ts"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.1U571NKs3l/src/index.ts",
+          "content": "import express from 'express';\nimport { authMiddleware } from './middleware/auth';\nimport { usersRouter } from './routes/users';\nimport { productsRouter } from './routes/products';\n\nconst app = express();\n\napp.use(express.json());\napp.use(authMiddleware);\n\napp.use('/users', usersRouter);\napp.use('/products', productsRouter);\n\napp.listen(3000, () => {\n  console.log('Simple Shop API running on port 3000');\n});\n",
+          "numLines": 17,
+          "startLine": 1,
+          "totalLines": 17
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-13T05:23:03.117Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.1U571NKs3l/src/middleware/auth.ts"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.1U571NKs3l/src/middleware/auth.ts",
+          "content": "import { Request, Response, NextFunction } from 'express';\n\nexport function authMiddleware(req: Request, res: Response, next: NextFunction) {\n  const token = req.headers.authorization?.replace('Bearer ', '');\n\n  if (!token) {\n    return res.status(401).json({ error: 'No token provided' });\n  }\n\n  // Simple token validation (in real app, verify JWT)\n  if (token === 'invalid') {\n    return res.status(401).json({ error: 'Invalid token' });\n  }\n\n  next();\n}\n",
+          "numLines": 17,
+          "startLine": 1,
+          "totalLines": 17
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-13T05:23:03.118Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.1U571NKs3l/src/routes/users.ts"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.1U571NKs3l/src/routes/users.ts",
+          "content": "import { Router } from 'express';\n\nexport const usersRouter = Router();\n\nconst users = [\n  { id: 1, name: 'Alice', email: 'alice@example.com' },\n  { id: 2, name: 'Bob', email: 'bob@example.com' },\n];\n\nusersRouter.get('/', (req, res) => {\n  res.json(users);\n});\n\nusersRouter.get('/:id', (req, res) => {\n  const user = users.find(u => u.id === parseInt(req.params.id));\n  if (!user) {\n    return res.status(404).json({ error: 'User not found' });\n  }\n  res.json(user);\n});\n\nusersRouter.post('/', (req, res) => {\n  const { name, email } = req.body;\n  const newUser = { id: users.length + 1, name, email };\n  users.push(newUser);\n  res.status(201).json(newUser);\n});\n",
+          "numLines": 28,
+          "startLine": 1,
+          "totalLines": 28
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-13T05:23:03.119Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.1U571NKs3l/src/routes/products.ts"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.1U571NKs3l/src/routes/products.ts",
+          "content": "import { Router } from 'express';\n\nexport const productsRouter = Router();\n\nconst products = [\n  { id: 1, name: 'Widget', price: 9.99 },\n  { id: 2, name: 'Gadget', price: 19.99 },\n];\n\nproductsRouter.get('/', (req, res) => {\n  res.json(products);\n});\n\nproductsRouter.get('/:id', (req, res) => {\n  const product = products.find(p => p.id === parseInt(req.params.id));\n  if (!product) {\n    return res.status(404).json({ error: 'Product not found' });\n  }\n  res.json(product);\n});\n\nproductsRouter.post('/', (req, res) => {\n  const { name, price } = req.body;\n  const newProduct = { id: products.length + 1, name, price };\n  products.push(newProduct);\n  res.status(201).json(newProduct);\n});\n",
+          "numLines": 28,
+          "startLine": 1,
+          "totalLines": 28
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-13T05:23:07.752Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "mkdir -p /tmp/tmp.1U571NKs3l/.c3/adr",
+        "description": "Create C3 documentation directory structure"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T05:23:07.846Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "mkdir -p /tmp/tmp.1U571NKs3l/.c3/adr",
+        "description": "Create C3 documentation directory structure"
+      },
+      "result": {
+        "stdout": "",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T05:23:42.709Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.1U571NKs3l/.c3/c3.yaml",
+        "content": "# C3 Architecture Documentation\n# Simple Shop API - Express.js REST API\n# Generated: 2025-01-13\n\nversion: \"1.0\"\nname: Simple Shop API\ndescription: Express.js REST API for a simple e-commerce shop\n\n# =============================================================================\n# CONTEXT LEVEL (c3-0)\n# System boundary and external interactions\n# =============================================================================\ncontext:\n  id: c3-0\n  name: Simple Shop API\n  description: |\n    A lightweight REST API providing user and product management for\n    e-commerce applications. Designed as a backend service that exposes\n    HTTP endpoints for client applications to consume.\n\n  responsibilities:\n    - Authenticate incoming API requests\n    - Manage user data (CRUD operations)\n    - Manage product catalog (CRUD operations)\n    - Provide JSON-based REST interface\n\n  boundaries:\n    - All interactions via HTTP/REST\n    - Stateless request handling\n    - In-memory data storage (development mode)\n\n  external_actors:\n    - name: API Clients\n      description: Web/mobile applications consuming the API\n      interaction: HTTP REST requests with Bearer token authentication\n\n# =============================================================================\n# CONTAINER LEVEL (c3-1)\n# Deployable units\n# =============================================================================\ncontainers:\n  - id: c3-1\n    name: Express API Server\n    technology: Node.js / Express.js\n    description: |\n      Single deployable Express.js application serving REST endpoints.\n      Runs on port 3000 and handles all API routing and middleware.\n\n    entry_point: src/index.ts\n    port: 3000\n\n    responsibilities:\n      - HTTP request/response handling\n      - Middleware chain orchestration\n      - Route mounting and delegation\n\n# =============================================================================\n# COMPONENT LEVEL\n# Foundation components (cross-cutting concerns) and Feature components\n# =============================================================================\n\n# -----------------------------------------------------------------------------\n# FOUNDATION COMPONENTS\n# These provide cross-cutting concerns that feature components depend on\n# -----------------------------------------------------------------------------\nfoundation_components:\n  - id: c3-2\n    name: Auth Middleware\n    type: middleware\n    category: foundation\n    path: src/middleware/auth.ts\n\n    description: |\n      Global authentication middleware that validates Bearer tokens\n      on every incoming request. Acts as the security gate for the API.\n\n    responsibilities:\n      - Extract Bearer token from Authorization header\n      - Validate token presence and format\n      - Return 401 Unauthorized for missing/invalid tokens\n      - Pass control to next middleware for valid tokens\n\n    api:\n      exports:\n        - name: authMiddleware\n          type: function\n          signature: \"(req: Request, res: Response, next: NextFunction) => void\"\n\n    patterns:\n      - ref: auth-pattern\n\n    dependencies: []  # Foundation - no internal dependencies\n\n# -----------------------------------------------------------------------------\n# FEATURE COMPONENTS\n# Business domain components that depend on foundation\n# -----------------------------------------------------------------------------\nfeature_components:\n  - id: c3-3\n    name: Users Router\n    type: router\n    category: feature\n    path: src/routes/users.ts\n\n    description: |\n      Handles all user-related REST endpoints. Provides CRUD operations\n      for user management with in-memory storage.\n\n    responsibilities:\n      - GET /users - List all users\n      - GET /users/:id - Get user by ID\n      - POST /users - Create new user\n\n    api:\n      exports:\n        - name: usersRouter\n          type: Router\n      endpoints:\n        - method: GET\n          path: /users\n          description: List all users\n          response: \"User[]\"\n        - method: GET\n          path: /users/:id\n          description: Get user by ID\n          response: User\n          errors: [404 User not found]\n        - method: POST\n          path: /users\n          description: Create new user\n          body: \"{ name: string, email: string }\"\n          response: User (201 Created)\n\n    patterns:\n      - ref: rest-resource-pattern\n      - ref: error-handling-pattern\n\n    dependencies:\n      - c3-2  # Requires auth (applied globally)\n\n  - id: c3-4\n    name: Products Router\n    type: router\n    category: feature\n    path: src/routes/products.ts\n\n    description: |\n      Handles all product-related REST endpoints. Provides CRUD operations\n      for product catalog with in-memory storage.\n\n    responsibilities:\n      - GET /products - List all products\n      - GET /products/:id - Get product by ID\n      - POST /products - Create new product\n\n    api:\n      exports:\n        - name: productsRouter\n          type: Router\n      endpoints:\n        - method: GET\n          path: /products\n          description: List all products\n          response: \"Product[]\"\n        - method: GET\n          path: /products/:id\n          description: Get product by ID\n          response: Product\n          errors: [404 Product not found]\n        - method: POST\n          path: /products\n          description: Create new product\n          body: \"{ name: string, price: number }\"\n          response: Product (201 Created)\n\n    patterns:\n      - ref: rest-resource-pattern\n      - ref: error-handling-pattern\n\n    dependencies:\n      - c3-2  # Requires auth (applied globally)\n\n# =============================================================================\n# REFS (Shared Patterns)\n# Cross-cutting patterns and conventions used across components\n# =============================================================================\nrefs:\n  - id: auth-pattern\n    name: Bearer Token Authentication\n    description: |\n      All API requests must include a valid Bearer token in the\n      Authorization header. The middleware extracts and validates\n      the token before allowing the request to proceed.\n\n    usage: |\n      Authorization: Bearer <token>\n\n    behavior:\n      - Missing token returns 401 with \"No token provided\"\n      - Invalid token returns 401 with \"Invalid token\"\n      - Valid token allows request to continue\n\n    files:\n      - src/middleware/auth.ts\n\n  - id: rest-resource-pattern\n    name: REST Resource Pattern\n    description: |\n      Consistent RESTful resource handling across all routers.\n      Each resource follows the same endpoint structure and\n      response format conventions.\n\n    conventions:\n      - \"GET /{resource} - List all items\"\n      - \"GET /{resource}/:id - Get single item\"\n      - \"POST /{resource} - Create new item\"\n      - All responses are JSON\n      - Success uses appropriate HTTP status (200, 201)\n      - Errors use appropriate HTTP status (400, 404)\n\n    files:\n      - src/routes/users.ts\n      - src/routes/products.ts\n\n  - id: error-handling-pattern\n    name: Error Response Pattern\n    description: |\n      Consistent error response format across the API.\n      All errors return JSON with an 'error' field.\n\n    format: |\n      { \"error\": \"<error message>\" }\n\n    http_codes:\n      - 401: Authentication failures\n      - 404: Resource not found\n\n    files:\n      - src/middleware/auth.ts\n      - src/routes/users.ts\n      - src/routes/products.ts\n\n# =============================================================================\n# DEPENDENCY GRAPH SUMMARY\n# =============================================================================\ndependency_summary: |\n  API Clients\n       |\n       v\n  [c3-1: Express Server]\n       |\n       v\n  [c3-2: Auth Middleware] <-- Foundation (no dependencies)\n       |\n       +---> [c3-3: Users Router] <-- Feature (depends on c3-2)\n       |\n       +---> [c3-4: Products Router] <-- Feature (depends on c3-2)\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T05:23:42.779Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.1U571NKs3l/.c3/c3.yaml",
+        "content": "# C3 Architecture Documentation\n# Simple Shop API - Express.js REST API\n# Generated: 2025-01-13\n\nversion: \"1.0\"\nname: Simple Shop API\ndescription: Express.js REST API for a simple e-commerce shop\n\n# =============================================================================\n# CONTEXT LEVEL (c3-0)\n# System boundary and external interactions\n# =============================================================================\ncontext:\n  id: c3-0\n  name: Simple Shop API\n  description: |\n    A lightweight REST API providing user and product management for\n    e-commerce applications. Designed as a backend service that exposes\n    HTTP endpoints for client applications to consume.\n\n  responsibilities:\n    - Authenticate incoming API requests\n    - Manage user data (CRUD operations)\n    - Manage product catalog (CRUD operations)\n    - Provide JSON-based REST interface\n\n  boundaries:\n    - All interactions via HTTP/REST\n    - Stateless request handling\n    - In-memory data storage (development mode)\n\n  external_actors:\n    - name: API Clients\n      description: Web/mobile applications consuming the API\n      interaction: HTTP REST requests with Bearer token authentication\n\n# =============================================================================\n# CONTAINER LEVEL (c3-1)\n# Deployable units\n# =============================================================================\ncontainers:\n  - id: c3-1\n    name: Express API Server\n    technology: Node.js / Express.js\n    description: |\n      Single deployable Express.js application serving REST endpoints.\n      Runs on port 3000 and handles all API routing and middleware.\n\n    entry_point: src/index.ts\n    port: 3000\n\n    responsibilities:\n      - HTTP request/response handling\n      - Middleware chain orchestration\n      - Route mounting and delegation\n\n# =============================================================================\n# COMPONENT LEVEL\n# Foundation components (cross-cutting concerns) and Feature components\n# =============================================================================\n\n# -----------------------------------------------------------------------------\n# FOUNDATION COMPONENTS\n# These provide cross-cutting concerns that feature components depend on\n# -----------------------------------------------------------------------------\nfoundation_components:\n  - id: c3-2\n    name: Auth Middleware\n    type: middleware\n    category: foundation\n    path: src/middleware/auth.ts\n\n    description: |\n      Global authentication middleware that validates Bearer tokens\n      on every incoming request. Acts as the security gate for the API.\n\n    responsibilities:\n      - Extract Bearer token from Authorization header\n      - Validate token presence and format\n      - Return 401 Unauthorized for missing/invalid tokens\n      - Pass control to next middleware for valid tokens\n\n    api:\n      exports:\n        - name: authMiddleware\n          type: function\n          signature: \"(req: Request, res: Response, next: NextFunction) => void\"\n\n    patterns:\n      - ref: auth-pattern\n\n    dependencies: []  # Foundation - no internal dependencies\n\n# -----------------------------------------------------------------------------\n# FEATURE COMPONENTS\n# Business domain components that depend on foundation\n# -----------------------------------------------------------------------------\nfeature_components:\n  - id: c3-3\n    name: Users Router\n    type: router\n    category: feature\n    path: src/routes/users.ts\n\n    description: |\n      Handles all user-related REST endpoints. Provides CRUD operations\n      for user management with in-memory storage.\n\n    responsibilities:\n      - GET /users - List all users\n      - GET /users/:id - Get user by ID\n      - POST /users - Create new user\n\n    api:\n      exports:\n        - name: usersRouter\n          type: Router\n      endpoints:\n        - method: GET\n          path: /users\n          description: List all users\n          response: \"User[]\"\n        - method: GET\n          path: /users/:id\n          description: Get user by ID\n          response: User\n          errors: [404 User not found]\n        - method: POST\n          path: /users\n          description: Create new user\n          body: \"{ name: string, email: string }\"\n          response: User (201 Created)\n\n    patterns:\n      - ref: rest-resource-pattern\n      - ref: error-handling-pattern\n\n    dependencies:\n      - c3-2  # Requires auth (applied globally)\n\n  - id: c3-4\n    name: Products Router\n    type: router\n    category: feature\n    path: src/routes/products.ts\n\n    description: |\n      Handles all product-related REST endpoints. Provides CRUD operations\n      for product catalog with in-memory storage.\n\n    responsibilities:\n      - GET /products - List all products\n      - GET /products/:id - Get product by ID\n      - POST /products - Create new product\n\n    api:\n      exports:\n        - name: productsRouter\n          type: Router\n      endpoints:\n        - method: GET\n          path: /products\n          description: List all products\n          response: \"Product[]\"\n        - method: GET\n          path: /products/:id\n          description: Get product by ID\n          response: Product\n          errors: [404 Product not found]\n        - method: POST\n          path: /products\n          description: Create new product\n          body: \"{ name: string, price: number }\"\n          response: Product (201 Created)\n\n    patterns:\n      - ref: rest-resource-pattern\n      - ref: error-handling-pattern\n\n    dependencies:\n      - c3-2  # Requires auth (applied globally)\n\n# =============================================================================\n# REFS (Shared Patterns)\n# Cross-cutting patterns and conventions used across components\n# =============================================================================\nrefs:\n  - id: auth-pattern\n    name: Bearer Token Authentication\n    description: |\n      All API requests must include a valid Bearer token in the\n      Authorization header. The middleware extracts and validates\n      the token before allowing the request to proceed.\n\n    usage: |\n      Authorization: Bearer <token>\n\n    behavior:\n      - Missing token returns 401 with \"No token provided\"\n      - Invalid token returns 401 with \"Invalid token\"\n      - Valid token allows request to continue\n\n    files:\n      - src/middleware/auth.ts\n\n  - id: rest-resource-pattern\n    name: REST Resource Pattern\n    description: |\n      Consistent RESTful resource handling across all routers.\n      Each resource follows the same endpoint structure and\n      response format conventions.\n\n    conventions:\n      - \"GET /{resource} - List all items\"\n      - \"GET /{resource}/:id - Get single item\"\n      - \"POST /{resource} - Create new item\"\n      - All responses are JSON\n      - Success uses appropriate HTTP status (200, 201)\n      - Errors use appropriate HTTP status (400, 404)\n\n    files:\n      - src/routes/users.ts\n      - src/routes/products.ts\n\n  - id: error-handling-pattern\n    name: Error Response Pattern\n    description: |\n      Consistent error response format across the API.\n      All errors return JSON with an 'error' field.\n\n    format: |\n      { \"error\": \"<error message>\" }\n\n    http_codes:\n      - 401: Authentication failures\n      - 404: Resource not found\n\n    files:\n      - src/middleware/auth.ts\n      - src/routes/users.ts\n      - src/routes/products.ts\n\n# =============================================================================\n# DEPENDENCY GRAPH SUMMARY\n# =============================================================================\ndependency_summary: |\n  API Clients\n       |\n       v\n  [c3-1: Express Server]\n       |\n       v\n  [c3-2: Auth Middleware] <-- Foundation (no dependencies)\n       |\n       +---> [c3-3: Users Router] <-- Feature (depends on c3-2)\n       |\n       +---> [c3-4: Products Router] <-- Feature (depends on c3-2)\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.1U571NKs3l/.c3/c3.yaml",
+        "content": "# C3 Architecture Documentation\n# Simple Shop API - Express.js REST API\n# Generated: 2025-01-13\n\nversion: \"1.0\"\nname: Simple Shop API\ndescription: Express.js REST API for a simple e-commerce shop\n\n# =============================================================================\n# CONTEXT LEVEL (c3-0)\n# System boundary and external interactions\n# =============================================================================\ncontext:\n  id: c3-0\n  name: Simple Shop API\n  description: |\n    A lightweight REST API providing user and product management for\n    e-commerce applications. Designed as a backend service that exposes\n    HTTP endpoints for client applications to consume.\n\n  responsibilities:\n    - Authenticate incoming API requests\n    - Manage user data (CRUD operations)\n    - Manage product catalog (CRUD operations)\n    - Provide JSON-based REST interface\n\n  boundaries:\n    - All interactions via HTTP/REST\n    - Stateless request handling\n    - In-memory data storage (development mode)\n\n  external_actors:\n    - name: API Clients\n      description: Web/mobile applications consuming the API\n      interaction: HTTP REST requests with Bearer token authentication\n\n# =============================================================================\n# CONTAINER LEVEL (c3-1)\n# Deployable units\n# =============================================================================\ncontainers:\n  - id: c3-1\n    name: Express API Server\n    technology: Node.js / Express.js\n    description: |\n      Single deployable Express.js application serving REST endpoints.\n      Runs on port 3000 and handles all API routing and middleware.\n\n    entry_point: src/index.ts\n    port: 3000\n\n    responsibilities:\n      - HTTP request/response handling\n      - Middleware chain orchestration\n      - Route mounting and delegation\n\n# =============================================================================\n# COMPONENT LEVEL\n# Foundation components (cross-cutting concerns) and Feature components\n# =============================================================================\n\n# -----------------------------------------------------------------------------\n# FOUNDATION COMPONENTS\n# These provide cross-cutting concerns that feature components depend on\n# -----------------------------------------------------------------------------\nfoundation_components:\n  - id: c3-2\n    name: Auth Middleware\n    type: middleware\n    category: foundation\n    path: src/middleware/auth.ts\n\n    description: |\n      Global authentication middleware that validates Bearer tokens\n      on every incoming request. Acts as the security gate for the API.\n\n    responsibilities:\n      - Extract Bearer token from Authorization header\n      - Validate token presence and format\n      - Return 401 Unauthorized for missing/invalid tokens\n      - Pass control to next middleware for valid tokens\n\n    api:\n      exports:\n        - name: authMiddleware\n          type: function\n          signature: \"(req: Request, res: Response, next: NextFunction) => void\"\n\n    patterns:\n      - ref: auth-pattern\n\n    dependencies: []  # Foundation - no internal dependencies\n\n# -----------------------------------------------------------------------------\n# FEATURE COMPONENTS\n# Business domain components that depend on foundation\n# -----------------------------------------------------------------------------\nfeature_components:\n  - id: c3-3\n    name: Users Router\n    type: router\n    category: feature\n    path: src/routes/users.ts\n\n    description: |\n      Handles all user-related REST endpoints. Provides CRUD operations\n      for user management with in-memory storage.\n\n    responsibilities:\n      - GET /users - List all users\n      - GET /users/:id - Get user by ID\n      - POST /users - Create new user\n\n    api:\n      exports:\n        - name: usersRouter\n          type: Router\n      endpoints:\n        - method: GET\n          path: /users\n          description: List all users\n          response: \"User[]\"\n        - method: GET\n          path: /users/:id\n          description: Get user by ID\n          response: User\n          errors: [404 User not found]\n        - method: POST\n          path: /users\n          description: Create new user\n          body: \"{ name: string, email: string }\"\n          response: User (201 Created)\n\n    patterns:\n      - ref: rest-resource-pattern\n      - ref: error-handling-pattern\n\n    dependencies:\n      - c3-2  # Requires auth (applied globally)\n\n  - id: c3-4\n    name: Products Router\n    type: router\n    category: feature\n    path: src/routes/products.ts\n\n    description: |\n      Handles all product-related REST endpoints. Provides CRUD operations\n      for product catalog with in-memory storage.\n\n    responsibilities:\n      - GET /products - List all products\n      - GET /products/:id - Get product by ID\n      - POST /products - Create new product\n\n    api:\n      exports:\n        - name: productsRouter\n          type: Router\n      endpoints:\n        - method: GET\n          path: /products\n          description: List all products\n          response: \"Product[]\"\n        - method: GET\n          path: /products/:id\n          description: Get product by ID\n          response: Product\n          errors: [404 Product not found]\n        - method: POST\n          path: /products\n          description: Create new product\n          body: \"{ name: string, price: number }\"\n          response: Product (201 Created)\n\n    patterns:\n      - ref: rest-resource-pattern\n      - ref: error-handling-pattern\n\n    dependencies:\n      - c3-2  # Requires auth (applied globally)\n\n# =============================================================================\n# REFS (Shared Patterns)\n# Cross-cutting patterns and conventions used across components\n# =============================================================================\nrefs:\n  - id: auth-pattern\n    name: Bearer Token Authentication\n    description: |\n      All API requests must include a valid Bearer token in the\n      Authorization header. The middleware extracts and validates\n      the token before allowing the request to proceed.\n\n    usage: |\n      Authorization: Bearer <token>\n\n    behavior:\n      - Missing token returns 401 with \"No token provided\"\n      - Invalid token returns 401 with \"Invalid token\"\n      - Valid token allows request to continue\n\n    files:\n      - src/middleware/auth.ts\n\n  - id: rest-resource-pattern\n    name: REST Resource Pattern\n    description: |\n      Consistent RESTful resource handling across all routers.\n      Each resource follows the same endpoint structure and\n      response format conventions.\n\n    conventions:\n      - \"GET /{resource} - List all items\"\n      - \"GET /{resource}/:id - Get single item\"\n      - \"POST /{resource} - Create new item\"\n      - All responses are JSON\n      - Success uses appropriate HTTP status (200, 201)\n      - Errors use appropriate HTTP status (400, 404)\n\n    files:\n      - src/routes/users.ts\n      - src/routes/products.ts\n\n  - id: error-handling-pattern\n    name: Error Response Pattern\n    description: |\n      Consistent error response format across the API.\n      All errors return JSON with an 'error' field.\n\n    format: |\n      { \"error\": \"<error message>\" }\n\n    http_codes:\n      - 401: Authentication failures\n      - 404: Resource not found\n\n    files:\n      - src/middleware/auth.ts\n      - src/routes/users.ts\n      - src/routes/products.ts\n\n# =============================================================================\n# DEPENDENCY GRAPH SUMMARY\n# =============================================================================\ndependency_summary: |\n  API Clients\n       |\n       v\n  [c3-1: Express Server]\n       |\n       v\n  [c3-2: Auth Middleware] <-- Foundation (no dependencies)\n       |\n       +---> [c3-3: Users Router] <-- Feature (depends on c3-2)\n       |\n       +---> [c3-4: Products Router] <-- Feature (depends on c3-2)\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-13T05:24:01.321Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.1U571NKs3l/.c3/adr/adr-001-initial-architecture.md",
+        "content": "# ADR-001: Initial Architecture - Express.js REST API\n\n**Status:** Accepted\n**Date:** 2025-01-13\n**Context:** Initial architecture documentation for Simple Shop API\n\n## Context\n\nWe need a lightweight REST API for a simple e-commerce application that handles\nuser and product management. The API needs to be straightforward for new\ndevelopers to understand while following established patterns.\n\n## Decisions\n\n### 1. Express.js Framework\n\n**Choice:** Express.js as the web framework\n\n**Rationale:**\n- Minimal and unopinionated, keeping the codebase simple\n- Large ecosystem and community support\n- Easy to understand for developers new to Node.js\n- Well-suited for REST API development\n\n### 2. Global Authentication Middleware\n\n**Choice:** Single auth middleware applied globally via `app.use()`\n\n**Rationale:**\n- Enforces security by default (deny-first approach)\n- All routes automatically protected\n- Single point of authentication logic\n- Easy to audit security posture\n\n**Trade-offs:**\n- No public endpoints possible without modification\n- May need route-specific bypasses in future\n\n### 3. Feature-Based Router Organization\n\n**Choice:** Separate router files per resource (users, products)\n\n**Rationale:**\n- Clear separation of concerns\n- Each feature encapsulated in its own file\n- Easy to locate code for a specific resource\n- Scales well as features are added\n\n### 4. In-Memory Data Storage\n\n**Choice:** Arrays for data storage (development mode)\n\n**Rationale:**\n- Simplifies initial development and testing\n- No external database dependencies\n- Fast iteration for prototyping\n\n**Trade-offs:**\n- Data lost on server restart\n- Not suitable for production\n- Will need migration to persistent storage\n\n### 5. Consistent REST Patterns\n\n**Choice:** Uniform endpoint structure across all resources\n\n**Rationale:**\n- Predictable API for consumers\n- Reduces cognitive load for developers\n- Easy to add new resources following same pattern\n\n## Component Dependency Strategy\n\nFoundation components (like auth middleware) have no internal dependencies\nand are used by all feature components. This creates a clean dependency\nhierarchy:\n\n```\nFoundation Layer:  [Auth Middleware]\n                         |\nFeature Layer:    [Users] [Products]\n```\n\nThis ensures:\n- Auth can be tested in isolation\n- Feature components can be developed independently\n- Changes to foundation require careful consideration\n\n## Consequences\n\n### Positive\n- Simple, understandable architecture\n- Quick onboarding for new developers\n- Clear patterns to follow when adding features\n- Security enforced by default\n\n### Negative\n- In-memory storage limits production readiness\n- Global auth prevents public endpoints\n- No validation middleware (will need to add)\n\n## Related Components\n\n- c3-1: Express API Server\n- c3-2: Auth Middleware (foundation)\n- c3-3: Users Router (feature)\n- c3-4: Products Router (feature)\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T05:24:01.387Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.1U571NKs3l/.c3/adr/adr-001-initial-architecture.md",
+        "content": "# ADR-001: Initial Architecture - Express.js REST API\n\n**Status:** Accepted\n**Date:** 2025-01-13\n**Context:** Initial architecture documentation for Simple Shop API\n\n## Context\n\nWe need a lightweight REST API for a simple e-commerce application that handles\nuser and product management. The API needs to be straightforward for new\ndevelopers to understand while following established patterns.\n\n## Decisions\n\n### 1. Express.js Framework\n\n**Choice:** Express.js as the web framework\n\n**Rationale:**\n- Minimal and unopinionated, keeping the codebase simple\n- Large ecosystem and community support\n- Easy to understand for developers new to Node.js\n- Well-suited for REST API development\n\n### 2. Global Authentication Middleware\n\n**Choice:** Single auth middleware applied globally via `app.use()`\n\n**Rationale:**\n- Enforces security by default (deny-first approach)\n- All routes automatically protected\n- Single point of authentication logic\n- Easy to audit security posture\n\n**Trade-offs:**\n- No public endpoints possible without modification\n- May need route-specific bypasses in future\n\n### 3. Feature-Based Router Organization\n\n**Choice:** Separate router files per resource (users, products)\n\n**Rationale:**\n- Clear separation of concerns\n- Each feature encapsulated in its own file\n- Easy to locate code for a specific resource\n- Scales well as features are added\n\n### 4. In-Memory Data Storage\n\n**Choice:** Arrays for data storage (development mode)\n\n**Rationale:**\n- Simplifies initial development and testing\n- No external database dependencies\n- Fast iteration for prototyping\n\n**Trade-offs:**\n- Data lost on server restart\n- Not suitable for production\n- Will need migration to persistent storage\n\n### 5. Consistent REST Patterns\n\n**Choice:** Uniform endpoint structure across all resources\n\n**Rationale:**\n- Predictable API for consumers\n- Reduces cognitive load for developers\n- Easy to add new resources following same pattern\n\n## Component Dependency Strategy\n\nFoundation components (like auth middleware) have no internal dependencies\nand are used by all feature components. This creates a clean dependency\nhierarchy:\n\n```\nFoundation Layer:  [Auth Middleware]\n                         |\nFeature Layer:    [Users] [Products]\n```\n\nThis ensures:\n- Auth can be tested in isolation\n- Feature components can be developed independently\n- Changes to foundation require careful consideration\n\n## Consequences\n\n### Positive\n- Simple, understandable architecture\n- Quick onboarding for new developers\n- Clear patterns to follow when adding features\n- Security enforced by default\n\n### Negative\n- In-memory storage limits production readiness\n- Global auth prevents public endpoints\n- No validation middleware (will need to add)\n\n## Related Components\n\n- c3-1: Express API Server\n- c3-2: Auth Middleware (foundation)\n- c3-3: Users Router (feature)\n- c3-4: Products Router (feature)\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.1U571NKs3l/.c3/adr/adr-001-initial-architecture.md",
+        "content": "# ADR-001: Initial Architecture - Express.js REST API\n\n**Status:** Accepted\n**Date:** 2025-01-13\n**Context:** Initial architecture documentation for Simple Shop API\n\n## Context\n\nWe need a lightweight REST API for a simple e-commerce application that handles\nuser and product management. The API needs to be straightforward for new\ndevelopers to understand while following established patterns.\n\n## Decisions\n\n### 1. Express.js Framework\n\n**Choice:** Express.js as the web framework\n\n**Rationale:**\n- Minimal and unopinionated, keeping the codebase simple\n- Large ecosystem and community support\n- Easy to understand for developers new to Node.js\n- Well-suited for REST API development\n\n### 2. Global Authentication Middleware\n\n**Choice:** Single auth middleware applied globally via `app.use()`\n\n**Rationale:**\n- Enforces security by default (deny-first approach)\n- All routes automatically protected\n- Single point of authentication logic\n- Easy to audit security posture\n\n**Trade-offs:**\n- No public endpoints possible without modification\n- May need route-specific bypasses in future\n\n### 3. Feature-Based Router Organization\n\n**Choice:** Separate router files per resource (users, products)\n\n**Rationale:**\n- Clear separation of concerns\n- Each feature encapsulated in its own file\n- Easy to locate code for a specific resource\n- Scales well as features are added\n\n### 4. In-Memory Data Storage\n\n**Choice:** Arrays for data storage (development mode)\n\n**Rationale:**\n- Simplifies initial development and testing\n- No external database dependencies\n- Fast iteration for prototyping\n\n**Trade-offs:**\n- Data lost on server restart\n- Not suitable for production\n- Will need migration to persistent storage\n\n### 5. Consistent REST Patterns\n\n**Choice:** Uniform endpoint structure across all resources\n\n**Rationale:**\n- Predictable API for consumers\n- Reduces cognitive load for developers\n- Easy to add new resources following same pattern\n\n## Component Dependency Strategy\n\nFoundation components (like auth middleware) have no internal dependencies\nand are used by all feature components. This creates a clean dependency\nhierarchy:\n\n```\nFoundation Layer:  [Auth Middleware]\n                         |\nFeature Layer:    [Users] [Products]\n```\n\nThis ensures:\n- Auth can be tested in isolation\n- Feature components can be developed independently\n- Changes to foundation require careful consideration\n\n## Consequences\n\n### Positive\n- Simple, understandable architecture\n- Quick onboarding for new developers\n- Clear patterns to follow when adding features\n- Security enforced by default\n\n### Negative\n- In-memory storage limits production readiness\n- Global auth prevents public endpoints\n- No validation middleware (will need to add)\n\n## Related Components\n\n- c3-1: Express API Server\n- c3-2: Auth Middleware (foundation)\n- c3-3: Users Router (feature)\n- c3-4: Products Router (feature)\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-13T05:24:11.369Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.1U571NKs3l/.c3/README.md",
+        "content": "# C3 Architecture Documentation\n\n## Quick Navigation\n\n| ID | Component | Type | Path |\n|----|-----------|------|------|\n| c3-0 | Simple Shop API | Context | (system boundary) |\n| c3-1 | Express API Server | Container | `src/index.ts` |\n| c3-2 | Auth Middleware | Foundation | `src/middleware/auth.ts` |\n| c3-3 | Users Router | Feature | `src/routes/users.ts` |\n| c3-4 | Products Router | Feature | `src/routes/products.ts` |\n\n## Architecture Overview\n\n```\n                    API Clients\n                         |\n                         v\n              +---------------------+\n              |  Express Server     |\n              |      (c3-1)         |\n              +---------------------+\n                         |\n                         v\n              +---------------------+\n              |  Auth Middleware    |  <-- Foundation Layer\n              |      (c3-2)         |      (no dependencies)\n              +---------------------+\n                    /         \\\n                   v           v\n         +-----------+   +-------------+\n         |   Users   |   |  Products   |  <-- Feature Layer\n         |  (c3-3)   |   |   (c3-4)    |     (depend on c3-2)\n         +-----------+   +-------------+\n```\n\n## Shared Patterns (Refs)\n\n- **auth-pattern**: Bearer token authentication on all requests\n- **rest-resource-pattern**: Consistent GET/POST endpoints per resource\n- **error-handling-pattern**: Uniform JSON error responses\n\n## Files\n\n- `c3.yaml` - Full architecture specification\n- `adr/` - Architecture Decision Records\n\n## For New Developers\n\n1. Start with `c3.yaml` to understand the full system\n2. Read `adr/adr-001-initial-architecture.md` for decision rationale\n3. Foundation components (c3-2) are dependencies for feature components\n4. Follow existing patterns when adding new features\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T05:24:11.405Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.1U571NKs3l/.c3/README.md",
+        "content": "# C3 Architecture Documentation\n\n## Quick Navigation\n\n| ID | Component | Type | Path |\n|----|-----------|------|------|\n| c3-0 | Simple Shop API | Context | (system boundary) |\n| c3-1 | Express API Server | Container | `src/index.ts` |\n| c3-2 | Auth Middleware | Foundation | `src/middleware/auth.ts` |\n| c3-3 | Users Router | Feature | `src/routes/users.ts` |\n| c3-4 | Products Router | Feature | `src/routes/products.ts` |\n\n## Architecture Overview\n\n```\n                    API Clients\n                         |\n                         v\n              +---------------------+\n              |  Express Server     |\n              |      (c3-1)         |\n              +---------------------+\n                         |\n                         v\n              +---------------------+\n              |  Auth Middleware    |  <-- Foundation Layer\n              |      (c3-2)         |      (no dependencies)\n              +---------------------+\n                    /         \\\n                   v           v\n         +-----------+   +-------------+\n         |   Users   |   |  Products   |  <-- Feature Layer\n         |  (c3-3)   |   |   (c3-4)    |     (depend on c3-2)\n         +-----------+   +-------------+\n```\n\n## Shared Patterns (Refs)\n\n- **auth-pattern**: Bearer token authentication on all requests\n- **rest-resource-pattern**: Consistent GET/POST endpoints per resource\n- **error-handling-pattern**: Uniform JSON error responses\n\n## Files\n\n- `c3.yaml` - Full architecture specification\n- `adr/` - Architecture Decision Records\n\n## For New Developers\n\n1. Start with `c3.yaml` to understand the full system\n2. Read `adr/adr-001-initial-architecture.md` for decision rationale\n3. Foundation components (c3-2) are dependencies for feature components\n4. Follow existing patterns when adding new features\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.1U571NKs3l/.c3/README.md",
+        "content": "# C3 Architecture Documentation\n\n## Quick Navigation\n\n| ID | Component | Type | Path |\n|----|-----------|------|------|\n| c3-0 | Simple Shop API | Context | (system boundary) |\n| c3-1 | Express API Server | Container | `src/index.ts` |\n| c3-2 | Auth Middleware | Foundation | `src/middleware/auth.ts` |\n| c3-3 | Users Router | Feature | `src/routes/users.ts` |\n| c3-4 | Products Router | Feature | `src/routes/products.ts` |\n\n## Architecture Overview\n\n```\n                    API Clients\n                         |\n                         v\n              +---------------------+\n              |  Express Server     |\n              |      (c3-1)         |\n              +---------------------+\n                         |\n                         v\n              +---------------------+\n              |  Auth Middleware    |  <-- Foundation Layer\n              |      (c3-2)         |      (no dependencies)\n              +---------------------+\n                    /         \\\n                   v           v\n         +-----------+   +-------------+\n         |   Users   |   |  Products   |  <-- Feature Layer\n         |  (c3-3)   |   |   (c3-4)    |     (depend on c3-2)\n         +-----------+   +-------------+\n```\n\n## Shared Patterns (Refs)\n\n- **auth-pattern**: Bearer token authentication on all requests\n- **rest-resource-pattern**: Consistent GET/POST endpoints per resource\n- **error-handling-pattern**: Uniform JSON error responses\n\n## Files\n\n- `c3.yaml` - Full architecture specification\n- `adr/` - Architecture Decision Records\n\n## For New Developers\n\n1. Start with `c3.yaml` to understand the full system\n2. Read `adr/adr-001-initial-architecture.md` for decision rationale\n3. Foundation components (c3-2) are dependencies for feature components\n4. Follow existing patterns when adding new features\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    }
+  ],
+  "judgment": {
+    "pass": true,
+    "score": 100,
+    "expectations": [
+      {
+        "text": "System context is documented (boundaries, purpose, high-level structure)",
+        "pass": true,
+        "reasoning": "The README.md clearly documents the system context with c3-0 as the system boundary, includes an Architecture Overview diagram showing the full system structure with API Clients at the boundary, and the ADR explains the purpose as 'a lightweight REST API for a simple e-commerce application that handles user and product management.' The high-level structure is shown in both the ASCII diagram and the Quick Navigation table."
+      },
+      {
+        "text": "Container responsibilities are clear (what the API does)",
+        "pass": true,
+        "reasoning": "The Express API Server (c3-1) is documented as the container in the Quick Navigation table with its path 'src/index.ts'. The ADR thoroughly explains what the API does: handles user and product management, uses Express.js framework, applies global authentication, and uses in-memory data storage. The container's responsibility as the single API server is clear from both documents."
+      },
+      {
+        "text": "Auth middleware documented as foundation with dependencies shown",
+        "pass": true,
+        "reasoning": "Auth Middleware (c3-2) is explicitly listed as 'Foundation' type in the Quick Navigation table. The README diagram clearly shows it in the 'Foundation Layer' with annotation '(no dependencies)'. The ADR section 'Component Dependency Strategy' explicitly states 'Foundation components (like auth middleware) have no internal dependencies and are used by all feature components' with a dependency hierarchy diagram showing Auth Middleware at the foundation layer."
+      },
+      {
+        "text": "Users and Products documented as feature components",
+        "pass": true,
+        "reasoning": "Both Users Router (c3-3) and Products Router (c3-4) are documented as 'Feature' type in the Quick Navigation table. The README diagram shows them in the 'Feature Layer' with annotation '(depend on c3-2)'. The ADR discusses 'Feature-Based Router Organization' and explains 'Separate router files per resource (users, products)' with clear separation of concerns."
+      },
+      {
+        "text": "Cross-cutting patterns identified (auth, error handling, or similar)",
+        "pass": true,
+        "reasoning": "The README.md includes a 'Shared Patterns (Refs)' section that explicitly identifies three cross-cutting patterns: 'auth-pattern: Bearer token authentication on all requests', 'rest-resource-pattern: Consistent GET/POST endpoints per resource', and 'error-handling-pattern: Uniform JSON error responses'. The ADR also discusses 'Consistent REST Patterns' as a cross-cutting decision."
+      }
+    ],
+    "summary": "The documentation comprehensively covers all architectural aspects. The README provides clear system context with diagrams, container responsibilities are documented, Auth is properly identified as a foundation component with no dependencies, Users and Products are documented as feature components depending on auth, and cross-cutting patterns are explicitly listed including auth, REST patterns, and error handling."
+  }
+}

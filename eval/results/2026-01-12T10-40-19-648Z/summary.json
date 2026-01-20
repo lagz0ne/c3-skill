@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-12T10-40-19-648Z",
+  "total": 1,
+  "passed": 0,
+  "failed": 1,
+  "avgScore": 40,
+  "results": [
+    {
+      "name": "Add new feature via C3 alter workflow",
+      "pass": false,
+      "score": 40,
+      "duration": 92757,
+      "summary": "The agent created a well-structured ADR for the notification feature, but failed to follow through with the actual implementation. After user approval of the ADR, the agent did not create the c3-106 component documentation file or update the container README as specified in the ADR's 'Affected Layers' section."
+    }
+  ]
+}

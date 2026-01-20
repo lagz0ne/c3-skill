@@ -1,0 +1,451 @@
+{
+  "name": "Onboard simple Express app",
+  "pass": true,
+  "score": 100,
+  "duration": 87449,
+  "trace": [
+    {
+      "timestamp": "2026-01-12T12:03:39.708Z",
+      "event": "PreToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:onboard",
+        "args": "Simple Shop API - Express.js REST API. Create .c3/README.md, .c3/adr/adr-00000000-c3-adoption.md, .c3/c3-1-api/README.md, and component docs. Auth middleware is foundation, Users and Products routes are feature components."
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:03:39.868Z",
+      "event": "PostToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:onboard",
+        "args": "Simple Shop API - Express.js REST API. Create .c3/README.md, .c3/adr/adr-00000000-c3-adoption.md, .c3/c3-1-api/README.md, and component docs. Auth middleware is foundation, Users and Products routes are feature components."
+      },
+      "result": {
+        "success": true,
+        "commandName": "c3-skill:onboard",
+        "allowedTools": [
+          "Bash(rm:*)",
+          "Bash(test:*)",
+          "Bash(PROJECT=*)",
+          "Read",
+          "Glob",
+          "Grep",
+          "Write",
+          "Edit",
+          "AskUserQuestion",
+          "Skill"
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:03:43.323Z",
+      "event": "PreToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/*.js"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:03:43.323Z",
+      "event": "PreToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/package.json"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:03:43.323Z",
+      "event": "PreToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/*.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:03:43.333Z",
+      "event": "PostToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/*.js"
+      },
+      "result": {
+        "filenames": [],
+        "durationMs": 7,
+        "numFiles": 0,
+        "truncated": false
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:03:43.334Z",
+      "event": "PostToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/package.json"
+      },
+      "result": {
+        "filenames": [
+          "/tmp/tmp.dEigNUuk7O/package.json"
+        ],
+        "durationMs": 8,
+        "numFiles": 1,
+        "truncated": false
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:03:43.336Z",
+      "event": "PostToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/*.ts"
+      },
+      "result": {
+        "filenames": [
+          "/tmp/tmp.dEigNUuk7O/src/index.ts",
+          "/tmp/tmp.dEigNUuk7O/src/middleware/auth.ts",
+          "/tmp/tmp.dEigNUuk7O/src/routes/users.ts",
+          "/tmp/tmp.dEigNUuk7O/src/routes/products.ts"
+        ],
+        "durationMs": 9,
+        "numFiles": 4,
+        "truncated": false
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:03:48.265Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.dEigNUuk7O/package.json"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:03:48.265Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.dEigNUuk7O/src/index.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:03:48.265Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.dEigNUuk7O/src/middleware/auth.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:03:48.265Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.dEigNUuk7O/src/routes/users.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:03:48.265Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.dEigNUuk7O/src/routes/products.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:03:48.280Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.dEigNUuk7O/package.json"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.dEigNUuk7O/package.json",
+          "content": "{\n  \"name\": \"simple-shop-api\",\n  \"version\": \"1.0.0\",\n  \"type\": \"module\",\n  \"scripts\": {\n    \"start\": \"node src/index.js\"\n  },\n  \"dependencies\": {\n    \"express\": \"^4.18.0\"\n  }\n}\n",
+          "numLines": 12,
+          "startLine": 1,
+          "totalLines": 12
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:03:48.282Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.dEigNUuk7O/src/index.ts"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.dEigNUuk7O/src/index.ts",
+          "content": "import express from 'express';\nimport { authMiddleware } from './middleware/auth';\nimport { usersRouter } from './routes/users';\nimport { productsRouter } from './routes/products';\n\nconst app = express();\n\napp.use(express.json());\napp.use(authMiddleware);\n\napp.use('/users', usersRouter);\napp.use('/products', productsRouter);\n\napp.listen(3000, () => {\n  console.log('Simple Shop API running on port 3000');\n});\n",
+          "numLines": 17,
+          "startLine": 1,
+          "totalLines": 17
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:03:48.287Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.dEigNUuk7O/src/middleware/auth.ts"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.dEigNUuk7O/src/middleware/auth.ts",
+          "content": "import { Request, Response, NextFunction } from 'express';\n\nexport function authMiddleware(req: Request, res: Response, next: NextFunction) {\n  const token = req.headers.authorization?.replace('Bearer ', '');\n\n  if (!token) {\n    return res.status(401).json({ error: 'No token provided' });\n  }\n\n  // Simple token validation (in real app, verify JWT)\n  if (token === 'invalid') {\n    return res.status(401).json({ error: 'Invalid token' });\n  }\n\n  next();\n}\n",
+          "numLines": 17,
+          "startLine": 1,
+          "totalLines": 17
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:03:48.288Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.dEigNUuk7O/src/routes/users.ts"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.dEigNUuk7O/src/routes/users.ts",
+          "content": "import { Router } from 'express';\n\nexport const usersRouter = Router();\n\nconst users = [\n  { id: 1, name: 'Alice', email: 'alice@example.com' },\n  { id: 2, name: 'Bob', email: 'bob@example.com' },\n];\n\nusersRouter.get('/', (req, res) => {\n  res.json(users);\n});\n\nusersRouter.get('/:id', (req, res) => {\n  const user = users.find(u => u.id === parseInt(req.params.id));\n  if (!user) {\n    return res.status(404).json({ error: 'User not found' });\n  }\n  res.json(user);\n});\n\nusersRouter.post('/', (req, res) => {\n  const { name, email } = req.body;\n  const newUser = { id: users.length + 1, name, email };\n  users.push(newUser);\n  res.status(201).json(newUser);\n});\n",
+          "numLines": 28,
+          "startLine": 1,
+          "totalLines": 28
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:03:48.288Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.dEigNUuk7O/src/routes/products.ts"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.dEigNUuk7O/src/routes/products.ts",
+          "content": "import { Router } from 'express';\n\nexport const productsRouter = Router();\n\nconst products = [\n  { id: 1, name: 'Widget', price: 9.99 },\n  { id: 2, name: 'Gadget', price: 19.99 },\n];\n\nproductsRouter.get('/', (req, res) => {\n  res.json(products);\n});\n\nproductsRouter.get('/:id', (req, res) => {\n  const product = products.find(p => p.id === parseInt(req.params.id));\n  if (!product) {\n    return res.status(404).json({ error: 'Product not found' });\n  }\n  res.json(product);\n});\n\nproductsRouter.post('/', (req, res) => {\n  const { name, price } = req.body;\n  const newProduct = { id: products.length + 1, name, price };\n  products.push(newProduct);\n  res.status(201).json(newProduct);\n});\n",
+          "numLines": 28,
+          "startLine": 1,
+          "totalLines": 28
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:03:52.494Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "mkdir -p /tmp/tmp.dEigNUuk7O/.c3/adr /tmp/tmp.dEigNUuk7O/.c3/c3-1-api",
+        "description": "Create C3 directory structure"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:03:52.519Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "mkdir -p /tmp/tmp.dEigNUuk7O/.c3/adr /tmp/tmp.dEigNUuk7O/.c3/c3-1-api",
+        "description": "Create C3 directory structure"
+      },
+      "result": {
+        "stdout": "",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:04:36.241Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.dEigNUuk7O/.c3/README.md",
+        "content": "# Simple Shop API\n\n## System Overview\n\nSimple Shop API is a RESTful API service built with Express.js that provides endpoints for managing users and products in an e-commerce context.\n\n## Purpose\n\nThis API serves as a backend service for a simple shop application, handling:\n- User management (CRUD operations)\n- Product catalog management (CRUD operations)\n- Request authentication\n\n## Technology Stack\n\n- **Runtime**: Node.js\n- **Framework**: Express.js 4.x\n- **Language**: TypeScript\n\n## Architecture\n\n```\n┌─────────────────────────────────────────────────────┐\n│                  Simple Shop API                     │\n│                    (c3-1-api)                        │\n│  ┌─────────────────────────────────────────────────┐│\n│  │              Auth Middleware                     ││\n│  │              (c3-101-auth)                       ││\n│  │              [Foundation]                        ││\n│  └─────────────────────────────────────────────────┘│\n│                        │                             │\n│         ┌──────────────┼──────────────┐             │\n│         ▼              ▼              ▼             │\n│  ┌────────────┐ ┌────────────┐                      │\n│  │   Users    │ │  Products  │                      │\n│  │ (c3-102)   │ │ (c3-103)   │                      │\n│  │ [Feature]  │ │ [Feature]  │                      │\n│  └────────────┘ └────────────┘                      │\n└─────────────────────────────────────────────────────┘\n```\n\n## Containers\n\n| ID | Name | Description |\n|----|------|-------------|\n| c3-1-api | API Server | Express.js REST API server |\n\n## Quick Links\n\n- [ADR-000: C3 Adoption](adr/adr-00000000-c3-adoption.md)\n- [API Container](c3-1-api/README.md)\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:04:36.271Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.dEigNUuk7O/.c3/README.md",
+        "content": "# Simple Shop API\n\n## System Overview\n\nSimple Shop API is a RESTful API service built with Express.js that provides endpoints for managing users and products in an e-commerce context.\n\n## Purpose\n\nThis API serves as a backend service for a simple shop application, handling:\n- User management (CRUD operations)\n- Product catalog management (CRUD operations)\n- Request authentication\n\n## Technology Stack\n\n- **Runtime**: Node.js\n- **Framework**: Express.js 4.x\n- **Language**: TypeScript\n\n## Architecture\n\n```\n┌─────────────────────────────────────────────────────┐\n│                  Simple Shop API                     │\n│                    (c3-1-api)                        │\n│  ┌─────────────────────────────────────────────────┐│\n│  │              Auth Middleware                     ││\n│  │              (c3-101-auth)                       ││\n│  │              [Foundation]                        ││\n│  └─────────────────────────────────────────────────┘│\n│                        │                             │\n│         ┌──────────────┼──────────────┐             │\n│         ▼              ▼              ▼             │\n│  ┌────────────┐ ┌────────────┐                      │\n│  │   Users    │ │  Products  │                      │\n│  │ (c3-102)   │ │ (c3-103)   │                      │\n│  │ [Feature]  │ │ [Feature]  │                      │\n│  └────────────┘ └────────────┘                      │\n└─────────────────────────────────────────────────────┘\n```\n\n## Containers\n\n| ID | Name | Description |\n|----|------|-------------|\n| c3-1-api | API Server | Express.js REST API server |\n\n## Quick Links\n\n- [ADR-000: C3 Adoption](adr/adr-00000000-c3-adoption.md)\n- [API Container](c3-1-api/README.md)\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.dEigNUuk7O/.c3/README.md",
+        "content": "# Simple Shop API\n\n## System Overview\n\nSimple Shop API is a RESTful API service built with Express.js that provides endpoints for managing users and products in an e-commerce context.\n\n## Purpose\n\nThis API serves as a backend service for a simple shop application, handling:\n- User management (CRUD operations)\n- Product catalog management (CRUD operations)\n- Request authentication\n\n## Technology Stack\n\n- **Runtime**: Node.js\n- **Framework**: Express.js 4.x\n- **Language**: TypeScript\n\n## Architecture\n\n```\n┌─────────────────────────────────────────────────────┐\n│                  Simple Shop API                     │\n│                    (c3-1-api)                        │\n│  ┌─────────────────────────────────────────────────┐│\n│  │              Auth Middleware                     ││\n│  │              (c3-101-auth)                       ││\n│  │              [Foundation]                        ││\n│  └─────────────────────────────────────────────────┘│\n│                        │                             │\n│         ┌──────────────┼──────────────┐             │\n│         ▼              ▼              ▼             │\n│  ┌────────────┐ ┌────────────┐                      │\n│  │   Users    │ │  Products  │                      │\n│  │ (c3-102)   │ │ (c3-103)   │                      │\n│  │ [Feature]  │ │ [Feature]  │                      │\n│  └────────────┘ └────────────┘                      │\n└─────────────────────────────────────────────────────┘\n```\n\n## Containers\n\n| ID | Name | Description |\n|----|------|-------------|\n| c3-1-api | API Server | Express.js REST API server |\n\n## Quick Links\n\n- [ADR-000: C3 Adoption](adr/adr-00000000-c3-adoption.md)\n- [API Container](c3-1-api/README.md)\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:04:36.287Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.dEigNUuk7O/.c3/adr/adr-00000000-c3-adoption.md",
+        "content": "# ADR-000: Adoption of C3 Architecture Documentation\n\n## Status\n\nAccepted\n\n## Date\n\n2026-01-12\n\n## Context\n\nSimple Shop API is an Express.js REST API that provides user and product management endpoints. As the project grows, we need a structured approach to document and communicate the system architecture.\n\nThe codebase currently consists of:\n- An Express.js application entry point\n- Authentication middleware\n- Users route handlers\n- Products route handlers\n\nWithout formal architecture documentation:\n- New team members struggle to understand system structure\n- Architectural decisions are lost or forgotten\n- Component dependencies are unclear\n- Changes may inadvertently break architectural invariants\n\n## Decision\n\nWe will adopt the C3 (Context, Containers, Components) architecture documentation methodology for this project.\n\n### Documentation Structure\n\n```\n.c3/\n├── README.md                           # System context\n├── adr/                                # Architecture Decision Records\n│   └── adr-00000000-c3-adoption.md    # This document\n└── c3-1-api/                          # API Container\n    ├── README.md                       # Container overview\n    ├── c3-101-auth.md                 # Auth middleware (Foundation)\n    ├── c3-102-users.md                # Users routes (Feature)\n    └── c3-103-products.md             # Products routes (Feature)\n```\n\n### Component Classification\n\n- **Foundation Components**: Cross-cutting concerns that other components depend on\n  - Auth Middleware (c3-101): All routes depend on authentication\n\n- **Feature Components**: Business capability implementations\n  - Users Routes (c3-102): User management endpoints\n  - Products Routes (c3-103): Product catalog endpoints\n\n### Naming Conventions\n\n- Container IDs: `c3-{n}` (e.g., c3-1-api)\n- Component IDs: `c3-{container}{nn}` (e.g., c3-101, c3-102)\n- ADR files: `adr-{timestamp}-{slug}.md`\n\n## Consequences\n\n### Positive\n\n- Clear system structure documentation\n- Traceable architectural decisions via ADRs\n- Explicit component dependencies\n- Onboarding acceleration for new developers\n- Foundation for discussing architectural changes\n\n### Negative\n\n- Additional documentation maintenance overhead\n- Learning curve for C3 methodology\n\n### Neutral\n\n- Documentation lives alongside code in version control\n- Changes to architecture require ADR updates\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:04:36.303Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.dEigNUuk7O/.c3/adr/adr-00000000-c3-adoption.md",
+        "content": "# ADR-000: Adoption of C3 Architecture Documentation\n\n## Status\n\nAccepted\n\n## Date\n\n2026-01-12\n\n## Context\n\nSimple Shop API is an Express.js REST API that provides user and product management endpoints. As the project grows, we need a structured approach to document and communicate the system architecture.\n\nThe codebase currently consists of:\n- An Express.js application entry point\n- Authentication middleware\n- Users route handlers\n- Products route handlers\n\nWithout formal architecture documentation:\n- New team members struggle to understand system structure\n- Architectural decisions are lost or forgotten\n- Component dependencies are unclear\n- Changes may inadvertently break architectural invariants\n\n## Decision\n\nWe will adopt the C3 (Context, Containers, Components) architecture documentation methodology for this project.\n\n### Documentation Structure\n\n```\n.c3/\n├── README.md                           # System context\n├── adr/                                # Architecture Decision Records\n│   └── adr-00000000-c3-adoption.md    # This document\n└── c3-1-api/                          # API Container\n    ├── README.md                       # Container overview\n    ├── c3-101-auth.md                 # Auth middleware (Foundation)\n    ├── c3-102-users.md                # Users routes (Feature)\n    └── c3-103-products.md             # Products routes (Feature)\n```\n\n### Component Classification\n\n- **Foundation Components**: Cross-cutting concerns that other components depend on\n  - Auth Middleware (c3-101): All routes depend on authentication\n\n- **Feature Components**: Business capability implementations\n  - Users Routes (c3-102): User management endpoints\n  - Products Routes (c3-103): Product catalog endpoints\n\n### Naming Conventions\n\n- Container IDs: `c3-{n}` (e.g., c3-1-api)\n- Component IDs: `c3-{container}{nn}` (e.g., c3-101, c3-102)\n- ADR files: `adr-{timestamp}-{slug}.md`\n\n## Consequences\n\n### Positive\n\n- Clear system structure documentation\n- Traceable architectural decisions via ADRs\n- Explicit component dependencies\n- Onboarding acceleration for new developers\n- Foundation for discussing architectural changes\n\n### Negative\n\n- Additional documentation maintenance overhead\n- Learning curve for C3 methodology\n\n### Neutral\n\n- Documentation lives alongside code in version control\n- Changes to architecture require ADR updates\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.dEigNUuk7O/.c3/adr/adr-00000000-c3-adoption.md",
+        "content": "# ADR-000: Adoption of C3 Architecture Documentation\n\n## Status\n\nAccepted\n\n## Date\n\n2026-01-12\n\n## Context\n\nSimple Shop API is an Express.js REST API that provides user and product management endpoints. As the project grows, we need a structured approach to document and communicate the system architecture.\n\nThe codebase currently consists of:\n- An Express.js application entry point\n- Authentication middleware\n- Users route handlers\n- Products route handlers\n\nWithout formal architecture documentation:\n- New team members struggle to understand system structure\n- Architectural decisions are lost or forgotten\n- Component dependencies are unclear\n- Changes may inadvertently break architectural invariants\n\n## Decision\n\nWe will adopt the C3 (Context, Containers, Components) architecture documentation methodology for this project.\n\n### Documentation Structure\n\n```\n.c3/\n├── README.md                           # System context\n├── adr/                                # Architecture Decision Records\n│   └── adr-00000000-c3-adoption.md    # This document\n└── c3-1-api/                          # API Container\n    ├── README.md                       # Container overview\n    ├── c3-101-auth.md                 # Auth middleware (Foundation)\n    ├── c3-102-users.md                # Users routes (Feature)\n    └── c3-103-products.md             # Products routes (Feature)\n```\n\n### Component Classification\n\n- **Foundation Components**: Cross-cutting concerns that other components depend on\n  - Auth Middleware (c3-101): All routes depend on authentication\n\n- **Feature Components**: Business capability implementations\n  - Users Routes (c3-102): User management endpoints\n  - Products Routes (c3-103): Product catalog endpoints\n\n### Naming Conventions\n\n- Container IDs: `c3-{n}` (e.g., c3-1-api)\n- Component IDs: `c3-{container}{nn}` (e.g., c3-101, c3-102)\n- ADR files: `adr-{timestamp}-{slug}.md`\n\n## Consequences\n\n### Positive\n\n- Clear system structure documentation\n- Traceable architectural decisions via ADRs\n- Explicit component dependencies\n- Onboarding acceleration for new developers\n- Foundation for discussing architectural changes\n\n### Negative\n\n- Additional documentation maintenance overhead\n- Learning curve for C3 methodology\n\n### Neutral\n\n- Documentation lives alongside code in version control\n- Changes to architecture require ADR updates\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:04:36.310Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.dEigNUuk7O/.c3/c3-1-api/README.md",
+        "content": "# c3-1-api: API Server\n\n## Overview\n\nThe API Server is an Express.js application that provides RESTful endpoints for the Simple Shop system. It handles user management and product catalog operations.\n\n## Technology\n\n- Express.js 4.x\n- TypeScript\n- Node.js\n\n## Entry Point\n\n`src/index.ts` - Application bootstrap and middleware configuration\n\n## Components\n\n### Foundation Components\n\nFoundation components provide cross-cutting functionality that feature components depend on.\n\n| ID | Name | File | Description |\n|----|------|------|-------------|\n| [c3-101](c3-101-auth.md) | Auth Middleware | `src/middleware/auth.ts` | Request authentication |\n\n### Feature Components\n\nFeature components implement specific business capabilities.\n\n| ID | Name | File | Description |\n|----|------|------|-------------|\n| [c3-102](c3-102-users.md) | Users Routes | `src/routes/users.ts` | User management endpoints |\n| [c3-103](c3-103-products.md) | Products Routes | `src/routes/products.ts` | Product catalog endpoints |\n\n## Dependency Graph\n\n```\n                ┌──────────────┐\n                │  c3-101-auth │\n                │  (Foundation)│\n                └──────┬───────┘\n                       │\n         ┌─────────────┼─────────────┐\n         │ depends on  │ depends on  │\n         ▼             ▼             ▼\n   ┌──────────┐  ┌──────────┐\n   │ c3-102   │  │ c3-103   │\n   │ Users    │  │ Products │\n   │(Feature) │  │(Feature) │\n   └──────────┘  └──────────┘\n```\n\n## API Routes\n\n| Method | Path | Component | Description |\n|--------|------|-----------|-------------|\n| GET | `/users` | c3-102 | List all users |\n| GET | `/users/:id` | c3-102 | Get user by ID |\n| POST | `/users` | c3-102 | Create new user |\n| GET | `/products` | c3-103 | List all products |\n| GET | `/products/:id` | c3-103 | Get product by ID |\n| POST | `/products` | c3-103 | Create new product |\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:04:36.323Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.dEigNUuk7O/.c3/c3-1-api/README.md",
+        "content": "# c3-1-api: API Server\n\n## Overview\n\nThe API Server is an Express.js application that provides RESTful endpoints for the Simple Shop system. It handles user management and product catalog operations.\n\n## Technology\n\n- Express.js 4.x\n- TypeScript\n- Node.js\n\n## Entry Point\n\n`src/index.ts` - Application bootstrap and middleware configuration\n\n## Components\n\n### Foundation Components\n\nFoundation components provide cross-cutting functionality that feature components depend on.\n\n| ID | Name | File | Description |\n|----|------|------|-------------|\n| [c3-101](c3-101-auth.md) | Auth Middleware | `src/middleware/auth.ts` | Request authentication |\n\n### Feature Components\n\nFeature components implement specific business capabilities.\n\n| ID | Name | File | Description |\n|----|------|------|-------------|\n| [c3-102](c3-102-users.md) | Users Routes | `src/routes/users.ts` | User management endpoints |\n| [c3-103](c3-103-products.md) | Products Routes | `src/routes/products.ts` | Product catalog endpoints |\n\n## Dependency Graph\n\n```\n                ┌──────────────┐\n                │  c3-101-auth │\n                │  (Foundation)│\n                └──────┬───────┘\n                       │\n         ┌─────────────┼─────────────┐\n         │ depends on  │ depends on  │\n         ▼             ▼             ▼\n   ┌──────────┐  ┌──────────┐\n   │ c3-102   │  │ c3-103   │\n   │ Users    │  │ Products │\n   │(Feature) │  │(Feature) │\n   └──────────┘  └──────────┘\n```\n\n## API Routes\n\n| Method | Path | Component | Description |\n|--------|------|-----------|-------------|\n| GET | `/users` | c3-102 | List all users |\n| GET | `/users/:id` | c3-102 | Get user by ID |\n| POST | `/users` | c3-102 | Create new user |\n| GET | `/products` | c3-103 | List all products |\n| GET | `/products/:id` | c3-103 | Get product by ID |\n| POST | `/products` | c3-103 | Create new product |\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.dEigNUuk7O/.c3/c3-1-api/README.md",
+        "content": "# c3-1-api: API Server\n\n## Overview\n\nThe API Server is an Express.js application that provides RESTful endpoints for the Simple Shop system. It handles user management and product catalog operations.\n\n## Technology\n\n- Express.js 4.x\n- TypeScript\n- Node.js\n\n## Entry Point\n\n`src/index.ts` - Application bootstrap and middleware configuration\n\n## Components\n\n### Foundation Components\n\nFoundation components provide cross-cutting functionality that feature components depend on.\n\n| ID | Name | File | Description |\n|----|------|------|-------------|\n| [c3-101](c3-101-auth.md) | Auth Middleware | `src/middleware/auth.ts` | Request authentication |\n\n### Feature Components\n\nFeature components implement specific business capabilities.\n\n| ID | Name | File | Description |\n|----|------|------|-------------|\n| [c3-102](c3-102-users.md) | Users Routes | `src/routes/users.ts` | User management endpoints |\n| [c3-103](c3-103-products.md) | Products Routes | `src/routes/products.ts` | Product catalog endpoints |\n\n## Dependency Graph\n\n```\n                ┌──────────────┐\n                │  c3-101-auth │\n                │  (Foundation)│\n                └──────┬───────┘\n                       │\n         ┌─────────────┼─────────────┐\n         │ depends on  │ depends on  │\n         ▼             ▼             ▼\n   ┌──────────┐  ┌──────────┐\n   │ c3-102   │  │ c3-103   │\n   │ Users    │  │ Products │\n   │(Feature) │  │(Feature) │\n   └──────────┘  └──────────┘\n```\n\n## API Routes\n\n| Method | Path | Component | Description |\n|--------|------|-----------|-------------|\n| GET | `/users` | c3-102 | List all users |\n| GET | `/users/:id` | c3-102 | Get user by ID |\n| POST | `/users` | c3-102 | Create new user |\n| GET | `/products` | c3-103 | List all products |\n| GET | `/products/:id` | c3-103 | Get product by ID |\n| POST | `/products` | c3-103 | Create new product |\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:04:36.336Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.dEigNUuk7O/.c3/c3-1-api/c3-101-auth.md",
+        "content": "# c3-101: Auth Middleware\n\n## Classification\n\n**Foundation** - Cross-cutting authentication concern that all routes depend on.\n\n## Purpose\n\nValidates incoming requests by checking for a valid Bearer token in the Authorization header. Protects all API endpoints from unauthorized access.\n\n## Location\n\n`src/middleware/auth.ts`\n\n## Interface\n\n### Middleware Function\n\n```typescript\nfunction authMiddleware(req: Request, res: Response, next: NextFunction): void\n```\n\n### Headers\n\n| Header | Format | Required | Description |\n|--------|--------|----------|-------------|\n| Authorization | `Bearer {token}` | Yes | Authentication token |\n\n### Responses\n\n| Status | Condition | Body |\n|--------|-----------|------|\n| 401 | No token provided | `{ \"error\": \"No token provided\" }` |\n| 401 | Invalid token | `{ \"error\": \"Invalid token\" }` |\n| - | Valid token | Passes to next middleware |\n\n## Dependencies\n\n- None (foundation component)\n\n## Dependents\n\nAll feature components depend on this middleware:\n- [c3-102: Users Routes](c3-102-users.md)\n- [c3-103: Products Routes](c3-103-products.md)\n\n## Notes\n\nCurrent implementation uses simple string comparison for token validation. In production, this should be replaced with proper JWT verification.\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:04:36.346Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.dEigNUuk7O/.c3/c3-1-api/c3-101-auth.md",
+        "content": "# c3-101: Auth Middleware\n\n## Classification\n\n**Foundation** - Cross-cutting authentication concern that all routes depend on.\n\n## Purpose\n\nValidates incoming requests by checking for a valid Bearer token in the Authorization header. Protects all API endpoints from unauthorized access.\n\n## Location\n\n`src/middleware/auth.ts`\n\n## Interface\n\n### Middleware Function\n\n```typescript\nfunction authMiddleware(req: Request, res: Response, next: NextFunction): void\n```\n\n### Headers\n\n| Header | Format | Required | Description |\n|--------|--------|----------|-------------|\n| Authorization | `Bearer {token}` | Yes | Authentication token |\n\n### Responses\n\n| Status | Condition | Body |\n|--------|-----------|------|\n| 401 | No token provided | `{ \"error\": \"No token provided\" }` |\n| 401 | Invalid token | `{ \"error\": \"Invalid token\" }` |\n| - | Valid token | Passes to next middleware |\n\n## Dependencies\n\n- None (foundation component)\n\n## Dependents\n\nAll feature components depend on this middleware:\n- [c3-102: Users Routes](c3-102-users.md)\n- [c3-103: Products Routes](c3-103-products.md)\n\n## Notes\n\nCurrent implementation uses simple string comparison for token validation. In production, this should be replaced with proper JWT verification.\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.dEigNUuk7O/.c3/c3-1-api/c3-101-auth.md",
+        "content": "# c3-101: Auth Middleware\n\n## Classification\n\n**Foundation** - Cross-cutting authentication concern that all routes depend on.\n\n## Purpose\n\nValidates incoming requests by checking for a valid Bearer token in the Authorization header. Protects all API endpoints from unauthorized access.\n\n## Location\n\n`src/middleware/auth.ts`\n\n## Interface\n\n### Middleware Function\n\n```typescript\nfunction authMiddleware(req: Request, res: Response, next: NextFunction): void\n```\n\n### Headers\n\n| Header | Format | Required | Description |\n|--------|--------|----------|-------------|\n| Authorization | `Bearer {token}` | Yes | Authentication token |\n\n### Responses\n\n| Status | Condition | Body |\n|--------|-----------|------|\n| 401 | No token provided | `{ \"error\": \"No token provided\" }` |\n| 401 | Invalid token | `{ \"error\": \"Invalid token\" }` |\n| - | Valid token | Passes to next middleware |\n\n## Dependencies\n\n- None (foundation component)\n\n## Dependents\n\nAll feature components depend on this middleware:\n- [c3-102: Users Routes](c3-102-users.md)\n- [c3-103: Products Routes](c3-103-products.md)\n\n## Notes\n\nCurrent implementation uses simple string comparison for token validation. In production, this should be replaced with proper JWT verification.\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:04:36.358Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.dEigNUuk7O/.c3/c3-1-api/c3-102-users.md",
+        "content": "# c3-102: Users Routes\n\n## Classification\n\n**Feature** - Implements user management business capability.\n\n## Purpose\n\nProvides REST API endpoints for managing user resources including listing, retrieval, and creation of users.\n\n## Location\n\n`src/routes/users.ts`\n\n## Interface\n\n### Endpoints\n\n#### GET /users\n\nList all users.\n\n**Response**: `200 OK`\n```json\n[\n  { \"id\": 1, \"name\": \"Alice\", \"email\": \"alice@example.com\" },\n  { \"id\": 2, \"name\": \"Bob\", \"email\": \"bob@example.com\" }\n]\n```\n\n#### GET /users/:id\n\nGet a specific user by ID.\n\n**Parameters**:\n- `id` (path): User ID (integer)\n\n**Response**: `200 OK`\n```json\n{ \"id\": 1, \"name\": \"Alice\", \"email\": \"alice@example.com\" }\n```\n\n**Error**: `404 Not Found`\n```json\n{ \"error\": \"User not found\" }\n```\n\n#### POST /users\n\nCreate a new user.\n\n**Request Body**:\n```json\n{ \"name\": \"string\", \"email\": \"string\" }\n```\n\n**Response**: `201 Created`\n```json\n{ \"id\": 3, \"name\": \"Charlie\", \"email\": \"charlie@example.com\" }\n```\n\n## Dependencies\n\n| Component | Relationship |\n|-----------|--------------|\n| [c3-101: Auth Middleware](c3-101-auth.md) | All requests pass through auth |\n\n## Data Model\n\n```typescript\ninterface User {\n  id: number;\n  name: string;\n  email: string;\n}\n```\n\n## Notes\n\nCurrent implementation uses in-memory array storage. For production, this should be backed by a persistent database.\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:04:36.374Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.dEigNUuk7O/.c3/c3-1-api/c3-102-users.md",
+        "content": "# c3-102: Users Routes\n\n## Classification\n\n**Feature** - Implements user management business capability.\n\n## Purpose\n\nProvides REST API endpoints for managing user resources including listing, retrieval, and creation of users.\n\n## Location\n\n`src/routes/users.ts`\n\n## Interface\n\n### Endpoints\n\n#### GET /users\n\nList all users.\n\n**Response**: `200 OK`\n```json\n[\n  { \"id\": 1, \"name\": \"Alice\", \"email\": \"alice@example.com\" },\n  { \"id\": 2, \"name\": \"Bob\", \"email\": \"bob@example.com\" }\n]\n```\n\n#### GET /users/:id\n\nGet a specific user by ID.\n\n**Parameters**:\n- `id` (path): User ID (integer)\n\n**Response**: `200 OK`\n```json\n{ \"id\": 1, \"name\": \"Alice\", \"email\": \"alice@example.com\" }\n```\n\n**Error**: `404 Not Found`\n```json\n{ \"error\": \"User not found\" }\n```\n\n#### POST /users\n\nCreate a new user.\n\n**Request Body**:\n```json\n{ \"name\": \"string\", \"email\": \"string\" }\n```\n\n**Response**: `201 Created`\n```json\n{ \"id\": 3, \"name\": \"Charlie\", \"email\": \"charlie@example.com\" }\n```\n\n## Dependencies\n\n| Component | Relationship |\n|-----------|--------------|\n| [c3-101: Auth Middleware](c3-101-auth.md) | All requests pass through auth |\n\n## Data Model\n\n```typescript\ninterface User {\n  id: number;\n  name: string;\n  email: string;\n}\n```\n\n## Notes\n\nCurrent implementation uses in-memory array storage. For production, this should be backed by a persistent database.\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.dEigNUuk7O/.c3/c3-1-api/c3-102-users.md",
+        "content": "# c3-102: Users Routes\n\n## Classification\n\n**Feature** - Implements user management business capability.\n\n## Purpose\n\nProvides REST API endpoints for managing user resources including listing, retrieval, and creation of users.\n\n## Location\n\n`src/routes/users.ts`\n\n## Interface\n\n### Endpoints\n\n#### GET /users\n\nList all users.\n\n**Response**: `200 OK`\n```json\n[\n  { \"id\": 1, \"name\": \"Alice\", \"email\": \"alice@example.com\" },\n  { \"id\": 2, \"name\": \"Bob\", \"email\": \"bob@example.com\" }\n]\n```\n\n#### GET /users/:id\n\nGet a specific user by ID.\n\n**Parameters**:\n- `id` (path): User ID (integer)\n\n**Response**: `200 OK`\n```json\n{ \"id\": 1, \"name\": \"Alice\", \"email\": \"alice@example.com\" }\n```\n\n**Error**: `404 Not Found`\n```json\n{ \"error\": \"User not found\" }\n```\n\n#### POST /users\n\nCreate a new user.\n\n**Request Body**:\n```json\n{ \"name\": \"string\", \"email\": \"string\" }\n```\n\n**Response**: `201 Created`\n```json\n{ \"id\": 3, \"name\": \"Charlie\", \"email\": \"charlie@example.com\" }\n```\n\n## Dependencies\n\n| Component | Relationship |\n|-----------|--------------|\n| [c3-101: Auth Middleware](c3-101-auth.md) | All requests pass through auth |\n\n## Data Model\n\n```typescript\ninterface User {\n  id: number;\n  name: string;\n  email: string;\n}\n```\n\n## Notes\n\nCurrent implementation uses in-memory array storage. For production, this should be backed by a persistent database.\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:04:36.381Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.dEigNUuk7O/.c3/c3-1-api/c3-103-products.md",
+        "content": "# c3-103: Products Routes\n\n## Classification\n\n**Feature** - Implements product catalog business capability.\n\n## Purpose\n\nProvides REST API endpoints for managing product resources including listing, retrieval, and creation of products.\n\n## Location\n\n`src/routes/products.ts`\n\n## Interface\n\n### Endpoints\n\n#### GET /products\n\nList all products.\n\n**Response**: `200 OK`\n```json\n[\n  { \"id\": 1, \"name\": \"Widget\", \"price\": 9.99 },\n  { \"id\": 2, \"name\": \"Gadget\", \"price\": 19.99 }\n]\n```\n\n#### GET /products/:id\n\nGet a specific product by ID.\n\n**Parameters**:\n- `id` (path): Product ID (integer)\n\n**Response**: `200 OK`\n```json\n{ \"id\": 1, \"name\": \"Widget\", \"price\": 9.99 }\n```\n\n**Error**: `404 Not Found`\n```json\n{ \"error\": \"Product not found\" }\n```\n\n#### POST /products\n\nCreate a new product.\n\n**Request Body**:\n```json\n{ \"name\": \"string\", \"price\": \"number\" }\n```\n\n**Response**: `201 Created`\n```json\n{ \"id\": 3, \"name\": \"Gizmo\", \"price\": 29.99 }\n```\n\n## Dependencies\n\n| Component | Relationship |\n|-----------|--------------|\n| [c3-101: Auth Middleware](c3-101-auth.md) | All requests pass through auth |\n\n## Data Model\n\n```typescript\ninterface Product {\n  id: number;\n  name: string;\n  price: number;\n}\n```\n\n## Notes\n\nCurrent implementation uses in-memory array storage. For production, this should be backed by a persistent database.\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-12T12:04:36.394Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.dEigNUuk7O/.c3/c3-1-api/c3-103-products.md",
+        "content": "# c3-103: Products Routes\n\n## Classification\n\n**Feature** - Implements product catalog business capability.\n\n## Purpose\n\nProvides REST API endpoints for managing product resources including listing, retrieval, and creation of products.\n\n## Location\n\n`src/routes/products.ts`\n\n## Interface\n\n### Endpoints\n\n#### GET /products\n\nList all products.\n\n**Response**: `200 OK`\n```json\n[\n  { \"id\": 1, \"name\": \"Widget\", \"price\": 9.99 },\n  { \"id\": 2, \"name\": \"Gadget\", \"price\": 19.99 }\n]\n```\n\n#### GET /products/:id\n\nGet a specific product by ID.\n\n**Parameters**:\n- `id` (path): Product ID (integer)\n\n**Response**: `200 OK`\n```json\n{ \"id\": 1, \"name\": \"Widget\", \"price\": 9.99 }\n```\n\n**Error**: `404 Not Found`\n```json\n{ \"error\": \"Product not found\" }\n```\n\n#### POST /products\n\nCreate a new product.\n\n**Request Body**:\n```json\n{ \"name\": \"string\", \"price\": \"number\" }\n```\n\n**Response**: `201 Created`\n```json\n{ \"id\": 3, \"name\": \"Gizmo\", \"price\": 29.99 }\n```\n\n## Dependencies\n\n| Component | Relationship |\n|-----------|--------------|\n| [c3-101: Auth Middleware](c3-101-auth.md) | All requests pass through auth |\n\n## Data Model\n\n```typescript\ninterface Product {\n  id: number;\n  name: string;\n  price: number;\n}\n```\n\n## Notes\n\nCurrent implementation uses in-memory array storage. For production, this should be backed by a persistent database.\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.dEigNUuk7O/.c3/c3-1-api/c3-103-products.md",
+        "content": "# c3-103: Products Routes\n\n## Classification\n\n**Feature** - Implements product catalog business capability.\n\n## Purpose\n\nProvides REST API endpoints for managing product resources including listing, retrieval, and creation of products.\n\n## Location\n\n`src/routes/products.ts`\n\n## Interface\n\n### Endpoints\n\n#### GET /products\n\nList all products.\n\n**Response**: `200 OK`\n```json\n[\n  { \"id\": 1, \"name\": \"Widget\", \"price\": 9.99 },\n  { \"id\": 2, \"name\": \"Gadget\", \"price\": 19.99 }\n]\n```\n\n#### GET /products/:id\n\nGet a specific product by ID.\n\n**Parameters**:\n- `id` (path): Product ID (integer)\n\n**Response**: `200 OK`\n```json\n{ \"id\": 1, \"name\": \"Widget\", \"price\": 9.99 }\n```\n\n**Error**: `404 Not Found`\n```json\n{ \"error\": \"Product not found\" }\n```\n\n#### POST /products\n\nCreate a new product.\n\n**Request Body**:\n```json\n{ \"name\": \"string\", \"price\": \"number\" }\n```\n\n**Response**: `201 Created`\n```json\n{ \"id\": 3, \"name\": \"Gizmo\", \"price\": 29.99 }\n```\n\n## Dependencies\n\n| Component | Relationship |\n|-----------|--------------|\n| [c3-101: Auth Middleware](c3-101-auth.md) | All requests pass through auth |\n\n## Data Model\n\n```typescript\ninterface Product {\n  id: number;\n  name: string;\n  price: number;\n}\n```\n\n## Notes\n\nCurrent implementation uses in-memory array storage. For production, this should be backed by a persistent database.\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    }
+  ],
+  "judgment": {
+    "pass": true,
+    "score": 100,
+    "expectations": [
+      {
+        "text": ".c3/README.md exists and describes the Simple Shop API system",
+        "pass": true,
+        "reasoning": "The .c3/README.md file exists and clearly describes the Simple Shop API system, including its purpose (user and product management), technology stack (Express.js, TypeScript, Node.js), and architecture diagram."
+      },
+      {
+        "text": "A container directory exists for the API (e.g., c3-1-api/)",
+        "pass": true,
+        "reasoning": "The container directory .c3/c3-1-api/ exists with a README.md that describes the API Server container, its components, and dependency graph."
+      },
+      {
+        "text": "Auth middleware is documented as a foundation component",
+        "pass": true,
+        "reasoning": "The c3-101-auth.md file explicitly classifies Auth Middleware as 'Foundation - Cross-cutting authentication concern that all routes depend on.' It's also listed under Foundation Components in the container README."
+      },
+      {
+        "text": "Users and Products are documented as feature components",
+        "pass": true,
+        "reasoning": "Both c3-102-users.md and c3-103-products.md are classified as 'Feature' components. The container README also lists them under 'Feature Components' section."
+      },
+      {
+        "text": "ADR-000 (adoption decision) is created",
+        "pass": true,
+        "reasoning": "The file .c3/adr/adr-00000000-c3-adoption.md exists with the title 'ADR-000: Adoption of C3 Architecture Documentation', including proper context, decision, and consequences sections."
+      }
+    ],
+    "summary": "All expectations are fully met. The agent created a complete C3 documentation structure for the Simple Shop API, properly classifying auth as foundation and users/products as feature components, with a well-structured ADR-000 adoption document."
+  }
+}

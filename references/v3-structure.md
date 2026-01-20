@@ -2,6 +2,17 @@
 
 Single source of truth for C3 v3 documentation structure.
 
+## Contents
+
+- [Core Concept](#core-concept)
+- [ID Patterns](#id-patterns)
+- [File Paths](#file-paths)
+- [Directory Layout](#directory-layout)
+- [Required Frontmatter](#required-frontmatter)
+- [Required Sections](#required-sections)
+- [Validation Rules](#validation-rules)
+- [Search Patterns](#search-patterns)
+
 ## Core Concept
 
 **Context IS the README.** There is no separate "c3-0" file - the `.c3/README.md` file IS c3-0.

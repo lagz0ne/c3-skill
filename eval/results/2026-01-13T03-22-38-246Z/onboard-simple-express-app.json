@@ -1,0 +1,623 @@
+{
+  "name": "Onboard simple Express app",
+  "pass": false,
+  "score": 60,
+  "duration": 206305,
+  "trace": [
+    {
+      "timestamp": "2026-01-13T03:19:17.031Z",
+      "event": "PreToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:onboard"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:19:17.270Z",
+      "event": "PostToolUse",
+      "tool": "Skill",
+      "input": {
+        "skill": "c3-skill:onboard"
+      },
+      "result": {
+        "success": true,
+        "commandName": "c3-skill:onboard",
+        "allowedTools": [
+          "Bash(rm:*)",
+          "Bash(test:*)",
+          "Bash(PROJECT=*)",
+          "Read",
+          "Glob",
+          "Grep",
+          "Write",
+          "Edit",
+          "AskUserQuestion",
+          "Skill"
+        ]
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:19:23.867Z",
+      "event": "PreToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/*.js"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:19:23.868Z",
+      "event": "PreToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/*.json"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:19:23.868Z",
+      "event": "PreToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/*.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:19:23.888Z",
+      "event": "PostToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/*.js"
+      },
+      "result": {
+        "filenames": [],
+        "durationMs": 13,
+        "numFiles": 0,
+        "truncated": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:19:23.890Z",
+      "event": "PostToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/*.json"
+      },
+      "result": {
+        "filenames": [
+          "/tmp/tmp.KrACabQTze/package.json"
+        ],
+        "durationMs": 17,
+        "numFiles": 1,
+        "truncated": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:19:23.892Z",
+      "event": "PostToolUse",
+      "tool": "Glob",
+      "input": {
+        "pattern": "**/*.ts"
+      },
+      "result": {
+        "filenames": [
+          "/tmp/tmp.KrACabQTze/src/index.ts",
+          "/tmp/tmp.KrACabQTze/src/middleware/auth.ts",
+          "/tmp/tmp.KrACabQTze/src/routes/users.ts",
+          "/tmp/tmp.KrACabQTze/src/routes/products.ts"
+        ],
+        "durationMs": 18,
+        "numFiles": 4,
+        "truncated": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:19:27.598Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/package.json"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:19:27.599Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/src/index.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:19:27.599Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/src/middleware/auth.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:19:27.599Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/src/routes/users.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:19:27.599Z",
+      "event": "PreToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/src/routes/products.ts"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:19:27.621Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/package.json"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.KrACabQTze/package.json",
+          "content": "{\n  \"name\": \"simple-shop-api\",\n  \"version\": \"1.0.0\",\n  \"type\": \"module\",\n  \"scripts\": {\n    \"start\": \"node src/index.js\"\n  },\n  \"dependencies\": {\n    \"express\": \"^4.18.0\"\n  }\n}\n",
+          "numLines": 12,
+          "startLine": 1,
+          "totalLines": 12
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:19:27.621Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/src/index.ts"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.KrACabQTze/src/index.ts",
+          "content": "import express from 'express';\nimport { authMiddleware } from './middleware/auth';\nimport { usersRouter } from './routes/users';\nimport { productsRouter } from './routes/products';\n\nconst app = express();\n\napp.use(express.json());\napp.use(authMiddleware);\n\napp.use('/users', usersRouter);\napp.use('/products', productsRouter);\n\napp.listen(3000, () => {\n  console.log('Simple Shop API running on port 3000');\n});\n",
+          "numLines": 17,
+          "startLine": 1,
+          "totalLines": 17
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:19:27.621Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/src/middleware/auth.ts"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.KrACabQTze/src/middleware/auth.ts",
+          "content": "import { Request, Response, NextFunction } from 'express';\n\nexport function authMiddleware(req: Request, res: Response, next: NextFunction) {\n  const token = req.headers.authorization?.replace('Bearer ', '');\n\n  if (!token) {\n    return res.status(401).json({ error: 'No token provided' });\n  }\n\n  // Simple token validation (in real app, verify JWT)\n  if (token === 'invalid') {\n    return res.status(401).json({ error: 'Invalid token' });\n  }\n\n  next();\n}\n",
+          "numLines": 17,
+          "startLine": 1,
+          "totalLines": 17
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:19:27.622Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/src/routes/users.ts"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.KrACabQTze/src/routes/users.ts",
+          "content": "import { Router } from 'express';\n\nexport const usersRouter = Router();\n\nconst users = [\n  { id: 1, name: 'Alice', email: 'alice@example.com' },\n  { id: 2, name: 'Bob', email: 'bob@example.com' },\n];\n\nusersRouter.get('/', (req, res) => {\n  res.json(users);\n});\n\nusersRouter.get('/:id', (req, res) => {\n  const user = users.find(u => u.id === parseInt(req.params.id));\n  if (!user) {\n    return res.status(404).json({ error: 'User not found' });\n  }\n  res.json(user);\n});\n\nusersRouter.post('/', (req, res) => {\n  const { name, email } = req.body;\n  const newUser = { id: users.length + 1, name, email };\n  users.push(newUser);\n  res.status(201).json(newUser);\n});\n",
+          "numLines": 28,
+          "startLine": 1,
+          "totalLines": 28
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:19:27.622Z",
+      "event": "PostToolUse",
+      "tool": "Read",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/src/routes/products.ts"
+      },
+      "result": {
+        "type": "text",
+        "file": {
+          "filePath": "/tmp/tmp.KrACabQTze/src/routes/products.ts",
+          "content": "import { Router } from 'express';\n\nexport const productsRouter = Router();\n\nconst products = [\n  { id: 1, name: 'Widget', price: 9.99 },\n  { id: 2, name: 'Gadget', price: 19.99 },\n];\n\nproductsRouter.get('/', (req, res) => {\n  res.json(products);\n});\n\nproductsRouter.get('/:id', (req, res) => {\n  const product = products.find(p => p.id === parseInt(req.params.id));\n  if (!product) {\n    return res.status(404).json({ error: 'Product not found' });\n  }\n  res.json(product);\n});\n\nproductsRouter.post('/', (req, res) => {\n  const { name, price } = req.body;\n  const newProduct = { id: products.length + 1, name, price };\n  products.push(newProduct);\n  res.status(201).json(newProduct);\n});\n",
+          "numLines": 28,
+          "startLine": 1,
+          "totalLines": 28
+        }
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:19:32.285Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "mkdir -p /tmp/tmp.KrACabQTze/.c3/components /tmp/tmp.KrACabQTze/.c3/refs /tmp/tmp.KrACabQTze/.c3/adrs",
+        "description": "Create C3 directory structure"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:19:32.342Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "mkdir -p /tmp/tmp.KrACabQTze/.c3/components /tmp/tmp.KrACabQTze/.c3/refs /tmp/tmp.KrACabQTze/.c3/adrs",
+        "description": "Create C3 directory structure"
+      },
+      "result": {
+        "stdout": "",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:19:40.069Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/.c3/context.md",
+        "content": "# Simple Shop API\n\n## System Purpose\nA REST API providing user and product management capabilities for an e-commerce application. Built with Express.js and TypeScript.\n\n## System Boundary\n- **Exposes**: RESTful HTTP endpoints for user and product CRUD operations\n- **Consumes**: HTTP requests from clients (web/mobile applications)\n- **Data**: In-memory storage (no external database)\n\n## Key Actors\n| Actor | Interaction |\n|-------|-------------|\n| Client Applications | HTTP requests to /users and /products endpoints |\n| API Consumers | Must provide Bearer token for authentication |\n\n## Tech Stack\n- **Runtime**: Node.js\n- **Framework**: Express.js 4.18\n- **Language**: TypeScript\n- **Port**: 3000\n\n## Quick Start\n```bash\nnpm start  # Runs on http://localhost:3000\n```\n\n## API Endpoints\n| Method | Path | Description |\n|--------|------|-------------|\n| GET | /users | List all users |\n| GET | /users/:id | Get user by ID |\n| POST | /users | Create new user |\n| GET | /products | List all products |\n| GET | /products/:id | Get product by ID |\n| POST | /products | Create new product |\n\n## C3 Navigation\n- [Container: API Server](./container.md) - The single deployable unit\n- [Components](./components/) - Foundation and Feature components\n- [Refs](./refs/) - Cross-cutting patterns\n- [ADRs](./adrs/) - Architectural decisions\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:19:40.106Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/.c3/context.md",
+        "content": "# Simple Shop API\n\n## System Purpose\nA REST API providing user and product management capabilities for an e-commerce application. Built with Express.js and TypeScript.\n\n## System Boundary\n- **Exposes**: RESTful HTTP endpoints for user and product CRUD operations\n- **Consumes**: HTTP requests from clients (web/mobile applications)\n- **Data**: In-memory storage (no external database)\n\n## Key Actors\n| Actor | Interaction |\n|-------|-------------|\n| Client Applications | HTTP requests to /users and /products endpoints |\n| API Consumers | Must provide Bearer token for authentication |\n\n## Tech Stack\n- **Runtime**: Node.js\n- **Framework**: Express.js 4.18\n- **Language**: TypeScript\n- **Port**: 3000\n\n## Quick Start\n```bash\nnpm start  # Runs on http://localhost:3000\n```\n\n## API Endpoints\n| Method | Path | Description |\n|--------|------|-------------|\n| GET | /users | List all users |\n| GET | /users/:id | Get user by ID |\n| POST | /users | Create new user |\n| GET | /products | List all products |\n| GET | /products/:id | Get product by ID |\n| POST | /products | Create new product |\n\n## C3 Navigation\n- [Container: API Server](./container.md) - The single deployable unit\n- [Components](./components/) - Foundation and Feature components\n- [Refs](./refs/) - Cross-cutting patterns\n- [ADRs](./adrs/) - Architectural decisions\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.KrACabQTze/.c3/context.md",
+        "content": "# Simple Shop API\n\n## System Purpose\nA REST API providing user and product management capabilities for an e-commerce application. Built with Express.js and TypeScript.\n\n## System Boundary\n- **Exposes**: RESTful HTTP endpoints for user and product CRUD operations\n- **Consumes**: HTTP requests from clients (web/mobile applications)\n- **Data**: In-memory storage (no external database)\n\n## Key Actors\n| Actor | Interaction |\n|-------|-------------|\n| Client Applications | HTTP requests to /users and /products endpoints |\n| API Consumers | Must provide Bearer token for authentication |\n\n## Tech Stack\n- **Runtime**: Node.js\n- **Framework**: Express.js 4.18\n- **Language**: TypeScript\n- **Port**: 3000\n\n## Quick Start\n```bash\nnpm start  # Runs on http://localhost:3000\n```\n\n## API Endpoints\n| Method | Path | Description |\n|--------|------|-------------|\n| GET | /users | List all users |\n| GET | /users/:id | Get user by ID |\n| POST | /users | Create new user |\n| GET | /products | List all products |\n| GET | /products/:id | Get product by ID |\n| POST | /products | Create new product |\n\n## C3 Navigation\n- [Container: API Server](./container.md) - The single deployable unit\n- [Components](./components/) - Foundation and Feature components\n- [Refs](./refs/) - Cross-cutting patterns\n- [ADRs](./adrs/) - Architectural decisions\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:19:51.590Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/.c3/container.md",
+        "content": "# Container: API Server\n\n**c3-id**: `container-api-server`\n\n## Overview\nSingle Express.js application serving REST endpoints. All components run within this process.\n\n## Deployment\n| Aspect | Value |\n|--------|-------|\n| Runtime | Node.js |\n| Entry Point | `src/index.ts` |\n| Port | 3000 |\n| Protocol | HTTP |\n\n## Request Flow\n```\nClient Request\n    │\n    ▼\n┌─────────────────────────┐\n│   Express App           │\n│   (src/index.ts)        │\n├─────────────────────────┤\n│ 1. JSON Body Parser     │\n│ 2. Auth Middleware      │  ← Foundation: validates all requests\n├─────────────────────────┤\n│ Routes:                 │\n│   /users → usersRouter  │  ← Feature: user management\n│   /products → products  │  ← Feature: product management\n└─────────────────────────┘\n```\n\n## Component Registry\n| Type | Component | C3 ID | Path |\n|------|-----------|-------|------|\n| Foundation | Auth Middleware | `c3-auth` | [auth.md](./components/auth.md) |\n| Feature | Users | `c3-users` | [users.md](./components/users.md) |\n| Feature | Products | `c3-products` | [products.md](./components/products.md) |\n\n## Dependency Graph\n```\n                 ┌──────────────┐\n                 │   Express    │\n                 │  Application │\n                 └──────┬───────┘\n                        │\n          ┌─────────────┼─────────────┐\n          │             │             │\n          ▼             ▼             ▼\n    ┌──────────┐  ┌──────────┐  ┌──────────┐\n    │   Auth   │  │  Users   │  │ Products │\n    │Foundation│  │ Feature  │  │ Feature  │\n    └──────────┘  └────┬─────┘  └────┬─────┘\n          │            │             │\n          └────────────┴─────────────┘\n                       │\n              (depends on Auth)\n```\n\n## Health & Monitoring\nCurrently no health check endpoint. Server logs startup message to console.\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:19:51.616Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/.c3/container.md",
+        "content": "# Container: API Server\n\n**c3-id**: `container-api-server`\n\n## Overview\nSingle Express.js application serving REST endpoints. All components run within this process.\n\n## Deployment\n| Aspect | Value |\n|--------|-------|\n| Runtime | Node.js |\n| Entry Point | `src/index.ts` |\n| Port | 3000 |\n| Protocol | HTTP |\n\n## Request Flow\n```\nClient Request\n    │\n    ▼\n┌─────────────────────────┐\n│   Express App           │\n│   (src/index.ts)        │\n├─────────────────────────┤\n│ 1. JSON Body Parser     │\n│ 2. Auth Middleware      │  ← Foundation: validates all requests\n├─────────────────────────┤\n│ Routes:                 │\n│   /users → usersRouter  │  ← Feature: user management\n│   /products → products  │  ← Feature: product management\n└─────────────────────────┘\n```\n\n## Component Registry\n| Type | Component | C3 ID | Path |\n|------|-----------|-------|------|\n| Foundation | Auth Middleware | `c3-auth` | [auth.md](./components/auth.md) |\n| Feature | Users | `c3-users` | [users.md](./components/users.md) |\n| Feature | Products | `c3-products` | [products.md](./components/products.md) |\n\n## Dependency Graph\n```\n                 ┌──────────────┐\n                 │   Express    │\n                 │  Application │\n                 └──────┬───────┘\n                        │\n          ┌─────────────┼─────────────┐\n          │             │             │\n          ▼             ▼             ▼\n    ┌──────────┐  ┌──────────┐  ┌──────────┐\n    │   Auth   │  │  Users   │  │ Products │\n    │Foundation│  │ Feature  │  │ Feature  │\n    └──────────┘  └────┬─────┘  └────┬─────┘\n          │            │             │\n          └────────────┴─────────────┘\n                       │\n              (depends on Auth)\n```\n\n## Health & Monitoring\nCurrently no health check endpoint. Server logs startup message to console.\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.KrACabQTze/.c3/container.md",
+        "content": "# Container: API Server\n\n**c3-id**: `container-api-server`\n\n## Overview\nSingle Express.js application serving REST endpoints. All components run within this process.\n\n## Deployment\n| Aspect | Value |\n|--------|-------|\n| Runtime | Node.js |\n| Entry Point | `src/index.ts` |\n| Port | 3000 |\n| Protocol | HTTP |\n\n## Request Flow\n```\nClient Request\n    │\n    ▼\n┌─────────────────────────┐\n│   Express App           │\n│   (src/index.ts)        │\n├─────────────────────────┤\n│ 1. JSON Body Parser     │\n│ 2. Auth Middleware      │  ← Foundation: validates all requests\n├─────────────────────────┤\n│ Routes:                 │\n│   /users → usersRouter  │  ← Feature: user management\n│   /products → products  │  ← Feature: product management\n└─────────────────────────┘\n```\n\n## Component Registry\n| Type | Component | C3 ID | Path |\n|------|-----------|-------|------|\n| Foundation | Auth Middleware | `c3-auth` | [auth.md](./components/auth.md) |\n| Feature | Users | `c3-users` | [users.md](./components/users.md) |\n| Feature | Products | `c3-products` | [products.md](./components/products.md) |\n\n## Dependency Graph\n```\n                 ┌──────────────┐\n                 │   Express    │\n                 │  Application │\n                 └──────┬───────┘\n                        │\n          ┌─────────────┼─────────────┐\n          │             │             │\n          ▼             ▼             ▼\n    ┌──────────┐  ┌──────────┐  ┌──────────┐\n    │   Auth   │  │  Users   │  │ Products │\n    │Foundation│  │ Feature  │  │ Feature  │\n    └──────────┘  └────┬─────┘  └────┬─────┘\n          │            │             │\n          └────────────┴─────────────┘\n                       │\n              (depends on Auth)\n```\n\n## Health & Monitoring\nCurrently no health check endpoint. Server logs startup message to console.\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:20:07.134Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/.c3/components/auth.md",
+        "content": "# Component: Auth Middleware\n\n**c3-id**: `c3-auth`\n**Type**: Foundation\n**Location**: `src/middleware/auth.ts`\n\n## Purpose\nValidates incoming requests by checking for a valid Bearer token. Acts as a gatekeeper for all API endpoints.\n\n## Why Foundation?\n- All feature components depend on this middleware running first\n- Provides cross-cutting authentication concern\n- Registered globally via `app.use(authMiddleware)` before any routes\n\n## Interface\n```typescript\nfunction authMiddleware(req: Request, res: Response, next: NextFunction): void\n```\n\n## Behavior\n| Input | Response |\n|-------|----------|\n| No Authorization header | 401 `{ error: 'No token provided' }` |\n| Token is 'invalid' | 401 `{ error: 'Invalid token' }` |\n| Any other token | Passes to next middleware |\n\n## Dependencies\n- **External**: `express` (Request, Response, NextFunction types)\n- **Internal**: None (this is a leaf dependency)\n\n## Dependents\nAll feature components implicitly depend on auth:\n- [Users](./users.md) - protected by auth\n- [Products](./products.md) - protected by auth\n\n## Usage Pattern\n```typescript\n// In src/index.ts\napp.use(authMiddleware);  // Applied globally before routes\n```\n\n## Security Notes\n- Current implementation uses simple string comparison\n- Comment in code indicates this should verify JWT in production\n- See [ref-auth-pattern](../refs/auth-pattern.md) for recommended patterns\n\n## Future Considerations\n- Implement proper JWT verification\n- Add role-based access control (RBAC)\n- Add rate limiting per token/user\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:20:07.151Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/.c3/components/auth.md",
+        "content": "# Component: Auth Middleware\n\n**c3-id**: `c3-auth`\n**Type**: Foundation\n**Location**: `src/middleware/auth.ts`\n\n## Purpose\nValidates incoming requests by checking for a valid Bearer token. Acts as a gatekeeper for all API endpoints.\n\n## Why Foundation?\n- All feature components depend on this middleware running first\n- Provides cross-cutting authentication concern\n- Registered globally via `app.use(authMiddleware)` before any routes\n\n## Interface\n```typescript\nfunction authMiddleware(req: Request, res: Response, next: NextFunction): void\n```\n\n## Behavior\n| Input | Response |\n|-------|----------|\n| No Authorization header | 401 `{ error: 'No token provided' }` |\n| Token is 'invalid' | 401 `{ error: 'Invalid token' }` |\n| Any other token | Passes to next middleware |\n\n## Dependencies\n- **External**: `express` (Request, Response, NextFunction types)\n- **Internal**: None (this is a leaf dependency)\n\n## Dependents\nAll feature components implicitly depend on auth:\n- [Users](./users.md) - protected by auth\n- [Products](./products.md) - protected by auth\n\n## Usage Pattern\n```typescript\n// In src/index.ts\napp.use(authMiddleware);  // Applied globally before routes\n```\n\n## Security Notes\n- Current implementation uses simple string comparison\n- Comment in code indicates this should verify JWT in production\n- See [ref-auth-pattern](../refs/auth-pattern.md) for recommended patterns\n\n## Future Considerations\n- Implement proper JWT verification\n- Add role-based access control (RBAC)\n- Add rate limiting per token/user\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.KrACabQTze/.c3/components/auth.md",
+        "content": "# Component: Auth Middleware\n\n**c3-id**: `c3-auth`\n**Type**: Foundation\n**Location**: `src/middleware/auth.ts`\n\n## Purpose\nValidates incoming requests by checking for a valid Bearer token. Acts as a gatekeeper for all API endpoints.\n\n## Why Foundation?\n- All feature components depend on this middleware running first\n- Provides cross-cutting authentication concern\n- Registered globally via `app.use(authMiddleware)` before any routes\n\n## Interface\n```typescript\nfunction authMiddleware(req: Request, res: Response, next: NextFunction): void\n```\n\n## Behavior\n| Input | Response |\n|-------|----------|\n| No Authorization header | 401 `{ error: 'No token provided' }` |\n| Token is 'invalid' | 401 `{ error: 'Invalid token' }` |\n| Any other token | Passes to next middleware |\n\n## Dependencies\n- **External**: `express` (Request, Response, NextFunction types)\n- **Internal**: None (this is a leaf dependency)\n\n## Dependents\nAll feature components implicitly depend on auth:\n- [Users](./users.md) - protected by auth\n- [Products](./products.md) - protected by auth\n\n## Usage Pattern\n```typescript\n// In src/index.ts\napp.use(authMiddleware);  // Applied globally before routes\n```\n\n## Security Notes\n- Current implementation uses simple string comparison\n- Comment in code indicates this should verify JWT in production\n- See [ref-auth-pattern](../refs/auth-pattern.md) for recommended patterns\n\n## Future Considerations\n- Implement proper JWT verification\n- Add role-based access control (RBAC)\n- Add rate limiting per token/user\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:20:15.513Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/.c3/components/users.md",
+        "content": "# Component: Users\n\n**c3-id**: `c3-users`\n**Type**: Feature\n**Location**: `src/routes/users.ts`\n\n## Purpose\nManages user entities - listing, retrieving, and creating users in the system.\n\n## Endpoints\n| Method | Path | Description | Success | Error |\n|--------|------|-------------|---------|-------|\n| GET | /users | List all users | 200 + array | - |\n| GET | /users/:id | Get user by ID | 200 + user | 404 if not found |\n| POST | /users | Create user | 201 + user | - |\n\n## Data Model\n```typescript\ninterface User {\n  id: number;      // Auto-incremented\n  name: string;    // From request body\n  email: string;   // From request body\n}\n```\n\n## Storage\nIn-memory array. Data resets on server restart.\n\n```typescript\nconst users = [\n  { id: 1, name: 'Alice', email: 'alice@example.com' },\n  { id: 2, name: 'Bob', email: 'bob@example.com' },\n];\n```\n\n## Dependencies\n| Dependency | Type | Purpose |\n|------------|------|---------|\n| [Auth Middleware](./auth.md) | Foundation | Request authentication |\n| Express Router | External | Route handling |\n\n## Usage Examples\n\n### List Users\n```bash\ncurl -H \"Authorization: Bearer token123\" http://localhost:3000/users\n```\n\n### Get User\n```bash\ncurl -H \"Authorization: Bearer token123\" http://localhost:3000/users/1\n```\n\n### Create User\n```bash\ncurl -X POST \\\n  -H \"Authorization: Bearer token123\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"name\":\"Carol\",\"email\":\"carol@example.com\"}' \\\n  http://localhost:3000/users\n```\n\n## Error Handling\nSee [ref-error-responses](../refs/error-responses.md) for standard error format.\n\n## Future Considerations\n- Add input validation\n- Implement UPDATE and DELETE operations\n- Add email uniqueness constraint\n- Persist to database\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:20:15.542Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/.c3/components/users.md",
+        "content": "# Component: Users\n\n**c3-id**: `c3-users`\n**Type**: Feature\n**Location**: `src/routes/users.ts`\n\n## Purpose\nManages user entities - listing, retrieving, and creating users in the system.\n\n## Endpoints\n| Method | Path | Description | Success | Error |\n|--------|------|-------------|---------|-------|\n| GET | /users | List all users | 200 + array | - |\n| GET | /users/:id | Get user by ID | 200 + user | 404 if not found |\n| POST | /users | Create user | 201 + user | - |\n\n## Data Model\n```typescript\ninterface User {\n  id: number;      // Auto-incremented\n  name: string;    // From request body\n  email: string;   // From request body\n}\n```\n\n## Storage\nIn-memory array. Data resets on server restart.\n\n```typescript\nconst users = [\n  { id: 1, name: 'Alice', email: 'alice@example.com' },\n  { id: 2, name: 'Bob', email: 'bob@example.com' },\n];\n```\n\n## Dependencies\n| Dependency | Type | Purpose |\n|------------|------|---------|\n| [Auth Middleware](./auth.md) | Foundation | Request authentication |\n| Express Router | External | Route handling |\n\n## Usage Examples\n\n### List Users\n```bash\ncurl -H \"Authorization: Bearer token123\" http://localhost:3000/users\n```\n\n### Get User\n```bash\ncurl -H \"Authorization: Bearer token123\" http://localhost:3000/users/1\n```\n\n### Create User\n```bash\ncurl -X POST \\\n  -H \"Authorization: Bearer token123\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"name\":\"Carol\",\"email\":\"carol@example.com\"}' \\\n  http://localhost:3000/users\n```\n\n## Error Handling\nSee [ref-error-responses](../refs/error-responses.md) for standard error format.\n\n## Future Considerations\n- Add input validation\n- Implement UPDATE and DELETE operations\n- Add email uniqueness constraint\n- Persist to database\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.KrACabQTze/.c3/components/users.md",
+        "content": "# Component: Users\n\n**c3-id**: `c3-users`\n**Type**: Feature\n**Location**: `src/routes/users.ts`\n\n## Purpose\nManages user entities - listing, retrieving, and creating users in the system.\n\n## Endpoints\n| Method | Path | Description | Success | Error |\n|--------|------|-------------|---------|-------|\n| GET | /users | List all users | 200 + array | - |\n| GET | /users/:id | Get user by ID | 200 + user | 404 if not found |\n| POST | /users | Create user | 201 + user | - |\n\n## Data Model\n```typescript\ninterface User {\n  id: number;      // Auto-incremented\n  name: string;    // From request body\n  email: string;   // From request body\n}\n```\n\n## Storage\nIn-memory array. Data resets on server restart.\n\n```typescript\nconst users = [\n  { id: 1, name: 'Alice', email: 'alice@example.com' },\n  { id: 2, name: 'Bob', email: 'bob@example.com' },\n];\n```\n\n## Dependencies\n| Dependency | Type | Purpose |\n|------------|------|---------|\n| [Auth Middleware](./auth.md) | Foundation | Request authentication |\n| Express Router | External | Route handling |\n\n## Usage Examples\n\n### List Users\n```bash\ncurl -H \"Authorization: Bearer token123\" http://localhost:3000/users\n```\n\n### Get User\n```bash\ncurl -H \"Authorization: Bearer token123\" http://localhost:3000/users/1\n```\n\n### Create User\n```bash\ncurl -X POST \\\n  -H \"Authorization: Bearer token123\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"name\":\"Carol\",\"email\":\"carol@example.com\"}' \\\n  http://localhost:3000/users\n```\n\n## Error Handling\nSee [ref-error-responses](../refs/error-responses.md) for standard error format.\n\n## Future Considerations\n- Add input validation\n- Implement UPDATE and DELETE operations\n- Add email uniqueness constraint\n- Persist to database\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:20:29.602Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/.c3/components/products.md",
+        "content": "# Component: Products\n\n**c3-id**: `c3-products`\n**Type**: Feature\n**Location**: `src/routes/products.ts`\n\n## Purpose\nManages product catalog - listing, retrieving, and creating products for the shop.\n\n## Endpoints\n| Method | Path | Description | Success | Error |\n|--------|------|-------------|---------|-------|\n| GET | /products | List all products | 200 + array | - |\n| GET | /products/:id | Get product by ID | 200 + product | 404 if not found |\n| POST | /products | Create product | 201 + product | - |\n\n## Data Model\n```typescript\ninterface Product {\n  id: number;     // Auto-incremented\n  name: string;   // From request body\n  price: number;  // From request body\n}\n```\n\n## Storage\nIn-memory array. Data resets on server restart.\n\n```typescript\nconst products = [\n  { id: 1, name: 'Widget', price: 9.99 },\n  { id: 2, name: 'Gadget', price: 19.99 },\n];\n```\n\n## Dependencies\n| Dependency | Type | Purpose |\n|------------|------|---------|\n| [Auth Middleware](./auth.md) | Foundation | Request authentication |\n| Express Router | External | Route handling |\n\n## Usage Examples\n\n### List Products\n```bash\ncurl -H \"Authorization: Bearer token123\" http://localhost:3000/products\n```\n\n### Get Product\n```bash\ncurl -H \"Authorization: Bearer token123\" http://localhost:3000/products/1\n```\n\n### Create Product\n```bash\ncurl -X POST \\\n  -H \"Authorization: Bearer token123\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"name\":\"Gizmo\",\"price\":29.99}' \\\n  http://localhost:3000/products\n```\n\n## Error Handling\nSee [ref-error-responses](../refs/error-responses.md) for standard error format.\n\n## Future Considerations\n- Add input validation (price > 0, name required)\n- Implement UPDATE and DELETE operations\n- Add inventory tracking\n- Add product categories\n- Persist to database\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:20:29.639Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/.c3/components/products.md",
+        "content": "# Component: Products\n\n**c3-id**: `c3-products`\n**Type**: Feature\n**Location**: `src/routes/products.ts`\n\n## Purpose\nManages product catalog - listing, retrieving, and creating products for the shop.\n\n## Endpoints\n| Method | Path | Description | Success | Error |\n|--------|------|-------------|---------|-------|\n| GET | /products | List all products | 200 + array | - |\n| GET | /products/:id | Get product by ID | 200 + product | 404 if not found |\n| POST | /products | Create product | 201 + product | - |\n\n## Data Model\n```typescript\ninterface Product {\n  id: number;     // Auto-incremented\n  name: string;   // From request body\n  price: number;  // From request body\n}\n```\n\n## Storage\nIn-memory array. Data resets on server restart.\n\n```typescript\nconst products = [\n  { id: 1, name: 'Widget', price: 9.99 },\n  { id: 2, name: 'Gadget', price: 19.99 },\n];\n```\n\n## Dependencies\n| Dependency | Type | Purpose |\n|------------|------|---------|\n| [Auth Middleware](./auth.md) | Foundation | Request authentication |\n| Express Router | External | Route handling |\n\n## Usage Examples\n\n### List Products\n```bash\ncurl -H \"Authorization: Bearer token123\" http://localhost:3000/products\n```\n\n### Get Product\n```bash\ncurl -H \"Authorization: Bearer token123\" http://localhost:3000/products/1\n```\n\n### Create Product\n```bash\ncurl -X POST \\\n  -H \"Authorization: Bearer token123\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"name\":\"Gizmo\",\"price\":29.99}' \\\n  http://localhost:3000/products\n```\n\n## Error Handling\nSee [ref-error-responses](../refs/error-responses.md) for standard error format.\n\n## Future Considerations\n- Add input validation (price > 0, name required)\n- Implement UPDATE and DELETE operations\n- Add inventory tracking\n- Add product categories\n- Persist to database\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.KrACabQTze/.c3/components/products.md",
+        "content": "# Component: Products\n\n**c3-id**: `c3-products`\n**Type**: Feature\n**Location**: `src/routes/products.ts`\n\n## Purpose\nManages product catalog - listing, retrieving, and creating products for the shop.\n\n## Endpoints\n| Method | Path | Description | Success | Error |\n|--------|------|-------------|---------|-------|\n| GET | /products | List all products | 200 + array | - |\n| GET | /products/:id | Get product by ID | 200 + product | 404 if not found |\n| POST | /products | Create product | 201 + product | - |\n\n## Data Model\n```typescript\ninterface Product {\n  id: number;     // Auto-incremented\n  name: string;   // From request body\n  price: number;  // From request body\n}\n```\n\n## Storage\nIn-memory array. Data resets on server restart.\n\n```typescript\nconst products = [\n  { id: 1, name: 'Widget', price: 9.99 },\n  { id: 2, name: 'Gadget', price: 19.99 },\n];\n```\n\n## Dependencies\n| Dependency | Type | Purpose |\n|------------|------|---------|\n| [Auth Middleware](./auth.md) | Foundation | Request authentication |\n| Express Router | External | Route handling |\n\n## Usage Examples\n\n### List Products\n```bash\ncurl -H \"Authorization: Bearer token123\" http://localhost:3000/products\n```\n\n### Get Product\n```bash\ncurl -H \"Authorization: Bearer token123\" http://localhost:3000/products/1\n```\n\n### Create Product\n```bash\ncurl -X POST \\\n  -H \"Authorization: Bearer token123\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"name\":\"Gizmo\",\"price\":29.99}' \\\n  http://localhost:3000/products\n```\n\n## Error Handling\nSee [ref-error-responses](../refs/error-responses.md) for standard error format.\n\n## Future Considerations\n- Add input validation (price > 0, name required)\n- Implement UPDATE and DELETE operations\n- Add inventory tracking\n- Add product categories\n- Persist to database\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:20:38.981Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/.c3/refs/auth-pattern.md",
+        "content": "# Ref: Authentication Pattern\n\n**ref-id**: `ref-auth-pattern`\n\n## Current Implementation\nGlobal middleware that validates Bearer tokens before any route handler executes.\n\n### Flow\n```\nRequest → Extract Token → Validate → Next() or 401\n```\n\n### Code Location\n`src/middleware/auth.ts`\n\n### Usage\n```typescript\n// Applied globally in src/index.ts\napp.use(authMiddleware);\n\n// All subsequent routes are protected\napp.use('/users', usersRouter);\napp.use('/products', productsRouter);\n```\n\n## Pattern Rules\n1. **All routes require authentication** - middleware is applied globally\n2. **Token in Authorization header** - format: `Bearer <token>`\n3. **Fail fast** - invalid/missing tokens return 401 immediately\n\n## Response Format\n```json\n{\n  \"error\": \"No token provided\"\n}\n```\n```json\n{\n  \"error\": \"Invalid token\"\n}\n```\n\n## Used By\n- [c3-auth](../components/auth.md) - implements this pattern\n- All feature components inherit protection\n\n## Recommendations for Production\n1. Replace simple string check with JWT verification\n2. Add token expiration handling\n3. Consider refresh token flow\n4. Add rate limiting\n5. Log authentication failures for security monitoring\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:20:39.012Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/.c3/refs/auth-pattern.md",
+        "content": "# Ref: Authentication Pattern\n\n**ref-id**: `ref-auth-pattern`\n\n## Current Implementation\nGlobal middleware that validates Bearer tokens before any route handler executes.\n\n### Flow\n```\nRequest → Extract Token → Validate → Next() or 401\n```\n\n### Code Location\n`src/middleware/auth.ts`\n\n### Usage\n```typescript\n// Applied globally in src/index.ts\napp.use(authMiddleware);\n\n// All subsequent routes are protected\napp.use('/users', usersRouter);\napp.use('/products', productsRouter);\n```\n\n## Pattern Rules\n1. **All routes require authentication** - middleware is applied globally\n2. **Token in Authorization header** - format: `Bearer <token>`\n3. **Fail fast** - invalid/missing tokens return 401 immediately\n\n## Response Format\n```json\n{\n  \"error\": \"No token provided\"\n}\n```\n```json\n{\n  \"error\": \"Invalid token\"\n}\n```\n\n## Used By\n- [c3-auth](../components/auth.md) - implements this pattern\n- All feature components inherit protection\n\n## Recommendations for Production\n1. Replace simple string check with JWT verification\n2. Add token expiration handling\n3. Consider refresh token flow\n4. Add rate limiting\n5. Log authentication failures for security monitoring\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.KrACabQTze/.c3/refs/auth-pattern.md",
+        "content": "# Ref: Authentication Pattern\n\n**ref-id**: `ref-auth-pattern`\n\n## Current Implementation\nGlobal middleware that validates Bearer tokens before any route handler executes.\n\n### Flow\n```\nRequest → Extract Token → Validate → Next() or 401\n```\n\n### Code Location\n`src/middleware/auth.ts`\n\n### Usage\n```typescript\n// Applied globally in src/index.ts\napp.use(authMiddleware);\n\n// All subsequent routes are protected\napp.use('/users', usersRouter);\napp.use('/products', productsRouter);\n```\n\n## Pattern Rules\n1. **All routes require authentication** - middleware is applied globally\n2. **Token in Authorization header** - format: `Bearer <token>`\n3. **Fail fast** - invalid/missing tokens return 401 immediately\n\n## Response Format\n```json\n{\n  \"error\": \"No token provided\"\n}\n```\n```json\n{\n  \"error\": \"Invalid token\"\n}\n```\n\n## Used By\n- [c3-auth](../components/auth.md) - implements this pattern\n- All feature components inherit protection\n\n## Recommendations for Production\n1. Replace simple string check with JWT verification\n2. Add token expiration handling\n3. Consider refresh token flow\n4. Add rate limiting\n5. Log authentication failures for security monitoring\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:21:02.972Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/.c3/refs/error-responses.md",
+        "content": "# Ref: Error Response Pattern\n\n**ref-id**: `ref-error-responses`\n\n## Standard Error Format\nAll API errors return JSON with an `error` field:\n\n```json\n{\n  \"error\": \"<error message>\"\n}\n```\n\n## HTTP Status Codes Used\n\n| Code | Meaning | When Used |\n|------|---------|-----------|\n| 401 | Unauthorized | Missing or invalid auth token |\n| 404 | Not Found | Resource ID doesn't exist |\n| 201 | Created | Successfully created resource |\n| 200 | OK | Successful GET request |\n\n## Examples by Component\n\n### Auth Middleware (c3-auth)\n```json\n// 401 - No token\n{ \"error\": \"No token provided\" }\n\n// 401 - Invalid token\n{ \"error\": \"Invalid token\" }\n```\n\n### Users (c3-users)\n```json\n// 404 - User not found\n{ \"error\": \"User not found\" }\n```\n\n### Products (c3-products)\n```json\n// 404 - Product not found\n{ \"error\": \"Product not found\" }\n```\n\n## Pattern Rules\n1. Always return JSON, even for errors\n2. Use appropriate HTTP status code\n3. Provide human-readable error message\n4. Keep error messages consistent across components\n\n## Used By\n- [c3-auth](../components/auth.md)\n- [c3-users](../components/users.md)\n- [c3-products](../components/products.md)\n\n## Future Improvements\n- Add error codes for programmatic handling\n- Include request ID for debugging\n- Add field-level validation errors\n- Implement centralized error handler middleware\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:21:03.031Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/.c3/refs/error-responses.md",
+        "content": "# Ref: Error Response Pattern\n\n**ref-id**: `ref-error-responses`\n\n## Standard Error Format\nAll API errors return JSON with an `error` field:\n\n```json\n{\n  \"error\": \"<error message>\"\n}\n```\n\n## HTTP Status Codes Used\n\n| Code | Meaning | When Used |\n|------|---------|-----------|\n| 401 | Unauthorized | Missing or invalid auth token |\n| 404 | Not Found | Resource ID doesn't exist |\n| 201 | Created | Successfully created resource |\n| 200 | OK | Successful GET request |\n\n## Examples by Component\n\n### Auth Middleware (c3-auth)\n```json\n// 401 - No token\n{ \"error\": \"No token provided\" }\n\n// 401 - Invalid token\n{ \"error\": \"Invalid token\" }\n```\n\n### Users (c3-users)\n```json\n// 404 - User not found\n{ \"error\": \"User not found\" }\n```\n\n### Products (c3-products)\n```json\n// 404 - Product not found\n{ \"error\": \"Product not found\" }\n```\n\n## Pattern Rules\n1. Always return JSON, even for errors\n2. Use appropriate HTTP status code\n3. Provide human-readable error message\n4. Keep error messages consistent across components\n\n## Used By\n- [c3-auth](../components/auth.md)\n- [c3-users](../components/users.md)\n- [c3-products](../components/products.md)\n\n## Future Improvements\n- Add error codes for programmatic handling\n- Include request ID for debugging\n- Add field-level validation errors\n- Implement centralized error handler middleware\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.KrACabQTze/.c3/refs/error-responses.md",
+        "content": "# Ref: Error Response Pattern\n\n**ref-id**: `ref-error-responses`\n\n## Standard Error Format\nAll API errors return JSON with an `error` field:\n\n```json\n{\n  \"error\": \"<error message>\"\n}\n```\n\n## HTTP Status Codes Used\n\n| Code | Meaning | When Used |\n|------|---------|-----------|\n| 401 | Unauthorized | Missing or invalid auth token |\n| 404 | Not Found | Resource ID doesn't exist |\n| 201 | Created | Successfully created resource |\n| 200 | OK | Successful GET request |\n\n## Examples by Component\n\n### Auth Middleware (c3-auth)\n```json\n// 401 - No token\n{ \"error\": \"No token provided\" }\n\n// 401 - Invalid token\n{ \"error\": \"Invalid token\" }\n```\n\n### Users (c3-users)\n```json\n// 404 - User not found\n{ \"error\": \"User not found\" }\n```\n\n### Products (c3-products)\n```json\n// 404 - Product not found\n{ \"error\": \"Product not found\" }\n```\n\n## Pattern Rules\n1. Always return JSON, even for errors\n2. Use appropriate HTTP status code\n3. Provide human-readable error message\n4. Keep error messages consistent across components\n\n## Used By\n- [c3-auth](../components/auth.md)\n- [c3-users](../components/users.md)\n- [c3-products](../components/products.md)\n\n## Future Improvements\n- Add error codes for programmatic handling\n- Include request ID for debugging\n- Add field-level validation errors\n- Implement centralized error handler middleware\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:21:12.219Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/.c3/refs/router-pattern.md",
+        "content": "# Ref: Express Router Pattern\n\n**ref-id**: `ref-router-pattern`\n\n## Pattern Description\nFeature components are implemented as Express Routers, mounted at specific paths on the main application.\n\n## Structure\n```typescript\n// Feature router file\nimport { Router } from 'express';\n\nexport const featureRouter = Router();\n\n// Define routes relative to mount point\nfeatureRouter.get('/', handler);\nfeatureRouter.get('/:id', handler);\nfeatureRouter.post('/', handler);\n```\n\n## Mounting\n```typescript\n// In src/index.ts\napp.use('/feature', featureRouter);\n```\n\n## Route Resolution\n| Mount Path | Router Route | Full Path |\n|------------|--------------|-----------|\n| /users | / | /users |\n| /users | /:id | /users/:id |\n| /products | / | /products |\n| /products | /:id | /products/:id |\n\n## Benefits\n1. **Modularity** - Each feature is self-contained\n2. **Testability** - Routers can be tested in isolation\n3. **Namespace isolation** - Routes don't conflict\n4. **Middleware scoping** - Can apply middleware per-router\n\n## Used By\n- [c3-users](../components/users.md)\n- [c3-products](../components/products.md)\n\n## Best Practices\n1. Export router as named export (not default)\n2. Use consistent naming: `{feature}Router`\n3. Keep route handlers focused and small\n4. Extract complex logic to service layer (future)\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:21:12.256Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/.c3/refs/router-pattern.md",
+        "content": "# Ref: Express Router Pattern\n\n**ref-id**: `ref-router-pattern`\n\n## Pattern Description\nFeature components are implemented as Express Routers, mounted at specific paths on the main application.\n\n## Structure\n```typescript\n// Feature router file\nimport { Router } from 'express';\n\nexport const featureRouter = Router();\n\n// Define routes relative to mount point\nfeatureRouter.get('/', handler);\nfeatureRouter.get('/:id', handler);\nfeatureRouter.post('/', handler);\n```\n\n## Mounting\n```typescript\n// In src/index.ts\napp.use('/feature', featureRouter);\n```\n\n## Route Resolution\n| Mount Path | Router Route | Full Path |\n|------------|--------------|-----------|\n| /users | / | /users |\n| /users | /:id | /users/:id |\n| /products | / | /products |\n| /products | /:id | /products/:id |\n\n## Benefits\n1. **Modularity** - Each feature is self-contained\n2. **Testability** - Routers can be tested in isolation\n3. **Namespace isolation** - Routes don't conflict\n4. **Middleware scoping** - Can apply middleware per-router\n\n## Used By\n- [c3-users](../components/users.md)\n- [c3-products](../components/products.md)\n\n## Best Practices\n1. Export router as named export (not default)\n2. Use consistent naming: `{feature}Router`\n3. Keep route handlers focused and small\n4. Extract complex logic to service layer (future)\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.KrACabQTze/.c3/refs/router-pattern.md",
+        "content": "# Ref: Express Router Pattern\n\n**ref-id**: `ref-router-pattern`\n\n## Pattern Description\nFeature components are implemented as Express Routers, mounted at specific paths on the main application.\n\n## Structure\n```typescript\n// Feature router file\nimport { Router } from 'express';\n\nexport const featureRouter = Router();\n\n// Define routes relative to mount point\nfeatureRouter.get('/', handler);\nfeatureRouter.get('/:id', handler);\nfeatureRouter.post('/', handler);\n```\n\n## Mounting\n```typescript\n// In src/index.ts\napp.use('/feature', featureRouter);\n```\n\n## Route Resolution\n| Mount Path | Router Route | Full Path |\n|------------|--------------|-----------|\n| /users | / | /users |\n| /users | /:id | /users/:id |\n| /products | / | /products |\n| /products | /:id | /products/:id |\n\n## Benefits\n1. **Modularity** - Each feature is self-contained\n2. **Testability** - Routers can be tested in isolation\n3. **Namespace isolation** - Routes don't conflict\n4. **Middleware scoping** - Can apply middleware per-router\n\n## Used By\n- [c3-users](../components/users.md)\n- [c3-products](../components/products.md)\n\n## Best Practices\n1. Export router as named export (not default)\n2. Use consistent naming: `{feature}Router`\n3. Keep route handlers focused and small\n4. Extract complex logic to service layer (future)\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:21:24.435Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/.c3/adrs/adr-001-in-memory-storage.md",
+        "content": "# ADR-001: In-Memory Storage\n\n**Status**: Accepted\n**Date**: Initial implementation\n**Context**: c3-users, c3-products\n\n## Context\nThe Simple Shop API needs to store user and product data. Options include databases (SQL, NoSQL) or in-memory storage.\n\n## Decision\nUse in-memory JavaScript arrays for data storage.\n\n## Rationale\n- **Simplicity**: No database setup or dependencies required\n- **Development Speed**: Immediate read/write without ORM configuration\n- **Portability**: Runs anywhere Node.js runs\n- **Prototype Focus**: Suitable for demonstration and early development\n\n## Consequences\n\n### Positive\n- Zero external dependencies beyond Express\n- Fast development iteration\n- Easy to understand and modify\n- No connection management\n\n### Negative\n- Data lost on server restart\n- No persistence across deployments\n- Not suitable for production\n- No concurrent access safety\n- Cannot scale horizontally\n\n## Trade-offs Accepted\nThis decision prioritizes simplicity over durability. It's appropriate for:\n- Local development\n- Demonstrations\n- Learning/teaching\n- Prototyping\n\n## Migration Path\nWhen production readiness is needed:\n1. Add database dependency (e.g., PostgreSQL, MongoDB)\n2. Create repository layer abstracting data access\n3. Replace in-memory arrays with repository calls\n4. Add connection pooling and error handling\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:21:24.465Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/.c3/adrs/adr-001-in-memory-storage.md",
+        "content": "# ADR-001: In-Memory Storage\n\n**Status**: Accepted\n**Date**: Initial implementation\n**Context**: c3-users, c3-products\n\n## Context\nThe Simple Shop API needs to store user and product data. Options include databases (SQL, NoSQL) or in-memory storage.\n\n## Decision\nUse in-memory JavaScript arrays for data storage.\n\n## Rationale\n- **Simplicity**: No database setup or dependencies required\n- **Development Speed**: Immediate read/write without ORM configuration\n- **Portability**: Runs anywhere Node.js runs\n- **Prototype Focus**: Suitable for demonstration and early development\n\n## Consequences\n\n### Positive\n- Zero external dependencies beyond Express\n- Fast development iteration\n- Easy to understand and modify\n- No connection management\n\n### Negative\n- Data lost on server restart\n- No persistence across deployments\n- Not suitable for production\n- No concurrent access safety\n- Cannot scale horizontally\n\n## Trade-offs Accepted\nThis decision prioritizes simplicity over durability. It's appropriate for:\n- Local development\n- Demonstrations\n- Learning/teaching\n- Prototyping\n\n## Migration Path\nWhen production readiness is needed:\n1. Add database dependency (e.g., PostgreSQL, MongoDB)\n2. Create repository layer abstracting data access\n3. Replace in-memory arrays with repository calls\n4. Add connection pooling and error handling\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.KrACabQTze/.c3/adrs/adr-001-in-memory-storage.md",
+        "content": "# ADR-001: In-Memory Storage\n\n**Status**: Accepted\n**Date**: Initial implementation\n**Context**: c3-users, c3-products\n\n## Context\nThe Simple Shop API needs to store user and product data. Options include databases (SQL, NoSQL) or in-memory storage.\n\n## Decision\nUse in-memory JavaScript arrays for data storage.\n\n## Rationale\n- **Simplicity**: No database setup or dependencies required\n- **Development Speed**: Immediate read/write without ORM configuration\n- **Portability**: Runs anywhere Node.js runs\n- **Prototype Focus**: Suitable for demonstration and early development\n\n## Consequences\n\n### Positive\n- Zero external dependencies beyond Express\n- Fast development iteration\n- Easy to understand and modify\n- No connection management\n\n### Negative\n- Data lost on server restart\n- No persistence across deployments\n- Not suitable for production\n- No concurrent access safety\n- Cannot scale horizontally\n\n## Trade-offs Accepted\nThis decision prioritizes simplicity over durability. It's appropriate for:\n- Local development\n- Demonstrations\n- Learning/teaching\n- Prototyping\n\n## Migration Path\nWhen production readiness is needed:\n1. Add database dependency (e.g., PostgreSQL, MongoDB)\n2. Create repository layer abstracting data access\n3. Replace in-memory arrays with repository calls\n4. Add connection pooling and error handling\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:21:36.681Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/.c3/adrs/adr-002-global-auth-middleware.md",
+        "content": "# ADR-002: Global Authentication Middleware\n\n**Status**: Accepted\n**Date**: Initial implementation\n**Context**: c3-auth\n\n## Context\nThe API needs to protect endpoints from unauthorized access. Authentication can be applied globally or per-route.\n\n## Decision\nApply authentication middleware globally to the Express app before route registration.\n\n```typescript\napp.use(authMiddleware);  // Applied first\napp.use('/users', usersRouter);\napp.use('/products', productsRouter);\n```\n\n## Rationale\n- **Security by Default**: All routes are protected automatically\n- **Consistency**: Same auth behavior across all endpoints\n- **Simplicity**: Single point of authentication logic\n- **Fail-Safe**: New routes are automatically protected\n\n## Consequences\n\n### Positive\n- Cannot accidentally expose unprotected endpoints\n- Centralized authentication logic\n- Easy to reason about security posture\n- Simple middleware ordering\n\n### Negative\n- No public endpoints possible without modification\n- All routes have same auth requirements\n- No route-specific auth customization\n\n## Alternatives Considered\n\n### Per-Route Middleware\n```typescript\nusersRouter.use(authMiddleware);\nproductsRouter.use(authMiddleware);\n```\nRejected: Easy to forget on new routes.\n\n### Route-Level Decorators\n```typescript\nrouter.get('/', [authMiddleware], handler);\n```\nRejected: Verbose, repetitive.\n\n## Migration Path\nIf public endpoints are needed later:\n1. Create path whitelist in auth middleware\n2. Or move auth to router level\n3. Or use route-specific middleware chains\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:21:36.713Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/.c3/adrs/adr-002-global-auth-middleware.md",
+        "content": "# ADR-002: Global Authentication Middleware\n\n**Status**: Accepted\n**Date**: Initial implementation\n**Context**: c3-auth\n\n## Context\nThe API needs to protect endpoints from unauthorized access. Authentication can be applied globally or per-route.\n\n## Decision\nApply authentication middleware globally to the Express app before route registration.\n\n```typescript\napp.use(authMiddleware);  // Applied first\napp.use('/users', usersRouter);\napp.use('/products', productsRouter);\n```\n\n## Rationale\n- **Security by Default**: All routes are protected automatically\n- **Consistency**: Same auth behavior across all endpoints\n- **Simplicity**: Single point of authentication logic\n- **Fail-Safe**: New routes are automatically protected\n\n## Consequences\n\n### Positive\n- Cannot accidentally expose unprotected endpoints\n- Centralized authentication logic\n- Easy to reason about security posture\n- Simple middleware ordering\n\n### Negative\n- No public endpoints possible without modification\n- All routes have same auth requirements\n- No route-specific auth customization\n\n## Alternatives Considered\n\n### Per-Route Middleware\n```typescript\nusersRouter.use(authMiddleware);\nproductsRouter.use(authMiddleware);\n```\nRejected: Easy to forget on new routes.\n\n### Route-Level Decorators\n```typescript\nrouter.get('/', [authMiddleware], handler);\n```\nRejected: Verbose, repetitive.\n\n## Migration Path\nIf public endpoints are needed later:\n1. Create path whitelist in auth middleware\n2. Or move auth to router level\n3. Or use route-specific middleware chains\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.KrACabQTze/.c3/adrs/adr-002-global-auth-middleware.md",
+        "content": "# ADR-002: Global Authentication Middleware\n\n**Status**: Accepted\n**Date**: Initial implementation\n**Context**: c3-auth\n\n## Context\nThe API needs to protect endpoints from unauthorized access. Authentication can be applied globally or per-route.\n\n## Decision\nApply authentication middleware globally to the Express app before route registration.\n\n```typescript\napp.use(authMiddleware);  // Applied first\napp.use('/users', usersRouter);\napp.use('/products', productsRouter);\n```\n\n## Rationale\n- **Security by Default**: All routes are protected automatically\n- **Consistency**: Same auth behavior across all endpoints\n- **Simplicity**: Single point of authentication logic\n- **Fail-Safe**: New routes are automatically protected\n\n## Consequences\n\n### Positive\n- Cannot accidentally expose unprotected endpoints\n- Centralized authentication logic\n- Easy to reason about security posture\n- Simple middleware ordering\n\n### Negative\n- No public endpoints possible without modification\n- All routes have same auth requirements\n- No route-specific auth customization\n\n## Alternatives Considered\n\n### Per-Route Middleware\n```typescript\nusersRouter.use(authMiddleware);\nproductsRouter.use(authMiddleware);\n```\nRejected: Easy to forget on new routes.\n\n### Route-Level Decorators\n```typescript\nrouter.get('/', [authMiddleware], handler);\n```\nRejected: Verbose, repetitive.\n\n## Migration Path\nIf public endpoints are needed later:\n1. Create path whitelist in auth middleware\n2. Or move auth to router level\n3. Or use route-specific middleware chains\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:21:49.351Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/.c3/adrs/adr-003-router-based-features.md",
+        "content": "# ADR-003: Router-Based Feature Components\n\n**Status**: Accepted\n**Date**: Initial implementation\n**Context**: c3-users, c3-products\n\n## Context\nThe API has multiple feature domains (users, products). These can be organized in various ways: single file, controller classes, or Express routers.\n\n## Decision\nImplement each feature domain as a separate Express Router, each in its own file.\n\n```\nsrc/routes/\n  users.ts     → usersRouter\n  products.ts  → productsRouter\n```\n\n## Rationale\n- **Separation of Concerns**: Each feature manages its own routes\n- **Express Native**: Uses Express's built-in Router pattern\n- **Encapsulation**: Feature logic stays within its module\n- **Composability**: Routers can be mounted at any path\n\n## Consequences\n\n### Positive\n- Clear file organization by feature\n- Easy to locate feature code\n- Features can be developed independently\n- Simple mounting in main app\n- Natural path namespacing\n\n### Negative\n- No shared base functionality (yet)\n- Each router must handle its own error patterns\n- Potential code duplication across features\n\n## Structure Pattern\nEach router file follows this structure:\n```typescript\nimport { Router } from 'express';\n\nexport const featureRouter = Router();\n\n// Data (in-memory for now)\nconst items = [...];\n\n// Routes\nfeatureRouter.get('/', ...);\nfeatureRouter.get('/:id', ...);\nfeatureRouter.post('/', ...);\n```\n\n## Migration Path\nAs the application grows:\n1. Extract data access to repository layer\n2. Add service layer for business logic\n3. Consider controller classes if complexity warrants\n4. Add per-router middleware for feature-specific concerns\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:21:49.401Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/.c3/adrs/adr-003-router-based-features.md",
+        "content": "# ADR-003: Router-Based Feature Components\n\n**Status**: Accepted\n**Date**: Initial implementation\n**Context**: c3-users, c3-products\n\n## Context\nThe API has multiple feature domains (users, products). These can be organized in various ways: single file, controller classes, or Express routers.\n\n## Decision\nImplement each feature domain as a separate Express Router, each in its own file.\n\n```\nsrc/routes/\n  users.ts     → usersRouter\n  products.ts  → productsRouter\n```\n\n## Rationale\n- **Separation of Concerns**: Each feature manages its own routes\n- **Express Native**: Uses Express's built-in Router pattern\n- **Encapsulation**: Feature logic stays within its module\n- **Composability**: Routers can be mounted at any path\n\n## Consequences\n\n### Positive\n- Clear file organization by feature\n- Easy to locate feature code\n- Features can be developed independently\n- Simple mounting in main app\n- Natural path namespacing\n\n### Negative\n- No shared base functionality (yet)\n- Each router must handle its own error patterns\n- Potential code duplication across features\n\n## Structure Pattern\nEach router file follows this structure:\n```typescript\nimport { Router } from 'express';\n\nexport const featureRouter = Router();\n\n// Data (in-memory for now)\nconst items = [...];\n\n// Routes\nfeatureRouter.get('/', ...);\nfeatureRouter.get('/:id', ...);\nfeatureRouter.post('/', ...);\n```\n\n## Migration Path\nAs the application grows:\n1. Extract data access to repository layer\n2. Add service layer for business logic\n3. Consider controller classes if complexity warrants\n4. Add per-router middleware for feature-specific concerns\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.KrACabQTze/.c3/adrs/adr-003-router-based-features.md",
+        "content": "# ADR-003: Router-Based Feature Components\n\n**Status**: Accepted\n**Date**: Initial implementation\n**Context**: c3-users, c3-products\n\n## Context\nThe API has multiple feature domains (users, products). These can be organized in various ways: single file, controller classes, or Express routers.\n\n## Decision\nImplement each feature domain as a separate Express Router, each in its own file.\n\n```\nsrc/routes/\n  users.ts     → usersRouter\n  products.ts  → productsRouter\n```\n\n## Rationale\n- **Separation of Concerns**: Each feature manages its own routes\n- **Express Native**: Uses Express's built-in Router pattern\n- **Encapsulation**: Feature logic stays within its module\n- **Composability**: Routers can be mounted at any path\n\n## Consequences\n\n### Positive\n- Clear file organization by feature\n- Easy to locate feature code\n- Features can be developed independently\n- Simple mounting in main app\n- Natural path namespacing\n\n### Negative\n- No shared base functionality (yet)\n- Each router must handle its own error patterns\n- Potential code duplication across features\n\n## Structure Pattern\nEach router file follows this structure:\n```typescript\nimport { Router } from 'express';\n\nexport const featureRouter = Router();\n\n// Data (in-memory for now)\nconst items = [...];\n\n// Routes\nfeatureRouter.get('/', ...);\nfeatureRouter.get('/:id', ...);\nfeatureRouter.post('/', ...);\n```\n\n## Migration Path\nAs the application grows:\n1. Extract data access to repository layer\n2. Add service layer for business logic\n3. Consider controller classes if complexity warrants\n4. Add per-router middleware for feature-specific concerns\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:22:02.304Z",
+      "event": "PreToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/.c3/index.md",
+        "content": "# C3 Architecture Index\n\n## Quick Navigation\n\n### System Overview\n- [Context](./context.md) - System purpose, boundaries, and tech stack\n- [Container](./container.md) - Deployment unit and component registry\n\n### Components\n\n#### Foundation (Load First)\n| ID | Name | Purpose |\n|----|------|---------|\n| [c3-auth](./components/auth.md) | Auth Middleware | Request authentication |\n\n#### Features (Depend on Foundation)\n| ID | Name | Purpose |\n|----|------|---------|\n| [c3-users](./components/users.md) | Users | User management |\n| [c3-products](./components/products.md) | Products | Product catalog |\n\n### Cross-Cutting Patterns (Refs)\n| ID | Name | Description |\n|----|------|-------------|\n| [ref-auth-pattern](./refs/auth-pattern.md) | Authentication | Bearer token validation |\n| [ref-error-responses](./refs/error-responses.md) | Error Handling | Standard error format |\n| [ref-router-pattern](./refs/router-pattern.md) | Router Pattern | Express router structure |\n\n### Architectural Decisions (ADRs)\n| ID | Title | Status |\n|----|-------|--------|\n| [ADR-001](./adrs/adr-001-in-memory-storage.md) | In-Memory Storage | Accepted |\n| [ADR-002](./adrs/adr-002-global-auth-middleware.md) | Global Auth Middleware | Accepted |\n| [ADR-003](./adrs/adr-003-router-based-features.md) | Router-Based Features | Accepted |\n\n## Dependency Map\n```\n┌─────────────────────────────────────────────────────┐\n│                   Express App                        │\n│                  (src/index.ts)                      │\n└─────────────────────┬───────────────────────────────┘\n                      │\n         ┌────────────┼────────────┐\n         │            │            │\n         ▼            ▼            ▼\n   ┌──────────┐ ┌──────────┐ ┌──────────┐\n   │   Auth   │ │  Users   │ │ Products │\n   │ c3-auth  │ │c3-users  │ │c3-products│\n   │Foundation│ │ Feature  │ │ Feature  │\n   └──────────┘ └────┬─────┘ └────┬─────┘\n         ▲           │            │\n         └───────────┴────────────┘\n            (implicit dependency)\n```\n\n## File-to-Component Map\n| Source File | Component |\n|-------------|-----------|\n| src/index.ts | Container (app entry) |\n| src/middleware/auth.ts | c3-auth |\n| src/routes/users.ts | c3-users |\n| src/routes/products.ts | c3-products |\n"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:22:02.344Z",
+      "event": "PostToolUse",
+      "tool": "Write",
+      "input": {
+        "file_path": "/tmp/tmp.KrACabQTze/.c3/index.md",
+        "content": "# C3 Architecture Index\n\n## Quick Navigation\n\n### System Overview\n- [Context](./context.md) - System purpose, boundaries, and tech stack\n- [Container](./container.md) - Deployment unit and component registry\n\n### Components\n\n#### Foundation (Load First)\n| ID | Name | Purpose |\n|----|------|---------|\n| [c3-auth](./components/auth.md) | Auth Middleware | Request authentication |\n\n#### Features (Depend on Foundation)\n| ID | Name | Purpose |\n|----|------|---------|\n| [c3-users](./components/users.md) | Users | User management |\n| [c3-products](./components/products.md) | Products | Product catalog |\n\n### Cross-Cutting Patterns (Refs)\n| ID | Name | Description |\n|----|------|-------------|\n| [ref-auth-pattern](./refs/auth-pattern.md) | Authentication | Bearer token validation |\n| [ref-error-responses](./refs/error-responses.md) | Error Handling | Standard error format |\n| [ref-router-pattern](./refs/router-pattern.md) | Router Pattern | Express router structure |\n\n### Architectural Decisions (ADRs)\n| ID | Title | Status |\n|----|-------|--------|\n| [ADR-001](./adrs/adr-001-in-memory-storage.md) | In-Memory Storage | Accepted |\n| [ADR-002](./adrs/adr-002-global-auth-middleware.md) | Global Auth Middleware | Accepted |\n| [ADR-003](./adrs/adr-003-router-based-features.md) | Router-Based Features | Accepted |\n\n## Dependency Map\n```\n┌─────────────────────────────────────────────────────┐\n│                   Express App                        │\n│                  (src/index.ts)                      │\n└─────────────────────┬───────────────────────────────┘\n                      │\n         ┌────────────┼────────────┐\n         │            │            │\n         ▼            ▼            ▼\n   ┌──────────┐ ┌──────────┐ ┌──────────┐\n   │   Auth   │ │  Users   │ │ Products │\n   │ c3-auth  │ │c3-users  │ │c3-products│\n   │Foundation│ │ Feature  │ │ Feature  │\n   └──────────┘ └────┬─────┘ └────┬─────┘\n         ▲           │            │\n         └───────────┴────────────┘\n            (implicit dependency)\n```\n\n## File-to-Component Map\n| Source File | Component |\n|-------------|-----------|\n| src/index.ts | Container (app entry) |\n| src/middleware/auth.ts | c3-auth |\n| src/routes/users.ts | c3-users |\n| src/routes/products.ts | c3-products |\n"
+      },
+      "result": {
+        "type": "create",
+        "filePath": "/tmp/tmp.KrACabQTze/.c3/index.md",
+        "content": "# C3 Architecture Index\n\n## Quick Navigation\n\n### System Overview\n- [Context](./context.md) - System purpose, boundaries, and tech stack\n- [Container](./container.md) - Deployment unit and component registry\n\n### Components\n\n#### Foundation (Load First)\n| ID | Name | Purpose |\n|----|------|---------|\n| [c3-auth](./components/auth.md) | Auth Middleware | Request authentication |\n\n#### Features (Depend on Foundation)\n| ID | Name | Purpose |\n|----|------|---------|\n| [c3-users](./components/users.md) | Users | User management |\n| [c3-products](./components/products.md) | Products | Product catalog |\n\n### Cross-Cutting Patterns (Refs)\n| ID | Name | Description |\n|----|------|-------------|\n| [ref-auth-pattern](./refs/auth-pattern.md) | Authentication | Bearer token validation |\n| [ref-error-responses](./refs/error-responses.md) | Error Handling | Standard error format |\n| [ref-router-pattern](./refs/router-pattern.md) | Router Pattern | Express router structure |\n\n### Architectural Decisions (ADRs)\n| ID | Title | Status |\n|----|-------|--------|\n| [ADR-001](./adrs/adr-001-in-memory-storage.md) | In-Memory Storage | Accepted |\n| [ADR-002](./adrs/adr-002-global-auth-middleware.md) | Global Auth Middleware | Accepted |\n| [ADR-003](./adrs/adr-003-router-based-features.md) | Router-Based Features | Accepted |\n\n## Dependency Map\n```\n┌─────────────────────────────────────────────────────┐\n│                   Express App                        │\n│                  (src/index.ts)                      │\n└─────────────────────┬───────────────────────────────┘\n                      │\n         ┌────────────┼────────────┐\n         │            │            │\n         ▼            ▼            ▼\n   ┌──────────┐ ┌──────────┐ ┌──────────┐\n   │   Auth   │ │  Users   │ │ Products │\n   │ c3-auth  │ │c3-users  │ │c3-products│\n   │Foundation│ │ Feature  │ │ Feature  │\n   └──────────┘ └────┬─────┘ └────┬─────┘\n         ▲           │            │\n         └───────────┴────────────┘\n            (implicit dependency)\n```\n\n## File-to-Component Map\n| Source File | Component |\n|-------------|-----------|\n| src/index.ts | Container (app entry) |\n| src/middleware/auth.ts | c3-auth |\n| src/routes/users.ts | c3-users |\n| src/routes/products.ts | c3-products |\n",
+        "structuredPatch": [],
+        "originalFile": null
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:22:05.095Z",
+      "event": "PreToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "find /tmp/tmp.KrACabQTze/.c3 -type f | sort",
+        "description": "List all C3 documentation files"
+      }
+    },
+    {
+      "timestamp": "2026-01-13T03:22:05.162Z",
+      "event": "PostToolUse",
+      "tool": "Bash",
+      "input": {
+        "command": "find /tmp/tmp.KrACabQTze/.c3 -type f | sort",
+        "description": "List all C3 documentation files"
+      },
+      "result": {
+        "stdout": "/tmp/tmp.KrACabQTze/.c3/adrs/adr-001-in-memory-storage.md\n/tmp/tmp.KrACabQTze/.c3/adrs/adr-002-global-auth-middleware.md\n/tmp/tmp.KrACabQTze/.c3/adrs/adr-003-router-based-features.md\n/tmp/tmp.KrACabQTze/.c3/components/auth.md\n/tmp/tmp.KrACabQTze/.c3/components/products.md\n/tmp/tmp.KrACabQTze/.c3/components/users.md\n/tmp/tmp.KrACabQTze/.c3/container.md\n/tmp/tmp.KrACabQTze/.c3/context.md\n/tmp/tmp.KrACabQTze/.c3/index.md\n/tmp/tmp.KrACabQTze/.c3/refs/auth-pattern.md\n/tmp/tmp.KrACabQTze/.c3/refs/error-responses.md\n/tmp/tmp.KrACabQTze/.c3/refs/router-pattern.md",
+        "stderr": "",
+        "interrupted": false,
+        "isImage": false
+      }
+    }
+  ],
+  "judgment": {
+    "pass": false,
+    "score": 60,
+    "expectations": [
+      {
+        "text": ".c3/README.md exists and describes the Simple Shop API system",
+        "pass": false,
+        "reasoning": "No .c3/README.md was created. The output shows .c3/context.md and .c3/index.md were created instead, but the specific README.md file is not present in the output."
+      },
+      {
+        "text": "A container directory exists for the API (e.g., c3-1-api/)",
+        "pass": false,
+        "reasoning": "No container directory like 'c3-1-api/' was created. The output shows a .c3/container.md file was created, but this is documentation about the container concept, not an actual container directory structure. The constraint specified 'Single container (the API itself)' with an expectation of a directory like 'c3-1-api/', which was not created."
+      },
+      {
+        "text": "Auth middleware is documented as a foundation component",
+        "pass": true,
+        "reasoning": "Auth middleware is clearly documented as a foundation component in .c3/components/auth.md with **Type**: Foundation, and the file explains why it's a foundation ('All feature components depend on this middleware running first'). The index.md also categorizes it under 'Foundation (Load First)'."
+      },
+      {
+        "text": "Users and Products are documented as feature components",
+        "pass": true,
+        "reasoning": "Both Users and Products are documented as feature components. .c3/components/users.md shows **Type**: Feature and .c3/components/products.md shows **Type**: Feature. The index.md correctly lists them under 'Features (Depend on Foundation)'."
+      },
+      {
+        "text": "ADR-000 (adoption decision) is created",
+        "pass": false,
+        "reasoning": "No ADR-000 was created. The output shows ADR-001 (In-Memory Storage), ADR-002 (Global Auth Middleware), and ADR-003 (Router-Based Features), but the required ADR-000 for the adoption decision is missing. This is a specific requirement for the 'full onboarding workflow'."
+      }
+    ],
+    "summary": "The agent created comprehensive documentation for the Simple Shop API with proper foundation/feature component classification, but failed to create the required .c3/README.md file, a container directory structure (c3-1-api/), and the mandatory ADR-000 adoption decision document. Only 3 of 5 expectations were met."
+  }
+}

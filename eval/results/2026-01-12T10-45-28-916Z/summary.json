@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-12T10-45-28-916Z",
+  "total": 1,
+  "passed": 0,
+  "failed": 1,
+  "avgScore": 60,
+  "results": [
+    {
+      "name": "Add new feature via C3 alter workflow",
+      "pass": false,
+      "score": 60,
+      "duration": 69234,
+      "summary": "The ADR was created properly with correct structure and dependency references, but the workflow was incomplete - the new component documentation file was never created, and the container README was not updated to include c3-106."
+    }
+  ]
+}

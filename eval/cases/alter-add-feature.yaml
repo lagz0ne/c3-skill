@@ -1,0 +1,38 @@
+name: "Add new feature via C3 alter workflow"
+
+fixtures: "fixtures/documented-api"
+
+eval_type: alter
+
+change_request: |
+  Add notification routes for sending task reminders.
+
+  The notification routes should:
+  - GET /api/notifications - list user notifications
+  - POST /api/notifications/:id/read - mark as read
+  - Depend on auth middleware (c3-102) and database (c3-105)
+
+command: |
+  This project has existing C3 documentation. I want to add a new feature:
+  notification routes for sending task reminders.
+
+  Please use the C3 alter workflow to:
+  1. Create an ADR for the new notification feature
+  2. Add documentation for the new component
+  3. Update the container README to include the new component
+
+  The notification routes should:
+  - GET /api/notifications - list user notifications
+  - POST /api/notifications/:id/read - mark as read
+  - Depend on auth middleware (c3-102) and database (c3-105)
+
+goal: |
+  Use the C3 alter workflow to add a new feature component to an existing
+  documented codebase. This tests the ADR-first approach to changes.
+
+constraints:
+  - Must create an ADR before adding component documentation
+  - ADR should describe the notification feature
+  - New component should be properly numbered (c3-106 or similar)
+  - Must update container README with new component
+  - Should reference dependencies on existing components

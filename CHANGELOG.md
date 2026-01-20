@@ -5,6 +5,17 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.3] - 2026-01-20
+
+### Fixed
+- **plugin.json**: Removed explicit component paths - paths were relative to `.claude-plugin/` not plugin root, causing auto-discovery to fail. Now uses Claude Code's default auto-discovery.
+- **onboard skill**: Aligned frontmatter `name: onboard` with directory name (was `onboarding-c3`)
+- **onboard command**: Updated skill reference to match corrected skill name
+- **c3-orchestrator agent**: Changed invalid color `orange` to `yellow`
+
+### Documentation
+- **CLAUDE.md**: Added plugin troubleshooting section with validation workflow
+
 ## [3.3.2] - 2026-01-20
 
 ### Fixed

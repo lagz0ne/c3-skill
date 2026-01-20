@@ -1,7 +1,7 @@
 {
   "name": "c3-skill",
   "description": "C3 (Context-Container-Component) architecture design methodology with structured top-down documentation, mermaid diagrams, and intention-based workflows",
-  "version": "3.3.2",
+  "version": "3.3.3",
   "author": {
     "name": "Lagz0ne",
     "email": "lagz0ne@users.noreply.github.com"
@@ -9,9 +9,5 @@
   "homepage": "https://github.com/Lagz0ne/c3-skill",
   "repository": "https://github.com/Lagz0ne/c3-skill",
   "license": "MIT",
-  "keywords": ["architecture", "design", "c3", "documentation", "mermaid", "system-design"],
-  "commands": "./commands",
-  "agents": "./agents",
-  "skills": "./skills",
-  "hooks": "./hooks"
+  "keywords": ["architecture", "design", "c3", "documentation", "mermaid", "system-design"]
 }

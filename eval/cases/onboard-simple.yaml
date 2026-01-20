@@ -1,0 +1,32 @@
+name: "Onboard simple Express app"
+
+fixtures: "fixtures/simple-express-app"
+
+command: |
+  Please onboard this project to C3 architecture documentation. This is Simple Shop API - an Express.js REST API.
+
+  Document it so a new developer can understand:
+  - System boundaries and responsibilities
+  - How components relate and depend on each other
+  - Cross-cutting patterns (like auth, error handling)
+  - Architectural decisions and their rationale
+
+  Auth middleware is foundational (others depend on it).
+  Users and Products are feature components.
+
+goal: |
+  Document a simple Express.js REST API called "Simple Shop API"
+  so future developers understand its architecture. The API handles
+  user and product management with authentication.
+
+constraints:
+  - Single container (the API itself)
+  - Auth middleware is a foundation component (others depend on it)
+  - Users and Products routes are feature components
+
+expectations:
+  - "System context is documented (boundaries, purpose, high-level structure)"
+  - "Container responsibilities are clear (what the API does)"
+  - "Auth middleware documented as foundation with dependencies shown"
+  - "Users and Products documented as feature components"
+  - "Cross-cutting patterns identified (auth, error handling, or similar)"

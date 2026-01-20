@@ -1,0 +1,40 @@
+name: "Design greenfield SaaS with C3"
+
+fixtures: "fixtures/greenfield-saas"
+
+command: |
+  I'm starting a new project - TaskFlow, a task management SaaS for small teams.
+  Help me design the architecture using C3. I want to plan the system before writing any code.
+  The ADR-000 should be the blueprint for what we'll build.
+
+  Here are my design decisions:
+  - Web application (React SPA) + API for future mobile
+  - Node.js/TypeScript backend with Express
+  - PostgreSQL + Redis for caching and real-time pub/sub
+  - Modular monolith architecture (can split later)
+  - WebSocket for real-time collaboration on task boards
+  - Google OAuth for authentication
+  - Multi-tenant with team workspaces
+
+  Please proceed with these decisions and create the full C3 architecture.
+
+goal: |
+  Design the architecture for TaskFlow SaaS - a task management platform.
+  Use C3 onboarding to create a comprehensive design document (ADR-000)
+  that serves as the blueprint for development. The architecture should
+  cover: React frontend, Node.js API, PostgreSQL database, and real-time
+  features via WebSockets.
+
+constraints:
+  - This is a greenfield project - no existing code to document
+  - ADR-000 should be the primary design artifact
+  - Architecture should include at least 3 containers (frontend, API, database)
+  - Must consider real-time collaboration requirements
+  - Design for team workspaces and multi-tenancy
+
+expectations:
+  - "ADR-000 exists and serves as the architectural blueprint"
+  - "Context README describes TaskFlow's purpose and high-level architecture"
+  - "At least 3 containers are defined (frontend, API, database or similar)"
+  - "Real-time/WebSocket considerations are documented"
+  - "Component placeholders exist for key features (auth, tasks, teams)"

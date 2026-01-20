@@ -10,11 +10,6 @@ goal: ${GOAL}
 
 ${GOAL}
 
-## Cited By
-
-<!-- Components/containers that cite this ref. Update when citations change. -->
-- (none yet)
-
 <!--
 WHY DOCUMENT:
 - Enforce consistency (current and future work)
@@ -52,5 +47,3 @@ Delete this comment block after drafting.
 Before finalizing, verify:
 - [ ] Goal is specific and actionable
 - [ ] Each section directly serves the Goal
-- [ ] Cited By section is updated
-- [ ] No orphan ref (at least one citation)

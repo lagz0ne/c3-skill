@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-13T03-13-08-912Z",
+  "total": 1,
+  "passed": 1,
+  "failed": 0,
+  "avgScore": 100,
+  "results": [
+    {
+      "name": "Onboard simple Express app",
+      "pass": true,
+      "score": 100,
+      "duration": 100750,
+      "summary": "All expectations are fully met. The agent created a complete C3 documentation structure for the Simple Shop API with proper README, container directory, foundation and feature component classifications, and the required ADR-000 adoption decision record."
+    }
+  ]
+}

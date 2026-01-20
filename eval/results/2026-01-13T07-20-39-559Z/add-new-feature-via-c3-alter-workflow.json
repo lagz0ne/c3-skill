@@ -1,0 +1,14 @@
+{
+  "name": "Add new feature via C3 alter workflow",
+  "pass": false,
+  "score": 0,
+  "duration": 205730,
+  "trace": [],
+  "judgment": {
+    "pass": false,
+    "score": 0,
+    "expectations": [],
+    "summary": "Error: Error: Claude Code process exited with code 1"
+  },
+  "error": "Error: Claude Code process exited with code 1"
+}

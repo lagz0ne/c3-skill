@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-12T11-58-04-741Z",
+  "total": 1,
+  "passed": 0,
+  "failed": 1,
+  "avgScore": 60,
+  "results": [
+    {
+      "name": "Onboard simple Express app",
+      "pass": false,
+      "score": 60,
+      "duration": 102555,
+      "summary": "The agent created ADR-000 and properly documented foundation and feature components, but failed to create a .c3/README.md file (created index.md instead) and did not create a physical container directory structure for the API."
+    }
+  ]
+}

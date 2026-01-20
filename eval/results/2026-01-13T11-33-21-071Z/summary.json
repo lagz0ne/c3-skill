@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-13T11-33-21-071Z",
+  "total": 1,
+  "passed": 1,
+  "failed": 0,
+  "avgScore": 100,
+  "results": [
+    {
+      "name": "Fix bug via C3 alter workflow",
+      "pass": true,
+      "score": 100,
+      "duration": 84857,
+      "summary": "All documentation follows required templates, change is well-scoped with clear rationale, executable plan, concrete verification, and maintainable traceability."
+    }
+  ]
+}

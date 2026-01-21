@@ -79,19 +79,66 @@ EXIT_CODE=$?
 assert_exit_code 0 $EXIT_CODE "allows with empty .c3 (not fully adopted)"
 
 # ============================================
-# Test: Allows when .c3/README.md exists (C3 project)
+# Test: Blocks when C3 project has no ADR
 # ============================================
 echo ""
-echo "--- Test: Allows with .c3/README.md (C3 project) ---"
+echo "--- Test: Blocks C3 project with no ADR ---"
 
-TEST_DIR="$TMPDIR/c3-project"
+TEST_DIR="$TMPDIR/c3-no-adr"
 mkdir -p "$TEST_DIR/.c3"
 echo "# Context" > "$TEST_DIR/.c3/README.md"
 
-OUTPUT=$(run_gate '{"tool_name":"Edit","tool_input":{"file_path":"src/main.py"}}' "$TEST_DIR")
+OUTPUT=$(run_gate '{"tool_name":"Edit","tool_input":{"file_path":"'$TEST_DIR'/src/main.py"}}' "$TEST_DIR")
 EXIT_CODE=$?
 
-assert_exit_code 0 $EXIT_CODE "allows in C3 project"
+assert_exit_code 2 $EXIT_CODE "blocks C3 project with no ADR"
+
+# ============================================
+# Test: Blocks when ADR is only proposed
+# ============================================
+echo ""
+echo "--- Test: Blocks when ADR is only proposed ---"
+
+TEST_DIR="$TMPDIR/c3-proposed-adr"
+mkdir -p "$TEST_DIR/.c3/adr"
+echo "# Context" > "$TEST_DIR/.c3/README.md"
+cat > "$TEST_DIR/.c3/adr/adr-20260121-test.md" << 'EOF'
+---
+id: adr-20260121-test
+title: Test ADR
+status: proposed
+---
+# Test
+EOF
+
+OUTPUT=$(run_gate '{"tool_name":"Edit","tool_input":{"file_path":"'$TEST_DIR'/src/main.py"}}' "$TEST_DIR")
+EXIT_CODE=$?
+
+assert_exit_code 2 $EXIT_CODE "blocks when ADR is only proposed"
+
+# ============================================
+# Test: Allows when ADR is accepted
+# ============================================
+echo ""
+echo "--- Test: Allows when ADR is accepted ---"
+
+TEST_DIR="$TMPDIR/c3-accepted-adr"
+mkdir -p "$TEST_DIR/.c3/adr"
+echo "# Context" > "$TEST_DIR/.c3/README.md"
+cat > "$TEST_DIR/.c3/adr/adr-20260121-test.md" << 'EOF'
+---
+id: adr-20260121-test
+title: Test ADR
+status: accepted
+base-commit: abc123
+---
+# Test
+EOF
+
+OUTPUT=$(run_gate '{"tool_name":"Edit","tool_input":{"file_path":"'$TEST_DIR'/src/main.py"}}' "$TEST_DIR")
+EXIT_CODE=$?
+
+assert_exit_code 0 $EXIT_CODE "allows when ADR is accepted"
 
 # ============================================
 # Test: Allows editing .c3/ files

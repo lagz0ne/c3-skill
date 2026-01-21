@@ -63,6 +63,45 @@ From the component doc, identify:
 | high | Breaking change, many consumers |
 | critical | Cross-container, external system |
 
+### Step 5: Boundary Analysis
+
+For each affected component, perform these checks:
+
+#### 5.1 Ownership Check
+Read component's "Responsibilities" or "Owns" section. Does the change fall within stated responsibilities?
+- ✓ if change matches documented responsibilities
+- ✗ if change outside component's stated scope
+
+#### 5.2 Redundancy Check
+Check sibling components in same container. Does any sibling already provide this capability?
+- ✓ if no duplicate capability exists
+- ✗ if another component already handles this
+
+#### 5.3 Sibling Overlap Check
+Compare change description against all sibling responsibilities. Flag significant overlap.
+- ✓ if minimal/no overlap with siblings
+- ✗ if >30% overlap with another component's responsibilities
+
+#### 5.4 Composition Check
+Check for orchestration signals in change description:
+- **FAIL signals:** "coordinate", "orchestrate", "manage flow", "control", "decide which to call"
+- **PASS signals:** "receives from", "passes to", "returns to", "hands off"
+- ✓ if hand-off pattern
+- ✗ if orchestration at component level
+
+#### 5.5 Leaky Abstraction Check
+Check if change exposes internal implementation details in the interface.
+- ✓ if interface remains clean/abstract
+- ✗ if internals exposed (implementation types, internal state, etc.)
+
+#### 5.6 Correct Layer Check
+Verify logic is at appropriate level:
+- **Context-level:** system-wide decisions, external boundaries
+- **Container-level:** coordination between components, composition rules
+- **Component-level:** single responsibility implementation
+- ✓ if logic matches the layer being changed
+- ✗ if logic belongs at different layer
+
 ## Output Format
 
 Return exactly this structure:
@@ -87,11 +126,27 @@ Return exactly this structure:
 ## Specific Risks
 - [Risk 1: what could break and why]
 - [Risk 2: what could break and why]
+
+## Boundary Analysis
+
+| Check | Status | Evidence |
+|-------|--------|----------|
+| Ownership | ✓/✗ | Component owns this change per Responsibilities section |
+| Redundancy | ✓/✗ | No duplicate capability exists elsewhere |
+| Sibling overlap | ✓/✗ | No sibling already handles this |
+| Composition | ✓/✗ | Hand-off pattern, not orchestration |
+| Leaky abstraction | ✓/✗ | Internals not exposed in interface |
+| Correct layer | ✓/✗ | Logic at appropriate level |
+
+### Boundary Issues Found
+- [Issue 1: description with evidence from docs]
+- [Or "None" if all checks pass]
 ```
 
 ## Constraints
 
-- **Token limit:** Output MUST be under 600 tokens
+- **Token limit:** Output MUST be under 800 tokens
 - **Trace both directions:** Always check upstream AND downstream
 - **Explicit about cross-container:** This is a key escalation signal
 - **Preserve IDs:** Always use full c3-XXX identifiers
+- **Evidence-based boundaries:** Every boundary check must cite specific text from component docs

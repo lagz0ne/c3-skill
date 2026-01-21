@@ -5,6 +5,22 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.3] - 2026-01-21
+
+### Added
+- **c3-adr-auditor agent**: New agent that validates ADRs against C3 architectural principles before approval
+  - Checks abstraction boundaries (component doing sibling's job)
+  - Checks composition rules (orchestration vs hand-off)
+  - Checks context alignment (contradicting Key Decisions)
+  - Checks ref compliance (touching pattern domain without citation)
+- **c3-audit-adr skill**: Direct invocation wrapper for ADR auditing (`/c3 audit-adr`)
+- **Phase 5a in c3-orchestrator**: ADR audit gate between generation and acceptance - ADR cannot be accepted until auditor returns PASS
+- **Stage 4b in c3-alter**: Audit step integrated into alter workflow checklist
+
+### Changed
+- **c3-orchestrator workflow**: Now includes mandatory audit step before user can accept ADR
+- **c3-alter workflow**: Progress checklist updated with Stage 4b (audit) and Stage 4c (accept)
+
 ## [3.4.2] - 2026-01-21
 
 ### Fixed

@@ -1,0 +1,33 @@
+name: "Audit ADRs for principle violations"
+
+fixtures: "fixtures/adr-violations"
+
+command: |
+  Audit the ADR at .c3/adr/adr-20260121-add-oauth-to-tasks.md
+
+  Check if this ADR violates C3 architectural principles:
+  - Down abstraction: Does the change respect layer hierarchy?
+  - Composition: Does the change avoid component-level orchestration?
+  - Ref integrity: Does the change properly address patterns?
+
+  The ADR proposes adding OAuth verification to task routes (c3-103).
+  Task routes should NOT handle auth - that's c3-102's responsibility.
+
+goal: |
+  Detect that the ADR violates abstraction boundaries.
+  c3-103 (task-routes) cannot add auth logic because:
+  1. c3-102 (auth-middleware) owns all authentication
+  2. Container data flow assigns auth to c3-102
+  3. c3-103's "Does NOT Own" explicitly excludes authentication
+
+constraints:
+  - Must read the ADR file
+  - Must read affected component docs (c3-103, c3-102)
+  - Must read container doc (c3-1-api)
+  - Must detect the abstraction violation
+
+expectations:
+  - "Detects that c3-103 cannot handle auth logic"
+  - "References c3-102 as the component that owns authentication"
+  - "References container data flow or component responsibilities"
+  - "Returns FAIL verdict for this ADR"

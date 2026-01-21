@@ -1,0 +1,34 @@
+name: "Audit ADR for context-level override"
+
+fixtures: "fixtures/adr-violations"
+
+command: |
+  Audit the ADR at .c3/adr/adr-20260121-replace-jwt.md
+
+  Check if this ADR violates C3 architectural principles:
+  - Down abstraction: Does the change respect layer hierarchy?
+  - Context alignment: Does the change align with context-level decisions?
+  - Pattern override: If contradicting context, is override justified?
+
+  The ADR proposes replacing JWT with sessions.
+  Context (c3-0) states "JWT-based authentication" as a key decision.
+  This ADR contradicts that without a Pattern Overrides section.
+
+goal: |
+  Detect that the ADR contradicts context-level decision without justification.
+  The ADR violates because:
+  1. Context README has "JWT-based authentication" in Key Decisions
+  2. ADR proposes to replace JWT with sessions
+  3. No Pattern Overrides section to justify breaking context decision
+
+constraints:
+  - Must read the ADR file
+  - Must read context doc (c3-0 / .c3/README.md)
+  - Must detect the context-level contradiction
+  - Must note missing Pattern Overrides section
+
+expectations:
+  - "Detects contradiction with context Key Decisions"
+  - "References 'JWT-based authentication' as context decision"
+  - "Notes missing Pattern Overrides section"
+  - "Returns FAIL verdict for this ADR"

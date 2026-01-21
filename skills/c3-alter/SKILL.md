@@ -40,7 +40,9 @@ Change Progress:
 - [ ] Stage 1: Intent clarified (type, goal confirmed)
 - [ ] Stage 2: Current state documented (affected components listed)
 - [ ] Stage 3: Scope assessed (all c3 IDs, breaking changes noted)
-- [ ] Stage 4: ADR created and accepted
+- [ ] Stage 4: ADR created (proposed)
+- [ ] Stage 4b: ADR audited (c3-adr-auditor PASS)
+- [ ] Stage 4c: ADR accepted by user
 - [ ] Stage 5: Plan created with ordered steps
 - [ ] Stage 6: Execution complete (docs, code, diagrams)
 - [ ] Stage 7: Audit passed, ADR marked implemented
@@ -87,7 +89,36 @@ Generate at `.c3/adr/adr-YYYYMMDD-{slug}.md`. Use `**/references/adr-template.md
 
 **Key sections:** Problem, Decision, Rationale, Affected Layers, References Affected, Verification
 
-**After creating the ADR:** Use AskUserQuestion to ask the user to approve or reject the ADR.
+---
+
+## Stage 4b: Audit ADR (REQUIRED)
+
+**Before asking user to accept, run the auditor:**
+
+```
+Task with subagent_type: c3-skill:c3-adr-auditor
+Prompt:
+  ADR Path: .c3/adr/adr-YYYYMMDD-{slug}.md
+```
+
+| Verdict | Action |
+|---------|--------|
+| **PASS** | Proceed to Stage 4c (user acceptance) |
+| **FAIL** | Show violations, fix ADR, re-audit |
+
+**Common violations:**
+- Component doing sibling's job → change `affects` to correct component
+- Orchestration language → move coordination to container
+- Context contradiction → add Pattern Overrides section
+- Missing ref citation → cite ref or justify override
+
+**Loop until auditor returns PASS.**
+
+---
+
+## Stage 4c: ADR Acceptance
+
+**After audit passes:** Use AskUserQuestion to ask the user to approve or reject the ADR.
 
 | On Accept | Update status to `accepted`, **then immediately execute Stage 5 and 6** |
 |-----------|---------------------------------------------|
@@ -189,7 +220,13 @@ Stage 3 - Scope:
 
 Stage 4 - ADR:
   Created: .c3/adr/adr-20260109-rate-limiting.md
-  Status: proposed → user accepts → accepted
+  Status: proposed
+
+Stage 4b - Audit:
+  c3-adr-auditor: PASS (rate limiting is within middleware domain)
+
+Stage 4c - Accept:
+  User accepts → status: accepted
 
 Stage 5 - Plan:
   1. Create c3-206-rate-limiter.md
@@ -223,6 +260,12 @@ Stage 3 - Scope:
 Stage 4 - ADR:
   Created: .c3/adr/adr-20260109-login-timeout-fix.md
   (simpler ADR for bugfix)
+
+Stage 4b - Audit:
+  c3-adr-auditor: PASS (fix is within auth-middleware scope)
+
+Stage 4c - Accept:
+  User accepts → status: accepted
 
 Stage 5-7: Execute and verify
 ```

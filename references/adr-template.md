@@ -42,6 +42,7 @@ status: proposed
 date: YYYY-MM-DD
 affects: [c3-0, c3-1]
 approved-files: []
+base-commit:        # Captured when status becomes accepted
 ---
 
 # [Decision Title]
@@ -105,16 +106,28 @@ approved-files:
 - [ ] [Check 1]
 - [ ] [Check 2]
 - [ ] [Check 3]
+
+## Verification Results (populated on implementation)
+
+```yaml
+actual-files: []      # Files actually changed (from git diff)
+verification:
+  matched: []         # In approved-files AND touched
+  unplanned: []       # Touched but not in approved-files
+  untouched: []       # In approved-files but not touched
+  verified-at:        # ISO timestamp
+  verified-by: claude
+```
 ```
 
 ## Status Values
 
-| Status | Meaning | Gate Behavior |
-|--------|---------|---------------|
-| `proposed` | Awaiting review | Files NOT editable |
-| `accepted` | Ready for implementation | Files in `approved-files` editable |
-| `implemented` | Changes applied, audit passed | Gate relaxed |
-| `superseded` | Replaced by another ADR | Files NOT editable |
+| Status | Meaning | Gate Behavior | base-commit |
+|--------|---------|---------------|-------------|
+| `proposed` | Awaiting review | Files NOT editable | Not set |
+| `accepted` | Ready for implementation | All code editable | Captured (HEAD at acceptance) |
+| `implemented` | Changes applied, verified | Gate relaxed | Used for verification |
+| `superseded` | Replaced by another ADR | Files NOT editable | N/A |
 
 ## Lifecycle
 

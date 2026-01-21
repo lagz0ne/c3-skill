@@ -9,5 +9,9 @@
   "homepage": "https://github.com/Lagz0ne/c3-skill",
   "repository": "https://github.com/Lagz0ne/c3-skill",
   "license": "MIT",
-  "keywords": ["architecture", "design", "c3", "documentation", "mermaid", "system-design"]
+  "keywords": ["architecture", "design", "c3", "documentation", "mermaid", "system-design"],
+  "commands": "commands",
+  "skills": "skills",
+  "agents": "agents",
+  "hooks": "hooks/hooks.json"
 }

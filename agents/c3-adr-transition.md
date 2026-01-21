@@ -57,6 +57,23 @@ Output:
 - Untouched approved files (informational)
 - ADR path
 
+## Error Handling
+
+**If c3-verifier fails:**
+- Capture error output
+- Inform user of failure reason (missing base-commit, invalid commit, etc.)
+- Do NOT update ADR status
+- Suggest checking ADR has valid base-commit field
+
+**If no accepted ADRs found:**
+- Inform user: "No ADRs with status: accepted found in .c3/adr/"
+- Suggest running c3-orchestrator to create and accept an ADR
+- Exit gracefully
+
+**If ADR already implemented:**
+- Check status before transition
+- If already `implemented`, inform user and skip
+
 ## Example Output
 
 ```

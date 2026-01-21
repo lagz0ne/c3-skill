@@ -411,7 +411,23 @@ AskUserQuestion:
 
 **On Accept:**
 1. Update ADR `status: proposed` → `status: accepted`
-2. c3-gate will now allow Edit/Write to files in `approved-files`
+2. **Capture base-commit:** Add `base-commit: <current HEAD>` to frontmatter
+   ```bash
+   git rev-parse HEAD
+   ```
+3. c3-gate will now allow Edit/Write operations
+
+**Example frontmatter update on acceptance:**
+
+```yaml
+# Before acceptance
+status: proposed
+base-commit:
+
+# After acceptance
+status: accepted
+base-commit: abc123f
+```
 
 **On Revise:** Loop back to refine scope and approved-files list.
 

@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+#
+# C3 ADR Verifier
+#
+# Verifies ADR implementation by comparing approved-files against actual changes.
+# Called when transitioning ADR from accepted to implemented.
+#
+# Usage: c3-verifier <adr-file>
+#
+# Outputs verification results to stdout and updates the ADR file.
+
+set -uo pipefail
+
+ADR_FILE="${1:-}"
+
+if [[ -z "$ADR_FILE" || ! -f "$ADR_FILE" ]]; then
+    echo "Usage: c3-verifier <adr-file>" >&2
+    exit 1
+fi
+
+# Get project directory
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
+
+# Extract base-commit from frontmatter
+BASE_COMMIT=$(grep -E "^base-commit:" "$ADR_FILE" | sed 's/base-commit:[[:space:]]*//' | tr -d '[:space:]')
+
+if [[ -z "$BASE_COMMIT" ]]; then
+    echo "Error: No base-commit found in ADR frontmatter" >&2
+    exit 1
+fi
+
+# Verify base-commit exists
+if ! git cat-file -e "$BASE_COMMIT" 2>/dev/null; then
+    echo "Error: base-commit $BASE_COMMIT not found in git history" >&2
+    exit 1
+fi
+
+# Get actual files changed since base-commit (excluding .c3/ directory)
+ACTUAL_FILES=$(git diff --name-only "$BASE_COMMIT"..HEAD | grep -v "^\.c3/" | sort)
+
+# Extract approved-files from frontmatter (handle YAML list format)
+APPROVED_FILES=$(awk '
+    /^approved-files:/ { in_list=1; next }
+    in_list && /^[[:space:]]*-[[:space:]]/ {
+        gsub(/^[[:space:]]*-[[:space:]]*/, "")
+        gsub(/["\047]/, "")  # Remove quotes
+        gsub(/[[:space:]]*$/, "")
+        print
+    }
+    in_list && /^[a-z]/ { exit }
+' "$ADR_FILE" | sort)
+
+# Calculate matched, unplanned, untouched using comm
+MATCHED=$(comm -12 <(echo "$APPROVED_FILES") <(echo "$ACTUAL_FILES"))
+UNPLANNED=$(comm -13 <(echo "$APPROVED_FILES") <(echo "$ACTUAL_FILES"))
+UNTOUCHED=$(comm -23 <(echo "$APPROVED_FILES") <(echo "$ACTUAL_FILES"))
+
+# Format as YAML lists
+format_yaml_list() {
+    local items="$1"
+    if [[ -z "$items" ]]; then
+        echo "[]"
+    else
+        echo ""
+        echo "$items" | while read -r item; do
+            [[ -n "$item" ]] && echo "  - $item"
+        done
+    fi
+}
+
+# Output verification results
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+cat << EOF
+
+## Verification Results
+
+\`\`\`yaml
+actual-files:$(format_yaml_list "$ACTUAL_FILES")
+
+verification:
+  matched:$(format_yaml_list "$MATCHED")
+  unplanned:$(format_yaml_list "$UNPLANNED")
+  untouched:$(format_yaml_list "$UNTOUCHED")
+  verified-at: $TIMESTAMP
+  verified-by: claude
+\`\`\`
+EOF
+
+# Summary
+MATCHED_COUNT=$(echo "$MATCHED" | grep -c . || echo 0)
+UNPLANNED_COUNT=$(echo "$UNPLANNED" | grep -c . || echo 0)
+UNTOUCHED_COUNT=$(echo "$UNTOUCHED" | grep -c . || echo 0)
+
+echo ""
+echo "Summary: $MATCHED_COUNT matched, $UNPLANNED_COUNT unplanned, $UNTOUCHED_COUNT untouched"
+
+# Exit code based on results
+if [[ $UNPLANNED_COUNT -gt 0 || $UNTOUCHED_COUNT -gt 0 ]]; then
+    echo ""
+    echo "Note: Discrepancies found between approved and actual files."
+    echo "This is informational - the verification documents what happened."
+fi
+
+exit 0

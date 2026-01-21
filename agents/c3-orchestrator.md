@@ -48,6 +48,7 @@ Guide users through architectural changes with understanding-first approach:
 4. Generate ADR only when understanding is complete
 5. **Audit ADR** for principle violations before acceptance
 6. Delegate execution based on user preference
+7. **Complete implementation** with verification and ADR transition
 
 ## Precondition Check
 
@@ -123,6 +124,12 @@ Read: references/adr-template.md    - ADR structure
                                  v
                         +------------------+
                         | Phase 6: Delegate|
+                        +--------+---------+
+                                 |
+                                 v
+                        +------------------+
+                        | Phase 7: Complete|
+                        | (Implementation) |
                         +------------------+
 ```
 
@@ -451,6 +458,41 @@ AskUserQuestion:
 | Plan only | Generate `.plan.md` file using plan-template |
 | Execute now | Generate plan, then execute with verification |
 | Done | Confirm ADR location and exit |
+
+## Phase 7: Implementation Completion
+
+When the user indicates implementation is complete:
+
+```
+AskUserQuestion:
+  question: "Implementation complete. Ready to transition ADR to implemented?"
+  options:
+    - "Yes - run verification and transition"
+    - "Not yet - still working"
+    - "Skip verification - mark implemented directly"
+```
+
+**On "Yes - run verification and transition":**
+
+Dispatch c3-adr-transition:
+
+```
+Task with subagent_type: c3-skill:c3-adr-transition
+Prompt:
+  Transition ADR at .c3/adr/<current-adr>.md from accepted to implemented.
+  Run verification and document results.
+```
+
+**On "Not yet":**
+
+Acknowledge and wait for user to continue implementation.
+
+**On "Skip verification":**
+
+Update ADR status directly (not recommended, loses traceability):
+- Change `status: accepted` → `status: implemented`
+- No verification results will be documented
+- Warn user that this bypasses audit trail
 
 ## Visualization
 

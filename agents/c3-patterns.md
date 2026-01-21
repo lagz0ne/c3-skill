@@ -69,6 +69,30 @@ If change **breaks** a pattern:
 - Updating the pattern affects all existing usages
 - This is a key warning for the user
 
+### Step 5: Ref Health Checks
+
+#### 5.1 Follows Ref
+Does the change follow the conventions documented in the relevant ref?
+- ✓ if change aligns with ref conventions
+- ✗ if change contradicts or ignores ref
+
+#### 5.2 Ref Usage Correct
+Is the ref being applied as intended, or misused?
+- ✓ if ref applied correctly
+- ✗ if ref misinterpreted or misapplied
+
+#### 5.3 Missing Ref
+Does this change introduce a reusable pattern that should become a ref?
+- Signals: pattern used in 2+ places, cross-cutting concern, convention others should follow
+- ✓ if no new pattern introduced, or pattern already has ref
+- ✗ if new reusable pattern without ref (suggest creating one)
+
+#### 5.4 Stale Ref
+Is the referenced ref still accurate?
+- Check ref's examples against current codebase patterns
+- ✓ if ref still matches reality
+- ✗ if ref documents patterns no longer in use (suggest updating ref)
+
 ## Output Format
 
 Return exactly this structure:
@@ -85,9 +109,18 @@ Return exactly this structure:
 ## Pattern Details
 [For the most relevant pattern, summarize the key conventions]
 
-## Violations (if any)
-- [Violation 1: what the pattern says vs what the change does]
-- [Violation 2: what the pattern says vs what the change does]
+## Ref Compliance
+
+| Check | Status | Evidence |
+|-------|--------|----------|
+| Follows ref | ✓/✗ | Change aligns with ref-X conventions |
+| Ref usage correct | ✓/✗ | Ref applied as documented |
+| Missing ref | ✓/✗ | No new reusable pattern without ref |
+| Stale ref | ✓/✗ | Referenced ref still matches codebase |
+
+## Ref Issues Found
+- [Issue 1: description with evidence]
+- [Or "None" if all checks pass]
 
 ## Scope Warning
 [If breaks pattern: explain that fixing the pattern is additional scope]
@@ -96,7 +129,8 @@ Return exactly this structure:
 
 ## Constraints
 
-- **Token limit:** Output MUST be under 500 tokens
+- **Token limit:** Output MUST be under 650 tokens
 - **Check refs first:** Don't analyze code patterns, only documented refs
 - **Explicit about breaks:** Pattern violations are high-signal warnings
 - **Suggest refs:** If change introduces reusable pattern, suggest creating ref
+- **Ref health matters:** Stale or missing refs indicate documentation debt

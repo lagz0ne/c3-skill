@@ -3,10 +3,9 @@
 # C3 SessionStart Hook
 #
 # Checks if .c3/README.md exists in the project.
-# If exists: outputs harness message to activate C3 skill usage
+# If exists: outputs JSON with additionalContext to inject harness into conversation
 # If not: exits silently
 #
-# For SessionStart hooks, stdout is added to context when exit code is 0.
 
 set -uo pipefail
 
@@ -15,37 +14,14 @@ PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 
 # Check if .c3/README.md exists
 if [[ -f "$PROJECT_DIR/.c3/README.md" ]]; then
+    # Output JSON format for context injection
     cat << 'EOF'
-<c3-architecture-harness>
-This project has C3 architecture documentation (.c3/).
-
-## C3 Agent Routing
-
-```mermaid
-flowchart TD
-    U[User Request] --> Q{Type?}
-    Q -->|question| NAV[c3-navigator]
-    Q -->|change| ORC[c3-orchestrator]
-    Q -->|audit| AUD[/c3 skill]
-
-    ORC --> P[Parallel Analysis]
-    P --> A[analyzer]
-    P --> I[impact]
-    P --> PT[patterns]
-    A --> S[synthesizer]
-    I --> S
-    PT --> S
-    S --> ADR[ADR + Plan]
-```
-
-| Request | Agent |
-|---------|-------|
-| question | `c3-skill:c3-navigator` |
-| change | `c3-skill:c3-orchestrator` |
-| audit | `/c3` |
-
-Use the appropriate agent BEFORE responding.
-</c3-architecture-harness>
+{
+  "hookSpecificOutput": {
+    "hookEventName": "SessionStart",
+    "additionalContext": "<c3-architecture-harness>\nThis project has C3 architecture documentation (.c3/).\n\n## C3 Agent Routing\n\n| Request Type | Agent | When to Use |\n|--------------|-------|-------------|\n| question | `c3-skill:c3-navigator` | \"where is X\", \"how does X work\", \"explain X\" |\n| change | `c3-skill:c3-orchestrator` | \"add component\", \"refactor X\", \"implement feature\" |\n| audit | `/c3` skill | \"audit architecture\", \"validate C3 docs\" |\n\n**IMPORTANT**: When user asks architecture questions or requests changes in a .c3 project, you MUST use the Task tool to spawn the appropriate agent BEFORE responding.\n</c3-architecture-harness>"
+  }
+}
 EOF
 fi
 

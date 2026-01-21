@@ -27,13 +27,9 @@ Before proceeding, use Glob to find and Read these files:
 
 ## Mode: Adopt
 
-Route to `onboarding-c3` skill for the full staged learning loop.
+Route to `/onboard` skill for the full staged learning loop.
 
-The skill handles:
-1. Context discovery (actors, containers, externals)
-2. Container documentation (tech stack, components)
-3. Component documentation (Foundation then Feature)
-4. Refs discovery (shared patterns)
+See `skills/onboard/SKILL.md` for the complete workflow.
 
 ---
 
@@ -47,7 +43,12 @@ The skill handles:
 | Container | `audit container c3-1` |
 | ADR | `audit adr adr-YYYYMMDD-slug` |
 
-**Checks:** Inventory vs code, categorization, reference validity, diagrams, ADR lifecycle
+**Checks:** Inventory vs code, categorization, reference validity, diagrams, ADR lifecycle, abstraction boundaries, content separation
+
+**Content Separation Check (Phase 9):**
+- Verifies components contain domain logic, refs contain usage patterns
+- Uses `c3-skill:c3-content-classifier` agent for LLM-based analysis
+- Detects: missing refs for technologies, integration patterns in components, duplicated patterns
 
 **Example:**
 ```
@@ -55,7 +56,7 @@ User: "Check if C3 docs are up to date"
 
 1. Load audit-checks.md
 2. Run Phase 1: Gather (list containers, components, ADRs)
-3. Run Phase 2-7: Validate each check
+3. Run Phase 2-9: Validate each check (including content separation)
 4. Output audit report with PASS/FAIL/WARN per check
 5. List actionable fixes for any failures
 ```

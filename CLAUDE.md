@@ -129,10 +129,7 @@ Run before every release to ensure plugin loads correctly:
 | Check | Required | File |
 |-------|----------|------|
 | `name` field exists | Yes | `.claude-plugin/plugin.json` |
-| `commands` declaration | Yes | `.claude-plugin/plugin.json` |
-| `skills` declaration | Yes | `.claude-plugin/plugin.json` |
-| `agents` declaration | Yes | `.claude-plugin/plugin.json` |
-| `hooks` declaration | Yes | `.claude-plugin/plugin.json` |
+| NO explicit component paths | Yes | `.claude-plugin/plugin.json` (auto-discovery only) |
 | Commands have YAML frontmatter with `description` | Yes | `commands/*.md` |
 | Skills have `SKILL.md` with frontmatter | Yes | `skills/*/SKILL.md` |
 | Agents have YAML frontmatter with `name`, `description` | Yes | `agents/*.md` |
@@ -141,26 +138,29 @@ Run before every release to ensure plugin loads correctly:
 
 ## plugin.json Template
 
+**IMPORTANT:** Claude Code uses auto-discovery. Do NOT add explicit component paths - they break plugin loading.
+
 ```json
 {
   "name": "c3-skill",
-  "version": "x.x.x",
-  "commands": "commands",
-  "skills": "skills",
-  "agents": "agents",
-  "hooks": "hooks/hooks.json"
+  "version": "x.x.x"
 }
 ```
+
+Components are auto-discovered from standard directories:
+- `commands/` - Slash commands
+- `skills/` - Agent skills
+- `agents/` - Subagent definitions
+- `hooks/hooks.json` - Event handlers
 
 ## Common Issues
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| Commands not showing | Missing `commands` declaration | Add `"commands": "commands"` to plugin.json |
-| Hooks not firing | Missing `hooks` declaration or wrong path | Add `"hooks": "hooks/hooks.json"` |
-| Skills not available | Missing `skills` declaration | Add `"skills": "skills"` to plugin.json |
+| Components not loading | Explicit path declarations in plugin.json | REMOVE `commands`, `skills`, `agents`, `hooks` fields - use auto-discovery |
 | Plugin not loading | Version mismatch in `installed_plugins.json` | Update path/version in `~/.claude/plugins/installed_plugins.json` |
 | Plugin marked orphaned | `.orphaned_at` file in cache | Remove the file from cached plugin directory |
+| Hooks not firing | hooks.json not in `hooks/` directory | Move to `hooks/hooks.json` (auto-discovered) |
 
 ## Validation Steps
 

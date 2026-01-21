@@ -255,7 +255,43 @@ Fill:
 - Container Connection
 - Related Refs table
 
-**1.2.3 Handle discoveries**
+**1.2.3 Extract Refs During Component Documentation**
+
+While documenting components, proactively identify content that belongs in refs.
+
+**The Separation Test:** (see `references/content-separation.md` for full definition)
+
+> "Would this content change if we swapped the underlying technology?"
+> - **Yes** → Integration/usage pattern → extract to ref
+> - **No** → Business/domain logic → keep in component
+
+**Signals to extract:**
+
+| Signal | Action |
+|--------|--------|
+| "We use [technology] with..." | Extract to ref-[technology] |
+| "Our convention is..." | Extract to existing or new ref |
+| Same pattern appearing in code across components | Create ref, cite in components |
+| Technology setup/config details | Extract to ref-[technology]-setup |
+
+**Common extractions during onboarding:**
+
+| From Component | To Ref |
+|----------------|--------|
+| Error response format | ref-error-handling |
+| Auth token handling | ref-auth |
+| Database query patterns | ref-database |
+| API request/response conventions | ref-api-conventions |
+| State management approach | ref-state-management |
+| Validation patterns | ref-validation |
+
+**What refs capture (the "use" questions):**
+- **When** do we use this? (context, triggers)
+- **Why** this over alternatives? (decision rationale)
+- **Where** is the entry point? (how to invoke)
+- **What** conventions apply? (constraints, patterns)
+
+**1.2.4 Handle discoveries**
 
 If new component found during documentation:
 - Add to ADR-000 Component Discovery table

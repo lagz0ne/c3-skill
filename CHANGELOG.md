@@ -5,6 +5,30 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.6.0] - 2026-01-21
+
+### Added
+- **Content Separation Verification (Phase 9)**: New audit phase that validates proper separation between components (domain logic) and refs (usage patterns)
+  - The Separation Test: "Would this content change if we swapped the underlying technology?"
+  - Detects missing refs for technologies, integration patterns in components, duplicated patterns
+- **c3-content-classifier agent**: LLM-based content classification for Phase 9 audit
+  - Identifies misplaced content between components and refs
+  - Includes worked example with reasoning
+  - Accepts optional technology context for better classification
+- **content-separation.md reference**: Canonical definition for component vs ref separation
+- **references/README.md**: Index of all reference files for discoverability
+- **Proactive ref extraction in onboarding**: Section 1.2.3 guides extracting refs during component documentation
+
+### Changed
+- **ref.md template**: Added When/Why/Conventions structure for clearer ref documentation
+- **Skill/agent relationship clarification**: c3-query and c3-alter skills now document their relationship to c3-navigator and c3-orchestrator agents
+- **c3/SKILL.md Adopt mode simplified**: Now routes directly to /onboard skill without duplicating workflow
+- **CLAUDE.md plugin guidance**: Updated to emphasize auto-discovery (explicit component paths break loading)
+
+### Fixed
+- **Skill name typo**: Fixed `onboarding-c3` → `/onboard` in c3/SKILL.md
+- **Template typo**: Fixed `Applicable atterns` → `Applicable Patterns` in component.md
+
 ## [3.5.1] - 2026-01-21
 
 ### Fixed

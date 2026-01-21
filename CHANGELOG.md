@@ -5,6 +5,12 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.1] - 2026-01-21
+
+### Fixed
+- **Plugin loading broken by explicit paths**: Removed `commands`, `skills`, `agents`, `hooks` declarations from plugin.json - Claude Code uses auto-discovery
+- **Release command validation**: Added Step 4 to validate plugin.json and remove explicit paths before every release
+
 ## [3.5.0] - 2026-01-21
 
 ### Added

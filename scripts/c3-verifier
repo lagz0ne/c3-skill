@@ -18,9 +18,6 @@ if [[ -z "$ADR_FILE" || ! -f "$ADR_FILE" ]]; then
     exit 1
 fi
 
-# Get project directory
-PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
-
 # Extract base-commit from frontmatter
 BASE_COMMIT=$(grep -E "^base-commit:" "$ADR_FILE" | sed 's/base-commit:[[:space:]]*//' | tr -d '[:space:]')
 
@@ -87,10 +84,19 @@ verification:
 \`\`\`
 EOF
 
-# Summary
-MATCHED_COUNT=$(echo "$MATCHED" | grep -c . || echo 0)
-UNPLANNED_COUNT=$(echo "$UNPLANNED" | grep -c . || echo 0)
-UNTOUCHED_COUNT=$(echo "$UNTOUCHED" | grep -c . || echo 0)
+# Summary - count non-empty lines reliably
+count_lines() {
+    local content="$1"
+    if [[ -z "$content" ]]; then
+        echo 0
+    else
+        printf '%s\n' "$content" | grep -c .
+    fi
+}
+
+MATCHED_COUNT=$(count_lines "$MATCHED")
+UNPLANNED_COUNT=$(count_lines "$UNPLANNED")
+UNTOUCHED_COUNT=$(count_lines "$UNTOUCHED")
 
 echo ""
 echo "Summary: $MATCHED_COUNT matched, $UNPLANNED_COUNT unplanned, $UNTOUCHED_COUNT untouched"

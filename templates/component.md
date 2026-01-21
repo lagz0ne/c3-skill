@@ -70,7 +70,7 @@ Delete this comment block after drafting.
 | Ref | How It Serves Goal |
 |-----|-------------------|
 
-## Applicable atterns
+## Applicable Patterns
 
 <!-- Don't code, show patterns using design tools, code doesn't age well -->
 

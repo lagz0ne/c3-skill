@@ -12,6 +12,8 @@ description: |
 
 Navigate C3 docs AND explore corresponding code. Full context = docs + code.
 
+**Relationship to c3-navigator agent:** This skill defines the query workflow. The `c3-skill:c3-navigator` agent implements this workflow with sub-agent dispatch for token efficiency. Use the agent when spawning via Task tool; use this skill directly for inline execution.
+
 ## REQUIRED: Load References
 
 Before proceeding, use Glob to find and Read these files:

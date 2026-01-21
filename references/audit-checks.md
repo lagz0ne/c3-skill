@@ -13,6 +13,8 @@ Detailed validation rules for Mode: Audit in the c3 agent.
   - Phase 5: Diagram Accuracy
   - Phase 6: ADR Lifecycle
   - Phase 7: Reference Validation
+  - Phase 8: Abstraction Boundaries
+  - Phase 9: Content Separation
 - [Audit Output Template](#audit-output-template)
 - [Drift Resolution Guidance](#drift-resolution-guidance)
 - [Audit Scope Options](#audit-scope-options)
@@ -32,6 +34,7 @@ Detailed validation rules for Mode: Audit in the c3 agent.
 | **ADR Lifecycle** | No stale ADRs | Accepted >30 days without implemented = WARN |
 | **Ref Files** | ref-* files valid and linked | Missing Goal or orphan ref = WARN |
 | **Abstraction Boundaries** | Layers stay in their lane | Container job/Ref bypass = FAIL, bleeding = WARN |
+| **Content Separation** | Components = domain logic, Refs = usage patterns | Integration content in component = WARN, missing ref for technology = WARN |
 
 ---
 
@@ -171,6 +174,101 @@ For each Container:
 | c3-201 | Ref bypass | Reimplements error handling | Cite ref-error-handling instead |
 ```
 
+### Phase 9: Content Separation
+
+**Goal:** Ensure proper separation between domain logic (components) and usage patterns (refs).
+
+**Core Principle:** C3 proactively splits content:
+- **Components** document WHAT the system does (business/domain logic)
+- **Refs** document HOW we use technologies HERE (usage patterns, conventions)
+
+**The Separation Test:** (see `content-separation.md` for full definition)
+
+> "Would this content change if we swapped the underlying technology?"
+> - **Yes** → Integration/usage pattern → belongs in ref
+> - **No** → Business/domain logic → belongs in component
+
+#### Step 1: Identify Technologies in Use
+
+```
+1. Scan dependency manifests (package.json, go.mod, Cargo.toml, etc.)
+2. Scan imports across codebase for frameworks/libraries
+3. List technologies used in 3+ components
+```
+
+#### Step 2: Check for Missing Refs
+
+For each significant technology/framework:
+- Does a ref exist explaining "how we use it HERE"?
+- Does the ref capture specific decisions and conventions (not generic docs)?
+
+**What refs should capture (the "use" questions):**
+
+| Question | What It Captures |
+|----------|------------------|
+| **When** do we use this? | Context, triggers, conditions |
+| **Why** this over alternatives? | Decision rationale |
+| **Where** is the entry point? | How to invoke, where to start |
+| **What** conventions apply? | Constraints, patterns we follow |
+
+#### Step 3: Check Component Content
+
+For each component doc, analyze content for integration patterns that should be refs:
+
+| Signal | Indicates | Action |
+|--------|-----------|--------|
+| "We use X for..." | Technology usage pattern | Extract to ref |
+| "Our convention is..." | Cross-cutting pattern | Extract to ref |
+| Setup/config details | Integration knowledge | Extract to ref |
+| Same pattern in 2+ components | Duplicated knowledge | Create ref, cite in both |
+
+**NOT ref content (keep in component):**
+- Domain-specific rules ("Users are charged when...")
+- Business calculations
+- Feature-specific behavior
+- Entity lifecycle logic
+
+#### Step 4: Check Ref Content
+
+For each ref doc, verify it doesn't contain business logic:
+
+| Signal | Indicates | Action |
+|--------|-----------|--------|
+| Domain entity behavior | Business logic | Move to component |
+| Business rules not tied to technology | Domain logic | Move to component |
+| Feature-specific workflows | Domain logic | Move to component |
+
+#### Step 5: Check Ref Scope
+
+Refs should be focused enough to be actionable:
+- If a ref covers too much (e.g., "ref-react" for a large React app) → split by concern
+- Scoping options: by layer, by feature area, by specific pattern
+
+**Output format:**
+
+```
+## Content Separation Check
+
+### Missing Refs
+
+| Technology | Used In | Recommendation |
+|------------|---------|----------------|
+| [technology] | c3-101, c3-205, c3-301 | Create ref-[topic] |
+
+### Misplaced Content
+
+| Location | Content Type | Should Be | Evidence | Severity |
+|----------|--------------|-----------|----------|----------|
+| c3-201 Conventions | Integration pattern | ref-error-handling | "We use RFC 7807 format..." | WARN |
+| ref-api-patterns | Business rule | c3-pricing | Rate limit tiers by plan | WARN |
+
+### Duplicated Patterns
+
+| Pattern | Found In | Recommendation |
+|---------|----------|----------------|
+| Retry logic | c3-201, c3-205 | Create ref-retry-pattern |
+```
+
 ---
 
 ## Audit Output Template
@@ -192,6 +290,7 @@ For each Container:
 | ADR Lifecycle | ✓ PASS / ⚠ WARN |
 | Ref Files | ✓ PASS / ⚠ WARN |
 | Abstraction Boundaries | ✓ PASS / ⚠ WARN / ✗ FAIL |
+| Content Separation | ✓ PASS / ⚠ WARN |
 
 ## Issues
 - [issue]: [details]

@@ -11,6 +11,8 @@ description: |
 
 **Every change flows through an ADR.** No exceptions.
 
+**Relationship to c3-orchestrator agent:** This skill defines the change workflow stages. The `c3-skill:c3-orchestrator` agent implements this workflow, dispatching to sub-agents (c3-analyzer, c3-impact, c3-patterns, c3-synthesizer) for parallel analysis. Use the agent when spawning via Task tool; use this skill directly for inline execution.
+
 ## REQUIRED: Load References
 
 Before proceeding, use Glob to find and Read these files:

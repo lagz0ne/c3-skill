@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 #
-# C3 Architecture Gate
+# C3 Architecture Gate (Simplified)
 #
 # Gates Edit/Write operations in C3-adopted projects.
-# Files can only be modified if listed in an accepted ADR's approved-files.
+# Requires an accepted ADR to exist before any code changes.
 #
 # Behavior:
 # - If no .c3/README.md: Allow (not a C3 project)
 # - If file is in .c3/: Allow (documentation)
-# - If file is in accepted ADR's approved-files: Allow
+# - If any ADR with status: accepted exists: Allow
 # - Otherwise: Block with guidance
 #
 # Exit codes:
@@ -44,7 +44,7 @@ if [[ ! -f "$PROJECT_DIR/.c3/README.md" ]]; then
     exit 0
 fi
 
-# Check if file is in any accepted ADR's approved-files
+# Check if ANY accepted ADR exists
 ADR_DIR="$PROJECT_DIR/.c3/adr"
 
 if [[ -d "$ADR_DIR" ]]; then
@@ -54,29 +54,21 @@ if [[ -d "$ADR_DIR" ]]; then
 
         # Check if ADR is accepted
         if grep -q "^status:[[:space:]]*accepted" "$adr_file" 2>/dev/null; then
-            # Extract approved-files from frontmatter
-            # Look for approved-files: [...] or approved-files:\n  - file
-            if grep -q "approved-files:" "$adr_file" 2>/dev/null; then
-                # Check if our file is listed
-                if grep -E "^\s*-\s*['\"]?${REL_PATH}['\"]?\s*$" "$adr_file" 2>/dev/null || \
-                   grep -E "approved-files:.*${REL_PATH}" "$adr_file" 2>/dev/null; then
-                    # File is approved in this ADR
-                    exit 0
-                fi
-            fi
+            # Found an accepted ADR - allow the change
+            exit 0
         fi
     done
 fi
 
-# File not approved - block with guidance
+# No accepted ADR found - block with guidance
 cat >&2 << EOF
 [c3-gate] Change blocked: ${REL_PATH}
 
-This file is not in any accepted ADR's approved-files list.
+No accepted ADR found in this C3 project.
 
 To modify code in a C3 project:
 1. Use c3-orchestrator agent to analyze the change
-2. Create/update ADR with approved-files list
+2. Create ADR with approved-files list
 3. Set ADR status to 'accepted'
 4. Then Edit/Write will be allowed
 

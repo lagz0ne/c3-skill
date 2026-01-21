@@ -5,6 +5,32 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.0] - 2026-01-21
+
+### Added
+- **ADR Lifecycle Tracking**: Complete tracking from acceptance to implementation
+  - `base-commit` field captured when ADR transitions to accepted
+  - `c3-verifier` script compares approved-files vs actual git changes
+  - `c3-adr-transition` agent handles status transitions with verification
+  - Verification results documented: matched, unplanned, untouched files
+- **Phase 7 in c3-orchestrator**: Implementation completion with verification
+- **Simplified c3-gate**: Now requires any accepted ADR (not specific file approval)
+- **11-check validation hub in c3-synthesizer**: Consolidates all validation before ADR generation
+  - 6 boundary checks from c3-impact: ownership, redundancy, sibling overlap, composition, leaky abstraction, correct layer
+  - 4 ref checks from c3-patterns: follows ref, ref usage, missing ref, stale ref
+  - 1 context alignment check in synthesizer
+
+### Changed
+- **Validation happens BEFORE ADR**: Loop closes at synthesizer, ADR is always valid when generated
+- **c3-impact expanded**: Now performs boundary analysis (6 checks)
+- **c3-patterns expanded**: Now performs ref health checks (4 checks)
+- **c3-alter workflow simplified**: Removed Stage 4b (audit), validation now implicit in ADR creation
+
+### Removed
+- **c3-adr-auditor agent**: Consolidated into c3-synthesizer validation hub
+- **c3-audit-adr skill**: No longer needed
+- **Phase 5a in c3-orchestrator**: Audit phase removed, validation moved earlier
+
 ## [3.4.3] - 2026-01-21
 
 ### Added

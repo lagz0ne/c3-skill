@@ -66,14 +66,26 @@ Use AskUserQuestion to confirm:
 - The determined version bump (showing current → new version)
 - Summary of changes to include in changelog
 
-### Step 4: Update Version Files
+### Step 4: Validate plugin.json (CRITICAL)
+
+**Claude Code uses auto-discovery for plugin components. Explicit path declarations break plugin loading.**
+
+Read `.claude-plugin/plugin.json` and **REMOVE** these fields if present:
+- `"commands": "..."`
+- `"skills": "..."`
+- `"agents": "..."`
+- `"hooks": "..."`
+
+These fields cause the plugin to not load properly. Auto-discovery finds components automatically from standard directories (`commands/`, `skills/`, `agents/`, `hooks/`).
+
+### Step 5: Update Version Files
 
 Read, then update both files with the new version:
 
-1. `.claude-plugin/plugin.json` - Update `"version": "X.Y.Z"`
+1. `.claude-plugin/plugin.json` - Update `"version": "X.Y.Z"` (and ensure no explicit paths per Step 4)
 2. `.claude-plugin/marketplace.json` - Update `"version": "X.Y.Z"` in the plugins array
 
-### Step 5: Update CHANGELOG.md
+### Step 6: Update CHANGELOG.md
 
 Read CHANGELOG.md (create if doesn't exist). Add a new entry at the top following this format:
 
@@ -99,7 +111,7 @@ Read CHANGELOG.md (create if doesn't exist). Add a new entry at the top followin
 - Write user-facing descriptions (not commit messages verbatim)
 - Include the justification for the version bump type
 
-### Step 6: Summary
+### Step 7: Summary
 
 After updates, show:
 1. Version change: `X.Y.Z` → `A.B.C`

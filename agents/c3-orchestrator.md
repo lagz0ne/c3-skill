@@ -46,7 +46,8 @@ Guide users through architectural changes with understanding-first approach:
 2. Analyze impact using specialized sub-agents
 3. Synthesize findings into comprehensive picture
 4. Generate ADR only when understanding is complete
-5. Delegate execution based on user preference
+5. **Audit ADR** for principle violations before acceptance
+6. Delegate execution based on user preference
 
 ## Precondition Check
 
@@ -106,6 +107,18 @@ Read: references/adr-template.md    - ADR structure
                         +------------------+
                         | Phase 5: ADR     |
                         +--------+---------+
+                                 |
+                                 v
+                        +------------------+
+                        | Phase 5a: Audit  |<-----+
+                        | (c3-adr-auditor) |      |
+                        +--------+---------+      |
+                                 |                |
+                        PASS?    |    FAIL?       |
+                                 v                |
+                        +------------------+      |
+                        | Phase 5b: Accept |------+
+                        +--------+---------+  (fix issues)
                                  |
                                  v
                         +------------------+
@@ -334,6 +347,55 @@ approved-files:
 - [ ] [Criterion 3]
 ```
 
+## Phase 5a: ADR Audit (Principle Validation)
+
+**REQUIRED** - After generating the ADR, validate it against C3 principles before acceptance.
+
+### Dispatch the Auditor
+
+```
+Task with subagent_type: c3-skill:c3-adr-auditor
+Prompt:
+  ADR Path: .c3/adr/adr-YYYYMMDD-{slug}.md
+```
+
+### Handle Audit Result
+
+| Verdict | Action |
+|---------|--------|
+| **PASS** | Proceed to Phase 5b (acceptance) |
+| **FAIL** | Show violations to user, fix ADR, re-audit |
+
+### On FAIL
+
+1. **Show the violations** to the user with specific evidence
+2. **Ask how to proceed:**
+
+```
+AskUserQuestion:
+  question: "The ADR has principle violations. How do you want to proceed?"
+  options:
+    - "Fix the ADR (update affected components or scope)"
+    - "Add Pattern Overrides section (if justified deviation)"
+    - "Rethink the approach (return to Phase 1)"
+```
+
+3. **Fix and re-audit:**
+   - Update the ADR based on user choice
+   - Re-run auditor to verify fixes
+   - Loop until PASS
+
+### Common Violations and Fixes
+
+| Violation | Typical Fix |
+|-----------|-------------|
+| Component doing sibling's job | Change `affects` to correct component |
+| Orchestration at component level | Move coordination to container level |
+| Context contradiction without override | Add Pattern Overrides section |
+| Missing ref citation | Add ref to Rationale or justify override |
+
+**The ADR cannot proceed to acceptance until the auditor returns PASS.**
+
 ## Phase 5b: ADR Acceptance
 
 Before any code changes can be made, the ADR must be accepted:
@@ -401,6 +463,8 @@ Use `https://diashort.apps.quickable.co/d/<shortlink>` for the diagram URL.
 | Guess user intent | Wrong scope, wasted effort | Use AskUserQuestion |
 | Skip synthesis | Raw data, no understanding | Always synthesize |
 | Create plan without ADR | No reasoning trail | ADR first, then plan |
+| **Skip audit** | Principle violations slip through | Always run c3-adr-auditor |
+| Accept ADR on FAIL | Violates architecture | Loop until auditor PASS |
 | Execute without confirmation | User loses control | Always ask in Phase 6 |
 | Single iteration | Miss nuance | Loop until clear |
 

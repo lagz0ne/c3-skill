@@ -9,7 +9,7 @@
     {
       "name": "c3-skill",
       "description": "C3 (Context-Container-Component) architecture design methodology with structured top-down documentation, mermaid diagrams, and intention-based workflows",
-      "version": "3.4.2",
+      "version": "3.4.3",
       "source": "./",
       "author": {
         "name": "Lagz0ne",

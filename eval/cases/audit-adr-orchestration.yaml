@@ -1,0 +1,32 @@
+name: "Audit ADR for orchestration violation"
+
+fixtures: "fixtures/adr-violations"
+
+command: |
+  Audit the ADR at .c3/adr/adr-20260121-task-orchestration.md
+
+  Check if this ADR violates C3 architectural principles:
+  - Down abstraction: Does the change respect layer hierarchy?
+  - Composition: Does the change avoid component-level orchestration?
+  - Ref integrity: Does the change properly address patterns?
+
+  The ADR proposes that task routes will "coordinate requests" and "manage flow".
+  Components should hand-off, not orchestrate. Coordination is container's job.
+
+goal: |
+  Detect that the ADR violates composition principles.
+  c3-103 (task-routes) cannot coordinate/orchestrate because:
+  1. Container doc states "Components hand-off to each other; they do not orchestrate"
+  2. c3-101 (entry-point) handles coordination at container level
+  3. Decision language uses orchestration signals ("coordinate", "manage flow")
+
+constraints:
+  - Must read the ADR file
+  - Must read container doc (c3-1-api)
+  - Must detect orchestration language as violation
+
+expectations:
+  - "Detects orchestration language in ADR decision"
+  - "References container-level coordination principle"
+  - "Identifies that components hand-off, not orchestrate"
+  - "Returns FAIL verdict for this ADR"

@@ -1,0 +1,32 @@
+name: "Audit valid ADR (should pass)"
+
+fixtures: "fixtures/adr-violations"
+
+command: |
+  Audit the ADR at .c3/adr/adr-20260121-add-archive.md
+
+  Check if this ADR violates C3 architectural principles:
+  - Down abstraction: Does the change respect layer hierarchy?
+  - Composition: Does the change avoid component-level orchestration?
+  - Context alignment: Does the change align with context-level decisions?
+
+  The ADR proposes adding archive/unarchive to task routes.
+  This should be valid because archiving is a task operation within c3-103's domain.
+
+goal: |
+  Confirm that this ADR is valid and does not violate principles.
+  The ADR is valid because:
+  1. c3-103 owns "Task CRUD operations" per container doc
+  2. Archiving is a task operation (CRUD-adjacent)
+  3. No orchestration language
+  4. No context-level contradiction
+
+constraints:
+  - Must read the ADR file
+  - Must read affected component docs
+  - Must confirm the change fits within component's domain
+
+expectations:
+  - "Confirms archiving is within c3-103's responsibility"
+  - "No violations detected"
+  - "Returns PASS verdict for this ADR"

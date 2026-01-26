@@ -55,6 +55,24 @@ description: |
   Structural question about system - navigator provides comprehensive view.
   </commentary>
   </example>
+
+  <example>
+  Context: User is in a project with .c3/ directory
+  user: "what ref documents our query services pattern?"
+  assistant: "I'll use the c3-ref skill to look up pattern documentation."
+  <commentary>
+  Contains "ref" and "pattern" - DO NOT use c3-navigator. Use c3-ref skill instead.
+  </commentary>
+  </example>
+
+  <example>
+  Context: User is in a project with .c3/ directory
+  user: "show me the refs - what patterns are documented?"
+  assistant: "Using c3-ref skill to list documented patterns and refs."
+  <commentary>
+  Contains "refs" and "patterns" - DO NOT use c3-navigator. Use c3-ref skill instead.
+  </commentary>
+  </example>
 model: inherit
 color: cyan
 tools: ["Read", "Glob", "Grep", "Bash", "Task"]

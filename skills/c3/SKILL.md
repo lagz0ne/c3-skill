@@ -2,8 +2,9 @@
 name: c3
 description: |
   Routes C3 architecture requests and audits existing C3 documentation for consistency.
-  Use when the user asks to "audit architecture", "validate C3", "check C3 docs", or when
-  no .c3/ directory exists (routes to onboarding). Routes navigation to c3-navigator agent, changes to c3-orchestrator agent.
+  Use when the user asks to "audit architecture", "validate C3", "check C3 docs", "verify docs",
+  "check documentation", "are docs up to date", or when no .c3/ directory exists (routes to onboarding).
+  Routes navigation to c3-navigator agent, changes to c3-orchestrator agent.
 ---
 
 # C3 Architecture Assistant

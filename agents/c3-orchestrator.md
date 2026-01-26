@@ -409,10 +409,38 @@ AskUserQuestion:
 | Choice | Action |
 |--------|--------|
 | Plan only | Generate `.plan.md` file using plan-template |
-| Execute now | Generate plan, then execute with verification |
+| Execute now | Dispatch c3-dev agent for TDD-based implementation |
 | Done | Confirm ADR location and exit |
 
+**On "Execute now":**
+
+Dispatch c3-dev:
+
+```
+Task with subagent_type: c3-skill:c3-dev
+Prompt:
+  Implement ADR at .c3/adr/<adr-path>.md
+  Follow TDD workflow, create tasks, and complete implementation.
+```
+
+The c3-dev agent will:
+1. Load context (components, patterns, tests)
+2. Create tasks per work item (linked to ADR)
+3. Implement using TDD (RED → GREEN)
+4. Create summary task
+5. Dispatch c3-adr-transition when complete
+
 ## Phase 7: Implementation Completion
+
+**Note:** This phase only applies when:
+- User chose "Plan only" or "Done for now" in Phase 6
+- User is implementing manually without c3-dev
+
+**If c3-dev was dispatched:** c3-dev handles the full lifecycle including transition. Skip this phase - c3-dev will dispatch c3-adr-transition automatically when all tasks complete.
+
+---
+
+**For manual implementation path:**
 
 When the user indicates implementation is complete:
 

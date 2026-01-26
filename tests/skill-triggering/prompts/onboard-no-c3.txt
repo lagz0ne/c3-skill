@@ -1,0 +1,1 @@
+help me document this project's architecture using C3

@@ -1,0 +1,1 @@
+explain the middleware stack and how requests are processed

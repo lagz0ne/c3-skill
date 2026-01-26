@@ -1,0 +1,1 @@
+implement caching for the query services to improve performance

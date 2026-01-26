@@ -1,0 +1,1 @@
+fix the notification system to retry on failure with exponential backoff

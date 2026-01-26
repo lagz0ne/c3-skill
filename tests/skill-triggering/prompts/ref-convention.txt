@@ -1,0 +1,1 @@
+document our error handling convention - what patterns do we use?

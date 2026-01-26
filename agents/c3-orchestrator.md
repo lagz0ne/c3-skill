@@ -2,13 +2,20 @@
 name: c3-orchestrator
 description: |
   Orchestrates architectural changes to .c3 repositories through iterative understanding.
-  Triggers: "add a component", "add feature", "add X to Y", "new component", "create new service",
-  "change architecture", "change X", "modify X", "edit X", "update component", "update X",
-  "refactor X", "implement feature", "implement X", "replace X with Y", "swap X for Y",
-  "fix bug", "rename component", "move component", "split component", "merge components",
-  "delete component", "remove component", "remove X", "deprecate X", "migrate X", "introduce X",
-  "extend X", "improve X", "make X do Y", "enhance X", "upgrade X", "update diagram",
-  "I want to change", "need to modify", "should we add".
+
+  MUST use this agent when user wants to CHANGE something (not just ask about it):
+  - ADD: "add a component", "add feature", "add X to Y", "new component", "create new service", "introduce X"
+  - MODIFY: "change architecture", "change X", "modify X", "edit X", "update component", "update X", "make X do Y"
+  - FIX: "fix X", "fix the X", "fix bug", "fix issue", "fix problem", "fix X to Y", "repair X", "correct X"
+  - REFACTOR: "refactor X", "restructure X", "reorganize X", "clean up X"
+  - REPLACE: "replace X with Y", "swap X for Y", "migrate X", "upgrade X"
+  - REMOVE: "delete component", "remove component", "remove X", "deprecate X"
+  - OTHER CHANGES: "rename component", "move component", "split component", "merge components", "extend X", "improve X", "enhance X", "update diagram", "I want to change", "need to modify", "should we add"
+
+  Key indicator: User is requesting an ACTION to be performed, not asking a question.
+  "fix the notification system" = ACTION → use c3-orchestrator
+  "how does the notification system work" = QUESTION → use c3-navigator
+
   Guides through impact analysis with Socratic dialogue before ADR generation.
   Requires .c3/ directory to exist.
 

@@ -3,13 +3,17 @@ name: c3
 description: |
   PRIMARY ROUTER for C3 architecture tasks and audit tool for documentation consistency.
 
-  ROUTING (use this skill to route requests):
-  - Questions (where/what/how/explain) → route to c3-query skill
-  - Changes (add/modify/remove/fix/refactor) → route to c3-alter skill
-  - Patterns (convention/standard/ref) → route to c3-ref skill
-  - No .c3/ directory exists → route to onboard skill
+  ROUTING RULES (check in order):
+  1. **REF-RELATED** (contains "ref", "refs", "pattern", "patterns", "convention", "standard"):
+     → MUST route to c3-ref skill (e.g., "what ref", "show refs", "what patterns")
+  2. **CHANGES** (add/modify/remove/fix/refactor/implement):
+     → route to c3-alter skill
+  3. **QUESTIONS** (where/what/how/explain about components):
+     → route to c3-query skill
+  4. **NO .c3/** directory:
+     → route to onboard skill
 
-  AUDIT MODE: Use when the user asks to "audit architecture", "audit C3", "run C3 audit", "run audit",
+  AUDIT MODE: Use when user asks to "audit architecture", "audit C3", "run C3 audit", "run audit",
   "validate C3", "validate architecture", "validate docs", "check C3 docs", "verify docs", "verify C3",
   "verify documentation", "verify architecture", "check documentation", "are docs up to date",
   "is documentation current", "check for stale docs", "docs out of sync", "sync docs", "refresh docs",

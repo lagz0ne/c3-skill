@@ -3,10 +3,19 @@ name: c3-ref
 description: |
   Manage cross-cutting patterns, conventions, and refs as first-class architecture artifacts.
 
-  MUST use this skill when user mentions: "ref", "refs", "pattern", "patterns", "convention",
-  "conventions", "standard", "standards", "best practice", "coding standard", "guideline".
+  REQUIRED TRIGGERS - Use this skill when ANY of these words appear:
+  - "ref" or "refs" (e.g., "what ref", "show refs", "list refs", "ref documents")
+  - "pattern" or "patterns" (e.g., "what patterns", "show patterns", "patterns documented")
+  - "convention" or "conventions" (e.g., "our convention", "document convention")
+  - "standard" or "standards" (e.g., "what's the standard", "coding standard")
 
-  Use when: "add a pattern", "create a pattern", "define a pattern", "document this convention",
+  Example triggers:
+  - "what ref documents our query services pattern?" → c3-ref
+  - "show me the refs - what patterns are documented?" → c3-ref
+  - "document our error handling convention" → c3-ref
+  - "what patterns do we use?" → c3-ref
+
+  Full trigger list: "add a pattern", "create a pattern", "define a pattern", "document this convention",
   "document our X convention", "what patterns do we use", "what patterns are documented",
   "standardize X", "convention for X", "cross-cutting concern", "our convention for X",
   "how should we X", "what's the standard for X", "what's our standard for X",

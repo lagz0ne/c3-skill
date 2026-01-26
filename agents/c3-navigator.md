@@ -2,17 +2,20 @@
 name: c3-navigator
 description: |
   READ-ONLY navigation of C3 architecture docs to answer questions about COMPONENTS, CONTAINERS, and FLOWS.
-  Use for: "where is X", "what is X", "what does X do", "explain X", "describe X",
+
+  FIRST CHECK - If prompt contains ANY of these words, DO NOT use this agent:
+  - "ref" or "refs" → use c3-ref skill instead
+  - "pattern" or "patterns" → use c3-ref skill instead
+  - "convention" or "conventions" → use c3-ref skill instead
+  - "standard" or "standards" → use c3-ref skill instead
+  - "fix" or "add" or "modify" or "change" → use c3-orchestrator instead
+
+  Use this agent ONLY for component/container questions WITHOUT the words above:
+  "where is X", "what component handles X", "what does X do", "explain X", "describe X",
   "tell me about X", "find component", "which component", "list components", "components in X",
   "what handles X", "look up X", "navigate to X", "diagram of X", "show diagram", "architecture diagram",
   "visualize X", "dependencies of X", "what depends on X", "who calls X", "what calls X", "callers of X",
   "trace X", "flow of X", "how X connects to Y", or references C3 IDs (c3-0, c3-1, adr-*).
-
-  NEVER use for:
-  - Changes/fixes/adds/refactors/implements → use c3-orchestrator instead
-  - Refs/patterns/conventions/standards → use c3-ref skill instead
-  - "fix X", "add X", "modify X", "change X" → use c3-orchestrator instead
-  - "show refs", "list refs", "what patterns", "document convention" → use c3-ref instead
 
   This agent provides dedicated context for architecture queries with visual diagrams.
   Uses a sub-agent to efficiently analyze docs and optimize responses.

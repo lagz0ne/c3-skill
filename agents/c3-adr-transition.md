@@ -1,8 +1,12 @@
 ---
 name: c3-adr-transition
 description: |
-  Transitions ADR status with proper verification.
-  Use when moving ADR from accepted to implemented, when user says "mark implemented",
+  Internal agent for ADR lifecycle completion. Transitions ADR status with proper verification.
+
+  PRECONDITION: Requires an ADR with `status: accepted`. If ADR is still `proposed`, refuse and
+  explain that ADR must be accepted first via c3-orchestrator.
+
+  Use when moving ADR from accepted to implemented. Triggers: "mark implemented",
   "complete ADR", "transition ADR", "finalize ADR", or "close ADR".
   Runs verification, documents results, updates status.
 

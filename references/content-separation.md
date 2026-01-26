@@ -1,35 +1,66 @@
 # Content Separation Reference
 
-Canonical definition for separating component content (domain logic) from ref content (usage patterns).
+Canonical definition for separating Foundation (code), Feature (composition), and Ref (guidance).
 
-## The Separation Test
+## The Three-Way Test
 
-> **"Would this content change if we swapped the underlying technology?"**
-> - **Yes** → Integration/usage pattern → belongs in **ref**
-> - **No** → Business/domain logic → belongs in **component**
+| Question | Answer | Category |
+|----------|--------|----------|
+| Does it have **actual code** others import/depend on? | Yes | **Foundation** (component) |
+| Is it **how/when/why to do something** with no code? | Yes | **Ref** (pattern) |
+| Does it **compose foundation + follow refs** for business? | Yes | **Feature** (component) |
+
+## STRICT RULE (LLM MUST FOLLOW)
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  Foundation = HAS CODE (logger.ts, db-client.ts)           │
+│  Ref = NO CODE (when to log, how to handle errors)         │
+│  Feature = COMPOSES CODE (uses foundation, cites refs)     │
+└────────────────────────────────────────────────────────────┘
+```
+
+- FOUNDATION and FEATURE docs **MUST** include a `## Code References` section that points to real files.
+- REF docs **MUST NOT** include a `## Code References` section.
+
+**Hard test:** If the doc can't list at least one real code file in `## Code References`, it cannot be a component.
+
+If you are describing "when/how/why" with no concrete file → it is a REF.
+If you can point to a concrete file → it is a FOUNDATION or FEATURE component.
 
 ## What Belongs Where
 
-### Components (Domain Logic)
+### Foundation Components (Actual Implementations)
 
-| Signal | Example |
-|--------|---------|
-| Domain-specific rules | "Users are charged when subscription expires" |
-| Entity behavior | "Orders transition to SHIPPED after fulfillment" |
-| Business calculations | "Discount is 10% for orders over $100" |
-| Feature-specific logic | "Dashboard shows last 30 days of activity" |
-| User-facing behavior | "Notifications are sent when..." |
+| Signal | Example | Why Foundation |
+|--------|---------|----------------|
+| Concrete implementation | `logger.ts`, `db-client.ts` | Others import this code |
+| Framework integration | `hono-routes.ts`, `auth-provider.ts` | System depends on it |
+| Shared utilities | `event-bus.ts`, `config-loader.ts` | Reused across features |
 
-### Refs (Usage Patterns)
+### Feature Components (Business Composition)
 
-| Signal | Example |
-|--------|---------|
-| Technology conventions | "We use RFC 7807 for error responses" |
-| Framework setup | "Redis is configured with 1h TTL" |
-| Cross-cutting patterns | "All requests include X-Request-ID" |
-| Library usage | "Prisma queries use soft delete pattern" |
-| "We use X for..." | Technology usage pattern |
-| "Our convention is..." | Cross-cutting convention |
+| Signal | Example | Why Feature |
+|--------|---------|-------------|
+| Domain-specific rules | "Users charged when subscription expires" | Business logic |
+| Entity behavior | "Orders transition to SHIPPED" | Domain state |
+| Business calculations | "10% discount for orders > $100" | Non-reusable |
+| User-facing flows | "Checkout flow", "Registration" | Composes foundation |
+
+### Refs (Patterns/Conventions — NO CODE)
+
+| Signal | Example | Why Ref |
+|--------|---------|---------|
+| "When to X" | "When to log at DEBUG vs INFO" | Guidance, no code |
+| "How to X" | "How to structure error responses" | Convention |
+| "Our convention is..." | "All APIs return RFC 7807 errors" | Pattern |
+| Style/approach | "UI composition principles" | No implementation |
+| Cross-cutting patterns | "All requests include X-Request-ID" | Applied everywhere |
+
+**Logger example (the canonical split):**
+- "When to log at DEBUG vs INFO" → **REF** (`ref-logging.md`)
+- "How log messages must be structured" → **REF** (`ref-logging.md`)
+- "`logger.ts` implementation" → **FOUNDATION** (not a ref, has Code References)
 
 ## What Refs Capture
 

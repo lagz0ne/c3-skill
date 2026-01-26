@@ -17,11 +17,14 @@
 
 set -uo pipefail
 
+# Require jq for JSON parsing
+command -v jq >/dev/null 2>&1 || exit 0
+
 # Read JSON from stdin
 INPUT=$(cat)
 
-# Parse file_path
-FILE_PATH=$(echo "$INPUT" | grep -o '"file_path"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*:.*"\([^"]*\)".*/\1/' 2>/dev/null || echo "")
+# Parse file_path using jq (robust against special chars)
+FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty' 2>/dev/null)
 
 # No file path means we can't check - allow
 if [[ -z "$FILE_PATH" ]]; then

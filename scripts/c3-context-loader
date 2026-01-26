@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+#
+# C3 Context Loader - SessionStart Hook
+#
+# Loads C3 architecture context into the conversation:
+# 1. System goal and key decisions
+# 2. All refs with their goals (pattern awareness)
+# 3. Component → file mapping (for context injection on edits)
+#
+# This enables ambient awareness of patterns without explicit invocation.
+#
+
+set -uo pipefail
+
+# Require jq for JSON escaping
+command -v jq >/dev/null 2>&1 || exit 0
+
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
+C3_DIR="$PROJECT_DIR/.c3"
+
+# Exit silently if no C3 docs
+[[ -f "$C3_DIR/README.md" ]] || exit 0
+
+# Build context
+build_context() {
+    echo "<c3-architecture-context>"
+    echo "This project has C3 architecture documentation. You should be aware of established patterns."
+    echo ""
+
+    # Extract system goal from README
+    echo "## System Context"
+    if [[ -f "$C3_DIR/README.md" ]]; then
+        # Extract Goal section (first 3 lines after ## Goal)
+        grep -A3 "^## Goal" "$C3_DIR/README.md" 2>/dev/null | head -4 || echo "See .c3/README.md for system goal"
+    fi
+    echo ""
+
+    # Load all refs with their goals
+    echo "## Established Patterns (Refs)"
+    echo "These patterns apply across the codebase. Follow them for consistency."
+    echo ""
+    echo "| Ref | Goal |"
+    echo "|-----|------|"
+
+    for ref_file in "$C3_DIR"/refs/ref-*.md; do
+        [[ -f "$ref_file" ]] || continue
+
+        # Extract id and goal from frontmatter
+        ref_id=$(grep "^id:" "$ref_file" 2>/dev/null | head -1 | sed 's/id: *//')
+        ref_goal=$(grep "^goal:" "$ref_file" 2>/dev/null | head -1 | sed 's/goal: *//')
+
+        if [[ -n "$ref_id" && -n "$ref_goal" ]]; then
+            echo "| $ref_id | $ref_goal |"
+        fi
+    done
+    echo ""
+
+    # Build file → component map from Code References sections
+    echo "## Code Mapping"
+    echo "When editing these files, consider the associated patterns:"
+    echo ""
+
+    for comp_file in "$C3_DIR"/c3-*/c3-*.md; do
+        [[ -f "$comp_file" ]] || continue
+
+        comp_id=$(grep "^id:" "$comp_file" 2>/dev/null | head -1 | sed 's/id: *//')
+        [[ -z "$comp_id" ]] && continue
+
+        # Get related refs
+        refs=$(grep -A10 "^## Related Refs" "$comp_file" 2>/dev/null | grep "ref-" | sed 's/.*\(ref-[a-z-]*\).*/\1/' | tr '\n' ', ' | sed 's/, $//')
+
+        # Get code references (file paths)
+        code_refs=$(grep -A20 "^## Code References" "$comp_file" 2>/dev/null | grep -E "^\s*-\s*\`" | sed 's/.*`\([^`]*\)`.*/\1/' | head -5)
+
+        if [[ -n "$code_refs" && -n "$refs" ]]; then
+            for code_file in $code_refs; do
+                echo "- \`$code_file\` → $comp_id (follows: $refs)"
+            done
+        fi
+    done
+
+    echo ""
+    echo "## Guidance"
+    echo "- When modifying files above, ensure changes align with listed refs"
+    echo "- To read a ref: \`Read .c3/refs/{ref-id}.md\`"
+    echo "- For architectural changes, use c3-orchestrator to create ADR first"
+    echo "</c3-architecture-context>"
+}
+
+# Output JSON with context
+CONTEXT=$(build_context)
+
+# Escape for JSON
+CONTEXT_ESCAPED=$(echo "$CONTEXT" | jq -Rs .)
+
+cat << 'ENDJSON'
+{
+  "hookSpecificOutput": {
+    "hookEventName": "SessionStart",
+ENDJSON
+echo "    \"additionalContext\": $CONTEXT_ESCAPED"
+cat << 'ENDJSON'
+  }
+}
+ENDJSON
+
+exit 0

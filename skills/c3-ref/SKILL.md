@@ -1,16 +1,23 @@
 ---
 name: c3-ref
 description: |
-  Manage cross-cutting patterns and conventions as first-class architecture artifacts.
+  Manage cross-cutting patterns, conventions, and refs as first-class architecture artifacts.
+
+  MUST use this skill when user mentions: "ref", "refs", "pattern", "patterns", "convention",
+  "conventions", "standard", "standards", "best practice", "coding standard", "guideline".
+
   Use when: "add a pattern", "create a pattern", "define a pattern", "document this convention",
+  "document our X convention", "what patterns do we use", "what patterns are documented",
   "standardize X", "convention for X", "cross-cutting concern", "our convention for X",
   "how should we X", "what's the standard for X", "what's our standard for X",
   "best practice for X", "coding standard", "our approach to X",
   "guideline for X", "what's the convention for X", "how do we handle X",
   "create a ref", "update ref-X", "evolve this pattern", "modify ref-X",
-  "what patterns exist", "list refs", "show patterns", "what refs", "show all conventions",
+  "what patterns exist", "list refs", "show refs", "show me the refs", "show patterns",
+  "what refs", "show all conventions", "what ref documents X",
   "which components use ref-X", "who uses ref-X", "ref usage", "cited by",
   "establish a standard", "define how we do X".
+
   Requires .c3/ to exist. Refs are authoritative constraints - violations require explicit override.
 ---
 

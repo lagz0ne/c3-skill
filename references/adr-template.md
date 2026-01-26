@@ -97,7 +97,7 @@ approved-files:
 | ref-{slug} | [Why this change justifiably breaks the pattern] | [Components/areas affected by divergence] |
 
 **Rules:**
-- This section MUST be present if `c3-patterns` analysis returned `breaks`
+- This section MUST be present if `c3-analysis` reported `breaks` alignment
 - Each override requires explicit justification (not just "we need to")
 - Impact must list what existing code may need updating later
 

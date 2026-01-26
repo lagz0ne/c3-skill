@@ -2,7 +2,13 @@
 name: c3-orchestrator
 description: |
   Orchestrates architectural changes to .c3 repositories through iterative understanding.
-  Use when user wants to add, modify, refactor, or remove components.
+  Triggers: "add a component", "add feature", "add X to Y", "new component", "create new service",
+  "change architecture", "change X", "modify X", "edit X", "update component", "update X",
+  "refactor X", "implement feature", "implement X", "replace X with Y", "swap X for Y",
+  "fix bug", "rename component", "move component", "split component", "merge components",
+  "delete component", "remove component", "remove X", "deprecate X", "migrate X", "introduce X",
+  "extend X", "improve X", "make X do Y", "enhance X", "upgrade X", "update diagram",
+  "I want to change", "need to modify", "should we add".
   Guides through impact analysis with Socratic dialogue before ADR generation.
   Requires .c3/ directory to exist.
 
@@ -83,15 +89,11 @@ Read: references/adr-template.md    - ADR structure
                         +--------+---------+     |
                                  |               |
                                  v               |
-              +------------------+------------------+
-              |                  |                  |
-              v                  v                  v
-      +-------+------+  +--------+------+  +-------+-------+
-      | c3-analyzer  |  | c3-impact     |  | c3-patterns   |
-      | (state)      |  | (deps/risks)  |  | (conventions) |
-      +-------+------+  +--------+------+  +-------+-------+
-              |                  |                  |
-              +------------------+------------------+
+                        +------------------+
+                        | c3-analysis      |
+                        | (state+impact+   |
+                        |  patterns)       |
+                        +--------+---------+
                                  |
                                  v
                         +------------------+
@@ -159,60 +161,34 @@ AskUserQuestion:
 
 **Continue asking until no ambiguity remains.**
 
-## Phase 2: Parallel Analysis
+## Phase 2: Analysis
 
-Dispatch three sub-agents in parallel using Task tool:
-
-### Dispatch c3-analyzer (Current State)
+Dispatch the analysis agent:
 
 ```
-Task with subagent_type: c3-skill:c3-analyzer
+Task with subagent_type: c3-skill:c3-analysis
 Prompt:
   Intent: [user's change intent]
-  Focus: [containers/components identified in Phase 1]
-
-  Analyze affected areas and return current state summary.
-```
-
-### Dispatch c3-impact (Dependencies and Risks)
-
-```
-Task with subagent_type: c3-skill:c3-impact
-Prompt:
   Affected: [c3 IDs from Phase 1]
   Change type: [add|modify|remove]
 
-  Trace dependencies and assess risk levels.
+  Run comprehensive analysis: state, impact, and patterns.
 ```
 
-### Dispatch c3-patterns (Convention Checking)
-
-```
-Task with subagent_type: c3-skill:c3-patterns
-Prompt:
-  Change: [description of proposed change]
-  Area: [domain: auth, errors, data flow, etc.]
-
-  Check alignment with established patterns in .c3/refs/.
-```
-
-**Wait for all three to complete before proceeding.**
+The analysis agent returns a structured report with:
+- Current state of affected components
+- Upstream/downstream dependencies and risks
+- Pattern compliance checks
 
 ## Phase 3: Synthesis
 
-Dispatch synthesizer with combined outputs:
+Dispatch synthesizer with analysis output:
 
 ```
 Task with subagent_type: c3-skill:c3-synthesizer
 Prompt:
-  ## Analyzer Output
-  [paste c3-analyzer output]
-
-  ## Impact Output
-  [paste c3-impact output]
-
-  ## Patterns Output
-  [paste c3-patterns output]
+  ## Analysis Report
+  [paste c3-analysis output]
 
   Synthesize into comprehensive understanding.
 ```
@@ -247,11 +223,11 @@ AskUserQuestion:
 
 ## Phase 4b: Pattern Violation Gate
 
-**REQUIRED** when `c3-patterns` analysis returned `breaks` status.
+**REQUIRED** when `c3-analysis` analysis returned `breaks` status.
 
 Pattern violations are **blocking** - they cannot be silently bypassed.
 
-### When c3-patterns returns "breaks":
+### When c3-analysis returns "breaks":
 
 1. **Surface the violation clearly:**
 
@@ -287,7 +263,7 @@ AskUserQuestion:
 
 ### Enforcement
 
-- ADR generation (Phase 5) MUST check: if `c3-patterns` returned `breaks`, does ADR have `## Pattern Overrides` section?
+- ADR generation (Phase 5) MUST check: if `c3-analysis` returned `breaks`, does ADR have `## Pattern Overrides` section?
 - If missing, return error: "ADR requires Pattern Overrides section for changes that break ref-{name}"
 
 ## Phase 5: Generate ADR

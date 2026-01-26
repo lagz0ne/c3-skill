@@ -2,6 +2,11 @@
 name: c3-navigator
 description: |
   Use this agent when the user asks any question in a project containing .c3/ directory.
+  Triggers: "where is X", "what is X", "what does X do", "how does X work", "explain X", "describe X",
+  "tell me about X", "show me X", "find component", "which component", "list components", "components in X",
+  "what handles X", "look up X", "navigate to X", "diagram of X", "show diagram", "architecture diagram",
+  "visualize X", "dependencies of X", "what depends on X", "who calls X", "what calls X", "callers of X",
+  "trace X", "flow of X", "how X connects to Y", or references C3 IDs (c3-0, c3-1, adr-*).
   This agent provides dedicated context for architecture queries with visual diagrams.
   Uses a sub-agent to efficiently analyze docs and optimize responses.
 

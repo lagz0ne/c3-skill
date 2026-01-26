@@ -46,57 +46,128 @@ Templates include type-specific **discovery prompts** - signals to scan for when
 
 # Component Types
 
-Two categories organize components by role and impact.
+Three categories organize elements by role. **Strict separation required.**
 
-## Quick Selection
+## The Hierarchy
 
-```mermaid
-graph TD
-    Q1{Reusable primitives?}
-    Q1 -->|Yes| Foundation
-    Q1 -->|No| Feature
+```
+┌─────────────────────────────────────────────────────────────┐
+│  FEATURE (composition layer)                                │
+│  - Glues things together                                    │
+│  - Business logic, non-reusable                             │
+│  - Uses Foundation + cites Refs                             │
+├─────────────────────────────────────────────────────────────┤
+│  FOUNDATION (implementation layer)         │  REF (guidance)│
+│  - Actual concrete code                    │  - NO code     │
+│  - Logger, Hono routes, DB client          │  - Style/how-to│
+│  - Other components DEPEND on these        │  - Cited by all│
+└─────────────────────────────────────────────────────────────┘
 ```
 
-| Ask | If Yes → | If No → |
-|-----|----------|---------|
-| Is this a reusable primitive? | Foundation | Feature |
-| Does this deliver user-facing value? | Feature | Foundation |
+## The Three-Way Split (Strict)
 
-## Foundation
+You must choose ONE. Use the test below.
 
-**What:** Core primitives that others build on. High impact when changed. May cite refs for conventions.
+| Question | If Yes | Category |
+|----------|--------|----------|
+| Can you name a concrete code file that implements it (e.g., `logger.ts`)? | Yes | **FOUNDATION** |
+| Is it only rules/conventions about how/when to use code? | Yes | **REF** |
+| Is it domain logic that composes Foundation + follows Refs? | Yes | **FEATURE** |
+
+**Non-negotiable rule:** Refs contain NO `## Code References` section.
+
+**Hard test:** If you cannot name a concrete file, you are not allowed to create a component doc.
+
+## Foundation (Implementation)
+
+**What:** Actual code that other components import. **You can point to a real file path.**
+
+**The Test:** Can you name a concrete code file (e.g., `logger.ts`)?
 
 **Examples:**
-- Layout, Button, Input (UI primitives)
-- Router, AuthProvider (infrastructure)
-- DataStore, EventBus (shared state)
-- Logger, ConfigLoader (utilities)
+- `logger.ts` — the logging implementation itself
+- `db-client.ts` — database connection code
+- `hono-routes.ts` — HTTP framework integration
+- `auth-provider.ts` — authentication implementation
+- `event-bus.ts` — event system code
 
 **Characteristics:**
+- **Contains executable code** that others import
+- You can point to the file: `src/lib/logger.ts`
 - Changes ripple to many dependents
-- Stable API surface
-- Minimal external dependencies
-- Well-tested edge cases
+- Foundation of the system
+
+**In .c3 docs:** Component file with `## Code References` pointing to actual files.
 
 **Template:** `templates/component.md`
 
 ## Feature
 
-**What:** Domain-specific. Delivers user value. Uses Foundation + cites refs.
+**What:** Business logic composition. **Glues Foundation + Refs together.**
+
+**The Test:** Is this domain-specific, non-reusable business logic?
 
 **Examples:**
-- ProductCard, CheckoutFlow (e-commerce)
-- UserProfile, SettingsPage (user management)
-- OrderHistory, InvoiceGenerator (transactions)
-- Dashboard, ReportViewer (analytics)
+- `checkout-flow.ts` - uses PaymentService (foundation) + follows ref-error-handling
+- `user-registration.ts` - uses AuthProvider (foundation) + follows ref-validation
+- `order-processor.ts` - uses DB, EventBus (foundation) + follows ref-data-flow
 
 **Characteristics:**
-- Not reusable outside context
-- Combines Foundation + refs
-- User-facing behavior
-- Domain-specific logic
+- **Composes** Foundation components
+- **Cites** Refs for conventions
+- Not reusable outside its context
+- Delivers user-facing value
+- Domain-specific, business-driven
+
+**In .c3 docs:** Component file describes the business flow, what it composes.
 
 **Template:** `templates/component.md`
+
+## Refs (Patterns)
+
+**What:** Guidance only, no code. **You can only describe "how/when/why".**
+
+**The Test:** If you can only describe rules, not point to a file → it's a Ref.
+
+**Examples:**
+- `ref-logging.md` — when to log, levels, message conventions
+  (but the logger implementation lives in `logger.ts` → that's Foundation)
+- `ref-error-handling.md` — response shape and throw/return rules
+  (but error classes live in code → that's Foundation)
+- `ref-ui-composition.md` — how to compose components, naming conventions
+- `ref-data-flow.md` — how data moves through the system
+
+**Characteristics:**
+- **NO executable code** - only guidance
+- **NO `## Code References` section** - if it needs one, it's not a Ref
+- Describes patterns/conventions
+- Cited by both Foundation and Feature components
+
+**In .c3 docs:** Ref file in `refs/` directory. NO Code References.
+
+**Template:** `templates/ref.md`
+
+---
+
+## CRITICAL: The Separation Rule
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  WRONG: Creating component for a pattern                     │
+│  ✗ c3-105-logging-patterns.md (no code, just conventions)    │
+│  ✗ c3-106-error-handling-conventions.md                      │
+│  ✗ c3-107-ui-composition-rules.md                            │
+├──────────────────────────────────────────────────────────────┤
+│  RIGHT: Split implementation from guidance                   │
+│  ✓ c3-105-logger.md (Foundation: actual logger code)         │
+│  ✓ ref-logging.md (Ref: when/how to use logger)              │
+│                                                              │
+│  ✓ c3-106-error-handler.md (Foundation: error classes)       │
+│  ✓ ref-error-handling.md (Ref: error conventions)            │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Audit trigger:** If a component doc has no `## Code References`, it is misclassified. Move it to `refs/` and remove the component ID.
 
 ---
 

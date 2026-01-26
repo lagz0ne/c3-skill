@@ -25,7 +25,7 @@ Load project understanding before launching subagents:
 ```
 CLAUDE.md + references/skill-harness.md (principles)
 skills/**/*.md (all skills, their connections)
-git status + eval/results/ (current state)
+git status (current state)
 ```
 
 Summarize: What is the current state relevant to $ARGUMENTS?
@@ -45,7 +45,7 @@ If later phases find complexity, this phase may be revisited.
 Launch subagent to discover how to verify the work:
 
 **Input:** Brainstorm output (goal + approach)
-**Method:** Socratic questioning + educated guesses based on existing eval/
+**Method:** Socratic questioning
 
 **Questions to answer:**
 - How would you know it works?

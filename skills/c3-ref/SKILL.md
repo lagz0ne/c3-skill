@@ -2,14 +2,27 @@
 name: c3-ref
 description: |
   Manage cross-cutting patterns and conventions as first-class architecture artifacts.
-  Use when: "add a pattern", "document this convention", "create a ref", "update ref-X",
-  "evolve this pattern", "what patterns exist", "which components use ref-X".
+  Use when: "add a pattern", "create a pattern", "define a pattern", "document this convention",
+  "standardize X", "convention for X", "cross-cutting concern", "our convention for X",
+  "how should we X", "what's the standard for X", "what's our standard for X",
+  "best practice for X", "coding standard", "our approach to X",
+  "guideline for X", "what's the convention for X", "how do we handle X",
+  "create a ref", "update ref-X", "evolve this pattern", "modify ref-X",
+  "what patterns exist", "list refs", "show patterns", "what refs", "show all conventions",
+  "which components use ref-X", "who uses ref-X", "ref usage", "cited by",
+  "establish a standard", "define how we do X".
   Requires .c3/ to exist. Refs are authoritative constraints - violations require explicit override.
 ---
 
 # C3 Ref - Pattern Management
 
 Cross-cutting patterns (refs) are **authoritative constraints**. They define how things should be done system-wide. This skill makes refs first-class citizens with proper workflows.
+
+## CRITICAL: Component Categorization
+
+Load `**/references/component-categories.md` for the full Foundation vs Feature vs Ref rules.
+
+**Key rule for refs:** Refs have NO `## Code References` section. If it needs one, it's a component.
 
 ## REQUIRED: Load References
 
@@ -227,6 +240,14 @@ If proceeding:
 | c3-103 | needs-update | Updated code in PR #123 |
 | c3-205 | breaking | TODO: refactor in follow-up |
 ```
+
+**Step 6: Route to c3-alter if Code Changes Required**
+
+If pattern change requires code modifications in components:
+
+> "Pattern update requires code changes in {N} components. Route to /alter to create an ADR for implementation."
+
+All code changes MUST go through c3-alter to maintain the ADR-first principle. Do not edit component code directly from c3-ref.
 
 ---
 

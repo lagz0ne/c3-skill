@@ -2,8 +2,13 @@
 name: onboard
 description: |
   Creates C3 architecture documentation from scratch using staged Socratic discovery.
-  Use when the user asks to "adopt C3", "onboard me to architecture", "scaffold C3 docs",
-  "init C3", "set up architecture docs", or starts C3 documentation for a new project.
+  Use when the user asks to "adopt C3", "init C3", "initialize C3", "start C3",
+  "bootstrap C3", "scaffold C3 docs", "create C3 docs", "create .c3", "set up .c3",
+  "set up architecture docs", "create architecture documentation", "generate architecture docs",
+  "initialize architecture", "start documenting", "document this project", "create docs for this project",
+  "document the codebase", "onboard me to architecture", "document the architecture from scratch",
+  "new C3 project", "first time with C3", "never used C3", "new to C3", "getting started with C3",
+  or starts C3 documentation for a new project.
   Implements 3-stage workflow: Inventory → Details → Finalize.
 ---
 
@@ -43,6 +48,12 @@ Every onboarding MUST create this EXACT structure:
 - Each component = separate file (c3-101-auth.md, c3-102-users.md, etc.)
 - Each container = separate directory (c3-1-api/, c3-2-web/, etc.)
 - refs/ = separate directory with pattern files (ref-auth.md, ref-errors.md)
+
+## CRITICAL: The Three Categories
+
+Load `**/references/component-categories.md` for the full Foundation vs Feature vs Ref rules.
+
+**Key rule:** Components (Foundation/Feature) MUST have `## Code References`. Refs must NOT. If you cannot name a concrete file, create a ref instead.
 
 ---
 
@@ -259,37 +270,13 @@ Fill:
 
 While documenting components, proactively identify content that belongs in refs.
 
-**The Separation Test:** (see `references/content-separation.md` for full definition)
+Load `**/references/onboard-ref-extraction.md` for the separation test, signals, and common extractions.
 
-> "Would this content change if we swapped the underlying technology?"
-> - **Yes** → Integration/usage pattern → extract to ref
-> - **No** → Business/domain logic → keep in component
+**Quick test:** "Would this content change if we swapped the underlying technology?"
+- **Yes** → Extract to ref
+- **No** → Keep in component
 
-**Signals to extract:**
-
-| Signal | Action |
-|--------|--------|
-| "We use [technology] with..." | Extract to ref-[technology] |
-| "Our convention is..." | Extract to existing or new ref |
-| Same pattern appearing in code across components | Create ref, cite in components |
-| Technology setup/config details | Extract to ref-[technology]-setup |
-
-**Common extractions during onboarding:**
-
-| From Component | To Ref |
-|----------------|--------|
-| Error response format | ref-error-handling |
-| Auth token handling | ref-auth |
-| Database query patterns | ref-database |
-| API request/response conventions | ref-api-conventions |
-| State management approach | ref-state-management |
-| Validation patterns | ref-validation |
-
-**What refs capture (the "use" questions):**
-- **When** do we use this? (context, triggers)
-- **Why** this over alternatives? (decision rationale)
-- **Where** is the entry point? (how to invoke)
-- **What** conventions apply? (constraints, patterns)
+**Common extractions:** error handling, auth patterns, database usage, API conventions, state management.
 
 **1.2.4 Handle discoveries**
 
@@ -368,68 +355,24 @@ Before marking complete, verify:
 User: "Set up C3 for my project"
 
 === Stage 0: Inventory ===
-
-[0.1] Run c3-init.sh, create ADR-000
-
-[0.2] Context Discovery
-Read codebase: apps/api/, apps/web/, packages/shared/
-
-AskUserQuestion: "What is this system called?"
-User: "Acme Platform"
-
-AskUserQuestion: "Why does this system exist?"
-User: "E-commerce platform for small businesses"
-
-Fill ADR-000 Context Discovery:
-| PROJECT | Acme Platform |
-| GOAL | E-commerce platform for small businesses |
-| SUMMARY | Full-stack e-commerce with API and web frontend |
-
-[0.3] Container Discovery
-AskUserQuestion: "Are apps/api/ and apps/web/ separate containers?"
-User: "Yes"
-
-Fill ADR-000 Container Discovery:
-| 1 | API Backend | Handle business logic and data | REST API layer |
-| 2 | Web Frontend | User interface | Next.js web app |
-
-[0.4] Component Discovery
-Scan apps/api/src/...
-Found: auth/, products/, orders/, middleware/
-
-AskUserQuestion: "AuthMiddleware - Foundation or Feature?"
-User: "Foundation"
-
-Fill ADR-000 Component Discovery:
-| 1 | 01 | AuthMiddleware | foundation | Auth handling | JWT validation |
-| 1 | 10 | ProductService | feature | Product CRUD | Catalog management |
-...
-
-[0.5] Ref Discovery
-Pattern found: error handling in 5 components
-
-Fill ADR-000 Ref Discovery:
-| error-handling | Error Handling | Consistent errors | c3-101, c3-110 |
-
-[Gate 0] ✓ All tables filled, proceed to Stage 1
+1. Run c3-init.sh, create ADR-000
+2. Discover via AskUserQuestion: PROJECT="Acme Platform", GOAL="E-commerce"
+3. Discover containers: c3-1-api, c3-2-web
+4. Discover components: c3-101-auth (foundation), c3-110-products (feature)
+5. Discover refs: ref-error-handling (used by 5 components)
+Gate 0: All inventory complete ✓
 
 === Stage 1: Details ===
-
-[1.1] Create .c3/README.md from context.md template
-[1.2] Create .c3/c3-1-api/README.md + component docs
-[1.2] Create .c3/c3-2-web/README.md + component docs
-[1.3] Create .c3/refs/ref-error-handling.md
-
-[Gate 1] ✓ All docs created, no new items
+1. Create .c3/README.md from context template
+2. Create c3-1-api/README.md + component docs
+3. Create c3-2-web/README.md + component docs
+4. Create refs/ref-error-handling.md
+Gate 1: All docs created, no new discoveries ✓
 
 === Stage 2: Finalize ===
-
-[2.1] Integrity checks - all pass
-[2.2] /c3 audit - passes
-
-[Gate 2] ✓ Mark ADR-000 as implemented
-
-Done!
+1. Integrity checks: all linkages valid ✓
+2. Run /c3 audit: passes ✓
+3. Mark ADR-000 as implemented ✓
 ```
 
 ---

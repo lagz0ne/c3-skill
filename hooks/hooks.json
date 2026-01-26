@@ -1,10 +1,15 @@
 {
-  "description": "C3 architecture hooks - gate and TOC rebuild",
+  "description": "C3 architecture hooks - context awareness, gate, and TOC rebuild",
   "hooks": {
     "PreToolUse": [
       {
         "matcher": "Edit|Write|NotebookEdit",
         "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/c3-edit-context",
+            "timeout": 5
+          },
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/scripts/c3-gate",
@@ -29,8 +34,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/c3-session-start",
-            "timeout": 5
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/c3-context-loader",
+            "timeout": 10
           }
         ]
       }

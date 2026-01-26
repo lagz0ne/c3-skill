@@ -14,54 +14,6 @@ This is a repository containing a Claude code skill called c3. c3 is a trimmed d
 
 ---
 
-# Evaluation Philosophy
-
-## Core Principle
-
-**Test outcomes, not structure.** Meaningful evaluation tests whether artifacts achieve their purpose, not whether they match a template.
-
-## Evaluation Quality Hierarchy
-
-| Level | Approach | What It Tests |
-|-------|----------|---------------|
-| Best | Outcome-based | Does artifact enable its purpose? |
-| Mid | Behavior-based | Does artifact work correctly? |
-| Worst | Structure-based | Does artifact match expected shape? |
-
-Always start from outcomes and work backward to find minimal structure requirements.
-
-## Question-Based Evaluation Pattern
-
-The gold standard for evaluating generated artifacts:
-
-```
-Codebase Analysis → Question Generation → Fresh-Context Answering → Verification
-       ↓                    ↓                       ↓                    ↓
-  Extract truth      Simulate real            No cheating         Ground truth
-  from source        developer needs          (isolated LLM)      comparison
-```
-
-**Why this works:**
-- Grounded in THIS system, not generic templates
-- Simulates real use with fresh context (prevents information leakage)
-- Binary correctness - either the answer matches reality or it doesn't
-- Actionable failures - know exactly which question failed and why
-
-**Implementation:** `eval/lib/question-eval.ts`
-
-## Anti-Patterns to Avoid
-
-| Anti-Pattern | Why It Fails | Alternative |
-|--------------|--------------|-------------|
-| Golden example comparison | Measures similarity, not utility | Question-based testing |
-| Structural checklists | Creates template compliance, not quality | Outcome verification |
-| Generic dimensions | Same scores for different codebases | Codebase-specific questions |
-| Single-context evaluation | LLM can cheat with prior knowledge | Fresh context isolation |
-| Bidirectional links | Maintenance burden, stale links | Unidirectional hierarchy |
-| Monolithic docs | Hard to maintain and navigate | Separate files per concept |
-
----
-
 # Skill Development Philosophy
 
 ## The Structure vs Outcome Balance
@@ -102,21 +54,6 @@ Goals → Minimal Skill → Meaningful Eval → Run → Trace Failures → Updat
 | Hard technical constraints (file names, IDs) | Content quality |
 | Integration points (CI expects certain paths) | Organization decisions |
 | Non-negotiable conventions | Style and depth |
-
----
-
-# Running Evaluations
-
-```bash
-# Expectations-based (structural)
-bun eval/run.ts eval/cases/onboard-simple.yaml
-
-# Question-based (meaningful)
-bun eval/test-question-eval.ts <codebase-path> <docs-path>
-
-# Example
-bun eval/test-question-eval.ts eval/fixtures/simple-express-app /tmp/output/.c3
-```
 
 ---
 

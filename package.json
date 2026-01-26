@@ -4,9 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build:opencode": "bun run scripts/build-opencode.ts",
-    "eval": "bun eval/run.ts",
-    "eval:verbose": "bun eval/run.ts --verbose"
+    "build:opencode": "bun run scripts/build-opencode.ts"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.5",

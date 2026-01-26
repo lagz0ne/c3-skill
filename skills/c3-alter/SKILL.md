@@ -2,16 +2,22 @@
 name: c3-alter
 description: |
   Makes architectural changes through ADR-first workflow with staged intent clarification.
-  Use when the user asks to "add a component", "change architecture", "refactor X", "implement feature",
-  "fix bug", "create new service", "update diagram", or "remove component".
-  Requires .c3/ to exist. All changes flow through ADR process. For questions, route to c3-query instead.
+  Use when the user asks to "add a component", "add feature", "add X to Y", "new component", "create new service",
+  "change architecture", "change X", "modify X", "edit X", "update component", "update X",
+  "refactor X", "implement feature", "implement X", "replace X with Y", "swap X for Y",
+  "fix bug", "rename component", "move component", "split component", "merge components",
+  "delete component", "remove component", "remove X", "deprecate X", "migrate X", "introduce X",
+  "extend X", "improve X", "make X do Y", "enhance X", "upgrade X", "update diagram",
+  "I want to change", "need to modify", "should we add".
+  Requires .c3/ to exist. All changes flow through ADR process.
+  For questions (where/what/how), route to c3-query. For pattern management, route to c3-ref.
 ---
 
 # C3 Alter - Change Through ADR
 
 **Every change flows through an ADR.** No exceptions.
 
-**Relationship to c3-orchestrator agent:** This skill defines the change workflow stages. The `c3-skill:c3-orchestrator` agent implements this workflow, dispatching to sub-agents (c3-analyzer, c3-impact, c3-patterns, c3-synthesizer) for parallel analysis. Use the agent when spawning via Task tool; use this skill directly for inline execution.
+**Relationship to c3-orchestrator agent:** This skill defines the change workflow stages. The `c3-skill:c3-orchestrator` agent implements this workflow, dispatching to sub-agents (c3-analysis, c3-synthesizer) for comprehensive analysis. Use the agent when spawning via Task tool; use this skill directly for inline execution.
 
 ## REQUIRED: Load References
 
@@ -146,22 +152,11 @@ If change affects a pattern:
 2. Update ref if pattern changes
 3. Create new ref if pattern is new and reusable
 
-**Critical: Components vs Refs**
+**Critical: The Three Categories**
 
-| Documenting... | Use | Path |
-|----------------|-----|------|
-| Code that runs | Component | `.c3/c3-N-*/c3-NNN-*.md` |
-| Conventions/patterns | Ref | `.c3/refs/ref-*.md` |
+Load `**/references/component-categories.md` for the full Foundation vs Feature vs Ref rules.
 
-**NEVER** create component files for:
-- Information architecture
-- User flows
-- Design systems
-- UI patterns
-- Error handling conventions
-- Form patterns
-
-These are **refs**, not components.
+**Key rule:** Components (Foundation/Feature) MUST have `## Code References`. Refs must NOT. If you cannot name a concrete file, create a ref instead.
 
 ---
 

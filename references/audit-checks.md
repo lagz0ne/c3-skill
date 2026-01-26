@@ -176,17 +176,28 @@ For each Container:
 
 ### Phase 9: Content Separation
 
-**Goal:** Ensure proper separation between domain logic (components) and usage patterns (refs).
+**Goal:** Ensure proper separation between Foundation (code), Feature (composition), and Ref (guidance).
 
-**Core Principle:** C3 proactively splits content:
-- **Components** document WHAT the system does (business/domain logic)
-- **Refs** document HOW we use technologies HERE (usage patterns, conventions)
+**Core Principle:** Three categories with strict rules:
 
-**The Separation Test:** (see `content-separation.md` for full definition)
+| Category | Has Code? | Example |
+|----------|-----------|---------|
+| **Foundation** (component) | YES - actual implementation | `logger.ts`, `db-client.ts` |
+| **Feature** (component) | YES - business composition | `checkout-flow.ts` |
+| **Ref** (pattern) | NO - guidance/convention only | when to log, error format |
 
-> "Would this content change if we swapped the underlying technology?"
-> - **Yes** → Integration/usage pattern → belongs in ref
-> - **No** → Business/domain logic → belongs in component
+**The Code References Test:**
+- Component with `## Code References` → VALID (Foundation or Feature)
+- Component WITHOUT `## Code References` → VIOLATION (should be a Ref)
+- Ref with `## Code References` → VIOLATION (should be a Component)
+
+**The Split Test:**
+| If documenting... | Create | Has Code Refs? |
+|-------------------|--------|----------------|
+| Actual logger implementation | Component | YES |
+| When/how to use logger | Ref | NO |
+| Error classes code | Component | YES |
+| Error response conventions | Ref | NO |
 
 #### Step 1: Identify Technologies in Use
 

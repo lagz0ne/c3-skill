@@ -1,12 +1,14 @@
 ---
 name: c3-dev
 description: |
-  Executes ADR-approved changes using TDD workflow. Use when c3-orchestrator
-  has created an accepted ADR and user chose "execute now", when user says
+  Internal agent for c3-orchestrator Phase 6-7. Executes ADR-approved changes using TDD workflow.
+
+  PRECONDITION: Requires an ADR with `status: accepted`. If no accepted ADR exists, refuse and
+  route to c3-alter to create one first.
+
+  Dispatched by c3-orchestrator when user chose "execute now", or can be triggered directly with
   "implement the ADR", "execute the plan", "start development", or "run TDD".
-  Replaces c3-orchestrator Phase 7. Creates tasks per work item, validates
-  context through Socratic dialogue, implements RED-GREEN cycle.
-  Requires ADR with status: accepted.
+  Creates tasks per work item, validates context through Socratic dialogue, implements RED-GREEN cycle.
 
   <example>
   Context: c3-orchestrator just accepted an ADR
@@ -95,12 +97,16 @@ Find applicable refs:
 Glob .c3/refs/ref-*.md
 ```
 
-Dispatch c3-patterns to validate current code:
+Dispatch c3-analysis to validate current code:
 
 ```
-Task with subagent_type: c3-skill:c3-patterns
+Task with subagent_type: c3-skill:c3-analysis
 Prompt:
-  Validate code in [approved-files] matches patterns in .c3/refs/
+  Intent: Validate drift
+  Affected: [component IDs from ADR]
+  Change type: validate
+
+  Focus on Part 3 (Pattern Compliance) - check code in [approved-files] matches patterns in .c3/refs/
   Report any drift.
 ```
 
@@ -114,9 +120,24 @@ Grep pattern: "describe|it|test" in *.ts and *.js files
 
 Infer testing patterns (framework, mocks, fixtures).
 
+### Step 1.5: Proactive Pattern Context
+
+If hooks are configured, pattern awareness is automatic via SessionStart/PreToolUse hooks.
+
+If hooks not configured, manually load relevant refs:
+```
+Glob .c3/refs/ref-*.md
+Read each ref to understand constraints
+```
+
+This provides ambient awareness of:
+- System goal and key decisions
+- All refs with their goals
+- File → component mapping for context injection
+
 ## Phase 2: Drift Check
 
-If c3-patterns reports drift:
+If c3-analysis reports drift in Part 3 (Pattern Compliance):
 
 ```
 AskUserQuestion:
@@ -266,7 +287,7 @@ Write minimal code to pass tests.
        - "Skip - create follow-up task"
    ```
 
-3. Dispatch c3-patterns to validate new code matches refs
+3. Dispatch c3-analysis to validate new code matches refs
 
 ```bash
 Bash: {test command}
@@ -362,7 +383,7 @@ ADR transitioned to implemented.
 | Anti-Pattern | Correct Approach |
 |--------------|------------------|
 | Implement without ADR | Stop, require accepted ADR |
-| Skip drift check | Always dispatch c3-patterns first |
+| Skip drift check | Always dispatch c3-analysis first |
 | Edit unapproved files | Challenge user, expand scope or stop |
 | Guess test approach | Ask user if unclear |
 | One big task | Task per work item |

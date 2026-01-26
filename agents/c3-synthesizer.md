@@ -172,6 +172,7 @@ Return exactly this structure:
 
 ## Constraints
 
+- **Token limit:** Output SHOULD be under 1500 tokens
 - **Critical thinking:** Don't just concatenate - analyze and connect
 - **User-facing quality:** This output drives the Socratic dialogue
 - **Explicit decisions:** Surface choices, don't hide them

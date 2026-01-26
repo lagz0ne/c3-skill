@@ -1,5 +1,5 @@
 ---
-description: Navigate C3 architecture docs - find where things are documented
+description: Navigate C3 docs - use for 'where is X', 'explain X', 'find component', 'how does X work'
 argument-hint: <question or ID>
 allowed-tools: Skill
 ---

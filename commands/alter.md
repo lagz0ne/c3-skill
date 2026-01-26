@@ -1,5 +1,5 @@
 ---
-description: Change code or architecture through ADR-first workflow
+description: Make changes via ADR - use for 'add component', 'refactor X', 'implement feature', 'fix bug'
 argument-hint: <what to change>
 allowed-tools: Skill
 ---

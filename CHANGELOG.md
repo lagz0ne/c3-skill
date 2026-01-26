@@ -5,6 +5,35 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.7.0] - 2026-01-26
+
+### Added
+- **c3-dev agent**: New TDD execution agent for implementing ADR-approved changes
+  - Creates tasks per work item linked to ADR
+  - Implements RED-GREEN TDD cycle with Socratic dialogue
+  - Validates code against patterns via c3-patterns dispatch
+  - Creates summary task with integrity check before ADR transition
+  - Granular task states for parallel visibility: pending → in_progress → blocked → testing → implementing → completed
+- **README.md**: Comprehensive plugin documentation with d2 diagrams via diashort
+  - Agent ecosystem diagram
+  - TDD workflow diagram
+  - C3 structure diagram
+  - Simple 4-step example walkthrough
+
+### Changed
+- **c3-orchestrator Phase 6**: Now dispatches c3-dev when user chooses "Execute now"
+- **c3-orchestrator Phase 7**: Clarified to only apply for manual implementation path
+- **c3-adr-transition**: Added integrity check for summary task (Step 1b)
+  - Verifies summary task exists with correct metadata before transition
+  - Added TaskList and TaskGet tools for integrity verification
+  - Added example blocks for better triggering
+
+### Fixed
+- **Command descriptions**: Added trigger phrases to query.md and alter.md
+- **c3.md command**: Added missing argument-hint field
+- **c3 skill description**: Added "verify docs", "check documentation" triggers
+- **c3-synthesizer**: Added token limit constraint for consistency
+
 ## [3.6.0] - 2026-01-21
 
 ### Added

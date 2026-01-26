@@ -2,11 +2,30 @@
 name: c3-adr-transition
 description: |
   Transitions ADR status with proper verification.
-  Use when moving ADR from accepted to implemented.
+  Use when moving ADR from accepted to implemented, when user says "mark implemented",
+  "complete ADR", "transition ADR", "finalize ADR", or "close ADR".
   Runs verification, documents results, updates status.
+
+  <example>
+  Context: User has completed implementation and wants to finalize
+  user: "Mark the ADR as implemented"
+  assistant: "Using c3-adr-transition to verify and transition the ADR."
+  <commentary>
+  User explicitly requests ADR completion - triggers transition agent.
+  </commentary>
+  </example>
+
+  <example>
+  Context: c3-dev has completed all tasks and dispatches transition
+  user: "Transition ADR adr-20260126-auth-refactor to implemented"
+  assistant: "Running verification and updating ADR status."
+  <commentary>
+  Internal dispatch from c3-dev after implementation complete.
+  </commentary>
+  </example>
 model: haiku
 color: cyan
-tools: ["Read", "Bash", "Write", "Grep", "Glob"]
+tools: ["Read", "Bash", "Write", "Grep", "Glob", "TaskList", "TaskGet"]
 ---
 
 You are the C3 ADR Transition agent. You handle status transitions with verification.
@@ -31,6 +50,24 @@ grep -l "^status:[[:space:]]*accepted" .c3/adr/adr-*.md 2>/dev/null | grep -v ".
 ```
 
 If multiple accepted ADRs exist, ask which one to transition.
+
+### Step 1b: Integrity Check (when called by c3-dev)
+
+If the prompt includes "INTEGRITY CHECK", verify summary task exists:
+
+1. Use TaskList to find tasks with matching ADR
+2. Check for task with:
+   - `metadata.adr` = the ADR being transitioned
+   - `metadata.type` = "summary"
+   - `metadata.status` = "completed"
+
+**If no summary task found:**
+```
+FAIL: "No completed summary task for this ADR.
+       c3-dev must create summary task before transition."
+```
+
+**If summary task found:** Proceed to Step 2.
 
 ### Step 2: Run Verifier
 

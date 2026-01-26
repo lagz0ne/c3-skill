@@ -4,11 +4,11 @@ description: |
   READ-ONLY navigation of C3 architecture docs to answer questions about COMPONENTS, CONTAINERS, and FLOWS.
 
   FIRST CHECK - If prompt contains ANY of these words, DO NOT use this agent:
-  - "ref" or "refs" → use c3-ref skill instead
-  - "pattern" or "patterns" → use c3-ref skill instead
+  - "ref" or "refs" or "show refs" or "list refs" → use c3-ref skill instead
+  - "pattern" or "patterns" or "show patterns" → use c3-ref skill instead
   - "convention" or "conventions" → use c3-ref skill instead
   - "standard" or "standards" → use c3-ref skill instead
-  - "fix" or "add" or "modify" or "change" → use c3-orchestrator instead
+  - "fix" or "add" or "modify" or "change" or "implement" or "refactor" → use c3-orchestrator instead
 
   Use this agent ONLY for component/container questions WITHOUT the words above:
   "where is X", "what component handles X", "what does X do", "explain X", "describe X",

@@ -7,6 +7,7 @@ description: |
   - ADD: "add a component", "add feature", "add X to Y", "new component", "create new service", "introduce X"
   - MODIFY: "change architecture", "change X", "modify X", "edit X", "update component", "update X", "make X do Y"
   - FIX: "fix X", "fix the X", "fix bug", "fix issue", "fix problem", "fix X to Y", "repair X", "correct X"
+  - IMPLEMENT: "implement X", "implement caching", "implement feature", "implement Y for X"
   - REFACTOR: "refactor X", "restructure X", "reorganize X", "clean up X"
   - REPLACE: "replace X with Y", "swap X for Y", "migrate X", "upgrade X"
   - REMOVE: "delete component", "remove component", "remove X", "deprecate X"

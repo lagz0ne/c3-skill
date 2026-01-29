@@ -92,21 +92,23 @@ Change frontmatter:
 
 ### Step 4b: Supersede Provisioned ADR (if applicable)
 
-Check if the implementation ADR has an `implements:` field:
+Check if THIS specific ADR has an `implements:` field:
 
 ```bash
-grep "^implements:" .c3/adr/adr-*.md
+# Read the ADR being transitioned and extract implements field
+grep "^implements:" <current-adr-path>
 ```
 
 **If `implements:` links to a provisioned ADR:**
 
-1. Read the provisioned ADR
-2. Update its frontmatter:
+1. Extract the provisioned ADR ID from the `implements:` field
+2. Read the provisioned ADR at `.c3/adr/<provisioned-adr-id>.md`
+3. Update its frontmatter:
    ```yaml
    status: superseded
    superseded-by: <implementation-adr-id>
    ```
-3. Update its Status section:
+4. Update its Status section:
    ```markdown
    ## Status
 
@@ -114,6 +116,8 @@ grep "^implements:" .c3/adr/adr-*.md
 
    This design was implemented via [adr-YYYYMMDD-implementation](./adr-YYYYMMDD-implementation.md).
    ```
+
+**IMPORTANT:** Only check the `implements:` field of the ADR being transitioned, not all ADRs.
 
 ### Step 5: Report Summary
 

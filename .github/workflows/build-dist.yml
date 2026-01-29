@@ -35,6 +35,11 @@ jobs:
           echo "=== OpenCode ==="
           ls -la dist/opencode-c3/
           ls -la dist/opencode-c3/skill/
+          ls -la dist/opencode-c3/.opencode/agents/
+
+          echo "=== Codex ==="
+          ls -la dist/codex-c3/
+          ls -la dist/codex-c3/skill/
 
       - name: Configure git
         run: |
@@ -53,8 +58,9 @@ jobs:
           # Move Claude Code output to root
           mv dist/claude-code/* .
 
-          # Keep OpenCode as subdirectory
+          # Keep OpenCode and Codex as subdirectories
           mv dist/opencode-c3 opencode
+          mv dist/codex-c3 codex
 
           # Cleanup
           rm -rf dist node_modules src .github scripts templates migrations references .claude .claude-plugin docs package.json bun.lock* tsconfig.json CLAUDE.md
@@ -75,12 +81,16 @@ claude plugin install c3-skill
 **OpenCode:**
 Use the \`opencode/\` subdirectory.
 
+**Codex:**
+Use the \`codex/\` subdirectory (skills only, no agents).
+
 ## Structure
 
 - \`skills/\` - Self-contained skill packages with bundled references
 - \`agents/\` - Agent definitions
 - \`.claude-plugin/\` - Plugin manifest
-- \`opencode/\` - OpenCode-compatible plugin
+- \`opencode/\` - OpenCode-compatible plugin (skills + agents)
+- \`codex/\` - Codex-compatible skills (no agent support)
 
 ---
 Built from commit: ${GITHUB_SHA::7}

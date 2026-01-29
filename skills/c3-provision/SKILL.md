@@ -147,9 +147,15 @@ options:
   - "Cancel - abandon this provisioning"
 ```
 
+**On Accept:**
+1. Update ADR status: `proposed` → `accepted`
+2. Proceed immediately to Stage 5
+
 ---
 
 ## Stage 5: Create Provisioned Docs
+
+**PREREQUISITE:** ADR must be in `status: accepted` before creating docs.
 
 ### For NEW component:
 
@@ -228,7 +234,7 @@ Components designed but not yet implemented:
 Update ADR frontmatter:
 
 ```yaml
-status: provisioned    # Changed from proposed
+status: provisioned    # Changed from accepted
 ```
 
 Add to end of ADR:
@@ -269,14 +275,14 @@ Stage 4 - ADR:
   Status: proposed
 
 Stage 4b - Accept:
-  User accepts
+  User accepts → ADR status: accepted
 
 Stage 5 - Create Docs:
   Created: .c3/provisioned/c3-2-api/c3-206-rate-limiter.md
-  Status: provisioned
+  Component status: provisioned
 
 Stage 6 - Finalize:
-  ADR status: provisioned
+  ADR status: accepted → provisioned
 ```
 
 **Example 2: Provision update to existing**
@@ -300,14 +306,14 @@ Stage 4 - ADR:
   Created: .c3/adr/adr-20260129-oauth-support.md
 
 Stage 4b - Accept:
-  User accepts
+  User accepts → ADR status: accepted
 
 Stage 5 - Create Docs:
   Created: .c3/provisioned/c3-2-api/c3-201-auth-middleware.md
-  (supersedes: ../c3-2-api/c3-201-auth-middleware.md)
+  (supersedes: ../../c3-2-api/c3-201-auth-middleware.md)
 
 Stage 6 - Finalize:
-  ADR status: provisioned
+  ADR status: accepted → provisioned
 ```
 
 ---

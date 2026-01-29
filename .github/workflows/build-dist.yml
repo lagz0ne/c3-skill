@@ -1,0 +1,92 @@
+name: Build Distribution
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build all targets
+        run: bun run build
+
+      - name: Verify builds
+        run: |
+          echo "=== Claude Code ==="
+          ls -la dist/claude-code/
+          ls -la dist/claude-code/.claude-plugin/
+          ls -la dist/claude-code/skills/
+
+          echo "=== OpenCode ==="
+          ls -la dist/opencode-c3/
+          ls -la dist/opencode-c3/skill/
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Push to dist branch
+        run: |
+          # Create orphan branch
+          git checkout --orphan dist-temp
+          git rm -rf . || true
+
+          # Enable dotglob to include .claude-plugin
+          shopt -s dotglob
+
+          # Move Claude Code output to root
+          mv dist/claude-code/* .
+
+          # Keep OpenCode as subdirectory
+          mv dist/opencode-c3 opencode
+
+          # Cleanup
+          rm -rf dist node_modules src .github scripts templates migrations references .claude .claude-plugin docs package.json bun.lock* tsconfig.json CLAUDE.md
+
+          # Add README for dist branch
+          cat > README.md << EOF
+# C3 Skills Distribution
+
+This branch contains the built distribution of C3 skills.
+
+## Installation
+
+**Claude Code:**
+\`\`\`bash
+claude plugin install c3-skill
+\`\`\`
+
+**OpenCode:**
+Use the \`opencode/\` subdirectory.
+
+## Structure
+
+- \`skills/\` - Self-contained skill packages with bundled references
+- \`agents/\` - Agent definitions
+- \`.claude-plugin/\` - Plugin manifest
+- \`opencode/\` - OpenCode-compatible plugin
+
+---
+Built from commit: ${GITHUB_SHA::7}
+EOF
+
+          # Commit and push
+          git add -A
+          git commit -m "Build from ${GITHUB_SHA::7} [skip ci]"
+          git push origin dist-temp:dist --force

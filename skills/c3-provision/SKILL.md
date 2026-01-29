@@ -204,7 +204,7 @@ Create at `.c3/provisioned/c3-X-container/c3-XXX-name.md`:
 ---
 id: c3-XXX-name
 status: provisioned
-supersedes: ../c3-X-container/c3-XXX-name.md
+supersedes: ../../c3-X-container/c3-XXX-name.md
 adr: adr-YYYYMMDD-{slug}
 ---
 

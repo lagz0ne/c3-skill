@@ -15,6 +15,7 @@ Detailed validation rules for Mode: Audit in the c3 agent.
   - Phase 7: Reference Validation
   - Phase 8: Abstraction Boundaries
   - Phase 9: Content Separation
+  - Phase 10: Context Files
 - [Audit Output Template](#audit-output-template)
 - [Drift Resolution Guidance](#drift-resolution-guidance)
 - [Audit Scope Options](#audit-scope-options)
@@ -35,6 +36,7 @@ Detailed validation rules for Mode: Audit in the c3 agent.
 | **Ref Files** | ref-* files valid and linked | Missing Goal or orphan ref = WARN |
 | **Abstraction Boundaries** | Layers stay in their lane | Container job/Ref bypass = FAIL, bleeding = WARN |
 | **Content Separation** | Components = domain logic, Refs = usage patterns | Integration content in component = WARN, missing ref for technology = WARN |
+| **Context Files** | CLAUDE.md files propagated to code directories | Missing CLAUDE.md = WARN, stale/orphaned block = WARN |
 
 ---
 
@@ -280,6 +282,94 @@ Refs should be focused enough to be actionable:
 | Retry logic | c3-201, c3-205 | Create ref-retry-pattern |
 ```
 
+### Phase 10: Context Files
+
+**Goal:** Verify CLAUDE.md files are propagated to code directories documented in components, enabling Claude to load architecture context automatically when editing code.
+
+**Why this matters:** Claude (and subagents) rush to read code instead of checking C3 docs first. CLAUDE.md files in strategic positions ensure context is loaded at session start, not injected too late via hooks.
+
+#### Step 1: Extract Expected Context Files
+
+```
+For each Component with ## Code References section:
+  1. Parse Code References to extract directory paths
+  2. For each directory path:
+     - Record: directory, component-id, related refs
+
+Output: List of (directory, component-id, refs[]) tuples
+```
+
+#### Step 2: Check CLAUDE.md Presence
+
+```
+For each expected directory:
+  - Check if CLAUDE.md exists
+  - If missing → WARN: "Missing CLAUDE.md in {directory} for {component-id}"
+```
+
+#### Step 3: Check c3-generated Block
+
+```
+For each existing CLAUDE.md:
+  - Search for <!-- c3-generated: {id} --> marker
+  - If no marker and directory is in expected list → WARN: "CLAUDE.md exists but missing c3-generated block"
+  - If marker exists:
+    - Verify component-id matches expected
+    - Verify listed refs match component's Related Refs
+    - If mismatch → WARN: "Stale c3-generated block in {directory}"
+```
+
+#### Step 4: Check for Orphaned Blocks
+
+```
+For each CLAUDE.md with c3-generated block:
+  - Extract component-id from marker
+  - Verify component still exists in .c3/
+  - Verify component's Code References still lists this directory
+  - If component deleted or directory removed from refs → WARN: "Orphaned c3-generated block"
+```
+
+**Expected CLAUDE.md block format:**
+
+```markdown
+<!-- c3-generated: c3-201 -->
+# c3-201: Component Title
+
+Before modifying this code, read:
+- Component: `.c3/c3-2-api/c3-201-component.md`
+- Patterns: `ref-error-handling`, `ref-logging`
+
+Full refs: `.c3/refs/ref-{name}.md`
+<!-- end-c3-generated -->
+```
+
+**Output format:**
+
+```
+## Context Files Check
+
+### Missing CLAUDE.md
+
+| Directory | Component | Related Refs |
+|-----------|-----------|--------------|
+| src/routes/auth/ | c3-201 | ref-error-handling, ref-logging |
+| src/middleware/ | c3-102 | ref-middleware-pattern |
+
+### Stale Blocks
+
+| Directory | Issue | Expected | Actual |
+|-----------|-------|----------|--------|
+| src/api/ | Wrong refs | ref-api-errors | ref-old-errors |
+
+### Orphaned Blocks
+
+| Directory | Block References | Issue |
+|-----------|------------------|-------|
+| src/legacy/ | c3-099 | Component deleted |
+```
+
+**Resolution:** Run `/c3 apply` to generate/update CLAUDE.md files.
+
 ---
 
 ## Audit Output Template
@@ -302,6 +392,7 @@ Refs should be focused enough to be actionable:
 | Ref Files | ✓ PASS / ⚠ WARN |
 | Abstraction Boundaries | ✓ PASS / ⚠ WARN / ✗ FAIL |
 | Content Separation | ✓ PASS / ⚠ WARN |
+| Context Files | ✓ PASS / ⚠ WARN |
 
 ## Issues
 - [issue]: [details]

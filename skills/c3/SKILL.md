@@ -65,12 +65,18 @@ Route to `/onboard` skill for the full staged learning loop.
 | Container | `audit container c3-1` |
 | ADR | `audit adr adr-YYYYMMDD-slug` |
 
-**Checks:** Inventory vs code, categorization, reference validity, diagrams, ADR lifecycle, abstraction boundaries, content separation
+**Checks:** Inventory vs code, categorization, reference validity, diagrams, ADR lifecycle, abstraction boundaries, content separation, context files
 
 **Content Separation Check (Phase 9):**
 - Verifies components contain domain logic, refs contain usage patterns
 - Uses `c3-skill:c3-content-classifier` agent for LLM-based analysis
 - Detects: missing refs for technologies, integration patterns in components, duplicated patterns
+
+**Context Files Check (Phase 10):**
+- Verifies CLAUDE.md files exist in Code Reference directories
+- Checks c3-generated blocks are current (match component/refs)
+- Detects: missing CLAUDE.md, stale blocks, orphaned blocks
+- Resolution: Run `/c3 apply` to generate/update files
 
 **Example:**
 ```
@@ -78,7 +84,7 @@ User: "Check if C3 docs are up to date"
 
 1. Load audit-checks.md
 2. Run Phase 1: Gather (list containers, components, ADRs)
-3. Run Phase 2-9: Validate each check
+3. Run Phase 2-10: Validate each check
 4. Output audit report with PASS/FAIL/WARN per check
 5. List actionable fixes for any failures
 ```
@@ -87,7 +93,20 @@ User: "Check if C3 docs are up to date"
 
 ## Proactive Pattern Awareness
 
-If hooks are configured, C3 provides **ambient pattern awareness** without explicit invocation:
+C3 provides **ambient pattern awareness** through CLAUDE.md files in code directories:
+
+| Mechanism | How It Works |
+|-----------|--------------|
+| CLAUDE.md files | Generated in Code Reference directories, loaded automatically by Claude |
+| `/c3 apply` | Generates/updates CLAUDE.md files based on component docs |
+| Audit Phase 10 | Checks CLAUDE.md presence and freshness |
+
+**Why CLAUDE.md over hooks:**
+- Hooks fire too late (PreToolUse on Edit/Write happens after Claude decides what to change)
+- Subagents don't receive SessionStart context
+- CLAUDE.md loads at session start for all agents
+
+**Legacy hooks** (still available but less reliable):
 
 | Hook | Script | Purpose |
 |------|--------|---------|
@@ -95,4 +114,40 @@ If hooks are configured, C3 provides **ambient pattern awareness** without expli
 | PreToolUse (Edit/Write) | `c3-edit-context` | Surfaces relevant patterns when editing documented files |
 | PreToolUse (Edit/Write) | `c3-gate` | Gates edits to ADR-approved files only |
 
-This enables **drift prevention** - changes naturally align with established patterns.
+---
+
+## Mode: Apply
+
+**Trigger:** User says "apply", "generate context", "propagate context", "create CLAUDE.md"
+
+Generates CLAUDE.md files in directories listed in component Code References.
+
+```
+/c3 apply [--dry-run]
+
+1. Scan .c3/c3-*/c3-*.md for Code References sections
+2. For each referenced directory:
+   - Create CLAUDE.md if missing
+   - Update c3-generated block if stale
+   - Preserve user content outside block
+3. Report: created, updated, skipped counts
+4. Files left unstaged for user review
+```
+
+**CLAUDE.md template:**
+```markdown
+<!-- c3-generated: c3-201 -->
+# c3-201: Component Title
+
+Before modifying this code, read:
+- Component: `.c3/c3-2-api/c3-201.md`
+- Patterns: `ref-error-handling`, `ref-logging`
+
+Full refs: `.c3/refs/ref-{name}.md`
+<!-- end-c3-generated -->
+```
+
+**Workflow:**
+1. Run `/c3 audit` to see what's missing (Phase 10)
+2. Run `/c3 apply` to generate files
+3. Review and commit generated files

@@ -1,27 +1,10 @@
 ---
 name: c3
 description: |
-  PRIMARY ROUTER for C3 architecture tasks and audit tool for documentation consistency.
-
-  ROUTING RULES (check in order):
-  1. **REF-RELATED** (contains "ref", "refs", "pattern", "patterns", "convention", "standard"):
-     → MUST route to c3-ref skill (e.g., "what ref", "show refs", "what patterns", "design pattern")
-  2. **PROVISION-RELATED** (design without implementing, BUT NOT pattern/ref keywords):
-     → route to c3-provision skill (e.g., "provision X", "design the architecture for X", "plan X service", "envision X", "architect X")
-     → EXCLUDE if contains: "pattern", "ref", "convention", "standard"
-  3. **CHANGES** (add/modify/remove/fix/refactor/implement):
-     → route to c3-alter skill
-  4. **QUESTIONS** (where/what/how/explain about components):
-     → route to c3-query skill
-  5. **NO .c3/** directory:
-     → route to onboard skill
-
-  AUDIT MODE: Use when user asks to "audit architecture", "audit C3", "run C3 audit", "run audit",
-  "validate C3", "validate architecture", "validate docs", "check C3 docs", "verify docs", "verify C3",
-  "verify documentation", "verify architecture", "check documentation", "are docs up to date",
-  "is documentation current", "check for stale docs", "docs out of sync", "sync docs", "refresh docs",
-  "update docs to match code", "documentation drift", "check architecture", "is C3 current",
-  "I have a C3 project", "help me with C3", "show me my architecture", "C3 help".
+  Routes C3 architecture requests and audits existing C3 documentation for consistency.
+  Use when the user asks to "audit architecture", "validate C3", "check C3 docs", "verify docs",
+  "check documentation", "are docs up to date", or when no .c3/ directory exists (routes to onboarding).
+  Routes navigation to c3-query, changes to c3-alter, patterns to c3-ref, design to c3-provision.
 ---
 
 # C3 Architecture Assistant

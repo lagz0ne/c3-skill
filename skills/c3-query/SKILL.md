@@ -2,18 +2,9 @@
 name: c3-query
 description: |
   Navigates C3 architecture docs and explores corresponding code to answer architecture questions.
-  Use when the user asks "where is X", "what is X", "what does X do", "how does X work", "explain X", "describe X",
-  "tell me about X", "show me X", "show me the architecture", "architecture overview", "system design",
-  "how is X structured", "find component", "which component", "list components", "components in X",
-  "what handles X", "look up X", "navigate to X", "give me context on X",
-  "diagram of X", "show diagram", "architecture diagram", "visualize X", "draw X",
-  "dependencies of X", "what depends on X", "who calls X", "what calls X", "callers of X",
-  "trace X", "flow of X", "how X connects to Y", "relationship between X and Y",
-  "what constraints apply to X", "what rules apply to X", "understand the codebase",
-  or references C3 IDs (c3-0, c3-1, adr-*).
+  Use when the user asks "where is X", "how does X work", "explain X", "show me the architecture",
+  "find component", "what handles X", "what constraints apply to X", or references C3 IDs (c3-0, c3-1, adr-*).
   Requires .c3/ to exist. For changes, route to c3-alter instead.
-  For pattern management (add/update/list refs), route to c3-ref instead.
-  Pattern questions are answered here by reading refs.
 ---
 
 # C3 Query - Architecture Navigation

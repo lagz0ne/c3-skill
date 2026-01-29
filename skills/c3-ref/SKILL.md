@@ -1,32 +1,9 @@
 ---
 name: c3-ref
 description: |
-  Manage cross-cutting patterns, conventions, and refs as first-class architecture artifacts.
-
-  REQUIRED TRIGGERS - Use this skill when ANY of these words appear:
-  - "ref" or "refs" (e.g., "what ref", "show refs", "list refs", "ref documents")
-  - "pattern" or "patterns" (e.g., "what patterns", "show patterns", "patterns documented")
-  - "convention" or "conventions" (e.g., "our convention", "document convention")
-  - "standard" or "standards" (e.g., "what's the standard", "coding standard")
-
-  Example triggers:
-  - "what ref documents our query services pattern?" → c3-ref
-  - "show me the refs - what patterns are documented?" → c3-ref
-  - "document our error handling convention" → c3-ref
-  - "what patterns do we use?" → c3-ref
-
-  Full trigger list: "add a pattern", "create a pattern", "define a pattern", "document this convention",
-  "document our X convention", "what patterns do we use", "what patterns are documented",
-  "standardize X", "convention for X", "cross-cutting concern", "our convention for X",
-  "how should we X", "what's the standard for X", "what's our standard for X",
-  "best practice for X", "coding standard", "our approach to X",
-  "guideline for X", "what's the convention for X", "how do we handle X",
-  "create a ref", "update ref-X", "evolve this pattern", "modify ref-X",
-  "what patterns exist", "list refs", "show refs", "show me the refs", "show patterns",
-  "what refs", "show all conventions", "what ref documents X",
-  "which components use ref-X", "who uses ref-X", "ref usage", "cited by",
-  "establish a standard", "define how we do X".
-
+  Manage cross-cutting patterns and conventions as first-class architecture artifacts.
+  Use when: "add a pattern", "document this convention", "create a ref", "update ref-X",
+  "evolve this pattern", "what patterns exist", "which components use ref-X".
   Requires .c3/ to exist. Refs are authoritative constraints - violations require explicit override.
 ---
 

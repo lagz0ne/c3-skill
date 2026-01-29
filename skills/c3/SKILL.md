@@ -4,13 +4,15 @@ description: |
   PRIMARY ROUTER for C3 architecture tasks and audit tool for documentation consistency.
 
   ROUTING RULES (check in order):
-  1. **REF-RELATED** (contains "ref", "refs", "pattern", "patterns", "convention", "standard"):
+  1. **PROVISION-RELATED** (design without implementing):
+     → route to c3-provision skill (e.g., "provision X", "design X architecture", "plan X", "envision X", "architect X")
+  2. **REF-RELATED** (contains "ref", "refs", "pattern", "patterns", "convention", "standard"):
      → MUST route to c3-ref skill (e.g., "what ref", "show refs", "what patterns")
-  2. **CHANGES** (add/modify/remove/fix/refactor/implement):
+  3. **CHANGES** (add/modify/remove/fix/refactor/implement):
      → route to c3-alter skill
-  3. **QUESTIONS** (where/what/how/explain about components):
+  4. **QUESTIONS** (where/what/how/explain about components):
      → route to c3-query skill
-  4. **NO .c3/** directory:
+  5. **NO .c3/** directory:
      → route to onboard skill
 
   AUDIT MODE: Use when user asks to "audit architecture", "audit C3", "run C3 audit", "run audit",
@@ -35,13 +37,14 @@ This skill is the **primary entry point** for C3 tasks. Route based on intent:
 
 | User Says | Intent | Route To | Agent Chain |
 |-----------|--------|----------|-------------|
+| "provision/design/plan/envision/architect X" | Design-only | `/c3-provision` | (inline, stops at ADR) |
 | "where/what/how/explain/show me" | Question | `/c3-query` | c3-navigator → c3-summarizer |
 | "add/modify/remove/fix/refactor/implement" | Change | `/c3-alter` | c3-orchestrator → c3-analysis → c3-synthesizer → c3-dev |
 | "pattern/convention/standard/ref/how should we" | Pattern | `/c3-ref` | (inline) |
 | "audit/validate/check/verify/sync" | Audit | this skill | → c3-content-classifier |
 | (no .c3/ directory) | Initialize | `/onboard` | (inline) |
 
-**When unclear:** Ask "Do you want to explore (query), change (alter), manage patterns (ref), or audit?"
+**When unclear:** Ask "Do you want to explore (query), design only (provision), change and implement (alter), manage patterns (ref), or audit?"
 
 ---
 

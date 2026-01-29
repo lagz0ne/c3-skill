@@ -29,6 +29,7 @@ Before proceeding, use Glob to find and Read these files:
 1. `**/references/skill-harness.md` - Red flags and complexity rules
 2. `**/references/layer-navigation.md` - How to traverse C3 docs
 3. `**/references/adr-template.md` - ADR structure (for Stage 4)
+4. `**/references/component-lifecycle.md` - Provisioned status model (for Stage 2b)
 
 ## Core Loop (All Stages)
 
@@ -80,6 +81,37 @@ Change Progress:
 | Ask | Are docs accurate? Recent code changes not documented? |
 | Synthesize | List affected components, their current behavior, dependencies |
 | Review | User confirms or corrects |
+
+---
+
+## Stage 2b: Detect Provisioned Components
+
+Check if component has a provisioned version:
+
+```bash
+# Check for provisioned version
+ls .c3/provisioned/c3-*/c3-XXX-*.md 2>/dev/null
+```
+
+**If provisioned version exists:**
+
+```
+AskUserQuestion:
+  question: "Found provisioned design for this component at .c3/provisioned/... Implement from this design?"
+  options:
+    - "Yes - use provisioned design as starting point"
+    - "No - start fresh (will supersede provisioned)"
+```
+
+**On "Yes":**
+1. Load provisioned doc as starting point for analysis
+2. ADR frontmatter: add `implements: <provisioned-adr>`
+3. After implementation complete, promote provisioned docs
+
+**On "No":**
+1. Proceed with normal alter flow (fresh analysis)
+2. After implementation, delete orphaned provisioned file
+3. Update provisioned ADR: `superseded-by: <this-adr>` with note "Design not used"
 
 ---
 
@@ -161,6 +193,30 @@ If change affects a pattern:
 Load `**/references/component-categories.md` for the full Foundation vs Feature vs Ref rules.
 
 **Key rule:** Components (Foundation/Feature) MUST have `## Code References`. Refs must NOT. If you cannot name a concrete file, create a ref instead.
+
+### Promoting Provisioned Components
+
+If implementing a provisioned component (detected in Stage 2b):
+
+1. **Move file:**
+   ```bash
+   mv .c3/provisioned/c3-X/c3-XXX.md .c3/c3-X/c3-XXX.md
+   ```
+
+2. **Update frontmatter:**
+   ```yaml
+   status: active    # Changed from provisioned
+   # Remove supersedes: field if present
+   # Remove adr: field (or update to implementation ADR)
+   ```
+
+3. **Add Code References section** pointing to implemented files
+
+4. **Update provisioned ADR:**
+   ```yaml
+   status: superseded
+   superseded-by: <implementation-adr-id>
+   ```
 
 ---
 

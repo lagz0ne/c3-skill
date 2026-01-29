@@ -5,10 +5,15 @@ description: |
 
   MUST use this skill when user wants to DESIGN or PLAN without implementing:
   - "provision X", "provision a component", "provision new service"
-  - "design X", "design the architecture for X", "design a component"
+  - "design the architecture for X", "design a component"
   - "plan X", "plan a new service", "plan the architecture"
   - "document X architecture", "architect X"
   - "envision X", "sketch X architecture"
+
+  DO NOT use this skill if prompt contains:
+  - "pattern", "patterns" → route to c3-ref
+  - "ref", "refs" → route to c3-ref
+  - "convention", "standard" → route to c3-ref
 
   Key indicator: User wants documentation/design output, NOT code changes.
   Requires .c3/ to exist. Creates ADR with status: provisioned.

@@ -43,6 +43,8 @@ date: YYYY-MM-DD
 affects: [c3-0, c3-1]
 approved-files: []
 base-commit:        # Captured when status becomes accepted
+implements:         # Link to provisioned ADR (for implementation ADRs)
+superseded-by:      # Link to implementation ADR (when this ADR is superseded)
 ---
 
 # [Decision Title]
@@ -127,9 +129,12 @@ verification:
 | `proposed` | Awaiting review | Files NOT editable | Not set |
 | `accepted` | Ready for implementation | All code editable | Captured (HEAD at acceptance) |
 | `implemented` | Changes applied, verified | Gate relaxed | Used for verification |
+| `provisioned` | Design complete, no code yet | Files NOT editable | Not set |
 | `superseded` | Replaced by another ADR | Files NOT editable | N/A |
 
 ## Lifecycle
+
+### Implementation Path
 
 ```
 proposed → accepted → implemented
@@ -146,3 +151,18 @@ When ADR is accepted:
 2. Execute plan
 3. Run audit
 4. Mark ADR as `implemented`
+
+### Provisioning Path (Design-Only)
+
+```
+proposed → accepted → provisioned
+              ↓
+        Create component docs in .c3/provisioned/
+              ↓
+        DONE (no code execution)
+```
+
+When provisioned ADR is later implemented:
+1. Create new implementation ADR with `implements: <provisioned-adr>`
+2. Follow implementation path
+3. Mark provisioned ADR as `superseded` with `superseded-by: <impl-adr>`

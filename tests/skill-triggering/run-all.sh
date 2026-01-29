@@ -25,11 +25,17 @@ run_test() {
 }
 
 # NOTE: Routing behavior:
+# - Provision questions → c3-provision skill
 # - Query questions → c3-navigator agent
 # - Alter questions → c3-orchestrator agent
 # - Ref questions → c3-ref skill
 # - Audit → c3 skill
 # - No .c3/ → onboard skill
+
+# Provision routing tests → c3-provision skill
+run_test "c3-provision" "$PROMPTS_DIR/provision-new.txt"
+run_test "c3-provision" "$PROMPTS_DIR/provision-design.txt"
+run_test "c3-provision" "$PROMPTS_DIR/provision-plan.txt"
 
 # Query routing tests → c3-navigator agent
 run_test "c3-navigator" "$PROMPTS_DIR/query-where-simple.txt"

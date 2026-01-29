@@ -5,6 +5,43 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.8.0] - 2026-01-29
+
+### Added
+- **c3-provision skill**: Architecture-first workflow for designing components before implementation
+  - Supports "provision", "design", "plan", "envision", "architect" trigger words
+  - Creates provisioned ADRs that can be promoted to accepted when ready to implement
+  - Detects and promotes provisioned components in c3-alter
+- **Context propagation via CLAUDE.md files**: New approach to ensure Claude loads architecture context
+  - `/c3 apply` command generates CLAUDE.md files in Code Reference directories
+  - Solves subagent context loss (CLAUDE.md loads at session start for all agents)
+  - Phase 10 audit check verifies CLAUDE.md presence and freshness
+  - Minimal pointer template with c3-generated block markers for safe regeneration
+- **Provisioned ADR status**: New ADR lifecycle stage between draft and accepted
+  - `provisioned-by` and `supersedes` fields for ADR linking
+  - Component lifecycle reference documentation
+- **Build system**: Self-contained skills build with Codex target
+  - Generates standalone skill files for distribution
+  - CI workflow documentation
+- **Test framework**: Skill triggering test infrastructure
+  - 18 test prompts covering all routing scenarios
+  - Fixture creation script and test helpers
+
+### Changed
+- **c3-navigator**: Filters provisioned components by default, surfaces on explicit request
+- **c3-transition**: Supports superseded status for provisioned ADRs
+- **Audit Phase 10**: New Context Files check for CLAUDE.md validation
+- **Proactive pattern awareness**: CLAUDE.md files now recommended over hooks (hooks fire too late)
+
+### Fixed
+- **Routing**: All 18 skill triggering tests pass
+  - Ref keywords now prioritized over provision
+  - Negative examples added to c3-navigator for ref-related prompts
+  - Explicit keyword filter in c3-navigator
+- **ADR lifecycle**: Correct flow with accepted before provisioned
+- **Supersedes paths**: Fixed relative path from provisioned/ directory
+- **Transition scoping**: Implements check now scoped to current ADR only
+
 ## [3.7.0] - 2026-01-26
 
 ### Added

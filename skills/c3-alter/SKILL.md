@@ -212,11 +212,7 @@ If implementing a provisioned component (detected in Stage 2b):
 
 3. **Add Code References section** pointing to implemented files
 
-4. **Update provisioned ADR:**
-   ```yaml
-   status: superseded
-   superseded-by: <implementation-adr-id>
-   ```
+**Note:** The provisioned ADR is superseded by `c3-adr-transition` agent AFTER verification passes in Stage 7, not during execution. This ensures we don't mark the design as superseded if implementation fails verification.
 
 ---
 

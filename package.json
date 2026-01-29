@@ -6,7 +6,8 @@
   "scripts": {
     "build": "bun run scripts/build.ts",
     "build:claude-code": "bun run scripts/build.ts --target=claude-code",
-    "build:opencode": "bun run scripts/build.ts --target=opencode"
+    "build:opencode": "bun run scripts/build.ts --target=opencode",
+    "build:codex": "bun run scripts/build.ts --target=codex"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.5",

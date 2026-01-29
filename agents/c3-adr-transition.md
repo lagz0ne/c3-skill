@@ -90,6 +90,31 @@ Add the verification results section to the end of the ADR file.
 Change frontmatter:
 - `status: accepted` → `status: implemented`
 
+### Step 4b: Supersede Provisioned ADR (if applicable)
+
+Check if the implementation ADR has an `implements:` field:
+
+```bash
+grep "^implements:" .c3/adr/adr-*.md
+```
+
+**If `implements:` links to a provisioned ADR:**
+
+1. Read the provisioned ADR
+2. Update its frontmatter:
+   ```yaml
+   status: superseded
+   superseded-by: <implementation-adr-id>
+   ```
+3. Update its Status section:
+   ```markdown
+   ## Status
+
+   **Superseded** - YYYY-MM-DD
+
+   This design was implemented via [adr-YYYYMMDD-implementation](./adr-YYYYMMDD-implementation.md).
+   ```
+
 ### Step 5: Report Summary
 
 Output:
@@ -114,6 +139,12 @@ Output:
 **If ADR already implemented:**
 - Check status before transition
 - If already `implemented`, inform user and skip
+
+**If ADR status is `provisioned`:**
+- This is a design-only ADR
+- Cannot transition directly to `implemented` (no code to verify)
+- Inform user: "This is a provisioned (design-only) ADR. To implement, create a new ADR with `implements: <this-adr>` via c3-alter."
+- Exit gracefully
 
 ## Example Output
 

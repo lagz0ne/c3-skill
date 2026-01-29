@@ -111,6 +111,16 @@ From this, identify:
 - Which container(s) are relevant to the question
 - What component docs to examine
 
+**Provisioned Content:**
+- **Default:** Search only `.c3/c3-*` (active components)
+- **If user asks "what's planned?", "show provisioned", "what's designed?":** Include `.c3/provisioned/`
+- **If querying a component that has a provisioned version:** Warn user
+
+```
+Note: Component c3-201-auth has a provisioned update at .c3/provisioned/c3-2-api/c3-201-auth.md
+Would you like to see the planned changes?
+```
+
 ### Step 3: Dispatch Summarizer
 
 Use the Task tool to dispatch `c3-summarizer` sub-agent:
@@ -206,6 +216,8 @@ For simple questions, use conversational format without all sections.
 | Question not in docs | State "not documented", offer to search code |
 | Spans multiple containers | List all involved, show cross-container diagram |
 | Very complex question | Break into sub-questions, answer each |
+| Component has provisioned version | Warn user, offer to show planned changes |
+| User asks about planned/provisioned | Include `.c3/provisioned/` in search |
 
 ## Anti-Patterns
 

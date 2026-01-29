@@ -26,12 +26,12 @@ const ROOT = import.meta.dir.replace("/scripts", "")
 // TARGET CONFIGURATION
 // ─────────────────────────────────────────────
 
-type Target = 'claude-code' | 'opencode';
+type Target = 'claude-code' | 'opencode' | 'codex';
 
 interface TargetConfig {
   name: string;
   skillsDir: string;
-  agentsDir: string;
+  agentsDir: string | null;  // null = no agents support
   namespace: string;
   outputDir: string;
 }
@@ -47,9 +47,16 @@ const TARGETS: Record<Target, TargetConfig> = {
   'opencode': {
     name: 'opencode',
     skillsDir: 'skill',
-    agentsDir: 'agent',
+    agentsDir: '.opencode/agents',  // OpenCode expects agents here
     namespace: 'opencode-c3',
     outputDir: 'dist/opencode-c3',
+  },
+  'codex': {
+    name: 'codex',
+    skillsDir: 'skill',
+    agentsDir: null,  // Codex doesn't support subagents
+    namespace: 'codex-c3',
+    outputDir: 'dist/codex-c3',
   },
 };
 
@@ -419,22 +426,31 @@ async function generateClaudePluginManifest(DIST: string): Promise<void> {
   console.log("  ✓ .claude-plugin/plugin.json generated")
 }
 
-async function generatePackageJson(DIST: string): Promise<void> {
+async function generatePackageJson(DIST: string, targetName: string): Promise<void> {
   const claudePluginPath = join(ROOT, ".claude-plugin/plugin.json")
   const claudePlugin = JSON.parse(await readFile(claudePluginPath, "utf-8"))
 
-  const pkg = {
-    name: "opencode-c3",
+  const packageName = targetName === 'codex' ? 'codex-c3' : 'opencode-c3'
+  const keywords = targetName === 'codex'
+    ? ["codex", "skill", "c3", "architecture"]
+    : ["opencode", "plugin", "c3", "architecture"]
+
+  const pkg: Record<string, unknown> = {
+    name: packageName,
     version: claudePlugin.version || "1.0.0",
     description: claudePlugin.description || "",
     main: "./plugin.js",
     type: "module",
     author: claudePlugin.author || {},
     license: claudePlugin.license || "MIT",
-    keywords: ["opencode", "plugin", "c3", "architecture"],
-    peerDependencies: {
+    keywords,
+  }
+
+  // Add peer dependencies only for OpenCode (not Codex)
+  if (targetName === 'opencode') {
+    pkg.peerDependencies = {
       "@opencode-ai/plugin": "*",
-    },
+    }
   }
 
   await writeFile(join(DIST, "package.json"), JSON.stringify(pkg, null, 2))
@@ -465,7 +481,18 @@ async function verifyTarget(
       "plugin.js",
       "references",
       ...skills.map(s => `${config.skillsDir}/${s}/SKILL.md`),
-      ...agents.map(a => `${config.agentsDir}/${a}.md`),
+    )
+    // Add agents only if there are any
+    if (config.agentsDir && agents.length > 0) {
+      required.push(...agents.map(a => `${config.agentsDir}/${a}.md`))
+    }
+  } else if (config.name === 'codex') {
+    // Codex: skills only, no agents
+    required.push(
+      "package.json",
+      "plugin.js",
+      "references",
+      ...skills.map(s => `${config.skillsDir}/${s}/SKILL.md`),
     )
   }
 
@@ -521,9 +548,14 @@ async function buildTarget(config: TargetConfig): Promise<boolean> {
   console.log("Skills:")
   const skills = await transformSkillsForTarget(config, DIST)
 
-  // Transform agents
-  console.log("\nAgents:")
-  const agents = await transformAgentsForTarget(config, DIST)
+  // Transform agents (if target supports them)
+  let agents: string[] = []
+  if (config.agentsDir) {
+    console.log("\nAgents:")
+    agents = await transformAgentsForTarget(config, DIST)
+  } else {
+    console.log("\nAgents: (skipped - target doesn't support subagents)")
+  }
 
   // Copy shared assets (templates, scripts, hooks, commands)
   console.log("\nAssets:")
@@ -534,10 +566,10 @@ async function buildTarget(config: TargetConfig): Promise<boolean> {
 
   // Target-specific generation
   console.log("\nManifest:")
-  if (config.name === 'opencode') {
+  if (config.name === 'opencode' || config.name === 'codex') {
     await copyReferences(DIST)
     await compilePlugin(DIST)
-    await generatePackageJson(DIST)
+    await generatePackageJson(DIST, config.name)
   } else if (config.name === 'claude-code') {
     await generateClaudePluginManifest(DIST)
   }

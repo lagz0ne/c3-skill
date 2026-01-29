@@ -146,3 +146,65 @@ claude plugin install c3-skill
 - `.claude-plugin/plugin.json` paths (`"skills": "skills"`) are relative to the repo root
 - When installed, the whole repo is copied to `~/.claude/plugins/cache/.../version/`
 - The directory name for `--plugin-dir` becomes the skill prefix
+
+---
+
+# Build System
+
+## Multi-Target Build
+
+The build system creates self-contained skill packages for multiple platforms:
+
+```bash
+bun run build              # Build all targets
+bun run build:claude-code  # Claude Code only
+bun run build:opencode     # OpenCode only
+bun run build:codex        # Codex only
+```
+
+## Targets
+
+| Target | Skills | Agents | Output |
+|--------|--------|--------|--------|
+| claude-code | ✓ bundled refs | ✓ `agents/` | `dist/claude-code/` |
+| opencode | ✓ bundled refs | ✓ `.opencode/agents/` | `dist/opencode-c3/` |
+| codex | ✓ bundled refs | ✗ (not supported) | `dist/codex-c3/` |
+
+## Self-Contained Skills
+
+Each skill gets its referenced files bundled:
+
+**Before (source):**
+```markdown
+Load `**/references/skill-harness.md`
+```
+
+**After (built):**
+```markdown
+Load `references/skill-harness.md`
+```
+```
+skills/c3-query/
+├── SKILL.md          ← paths rewritten
+└── references/
+    └── skill-harness.md  ← bundled
+```
+
+## CI/CD
+
+- **Push to main** → Triggers `build-dist.yml`
+- **build-dist.yml** → Builds all targets, pushes to `dist` branch
+- **dist branch** → Default branch for installs
+
+## Versioning
+
+All version files must stay in sync:
+
+| File | Purpose |
+|------|---------|
+| `.claude-plugin/plugin.json` | Source of truth |
+| `.claude-plugin/marketplace.json` | Marketplace listing |
+| `VERSION` | Triggers GitHub release |
+| `package.json` | Dev repo version |
+
+Use `/release` command to bump versions consistently.

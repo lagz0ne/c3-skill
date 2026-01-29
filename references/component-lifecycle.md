@@ -59,7 +59,7 @@ adr: adr-20260129-rate-limiter
 ---
 id: c3-201-auth
 status: provisioned
-supersedes: ../c3-2-api/c3-201-auth.md
+supersedes: ../../c3-2-api/c3-201-auth.md
 adr: adr-20260129-oauth-support
 ---
 ```

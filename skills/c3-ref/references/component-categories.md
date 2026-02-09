@@ -16,7 +16,7 @@ Actual code that other components import. **You can point to a real file.**
 
 Examples: `logger.ts`, `db-client.ts`, `auth-provider.ts`, `event-bus.ts`
 
-**Must have** `## Code References` section pointing to actual files.
+**`## Code References`** marks this component as implemented — it has a code counterpart.
 
 ## Feature
 
@@ -24,30 +24,33 @@ Business logic composition. Glues Foundation + Refs together.
 
 Examples: `checkout-flow.ts`, `user-registration.ts`, `order-processor.ts`
 
-**Must have** `## Code References` section pointing to actual files.
+**`## Code References`** marks this component as implemented — it has a code counterpart.
 
 ## Ref
 
-Guidance only, no code. Describes how/when/why to do something.
+Guidance and conventions. Describes how/when/why to do something.
 
-Examples: `ref-logging.md` (when to log), `ref-error-handling.md` (error format)
+May include **code examples as golden references** — canonical snippets that implementation code should be reviewed against. These are prescriptive patterns, not an implementation counterpart.
 
-**Must NOT have** `## Code References` section.
+Examples: `ref-logging.md` (when to log, with canonical log format snippet), `ref-error-handling.md` (error format with example response shape)
+
+**No `## Code References`** — refs have no code counterpart. They ARE the deliverable.
 
 ## The Canonical Split
 
 | What | Category | Has Code References? |
 |------|----------|---------------------|
 | `logger.ts` implementation | Foundation | YES |
-| "When to log at DEBUG vs INFO" | Ref | NO |
+| "When to log at DEBUG vs INFO" (may include golden code examples) | Ref | NO |
 | "Checkout flow using logger + error conventions" | Feature | YES |
 
 ## Hard Rules (LLM MUST FOLLOW)
 
 1. **If you cannot name a concrete file, you cannot create a component doc.**
-2. **Components MUST have `## Code References`. Refs MUST NOT.**
-3. **Never create component files for conventions** — use refs.
+2. **`## Code References` = implemented.** Components have it when code exists. Provisioned components don't (yet). Refs never do.
+3. **Refs MAY contain code examples** as golden references — canonical patterns to review against.
+4. **Never create component files for conventions** — use refs.
 
 ## Audit Trigger
 
-If a component doc has no `## Code References`, it is misclassified. Move to `refs/` and remove the component ID.
+If an implemented component doc has no `## Code References`, it is either misclassified (move to `refs/`) or still provisioned (add `status: provisioned` to frontmatter).

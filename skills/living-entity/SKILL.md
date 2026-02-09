@@ -2,82 +2,74 @@
 name: living-entity
 description: |
   Read-only impact assessment for proposed changes using C3 docs.
-  Delegates to container, component, and ref subagents for constraint-checked analysis.
+  Activates a team lead who coordinates specialized workers for constraint-checked analysis.
   Advisory only — does NOT make changes (route to c3-change for implementation).
-  Use when: "what would break", "assess impact", "affected components", "is this safe".
+
+  This skill should be used when the user asks to:
+  - "assess C3 impact of X", "what would break in C3 if..."
+  - "check C3 constraints for X", "is this change safe per C3 docs"
+  - "affected C3 components", "which C3 containers are impacted by X"
+  - "living entity analysis", "impact assessment against C3 architecture"
 
   <example>
-  user: "what would break if I replaced the auth system?"
+  user: "assess C3 impact if I replace the auth system"
   assistant: "Using living-entity to assess architectural impact."
   </example>
 
-  <example>
-  user: "assess impact of adding retry logic to payment processing"
-  assistant: "Using living-entity to check constraints and affected components."
-  </example>
-
-  DO NOT use for: questions without change context (c3-query), implementation (c3-change), patterns (c3-ref).
+  DO NOT use for: "what is X" / "explain X" (c3-query), implementation (c3-change), patterns (c3-ref).
   Requires .c3/ to exist.
 ---
 
-# Living Entity: Context Tier
+# Living Entity: Impact Assessment Team
 
-You are the **system-level orchestrator** of a living entity — an architecture that is self-aware through its C3 documentation. You read `.c3/` docs dynamically and delegate to tiered subagents.
+Assess the architectural impact of proposed changes through a team of agents that read C3 docs dynamically.
 
 ## Precondition: C3 Adopted
 
-**STOP if `.c3/README.md` does not exist.** Do NOT proceed until `.c3/README.md` is confirmed.
+**STOP if `.c3/README.md` does not exist.**
 
 If missing:
 > This project doesn't have C3 architecture docs yet. Use the c3-onboard skill to create documentation first.
 
-## Step 1: Read the topology
+## How It Works
 
-1. Find `.c3/` directory (Glob for `.c3/TOC.md`)
-2. Read `.c3/TOC.md` — extract all containers, components, refs, ADRs (including ADR paths)
-3. Read `.c3/README.md` — understand the system context (actors, linkages)
-4. Glob `.c3/adr/adr-*.md` — collect ADR file paths for Step 2
+This skill creates an Agent Team with a lead and specialized workers:
 
-## Step 2: Identify affected entities
+```
+You (user)
+  ↕ conversation
+Team Lead (living-entity-lead agent, delegate mode)
+  ↕ coordinates
+Workers:
+  - Container workers (read container docs, delegate to component workers)
+  - Component workers (inspect code against docs + refs)
+  - Ref workers (check convention compliance)
+```
 
-From the change request, determine:
-- Which **containers** are involved (match by domain keywords, code paths)
-- Which **refs** apply (match ref titles to the change domain)
-- Which **ADRs** might conflict (scan ADR titles for related decisions)
+## Setup
 
-Read any relevant ADRs fully — they may contain decisions that constrain or conflict with the proposed change.
+Tell the lead about the change you're considering. The lead will:
 
-## Step 3: Delegate (parallel)
+1. **Read topology** — Parse `.c3/TOC.md` and `README.md` for system structure
+2. **Identify entities** — Match the change to affected containers, refs, and ADRs
+3. **Delegate** — Spawn container + ref workers in parallel for deep inspection
+4. **Synthesize** — Collect advisories into a unified impact assessment
 
-Spawn container and ref subagents **in parallel**.
+## Team Configuration
 
-### Container subagents
+The lead operates in delegate mode (coordination only, never modifies code or docs). The lead tries `TeamCreate` first for full Agent Teams coordination; if unavailable, falls back to `Task` with `subagent_type`. Either way, workers read C3 docs directly.
 
-For each affected container, use the Task tool with `subagent_type: "living-entity-container"`:
+### Worker Tiers
 
-> You are the [Container Name] container ([container-id]).
-> Read: .c3/[container-dir]/README.md
->
-> Change request: [user's change request]
->
-> Identify affected components and delegate to living-entity-component for each.
-> Include applicable ref paths in your delegation prompts.
-> Synthesize component advisories into a container-level assessment.
+| Worker | Role |
+|--------|------|
+| Container | Reads container README, identifies affected components, spawns component workers |
+| Component | Inspects actual code against component doc + applicable refs |
+| Ref | Checks whether the change complies with or violates conventions |
 
-### Ref subagents
+## Assessment Output
 
-For each applicable cross-cutting ref, use the Task tool with `subagent_type: "living-entity-ref"`:
-
-> You are ref: [ref-id] ([ref title]).
-> Read: .c3/ref/[ref-file].md
->
-> Change request: [user's change request]
->
-> Assess whether this change complies with or violates your conventions.
-
-## Step 4: Synthesize
-
-Collect all container and ref advisories. Present a unified assessment:
+The lead synthesizes all worker advisories into:
 
 1. **Affected Entities** — which containers and components, with reasons
 2. **Constraint Chain** — all conventions, refs, and ADRs that apply
@@ -85,21 +77,9 @@ Collect all container and ref advisories. Present a unified assessment:
 4. **Risks** — edge cases, relationship impacts, ADR conflicts
 5. **Recommended Approach** — step-by-step plan respecting all constraints
 
-## Progress Checklist
+## Routing
 
-```
-Impact Assessment:
-- [ ] Precondition: .c3/ exists
-- [ ] Step 1: Topology read (TOC.md, README.md)
-- [ ] Step 2: Affected entities identified
-- [ ] Step 3: Container + ref subagents delegated (parallel)
-- [ ] Step 4: Unified assessment synthesized
-```
-
-## Rules
-
-- **Always read .c3/ fresh** — never assume topology from previous requests
-- **Delegate, don't guess** — let container/component agents inspect their own domains
-- **Parallel when possible** — spawn container and ref agents concurrently
-- **Surface ADR conflicts** — if a prior decision contradicts this change, flag it prominently
-- **Advisory only** — you synthesize and advise, you do not make code changes
+- Want to implement after assessment? → c3-change skill
+- Architecture questions without change context → c3-query skill
+- Pattern management → c3-ref skill
+- Standalone audit → c3-audit skill

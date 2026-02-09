@@ -5,6 +5,23 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.0] - 2026-02-09
+
+### Added
+- **living-entity-lead agent**: Team lead for living-entity skill — orchestrates impact assessment via Agent Teams with adaptive `TeamCreate`/`Task` fallback
+- **Golden code examples in refs**: Refs may now include canonical code snippets as prescriptive review standards
+
+### Changed
+- **living-entity skill**: Restructured from skill-as-orchestrator to Agent Teams pattern (skill describes team, lead agent orchestrates)
+- **`## Code References` semantics**: Clarified as implementation indicator — present = implemented, absent on component = provisioned, never on refs
+- **Ref scope**: Refs are scoped conventions (apply where stated), not global enforcement
+- **c3-ref skill**: Trigger phrase tightened ("document this as a standard"), Mode: List now instructs Grep for counting citings, discovery relaxed to 2-3 Grep calls
+- **c3-lead agent**: Added `TeamCreate` and `SendMessage` to tool list to match Agent Teams body text
+- **living-entity worker agents**: Delegation attribution corrected to reference lead agent, `.c3/ref/` paths fixed to `.c3/refs/`
+
+### Removed
+- **experiments/living-entity/generated/**: Outdated standalone plugin export (superseded by main agents)
+
 ## [4.0.0] - 2026-02-09
 
 ### Breaking Changes

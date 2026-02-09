@@ -1,20 +1,18 @@
 {
   "name": "c3-design",
-  "version": "3.7.0",
+  "version": "4.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "bun run scripts/build.ts",
-    "build:claude-code": "bun run scripts/build.ts --target=claude-code",
-    "build:opencode": "bun run scripts/build.ts --target=opencode",
-    "build:codex": "bun run scripts/build.ts --target=codex"
+    "check-refs": "bun run scripts/check-refs.ts",
+    "fix-refs": "bun run scripts/check-refs.ts --fix"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.5",
     "yaml": "^2.7.0"
   },
   "devDependencies": {
-    "bun-types": "latest",
-    "@opencode-ai/plugin": "latest"
+    "bun-types": "latest"
   }
 }

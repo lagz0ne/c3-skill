@@ -1,1 +1,1 @@
-modify the auth middleware to support API keys in addition to OAuth
+modify the auth component in C3 to support API keys in addition to OAuth

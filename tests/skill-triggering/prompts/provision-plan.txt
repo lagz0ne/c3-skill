@@ -1,1 +1,1 @@
-plan a new caching layer - don't implement yet, just document the design
+provision a new caching layer in the C3 docs - don't implement yet, just document the design

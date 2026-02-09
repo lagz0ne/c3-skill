@@ -1,1 +1,1 @@
-add rate limiting to the API backend
+add a rate limiting component to the API container

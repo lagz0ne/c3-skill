@@ -5,6 +5,52 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0] - 2026-02-09
+
+### Breaking Changes
+- **Architecture overhaul**: Reduced from 7 agents + 7 skills to 5 agents + 6 skills
+- **Commands eliminated**: All slash commands (`/c3`, `/onboard`, `/query`, `/alter`, `/apply`) removed — routing is now entirely through skill descriptions
+- **Hooks removed**: `hooks.json` and all hook scripts deleted — context propagation moved to CLAUDE.md
+- **Legacy skills removed**: `c3` (router), `c3-alter`, `c3-provision`, `onboard` skills replaced by `c3-change`, `c3-onboard`, `c3-audit`
+- **Legacy agents removed**: `c3-orchestrator`, `c3-analysis`, `c3-synthesizer`, `c3-summarizer`, `c3-content-classifier`, `c3-adr-transition`, `c3-dev` — replaced by `c3-lead` and `c3-navigator`
+- **Legacy references removed**: `component-lifecycle.md`, `component-types.md`, `container-patterns.md`, `content-separation.md`, `implementation-guide.md`, `plan-template.md`, `v3-structure.md`
+- **Templates simplified**: Removed `container-database.md`, `container-queue.md`, `container-service.md`, `external.md`, `external-aspect.md` — single container and component templates now
+
+### Added
+- **Living Entity**: Architecture-aware impact assessment system
+  - `living-entity` skill: context-tier orchestrator that reads `.c3/` dynamically
+  - `living-entity-container` agent: container-tier subagent that identifies affected components
+  - `living-entity-component` agent: component-tier subagent that inspects code and enforces conventions
+  - `living-entity-ref` agent: ref-tier subagent that validates reference pattern compliance
+  - Four-layer constraint chain: code ownership → behavioral refs → relationships → ADR history
+  - Tiered delegation: context → container → component + ref (parallel)
+- **c3-lead agent**: Team lead for architectural changes — orchestrates 4-phase workflow (Understand → ADR → Execute → Audit)
+- **c3-change skill**: ADR-first change workflow replacing c3-alter and c3-provision
+- **c3-onboard skill**: Staged Socratic discovery replacing the old onboard skill
+- **c3-audit skill**: Architecture documentation audit with bundled references
+- **Self-contained skills**: Each skill bundles its own `references/` and `templates/` subdirectories
+- **check-refs script**: `bun run check-refs` validates bundled references match shared source; `bun run fix-refs` auto-fixes drift
+- **constraint-chain.md reference**: Documents the four-layer constraint model
+
+### Changed
+- **c3-navigator agent**: Streamlined description (3968 → 657 chars), added targeted examples for reliable routing
+- **c3-query skill**: Simplified with bundled references, outcome-focused instructions
+- **c3-ref skill**: Simplified with bundled references and templates
+- **Build system**: Simplified `build.ts`, removed `build-toc.sh` and legacy scripts
+- **Templates**: Goal-first structure throughout, simplified to essentials
+- **Skill descriptions**: All use `<example>` blocks and `DO NOT use for` routing guards for reliable triggering
+
+### Removed
+- All slash commands (`commands/` directory)
+- All hooks (`hooks/hooks.json`, gate/verifier/context-loader scripts)
+- `src/opencode/plugin.ts` (OpenCode support)
+- 13 legacy scripts (c3-gate, c3-verifier, c3-init, etc.)
+- `build-toc.sh` and `pre-commit-toc` hook
+
+### Documentation
+- **CLAUDE.md**: Updated with skill development philosophy, build system docs, plugin structure checklist
+- **Skill descriptions**: All under 1024-char limit with examples and routing exclusions
+
 ## [3.8.0] - 2026-01-29
 
 ### Added

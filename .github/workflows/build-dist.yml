@@ -22,24 +22,21 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Build all targets
+      - name: Check references
+        run: bun run check-refs
+
+      - name: Run gate tests
+        run: ./scripts/test-c3-gate
+
+      - name: Build
         run: bun run build
 
-      - name: Verify builds
+      - name: Verify build
         run: |
-          echo "=== Claude Code ==="
           ls -la dist/claude-code/
           ls -la dist/claude-code/.claude-plugin/
           ls -la dist/claude-code/skills/
-
-          echo "=== OpenCode ==="
-          ls -la dist/opencode-c3/
-          ls -la dist/opencode-c3/skill/
-          ls -la dist/opencode-c3/.opencode/agents/
-
-          echo "=== Codex ==="
-          ls -la dist/codex-c3/
-          ls -la dist/codex-c3/skill/
+          ls -la dist/claude-code/agents/
 
       - name: Configure git
         run: |
@@ -58,15 +55,11 @@ jobs:
           # Enable dotglob to include .claude-plugin
           shopt -s dotglob
 
-          # Move Claude Code output to root
+          # Move output to root
           mv dist/claude-code/* .
 
-          # Keep OpenCode and Codex as subdirectories
-          mv dist/opencode-c3 opencode
-          mv dist/codex-c3 codex
-
-          # Cleanup
-          rm -rf dist node_modules src .github scripts templates migrations references .claude .claude-plugin docs package.json bun.lock* tsconfig.json CLAUDE.md
+          # Cleanup source-only artifacts (keep scripts/ and .claude-plugin/ from dist output)
+          rm -rf dist node_modules src .github templates references .claude docs package.json bun.lock* tsconfig.json CLAUDE.md
 
           # Add README for dist branch
           cp /tmp/dist-readme.md README.md
@@ -78,4 +71,3 @@ jobs:
           git add -A
           git commit -m "Build from ${GITHUB_SHA::7} [skip ci]"
           git push origin dist-temp:dist --force
-

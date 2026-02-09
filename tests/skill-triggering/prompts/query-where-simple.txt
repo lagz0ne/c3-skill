@@ -1,1 +1,1 @@
-where is authentication handled in this project?
+where is authentication handled? check the C3 docs

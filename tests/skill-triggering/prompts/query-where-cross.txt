@@ -1,1 +1,1 @@
-where does the frontend call the API backend? show me the connection points
+which C3 components connect the frontend to the API backend?

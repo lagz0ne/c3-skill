@@ -7,30 +7,21 @@ Shared reference documents used across skills, agents, and templates.
 | File | Purpose | Used By |
 |------|---------|---------|
 | `skill-harness.md` | Behavioral constraints, complexity rules, red flags | All skills |
-| `layer-navigation.md` | How to traverse C3 docs (Context → Container → Component) | Query, Alter skills |
-| `content-separation.md` | Canonical definition for component vs ref content separation | Onboard, Audit, Classifier |
-| `audit-checks.md` | Full audit procedure with 9 phases | c3 skill (Audit mode) |
+| `layer-navigation.md` | How to traverse C3 docs (Context → Container → Component) | c3-query, c3-change skills |
+| `audit-checks.md` | Full audit procedure with 10 phases | c3-audit skill |
+
+## Content References
+
+| File | Purpose | Used By |
+|------|---------|---------|
+| `component-categories.md` | Foundation vs Feature vs Ref categorization | c3-onboard, c3-audit |
+| `onboard-ref-extraction.md` | Guidance for extracting refs during onboarding | c3-onboard skill |
 
 ## Workflow References
 
 | File | Purpose | Used By |
 |------|---------|---------|
-| `adr-template.md` | ADR structure and lifecycle | Alter skill, Orchestrator agent |
-| `plan-template.md` | Implementation plan structure | Alter skill |
-| `implementation-guide.md` | Code implementation patterns | Orchestrator agent |
-
-## Type References
-
-| File | Purpose | Used By |
-|------|---------|---------|
-| `component-types.md` | Foundation vs Feature categorization, external types | Onboard skill |
-| `container-patterns.md` | Container component patterns (internal, linkage, adapter) | Onboard skill |
-
-## Structure Reference
-
-| File | Purpose | Used By |
-|------|---------|---------|
-| `v3-structure.md` | C3 v3 directory structure specification | Layer navigation |
+| `adr-template.md` | ADR structure and lifecycle | c3-change skill |
 
 ## Loading References
 

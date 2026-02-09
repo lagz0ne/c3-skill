@@ -40,19 +40,22 @@ run_claude "$PROMPT" "$TEST_DIR" 180 > "$LOG_FILE" || true
 echo ""
 echo "=== Results ==="
 
-# Try skill first, then agent
-if grep -qE '"skill":"([^"]*:)?'"$EXPECTED"'"' "$LOG_FILE" 2>/dev/null; then
-    echo "[PASS] Skill '$EXPECTED' triggered"
-    exit 0
-elif grep -qE '"subagent_type":"c3-skill:'"$EXPECTED"'"' "$LOG_FILE" 2>/dev/null; then
-    echo "[PASS] Agent '$EXPECTED' triggered"
-    exit 0
-else
-    echo "[FAIL] Neither skill nor agent '$EXPECTED' triggered"
-    echo ""
-    echo "Skills triggered:"
-    grep -o '"skill":"[^"]*"' "$LOG_FILE" 2>/dev/null | sort -u || echo "  (none)"
-    echo "Agents triggered:"
-    grep -o '"subagent_type":"[^"]*"' "$LOG_FILE" 2>/dev/null | sort -u || echo "  (none)"
-    exit 1
-fi
+# Support comma-separated alternatives (e.g., "c3-query,c3-navigator")
+IFS=',' read -ra EXPECTED_LIST <<< "$EXPECTED"
+for exp in "${EXPECTED_LIST[@]}"; do
+    if grep -qE '"skill":"([^"]*:)?'"$exp"'"' "$LOG_FILE" 2>/dev/null; then
+        echo "[PASS] Skill '$exp' triggered"
+        exit 0
+    elif grep -qE '"subagent_type":"c3-skill:'"$exp"'"' "$LOG_FILE" 2>/dev/null; then
+        echo "[PASS] Agent '$exp' triggered"
+        exit 0
+    fi
+done
+
+echo "[FAIL] None of '$EXPECTED' triggered"
+echo ""
+echo "Skills triggered:"
+grep -o '"skill":"[^"]*"' "$LOG_FILE" 2>/dev/null | sort -u || echo "  (none)"
+echo "Agents triggered:"
+grep -o '"subagent_type":"[^"]*"' "$LOG_FILE" 2>/dev/null | sort -u || echo "  (none)"
+exit 1

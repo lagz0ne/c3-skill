@@ -1,1 +1,1 @@
-design the architecture for a notification service
+design the architecture for a notification service component - provision it in C3

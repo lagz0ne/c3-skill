@@ -1,1 +1,1 @@
-explain the middleware stack and how requests are processed
+explain c3-101 from the C3 docs - what does it do and what does it connect to?

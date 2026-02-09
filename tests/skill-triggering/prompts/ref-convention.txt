@@ -1,1 +1,1 @@
-document our error handling convention - what patterns do we use?
+create a C3 ref for our error handling convention - document it as a pattern

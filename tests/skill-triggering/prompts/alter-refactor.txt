@@ -1,1 +1,1 @@
-refactor the payment flows to extract common validation logic
+refactor the payment component - create an ADR and update the C3 architecture

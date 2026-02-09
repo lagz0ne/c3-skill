@@ -2,22 +2,51 @@
 name: c3-query
 description: |
   Navigates C3 architecture docs and explores corresponding code to answer architecture questions.
-  Use when the user asks "where is X", "how does X work", "explain X", "show me the architecture",
-  "find component", "what handles X", "what constraints apply to X", or references C3 IDs (c3-0, c3-1, adr-*).
-  Requires .c3/ to exist. For changes, route to c3-alter instead.
+
+  Use when the user asks:
+  - "where is X", "how does X work", "explain X", "show me the architecture"
+  - "find component", "what handles X", "diagram of X", "visualize X"
+  - "describe X", "list components", "trace X", "flow of X"
+  - References C3 IDs (c3-0, c3-1, adr-*)
+
+  <example>
+  Context: Project with .c3/ directory
+  user: "explain what c3-101 does and how it connects to other components"
+  assistant: "Using c3-query to navigate the architecture docs."
+  </example>
+
+  <example>
+  Context: Project with .c3/ directory
+  user: "show me a diagram of the C3 architecture"
+  assistant: "Using c3-query to generate an architecture overview."
+  </example>
+
+  DO NOT use for changes (route to c3-change).
+  DO NOT use for pattern artifact management — listing, creating, updating refs (route to c3-ref).
+  Requires .c3/ to exist.
 ---
 
 # C3 Query - Architecture Navigation
 
 Navigate C3 docs AND explore corresponding code. Full context = docs + code.
 
-**Relationship to c3-navigator agent:** This skill defines the query workflow. The `c3-skill:c3-navigator` agent implements this workflow with sub-agent dispatch for token efficiency. Use the agent when spawning via Task tool; use this skill directly for inline execution.
+**Relationship to c3-navigator agent:** This skill defines the query workflow. The `c3-navigator` agent implements this workflow. Use the agent when spawning via Task tool; use this skill directly for inline execution.
+
+## Precondition: C3 Adopted
+
+**STOP if `.c3/README.md` does not exist.**
+
+If missing:
+> This project doesn't have C3 docs yet. Use the c3-onboard skill to create documentation first.
+
+Do NOT proceed until `.c3/README.md` is confirmed.
 
 ## REQUIRED: Load References
 
-Before proceeding, use Glob to find and Read these files:
-1. `**/references/skill-harness.md` - Red flags and complexity rules
-2. `**/references/layer-navigation.md` - How to traverse C3 docs
+Before proceeding, Read these files (relative to this skill's directory):
+1. `references/skill-harness.md` - Red flags and complexity rules
+2. `references/layer-navigation.md` - How to traverse C3 docs
+3. `references/constraint-chain.md` - Constraint chain query procedure (for "what constraints apply to X")
 
 ## Query Flow
 
@@ -54,16 +83,24 @@ Query Progress:
 
 ---
 
-## Step 1-2: Navigate and Extract
+## Step 1: Navigate Layers
 
 Follow layer navigation: **Context → Container → Component**
 
 | Doc Section | Extract For Code |
 |-------------|------------------|
 | Component name | Class/module names |
-| `## References` | Direct file paths, symbols |
+| `## Code References` | Direct file paths, symbols |
 | Technology | Framework patterns |
 | Entry points | Main files, handlers |
+
+---
+
+## Step 2: Extract References
+
+From the identified component(s), extract:
+- File paths from `## Code References`
+- Related patterns from `## Related Refs`
 
 ### Reference Lookup
 
@@ -78,7 +115,7 @@ If query relates to patterns/conventions:
 Use extracted references:
 - **Glob**: `src/auth/**/*.ts`
 - **Grep**: Class names, functions
-- **Read**: Specific files from `## References`
+- **Read**: Specific files from `## Code References`
 
 ---
 
@@ -95,99 +132,7 @@ Use extracted references:
 
 ## Constraint Chain Query
 
-When user asks about rules, constraints, or boundaries for a layer:
-
-### Flow
-
-```
-Identify Layer → Read Upward Chain → Collect Cited Refs → Synthesize Chain
-```
-
-### Steps
-
-1. **Identify target layer** from query (c3-NNN, c3-N, or c3-0)
-
-2. **Read upward through hierarchy:**
-   - If component: read component → container → context
-   - If container: read container → context
-   - If context: read context only
-
-3. **At each level, extract:**
-   - Explicit constraints ("components MUST...", "MUST NOT...")
-   - Implicit boundaries (what the layer is responsible for)
-   - Layer-specific rules
-
-4. **Collect cited refs:**
-   - From component's `Related Refs` section
-   - From container's pattern references
-   - From context's system-wide patterns
-
-5. **Read each cited ref** and extract key rules
-
-### Response Format
-
-```
-**Constraint Chain for c3-NNN (Component Name)**
-
-**Context Constraints (c3-0):**
-- [System-wide rule 1]
-- [System-wide rule 2]
-
-**Container Constraints (c3-N):**
-- [Container boundary 1]
-- [Coordination rule]
-
-**Cited Pattern Constraints:**
-- **ref-X:** [Key rules from this pattern]
-- **ref-Y:** [Key rules from this pattern]
-
-**Layer Boundaries:**
-This component MAY:
-- [Permitted responsibilities]
-
-This component MUST NOT:
-- [Prohibited actions - from higher layers]
-
-**Visualization:**
-[Mermaid diagram showing constraint inheritance]
-```
-
-### Example
-
-```
-User: "What constraints apply to c3-201?"
-
-1. Read c3-201-auth-middleware.md → cites ref-error-handling, ref-auth
-2. Read c3-2-api/README.md → "Middleware must be stateless"
-3. Read .c3/README.md → "All auth uses RS256"
-4. Read ref-error-handling.md → "Use correlation IDs"
-5. Read ref-auth.md → "Tokens expire in 24h"
-
-Response:
-**Constraint Chain for c3-201 (Auth Middleware)**
-
-**Context Constraints (c3-0):**
-- All authentication must use RS256 signing
-
-**Container Constraints (c3-2-api):**
-- Middleware must be stateless
-- Request context via headers, not shared state
-
-**Cited Pattern Constraints:**
-- **ref-error-handling:** Use correlation IDs in all error responses
-- **ref-auth:** Token expiry 24h, refresh via /auth/refresh
-
-**Layer Boundaries:**
-This component MAY:
-- Validate JWT tokens
-- Reject unauthorized requests
-- Set request context for downstream handlers
-
-This component MUST NOT:
-- Store session state (container: stateless middleware)
-- Define new auth schemes (context: RS256 only)
-- Handle business logic errors (use ref-error-handling pattern)
-```
+For constraint queries ("what constraints apply to X?"), follow the procedure in `references/constraint-chain.md`. Read upward through the hierarchy, collect cited refs, and synthesize the full constraint chain.
 
 ## Edge Cases
 
@@ -195,7 +140,7 @@ This component MUST NOT:
 |-----------|--------|
 | Topic not in C3 docs | Search code directly, suggest documenting if significant |
 | Spans multiple containers | List all affected containers, explain relationships |
-| Docs seem stale | Note discrepancy, suggest `/c3 audit` or `/alter` to fix |
+| Docs seem stale | Note discrepancy, suggest running c3-audit or c3-change skill to fix |
 
 ---
 
@@ -261,3 +206,5 @@ Error handling follows a centralized pattern documented in refs.
 
 **Related:** <navigation hints>
 ```
+
+For constraint chain queries, use the response format in `references/constraint-chain.md` instead.

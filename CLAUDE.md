@@ -67,11 +67,8 @@ Run before every release to ensure plugin loads correctly:
 |-------|----------|------|
 | `name` field exists | Yes | `.claude-plugin/plugin.json` |
 | NO explicit component paths | Yes | `.claude-plugin/plugin.json` (auto-discovery only) |
-| Commands have YAML frontmatter with `description` | Yes | `commands/*.md` |
 | Skills have `SKILL.md` with frontmatter | Yes | `skills/*/SKILL.md` |
 | Agents have YAML frontmatter with `name`, `description` | Yes | `agents/*.md` |
-| Hook scripts exist at referenced paths | Yes | `scripts/*` |
-| Hooks use `${CLAUDE_PLUGIN_ROOT}` for paths | Yes | `hooks/hooks.json` |
 
 ## plugin.json Template
 
@@ -85,19 +82,16 @@ Run before every release to ensure plugin loads correctly:
 ```
 
 Components are auto-discovered from standard directories:
-- `commands/` - Slash commands
 - `skills/` - Agent skills
 - `agents/` - Subagent definitions
-- `hooks/hooks.json` - Event handlers
 
 ## Common Issues
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| Components not loading | Explicit path declarations in plugin.json | REMOVE `commands`, `skills`, `agents`, `hooks` fields - use auto-discovery |
+| Components not loading | Explicit path declarations in plugin.json | REMOVE `skills`, `agents` fields - use auto-discovery |
 | Plugin not loading | Version mismatch in `installed_plugins.json` | Update path/version in `~/.claude/plugins/installed_plugins.json` |
 | Plugin marked orphaned | `.orphaned_at` file in cache | Remove the file from cached plugin directory |
-| Hooks not firing | hooks.json not in `hooks/` directory | Move to `hooks/hooks.json` (auto-discovered) |
 
 ## Validation Steps
 
@@ -117,11 +111,9 @@ c3-design/                    # Repository root
 │   └── marketplace.json     # Marketplace publishing config
 ├── skills/                  # Skill definitions (at root)
 ├── agents/                  # Agent definitions (at root)
-├── commands/                # Slash commands (at root)
-├── hooks/                   # Hook configurations (at root)
 ├── references/              # Shared reference docs
 ├── templates/               # Doc templates
-└── scripts/                 # Helper scripts
+└── scripts/                 # Build scripts
 ```
 
 **Testing locally with --plugin-dir:**
@@ -151,49 +143,28 @@ claude plugin install c3-skill
 
 # Build System
 
-## Multi-Target Build
-
-The build system creates self-contained skill packages for multiple platforms:
-
 ```bash
-bun run build              # Build all targets
-bun run build:claude-code  # Claude Code only
-bun run build:opencode     # OpenCode only
-bun run build:codex        # Codex only
+bun run build        # Build to dist/claude-code/
+bun run check-refs   # Verify bundled references match shared source
+bun run fix-refs     # Copy from shared references/ to fix drift
 ```
-
-## Targets
-
-| Target | Skills | Agents | Output |
-|--------|--------|--------|--------|
-| claude-code | ✓ bundled refs | ✓ `agents/` | `dist/claude-code/` |
-| opencode | ✓ bundled refs | ✓ `.opencode/agents/` | `dist/opencode-c3/` |
-| codex | ✓ bundled refs | ✗ (not supported) | `dist/codex-c3/` |
 
 ## Self-Contained Skills
 
-Each skill gets its referenced files bundled:
+Each skill bundles its own `references/` and `templates/` subdirectories. The shared `references/` directory at the repo root is the source of truth — use `bun run fix-refs` after editing shared files.
 
-**Before (source):**
-```markdown
-Load `**/references/skill-harness.md`
-```
-
-**After (built):**
-```markdown
-Load `references/skill-harness.md`
-```
 ```
 skills/c3-query/
-├── SKILL.md          ← paths rewritten
+├── SKILL.md
 └── references/
-    └── skill-harness.md  ← bundled
+    ├── skill-harness.md
+    └── layer-navigation.md
 ```
 
 ## CI/CD
 
 - **Push to main** → Triggers `build-dist.yml`
-- **build-dist.yml** → Builds all targets, pushes to `dist` branch
+- **build-dist.yml** → Builds plugin, pushes to `dist` branch
 - **dist branch** → Default branch for installs
 
 ## Versioning

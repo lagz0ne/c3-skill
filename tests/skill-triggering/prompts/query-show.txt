@@ -1,1 +1,1 @@
-show me the system architecture overview
+show me the C3 architecture overview with containers and components from the C3 docs

@@ -1,1 +1,1 @@
-implement caching for the query services to improve performance
+implement caching for the query component - use C3 change workflow with ADR

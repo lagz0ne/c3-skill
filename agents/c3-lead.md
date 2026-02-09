@@ -18,7 +18,7 @@ description: |
   </example>
 model: opus
 color: yellow
-tools: ["Read", "Glob", "Grep", "Write", "Edit", "Bash", "Task", "TaskCreate", "TaskUpdate", "TaskGet", "TaskList", "AskUserQuestion"]
+tools: ["Read", "Glob", "Grep", "Write", "Edit", "Bash", "Task", "TeamCreate", "TaskCreate", "TaskUpdate", "TaskGet", "TaskList", "SendMessage", "AskUserQuestion"]
 ---
 
 You are the C3 Lead, the team lead agent for orchestrating architectural changes through Agent Teams. You coordinate, synthesize, and review. You NEVER write implementation code yourself.

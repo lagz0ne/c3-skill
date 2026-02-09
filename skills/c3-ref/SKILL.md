@@ -1,13 +1,13 @@
 ---
 name: c3-ref
 description: |
-  Manages cross-cutting patterns and conventions as first-class architecture artifacts.
+  Manages scoped patterns and conventions as first-class architecture artifacts.
 
   This skill should be used when the user asks to:
   - "add a pattern", "document this convention", "create a ref", "update ref-X"
   - "evolve this pattern", "what patterns exist", "which components use ref-X"
   - "list refs", "show refs", "list patterns"
-  - "standardize this approach", "make this a convention", "enforce this across the codebase"
+  - "standardize this approach", "make this a convention", "document this as a standard"
 
   <example>
   Context: Project with .c3/ directory
@@ -17,12 +17,12 @@ description: |
 
   DO NOT use when "pattern" or "ref" is merely descriptive (e.g., "explain the auth flow pattern" → c3-query).
   DO NOT use for removing/deprecating refs (route to c3-change with ADR).
-  Requires .c3/ to exist. Refs are authoritative constraints - violations require explicit override.
+  Requires .c3/ to exist. Refs apply where their scope states — violations require explicit override.
 ---
 
 # C3 Ref - Pattern Management
 
-Cross-cutting patterns (refs) are **authoritative constraints**. They define how things should be done system-wide. This skill makes refs first-class citizens with proper workflows.
+Refs are **scoped conventions** — they define how things should be done where their scope applies (a component, a container, or a protocol across layers). This skill makes refs first-class citizens with proper workflows.
 
 ## Precondition: C3 Adopted
 
@@ -37,7 +37,7 @@ Do NOT proceed until `.c3/README.md` is confirmed.
 
 Load `references/component-categories.md` for the full Foundation vs Feature vs Ref rules.
 
-**Key rule for refs:** Refs have NO `## Code References` section. If it needs one, it's a component.
+**Key rule for refs:** Refs have NO `## Code References` section — they have no code counterpart (`## Code References` marks a component as implemented). Refs MAY include code examples as **golden references** — canonical snippets that implementation code should be reviewed against.
 
 ## REQUIRED: Load References
 
@@ -81,7 +81,7 @@ Extract from the user's prompt:
 
 Create `.c3/refs/ref-{slug}.md` using `templates/ref.md` template. Fill Choice and Why sections from what the user told you. Do NOT search the codebase first — the user's description is sufficient for the initial draft.
 
-**Step 2: Discover Usage (BRIEF, max 2 Grep calls)**
+**Step 2: Discover Usage (BRIEF, 2-3 Grep calls)**
 
 Quick codebase scan to find components using this pattern. Do NOT exhaustively explore — just identify the main users for the citing step.
 
@@ -217,7 +217,7 @@ For each, read and extract:
 - `id`
 - `title`
 - `goal`
-- Count of citings
+- Count of citings (Grep `.c3/` for `ref-{slug}` in `c3-*/c3-*.md` to count citing components)
 
 ### Response Format
 

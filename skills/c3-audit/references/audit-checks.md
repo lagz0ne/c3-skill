@@ -185,22 +185,23 @@ For each Container:
 
 | Category | Has Code? | Example |
 |----------|-----------|---------|
-| **Foundation** (component) | YES - actual implementation | `logger.ts`, `db-client.ts` |
-| **Feature** (component) | YES - business composition | `checkout-flow.ts` |
-| **Ref** (pattern) | NO - guidance/convention only | when to log, error format |
+| **Foundation** (component) | YES — `## Code References` marks it as implemented | `logger.ts`, `db-client.ts` |
+| **Feature** (component) | YES — `## Code References` marks it as implemented | `checkout-flow.ts` |
+| **Ref** (pattern) | No `## Code References` (no code counterpart). May include golden code examples. | when to log, error format |
 
 **The Code References Test:**
-- Component with `## Code References` → VALID (Foundation or Feature)
-- Component WITHOUT `## Code References` → VIOLATION (should be a Ref)
-- Ref with `## Code References` → VIOLATION (should be a Component)
+- Component with `## Code References` → implemented (Foundation or Feature)
+- Component WITHOUT `## Code References` → either provisioned (`status: provisioned`) or misclassified (should be a Ref)
+- Ref with `## Code References` → VIOLATION (should be a Component — refs have no code counterpart)
+- Ref with code examples in body → VALID (golden references for review)
 
 **The Split Test:**
 | If documenting... | Create | Has Code Refs? |
 |-------------------|--------|----------------|
-| Actual logger implementation | Component | YES |
-| When/how to use logger | Ref | NO |
-| Error classes code | Component | YES |
-| Error response conventions | Ref | NO |
+| Actual logger implementation | Component | YES (implemented) |
+| When/how to use logger | Ref | NO (may have golden code examples) |
+| Error classes code | Component | YES (implemented) |
+| Error response conventions | Ref | NO (may have golden code examples) |
 
 #### Step 1: Identify Technologies in Use
 

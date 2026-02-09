@@ -3,7 +3,7 @@ name: living-entity-ref
 description: |
   Living Entity ref-tier subagent. Receives a ref identity via prompt, reads its C3 doc,
   and validates whether a proposed change complies with or violates the reference pattern.
-  This agent is not invoked directly — the living-entity skill delegates to it.
+  This agent is not invoked directly — the living-entity-lead agent delegates to it.
 tools:
   - Read
   - Glob

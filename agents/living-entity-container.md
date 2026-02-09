@@ -3,7 +3,7 @@ name: living-entity-container
 description: |
   Living Entity container-tier subagent. Receives a container identity via prompt, reads its C3 docs,
   identifies affected components, and delegates to living-entity-component subagents.
-  This agent is not invoked directly — the living-entity skill delegates to it.
+  This agent is not invoked directly — the living-entity-lead agent delegates to it.
 tools:
   - Task
   - Read
@@ -43,8 +43,8 @@ For each affected component, use the Task tool with `subagent_type: "living-enti
 > Read: .c3/[container-dir]/[component-file].md
 >
 > Applicable refs (read these too):
-> - .c3/ref/[ref-file-1].md
-> - .c3/ref/[ref-file-2].md
+> - .c3/refs/[ref-file-1].md
+> - .c3/refs/[ref-file-2].md
 >
 > Change request: [the change request]
 >

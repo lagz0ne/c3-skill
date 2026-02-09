@@ -30,11 +30,18 @@ KEY SECTIONS (use what serves your Goal):
 - Scope: Where it applies and where it doesn't
 - Override: How to deviate from this choice
 
+CODE EXAMPLES AS GOLDEN REFERENCES:
+- Refs MAY include code examples showing the canonical pattern
+- These are prescriptive: "code should look like THIS"
+- They serve as review standards, not implementation pointers
+- Keep examples minimal — show the pattern, not a full implementation
+
 ANTI-GOALS:
 - Don't duplicate official documentation (link instead)
 - Don't include business/domain logic (that goes in components)
 - Don't document technology generically (document YOUR chosen option)
 - Don't create overly broad refs (split by concern if needed)
+- Don't add a `## Code References` section (refs have no code counterpart — that section marks a component as implemented)
 
 GUARDRAILS:
 - Must have: Goal section

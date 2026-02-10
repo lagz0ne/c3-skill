@@ -5,6 +5,20 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.2.0] - 2026-02-10
+
+### Added
+- **Persistent entity agents**: c3-lead and living-entity-lead now spawn named, persistent agents per C3 entity (container, component, ref) that stay alive across phases and operations within a session
+- **Entity roster pattern**: Leads check team config before spawning — reuse existing agents via `SendMessage` instead of creating duplicates
+- **`/c3-change` command**: Slash command for easy invocation of architectural change workflow
+- **`/living-entity` command**: Slash command for impact assessment (marked experimental)
+
+### Changed
+- **c3-lead agent**: Replaced disposable analyst/reviewer/implementer workers with persistent entity agents. Lead absorbs adversarial reviewer role (cross-entity challenge at synthesis). Phase 1 uses entity self-assessment, Phase 3 messages existing agents for implementation
+- **living-entity-lead agent**: Updated to spawn persistent named entity agents with roster check pattern. Both leads share `c3-session` team name so entity agents are reused across assessment and implementation
+- **c3-change skill**: Added explicit `## Execution` section with HARD RULE to spawn c3-lead as first action (fixes unreliable team startup)
+- **living-entity skill**: Added explicit `## Execution` section with HARD RULE to spawn living-entity-lead as first action
+
 ## [4.1.0] - 2026-02-09
 
 ### Added

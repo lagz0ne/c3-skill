@@ -46,18 +46,29 @@ Workers:
   - Ref workers (check convention compliance)
 ```
 
-## Setup
+## Execution
 
-Tell the lead about the change you're considering. The lead will:
+**HARD RULE: Your FIRST action must be to spawn the living-entity-lead agent.** Do not read C3 docs yourself, do not create teams yourself, do not assess impact yourself. The lead handles everything.
 
+Spawn the lead:
+```
+Task tool:
+  subagent_type: "c3-skill:living-entity-lead"
+  prompt: "<pass the user's full change request / question here>"
+  mode: "delegate"
+```
+
+The lead will:
 1. **Read topology** — Parse `.c3/TOC.md` and `README.md` for system structure
 2. **Identify entities** — Match the change to affected containers, refs, and ADRs
 3. **Delegate** — Spawn container + ref workers in parallel for deep inspection
 4. **Synthesize** — Collect advisories into a unified impact assessment
 
+The lead communicates back when it needs clarification. Relay these to the user and pass their responses back.
+
 ## Team Configuration
 
-The lead operates in delegate mode (coordination only, never modifies code or docs). The lead tries `TeamCreate` first for full Agent Teams coordination; if unavailable, falls back to `Task` with `subagent_type`. Either way, workers read C3 docs directly.
+The lead operates in delegate mode (coordination only, never modifies code or docs). The lead creates its own Agent Team via `TeamCreate` and spawns workers into it. Workers read C3 docs directly.
 
 ### Worker Tiers
 

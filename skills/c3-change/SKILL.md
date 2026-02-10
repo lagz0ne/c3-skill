@@ -45,18 +45,29 @@ Workers:
   - Auditor (Phase 4: verify docs vs code)
 ```
 
-## Setup
+## Execution
 
-Tell the lead about your change. The lead will:
+**HARD RULE: Your FIRST action must be to spawn the c3-lead agent.** Do not read C3 docs yourself, do not create teams yourself, do not write ADRs yourself. The lead handles everything.
 
-1. **Understand** — Spawn analyst + reviewer to investigate impact
+Spawn the lead:
+```
+Task tool:
+  subagent_type: "c3-skill:c3-lead"
+  prompt: "<pass the user's full change request here>"
+  mode: "delegate"
+```
+
+The lead will:
+1. **Understand** — Read C3 docs, spawn analyst + reviewer workers
 2. **ADR** — Write Architecture Decision Record with Work Breakdown
-3. **Execute** — Decompose into tasks, spawn implementers
+3. **Execute** — Decompose into tasks, spawn implementer workers
 4. **Audit** — Spawn auditor to verify C3 docs match code
+
+The lead communicates back when it needs user input (e.g., ADR approval, provision gate). Relay these to the user and pass their responses back.
 
 ## Team Configuration
 
-The lead operates in delegate mode (coordination only, never writes code). Workers are spawned as Agent Teams workers when available, or as Task subagents otherwise. Either way, workers are full Claude Code sessions that read C3 docs directly.
+The lead operates in delegate mode (coordination only, never writes code). The lead creates its own Agent Team via `TeamCreate` and spawns workers into it. Workers are full Claude Code sessions that read C3 docs directly.
 
 ## Phase Details
 

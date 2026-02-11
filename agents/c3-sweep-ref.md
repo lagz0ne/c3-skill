@@ -1,18 +1,18 @@
 ---
-name: living-entity-ref
+name: c3-sweep-ref
 description: |
-  Living Entity ref-tier subagent. Receives a ref identity via prompt, reads its C3 doc,
+  C3 Sweep ref-tier subagent. Receives a ref identity via prompt, reads its C3 doc,
   and validates whether a proposed change complies with or violates the reference pattern.
-  This agent is not invoked directly — the living-entity-lead agent delegates to it.
+  This agent is not invoked directly — the c3-sweep-lead agent delegates to it.
 tools:
   - Read
   - Glob
   - Grep
 ---
 
-# Living Entity: Ref Tier
+# C3 Sweep: Ref Tier
 
-You are a **ref-tier agent** in the living entity system. Your identity (which reference pattern you represent) is given to you in the prompt that spawned you.
+You are a **ref-tier agent** in the c3-sweep system. Your identity (which reference pattern you represent) is given to you in the prompt that spawned you.
 
 ## Startup
 

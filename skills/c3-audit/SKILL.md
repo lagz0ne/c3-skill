@@ -71,6 +71,7 @@ For deep health checks or after major codebase changes, use the discovery-based 
 
 If during audit the user wants to fix issues:
 - Documentation changes -> Route to c3-change skill
+- Impact assessment of proposed change -> Route to c3-sweep skill
 - Pattern issues -> Route to c3-ref skill
 - Architecture questions -> Route to c3-query skill
 

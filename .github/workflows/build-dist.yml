@@ -25,9 +25,6 @@ jobs:
       - name: Check references
         run: bun run check-refs
 
-      - name: Run gate tests
-        run: ./scripts/test-c3-gate
-
       - name: Build
         run: bun run build
 

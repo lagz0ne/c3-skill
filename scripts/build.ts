@@ -107,14 +107,20 @@ async function copyTemplates(): Promise<void> {
 // ─────────────────────────────────────────────
 
 async function generateManifest(): Promise<void> {
-  const srcPath = join(ROOT, ".claude-plugin/plugin.json")
-  const manifest = JSON.parse(await readFile(srcPath, "utf-8"))
-
   const destDir = join(DIST, ".claude-plugin")
   await mkdir(destDir, { recursive: true })
-  await writeFile(join(destDir, "plugin.json"), JSON.stringify(manifest, null, 2))
 
+  const pluginPath = join(ROOT, ".claude-plugin/plugin.json")
+  const plugin = JSON.parse(await readFile(pluginPath, "utf-8"))
+  await writeFile(join(destDir, "plugin.json"), JSON.stringify(plugin, null, 2))
   console.log("  ✓ .claude-plugin/plugin.json generated")
+
+  const marketplacePath = join(ROOT, ".claude-plugin/marketplace.json")
+  if (existsSync(marketplacePath)) {
+    const marketplace = JSON.parse(await readFile(marketplacePath, "utf-8"))
+    await writeFile(join(destDir, "marketplace.json"), JSON.stringify(marketplace, null, 2))
+    console.log("  ✓ .claude-plugin/marketplace.json generated")
+  }
 }
 
 // ─────────────────────────────────────────────

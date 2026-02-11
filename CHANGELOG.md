@@ -5,6 +5,13 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.3.0] - 2026-02-11
+
+### Changed
+- **Renamed `living-entity` to `c3-sweep`**: All skills, agents, and commands now use the `c3-` prefix consistently. `living-entity` skill becomes `c3-sweep`, agents become `c3-sweep-lead`, `c3-sweep-container`, `c3-sweep-component`, `c3-sweep-ref`
+- **Cross-skill routing**: c3-change and c3-audit now route to c3-sweep for impact assessment
+- **Version sync**: All version files (plugin.json, marketplace.json, VERSION, package.json) synchronized
+
 ## [4.2.1] - 2026-02-11
 
 ### Fixed

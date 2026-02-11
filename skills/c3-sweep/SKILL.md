@@ -1,28 +1,27 @@
 ---
-name: living-entity
+name: c3-sweep
 description: |
-  Read-only impact assessment for proposed changes using C3 docs.
-  Activates a team lead who coordinates specialized workers for constraint-checked analysis.
+  Sweeps architecture for impact before a change — spawns agents per C3 entity for constraint-checked analysis.
   Advisory only — does NOT make changes (route to c3-change for implementation).
 
   This skill should be used when the user asks to:
   - "assess C3 impact of X", "what would break in C3 if..."
   - "check C3 constraints for X", "is this change safe per C3 docs"
   - "affected C3 components", "which C3 containers are impacted by X"
-  - "living entity analysis", "impact assessment against C3 architecture"
+  - "sweep C3 architecture", "impact assessment against C3 architecture"
 
   <example>
   user: "assess C3 impact if I replace the auth system"
-  assistant: "Using living-entity to assess architectural impact."
+  assistant: "Using c3-sweep to assess architectural impact."
   </example>
 
   DO NOT use for: "what is X" / "explain X" (c3-query), implementation (c3-change), patterns (c3-ref).
   Requires .c3/ to exist.
 ---
 
-# Living Entity: Impact Assessment Team
+# C3 Sweep: Impact Assessment Team
 
-Assess the architectural impact of proposed changes through a team of agents that read C3 docs dynamically.
+Sweep the architecture for impact of proposed changes through a team of agents that read C3 docs dynamically.
 
 ## Precondition: C3 Adopted
 
@@ -38,7 +37,7 @@ This skill creates an Agent Team with a lead and specialized workers:
 ```
 You (user)
   ↕ conversation
-Team Lead (living-entity-lead agent, delegate mode)
+Team Lead (c3-sweep-lead agent, delegate mode)
   ↕ coordinates
 Workers:
   - Container workers (read container docs, delegate to component workers)
@@ -48,12 +47,12 @@ Workers:
 
 ## Execution
 
-**HARD RULE: Your FIRST action must be to spawn the living-entity-lead agent.** Do not read C3 docs yourself, do not create teams yourself, do not assess impact yourself. The lead handles everything.
+**HARD RULE: Your FIRST action must be to spawn the c3-sweep-lead agent.** Do not read C3 docs yourself, do not create teams yourself, do not assess impact yourself. The lead handles everything.
 
 Spawn the lead:
 ```
 Task tool:
-  subagent_type: "c3-skill:living-entity-lead"
+  subagent_type: "c3-skill:c3-sweep-lead"
   prompt: "<pass the user's full change request / question here>"
   mode: "delegate"
 ```

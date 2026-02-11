@@ -117,6 +117,7 @@ Workers surface discoveries to the lead. Lead decides how far to regress. User c
 
 ## Routing
 
+- Impact assessment before change → c3-sweep skill
 - Architecture questions → c3-query skill
 - Pattern management → c3-ref skill
 - Standalone audit → c3-audit skill

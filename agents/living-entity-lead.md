@@ -49,9 +49,9 @@ Entity agents are persistent — once spawned, they stay alive for the entire se
 
 | Entity | Agent type | Named as | Prompt pattern |
 |--------|-----------|----------|----------------|
-| Container | `living-entity-container` | `container:{id}` (e.g. `container:c3-1-api`) | "You are [Container Name]. Read: [doc path]. Assess: [request]" |
-| Component | `living-entity-component` | `component:{id}` (e.g. `component:c3-101-auth`) | "You are [Component Name]. Read: [doc path] + [ref paths]. Assess: [request]" |
-| Ref | `living-entity-ref` | `ref:{id}` (e.g. `ref:error-handling`) | "You are ref [id]. Read: [doc path]. Check compliance: [request]" |
+| Container | `c3-skill:living-entity-container` | `container:{id}` (e.g. `container:c3-1-api`) | "You are [Container Name]. Read: [doc path]. Assess: [request]" |
+| Component | `c3-skill:living-entity-component` | `component:{id}` (e.g. `component:c3-101-auth`) | "You are [Component Name]. Read: [doc path] + [ref paths]. Assess: [request]" |
+| Ref | `c3-skill:living-entity-ref` | `ref:{id}` (e.g. `ref:error-handling`) | "You are ref [id]. Read: [doc path]. Check compliance: [request]" |
 
 ---
 
@@ -85,7 +85,7 @@ Spawn container and ref agents **in parallel**.
 
 #### Container agents
 
-Agent type: `living-entity-container`, named `container:{id}`
+Agent type: `c3-skill:living-entity-container`, named `container:{id}`
 
 ```
 You are the [Container Name] container ([container-id]).
@@ -100,7 +100,7 @@ Synthesize component advisories into a container-level assessment.
 
 #### Ref agents
 
-Agent type: `living-entity-ref`, named `ref:{id}`
+Agent type: `c3-skill:living-entity-ref`, named `ref:{id}`
 
 ```
 You are ref: [ref-id] ([ref title]).

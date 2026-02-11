@@ -5,6 +5,11 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.2.1] - 2026-02-11
+
+### Fixed
+- **Agent spawning broken**: Worker agent types in `living-entity-lead`, `living-entity-container`, and `c3-lead` used unprefixed names (e.g., `living-entity-container`) instead of fully-qualified names (`c3-skill:living-entity-container`), causing all worker agent spawns to fail silently
+
 ## [4.2.0] - 2026-02-10
 
 ### Added

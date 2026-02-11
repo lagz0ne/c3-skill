@@ -56,9 +56,9 @@ Entity agents are the core of this system. Each C3 entity (component, container,
 
 | Entity | Agent type | Named as | Prompt pattern |
 |--------|-----------|----------|----------------|
-| Container | `living-entity-container` | `container:{id}` (e.g. `container:c3-1-api`) | "You are [Container Name]. Read: [doc path]. Assess: [request]" |
-| Component | `living-entity-component` | `component:{id}` (e.g. `component:c3-101-auth`) | "You are [Component Name]. Read: [doc path] + [ref paths]. Assess: [request]" |
-| Ref | `living-entity-ref` | `ref:{id}` (e.g. `ref:error-handling`) | "You are ref [id]. Read: [doc path]. Check compliance: [request]" |
+| Container | `c3-skill:living-entity-container` | `container:{id}` (e.g. `container:c3-1-api`) | "You are [Container Name]. Read: [doc path]. Assess: [request]" |
+| Component | `c3-skill:living-entity-component` | `component:{id}` (e.g. `component:c3-101-auth`) | "You are [Component Name]. Read: [doc path] + [ref paths]. Assess: [request]" |
+| Ref | `c3-skill:living-entity-ref` | `ref:{id}` (e.g. `ref:error-handling`) | "You are ref [id]. Read: [doc path]. Check compliance: [request]" |
 
 Entity agents persist after their work — they go idle and can be re-messaged for subsequent phases or operations.
 

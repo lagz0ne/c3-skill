@@ -37,7 +37,7 @@ From your References table, note which refs apply to the affected components. Th
 
 ### Step 3: Delegate to component tier
 
-For each affected component, use the Task tool with `subagent_type: "living-entity-component"`:
+For each affected component, use the Task tool with `subagent_type: "c3-skill:living-entity-component"`:
 
 > You are [Component Name] ([component-id]), a [category] component of [Container Name].
 > Read: .c3/[container-dir]/[component-file].md

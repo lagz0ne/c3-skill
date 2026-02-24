@@ -65,31 +65,43 @@ Create a new ref from discovered or proposed pattern.
 ### Flow
 
 ```
-Write Ref FIRST → Discover Usage → Update Citings → Create ADR
+Scaffold via CLI → Fill Content → Discover Usage → Update Citings → Create ADR
 ```
 
-**HARD RULE: Your FIRST Write call must be the ref file.** Do not Read any codebase files, do not Grep, do not look at existing refs before writing. Extract the pattern name, goal, and rules directly from the user's prompt. You can read the `templates/ref.md` template (from the references step above), then immediately write the ref file. Refine it AFTER it exists.
+**HARD RULE: Your FIRST Bash call must be `npx -y c3x add ref <slug>`.** Do not Read any codebase files, do not Grep, do not look at existing refs before writing. Extract the pattern name and slug directly from the user's prompt. The CLI creates the file from the template with correct frontmatter and structure.
 
 ### Steps
 
-**Step 1: Write Ref File IMMEDIATELY**
+**Step 1: Scaffold Ref File via CLI**
 
 Extract from the user's prompt:
-- Pattern name → slug: `ref-{slug}`
-- Pattern goal → what it standardizes
-- Key rules → what must be followed
+- Pattern name → slug (e.g., `error-handling`, `retry-pattern`)
 
-Create `.c3/refs/ref-{slug}.md` using `templates/ref.md` template. Fill Choice and Why sections from what the user told you. Do NOT search the codebase first — the user's description is sufficient for the initial draft.
+```bash
+npx -y c3x add ref <slug>
+```
 
-**Step 2: Discover Usage (BRIEF, 2-3 Grep calls)**
+This creates `.c3/refs/ref-{slug}.md` from the template with correct id, frontmatter, and section structure.
+
+**Step 2: Fill Content via Edit**
+
+Use Edit to fill the scaffolded file with content from the user's prompt:
+- `## Goal` → what it standardizes
+- `## Choice` → what option was chosen
+- `## Why` → rationale over alternatives
+- Other sections as relevant
+
+Do NOT search the codebase first — the user's description is sufficient for the initial draft.
+
+**Step 3: Discover Usage (BRIEF, 2-3 Grep calls)**
 
 Quick codebase scan to find components using this pattern. Do NOT exhaustively explore — just identify the main users for the citing step.
 
-**Step 3: Refine Ref (if needed)**
+**Step 4: Refine Ref (if needed)**
 
 If discovery reveals additional details (variations, anti-patterns), update the ref file with an Edit call.
 
-**Step 4: Update Citing Components**
+**Step 5: Update Citing Components**
 
 For each component that uses this pattern:
 
@@ -110,7 +122,7 @@ Example `## Related Refs` table entry:
 
 **Scope:** Only modify `## Related Refs` table. If other content needs changing (e.g., removing duplicated pattern text), route to c3-change.
 
-**Step 5: Create Adoption ADR**
+**Step 6: Create Adoption ADR**
 
 Create mini-ADR at `.c3/adr/adr-YYYYMMDD-ref-{slug}-adoption.md`.
 
@@ -161,8 +173,7 @@ Use `AskUserQuestion` to confirm the change type: "What change do you want to ma
 
 **Step 2: Find All Citings**
 
-Search all `.c3/` docs for the ref ID using the Grep tool:
-- Pattern: `ref-{slug}` in path `.c3/` (recursive)
+Run `npx -y c3x list --json` and find the ref entity by id. The `relationships` field lists all citing components. For deeper searches beyond what the CLI reports, fall back to Grep for `ref-{slug}` in `.c3/`.
 
 List all citing components.
 
@@ -211,13 +222,17 @@ Show all refs in the system.
 
 ### Flow
 
-Use Glob to find all ref files: `.c3/refs/ref-*.md`
+Run `npx -y c3x list --json` via Bash and filter results by `type: "ref"`:
 
-For each, read and extract:
+```bash
+npx -y c3x list --json
+```
+
+From the JSON output, extract for each ref entity:
 - `id`
 - `title`
-- `goal`
-- Count of citings (Grep `.c3/` for `ref-{slug}` in `c3-*/c3-*.md` to count citing components)
+- `frontmatter.goal`
+- `relationships` (citing components from the relationships field)
 
 ### Response Format
 
@@ -238,10 +253,13 @@ Show where a specific ref is used.
 
 ### Flow
 
-Search for citings using the Grep tool:
-- Pattern: `ref-{slug}` in path `.c3/` with glob `c3-*/c3-*.md`
+Run `npx -y c3x list --json` via Bash and find the ref entity by id. The `relationships` field lists all citing components.
 
-Read each citing component doc.
+```bash
+npx -y c3x list --json
+```
+
+From the JSON output, find the entry with `id: "ref-{slug}"` and read its `relationships` to get citing components. Then Read each citing component doc for details.
 
 ### Response Format
 

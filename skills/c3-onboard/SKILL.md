@@ -109,20 +109,17 @@ Onboarding Progress:
 
 **Goal:** Discover EVERYTHING before creating any docs.
 
-### 0.1 Create ADR-000
+### 0.1 Scaffold and Create ADR-000
 
-Create the base .c3 directory structure and ADR-000 directly using Write tool:
+Scaffold the base `.c3/` directory structure using the CLI:
 
-```
-.c3/
-├── adr/
-│   └── adr-00000000-c3-adoption.md
-└── refs/
+```bash
+npx -y c3x init
 ```
 
-Do NOT create `.c3/README.md` or container directories yet — these are created in Stage 1 after discovery is confirmed at Gate 0. This prevents other skills from detecting a partial `.c3/README.md` as "C3 adopted."
+This creates `.c3/` with `config.yaml`, `README.md` (context template), `refs/` subdirectory, and `adr/adr-00000000-c3-adoption.md` (adoption ADR template). It does NOT create container directories — those are created in Stage 1 after discovery is confirmed at Gate 0.
 
-Then create ADR-000 from `templates/adr-000.md` template.
+After init, **Edit** `.c3/adr/adr-00000000-c3-adoption.md` to fill in the adoption ADR content from `templates/adr-000.md` template (discovery tables, workflow diagram, etc.).
 
 ### 0.2 Context Discovery
 
@@ -212,9 +209,7 @@ Before proceeding, verify:
 
 ### 1.1 Context Doc
 
-Create `.c3/README.md` from `context.md` template using discovered args.
-
-Fill:
+`.c3/README.md` was created by `npx -y c3x init` from the context template. **Edit** it to fill in discovered args:
 - Goal section (from PROJECT, GOAL)
 - Abstract Constraints table (system-level non-negotiable requirements)
 - Overview diagram
@@ -224,11 +219,15 @@ Fill:
 
 For EACH container in inventory:
 
-**1.2.1 Create container README**
+**1.2.1 Create container**
 
-Create `.c3/c3-N-{slug}/README.md` from `container.md` template.
+Create the container using the CLI:
 
-Fill:
+```bash
+npx -y c3x add container <slug>
+```
+
+This auto-numbers (c3-N), creates the directory, and generates `README.md` from the container template. After creation, **Edit** `.c3/c3-N-{slug}/README.md` to fill in:
 - Goal section
 - Responsibilities (what this container owns to satisfy context constraints)
 - Complexity Assessment (level + why)
@@ -236,11 +235,17 @@ Fill:
 
 **1.2.2 Create component docs**
 
-For each component in this container:
+For each component in this container, create using the CLI:
 
-Create `.c3/c3-N-{slug}/c3-NNN-{component}.md` from `component.md` template.
+```bash
+# Foundation component (NN = 01-09):
+npx -y c3x add component <slug> --container c3-N
 
-Fill:
+# Feature component (NN = 10+):
+npx -y c3x add component <slug> --container c3-N --feature
+```
+
+This auto-numbers the component (c3-NNN) and generates the file from the component template. After creation, **Edit** `.c3/c3-N-{slug}/c3-NNN-{component}.md` to fill in:
 - Goal section
 - Container Connection
 - Code References section (REQUIRED — list concrete file paths, classes, or modules that implement this component)
@@ -267,11 +272,13 @@ If new component found during documentation:
 
 ### 1.3 Ref Docs
 
-For each ref in inventory:
+For each ref in inventory, create using the CLI:
 
-Create `.c3/refs/ref-{slug}.md` from `ref.md` template.
+```bash
+npx -y c3x add ref <slug>
+```
 
-Fill:
+This creates `.c3/refs/ref-{slug}.md` from the ref template. After creation, **Edit** the file to fill in:
 - Goal section
 - Choice (what option was chosen and context)
 - Why (rationale over alternatives)
@@ -297,6 +304,16 @@ Before proceeding, verify:
 **Goal:** Verify integrity across all docs.
 
 ### 2.1 Integrity Checks
+
+First, run structural validation using the CLI:
+
+```bash
+npx -y c3x check
+```
+
+This detects broken links, orphans, and duplicate IDs automatically. Fix any structural issues reported before proceeding to semantic checks.
+
+Then verify semantic integrity:
 
 | Check | How to Verify |
 |-------|---------------|
@@ -327,11 +344,8 @@ Before marking complete, verify:
 **Before completing, verify structure exists:**
 
 ```bash
-ls .c3/README.md          # Context
-ls .c3/adr/*.md           # At least ADR-000
-ls .c3/c3-*/README.md     # Container(s)
-ls .c3/c3-*/c3-*.md       # Component(s)
-ls .c3/refs/ref-*.md      # Refs (if any discovered)
+npx -y c3x list                    # Visual topology with goals
+npx -y c3x check                   # Structural validation (broken links, orphans)
 ```
 
 **If refs/ is empty:** Most projects have at least one cross-cutting chosen option (error handling, auth, API conventions). If discovery genuinely found none, that's fine — don't create synthetic refs.

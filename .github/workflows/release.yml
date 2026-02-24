@@ -37,8 +37,35 @@ jobs:
             echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
           fi
 
-  release:
+  publish:
     needs: check-version
+    if: needs.check-version.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build
+        run: bun run build && bun run build:cli
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  release:
+    needs: [check-version, publish]
     if: needs.check-version.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -55,18 +82,14 @@ jobs:
       - name: Generate changelog from commits
         id: changelog
         run: |
-          # Get commits since last tag (or all if no tags)
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
 
           if [ -z "$LAST_TAG" ]; then
-            echo "No previous tag found, using all commits"
             COMMITS=$(git log --pretty=format:"- %s" --no-merges)
           else
-            echo "Getting commits since $LAST_TAG"
             COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s" --no-merges)
           fi
 
-          # Write to file for multiline output
           echo "## What's Changed" > changelog.md
           echo "" >> changelog.md
           echo "$COMMITS" >> changelog.md
@@ -77,42 +100,19 @@ jobs:
 
           cat changelog.md
 
-      - name: Create release zips (one per skill)
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Prepare release assets
         run: |
           VERSION=${{ steps.version.outputs.version }}
-          mkdir -p dist
+          mkdir -p dist/release
 
-          # Create one ZIP per skill with SKILL.md at root
-          for skill_dir in skills/*/; do
-            skill_name=$(basename "$skill_dir")
-            zip_name="dist/${skill_name}-v${VERSION}.zip"
-
-            echo "Creating $zip_name..."
-
-            # Create temp dir for this skill
-            tmp_dir=$(mktemp -d)
-
-            # Copy SKILL.md to root of temp dir
-            cp "${skill_dir}SKILL.md" "$tmp_dir/SKILL.md"
-
-            # Copy references (skills may need these)
-            if [ -d "references" ]; then
-              cp -r references "$tmp_dir/"
-            fi
-
-            # Create zip from temp dir
-            (cd "$tmp_dir" && zip -r - .) > "$zip_name"
-
-            rm -rf "$tmp_dir"
-
-            echo "Created: $zip_name"
-            unzip -l "$zip_name"
-            echo ""
-          done
-
-          # Also create full plugin zip for those who want everything
-          FULL_ZIP="dist/c3-skill-full-v${VERSION}.zip"
-          zip -r "$FULL_ZIP" . \
+          # Full plugin zip
+          zip -r "dist/release/c3-skill-full-v${VERSION}.zip" . \
             -x ".git/*" \
             -x ".github/*" \
             -x ".wt/*" \
@@ -121,16 +121,15 @@ jobs:
             -x "*.zip" \
             -x ".gitignore"
 
-          echo "Created full plugin: $FULL_ZIP"
-          ls -la dist/
+          ls -la dist/release/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.version }}
-          name: C3 Skill v${{ steps.version.outputs.version }}
+          name: C3 v${{ steps.version.outputs.version }}
           body_path: changelog.md
-          files: dist/*.zip
+          files: dist/release/*
           draft: false
           prerelease: false
         env:
@@ -142,8 +141,9 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Version**: v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Tag**: v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Published to npm**: c3x@${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Skill ZIPs (one SKILL.md per ZIP)" >> $GITHUB_STEP_SUMMARY
-          for f in dist/*.zip; do
+          echo "### Release Assets" >> $GITHUB_STEP_SUMMARY
+          for f in dist/release/*; do
             echo "- $(basename $f)" >> $GITHUB_STEP_SUMMARY
           done

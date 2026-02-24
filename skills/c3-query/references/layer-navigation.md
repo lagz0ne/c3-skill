@@ -2,7 +2,13 @@
 
 ## Activation Check
 
-Only proceed if `.c3/README.md` exists. Otherwise, suggest the c3-onboard skill.
+Run `npx -y c3x list --json` to load topology. If it fails or returns empty, suggest the c3-onboard skill.
+
+## Discovery via CLI
+
+**Primary discovery:** Use `npx -y c3x list --json` output to identify all entities, their types, relationships, and frontmatter. This replaces manual Glob/Read for discovering what exists.
+
+**Read for depth:** Only use the Read tool when you need body content (prose, Code References, edge cases) from a specific entity already identified in the JSON.
 
 ## Traversal Order
 
@@ -27,27 +33,27 @@ Context (.c3/README.md)
 
 ## Step-by-Step
 
-### 1. Load Context
+### 1. Load Topology (CLI)
 
-Read `.c3/README.md`:
-- Scan inventory for matching container(s)
-- Check linkages for relationship context
+Run `npx -y c3x list --json` to get all entities with id, type, title, path, relationships, and frontmatter. Use this to:
+- Identify all containers, components, refs, and ADRs
+- Match the query to relevant entities by title, type, or relationship
+- Resolve C3 IDs to file paths
+
+### 2. Match Entities (from JSON)
+
+Using the JSON output:
+- Match by entity title, type, or relationships
 - Identify which container(s) own the concept
+- Note component IDs, roles, and inter-entity links
 
-### 2. Load Container(s)
+### 3. Read for Depth (selective)
 
-Read `.c3/c3-N-*/README.md`:
-- Scan component inventory
-- Match by name, category, or description
-- Note component IDs and roles
-- Check fulfillment section
-
-### 3. Load Component(s) (if exists)
-
-Read `.c3/c3-N-*/c3-NNN-*.md`:
-- Implementation details
+Read specific entity files only when body content is needed:
+- Implementation details and prose
 - Edge cases documented
 - Code references (paths, classes, patterns)
+- Fulfillment sections
 
 ## ID-to-Path Quick Reference
 

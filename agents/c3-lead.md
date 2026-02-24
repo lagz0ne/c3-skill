@@ -68,10 +68,11 @@ Entity agents persist after their work — they go idle and can be re-messaged f
 
 Goal: Fully understand the change before any decisions are made.
 
-1. **Read C3 docs** relevant to the change:
-   - `.c3/README.md` for system context
-   - `.c3/TOC.md` for topology (containers, components, refs)
-   - Skim component docs (`.c3/c3-*`) and ref docs (`.c3/refs/`) in the affected area
+1. **Load C3 topology** using the CLI:
+   ```bash
+   npx -y c3x list --json
+   ```
+   This returns the full topology (id, type, title, path, relationships, frontmatter) — use it to identify affected entities. Also read `.c3/README.md` for system context. Skim component docs (`.c3/c3-*`) and ref docs (`.c3/refs/`) in the affected area.
 
 2. **Clarify intent with user** using AskUserQuestion:
    - What problem are they solving?
@@ -101,7 +102,11 @@ Goal: Fully understand the change before any decisions are made.
 
 Goal: Capture the decision in a structured ADR before any code changes.
 
-1. **Write ADR** at `.c3/adr/adr-YYYYMMDD-{slug}.md` with YAML frontmatter:
+1. **Create ADR** using the CLI:
+   ```bash
+   npx -y c3x add adr <slug>
+   ```
+   This creates `.c3/adr/adr-YYYYMMDD-{slug}.md` with template frontmatter. Then **Edit** the file to fill in the full ADR content:
 
    ```markdown
    ---
@@ -155,9 +160,11 @@ Use **AskUserQuestion**: "ADR accepted. How do you want to proceed?" with option
 
 ### If Provision:
 
-1. **Create component docs** in the main `.c3/` tree for each new/changed component in Affected Layers:
-
-   Use the standard component template location (`.c3/c3-N-{slug}/c3-NNN-{component}.md`) with these differences:
+1. **Create component docs** for each new component using the CLI:
+   ```bash
+   npx -y c3x add component <slug> --container c3-N [--feature]
+   ```
+   Then **Edit** the created file with these differences from standard components:
    - Add `status: provisioned` to frontmatter
    - Add `adr: {adr-id}` to frontmatter linking to the provisioning ADR
    - **OMIT** `## Code References` section (no code exists yet)
@@ -224,6 +231,13 @@ Goal: Coordinate implementation through entity agents, ensuring quality at every
 
 4. **Ensure no two tasks target the same files.** If overlap is unavoidable, make them sequential via dependencies.
 
+5. **For tasks that create new C3 entities**, include CLI commands in the task description:
+   ```bash
+   npx -y c3x add component <slug> --container c3-N [--feature]  # New component
+   npx -y c3x add ref <slug>                                      # New ref
+   ```
+   Entity agents use these to scaffold files, then Edit to fill in content.
+
 ### Task Execution
 
 5. **Send tasks to existing entity agents.** The component/container agents from Phase 1 are already alive and have full context. Use `SendMessage` to assign implementation tasks to them — do NOT spawn new workers.
@@ -252,7 +266,13 @@ Goal: Coordinate implementation through entity agents, ensuring quality at every
 
 Goal: Ensure C3 docs reflect the new reality after all changes land.
 
-1. **Spawn auditor worker:**
+1. **Run structural validation** first:
+   ```bash
+   npx -y c3x check
+   ```
+   This detects broken links, orphans, and duplicate IDs. Fix any structural issues before semantic audit.
+
+2. **Spawn auditor worker:**
    ```
    Compare C3 docs vs code changes from this ADR.
    Check:
@@ -263,11 +283,11 @@ Goal: Ensure C3 docs reflect the new reality after all changes land.
    Report: docs that need updates, new patterns observed, stale references.
    ```
 
-2. **Review audit findings.**
+4. **Review audit findings.**
 
-3. **Update C3 docs** as needed (delegate doc updates to the auditor if straightforward, or create tasks for complex updates).
+5. **Update C3 docs** as needed (delegate doc updates to the auditor if straightforward, or create tasks for complex updates).
 
-4. **Transition ADR:** `accepted` -> `implemented`
+6. **Transition ADR:** `accepted` -> `implemented`
 
 ---
 

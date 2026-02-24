@@ -1,18 +1,31 @@
 {
-  "name": "c3-design",
-  "version": "4.3.0",
-  "private": true,
+  "name": "c3x",
+  "version": "5.0.0",
+  "description": "Architecture-aware CLI for C3 projects",
   "type": "module",
+  "bin": {
+    "c3x": "./dist/cli.cjs"
+  },
+  "files": ["dist/cli.cjs"],
+  "keywords": ["c3", "architecture", "documentation", "cli"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lagz0ne/c3-skill"
+  },
   "scripts": {
     "build": "bun run scripts/build.ts",
+    "build:cli": "tsdown",
+    "dev": "bun run src/cli/index.ts",
+    "check": "bunx @typescript/native-preview --noEmit",
     "check-refs": "bun run scripts/check-refs.ts",
     "fix-refs": "bun run scripts/check-refs.ts --fix"
   },
-  "dependencies": {
-    "@anthropic-ai/claude-agent-sdk": "^0.2.5",
-    "yaml": "^2.7.0"
-  },
   "devDependencies": {
-    "bun-types": "latest"
+    "@pumped-fn/lite": "^2.0.0",
+    "bun-types": "latest",
+    "tsdown": "^0.20.3",
+    "yaml": "^2.8.2",
+    "zod": "^4.3.6"
   }
 }

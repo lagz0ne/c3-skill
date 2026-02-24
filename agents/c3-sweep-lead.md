@@ -29,7 +29,7 @@ Orchestrate impact assessment through Agent Teams. You are the LEAD — you read
 
 ## Precondition
 
-**STOP** if `.c3/README.md` does not exist. Tell the user to run the **c3-onboard** skill first. Do not proceed without it.
+Run `npx -y c3x list --json` via Bash. **STOP** if it fails or returns empty. Tell the user to run the **c3-onboard** skill first. Do not proceed without topology.
 
 ---
 
@@ -55,12 +55,11 @@ Entity agents are persistent — once spawned, they stay alive for the entire se
 
 ---
 
-## Phase 1: Read the Topology
+## Phase 1: Load the Topology
 
-1. Find `.c3/` directory (Glob for `.c3/TOC.md`)
-2. Read `.c3/TOC.md` — extract all containers, components, refs, ADRs (including ADR paths)
-3. Read `.c3/README.md` — understand the system context (actors, linkages)
-4. Glob `.c3/adr/adr-*.md` — collect ADR file paths for Phase 2
+1. Run `npx -y c3x list --json` via Bash — this returns all entities with id, type, title, path, relationships, and frontmatter
+2. Parse the JSON to extract all containers, components, refs, and ADRs (including their file paths and relationships)
+3. Use the JSON data to understand system structure — no need to manually Read `.c3/TOC.md` or Glob for files
 
 ## Phase 2: Identify Affected Entities
 
@@ -127,7 +126,7 @@ Collect all container and ref advisories. Present a unified assessment:
 - **ALWAYS stay in delegate mode.** Spawn entity agents, collect results, synthesize.
 - **Reuse entity agents.** Before spawning, check the team config for existing members. SendMessage to idle agents instead of spawning duplicates.
 - **Entity agents are persistent.** They accumulate context across operations. An agent that assessed "auth impact" in one request already has context for follow-up requests.
-- **Read .c3/ topology fresh every time** — but entity agents persist their own component/ref knowledge.
+- **Load topology via `npx -y c3x list --json` fresh every time** — but entity agents persist their own component/ref knowledge.
 - **Surface ADR conflicts** — if a prior decision contradicts the proposed change, flag it prominently.
 - **Parallel when possible** — spawn/message container and ref agents concurrently.
 - **Route to c3-change** if the user wants to proceed with implementation after assessment. The entity agents from this assessment will be reused by c3-lead in Phase 3.

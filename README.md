@@ -1,99 +1,96 @@
-# c3-skill
+# c3x: Architecture-Aware CLI for C3 Projects
 
-C3 (Context-Container-Component) architecture methodology for Claude Code. Concept-first documentation with Agent Teams for coordinated change.
+c3x is a CLI tool for managing C3 architecture documentation. It provides commands for listing entities, checking integrity, scaffolding new docs, and more.
 
 ## Installation
+
+### Per-project (recommended)
+
+```bash
+npm install --save-dev c3x
+```
+
+Then use via `npx`:
+
+```bash
+npx c3x list --json
+npx c3x check
+```
+
+### Global
+
+```bash
+npm install -g c3x
+```
+
+Then use directly:
+
+```bash
+c3x list --json
+c3x check
+```
+
+### Zero-install
+
+```bash
+npx -y c3x list --json
+```
+
+Downloads from npm on first use (~2s), then cached. The `-y` flag suppresses the install prompt.
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `list` | Topology view with relationships (`--json` for machine-readable) |
+| `check` | Doc integrity: broken links, orphans, duplicates |
+| `init` | Scaffold `.c3/` skeleton |
+| `add <type> <slug>` | Create entity with auto-numbering + wiring |
+| `sync` | Generate guard skills from component docs |
+
+Run `npx c3x <command> --help` for details and examples.
+
+## Claude Code Plugin
+
+c3x also ships as a Claude Code plugin with architecture-aware skills:
 
 ```bash
 claude plugin install c3-skill
 ```
 
-## Skills
-
 | Skill | Purpose |
 |-------|---------|
-| `c3-onboard` | Create C3 docs from scratch via staged Socratic discovery |
+| `c3-onboard` | Create C3 docs from scratch via Socratic discovery |
 | `c3-query` | Navigate architecture docs and answer questions |
 | `c3-change` | Coordinated change workflow via Agent Teams (ADR-first) |
-| `c3-ref` | Manage cross-cutting chosen options (patterns, conventions) |
-| `c3-audit` | Audit C3 docs for consistency, drift, and completeness |
+| `c3-ref` | Manage cross-cutting patterns and conventions |
+| `c3-audit` | Audit docs for consistency, drift, and completeness |
+| `c3-sweep` | Impact assessment before changes |
 
-## Quick Example
-
-```bash
-# 1. Initialize (Socratic discovery of your system)
-# Use the c3-onboard skill
-
-# 2. Query (find and explain architecture)
-# "where is authentication handled?"
-# → c3-1-api: c3-101-auth-middleware (foundation)
-
-# 3. Change (Agent Teams workflow)
-# "add rate limiting"
-# → Understand → ADR → Execute (teammates) → Audit
-```
-
-## Architecture
-
-### Agents
-
-| Agent | Role | Model |
-|-------|------|-------|
-| `c3-navigator` | Answer architecture questions via doc traversal | inherit |
-| `c3-lead` | Team lead for Agent Teams change workflow | opus |
-
-### Change Workflow (Agent Teams)
-
-```
-Understand → ADR → Execute → Audit
-    │          │        │        │
- analyst    lead    implement  auditor
- reviewer           teammates  teammate
-```
-
-**4-Phase Flow:**
-
-1. **Understand** — Analyst + reviewer teammates analyze impact, check refs
-2. **ADR** — Lead creates decision record with work breakdown
-3. **Execute** — Implementer teammates execute tasks, lead reviews
-4. **Audit** — Auditor teammate verifies docs match code reality
-
-**Regression:** Lead can regress to earlier phases when drift is discovered (ADR-anchored decision tree).
-
-## Documentation Structure
+## The `.c3/` Directory
 
 ```
 .c3/
-├── README.md                    # System context (abstract constraints)
-├── c3-N-{container}/            # Container docs (responsibility allocation)
-│   ├── README.md                # Container overview + boundary
-│   └── c3-NXX-{component}.md   # Foundation (01-09) or Feature (10+)
-├── refs/                        # Cross-cutting chosen options
-│   └── ref-{name}.md            # Choice/Why/How/Not This/Scope/Override
-└── adr/                         # Decision records
-    └── adr-YYYYMMDD-{slug}.md   # proposed → accepted → implemented
+├── README.md                    # System context
+├── config.yaml                  # Optional config
+├── c3-1-<container>/
+│   ├── README.md                # Container overview
+│   └── c3-101-<component>.md    # One file per component
+├── refs/
+│   └── ref-<pattern>.md         # Cross-cutting patterns
+└── adr/
+    └── adr-YYYYMMDD-<slug>.md   # Architecture decisions
 ```
 
-## Key Concepts
+## Building
 
-| Concept | Description |
-|---------|-------------|
-| **Context** | Abstract constraints and system-level goals |
-| **Container** | Deployment boundary + responsibility allocator |
-| **Foundation** | Platform capabilities others depend on (01-09) |
-| **Feature** | Business logic composing foundations (10+) |
-| **Ref** | Cross-cutting chosen option — Choice, Why, How, Scope, Override |
-| **ADR** | Architecture Decision Record with work breakdown |
-
-## References
-
-| File | Purpose |
-|------|---------|
-| `references/skill-harness.md` | Behavioral constraints for all skills |
-| `references/layer-navigation.md` | C3 doc traversal rules |
-| `references/adr-template.md` | ADR structure and lifecycle |
-| `references/audit-checks.md` | 10-phase audit procedure |
-| `references/component-categories.md` | Foundation vs Feature vs Ref rules |
+```bash
+bun install
+bun run build:cli    # CLI → dist/cli.js
+bun run build        # Plugin → dist/claude-code/
+bun run check-refs   # Verify bundled references match source
+bun run fix-refs     # Sync shared references into skills
+```
 
 ## License
 

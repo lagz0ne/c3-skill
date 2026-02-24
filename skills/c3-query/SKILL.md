@@ -34,12 +34,12 @@ Navigate C3 docs AND explore corresponding code. Full context = docs + code.
 
 ## Precondition: C3 Adopted
 
-**STOP if `.c3/README.md` does not exist.**
+Run `npx -y c3x list --json` via Bash. If it fails or returns empty, **STOP**.
 
 If missing:
 > This project doesn't have C3 docs yet. Use the c3-onboard skill to create documentation first.
 
-Do NOT proceed until `.c3/README.md` is confirmed.
+Do NOT proceed until topology is confirmed.
 
 ## REQUIRED: Load References
 
@@ -51,25 +51,45 @@ Before proceeding, Read these files (relative to this skill's directory):
 ## Query Flow
 
 ```
-Query → Clarify Intent → Navigate Layers → Extract References → Explore Code
-              │
-              └── Use AskUserQuestion if ambiguous
+Query → Load Topology (CLI) → Clarify Intent → Navigate Layers → Extract References → Explore Code
+                                     │
+                                     └── Use AskUserQuestion if ambiguous
 ```
 
 ## Progress Checklist
 
 ```
 Query Progress:
-- [ ] Step 0: Intent clarified (or skipped if specific)
-- [ ] Step 1: Context navigated (found relevant container)
-- [ ] Step 2: References extracted (code paths, symbols)
+- [ ] Step 0a: Topology loaded via `npx -y c3x list --json`
+- [ ] Step 0b: Intent clarified (or skipped if specific)
+- [ ] Step 1: Context navigated (found relevant container/component from JSON)
+- [ ] Step 2: References extracted (code paths, symbols — Read docs for body content)
 - [ ] Step 3: Code explored (verified against docs)
 - [ ] Response delivered with layer, refs, insights
 ```
 
 ---
 
-## Step 0: Clarify Intent
+## Step 0a: Load Topology
+
+**FIRST action:** Run `npx -y c3x list --json` via Bash to load full topology.
+
+```bash
+npx -y c3x list --json
+```
+
+The JSON output contains every entity's **id, type, title, path, relationships, and frontmatter**. Use this to:
+- Identify which containers, components, refs, and ADRs exist
+- Match the user's query to relevant entities by title, type, or relationship
+- Resolve C3 IDs (c3-N, c3-NNN, adr-*, ref-*) to file paths
+
+**Do NOT** manually Glob or Read `.c3/` directory listings. The JSON has everything needed for discovery.
+
+Only use the Read tool **after** you've identified specific entities from the JSON — and only when you need body content (prose, Code References sections, edge cases) that isn't in the frontmatter.
+
+---
+
+## Step 0b: Clarify Intent
 
 **Ask when:**
 - Query vague ("how does X work?" - which aspect?)
@@ -85,7 +105,10 @@ Query Progress:
 
 ## Step 1: Navigate Layers
 
-Follow layer navigation: **Context → Container → Component**
+Use the JSON topology from Step 0a to navigate: **Context → Container → Component**
+
+1. **Match from JSON** — Find relevant entities by title, type, or relationships in the JSON output
+2. **Read for depth** — Only Read entity files when you need body content (prose, `## Code References`, edge cases) not available in the JSON frontmatter
 
 | Doc Section | Extract For Code |
 |-------------|------------------|
@@ -105,8 +128,8 @@ From the identified component(s), extract:
 ### Reference Lookup
 
 If query relates to patterns/conventions:
-1. Check `.c3/refs/` for `ref-*` matching topic
-2. Return ref content + citing components
+1. Find matching `ref-*` entities from the JSON topology (loaded in Step 0a)
+2. Read ref file for body content, return ref content + citing components
 
 ---
 
@@ -150,9 +173,9 @@ For constraint queries ("what constraints apply to X?"), follow the procedure in
 ```
 User: "Where is authentication handled?"
 
-Step 1: Read .c3/README.md → Find c3-2-api container handles auth
-Step 2: Read .c3/c3-2-api/README.md → Find c3-201-auth-middleware
-Step 3: Read .c3/c3-2-api/c3-201-auth-middleware.md → Get code refs
+Step 0a: Run `npx -y c3x list --json` → JSON shows c3-2-api container, c3-201-auth-middleware component with title "Auth Middleware"
+Step 1: Match "authentication" → c3-201-auth-middleware (from JSON relationships + title)
+Step 2: Read .c3/c3-2-api/c3-201-auth-middleware.md → Get code refs (need body content)
 
 Response:
 **Layer:** c3-201 (Auth Middleware)
@@ -173,8 +196,8 @@ Uses RS256 for JWT signing. Sessions stored in Redis.
 ```
 User: "How does error handling work?"
 
-Step 1: Read .c3/README.md → Multiple containers
-Step 2: Check .c3/refs/ → Find ref-error-handling.md
+Step 0a: Run `npx -y c3x list --json` → JSON shows ref-error-handling entity, cited by c3-201, c3-203, c3-205
+Step 1: Match "error handling" → ref-error-handling (from JSON title + relationships)
 
 Response:
 **Pattern:** ref-error-handling

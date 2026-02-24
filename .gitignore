@@ -10,3 +10,6 @@ tests/output/
 # OpenCode build output
 dist/
 .opencode/
+
+# C3 vector index (derived, auto-rebuilt)
+.c3/index.db

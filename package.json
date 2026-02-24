@@ -1,5 +1,5 @@
 {
-  "name": "c3x",
+  "name": "c3-kit",
   "version": "5.0.0",
   "description": "Architecture-aware CLI for C3 projects",
   "type": "module",

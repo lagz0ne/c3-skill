@@ -70,7 +70,7 @@ Goal: Fully understand the change before any decisions are made.
 
 1. **Load C3 topology** using the CLI:
    ```bash
-   npx -y c3x list --json
+   npx -y c3-kit list --json
    ```
    This returns the full topology (id, type, title, path, relationships, frontmatter) — use it to identify affected entities. Also read `.c3/README.md` for system context. Skim component docs (`.c3/c3-*`) and ref docs (`.c3/refs/`) in the affected area.
 
@@ -104,7 +104,7 @@ Goal: Capture the decision in a structured ADR before any code changes.
 
 1. **Create ADR** using the CLI:
    ```bash
-   npx -y c3x add adr <slug>
+   npx -y c3-kit add adr <slug>
    ```
    This creates `.c3/adr/adr-YYYYMMDD-{slug}.md` with template frontmatter. Then **Edit** the file to fill in the full ADR content:
 
@@ -162,7 +162,7 @@ Use **AskUserQuestion**: "ADR accepted. How do you want to proceed?" with option
 
 1. **Create component docs** for each new component using the CLI:
    ```bash
-   npx -y c3x add component <slug> --container c3-N [--feature]
+   npx -y c3-kit add component <slug> --container c3-N [--feature]
    ```
    Then **Edit** the created file with these differences from standard components:
    - Add `status: provisioned` to frontmatter
@@ -233,8 +233,8 @@ Goal: Coordinate implementation through entity agents, ensuring quality at every
 
 5. **For tasks that create new C3 entities**, include CLI commands in the task description:
    ```bash
-   npx -y c3x add component <slug> --container c3-N [--feature]  # New component
-   npx -y c3x add ref <slug>                                      # New ref
+   npx -y c3-kit add component <slug> --container c3-N [--feature]  # New component
+   npx -y c3-kit add ref <slug>                                      # New ref
    ```
    Entity agents use these to scaffold files, then Edit to fill in content.
 
@@ -268,7 +268,7 @@ Goal: Ensure C3 docs reflect the new reality after all changes land.
 
 1. **Run structural validation** first:
    ```bash
-   npx -y c3x check
+   npx -y c3-kit check
    ```
    This detects broken links, orphans, and duplicate IDs. Fix any structural issues before semantic audit.
 

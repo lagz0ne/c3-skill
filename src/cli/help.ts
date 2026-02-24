@@ -16,7 +16,7 @@ Options:
   --json                 Machine-readable output
   --c3-dir <path>        Override .c3/ detection
 
-Run 'npx c3-kit <command> --help' for details and examples.
+Run 'npx @lagz0ne/c3x <command> --help' for details and examples.
 `.trim();
 
 const COMMAND_HELP: Record<string, string> = {

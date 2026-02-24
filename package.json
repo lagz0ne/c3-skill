@@ -1,5 +1,5 @@
 {
-  "name": "c3-kit",
+  "name": "@lagz0ne/c3x",
   "version": "5.0.0",
   "description": "Architecture-aware CLI for C3 projects",
   "type": "module",
@@ -7,6 +7,7 @@
     "c3x": "./dist/cli.cjs"
   },
   "files": ["dist/cli.cjs"],
+  "publishConfig": { "access": "public" },
   "keywords": ["c3", "architecture", "documentation", "cli"],
   "license": "MIT",
   "repository": {

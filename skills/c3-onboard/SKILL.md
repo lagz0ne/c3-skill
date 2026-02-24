@@ -114,7 +114,7 @@ Onboarding Progress:
 Scaffold the base `.c3/` directory structure using the CLI:
 
 ```bash
-npx -y c3-kit init
+npx -y @lagz0ne/c3x init
 ```
 
 This creates `.c3/` with `config.yaml`, `README.md` (context template), `refs/` subdirectory, and `adr/adr-00000000-c3-adoption.md` (adoption ADR template). It does NOT create container directories — those are created in Stage 1 after discovery is confirmed at Gate 0.
@@ -209,7 +209,7 @@ Before proceeding, verify:
 
 ### 1.1 Context Doc
 
-`.c3/README.md` was created by `npx -y c3-kit init` from the context template. **Edit** it to fill in discovered args:
+`.c3/README.md` was created by `npx -y @lagz0ne/c3x init` from the context template. **Edit** it to fill in discovered args:
 - Goal section (from PROJECT, GOAL)
 - Abstract Constraints table (system-level non-negotiable requirements)
 - Overview diagram
@@ -224,7 +224,7 @@ For EACH container in inventory:
 Create the container using the CLI:
 
 ```bash
-npx -y c3-kit add container <slug>
+npx -y @lagz0ne/c3x add container <slug>
 ```
 
 This auto-numbers (c3-N), creates the directory, and generates `README.md` from the container template. After creation, **Edit** `.c3/c3-N-{slug}/README.md` to fill in:
@@ -239,10 +239,10 @@ For each component in this container, create using the CLI:
 
 ```bash
 # Foundation component (NN = 01-09):
-npx -y c3-kit add component <slug> --container c3-N
+npx -y @lagz0ne/c3x add component <slug> --container c3-N
 
 # Feature component (NN = 10+):
-npx -y c3-kit add component <slug> --container c3-N --feature
+npx -y @lagz0ne/c3x add component <slug> --container c3-N --feature
 ```
 
 This auto-numbers the component (c3-NNN) and generates the file from the component template. After creation, **Edit** `.c3/c3-N-{slug}/c3-NNN-{component}.md` to fill in:
@@ -275,7 +275,7 @@ If new component found during documentation:
 For each ref in inventory, create using the CLI:
 
 ```bash
-npx -y c3-kit add ref <slug>
+npx -y @lagz0ne/c3x add ref <slug>
 ```
 
 This creates `.c3/refs/ref-{slug}.md` from the ref template. After creation, **Edit** the file to fill in:
@@ -308,7 +308,7 @@ Before proceeding, verify:
 First, run structural validation using the CLI:
 
 ```bash
-npx -y c3-kit check
+npx -y @lagz0ne/c3x check
 ```
 
 This detects broken links, orphans, and duplicate IDs automatically. Fix any structural issues reported before proceeding to semantic checks.
@@ -344,8 +344,8 @@ Before marking complete, verify:
 **Before completing, verify structure exists:**
 
 ```bash
-npx -y c3-kit list                    # Visual topology with goals
-npx -y c3-kit check                   # Structural validation (broken links, orphans)
+npx -y @lagz0ne/c3x list                    # Visual topology with goals
+npx -y @lagz0ne/c3x check                   # Structural validation (broken links, orphans)
 ```
 
 **If refs/ is empty:** Most projects have at least one cross-cutting chosen option (error handling, auth, API conventions). If discovery genuinely found none, that's fine — don't create synthetic refs.

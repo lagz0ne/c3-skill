@@ -68,7 +68,7 @@ Create a new ref from discovered or proposed pattern.
 Scaffold via CLI → Fill Content → Discover Usage → Update Citings → Create ADR
 ```
 
-**HARD RULE: Your FIRST Bash call must be `npx -y c3-kit add ref <slug>`.** Do not Read any codebase files, do not Grep, do not look at existing refs before writing. Extract the pattern name and slug directly from the user's prompt. The CLI creates the file from the template with correct frontmatter and structure.
+**HARD RULE: Your FIRST Bash call must be `npx -y @lagz0ne/c3x add ref <slug>`.** Do not Read any codebase files, do not Grep, do not look at existing refs before writing. Extract the pattern name and slug directly from the user's prompt. The CLI creates the file from the template with correct frontmatter and structure.
 
 ### Steps
 
@@ -78,7 +78,7 @@ Extract from the user's prompt:
 - Pattern name → slug (e.g., `error-handling`, `retry-pattern`)
 
 ```bash
-npx -y c3-kit add ref <slug>
+npx -y @lagz0ne/c3x add ref <slug>
 ```
 
 This creates `.c3/refs/ref-{slug}.md` from the template with correct id, frontmatter, and section structure.
@@ -173,7 +173,7 @@ Use `AskUserQuestion` to confirm the change type: "What change do you want to ma
 
 **Step 2: Find All Citings**
 
-Run `npx -y c3-kit list --json` and find the ref entity by id. The `relationships` field lists all citing components. For deeper searches beyond what the CLI reports, fall back to Grep for `ref-{slug}` in `.c3/`.
+Run `npx -y @lagz0ne/c3x list --json` and find the ref entity by id. The `relationships` field lists all citing components. For deeper searches beyond what the CLI reports, fall back to Grep for `ref-{slug}` in `.c3/`.
 
 List all citing components.
 
@@ -222,10 +222,10 @@ Show all refs in the system.
 
 ### Flow
 
-Run `npx -y c3-kit list --json` via Bash and filter results by `type: "ref"`:
+Run `npx -y @lagz0ne/c3x list --json` via Bash and filter results by `type: "ref"`:
 
 ```bash
-npx -y c3-kit list --json
+npx -y @lagz0ne/c3x list --json
 ```
 
 From the JSON output, extract for each ref entity:
@@ -253,10 +253,10 @@ Show where a specific ref is used.
 
 ### Flow
 
-Run `npx -y c3-kit list --json` via Bash and find the ref entity by id. The `relationships` field lists all citing components.
+Run `npx -y @lagz0ne/c3x list --json` via Bash and find the ref entity by id. The `relationships` field lists all citing components.
 
 ```bash
-npx -y c3-kit list --json
+npx -y @lagz0ne/c3x list --json
 ```
 
 From the JSON output, find the entry with `id: "ref-{slug}"` and read its `relationships` to get citing components. Then Read each citing component doc for details.

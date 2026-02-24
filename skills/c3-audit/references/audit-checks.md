@@ -48,22 +48,22 @@ Run the C3 CLI to automate structural checks before manual phases:
 
 ```bash
 # Detect broken links, orphans, duplicate IDs, missing parents
-npx -y c3-kit check
+npx -y @lagz0ne/c3x check
 
 # Machine-readable output for programmatic processing
-npx -y c3-kit check --json
+npx -y @lagz0ne/c3x check --json
 ```
 
-Issues found by `npx -y c3-kit check` overlap with Phases 2, 4, and 7. Record them upfront and skip re-checking in those phases.
+Issues found by `npx -y @lagz0ne/c3x check` overlap with Phases 2, 4, and 7. Record them upfront and skip re-checking in those phases.
 
 ### Phase 0.5: Gather Inventory (CLI)
 
 ```bash
 # Full entity inventory: id, type, title, path, relationships, frontmatter
-npx -y c3-kit list --json
+npx -y @lagz0ne/c3x list --json
 
 # Quick text topology with goals
-npx -y c3-kit list
+npx -y @lagz0ne/c3x list
 ```
 
 Use this inventory data to drive all subsequent phases. No need for manual Glob+Read of `.c3/` directories.
@@ -71,7 +71,7 @@ Use this inventory data to drive all subsequent phases. No need for manual Glob+
 ### Phase 1: Gather
 
 ```
-1. Use inventory from Phase 0.5 (`npx -y c3-kit list --json`)
+1. Use inventory from Phase 0.5 (`npx -y @lagz0ne/c3x list --json`)
 2. Filter by type: containers, components, refs, ADRs
 3. Cross-reference relationships from JSON
 ```
@@ -485,7 +485,7 @@ The validation-based audit above checks **docs against rules**. Discovery-based 
 **Goal:** Parse .c3/ documentation to understand what SHOULD exist
 
 ```
-1. Run `npx -y c3-kit list --json` → full entity inventory with frontmatter
+1. Run `npx -y @lagz0ne/c3x list --json` → full entity inventory with frontmatter
    - Filter type=container → expected containers
    - Filter type=component → expected components per container (via relationships)
    - Filter type=ref → expected patterns

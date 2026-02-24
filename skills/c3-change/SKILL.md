@@ -72,10 +72,10 @@ The lead operates in delegate mode (coordination only, never writes code). The l
 ## Phase Details
 
 ### Phase 1: Understand
-Lead loads C3 topology via `npx -y c3-kit list --json`, clarifies with you, then spawns analyst and reviewer workers who debate the impact. Lead synthesizes and presents findings.
+Lead loads C3 topology via `npx -y @lagz0ne/c3x list --json`, clarifies with you, then spawns analyst and reviewer workers who debate the impact. Lead synthesizes and presents findings.
 
 ### Phase 2: ADR
-Lead creates ADR via `npx -y c3-kit add adr <slug>`, then fills in the decision content. You review and accept. No separate plan files — the ADR IS the plan.
+Lead creates ADR via `npx -y @lagz0ne/c3x add adr <slug>`, then fills in the decision content. You review and accept. No separate plan files — the ADR IS the plan.
 
 **ADR format:** Always use YAML frontmatter (not markdown-style headers):
 ```yaml
@@ -100,10 +100,10 @@ After ADR acceptance, the lead asks: **implement now or design only?**
 To **implement a provisioned design** later, invoke c3-change again. The lead picks up the existing provisioned ADR + docs as starting context and resumes from Phase 3.
 
 ### Phase 3: Execute
-Lead creates tasks from Work Breakdown. New entities are scaffolded via `npx -y c3-kit add component/ref`. Each task points to C3 component docs and refs (mandatory reading). Implementer workers claim tasks and execute. Lead reviews each completion.
+Lead creates tasks from Work Breakdown. New entities are scaffolded via `npx -y @lagz0ne/c3x add component/ref`. Each task points to C3 component docs and refs (mandatory reading). Implementer workers claim tasks and execute. Lead reviews each completion.
 
 ### Phase 4: Audit
-Lead runs `npx -y c3-kit check` for structural validation (broken links, orphans), then spawns auditor for semantic review. Auditor updates CLAUDE.md files. Lead transitions ADR to implemented.
+Lead runs `npx -y @lagz0ne/c3x check` for structural validation (broken links, orphans), then spawns auditor for semantic review. Auditor updates CLAUDE.md files. Lead transitions ADR to implemented.
 
 ## Regression
 

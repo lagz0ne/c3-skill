@@ -2,11 +2,11 @@
 
 ## Activation Check
 
-Run `npx -y c3-kit list --json` to load topology. If it fails or returns empty, suggest the c3-onboard skill.
+Run `npx -y @lagz0ne/c3x list --json` to load topology. If it fails or returns empty, suggest the c3-onboard skill.
 
 ## Discovery via CLI
 
-**Primary discovery:** Use `npx -y c3-kit list --json` output to identify all entities, their types, relationships, and frontmatter. This replaces manual Glob/Read for discovering what exists.
+**Primary discovery:** Use `npx -y @lagz0ne/c3x list --json` output to identify all entities, their types, relationships, and frontmatter. This replaces manual Glob/Read for discovering what exists.
 
 **Read for depth:** Only use the Read tool when you need body content (prose, Code References, edge cases) from a specific entity already identified in the JSON.
 
@@ -35,7 +35,7 @@ Context (.c3/README.md)
 
 ### 1. Load Topology (CLI)
 
-Run `npx -y c3-kit list --json` to get all entities with id, type, title, path, relationships, and frontmatter. Use this to:
+Run `npx -y @lagz0ne/c3x list --json` to get all entities with id, type, title, path, relationships, and frontmatter. Use this to:
 - Identify all containers, components, refs, and ADRs
 - Match the query to relevant entities by title, type, or relationship
 - Resolve C3 IDs to file paths

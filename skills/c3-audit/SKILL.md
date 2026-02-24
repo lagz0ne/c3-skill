@@ -39,8 +39,8 @@ Follow the audit procedure from `references/audit-checks.md`. Track progress as 
 
 ```
 Audit Progress:
-- [ ] Phase 0: Structural Validation - Run `npx -y c3-kit check` for broken links, orphans, duplicates, missing parents
-- [ ] Phase 1: Gather Inventory - Run `npx -y c3-kit list --json` for full entity inventory
+- [ ] Phase 0: Structural Validation - Run `npx -y @lagz0ne/c3x check` for broken links, orphans, duplicates, missing parents
+- [ ] Phase 1: Gather Inventory - Run `npx -y @lagz0ne/c3x list --json` for full entity inventory
 - [ ] Phase 2: Inventory vs Code - Docs match reality
 - [ ] Phase 3: Component Categorization - Foundation/Feature/Ref correct
 - [ ] Phase 4: Code Reference Validation - Code References point to real files
@@ -54,27 +54,27 @@ Audit Progress:
 
 ### Phase 0: Structural Validation (CLI)
 
-Run `npx -y c3-kit check` via Bash to detect structural issues automatically:
+Run `npx -y @lagz0ne/c3x check` via Bash to detect structural issues automatically:
 
 ```bash
-npx -y c3-kit check
+npx -y @lagz0ne/c3x check
 ```
 
-This catches broken links, orphan entities, duplicate IDs, and missing parent references — issues that Phases 2-7 previously checked manually. For machine-readable output, use `npx -y c3-kit check --json`.
+This catches broken links, orphan entities, duplicate IDs, and missing parent references — issues that Phases 2-7 previously checked manually. For machine-readable output, use `npx -y @lagz0ne/c3x check --json`.
 
-If `npx -y c3-kit check` reports failures, record them immediately. Many will overlap with later phases — skip re-checking those manually.
+If `npx -y @lagz0ne/c3x check` reports failures, record them immediately. Many will overlap with later phases — skip re-checking those manually.
 
 ### Phase 1: Gather Inventory (CLI)
 
-Run `npx -y c3-kit list --json` via Bash to get the full entity inventory:
+Run `npx -y @lagz0ne/c3x list --json` via Bash to get the full entity inventory:
 
 ```bash
-npx -y c3-kit list --json
+npx -y @lagz0ne/c3x list --json
 ```
 
 This returns all entities with id, type, title, path, relationships, and frontmatter. Use this output as the source of truth for subsequent phases instead of manually running Glob+Read across `.c3/` directories.
 
-For a quick topology overview, use `npx -y c3-kit list` (text format with goals).
+For a quick topology overview, use `npx -y @lagz0ne/c3x list` (text format with goals).
 
 ### Phases 2-10: Semantic Validation (Manual)
 
@@ -115,8 +115,8 @@ If during audit the user wants to fix issues:
 ```
 User: "audit C3 docs"
 
-Phase 0: `npx -y c3-kit check` → 1 broken link (c3-205 → deleted file), 1 orphan ref → FAIL
-Phase 1: `npx -y c3-kit list --json` → 3 containers, 12 components, 4 refs
+Phase 0: `npx -y @lagz0ne/c3x check` → 1 broken link (c3-205 → deleted file), 1 orphan ref → FAIL
+Phase 1: `npx -y @lagz0ne/c3x list --json` → 3 containers, 12 components, 4 refs
 Phase 2: Inventory vs Code → (broken link already caught in Phase 0, skip) → PASS
 Phase 3: Categories → c3-103 has no Code References (should be ref?) → FAIL
 Phase 4: Code References → (stale paths already caught in Phase 0, skip) → PASS
@@ -124,7 +124,7 @@ Phase 5-10: PASS
 
 Summary: 9 passes, 2 failures (Phase 0 structural, Phase 3 semantic)
 Action Items:
-  1. Fix broken link in c3-205 (detected by npx -y c3-kit check)
+  1. Fix broken link in c3-205 (detected by npx -y @lagz0ne/c3x check)
   2. Reclassify c3-103 as ref or add Code References
-  3. Resolve orphan ref (detected by npx -y c3-kit check)
+  3. Resolve orphan ref (detected by npx -y @lagz0ne/c3x check)
 ```

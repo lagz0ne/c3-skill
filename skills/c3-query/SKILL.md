@@ -34,7 +34,7 @@ Navigate C3 docs AND explore corresponding code. Full context = docs + code.
 
 ## Precondition: C3 Adopted
 
-Run `npx -y c3-kit list --json` via Bash. If it fails or returns empty, **STOP**.
+Run `npx -y @lagz0ne/c3x list --json` via Bash. If it fails or returns empty, **STOP**.
 
 If missing:
 > This project doesn't have C3 docs yet. Use the c3-onboard skill to create documentation first.
@@ -60,7 +60,7 @@ Query → Load Topology (CLI) → Clarify Intent → Navigate Layers → Extract
 
 ```
 Query Progress:
-- [ ] Step 0a: Topology loaded via `npx -y c3-kit list --json`
+- [ ] Step 0a: Topology loaded via `npx -y @lagz0ne/c3x list --json`
 - [ ] Step 0b: Intent clarified (or skipped if specific)
 - [ ] Step 1: Context navigated (found relevant container/component from JSON)
 - [ ] Step 2: References extracted (code paths, symbols — Read docs for body content)
@@ -72,10 +72,10 @@ Query Progress:
 
 ## Step 0a: Load Topology
 
-**FIRST action:** Run `npx -y c3-kit list --json` via Bash to load full topology.
+**FIRST action:** Run `npx -y @lagz0ne/c3x list --json` via Bash to load full topology.
 
 ```bash
-npx -y c3-kit list --json
+npx -y @lagz0ne/c3x list --json
 ```
 
 The JSON output contains every entity's **id, type, title, path, relationships, and frontmatter**. Use this to:
@@ -173,7 +173,7 @@ For constraint queries ("what constraints apply to X?"), follow the procedure in
 ```
 User: "Where is authentication handled?"
 
-Step 0a: Run `npx -y c3-kit list --json` → JSON shows c3-2-api container, c3-201-auth-middleware component with title "Auth Middleware"
+Step 0a: Run `npx -y @lagz0ne/c3x list --json` → JSON shows c3-2-api container, c3-201-auth-middleware component with title "Auth Middleware"
 Step 1: Match "authentication" → c3-201-auth-middleware (from JSON relationships + title)
 Step 2: Read .c3/c3-2-api/c3-201-auth-middleware.md → Get code refs (need body content)
 
@@ -196,7 +196,7 @@ Uses RS256 for JWT signing. Sessions stored in Redis.
 ```
 User: "How does error handling work?"
 
-Step 0a: Run `npx -y c3-kit list --json` → JSON shows ref-error-handling entity, cited by c3-201, c3-203, c3-205
+Step 0a: Run `npx -y @lagz0ne/c3x list --json` → JSON shows ref-error-handling entity, cited by c3-201, c3-203, c3-205
 Step 1: Match "error handling" → ref-error-handling (from JSON title + relationships)
 
 Response:

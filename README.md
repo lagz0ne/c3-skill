@@ -7,20 +7,20 @@ c3x is a CLI tool for managing C3 architecture documentation. It provides comman
 ### Per-project (recommended)
 
 ```bash
-npm install --save-dev c3x
+npm install --save-dev c3-kit
 ```
 
 Then use via `npx`:
 
 ```bash
-npx c3x list --json
-npx c3x check
+npx c3-kit list --json
+npx c3-kit check
 ```
 
 ### Global
 
 ```bash
-npm install -g c3x
+npm install -g c3-kit
 ```
 
 Then use directly:
@@ -33,7 +33,7 @@ c3x check
 ### Zero-install
 
 ```bash
-npx -y c3x list --json
+npx -y c3-kit list --json
 ```
 
 Downloads from npm on first use (~2s), then cached. The `-y` flag suppresses the install prompt.
@@ -48,7 +48,7 @@ Downloads from npm on first use (~2s), then cached. The `-y` flag suppresses the
 | `add <type> <slug>` | Create entity with auto-numbering + wiring |
 | `sync` | Generate guard skills from component docs |
 
-Run `npx c3x <command> --help` for details and examples.
+Run `npx c3-kit <command> --help` for details and examples.
 
 ## Claude Code Plugin
 
@@ -86,7 +86,7 @@ claude plugin install c3-skill
 
 ```bash
 bun install
-bun run build:cli    # CLI → dist/cli.js
+bun run build:cli    # CLI → dist/cli.cjs
 bun run build        # Plugin → dist/claude-code/
 bun run check-refs   # Verify bundled references match source
 bun run fix-refs     # Sync shared references into skills

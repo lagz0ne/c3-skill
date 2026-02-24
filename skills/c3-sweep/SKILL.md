@@ -25,7 +25,7 @@ Sweep the architecture for impact of proposed changes through a team of agents t
 
 ## Precondition: C3 Adopted
 
-Run `npx -y c3x list --json` via Bash. **STOP if it fails or returns empty.**
+Run `npx -y c3-kit list --json` via Bash. **STOP if it fails or returns empty.**
 
 If missing:
 > This project doesn't have C3 architecture docs yet. Use the c3-onboard skill to create documentation first.
@@ -58,7 +58,7 @@ Task tool:
 ```
 
 The lead will:
-1. **Load topology** — Run `npx -y c3x list --json` to get full system structure (entities, relationships, frontmatter)
+1. **Load topology** — Run `npx -y c3-kit list --json` to get full system structure (entities, relationships, frontmatter)
 2. **Identify entities** — Match the change to affected containers, refs, and ADRs from the JSON
 3. **Delegate** — Spawn container + ref workers in parallel for deep inspection
 4. **Synthesize** — Collect advisories into a unified impact assessment

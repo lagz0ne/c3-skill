@@ -80,12 +80,11 @@ These fields cause the plugin to not load properly. Auto-discovery finds compone
 
 ### Step 5: Update Version Files
 
-Read, then update **all four** files with the new version:
+Read, then update **all three** files with the new version:
 
 1. `VERSION` - Replace content with just `A.B.C` (no quotes, no newline prefix) — **CI reads this to detect new releases**
 2. `.claude-plugin/plugin.json` - Update `"version": "X.Y.Z"` (and ensure no explicit paths per Step 4)
 3. `.claude-plugin/marketplace.json` - Update `"version": "X.Y.Z"` in the plugins array
-4. `package.json` - Update `"version": "X.Y.Z"`
 
 ### Step 6: Update README.md
 
@@ -132,7 +131,7 @@ After updates, show:
 3. Changelog entry preview
 4. Remind user to commit and push to **dev** (CI handles the rest):
    ```bash
-   git add VERSION .claude-plugin/plugin.json .claude-plugin/marketplace.json package.json CHANGELOG.md README.md
+   git add VERSION .claude-plugin/plugin.json .claude-plugin/marketplace.json CHANGELOG.md README.md
    git commit -m "chore: release vA.B.C"
    git push origin dev
    ```

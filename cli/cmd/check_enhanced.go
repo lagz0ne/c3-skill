@@ -15,6 +15,19 @@ import (
 	"github.com/lagz0ne/c3-design/cli/internal/walker"
 )
 
+// Issue represents a validation finding.
+type Issue struct {
+	Severity string `json:"severity"`
+	Entity   string `json:"entity,omitempty"`
+	Message  string `json:"message"`
+}
+
+// CheckResult holds the validation output.
+type CheckResult struct {
+	Total  int     `json:"total"`
+	Issues []Issue `json:"issues"`
+}
+
 // CheckOptions holds parameters for the enhanced check command.
 type CheckOptions struct {
 	Graph      *walker.C3Graph

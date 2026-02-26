@@ -62,9 +62,13 @@ func TestRunCheck_EmptyRequiredTable(t *testing.T) {
 	}
 
 	output := buf.String()
-	// c3-110 and c3-201 have empty Code References tables
-	if !strings.Contains(output, "Code References") {
-		t.Errorf("should warn about empty Code References, got: %s", output)
+	// c3-110 and c3-201 have empty Dependencies tables — should warn about them
+	if !strings.Contains(output, "empty required table") {
+		t.Errorf("should warn about empty required tables, got: %s", output)
+	}
+	// Code References no longer in schema — should NOT appear
+	if strings.Contains(output, "Code References") {
+		t.Errorf("should not warn about Code References (removed from schema), got: %s", output)
 	}
 }
 
@@ -120,135 +124,6 @@ Some pattern.
 // =============================================================================
 // Layer 3: Typed content validation
 // =============================================================================
-
-func TestRunCheck_CodeRefFileNotExist(t *testing.T) {
-	dir := t.TempDir()
-	c3Dir := filepath.Join(dir, ".c3")
-	os.MkdirAll(filepath.Join(c3Dir, "c3-1-api"), 0755)
-
-	writeFile(t, filepath.Join(c3Dir, "README.md"), `---
-id: c3-0
-title: Test
----
-
-# Test
-
-## Goal
-
-Test.
-`)
-
-	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "README.md"), `---
-id: c3-1
-title: api
-type: container
-parent: c3-0
----
-
-# api
-`)
-
-	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md"), `---
-id: c3-101
-title: auth
-type: component
-parent: c3-1
----
-
-# auth
-
-## Goal
-
-Auth.
-
-## Code References
-
-| File | Purpose |
-|------|---------|
-| src/auth/nonexistent.ts | This file does not exist |
-`)
-
-	docs := loadDocs(t, c3Dir)
-	graph := loadGraph(t, c3Dir)
-	var buf bytes.Buffer
-
-	opts := CheckOptions{Graph: graph, Docs: docs, JSON: false, ProjectDir: dir}
-	if err := RunCheckV2(opts, &buf); err != nil {
-		t.Fatal(err)
-	}
-
-	output := buf.String()
-	if !strings.Contains(output, "nonexistent.ts") {
-		t.Errorf("should flag nonexistent code reference, got: %s", output)
-	}
-}
-
-func TestRunCheck_CodeRefFileExists(t *testing.T) {
-	dir := t.TempDir()
-	c3Dir := filepath.Join(dir, ".c3")
-	os.MkdirAll(filepath.Join(c3Dir, "c3-1-api"), 0755)
-
-	// Create the referenced file
-	os.MkdirAll(filepath.Join(dir, "src", "auth"), 0755)
-	writeFile(t, filepath.Join(dir, "src", "auth", "jwt.ts"), "export function validate() {}")
-
-	writeFile(t, filepath.Join(c3Dir, "README.md"), `---
-id: c3-0
-title: Test
----
-
-# Test
-
-## Goal
-
-Test.
-`)
-
-	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "README.md"), `---
-id: c3-1
-title: api
-type: container
-parent: c3-0
----
-
-# api
-`)
-
-	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md"), `---
-id: c3-101
-title: auth
-type: component
-parent: c3-1
----
-
-# auth
-
-## Goal
-
-Auth.
-
-## Code References
-
-| File | Purpose |
-|------|---------|
-| src/auth/jwt.ts | JWT validation |
-`)
-
-	docs := loadDocs(t, c3Dir)
-	graph := loadGraph(t, c3Dir)
-	var buf bytes.Buffer
-
-	opts := CheckOptions{Graph: graph, Docs: docs, JSON: false, ProjectDir: dir}
-	if err := RunCheckV2(opts, &buf); err != nil {
-		t.Fatal(err)
-	}
-
-	output := buf.String()
-	// Should NOT flag the existing file
-	if strings.Contains(output, "nonexistent") || strings.Contains(output, "does not exist") {
-		t.Errorf("should not flag existing code reference, got: %s", output)
-	}
-}
 
 func TestRunCheck_EntityIdNotInGraph(t *testing.T) {
 	dir := t.TempDir()
@@ -312,11 +187,86 @@ Auth.
 	}
 }
 
-func TestRunCheck_BidirectionalInconsistency(t *testing.T) {
+func TestRunCheck_EnhancedJSON(t *testing.T) {
+	c3Dir := createRichFixture(t)
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	opts := CheckOptions{Graph: graph, Docs: docs, JSON: true}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	var result CheckResult
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
+	}
+
+	// Should have issues from schema validation (empty tables, etc.)
+	hasSchemaIssue := false
+	for _, issue := range result.Issues {
+		if strings.Contains(issue.Message, "empty") {
+			hasSchemaIssue = true
+			break
+		}
+	}
+	if !hasSchemaIssue {
+		t.Error("JSON output should include schema validation issues")
+	}
+	// Code References removed from schema — should not appear
+	for _, issue := range result.Issues {
+		if strings.Contains(issue.Message, "Code References") {
+			t.Errorf("should not have Code References issues (removed from schema), got: %s", issue.Message)
+		}
+	}
+}
+
+// =============================================================================
+// Code-map integration tests
+// =============================================================================
+
+func TestRunCheck_CodeMapInvalidID(t *testing.T) {
+	dir := t.TempDir()
+	c3Dir := filepath.Join(dir, ".c3")
+	os.MkdirAll(c3Dir, 0755)
+
+	writeFile(t, filepath.Join(c3Dir, "README.md"), `---
+id: c3-0
+title: Test
+---
+
+# Test
+
+## Goal
+
+Test.
+`)
+
+	// code-map with unknown ID
+	writeFile(t, filepath.Join(c3Dir, "code-map.yaml"), `c3-999:
+  - src/foo.ts
+`)
+
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	opts := CheckOptions{Graph: graph, Docs: docs, JSON: false, ProjectDir: dir, C3Dir: c3Dir}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "c3-999") {
+		t.Errorf("should flag unknown ID in code-map, got: %s", output)
+	}
+}
+
+func TestRunCheck_CodeMapMissingFile(t *testing.T) {
 	dir := t.TempDir()
 	c3Dir := filepath.Join(dir, ".c3")
 	os.MkdirAll(filepath.Join(c3Dir, "c3-1-api"), 0755)
-	os.MkdirAll(filepath.Join(c3Dir, "refs"), 0755)
 
 	writeFile(t, filepath.Join(c3Dir, "README.md"), `---
 id: c3-0
@@ -345,7 +295,6 @@ id: c3-101
 title: auth
 type: component
 parent: c3-1
-refs: [ref-jwt]
 ---
 
 # auth
@@ -355,58 +304,99 @@ refs: [ref-jwt]
 Auth.
 `)
 
-	// ref-jwt Cited By is empty — inconsistent with c3-101 citing it
-	writeFile(t, filepath.Join(c3Dir, "refs", "ref-jwt.md"), `---
-id: ref-jwt
-title: JWT
-goal: Tokens
-scope: [c3-1]
----
-
-# JWT
-
-## Goal
-
-Tokens.
-
-## Choice
-
-JWT RS256.
-
-## Why
-
-Standard.
-
-## Cited By
-
-| Component | Usage |
-|-----------|-------|
+	writeFile(t, filepath.Join(c3Dir, "code-map.yaml"), `c3-101:
+  - src/auth/nonexistent.ts
 `)
 
 	docs := loadDocs(t, c3Dir)
 	graph := loadGraph(t, c3Dir)
 	var buf bytes.Buffer
 
-	opts := CheckOptions{Graph: graph, Docs: docs, JSON: false}
+	opts := CheckOptions{Graph: graph, Docs: docs, JSON: false, ProjectDir: dir, C3Dir: c3Dir}
 	if err := RunCheckV2(opts, &buf); err != nil {
 		t.Fatal(err)
 	}
 
 	output := buf.String()
-	// Should detect: c3-101 cites ref-jwt but ref-jwt's Cited By doesn't list c3-101
-	// Use || not && — either entity name should appear in the inconsistency warning
-	if !strings.Contains(output, "c3-101") || !strings.Contains(output, "ref-jwt") {
-		t.Errorf("should detect bidirectional inconsistency between c3-101 and ref-jwt, got: %s", output)
+	if !strings.Contains(output, "nonexistent.ts") {
+		t.Errorf("should flag missing file in code-map, got: %s", output)
 	}
 }
 
-func TestRunCheck_EnhancedJSON(t *testing.T) {
-	c3Dir := createRichFixture(t)
-	docs := loadDocs(t, c3Dir)
-	graph := loadGraph(t, c3Dir)
+// =============================================================================
+// RED: Codex-identified issue — C3Dir should be distinct from ProjectDir
+// =============================================================================
+
+func TestRunCheck_CodeMapCustomC3Dir(t *testing.T) {
+	// Bug: RunCheckV2 hardcodes code-map path as ProjectDir/.c3/code-map.yaml.
+	// When .c3/ is at a custom location (--c3-dir), code-map is NOT found.
+	//
+	// Setup: ProjectDir has NO .c3/ subdirectory. The .c3/ docs live elsewhere.
+	// code-map.yaml with a valid entry exists in the custom c3 dir.
+	// Because RunCheckV2 looks at ProjectDir/.c3/code-map.yaml, it won't find it.
+
+	projectDir := t.TempDir()
+	customC3Dir := t.TempDir() // separate, not under projectDir
+
+	// Create source file in project dir
+	os.MkdirAll(filepath.Join(projectDir, "src", "auth"), 0755)
+	writeFile(t, filepath.Join(projectDir, "src", "auth", "jwt.ts"), "export function validate() {}")
+
+	// Create C3 docs in the custom c3 dir
+	os.MkdirAll(filepath.Join(customC3Dir, "c3-1-api"), 0755)
+
+	writeFile(t, filepath.Join(customC3Dir, "README.md"), `---
+id: c3-0
+title: Test
+---
+
+# Test
+
+## Goal
+
+Test.
+`)
+
+	writeFile(t, filepath.Join(customC3Dir, "c3-1-api", "README.md"), `---
+id: c3-1
+title: api
+type: container
+parent: c3-0
+---
+
+# api
+`)
+
+	writeFile(t, filepath.Join(customC3Dir, "c3-1-api", "c3-101-auth.md"), `---
+id: c3-101
+title: auth
+type: component
+parent: c3-1
+---
+
+# auth
+
+## Goal
+
+Auth.
+`)
+
+	// code-map.yaml lives inside the custom C3 dir (NOT under projectDir/.c3/)
+	writeFile(t, filepath.Join(customC3Dir, "code-map.yaml"), `c3-101:
+  - src/auth/jwt.ts
+`)
+
+	docs := loadDocs(t, customC3Dir)
+	graph := loadGraph(t, customC3Dir)
 	var buf bytes.Buffer
 
-	opts := CheckOptions{Graph: graph, Docs: docs, JSON: true}
+	opts := CheckOptions{
+		Graph:      graph,
+		Docs:       docs,
+		JSON:       true,
+		ProjectDir: projectDir,
+		C3Dir:      customC3Dir,
+	}
 	if err := RunCheckV2(opts, &buf); err != nil {
 		t.Fatal(err)
 	}
@@ -416,16 +406,112 @@ func TestRunCheck_EnhancedJSON(t *testing.T) {
 		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
 	}
 
-	// Should have issues from schema validation
-	hasSchemaIssue := false
+	// The code-map at customC3Dir/code-map.yaml has c3-101 mapped to src/auth/jwt.ts.
+	// If CheckOptions supported C3Dir, it would find and validate this code-map.
+	// We expect to see zero code-map errors (file exists, ID is valid).
+	//
+	// BUG: The current code looks at projectDir/.c3/code-map.yaml which doesn't
+	// exist, so it silently skips code-map validation entirely. This test asserts
+	// that code-map validation DID run (i.e., CheckOptions should accept a C3Dir).
+	//
+	// To detect whether code-map validation ran, we intentionally put a BOGUS
+	// extra entry in the code-map that should produce an error.
+	// But with the simpler approach: we verify the total issue count reflects
+	// that the engine processed code-map entries.
+
+	// Actually, the simplest RED assertion: CheckOptions SHOULD have a C3Dir field.
+	// Since it doesn't, we test that the struct is missing the field by checking
+	// that code-map validation was skipped (no code-map issues at all when there
+	// should be some).
+
+	// Add a second code-map with an UNKNOWN ID — this should trigger an error
+	// if code-map validation ran.
+	writeFile(t, filepath.Join(customC3Dir, "code-map.yaml"), `c3-101:
+  - src/auth/jwt.ts
+c3-999:
+  - src/unknown.ts
+`)
+
+	// Re-run
+	buf.Reset()
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
+	}
+
+	// If code-map validation ran from the custom C3Dir, c3-999 would be flagged.
+	foundCodeMapIssue := false
 	for _, issue := range result.Issues {
-		if strings.Contains(issue.Message, "Code References") ||
-			strings.Contains(issue.Message, "empty") {
-			hasSchemaIssue = true
-			break
+		if strings.Contains(issue.Message, "c3-999") {
+			foundCodeMapIssue = true
 		}
 	}
-	if !hasSchemaIssue {
-		t.Error("JSON output should include schema validation issues")
+	if !foundCodeMapIssue {
+		t.Error("code-map validation should run from custom C3Dir and flag unknown ID c3-999; " +
+			"CheckOptions needs a C3Dir field so RunCheckV2 resolves code-map.yaml from the correct directory")
+	}
+}
+
+func TestRunCheck_CodeMapValid(t *testing.T) {
+	dir := t.TempDir()
+	c3Dir := filepath.Join(dir, ".c3")
+	os.MkdirAll(filepath.Join(c3Dir, "c3-1-api"), 0755)
+	os.MkdirAll(filepath.Join(dir, "src", "auth"), 0755)
+	writeFile(t, filepath.Join(dir, "src", "auth", "jwt.ts"), "export function validate() {}")
+
+	writeFile(t, filepath.Join(c3Dir, "README.md"), `---
+id: c3-0
+title: Test
+---
+
+# Test
+
+## Goal
+
+Test.
+`)
+
+	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "README.md"), `---
+id: c3-1
+title: api
+type: container
+parent: c3-0
+---
+
+# api
+`)
+
+	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md"), `---
+id: c3-101
+title: auth
+type: component
+parent: c3-1
+---
+
+# auth
+
+## Goal
+
+Auth.
+`)
+
+	writeFile(t, filepath.Join(c3Dir, "code-map.yaml"), `c3-101:
+  - src/auth/jwt.ts
+`)
+
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	opts := CheckOptions{Graph: graph, Docs: docs, JSON: false, ProjectDir: dir, C3Dir: c3Dir}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if strings.Contains(output, "code-map") {
+		t.Errorf("should have no code-map issues, got: %s", output)
 	}
 }

@@ -10,20 +10,19 @@ import (
 	"github.com/lagz0ne/c3-design/cli/internal/writer"
 )
 
-// RunWire creates a bidirectional cite relationship between source and target.
-// Three sides: (1) source frontmatter refs[], (2) source "Related Refs" table, (3) target "Cited By" table.
+// RunWire creates a cite relationship between source and target.
+// Two sides: (1) source frontmatter refs[], (2) source "Related Refs" table.
 func RunWire(c3Dir, sourceID, relationType, targetID string, w io.Writer) error {
 	if relationType != "cite" {
 		return fmt.Errorf("unsupported relation type %q (only 'cite' supported)", relationType)
 	}
 
-	// Resolve file paths
+	// Resolve file paths (validates both entities exist)
 	srcPath, err := findEntityFile(c3Dir, sourceID)
 	if err != nil {
 		return err
 	}
-	tgtPath, err := findEntityFile(c3Dir, targetID)
-	if err != nil {
+	if _, err := findEntityFile(c3Dir, targetID); err != nil {
 		return err
 	}
 
@@ -40,19 +39,11 @@ func RunWire(c3Dir, sourceID, relationType, targetID string, w io.Writer) error 
 		return fmt.Errorf("side 2 (Related Refs): %w", err)
 	}
 
-	// Side 3: Add row to target's "Cited By" table
-	if err := addTableRowIfAbsent(tgtPath, "Cited By", "Component", sourceID, map[string]string{
-		"Component": sourceID,
-		"Usage":     "",
-	}); err != nil {
-		return fmt.Errorf("side 3 (Cited By): %w", err)
-	}
-
 	fmt.Fprintf(w, "Wired %s -[cite]-> %s\n", sourceID, targetID)
 	return nil
 }
 
-// RunUnwire removes a cite relationship from all three sides.
+// RunUnwire removes a cite relationship from both sides.
 func RunUnwire(c3Dir, sourceID, relationType, targetID string, w io.Writer) error {
 	if relationType != "cite" {
 		return fmt.Errorf("unsupported relation type %q (only 'cite' supported)", relationType)
@@ -62,8 +53,7 @@ func RunUnwire(c3Dir, sourceID, relationType, targetID string, w io.Writer) erro
 	if err != nil {
 		return err
 	}
-	tgtPath, err := findEntityFile(c3Dir, targetID)
-	if err != nil {
+	if _, err := findEntityFile(c3Dir, targetID); err != nil {
 		return err
 	}
 
@@ -75,11 +65,6 @@ func RunUnwire(c3Dir, sourceID, relationType, targetID string, w io.Writer) erro
 	// Side 2: Remove row from source's "Related Refs" table where Ref matches target
 	if err := removeTableRow(srcPath, "Related Refs", "Ref", targetID); err != nil {
 		return fmt.Errorf("side 2 (Related Refs): %w", err)
-	}
-
-	// Side 3: Remove row from target's "Cited By" table where Component matches source
-	if err := removeTableRow(tgtPath, "Cited By", "Component", sourceID); err != nil {
-		return fmt.Errorf("side 3 (Cited By): %w", err)
 	}
 
 	fmt.Fprintf(w, "Unwired %s -[cite]-> %s\n", sourceID, targetID)

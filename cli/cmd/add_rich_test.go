@@ -114,8 +114,8 @@ func TestRunAddRich_ComponentWithGoal(t *testing.T) {
 	if !strings.Contains(body, "## Dependencies") {
 		t.Error("body should contain Dependencies table scaffold")
 	}
-	if !strings.Contains(body, "## Code References") {
-		t.Error("body should contain Code References table scaffold")
+	if !strings.Contains(body, "## Related Refs") {
+		t.Error("body should contain Related Refs table scaffold")
 	}
 
 	// Container's Components table should now list the new component
@@ -166,8 +166,8 @@ func TestRunAddRich_RefWithGoal(t *testing.T) {
 	if !strings.Contains(body, "## Why") {
 		t.Error("ref body should contain Why section scaffold")
 	}
-	if !strings.Contains(body, "## Cited By") {
-		t.Error("ref body should contain Cited By table scaffold")
+	if !strings.Contains(body, "## How") {
+		t.Error("ref body should contain How section scaffold")
 	}
 }
 

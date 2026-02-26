@@ -76,12 +76,6 @@ Delete this comment block after drafting.
 | IN (uses) | | |
 | OUT (provides) | | |
 
-## Code References
-
-<!-- List concrete code files that implement this component -->
-| File | Purpose |
-|------|---------|
-
 ## Related Refs
 
 <!-- ref-* documents that govern this component's behavior -->

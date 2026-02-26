@@ -5,6 +5,22 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.2.0] - 2026-02-26
+
+### Added
+- **`.c3/code-map.yaml`**: New centralized file mapping component IDs to their source files. Replaces the `## Code References` section in component docs — keeps architecture reasoning in docs, code pointers in a machine-managed file.
+- **`c3x check` validates code-map**: Validates entity IDs exist in graph, IDs are components (not refs/containers), file paths exist on disk, no empty/absolute/traversal paths.
+- **`CheckOptions.C3Dir` field**: Explicit c3 directory path in check options — no longer reconstructed from ProjectDir, supports custom `--c3-dir` usage.
+
+### Changed
+- **Removed `## Code References` section**: Component docs no longer contain file path tables. File-to-component linkage moves to `.c3/code-map.yaml`.
+- **Removed `## Cited By` section**: Ref docs no longer require manual "Cited By" tables — citation tracking is derived from `refs:` frontmatter on components. Bidirectional consistency check removed from `c3x check`.
+- **Component type validation**: `code-map.yaml` validation now checks entity type from the graph (not a regex) — prevents false-positives on container IDs with 3+ digits.
+- **Skill docs updated**: All `skills/c3/references/` docs updated to reference `.c3/code-map.yaml` instead of `## Code References`.
+
+### Fixed
+- **Path validation in code-map**: Rejects empty paths, absolute paths, `../` traversal, and directory paths (must be regular files).
+
 ## [6.1.0] - 2026-02-26
 
 ### Breaking Changes

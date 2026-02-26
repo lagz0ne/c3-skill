@@ -1,0 +1,57 @@
+name: Build & Distribute
+
+on:
+  push:
+    branches: [dev]
+
+permissions:
+  contents: write
+
+jobs:
+  distribute:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: cli/go.mod
+
+      - name: Run tests
+        working-directory: cli
+        run: go test ./...
+
+      - name: Cross-compile
+        run: bash scripts/build.sh
+
+      - name: Distribute to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Save built binaries
+          mkdir -p /tmp/c3x-bins
+          cp skills/c3/bin/c3x-* /tmp/c3x-bins/
+
+          # Switch to main (create if first run)
+          git checkout main 2>/dev/null || git checkout -b main
+
+          # Merge dev → main (-X theirs: dev is source of truth for code)
+          git merge dev -X theirs -m "merge: dev → main" --no-edit
+
+          # Force-add binaries (gitignored but tracked on main)
+          cp /tmp/c3x-bins/* skills/c3/bin/
+          git add -f skills/c3/bin/c3x-*
+
+          # Commit only if binaries changed
+          if git diff --staged --quiet; then
+            echo "No binary changes to commit"
+          else
+            git commit -m "build: update c3x binaries"
+          fi
+
+          git push origin main

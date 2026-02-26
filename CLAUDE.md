@@ -57,22 +57,11 @@ Goals → Minimal Skill → Meaningful Eval → Run → Trace Failures → Updat
 
 ---
 
-# Plugin Structure Checklist
+# Plugin Structure
 
-## Pre-Release Checklist
+## plugin.json
 
-Run before every release to ensure plugin loads correctly:
-
-| Check | Required | File |
-|-------|----------|------|
-| `name` field exists | Yes | `.claude-plugin/plugin.json` |
-| NO explicit component paths | Yes | `.claude-plugin/plugin.json` (auto-discovery only) |
-| Skills have `SKILL.md` with frontmatter | Yes | `skills/*/SKILL.md` |
-| Agents have YAML frontmatter with `name`, `description` | Yes | `agents/*.md` |
-
-## plugin.json Template
-
-**IMPORTANT:** Claude Code uses auto-discovery. Do NOT add explicit component paths - they break plugin loading.
+Auto-discovery only. Do NOT add explicit component paths.
 
 ```json
 {
@@ -81,91 +70,45 @@ Run before every release to ensure plugin loads correctly:
 }
 ```
 
-Components are auto-discovered from standard directories:
-- `skills/` - Agent skills
-- `agents/` - Subagent definitions
-
-## Common Issues
-
-| Symptom | Cause | Fix |
-|---------|-------|-----|
-| Components not loading | Explicit path declarations in plugin.json | REMOVE `skills`, `agents` fields - use auto-discovery |
-| Plugin not loading | Version mismatch in `installed_plugins.json` | Update path/version in `~/.claude/plugins/installed_plugins.json` |
-| Plugin marked orphaned | `.orphaned_at` file in cache | Remove the file from cached plugin directory |
-
-## Validation Steps
-
-1. Load `plugin-dev:plugin-structure` skill for structure reference
-2. Run `plugin-dev:plugin-validator` agent on plugin root
-3. Fix issues reported by validator
-4. Restart Claude Code session (components load at startup)
-
-## Testing Plugin Behavior
-
-The plugin structure matches the installed format:
+## Repository Layout
 
 ```
-c3-design/                    # Repository root
+c3-design/
 ├── .claude-plugin/           # Plugin metadata
-│   ├── plugin.json          # Manifest with paths to content
-│   └── marketplace.json     # Marketplace publishing config
-├── skills/                  # Skill definitions (at root)
-├── agents/                  # Agent definitions (at root)
-├── references/              # Shared reference docs
-├── templates/               # Doc templates
-└── scripts/                 # Build scripts
+│   ├── plugin.json
+│   └── marketplace.json
+├── cli/                      # Go CLI source
+│   ├── main.go
+│   ├── cmd/                  # Command implementations
+│   ├── internal/             # Core libraries
+│   └── templates/            # Embedded doc templates
+├── skills/c3/                # Unified skill (auto-discovered)
+│   ├── SKILL.md              # Skill definition + intent router
+│   ├── bin/                  # CLI binaries (built in CI)
+│   │   ├── c3x.sh           # Platform-detecting wrapper
+│   │   └── c3x-{os}-{arch}  # Cross-compiled binaries (gitignored)
+│   └── references/           # Operation-specific guidance
+│       ├── onboard.md
+│       ├── query.md
+│       ├── audit.md
+│       ├── change.md
+│       ├── ref.md
+│       └── sweep.md
+└── scripts/
+    └── build.sh              # Cross-compile Go CLI
 ```
 
-**Testing locally with --plugin-dir:**
-
-Note: `--plugin-dir` conflicts with installed plugins of the same name. For local testing:
+## Build System
 
 ```bash
-# Option 1: Temporarily uninstall the marketplace plugin
-claude plugin uninstall c3-skill
-
-# Then test with --plugin-dir
-claude --plugin-dir /path/to/c3-design -p "list skills"
-
-# Re-install when done
-claude plugin install c3-skill
-
-# Option 2: Just release and test the installed version
-# Run /release to bump version, then the plugin auto-updates
-```
-
-**Structure notes:**
-- `.claude-plugin/plugin.json` paths (`"skills": "skills"`) are relative to the repo root
-- When installed, the whole repo is copied to `~/.claude/plugins/cache/.../version/`
-- The directory name for `--plugin-dir` becomes the skill prefix
-
----
-
-# Build System
-
-```bash
-bun run build        # Build to dist/claude-code/
-bun run check-refs   # Verify bundled references match shared source
-bun run fix-refs     # Copy from shared references/ to fix drift
-```
-
-## Self-Contained Skills
-
-Each skill bundles its own `references/` and `templates/` subdirectories. The shared `references/` directory at the repo root is the source of truth — use `bun run fix-refs` after editing shared files.
-
-```
-skills/c3-query/
-├── SKILL.md
-└── references/
-    ├── skill-harness.md
-    └── layer-navigation.md
+bash scripts/build.sh         # Cross-compile Go CLI for 4 targets
+cd cli && go test ./...       # Run Go tests
 ```
 
 ## CI/CD
 
-- **Push to main** → Triggers `build-dist.yml`
-- **build-dist.yml** → Builds plugin, pushes to `dist` branch
-- **dist branch** → Default branch for installs
+- **Push to main** -> `release.yml` checks VERSION file
+- New version -> Go cross-compile -> GitHub Release with plugin zip
 
 ## Versioning
 

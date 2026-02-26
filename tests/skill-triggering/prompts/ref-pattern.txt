@@ -1,1 +1,0 @@
-list the C3 refs and show which components cite each pattern

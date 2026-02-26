@@ -1,1 +1,0 @@
-check if the C3 documentation is up to date with the code

@@ -1,1 +1,0 @@
-create a C3 ref for our error handling convention - document it as a pattern

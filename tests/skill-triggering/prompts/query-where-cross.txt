@@ -1,1 +1,0 @@
-which C3 components connect the frontend to the API backend?

@@ -1,71 +1,38 @@
-# c3x: Architecture-Aware CLI for C3 Projects
+# C3: Architecture Documentation Toolkit
 
-c3x is a CLI tool for managing C3 architecture documentation. It provides commands for listing entities, checking integrity, scaffolding new docs, and more.
-
-## Installation
-
-### Per-project (recommended)
-
-```bash
-npm install --save-dev @lagz0ne/c3x
-```
-
-Then use via `npx`:
-
-```bash
-npx @lagz0ne/c3x list --json
-npx @lagz0ne/c3x check
-```
-
-### Global
-
-```bash
-npm install -g @lagz0ne/c3x
-```
-
-Then use directly:
-
-```bash
-c3x list --json
-c3x check
-```
-
-### Zero-install
-
-```bash
-npx -y @lagz0ne/c3x list --json
-```
-
-Downloads from npm on first use (~2s), then cached. The `-y` flag suppresses the install prompt.
-
-## Commands
-
-| Command | Description |
-|---------|-------------|
-| `list` | Topology view with relationships (`--json` for machine-readable) |
-| `check` | Doc integrity: broken links, orphans, duplicates |
-| `init` | Scaffold `.c3/` skeleton |
-| `add <type> <slug>` | Create entity with auto-numbering + wiring |
-| `sync` | Generate guard skills from component docs |
-
-Run `npx @lagz0ne/c3x <command> --help` for details and examples.
+C3 (Context-Container-Component) is a Claude Code plugin with a Go CLI for managing architecture documentation.
 
 ## Claude Code Plugin
-
-c3x also ships as a Claude Code plugin with architecture-aware skills:
 
 ```bash
 claude plugin install c3-skill
 ```
 
-| Skill | Purpose |
-|-------|---------|
-| `c3-onboard` | Create C3 docs from scratch via Socratic discovery |
-| `c3-query` | Navigate architecture docs and answer questions |
-| `c3-change` | Coordinated change workflow via Agent Teams (ADR-first) |
-| `c3-ref` | Manage cross-cutting patterns and conventions |
-| `c3-audit` | Audit docs for consistency, drift, and completeness |
-| `c3-sweep` | Impact assessment before changes |
+Single unified skill with 6 operations:
+
+| Operation | Purpose |
+|-----------|---------|
+| `onboard` | Create C3 docs from scratch via Socratic discovery |
+| `query` | Navigate architecture docs and answer questions |
+| `change` | Coordinated change workflow (ADR-first) |
+| `ref` | Manage cross-cutting patterns and conventions |
+| `audit` | Audit docs for consistency, drift, and completeness |
+| `sweep` | Impact assessment before changes |
+
+Just say `/c3` + what you want.
+
+## CLI
+
+The Go CLI (`c3x`) is bundled with the plugin and also usable standalone.
+
+| Command | Description |
+|---------|-------------|
+| `init` | Scaffold `.c3/` skeleton |
+| `list` | Topology view with relationships (`--json`, `--flat`) |
+| `check` | Doc integrity: broken links, orphans, duplicates (`--json`) |
+| `add <type> <slug>` | Create entity with auto-numbering + wiring |
+
+Types for `add`: `container`, `component`, `ref`, `adr`
 
 ## The `.c3/` Directory
 
@@ -73,9 +40,9 @@ claude plugin install c3-skill
 .c3/
 ├── README.md                    # System context
 ├── config.yaml                  # Optional config
-├── c3-1-<container>/
+├── c3-N-<container>/
 │   ├── README.md                # Container overview
-│   └── c3-101-<component>.md    # One file per component
+│   └── c3-NNN-<component>.md   # One file per component
 ├── refs/
 │   └── ref-<pattern>.md         # Cross-cutting patterns
 └── adr/
@@ -85,11 +52,11 @@ claude plugin install c3-skill
 ## Building
 
 ```bash
-bun install
-bun run build:cli    # CLI → dist/cli.cjs
-bun run build        # Plugin → dist/claude-code/
-bun run check-refs   # Verify bundled references match source
-bun run fix-refs     # Sync shared references into skills
+# Cross-compile Go CLI for all platforms
+bash scripts/build.sh
+
+# Run Go tests
+cd cli && go test ./...
 ```
 
 ## License

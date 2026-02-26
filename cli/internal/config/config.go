@@ -35,3 +35,8 @@ func ResolveC3Dir(startDir string, override string) string {
 	}
 	return FindC3Dir(startDir)
 }
+
+// ProjectDir returns the project root (parent of .c3/ directory).
+func ProjectDir(c3Dir string) string {
+	return filepath.Dir(c3Dir)
+}

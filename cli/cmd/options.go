@@ -7,8 +7,14 @@ type Options struct {
 	JSON      bool
 	Flat      bool
 	Feature   bool
+	Append    bool
 	Container string
 	C3Dir     string
+	Goal      string
+	Summary   string
+	Boundary  string
+	Field     string
+	Section   string
 	Help      bool
 	Version   bool
 }
@@ -41,6 +47,33 @@ func ParseArgs(argv []string) Options {
 				i++
 				opts.C3Dir = argv[i]
 			}
+		case "--goal":
+			if i+1 < len(argv) {
+				i++
+				opts.Goal = argv[i]
+			}
+		case "--summary":
+			if i+1 < len(argv) {
+				i++
+				opts.Summary = argv[i]
+			}
+		case "--boundary":
+			if i+1 < len(argv) {
+				i++
+				opts.Boundary = argv[i]
+			}
+		case "--field":
+			if i+1 < len(argv) {
+				i++
+				opts.Field = argv[i]
+			}
+		case "--section":
+			if i+1 < len(argv) {
+				i++
+				opts.Section = argv[i]
+			}
+		case "--append":
+			opts.Append = true
 		default:
 			args = append(args, arg)
 		}

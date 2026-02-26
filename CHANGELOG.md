@@ -5,6 +5,34 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.1.0] - 2026-02-26
+
+### Breaking Changes
+- **Go CLI replaces npm package**: `c3x` is now a native Go binary (cross-compiled for linux/darwin × amd64/arm64), replacing the previous npm-based CLI
+- **Unified `/c3` skill**: All separate skills (c3-onboard, c3-query, c3-ref, c3-audit, c3-change) consolidated into a single `c3` skill with intent router
+
+### Added
+- **CLI v2 structured document engine**: Three-layer architecture for C3 markdown documents
+  - Layer 1: Controlled frontmatter mutations + atomic 3-sided cite wiring
+  - Layer 2: Section/table schema registry with known sections per entity type
+  - Layer 3: Typed column validation (filepath, entity_id, ref_id, enum)
+- **New commands**: `set`, `wire`, `unwire`, `schema`
+  - `set`: Update frontmatter fields and section content (text or JSON tables)
+  - `wire`/`unwire`: Create/remove cite relationships with atomic 3-sided updates
+  - `schema`: Show known sections and column types per entity type
+- **Enhanced `add` command**: Rich content scaffolding with `--goal`, `--summary`, `--boundary` flags, auto-wiring to parent containers
+- **Enhanced `check` command**: 3-layer validation — broken links/orphans, required sections per schema, code refs + entity IDs + cite consistency
+- **Auto-download binary**: `c3x.sh` downloads pre-built binary from GitHub releases when not found locally — no Go toolchain required
+- **Internal packages**: `markdown` (section/table parser), `writer` (frontmatter mutations), `schema` (registry with typed columns)
+
+### Changed
+- **Binary distribution**: Binaries built in CI, force-added to `main` branch, included in release zips. `dev` branch has source only.
+- **Help text**: Compact, agent-browser style help for all 8 commands
+
+### Fixed
+- **CI workflow**: Merged release into distribute workflow for single-pipeline release
+- **npm package naming**: Resolved registry conflicts (c3x → c3-kit → @lagz0ne/c3x)
+
 ## [4.3.0] - 2026-02-11
 
 ### Changed

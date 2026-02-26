@@ -36,7 +36,7 @@ JSON contains every entity's id, type, title, path, relationships, frontmatter. 
 
 **Do NOT** manually Glob or Read `.c3/` directory. JSON has everything for discovery.
 
-Only Read **after** identifying specific entities — when body content (prose, Code References, edge cases) is needed.
+Only Read **after** identifying specific entities — when body content (prose, edge cases) is needed. Use `.c3/code-map.yaml` for file paths.
 
 ## Step 0b: Clarify Intent
 
@@ -57,17 +57,17 @@ Top-down: Context -> Container -> Component
 1. **Match from JSON** — find relevant entities by title, type, relationships
 2. **Read for depth** — only Read entity files when body content not in JSON frontmatter
 
-| Doc Section | Extract For Code |
-|-------------|------------------|
+| Source | Extract For Code |
+|--------|------------------|
 | Component name | Class/module names |
-| `## Code References` | Direct file paths, symbols |
+| `.c3/code-map.yaml` | Direct file paths, symbols |
 | Technology | Framework patterns |
 | Entry points | Main files, handlers |
 
 ## Step 2: Extract References
 
 From identified component(s):
-- File paths from `## Code References`
+- File paths from `.c3/code-map.yaml` (look up component ID)
 - Related patterns from `## Related Refs`
 
 **Ref lookup:** Find matching `ref-*` entities from JSON. Read ref file for body content. Return ref content + citing components.
@@ -77,7 +77,7 @@ From identified component(s):
 Use extracted references:
 - **Glob:** `src/auth/**/*.ts`
 - **Grep:** class names, functions
-- **Read:** specific files from `## Code References`
+- **Read:** specific files from `.c3/code-map.yaml`
 
 ---
 
@@ -138,7 +138,7 @@ This component MUST NOT: [prohibited]
 
 <Architecture from docs>
 
-**Code References:**
+**Code Map:**
 - `path/file.ts` - <role>
 
 **Key Insights:**

@@ -11,10 +11,10 @@ import (
 )
 
 // =============================================================================
-// RunWire: bidirectional cite relationship management (3 sides)
+// RunWire: bidirectional cite relationship management (2 sides)
 // =============================================================================
 
-func TestRunWire_CiteRef_UpdatesAllThreeSides(t *testing.T) {
+func TestRunWire_CiteRef_UpdatesBothSides(t *testing.T) {
 	c3Dir := createRichFixture(t)
 	var buf bytes.Buffer
 
@@ -37,16 +37,6 @@ func TestRunWire_CiteRef_UpdatesAllThreeSides(t *testing.T) {
 	srcStr := string(srcContent)
 	if !strings.Contains(srcStr, "ref-error-handling") {
 		t.Error("Side 2 fail: source's Related Refs table should include ref-error-handling")
-	}
-
-	// Side 3: target's Cited By table should include c3-201
-	tgtContent, err := os.ReadFile(filepath.Join(c3Dir, "refs", "ref-error-handling.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	tgtStr := string(tgtContent)
-	if !strings.Contains(tgtStr, "c3-201") {
-		t.Error("Side 3 fail: ref's Cited By should include c3-201")
 	}
 
 	output := buf.String()
@@ -79,21 +69,6 @@ func TestRunWire_CiteRef_NoDuplicate(t *testing.T) {
 	}
 	if count != 1 {
 		t.Errorf("should not duplicate ref citation, count = %d", count)
-	}
-
-	// Verify no duplicate rows in Cited By table
-	refContent, err := os.ReadFile(filepath.Join(c3Dir, "refs", "ref-jwt.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	refStr := string(refContent)
-	firstIdx := strings.Index(refStr, "| c3-101")
-	if firstIdx == -1 {
-		t.Fatal("c3-101 should appear in Cited By")
-	}
-	secondIdx := strings.Index(refStr[firstIdx+1:], "| c3-101")
-	if secondIdx != -1 {
-		t.Error("c3-101 should appear only once in Cited By table")
 	}
 }
 
@@ -163,15 +138,6 @@ func TestRunUnwire_CiteRef(t *testing.T) {
 
 	// Side 2: Related Refs should not contain ref-error-handling (as a table row)
 	// (Note: the section header "Related Refs" will still exist, just no row for this ref)
-
-	// Side 3: Cited By should not contain c3-201
-	tgtContent, err := os.ReadFile(filepath.Join(c3Dir, "refs", "ref-error-handling.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if strings.Contains(string(tgtContent), "c3-201") {
-		t.Error("ref's Cited By should not contain c3-201 after unwire")
-	}
 }
 
 func TestRunUnwire_NotWired(t *testing.T) {

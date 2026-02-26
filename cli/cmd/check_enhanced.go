@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/lagz0ne/c3-design/cli/internal/codemap"
 	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
 	"github.com/lagz0ne/c3-design/cli/internal/markdown"
 	"github.com/lagz0ne/c3-design/cli/internal/walker"
@@ -20,6 +21,7 @@ type CheckOptions struct {
 	Docs       []frontmatter.ParsedDoc
 	JSON       bool
 	ProjectDir string
+	C3Dir      string // path to .c3/ directory (may differ from ProjectDir/.c3/ with --c3-dir)
 }
 
 // RunCheckV2 validates entities against the schema registry.
@@ -198,57 +200,30 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 		}
 	}
 
-	// Layer 3: Bidirectional consistency — if entity refs[] lists a ref,
-	// that ref's "Cited By" table should contain the entity.
-	for _, entity := range entities {
-		if len(entity.Frontmatter.Refs) == 0 {
-			continue
-		}
-		for _, refID := range entity.Frontmatter.Refs {
-			refEntity := opts.Graph.Get(refID)
-			if refEntity == nil {
-				continue
+	// Code-map validation
+	c3Dir := opts.C3Dir
+	if c3Dir == "" && opts.ProjectDir != "" {
+		c3Dir = filepath.Join(opts.ProjectDir, ".c3")
+	}
+	if c3Dir != "" {
+		cmPath := filepath.Join(c3Dir, "code-map.yaml")
+		cm, err := codemap.ParseCodeMap(cmPath)
+		if err != nil {
+			issues = append(issues, Issue{
+				Severity: "error",
+				Entity:   "",
+				Message:  fmt.Sprintf("code-map parse error: %v", err),
+			})
+		} else if len(cm) > 0 {
+			knownEntities := make(map[string]string)
+			for _, e := range entities {
+				knownEntities[e.ID] = frontmatter.ClassifyDoc(e.Frontmatter).String()
 			}
-			// Check if ref's "Cited By" table lists this entity
-			citedByTable, err := markdown.ExtractTableFromSection(refEntity.Body, "Cited By")
-			if err != nil || citedByTable == nil {
-				// No Cited By section or not parseable — flag inconsistency
+			for _, ci := range codemap.Validate(cm, knownEntities, opts.ProjectDir) {
 				issues = append(issues, Issue{
-					Severity: "warning",
-					Entity:   entity.ID,
-					Message:  fmt.Sprintf("refs %s but %s has no Cited By entry for %s", refID, refID, entity.ID),
-				})
-				issues = append(issues, Issue{
-					Severity: "warning",
-					Entity:   refID,
-					Message:  fmt.Sprintf("missing Cited By entry for %s (which refs this)", entity.ID),
-				})
-				continue
-			}
-
-			// Check if any row in Cited By contains this entity's ID
-			found := false
-			for _, row := range citedByTable.Rows {
-				for _, val := range row {
-					if strings.Contains(val, entity.ID) {
-						found = true
-						break
-					}
-				}
-				if found {
-					break
-				}
-			}
-			if !found {
-				issues = append(issues, Issue{
-					Severity: "warning",
-					Entity:   entity.ID,
-					Message:  fmt.Sprintf("refs %s but %s has no Cited By entry for %s", refID, refID, entity.ID),
-				})
-				issues = append(issues, Issue{
-					Severity: "warning",
-					Entity:   refID,
-					Message:  fmt.Sprintf("missing Cited By entry for %s (which refs this)", entity.ID),
+					Severity: ci.Severity,
+					Entity:   ci.Entity,
+					Message:  ci.Message,
 				})
 			}
 		}

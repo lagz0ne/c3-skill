@@ -60,16 +60,30 @@ The CLI implements a three-layer document engine:
 ```
 .c3/
 ├── README.md                  # System context (c3-0)
+├── code-map.yaml              # Component → source file mappings (validated by check)
 ├── c3-N-name/                 # Container
 │   ├── README.md              # Container overview + component table
-│   └── c3-NNN-component.md   # Component with code refs, deps, wiring
+│   └── c3-NNN-component.md   # Component with deps, wiring
 ├── refs/
-│   └── ref-pattern.md         # Cross-cutting convention with cited-by tracking
+│   └── ref-pattern.md         # Cross-cutting convention (golden examples, no code pointers)
 └── adr/
     └── adr-YYYYMMDD-slug.md   # Architecture decision record
 ```
 
 Every entity has YAML frontmatter (`id`, `type`, `refs[]`, `status`) and markdown body with schema-defined sections. The CLI keeps wiring consistent — `wire`/`unwire` updates source frontmatter, source Related Refs table, and target Cited By table atomically.
+
+`code-map.yaml` maps foundation and feature components to their actual source files:
+
+```yaml
+# .c3/code-map.yaml
+c3-101:  # Logger
+  - src/lib/logger.ts
+  - src/lib/logger.test.ts
+c3-102:  # Config
+  - src/lib/config.ts
+```
+
+`c3x check` validates all mappings: component IDs must exist in the graph, paths must be regular files on disk.
 
 ## Development
 

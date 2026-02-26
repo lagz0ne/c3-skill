@@ -4,8 +4,8 @@ Manage scoped patterns and conventions as first-class architecture artifacts.
 
 ## Component Categories Reminder
 
-- **Foundation/Feature** (components): Has `## Code References` — code counterpart exists
-- **Ref** (pattern): NO `## Code References` — no code counterpart. May include golden code examples.
+- **Foundation/Feature** (components): Has entry in `.c3/code-map.yaml` — code counterpart exists
+- **Ref** (pattern): NO code-map entry — no code counterpart. May include golden code examples.
 
 Hard rule: If you cannot name a concrete file, create a ref, not a component.
 
@@ -117,7 +117,7 @@ Find ref entity by id. `relationships` field lists citing components. For deeper
 
 **Step 3: Check Compliance**
 For each citing component:
-- Read code references
+- Read code-map entries
 - Check if code complies with proposed change
 - Categorize: compliant / needs-update / breaking
 
@@ -149,9 +149,9 @@ Filter by `type: "ref"`. Extract: id, title, frontmatter.goal, relationships (ci
 ```
 **C3 Patterns (Refs)**
 
-| Ref | Title | Goal | Cited By |
-|-----|-------|------|----------|
-| ref-error-handling | Error Handling | Consistent error responses | 5 components |
+| Ref | Title | Goal |
+|-----|-------|------|
+| ref-error-handling | Error Handling | Consistent error responses |
 ```
 
 ---

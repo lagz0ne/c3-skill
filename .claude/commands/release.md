@@ -80,12 +80,25 @@ These fields cause the plugin to not load properly. Auto-discovery finds compone
 
 ### Step 5: Update Version Files
 
-Read, then update both files with the new version:
+Read, then update **all four** files with the new version:
 
-1. `.claude-plugin/plugin.json` - Update `"version": "X.Y.Z"` (and ensure no explicit paths per Step 4)
-2. `.claude-plugin/marketplace.json` - Update `"version": "X.Y.Z"` in the plugins array
+1. `VERSION` - Replace content with just `A.B.C` (no quotes, no newline prefix) — **CI reads this to detect new releases**
+2. `.claude-plugin/plugin.json` - Update `"version": "X.Y.Z"` (and ensure no explicit paths per Step 4)
+3. `.claude-plugin/marketplace.json` - Update `"version": "X.Y.Z"` in the plugins array
+4. `package.json` - Update `"version": "X.Y.Z"`
 
-### Step 6: Update CHANGELOG.md
+### Step 6: Update README.md
+
+Read `README.md` and update it to reflect any new features, changed commands, or modified `.c3/` structure introduced in this release. Focus on:
+
+- **What You Get** table: any new `/c3` operations or changed behavior
+- **`c3x` CLI** command list: new commands, removed commands, changed flags
+- **The `.c3/` Directory** tree: new files or changed structure
+- **Layer validation table**: if `check` behavior changed
+
+Keep it concise — README is user-facing marketing, not a changelog. Only update what's visibly different to a new user.
+
+### Step 7: Update CHANGELOG.md
 
 Read CHANGELOG.md (create if doesn't exist). Add a new entry at the top following this format:
 
@@ -117,9 +130,17 @@ After updates, show:
 1. Version change: `X.Y.Z` → `A.B.C`
 2. Files modified
 3. Changelog entry preview
-4. Remind user to commit these changes:
-   ```
-   git add .claude-plugin/plugin.json .claude-plugin/marketplace.json CHANGELOG.md
+4. Remind user to commit and push to **dev** (CI handles the rest):
+   ```bash
+   git add VERSION .claude-plugin/plugin.json .claude-plugin/marketplace.json package.json CHANGELOG.md README.md
    git commit -m "chore: release vA.B.C"
-   git tag vA.B.C
+   git push origin dev
    ```
+
+**What CI does automatically on push to dev:**
+- Runs `go test ./...`
+- Cross-compiles Go CLI for 4 targets (linux/darwin × amd64/arm64)
+- Merges dev → main (with binaries force-added — they're gitignored on dev)
+- Detects new VERSION → creates git tag `vA.B.C` + GitHub Release with plugin zip
+
+**Do NOT manually create git tags** — CI owns that.

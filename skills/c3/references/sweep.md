@@ -39,7 +39,7 @@ From the proposed change, determine:
 - Which refs govern the affected areas?
 - Which ADRs are relevant?
 
-Match by: entity title, relationships, Code References paths, ref scopes.
+Match by: entity title, relationships, code-map entries, ref scopes.
 
 ## Step 3: Per-Entity Assessment
 
@@ -57,7 +57,7 @@ For each affected container:
 
 For each affected component:
 1. Read component doc
-2. Read Code References — inspect actual code
+2. Read `.c3/code-map.yaml` for file paths — inspect actual code
 3. Check: does the change modify behavior, API, dependencies?
 4. Check applicable refs for compliance
 5. Identify downstream dependents (components that use this one)

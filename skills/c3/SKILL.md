@@ -113,9 +113,9 @@ When `ASSUMPTION_MODE` is true:
 - Updating docs without code check -> verify code first
 
 **Component Categories:**
-- Foundation (01-09): infrastructure, `## Code References` required
-- Feature (10+): business logic, `## Code References` required
-- Ref: conventions only, NO `## Code References`
+- Foundation (01-09): infrastructure, mapped in `.c3/code-map.yaml`
+- Feature (10+): business logic, mapped in `.c3/code-map.yaml`
+- Ref: conventions only, NO code-map entry
 
 **Layer Navigation:** Always top-down: Context -> Container -> Component
 

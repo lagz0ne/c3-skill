@@ -36,10 +36,6 @@ var schemaRegistry = map[string][]SectionDef{
 			{Name: "What", Type: "text"},
 			{Name: "From/To", Type: "entity_id"},
 		}},
-		{Name: "Code References", ContentType: "table", Required: true, Columns: []ColumnDef{
-			{Name: "File", Type: "filepath"},
-			{Name: "Purpose", Type: "text"},
-		}},
 		{Name: "Related Refs", ContentType: "table", Required: false, Columns: []ColumnDef{
 			{Name: "Ref", Type: "ref_id"},
 			{Name: "Role", Type: "text"},
@@ -79,10 +75,6 @@ var schemaRegistry = map[string][]SectionDef{
 		{Name: "Choice", ContentType: "text", Required: true},
 		{Name: "Why", ContentType: "text", Required: true},
 		{Name: "How", ContentType: "text", Required: false},
-		{Name: "Cited By", ContentType: "table", Required: false, Columns: []ColumnDef{
-			{Name: "Component", Type: "entity_id"},
-			{Name: "Usage", Type: "text"},
-		}},
 	},
 	"adr": {
 		{Name: "Goal", ContentType: "text", Required: true},

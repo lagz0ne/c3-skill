@@ -245,11 +245,6 @@ Handle authentication.
 |-----------|------|---------|
 | IN | user credentials | c3-110 |
 
-## Code References
-
-| File | Purpose |
-|------|---------|
-
 ## Related Refs
 
 | Ref | Role |
@@ -276,11 +271,6 @@ Manage user accounts.
 
 | Direction | What | From/To |
 |-----------|------|---------|
-
-## Code References
-
-| File | Purpose |
-|------|---------|
 `)
 
 	// Container 2
@@ -325,18 +315,13 @@ Render pages.
 | Direction | What | From/To |
 |-----------|------|---------|
 
-## Code References
-
-| File | Purpose |
-|------|---------|
-
 ## Related Refs
 
 | Ref | Role |
 |-----|------|
 `)
 
-	// Ref — with Cited By table
+	// Ref
 	writeFile(t, filepath.Join(c3Dir, "refs", "ref-jwt.md"), `---
 id: ref-jwt
 title: JWT Authentication
@@ -357,12 +342,6 @@ Use RS256 signed JWTs.
 ## Why
 
 Industry standard, asymmetric verification.
-
-## Cited By
-
-| Component | Usage |
-|-----------|-------|
-| c3-101 | Token format |
 `)
 
 	// Second ref — for wire tests
@@ -386,11 +365,6 @@ RFC 7807 Problem Details.
 ## Why
 
 Machine-readable error format.
-
-## Cited By
-
-| Component | Usage |
-|-----------|-------|
 `)
 
 	// ADR

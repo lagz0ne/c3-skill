@@ -76,7 +76,7 @@ After ADR acceptance, ask user (skip if ASSUMPTION_MODE):
 **"Implement now or design only?"**
 
 - **Implement now** -> Continue to Phase 3
-- **Design only (provision)** -> Create component docs with `status: provisioned`, no Code References (no code yet), mark ADR `provisioned`, done. Docs are visible to query and audit immediately.
+- **Design only (provision)** -> Create component docs with `status: provisioned`, no code-map entry (no code yet), mark ADR `provisioned`, done. Docs are visible to query and audit immediately.
 
 To implement a provisioned design later: invoke change again. Pick up existing provisioned ADR + docs as starting context, resume from Phase 3.
 
@@ -101,7 +101,7 @@ bash <skill-dir>/bin/c3x.sh add ref <slug>
 
 For each completed task, verify:
 - Code implemented correctly
-- C3 docs updated (Code References, Related Refs)
+- C3 docs updated (code-map.yaml, Related Refs)
 - No regressions in other components
 
 ## Phase 4: Audit
@@ -114,7 +114,6 @@ bash <skill-dir>/bin/c3x.sh check
 2. Semantic review:
    - Docs match code changes
    - Related Refs updated
-   - Cited By sections current
    - ADR Affected Layers accurate
 
 3. CLAUDE.md propagation:

@@ -94,7 +94,3 @@ To override this ref:
 2. Cite this ref and explain why the override is necessary
 3. Specify the scope of the override (which components deviate)
 
-## Cited By
-
-<!-- Updated when components cite this ref -->
-- c3-{N}{NN} ({component name})

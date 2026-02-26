@@ -61,6 +61,7 @@ func main() {
 			Docs:       docs,
 			JSON:       opts.JSON,
 			ProjectDir: projectDir,
+			C3Dir:      c3Dir,
 		}
 		err = cmd.RunCheckV2(checkOpts, w)
 	case "add":

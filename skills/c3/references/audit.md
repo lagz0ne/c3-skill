@@ -14,7 +14,7 @@ Audit Progress:
 - [ ] Phase 1: Gather Inventory (c3x list --json)
 - [ ] Phase 2: Inventory vs Code
 - [ ] Phase 3: Component Categorization
-- [ ] Phase 4: Code Reference Validation
+- [ ] Phase 4: Code Map Validation
 - [ ] Phase 5: Diagram Accuracy
 - [ ] Phase 6: ADR Lifecycle
 - [ ] Phase 7: Ref File Validation
@@ -74,12 +74,14 @@ For each Container:
 | **Foundation** (01-09) | Primitives, high impact | Layout, Button, Router |
 | **Feature** (10+) | Domain-specific | ProductCard, CheckoutScreen |
 
-## Phase 4: Code Reference Validation
+## Phase 4: Code Map Validation
 
 ```
+Read .c3/code-map.yaml
+
 For each Component:
-  - Read ## Code References
-  - For each reference:
+  - Look up component ID in code-map.yaml
+  - For each mapped path:
     - Symbol: grep for definition, flag if not found
     - Pattern: glob, flag if zero matches
     - Path: check exists, flag if missing
@@ -87,7 +89,7 @@ For each Component:
 
 Coverage:
   - Identify major code areas (top-level modules)
-  - Major area with zero component references -> WARN
+  - Major area with zero code-map entries -> WARN
 ```
 
 ## Phase 5: Diagram Accuracy
@@ -132,10 +134,10 @@ For each component citing a ref:
 
 **Goal:** Proper separation between Foundation (code), Feature (composition), Ref (guidance).
 
-**The Code References Test:**
-- Component WITH `## Code References` -> implemented (Foundation or Feature)
-- Component WITHOUT `## Code References` -> either provisioned or misclassified (should be Ref)
-- Ref WITH `## Code References` -> VIOLATION (should be Component)
+**The Code Map Test:**
+- Component WITH entry in `.c3/code-map.yaml` -> implemented (Foundation or Feature)
+- Component WITHOUT code-map entry -> either provisioned or misclassified (should be Ref)
+- Ref WITH code-map entry -> VIOLATION (should be Component)
 - Ref with code examples in body -> VALID (golden references)
 
 **Check for missing refs:**
@@ -154,7 +156,7 @@ For each component citing a ref:
 
 **Goal:** Verify CLAUDE.md files propagated to code directories.
 
-1. **Extract expected:** For each component with `## Code References`, parse directory paths
+1. **Extract expected:** For each component with code-map entry, parse directory paths
 2. **Check presence:** CLAUDE.md exists in each expected directory?
 3. **Check c3-generated block:** `<!-- c3-generated: c3-NNN -->` marker matches expected component
 4. **Check orphans:** c3-generated blocks referencing deleted components

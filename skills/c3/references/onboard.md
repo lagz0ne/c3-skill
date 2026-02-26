@@ -39,13 +39,13 @@ Each component = separate file. Each container = separate directory.
 | Can you name a concrete code file? | Yes | **Foundation** (01-09) or **Feature** (10+) |
 | Is it only rules/conventions? | Yes | **Ref** |
 
-- **Foundation** (NN=01-09): infrastructure that others depend on. Has `## Code References`.
-- **Feature** (NN=10+): business logic composing foundations. Has `## Code References`.
-- **Ref**: conventions only. NO `## Code References`. May include golden code examples.
+- **Foundation** (NN=01-09): infrastructure that others depend on. Has entry in `.c3/code-map.yaml`.
+- **Feature** (NN=10+): business logic composing foundations. Has entry in `.c3/code-map.yaml`.
+- **Ref**: conventions only. NO code-map entry. May include golden code examples.
 
 Hard rules:
 - If you cannot name a concrete file, you cannot create a component doc — create a ref
-- `## Code References` = implemented. Refs never have it.
+- Code-map entry = implemented. Refs never have one.
 
 ## Progress Checklist
 
@@ -184,7 +184,7 @@ bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N --feature
 Auto-numbers (c3-NNN). Edit to fill:
 - Goal section
 - Container Connection
-- Code References (REQUIRED — concrete file paths)
+- Code map entry in `.c3/code-map.yaml` (REQUIRED — concrete file paths)
 - Related Refs table
 
 **1.2.3 Extract Refs During Component Documentation**
@@ -215,7 +215,7 @@ bash <skill-dir>/bin/c3x.sh add ref <slug>
 Creates `.c3/refs/ref-{slug}.md`. Edit to fill:
 - Goal, Choice (required), Why (required)
 - How, Scope, Not This, Override (as relevant)
-- Update Cited By as you create component docs
+- Verify citing components listed in code-map.yaml as you create component docs
 
 ### Gate 1
 
@@ -246,7 +246,7 @@ Detects broken links, orphans, duplicate IDs. Fix structural issues before seman
 | Context <-> Container | Every container in ADR-000 appears in README.md Containers table |
 | Container <-> Component | Every component in container README has a doc |
 | Component <-> Component | Linkages documented in Container README |
-| * <-> Refs | Refs Cited By matches component Related Refs |
+| * <-> Refs | Ref citations match component Related Refs |
 
 ### 2.3 Run Audit
 
@@ -287,7 +287,7 @@ Assess container complexity BEFORE documenting aspects:
 |-------|---------|---------------------|
 | trivial/simple | Single purpose, few concerns | Skip aspects section |
 | moderate | Multiple concerns, caching | 2-3 key discovered aspects |
-| complex | Orchestration, security-critical | Full discovery with code refs |
+| complex | Orchestration, security-critical | Full discovery with code-map |
 | critical | Distributed txns, compliance | + rationale for each aspect |
 
 **Discovery over checklist:** Aspects MUST be discovered through code analysis, not assumed from templates.

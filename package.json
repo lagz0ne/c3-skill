@@ -1,6 +1,6 @@
 {
   "name": "c3-skill",
-  "version": "6.1.0",
+  "version": "6.2.0",
   "private": true,
   "description": "C3 architecture plugin with Go CLI",
   "license": "MIT",

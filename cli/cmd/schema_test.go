@@ -19,7 +19,7 @@ func TestRunSchema_Component(t *testing.T) {
 	}
 
 	output := buf.String()
-	for _, section := range []string{"Goal", "Dependencies", "Code References"} {
+	for _, section := range []string{"Goal", "Dependencies"} {
 		if !strings.Contains(output, section) {
 			t.Errorf("component schema should include %q, got: %s", section, output)
 		}
@@ -175,32 +175,6 @@ func TestRunSchema_JSON_TableColumns(t *testing.T) {
 	t.Error("Dependencies section not found in schema")
 }
 
-func TestRunSchema_JSON_CodeRefColumns(t *testing.T) {
-	var buf bytes.Buffer
-	if err := RunSchema("component", true, &buf); err != nil {
-		t.Fatal(err)
-	}
-
-	var schema SchemaOutput
-	if err := json.Unmarshal(buf.Bytes(), &schema); err != nil {
-		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
-	}
-
-	for _, s := range schema.Sections {
-		if s.Name == "Code References" {
-			fileCol := findColumn(s.Columns, "File")
-			if fileCol == nil {
-				t.Fatal("File column not found")
-			}
-			if fileCol.Type != "filepath" {
-				t.Errorf("File column type = %q, want %q", fileCol.Type, "filepath")
-			}
-			return
-		}
-	}
-	t.Error("Code References section not found in schema")
-}
-
 func TestRunSchema_SectionOrder(t *testing.T) {
 	// Schema sections should come back in a deterministic, template-defined order
 	var buf1, buf2 bytes.Buffer
@@ -239,6 +213,42 @@ func TestRunSchema_SectionOrder(t *testing.T) {
 	}
 	if goalIdx >= depsIdx {
 		t.Errorf("Goal (index %d) should come before Dependencies (index %d)", goalIdx, depsIdx)
+	}
+}
+
+func TestRunSchema_Component_NoCodeReferences(t *testing.T) {
+	var buf bytes.Buffer
+	if err := RunSchema("component", true, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	var schema SchemaOutput
+	if err := json.Unmarshal(buf.Bytes(), &schema); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
+	}
+
+	for _, s := range schema.Sections {
+		if s.Name == "Code References" {
+			t.Error("component schema should not contain Code References section")
+		}
+	}
+}
+
+func TestRunSchema_Ref_NoCitedBy(t *testing.T) {
+	var buf bytes.Buffer
+	if err := RunSchema("ref", true, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	var schema SchemaOutput
+	if err := json.Unmarshal(buf.Bytes(), &schema); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
+	}
+
+	for _, s := range schema.Sections {
+		if s.Name == "Cited By" {
+			t.Error("ref schema should not contain Cited By section")
+		}
 	}
 }
 

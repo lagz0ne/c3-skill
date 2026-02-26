@@ -1,3 +1,6 @@
 
 # Use bd merge for beads JSONL files
 .beads/issues.jsonl merge=beads
+
+# Go CLI binaries — treat as binary (no line ending conversion, no text diffs)
+skills/c3/bin/c3x-* binary

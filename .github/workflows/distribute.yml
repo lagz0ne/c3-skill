@@ -57,7 +57,8 @@ jobs:
             git commit -m "build: update c3x binaries"
           fi
 
-          git pull --rebase origin main
+          git fetch origin main
+          git merge origin/main -X ours --no-edit
           git push origin main
 
       - name: Check version for release

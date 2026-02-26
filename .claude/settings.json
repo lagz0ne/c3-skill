@@ -1,7 +1,6 @@
 {
   "permissions": {
     "deny": [
-      "Read(docs/plans/**)",
       "Read(**/adr/**)"
     ]
   }

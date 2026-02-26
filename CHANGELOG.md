@@ -5,6 +5,14 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.3.0] - 2026-02-26
+
+### Changed
+- **CI pipeline hardened**: `distribute.yml` now does `git pull --rebase` before pushing to main, preventing push failures when manual main commits race with CI runs.
+- **Binary integrity**: Go binaries marked as `binary` in `.gitattributes` — prevents line-ending corruption on Windows CI runners.
+- **Dead code removed**: Removed v1 `RunCheck()` and its tests; `Issue`/`CheckResult` types consolidated into `check_enhanced.go`. Removed unused `internal/output` package.
+- **Node.js residues removed**: Deleted `package.json`, removed `node_modules/` from `.gitignore`, removed stale pre-2026 design docs (28 files).
+
 ## [6.2.0] - 2026-02-26
 
 ### Added

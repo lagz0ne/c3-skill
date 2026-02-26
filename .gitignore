@@ -13,3 +13,6 @@ dist/
 
 # C3 vector index (derived, auto-rebuilt)
 .c3/index.db
+
+# Go CLI compiled binaries (built in CI)
+skills/c3/bin/c3x-*

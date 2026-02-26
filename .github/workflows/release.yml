@@ -2,8 +2,7 @@ name: Release
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 permissions:
   contents: write
@@ -23,11 +22,9 @@ jobs:
       - name: Check if version changed
         id: check
         run: |
-          # Get current version from VERSION file
           CURRENT_VERSION=$(cat VERSION | tr -d '[:space:]')
           echo "Current version: $CURRENT_VERSION"
 
-          # Check if tag already exists
           if git rev-parse "v$CURRENT_VERSION" >/dev/null 2>&1; then
             echo "Tag v$CURRENT_VERSION already exists, skipping release"
             echo "should_release=false" >> $GITHUB_OUTPUT
@@ -37,40 +34,15 @@ jobs:
             echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
           fi
 
-  publish:
+  release:
     needs: check-version
     if: needs.check-version.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Build
-        run: bun run build && bun run build:cli
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
         with:
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Publish to npm
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-  release:
-    needs: [check-version, publish]
-    if: needs.check-version.outputs.should_release == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+          fetch-depth: 0
 
       - name: Get version
         id: version
@@ -79,7 +51,7 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Releasing version: $VERSION"
 
-      - name: Generate changelog from commits
+      - name: Generate changelog
         id: changelog
         run: |
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
@@ -100,26 +72,16 @@ jobs:
 
           cat changelog.md
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-
-      - name: Install dependencies
-        run: bun install
-
       - name: Prepare release assets
         run: |
           VERSION=${{ steps.version.outputs.version }}
           mkdir -p dist/release
 
-          # Full plugin zip
-          zip -r "dist/release/c3-skill-full-v${VERSION}.zip" . \
-            -x ".git/*" \
-            -x ".github/*" \
-            -x ".wt/*" \
-            -x "docs/plans/*" \
-            -x "dist/*" \
-            -x "*.zip" \
-            -x ".gitignore"
+          # Plugin zip — main branch already has binaries in skills/c3/bin/
+          zip -r "dist/release/c3-skill-v${VERSION}.zip" \
+            .claude-plugin/ \
+            skills/ \
+            -x "*.DS_Store"
 
           ls -la dist/release/
 
@@ -141,7 +103,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Version**: v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Tag**: v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Published to npm**: @lagz0ne/c3x@${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Go CLI**: binaries bundled in plugin" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Release Assets" >> $GITHUB_STEP_SUMMARY
           for f in dist/release/*; do

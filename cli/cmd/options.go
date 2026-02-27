@@ -6,6 +6,7 @@ type Options struct {
 	Args      []string
 	JSON      bool
 	Flat      bool
+	Compact   bool
 	Feature   bool
 	Append    bool
 	Container string
@@ -31,6 +32,8 @@ func ParseArgs(argv []string) Options {
 			opts.JSON = true
 		case "--flat":
 			opts.Flat = true
+		case "--compact":
+			opts.Compact = true
 		case "--feature":
 			opts.Feature = true
 		case "-h", "--help":

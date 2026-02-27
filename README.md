@@ -42,6 +42,8 @@ c3x <command> [args] [options]
   wire <src> cite <tgt>      Link component to ref (3-sided atomic update)
   unwire <src> cite <tgt>    Remove cite link (3-sided)
   schema <type>              Show known sections and column types
+  lookup <file-path>         Map file to component(s) + refs
+  coverage                   Code-map coverage stats
 
   --json                     Machine-readable output
   --c3-dir <path>            Override .c3/ auto-detection
@@ -78,12 +80,18 @@ Every entity has YAML frontmatter (`id`, `type`, `refs[]`, `status`) and markdow
 # .c3/code-map.yaml
 c3-101:  # Logger
   - src/lib/logger.ts
-  - src/lib/logger.test.ts
 c3-102:  # Config
   - src/lib/config.ts
+  - src/lib/config/**/*.ts
+_exclude:
+  - "**/*.test.ts"
+  - "**/*.spec.ts"
+  - dist/**
 ```
 
-`c3x check` validates all mappings: component IDs must exist in the graph, paths must be regular files on disk.
+Patterns support `*` and `**` glob syntax, plus literal bracket paths like `[id]` (Next.js/SvelteKit routes). The `_exclude` key marks files that are intentionally unmapped (tests, build output) — they won't count against your coverage percentage.
+
+`c3x check` validates all mappings: component IDs must exist in the graph, paths must be regular files on disk. `c3x coverage` shows how many project files are mapped, excluded, or unmapped. `c3x lookup <file>` resolves any file to its owning component(s) and governing refs.
 
 ## Development
 

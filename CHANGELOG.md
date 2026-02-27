@@ -5,6 +5,29 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.4.0] - 2026-02-27
+
+### Added
+- **`c3x lookup` command**: Map any file path or glob pattern to its owning component(s) and governing refs. Single file returns component details + cited refs with goals. Glob pattern expands against project and shows file-to-component map.
+- **`c3x coverage` command**: Code-map coverage statistics — shows how many project files are mapped, excluded, or unmapped. Uses `git ls-files` for fast file discovery with filesystem walk fallback. JSON output by default (human-readable with `HUMAN=1`).
+- **`_exclude` key in code-map.yaml**: Mark files as intentionally unmapped (tests, build output, configs). Excluded files don't count against coverage percentage. Formula: `mapped / (total - excluded)`.
+- **Bracket path support**: Literal `[id]`, `[...slug]` paths (Next.js, SvelteKit route params) now work in code-map patterns. Double-try matching: glob interpretation first, then escaped brackets as fallback.
+- **`--compact` flag for `c3x list`**: Goals-only topology tree without file/ref detail.
+- **`doublestar/v4` dependency**: Powers `**` glob matching for code-map patterns.
+
+### Changed
+- **`c3x list` refactored**: Now accepts `ListOptions` struct with `C3Dir` for code-map integration. Shows file coverage and ref usage in topology output.
+- **Code-map validation**: `isGlobPattern` excludes brackets from glob detection — `[id]` paths are treated as literal, not character classes.
+- **Skill docs streamlined**: All 6 reference docs (onboard, query, audit, change, ref, sweep) trimmed for conciseness while adding coverage/lookup guidance.
+
+### Fixed
+- **`.c3/` files excluded from coverage**: `git ls-files` output now filtered by `skipPrefixes` (`.c3/`, `.git/`, `node_modules/`, `dist/`), preventing architecture docs from inflating file counts.
+- **Coverage percentage denominator**: Uses `(total - excluded)` not `total` — `_exclude` patterns don't penalize the coverage score.
+- **`c3x list` swallows code-map parse errors**: Now propagates malformed `code-map.yaml` errors instead of silently using empty map.
+- **`c3x lookup` with no argument**: Now exits with usage error instead of silently returning "no mapping found".
+- **JSON null for empty unmapped files**: `unmapped_files` is always `[]` in JSON output, never `null`.
+- **Duplicate `isGlobPattern`**: Exported as `IsGlobPattern` from codemap package, removed duplicate in cmd/lookup.go.
+
 ## [6.3.0] - 2026-02-26
 
 ### Changed

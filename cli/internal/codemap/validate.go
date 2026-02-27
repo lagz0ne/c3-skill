@@ -14,12 +14,21 @@ type Issue struct {
 	Message  string
 }
 
+// IsGlobPattern reports whether p contains glob metacharacters.
+// Brackets are excluded — [id] style paths (Next.js, SvelteKit) are literal.
+func IsGlobPattern(p string) bool {
+	return strings.ContainsAny(p, "*?")
+}
+
 // Validate checks a CodeMap against known entities and filesystem.
 // entities maps entity ID → type string ("component", "container", "ref", etc.).
 func Validate(cm CodeMap, entities map[string]string, projectDir string) []Issue {
 	var issues []Issue
 
 	for id, files := range cm {
+		if strings.HasPrefix(id, "_") {
+			continue
+		}
 		if typ, ok := entities[id]; !ok {
 			issues = append(issues, Issue{
 				Severity: "error",
@@ -64,20 +73,32 @@ func Validate(cm CodeMap, entities map[string]string, projectDir string) []Issue
 			}
 
 			if projectDir != "" {
-				full := filepath.Join(projectDir, p)
-				info, err := os.Stat(full)
-				if err != nil {
-					issues = append(issues, Issue{
-						Severity: "warning",
-						Entity:   id,
-						Message:  fmt.Sprintf("file %q does not exist", f),
-					})
-				} else if !info.Mode().IsRegular() {
-					issues = append(issues, Issue{
-						Severity: "warning",
-						Entity:   id,
-						Message:  fmt.Sprintf("path is a directory, not a file: %s", f),
-					})
+				if IsGlobPattern(p) {
+					fsys := os.DirFS(projectDir)
+					matches, err := GlobFiles(fsys, p)
+					if err != nil || len(matches) == 0 {
+						issues = append(issues, Issue{
+							Severity: "warning",
+							Entity:   id,
+							Message:  fmt.Sprintf("no files match pattern: %s", p),
+						})
+					}
+				} else {
+					full := filepath.Join(projectDir, p)
+					info, err := os.Stat(full)
+					if err != nil {
+						issues = append(issues, Issue{
+							Severity: "warning",
+							Entity:   id,
+							Message:  fmt.Sprintf("file %q does not exist", f),
+						})
+					} else if !info.Mode().IsRegular() {
+						issues = append(issues, Issue{
+							Severity: "warning",
+							Entity:   id,
+							Message:  fmt.Sprintf("path is a directory, not a file: %s", f),
+						})
+					}
 				}
 			}
 		}

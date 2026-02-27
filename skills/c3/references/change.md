@@ -1,52 +1,41 @@
 # Change Reference
 
-Orchestrate architectural changes through ADR-first workflow with parallel execution.
+Flow: `Understand → ADR → Provision Gate → Execute → Audit`
 
-## How It Works
-
-```
-Understand -> ADR -> Provision Gate -> Execute -> Audit
-```
-
-Use Task tool to spawn anonymous subagents for parallel work (analysis, implementation, audit).
+Spawn parallel subagents via Task tool for complex work.
 
 ## Progress Checklist
 
 ```
-Change Progress:
-- [ ] Phase 1: Load topology, clarify request, analyze impact
-- [ ] Phase 2: Create ADR, user approves
-- [ ] Phase 2b: Provision gate (implement now or design only?)
-- [ ] Phase 3: Execute work breakdown
-- [ ] Phase 4: Audit (structural + semantic)
-- [ ] ADR marked implemented
+- [ ] Phase 1: topology loaded, request clarified, impact analyzed
+- [ ] Phase 2: ADR created, user approves
+- [ ] Phase 2b: provision gate (implement or design-only?)
+- [ ] Phase 3: execute work breakdown
+- [ ] Phase 4: audit + ADR marked implemented
 ```
 
 ---
 
 ## Phase 1: Understand
 
-1. Load topology:
 ```bash
 bash <skill-dir>/bin/c3x.sh list --json
 ```
 
-2. Clarify request with user (skip if ASSUMPTION_MODE)
-3. Analyze impact:
-   - Which containers, components, refs are affected?
-   - What constraints apply? (read upward: component -> container -> context -> cited refs)
-   - What are the risks?
+Clarify with user (ASSUMPTION_MODE: skip). Analyze:
+- Affected containers, components, refs
+- For every file mentioned or discovered: `c3x lookup <file>` — load constraint chain before reasoning
+- If lookup returns no mapping → file is uncharted territory, flag as coverage gap
+- Read upward: component → container → context → cited refs
+- Risks
 
-**Subagent option:** For complex changes, spawn parallel analyst + reviewer subagents who debate impact. Synthesize findings.
+Complex changes: spawn parallel analyst + reviewer subagents, synthesize.
 
 ## Phase 2: ADR
 
-Create ADR:
 ```bash
 bash <skill-dir>/bin/c3x.sh add adr <slug>
 ```
-
-Fill ADR content:
 
 ```yaml
 ---
@@ -60,88 +49,62 @@ approved-files: []
 ---
 ```
 
-ADR body includes:
-- Problem statement
-- Decision
-- Work Breakdown (task list for Phase 3)
-- Affected Layers table
-- Risks and mitigations
+Body: problem, decision, work breakdown, affected layers, risks.
 
-Present to user for approval (skip if ASSUMPTION_MODE; mark `[ASSUMED]`).
+Present for approval (ASSUMPTION_MODE: mark `[ASSUMED]`).
 
 ## Phase 2b: Provision Gate
 
-After ADR acceptance, ask user (skip if ASSUMPTION_MODE):
+Ask (ASSUMPTION_MODE: skip):
+- **Implement now** → Phase 3
+- **Design only** → create docs `status: provisioned`, no code-map entry, mark ADR `provisioned`, done
 
-**"Implement now or design only?"**
-
-- **Implement now** -> Continue to Phase 3
-- **Design only (provision)** -> Create component docs with `status: provisioned`, no code-map entry (no code yet), mark ADR `provisioned`, done. Docs are visible to query and audit immediately.
-
-To implement a provisioned design later: invoke change again. Pick up existing provisioned ADR + docs as starting context, resume from Phase 3.
+To implement provisioned later: invoke change, pick up ADR + docs, resume Phase 3.
 
 ## Phase 3: Execute
 
-Create tasks from Work Breakdown in ADR.
-
-**Scaffolding via CLI:**
+Scaffold:
 ```bash
-# New container:
 bash <skill-dir>/bin/c3x.sh add container <slug>
-
-# New component:
-bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N
-bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N --feature
-
-# New ref:
+bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N [--feature]
 bash <skill-dir>/bin/c3x.sh add ref <slug>
 ```
 
-**Subagent option:** Decompose into independent tasks, spawn parallel implementer subagents. Each task points to C3 component docs and refs (mandatory reading for subagents).
+**REQUIRED before touching any file:**
+```bash
+bash <skill-dir>/bin/c3x.sh lookup <file-path>
+```
+Returned refs = hard constraints. Every one must be honored. No exceptions.
 
-For each completed task, verify:
-- Code implemented correctly
-- C3 docs updated (code-map.yaml, Related Refs)
-- No regressions in other components
+Parallel subagents: decompose tasks, each reads component docs + refs before touching code.
+
+Per task: verify code correct, docs updated (code-map.yaml, Related Refs), no regressions.
 
 ## Phase 4: Audit
 
-1. Structural validation:
 ```bash
 bash <skill-dir>/bin/c3x.sh check
 ```
 
-2. Semantic review:
-   - Docs match code changes
-   - Related Refs updated
-   - ADR Affected Layers accurate
-
-3. CLAUDE.md propagation:
-   - Update c3-generated blocks in relevant CLAUDE.md files
-   - Format: `<!-- c3-generated: c3-NNN -->` ... `<!-- end-c3-generated -->`
-
-4. Transition ADR to `implemented`
+- Docs match code
+- Related Refs updated
+- CLAUDE.md blocks updated: `<!-- c3-generated: c3-NNN -->` ... `<!-- end-c3-generated -->`
+- ADR → `implemented`
 
 ---
 
 ## Regression
 
-Late discoveries during any phase:
-
 | Discovery | Action |
 |-----------|--------|
-| Changes the problem | Back to Phase 1 |
-| Changes the approach | Back to Phase 2 |
+| Changes problem | Back to Phase 1 |
+| Changes approach | Back to Phase 2 |
 | Expands scope | Amend ADR |
 | Implementation detail | Adjust tasks |
-
-Surface discoveries to user. Confirm anything that affects the ADR.
 
 ---
 
 ## ADR Format
-
-Always use YAML frontmatter (not markdown-style headers):
 
 ```yaml
 ---
@@ -155,14 +118,13 @@ approved-files: []
 ---
 ```
 
-Status lifecycle: proposed -> accepted -> (provisioned | implemented)
+Status: `proposed → accepted → (provisioned | implemented)`
 
 ---
 
 ## Routing
 
-During change, if needed:
-- Impact assessment before starting -> sweep operation
-- Architecture questions -> query operation
-- Pattern management -> ref operation
-- Standalone audit -> audit operation
+- Pre-change impact → sweep
+- Architecture questions → query
+- Pattern management → ref
+- Standalone audit → audit

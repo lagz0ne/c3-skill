@@ -54,7 +54,7 @@ func main() {
 
 	switch opts.Command {
 	case "list":
-		err = cmd.RunList(graph, opts.JSON, opts.Flat, w)
+		err = cmd.RunList(cmd.ListOptions{Graph: graph, JSON: opts.JSON, Flat: opts.Flat, Compact: opts.Compact, C3Dir: c3Dir}, w)
 	case "check":
 		checkOpts := cmd.CheckOptions{
 			Graph:      graph,
@@ -138,6 +138,26 @@ func main() {
 			target = opts.Args[2]
 		}
 		err = cmd.RunUnwire(c3Dir, source, relation, target, w)
+	case "lookup":
+		if len(opts.Args) < 1 {
+			fmt.Fprintln(os.Stderr, "error: lookup requires a <file-path> argument")
+			fmt.Fprintln(os.Stderr, "hint: run 'c3x lookup --help' for usage")
+			os.Exit(1)
+		}
+		filePath := opts.Args[0]
+		err = cmd.RunLookup(cmd.LookupOptions{
+			Graph:      graph,
+			FilePath:   filePath,
+			JSON:       opts.JSON,
+			ProjectDir: projectDir,
+			C3Dir:      c3Dir,
+		}, w)
+	case "coverage":
+		err = cmd.RunCoverage(cmd.CoverageOptions{
+			C3Dir:      c3Dir,
+			ProjectDir: projectDir,
+			JSON:       opts.JSON,
+		}, w)
 	case "schema":
 		entityType := ""
 		if len(opts.Args) >= 1 {

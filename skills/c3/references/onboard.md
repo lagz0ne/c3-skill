@@ -212,7 +212,7 @@ bash <skill-dir>/bin/c3x.sh coverage                   # code-map coverage gaps
 |--------|---------|-----|
 | No system goal | Missing `goal:` in README.md | Edit frontmatter |
 | No `files:` | Missing code-map stubs | Run `c3x codemap`, then fill in patterns |
-| No `uses:` | Ref not wired | `c3x wire <id> cite <ref-id>` |
+| No `uses:` | Ref not wired | Add `uses: [ref-id]` to component frontmatter |
 | Ref has no `via:` | Uncited ref | Wire or delete |
 | `[provisioning]` | Design-only | Expected or implement |
 | `lookup <file>` returns nothing | No codemap or bad glob | Run `c3x codemap`; fix patterns; try `lookup 'src/**'` to see what IS mapped |

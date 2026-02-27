@@ -46,7 +46,8 @@ jobs:
           # Merge dev → main (-X theirs: dev is source of truth for code)
           git merge dev -X theirs -m "merge: dev → main" --no-edit
 
-          # Force-add binaries (gitignored but tracked on main)
+          # Remove stale binaries from previous versions, then add new ones
+          git rm -f skills/c3/bin/c3x-*-*-* 2>/dev/null || true
           cp /tmp/c3x-bins/* skills/c3/bin/
           git add -f skills/c3/bin/c3x-*
 

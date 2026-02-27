@@ -5,6 +5,13 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.5.2] - 2026-02-27
+
+### Fixed
+- **CI: stale binaries accumulating on main**: Each release added new versioned binaries without removing old ones, doubling the plugin zip size. The distribute workflow now `git rm`s previous version binaries before adding new ones.
+- **Nonexistent `c3x wire` command in onboard reference**: `onboard.md` troubleshooting table referenced `c3x wire <id> cite <ref-id>` which doesn't match the skill's CLI reference. Replaced with correct instruction to edit component frontmatter directly.
+- **Ambiguous ref code-map audit rule**: `audit.md` Phase 9 flagged any ref with a code-map entry as a violation, but `c3x codemap` scaffolds empty stubs for refs by default. Clarified that scaffold stubs are acceptable — only filled-in file patterns are violations.
+
 ## [6.5.1] - 2026-02-27
 
 ### Fixed

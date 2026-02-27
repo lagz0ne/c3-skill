@@ -88,7 +88,7 @@ All IDs in diagrams → verify exist in inventory. Stale reference → FAIL.
 Code-map test:
 - Component WITH code-map → implemented (Foundation/Feature)
 - Component WITHOUT code-map → provisioned or misclassified
-- Ref WITH code-map → VIOLATION
+- Ref WITH code-map file patterns → VIOLATION (scaffold stubs OK)
 - Ref with code examples in body → VALID
 
 Missing refs: scan deps for tech used in 3+ components. Does ref explain "how we use it HERE"?

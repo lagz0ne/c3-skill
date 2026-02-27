@@ -38,6 +38,7 @@ CLI: `bash <skill-dir>/bin/c3x.sh <command> [args]`
 | `list` | Topology (`--json`, `--flat`, `--compact`) |
 | `check` | Structural validation (`--json`) |
 | `add <type> <slug>` | Create entity (`--container`, `--feature`) |
+| `codemap` | Scaffold `.c3/code-map.yaml` with stubs for all components + refs |
 | `lookup <file-or-glob>` | File or glob → component + refs (`--json`) |
 | `coverage` | Code-map coverage stats (JSON default) |
 

@@ -152,6 +152,12 @@ func main() {
 			ProjectDir: projectDir,
 			C3Dir:      c3Dir,
 		}, w)
+	case "codemap":
+		err = cmd.RunCodemap(cmd.CodemapOptions{
+			C3Dir: c3Dir,
+			Graph: graph,
+			JSON:  opts.JSON,
+		}, w)
 	case "coverage":
 		err = cmd.RunCoverage(cmd.CoverageOptions{
 			C3Dir:      c3Dir,

@@ -23,9 +23,9 @@ Each component = separate file. Each container = separate directory.
 | Can name concrete file? | Category |
 |------------------------|---------|
 | Yes | Foundation (01-09) or Feature (10+) |
-| No (rules only) | **Ref** — no code-map entry |
+| No (rules only) | **Ref** — code-map entry optional |
 
-Foundation: infrastructure others depend on. Feature: business logic. Ref: conventions, no code.
+Foundation: infrastructure others depend on. Feature: business logic. Ref: conventions or shared utilities. Refs with concrete implementation files (shared middleware, utility libraries) should have code-map entries; pure-convention refs may leave them empty.
 
 ## Progress Checklist
 
@@ -34,7 +34,7 @@ Foundation: infrastructure others depend on. Feature: business logic. Ref: conve
 - [ ] Gate 0: proceed to Details
 - [ ] Stage 1: all container/component/ref docs created
 - [ ] Gate 1: no new items discovered
-- [ ] Stage 2: integrity + audit pass
+- [ ] Stage 2: code-map scaffolded + patterns filled, integrity + audit pass
 - [ ] Gate 2: ADR-000 marked implemented
 ```
 
@@ -151,13 +151,28 @@ Edit: Goal, Choice (required), Why (required), How/Scope/Not This/Override as ne
 
 ## Stage 2: Finalize
 
-### 2.1 Structural
+### 2.1 Code-Map Scaffold
+
+```bash
+bash <skill-dir>/bin/c3x.sh codemap
+```
+
+Scaffolds `.c3/code-map.yaml` with empty stubs for every component and ref.
+Idempotent — safe to re-run; existing patterns are preserved.
+
+After scaffolding, fill in glob patterns for each entry, then verify:
+```bash
+bash <skill-dir>/bin/c3x.sh coverage          # how many files are mapped
+bash <skill-dir>/bin/c3x.sh lookup 'src/**'   # spot-check the mapping
+```
+
+### 2.2 Structural
 
 ```bash
 bash <skill-dir>/bin/c3x.sh check
 ```
 
-### 2.2 Semantic
+### 2.3 Semantic
 
 | Check | Verify |
 |-------|--------|
@@ -165,12 +180,14 @@ bash <skill-dir>/bin/c3x.sh check
 | Container ↔ Component | Each component in container README has doc |
 | * ↔ Refs | Citations match Related Refs |
 
-### 2.3 Audit
+### 2.4 Audit
 
 Run audit operation. Pass → mark ADR-000 `implemented`.
 
 ### Gate 2
 
+- [ ] Code-map scaffolded and patterns filled
+- [ ] Coverage % acceptable (or exclusions documented)
 - [ ] Integrity checks pass
 - [ ] Audit passes
 
@@ -181,6 +198,7 @@ Issues → Inventory (Gate 0) or Detail (Gate 1).
 ## Final Checks
 
 ```bash
+bash <skill-dir>/bin/c3x.sh codemap                    # scaffold/update code-map.yaml stubs
 bash <skill-dir>/bin/c3x.sh list
 bash <skill-dir>/bin/c3x.sh check
 bash <skill-dir>/bin/c3x.sh lookup <any-mapped-file>   # spot-check single file
@@ -193,11 +211,11 @@ bash <skill-dir>/bin/c3x.sh coverage                   # code-map coverage gaps
 | Signal | Problem | Fix |
 |--------|---------|-----|
 | No system goal | Missing `goal:` in README.md | Edit frontmatter |
-| No `files:` | Missing code-map entry | Add to code-map.yaml |
+| No `files:` | Missing code-map stubs | Run `c3x codemap`, then fill in patterns |
 | No `uses:` | Ref not wired | `c3x wire <id> cite <ref-id>` |
 | Ref has no `via:` | Uncited ref | Wire or delete |
 | `[provisioning]` | Design-only | Expected or implement |
-| `lookup <file>` returns nothing | Bad glob pattern | Fix code-map.yaml; try `lookup 'src/**'` to see what IS mapped |
+| `lookup <file>` returns nothing | No codemap or bad glob | Run `c3x codemap`; fix patterns; try `lookup 'src/**'` to see what IS mapped |
 | Low coverage % | Many unmapped files | Add `_exclude` for tests/configs, map remaining to components |
 
 ---

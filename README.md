@@ -29,7 +29,7 @@ Six operations, one entry point:
 
 ### The `c3x` CLI
 
-Native Go binary, bundled with the plugin. Auto-downloads from GitHub releases if missing.
+Native Go binary, bundled with the plugin. Version-stamped binaries (`c3x-{version}-{os}-{arch}`) ensure the correct binary is always used after plugin updates.
 
 ```
 c3x <command> [args] [options]
@@ -42,6 +42,7 @@ c3x <command> [args] [options]
   wire <src> cite <tgt>      Link component to ref (3-sided atomic update)
   unwire <src> cite <tgt>    Remove cite link (3-sided)
   schema <type>              Show known sections and column types
+  codemap                    Scaffold code-map.yaml with stubs for all components + refs
   lookup <file-path>         Map file to component(s) + refs
   coverage                   Code-map coverage stats
 
@@ -74,7 +75,7 @@ The CLI implements a three-layer document engine:
 
 Every entity has YAML frontmatter (`id`, `type`, `refs[]`, `status`) and markdown body with schema-defined sections. The CLI keeps wiring consistent — `wire`/`unwire` updates source frontmatter, source Related Refs table, and target Cited By table atomically.
 
-`code-map.yaml` maps foundation and feature components to their actual source files:
+`code-map.yaml` maps components and refs to their actual source files. Run `c3x codemap` to scaffold stubs for every entity, then fill in the glob patterns:
 
 ```yaml
 # .c3/code-map.yaml

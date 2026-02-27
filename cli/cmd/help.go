@@ -19,6 +19,8 @@ Commands:
   wire <src> cite <tgt>      Link component to ref (3-sided)
   unwire <src> cite <tgt>    Remove cite link (3-sided)
   schema <type>              Show known sections for entity type
+  lookup <file-path>         Map file to component(s) + refs
+  coverage                   Code-map coverage stats
 
 Entity Types: context, container, component, ref, adr
 
@@ -26,18 +28,47 @@ Global Options:
   --json                     Machine-readable output
   --c3-dir <path>            Override .c3/ auto-detection
   -h, --help                 Show help
-  -v, --version              Print version`
+  -v, --version              Print version
+
+Workflows:
+
+  Understand the architecture before making changes:
+    c3x list              # topology: goals, file coverage, ref usage
+    c3x schema component  # required sections for a given entity type
+    c3x check             # validate refs, orphans, schema gaps
+
+  Add a component to an existing container:
+    c3x add component auth --container c3-1 --goal "JWT auth for all services"
+    c3x wire c3-101 cite ref-jwt
+    c3x set c3-101 --section "Code References" '[{"File":"src/auth.ts","Purpose":"Auth middleware"}]'
+    c3x check
+
+  Add a new domain (container + first component):
+    c3x add container payments --goal "Process payments" --boundary service
+    c3x add component billing --container c3-1 --goal "Invoice generation via Stripe"
+    c3x check
+
+  Document a cross-cutting concern:
+    c3x add ref rate-limiting --goal "Consistent rate limiting across services"
+    c3x wire c3-101 cite ref-rate-limiting
+    c3x set ref-rate-limiting --section "Code References" '[{"File":"src/middleware/rate.ts","Purpose":"Rate limiter"}]'
+
+  Record an architectural decision:
+    c3x add adr use-grpc --goal "Migrate to gRPC for internal services"
+    c3x set adr-1 status accepted
+    c3x set adr-1 --section "Context" "We need lower latency between services"`
 
 var commandHelp = map[string]string{
 	"init": `Usage: c3x init
 
 Scaffold .c3/ skeleton (config, README, refs/, adr/).`,
 
-	"list": `Usage: c3x list [--flat] [--json]
+	"list": `Usage: c3x list [--compact] [--flat] [--json]
 
-Topology view of all entities with relationships.
-  --flat    Simple file list
-  --json    JSON output`,
+Topology view with system goal, entity goals, file coverage, and ref usage.
+  --compact  Goals-only tree (no files/uses detail)
+  --flat     Simple file list (id, type, path)
+  --json     Machine-readable full output`,
 
 	"check": `Usage: c3x check [--json]
 
@@ -98,6 +129,32 @@ Types: context, container, component, ref, adr
 JSON output includes column types (filepath, entity_id, enum, ref_id).
 
 Example: c3x schema component --json`,
+
+	"lookup": `Usage: c3x lookup <file-or-glob> [--json]
+
+Map a file path (or glob pattern) to owning component(s) from code-map.yaml.
+Shows component goal, summary, and cited refs with their goals.
+Glob arguments expand against the project and show a file map.
+Bracket paths ([id], [...slug]) for Next.js/SvelteKit routes work automatically.
+
+Examples:
+  c3x lookup src/auth/login.ts
+  c3x lookup 'src/auth/**/*.ts'`,
+
+	"coverage": `Usage: c3x coverage [--json]
+
+Show code-map coverage: how many project files are mapped, excluded, or unmapped.
+Coverage % = mapped / (total - excluded), so _exclude patterns don't penalize your score.
+Uses git ls-files for file discovery (falls back to filesystem walk).
+Default output is JSON; set HUMAN=1 for human-readable text.
+
+Add _exclude patterns to code-map.yaml to mark intentional exclusions:
+  _exclude:
+    - "**/*.test.ts"
+    - "**/*.spec.ts"
+    - dist/**
+
+Example: c3x coverage --json`,
 }
 
 // ShowHelp prints command help or global help.

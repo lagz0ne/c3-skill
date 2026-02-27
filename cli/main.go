@@ -42,11 +42,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	docs, err := walker.WalkC3Docs(c3Dir)
+	walkResult, err := walker.WalkC3DocsWithWarnings(c3Dir)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: walking .c3/: %v\n", err)
 		os.Exit(1)
 	}
+	docs := walkResult.Docs
 	graph := walker.BuildGraph(docs)
 
 	// Resolve project root (parent of .c3/)
@@ -57,11 +58,12 @@ func main() {
 		err = cmd.RunList(cmd.ListOptions{Graph: graph, JSON: opts.JSON, Flat: opts.Flat, Compact: opts.Compact, C3Dir: c3Dir}, w)
 	case "check":
 		checkOpts := cmd.CheckOptions{
-			Graph:      graph,
-			Docs:       docs,
-			JSON:       opts.JSON,
-			ProjectDir: projectDir,
-			C3Dir:      c3Dir,
+			Graph:         graph,
+			Docs:          docs,
+			JSON:          opts.JSON,
+			ProjectDir:    projectDir,
+			C3Dir:         c3Dir,
+			ParseWarnings: walkResult.Warnings,
 		}
 		err = cmd.RunCheckV2(checkOpts, w)
 	case "add":

@@ -88,6 +88,8 @@ First `AskUserQuestion` denial → `ASSUMPTION_MODE = true` for session.
 
 ## Shared Rules
 
+**Run `c3x check` frequently** — after creating/editing any `.c3/` doc. It catches broken YAML frontmatter, missing required sections, bad entity references, and codemap issues. Treat errors (`✗`) as blockers.
+
 **Stop immediately if:**
 - Editing code without ADR → create ADR first
 - Guessing intent → `AskUserQuestion` (skip if ASSUMPTION_MODE)

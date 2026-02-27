@@ -30,16 +30,26 @@ type CheckResult struct {
 
 // CheckOptions holds parameters for the enhanced check command.
 type CheckOptions struct {
-	Graph      *walker.C3Graph
-	Docs       []frontmatter.ParsedDoc
-	JSON       bool
-	ProjectDir string
-	C3Dir      string // path to .c3/ directory (may differ from ProjectDir/.c3/ with --c3-dir)
+	Graph         *walker.C3Graph
+	Docs          []frontmatter.ParsedDoc
+	JSON          bool
+	ProjectDir    string
+	C3Dir         string // path to .c3/ directory (may differ from ProjectDir/.c3/ with --c3-dir)
+	ParseWarnings []walker.ParseWarning
 }
 
 // RunCheckV2 validates entities against the schema registry.
 func RunCheckV2(opts CheckOptions, w io.Writer) error {
 	var issues []Issue
+
+	// Report files with broken YAML frontmatter (have --- delimiters but failed to parse)
+	for _, pw := range opts.ParseWarnings {
+		issues = append(issues, Issue{
+			Severity: "error",
+			Entity:   pw.Path,
+			Message:  "broken YAML frontmatter: file has --- delimiters but failed to parse (check for unquoted colons in values)",
+		})
+	}
 
 	// Build sorted entity list for deterministic output
 	entities := opts.Graph.All()

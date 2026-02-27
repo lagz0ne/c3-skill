@@ -24,10 +24,14 @@ if [ ! -f "$BIN" ]; then
   exit 1
 fi
 
-# Remove stale binaries from previous versions.
-for old in "$SCRIPT_DIR"/c3x-*; do
-  [ "$old" = "$BIN" ] && continue
-  rm -f "$old"
-done
+# Remove stale binaries from previous versions (only in installed plugin, not source dir).
+# If multiple versioned binaries exist for different platforms, this is a source/build dir — skip cleanup.
+CURRENT_VERSION_COUNT=$(find "$SCRIPT_DIR" -maxdepth 1 -name "c3x-${VERSION}-*" -type f | wc -l)
+if [ "$CURRENT_VERSION_COUNT" -le 1 ]; then
+  for old in "$SCRIPT_DIR"/c3x-*; do
+    [ "$old" = "$BIN" ] && continue
+    rm -f "$old"
+  done
+fi
 
 exec "$BIN" "$@"

@@ -1,3 +1,12 @@
+# Architecture
+This project uses C3 docs in `.c3/`.
+For architecture questions, changes, audits, file context -> `/c3`.
+Operations: query, audit, change, ref, sweep.
+File lookup: `c3x lookup <file-or-glob>` maps files/directories to components + refs.
+CLI: `bash skills/c3/bin/c3x.sh <command>` (must build first: `bash scripts/build.sh`)
+
+---
+
 # C3 skill design
 
 This is a repository containing a Claude code skill called c3. c3 is a trimmed down concept from c4, focusing on rationalizing architectural and architectural change for large codebase

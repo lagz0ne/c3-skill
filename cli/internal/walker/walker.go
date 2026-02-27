@@ -27,9 +27,30 @@ type C3Graph struct {
 	byType   map[frontmatter.DocType][]*C3Entity
 }
 
+// ParseWarning records a .md file that has YAML frontmatter delimiters but failed to parse.
+type ParseWarning struct {
+	Path string // relative to .c3/
+}
+
+// WalkResult holds both successfully parsed docs and files that failed to parse.
+type WalkResult struct {
+	Docs     []frontmatter.ParsedDoc
+	Warnings []ParseWarning
+}
+
 // WalkC3Docs recursively walks a .c3/ directory and parses all .md files.
 func WalkC3Docs(c3Dir string) ([]frontmatter.ParsedDoc, error) {
-	var docs []frontmatter.ParsedDoc
+	result, err := WalkC3DocsWithWarnings(c3Dir)
+	if err != nil {
+		return nil, err
+	}
+	return result.Docs, nil
+}
+
+// WalkC3DocsWithWarnings is like WalkC3Docs but also returns files that had
+// frontmatter delimiters (---) but failed to parse — likely broken YAML.
+func WalkC3DocsWithWarnings(c3Dir string) (*WalkResult, error) {
+	result := &WalkResult{}
 
 	err := filepath.Walk(c3Dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -42,14 +63,18 @@ func WalkC3Docs(c3Dir string) ([]frontmatter.ParsedDoc, error) {
 		if err != nil {
 			return err
 		}
-		fm, body := frontmatter.ParseFrontmatter(string(content))
+		raw := string(content)
+		fm, body := frontmatter.ParseFrontmatter(raw)
+		rel, _ := filepath.Rel(c3Dir, path)
 		if fm != nil {
-			rel, _ := filepath.Rel(c3Dir, path)
-			docs = append(docs, frontmatter.ParsedDoc{
+			result.Docs = append(result.Docs, frontmatter.ParsedDoc{
 				Frontmatter: fm,
 				Body:        body,
 				Path:        rel,
 			})
+		} else if strings.HasPrefix(raw, "---\n") {
+			// File has frontmatter delimiters but parsing failed
+			result.Warnings = append(result.Warnings, ParseWarning{Path: rel})
 		}
 		return nil
 	})
@@ -57,7 +82,7 @@ func WalkC3Docs(c3Dir string) ([]frontmatter.ParsedDoc, error) {
 	if err != nil {
 		return nil, err
 	}
-	return docs, nil
+	return result, nil
 }
 
 var slugPattern = regexp.MustCompile(`^(c3-\d+-|c3-\d+|ref-|adr-\d+-|README)`)

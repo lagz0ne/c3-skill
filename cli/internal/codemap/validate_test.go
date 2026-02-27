@@ -53,19 +53,16 @@ func TestValidate_FileExists(t *testing.T) {
 	}
 }
 
-func TestValidate_NonComponentID(t *testing.T) {
+func TestValidate_RefID(t *testing.T) {
+	// refs are valid in code-map alongside components — no warning expected
 	cm := CodeMap{"ref-jwt": {"src/foo.ts"}}
 	entities := map[string]string{"ref-jwt": "ref"}
 
 	issues := Validate(cm, entities, "")
-	found := false
 	for _, issue := range issues {
 		if issue.Entity == "ref-jwt" && issue.Severity == "warning" {
-			found = true
+			t.Errorf("ref-jwt should not be flagged: %s", issue.Message)
 		}
-	}
-	if !found {
-		t.Error("should flag non-component ID in code-map")
 	}
 }
 

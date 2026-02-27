@@ -19,6 +19,7 @@ Commands:
   wire <src> cite <tgt>      Link component to ref (3-sided)
   unwire <src> cite <tgt>    Remove cite link (3-sided)
   schema <type>              Show known sections for entity type
+  codemap                    Scaffold code-map.yaml for all components + refs
   lookup <file-path>         Map file to component(s) + refs
   coverage                   Code-map coverage stats
 
@@ -140,6 +141,20 @@ Bracket paths ([id], [...slug]) for Next.js/SvelteKit routes work automatically.
 Examples:
   c3x lookup src/auth/login.ts
   c3x lookup 'src/auth/**/*.ts'`,
+
+	"codemap": `Usage: c3x codemap [--json]
+
+Scaffold or update .c3/code-map.yaml with stubs for every component and ref
+in the C3 graph. Existing entries (patterns already set) are preserved.
+New entries are added with empty pattern lists for you to fill in.
+
+After scaffolding, edit patterns manually or with your LLM, then check:
+  c3x coverage   # see how many files are mapped vs. unmapped
+
+JSON output lists added and existing IDs. Default output is JSON;
+set HUMAN=1 for human-readable text.
+
+Example: c3x codemap`,
 
 	"coverage": `Usage: c3x coverage [--json]
 

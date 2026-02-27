@@ -84,9 +84,10 @@ c3-design/
 │   └── templates/            # Embedded doc templates
 ├── skills/c3/                # Unified skill (auto-discovered)
 │   ├── SKILL.md              # Skill definition + intent router
-│   ├── bin/                  # CLI binaries (built in CI)
-│   │   ├── c3x.sh           # Platform-detecting wrapper
-│   │   └── c3x-{os}-{arch}  # Cross-compiled binaries (gitignored)
+│   ├── bin/                           # CLI binaries (built in CI)
+│   │   ├── c3x.sh                    # Platform-detecting wrapper
+│   │   ├── VERSION                   # Current version (read by c3x.sh, committed)
+│   │   └── c3x-{version}-{os}-{arch} # Cross-compiled binaries (gitignored)
 │   └── references/           # Operation-specific guidance
 │       ├── onboard.md
 │       ├── query.md
@@ -119,6 +120,7 @@ All version files must stay in sync:
 | `.claude-plugin/plugin.json` | Source of truth |
 | `.claude-plugin/marketplace.json` | Marketplace listing |
 | `VERSION` | Triggers GitHub release |
+| `skills/c3/bin/VERSION` | Read by c3x.sh to select correct binary |
 | `package.json` | Dev repo version |
 
 Use `/release` command to bump versions consistently.

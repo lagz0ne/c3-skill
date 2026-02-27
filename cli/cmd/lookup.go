@@ -80,6 +80,9 @@ func RunLookup(opts LookupOptions, w io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("code-map parse error: %w", err)
 	}
+	if len(cm) == 0 {
+		fmt.Fprintln(w, "hint: code-map.yaml is empty or missing — run 'c3x codemap' to scaffold it")
+	}
 
 	if codemap.IsGlobPattern(opts.FilePath) {
 		return runGlobLookup(opts, cm, w)

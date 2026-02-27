@@ -5,6 +5,22 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.5.0] - 2026-02-27
+
+### Added
+- **`c3x codemap` command**: Scaffold or update `.c3/code-map.yaml` with stubs for every component and ref in the C3 graph. Idempotent — existing patterns are preserved, missing entries get empty lists. Output groups components then refs with commented `_exclude` example. JSON by default, human-readable with `HUMAN=1`.
+- **Versioned binary naming**: Binaries are now named `c3x-{version}-{os}-{arch}` (e.g. `c3x-6.5.0-linux-amd64`). A `VERSION` file alongside the wrapper tells `c3x.sh` which binary to use.
+- **Stale binary cleanup**: `c3x.sh` removes binaries from previous versions on every invocation, eliminating the caching issue where plugin updates left old binaries in place.
+- **Refs in code-map**: Refs (e.g. `ref-jwt`) can now have code-map entries alongside components. Useful for refs that have concrete implementation files (shared middleware, utility libraries).
+
+### Changed
+- **`c3x.sh` simplified**: Removed download fallback — binaries are always bundled with the plugin release, so network fetching was unnecessary dead code.
+- **Onboarding flow**: Stage 2 now starts with `c3x codemap` scaffold step before structural checks. Gate 2 checklist includes code-map coverage as a requirement.
+- **`lookup` hint**: When `code-map.yaml` is empty or missing, `c3x lookup` now prints a hint to run `c3x codemap`.
+
+### Fixed
+- **Refs no longer warned in code-map validation**: `validate.go` previously flagged any non-component ID. Now only warns for `container`, `context`, and `adr` types in the codemap.
+
 ## [6.4.0] - 2026-02-27
 
 ### Added

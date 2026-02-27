@@ -54,6 +54,7 @@ The CLI implements a three-layer document engine:
 
 | Layer | What it validates |
 |-------|-------------------|
+| **0. Parse** | Broken YAML frontmatter (e.g. unquoted colons in values) |
 | **1. Structure** | Broken links, orphans, duplicates, missing parents |
 | **2. Schema** | Required sections per entity type (Goal, Components, Dependencies, etc.) |
 | **3. Types** | Column types in tables: `filepath` exists on disk, `entity_id` in graph, `ref_id` valid, `enum` in allowed set |

@@ -5,6 +5,19 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.5.1] - 2026-02-27
+
+### Fixed
+- **`c3x.sh` cleanup destroying cross-compiled binaries**: When run from the source directory (where all 4 platform binaries exist), the stale-version cleanup loop deleted binaries for other platforms. Now detects multi-binary source dirs and skips cleanup.
+- **Broken YAML frontmatter silently dropped entities**: Files with `---` delimiters but invalid YAML (e.g. unquoted `via:` colon-space in values) were silently excluded from the entity graph. `c3x check` now reports these as errors (`✗`) with a hint to check for unquoted colons.
+
+### Changed
+- **SKILL.md**: Added shared rule to run `c3x check` frequently after creating/editing `.c3/` docs. Check now catches broken YAML, missing sections, bad entity references, and codemap issues.
+
+### Documentation
+- **README.md**: Added Layer 0 (Parse) to the validation table — broken YAML frontmatter detection.
+- **CLAUDE.md**: Added Architecture block pointing to `.c3/` directory and `/c3` skill.
+
 ## [6.5.0] - 2026-02-27
 
 ### Added

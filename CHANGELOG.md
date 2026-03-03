@@ -5,6 +5,16 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.5.3] - 2026-03-03
+
+### Added
+- **`c3x query` command**: Extract structured blocks from C3 entities. Modes: catalog (all entities with fill status), snapshot (all blocks for one entity), single block, chain walk (component → container → context + refs), and file resolution (file path → entity → snapshot). Supports `--chain` and `--json` flags.
+- **`check` output quality**: Summary header (`Checked N docs — all clear` or `Checked N docs — X errors, Y warnings`), actionable hint lines below each issue (`→ fix suggestion`), and a legend footer. JSON output now includes `hint` field on issues.
+
+### Changed
+- **Schema extracted to `internal/schema`**: Schema registry moved from `cmd/schema.go` to a standalone internal package, enabling reuse across `add`, `check`, and `query` commands.
+- **`writeJSON` helper**: Consolidated 5 duplicate `json.MarshalIndent` + `Fprintln` patterns into a single `writeJSON` helper in `helpers.go`.
+
 ## [6.5.2] - 2026-02-27
 
 ### Fixed

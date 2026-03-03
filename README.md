@@ -41,6 +41,7 @@ c3x <command> [args] [options]
   set <id> <field> <value>   Update frontmatter field or section content
   wire <src> cite <tgt>      Link component to ref (3-sided atomic update)
   unwire <src> cite <tgt>    Remove cite link (3-sided)
+  query [id] [section]       Extract structured blocks from entities
   schema <type>              Show known sections and column types
   codemap                    Scaffold code-map.yaml with stubs for all components + refs
   lookup <file-path>         Map file to component(s) + refs

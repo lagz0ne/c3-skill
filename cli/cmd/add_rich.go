@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/lagz0ne/c3-design/cli/internal/numbering"
+	"github.com/lagz0ne/c3-design/cli/internal/schema"
 	"github.com/lagz0ne/c3-design/cli/internal/walker"
 	"github.com/lagz0ne/c3-design/cli/internal/wiring"
 )
@@ -259,8 +260,8 @@ func buildDocument(fmFields map[string]string, title, entityType, goal string) s
 	b.WriteString(fmt.Sprintf("# %s\n", title))
 
 	// Scaffold body sections from schema registry
-	sections, ok := schemaRegistry[entityType]
-	if !ok {
+	sections := schema.ForType(entityType)
+	if sections == nil {
 		return b.String()
 	}
 

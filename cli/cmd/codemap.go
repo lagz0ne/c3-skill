@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -70,9 +69,7 @@ func RunCodemap(opts CodemapOptions, w io.Writer) error {
 	}
 
 	if opts.JSON || os.Getenv("HUMAN") == "" {
-		out, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Fprintln(w, string(out))
-		return nil
+		return writeJSON(w, result)
 	}
 
 	fmt.Fprintf(w, "code-map: %s\n", cmPath)

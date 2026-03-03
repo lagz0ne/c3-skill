@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,6 +11,16 @@ import (
 	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
 	"github.com/lagz0ne/c3-design/cli/internal/writer"
 )
+
+// writeJSON marshals v as indented JSON and writes it to w.
+func writeJSON(w io.Writer, v any) error {
+	data, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return err
+	}
+	fmt.Fprintln(w, string(data))
+	return nil
+}
 
 // findEntityFile walks the c3Dir to find the file matching the given entity ID.
 func findEntityFile(c3Dir string, id string) (string, error) {

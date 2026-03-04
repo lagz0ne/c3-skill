@@ -37,7 +37,7 @@ c3x <command> [args] [options]
   init                       Scaffold .c3/ skeleton
   list                       Topology view with relationships
   check                      Validate docs, schema, code refs, consistency
-  add <type> <slug>          Create entity (auto-numbering + wiring)
+  add <type> <slug>          Create entity (container, component, ref, adr, recipe)
   set <id> <field> <value>   Update frontmatter field or section content
   wire <src> cite <tgt>      Link component to ref (3-sided atomic update)
   unwire <src> cite <tgt>    Remove cite link (3-sided)
@@ -74,6 +74,8 @@ The CLI implements a three-layer document engine:
 │   └── c3-NNN-component.md   # Component with deps, wiring
 ├── refs/
 │   └── ref-pattern.md         # Cross-cutting convention (golden examples, no code pointers)
+├── recipes/
+│   └── recipe-topic.md        # Cross-cutting concern trace (end-to-end narrative with source refs)
 └── adr/
     └── adr-YYYYMMDD-slug.md   # Architecture decision record
 ```

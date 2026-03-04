@@ -321,6 +321,34 @@ func TestBuildGraph(t *testing.T) {
 	})
 }
 
+func TestWalkC3Docs_SkipsIndexDir(t *testing.T) {
+	c3 := t.TempDir()
+
+	writeDoc(t, c3, "README.md", `---
+id: c3-0
+title: Test
+---
+Body`)
+
+	// Write a doc inside _index/ — should be skipped
+	writeDoc(t, c3, "_index/notes/test.md", `---
+id: note-test
+title: Test Note
+---
+Note body`)
+
+	docs, err := WalkC3Docs(c3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(docs) != 1 {
+		t.Errorf("expected 1 doc (skipping _index/), got %d", len(docs))
+		for _, d := range docs {
+			t.Logf("  %s (%s)", d.Frontmatter.ID, d.Path)
+		}
+	}
+}
+
 func TestSlugFromPath(t *testing.T) {
 	tests := []struct {
 		path string
@@ -333,6 +361,7 @@ func TestSlugFromPath(t *testing.T) {
 		{"README.md", ""},
 		{"c3-1-api/README.md", "api"},
 		{"containers/api/plain-name.md", "plain-name"},
+		{"recipes/recipe-auth-flow.md", "auth-flow"},
 	}
 
 	for _, tt := range tests {

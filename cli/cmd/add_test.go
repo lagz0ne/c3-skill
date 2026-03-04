@@ -230,6 +230,52 @@ func TestRunAdd_Adr(t *testing.T) {
 	}
 }
 
+func TestRunAdd_Recipe(t *testing.T) {
+	c3Dir := createFixture(t)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	err := RunAdd("recipe", "auth-flow", c3Dir, graph, "", false, &buf)
+	if err != nil {
+		t.Fatalf("RunAdd recipe failed: %v", err)
+	}
+
+	filePath := filepath.Join(c3Dir, "recipes", "recipe-auth-flow.md")
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	s := string(content)
+	if !strings.Contains(s, "id: recipe-auth-flow") {
+		t.Error("recipe should have id recipe-auth-flow")
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "recipe-auth-flow") {
+		t.Errorf("output should mention recipe id: %s", output)
+	}
+}
+
+func TestRunAdd_RecipeDuplicate(t *testing.T) {
+	c3Dir := createFixture(t)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	// Create first
+	RunAdd("recipe", "auth-flow", c3Dir, graph, "", false, &buf)
+	buf.Reset()
+
+	// Duplicate should fail
+	err := RunAdd("recipe", "auth-flow", c3Dir, graph, "", false, &buf)
+	if err == nil {
+		t.Fatal("expected error when recipe already exists")
+	}
+	if !strings.Contains(err.Error(), "already exists") {
+		t.Errorf("error should mention 'already exists': %v", err)
+	}
+}
+
 func TestRunAdd_InvalidSlug(t *testing.T) {
 	c3Dir := createFixture(t)
 	graph := loadGraph(t, c3Dir)

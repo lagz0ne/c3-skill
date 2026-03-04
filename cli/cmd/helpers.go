@@ -12,7 +12,6 @@ import (
 	"github.com/lagz0ne/c3-design/cli/internal/writer"
 )
 
-// writeJSON marshals v as indented JSON and writes it to w.
 func writeJSON(w io.Writer, v any) error {
 	data, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
@@ -52,7 +51,6 @@ func findEntityFile(c3Dir string, id string) (string, error) {
 	return found, nil
 }
 
-// writeEntityFile writes frontmatter + body back to the file.
 func writeEntityFile(path string, fm *frontmatter.Frontmatter, body string) error {
 	return writer.WriteBack(path, fm, body)
 }

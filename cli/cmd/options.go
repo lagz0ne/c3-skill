@@ -9,7 +9,6 @@ type Options struct {
 	Compact   bool
 	Feature   bool
 	Append    bool
-	Chain     bool
 	Container string
 	C3Dir     string
 	Goal      string
@@ -78,8 +77,6 @@ func ParseArgs(argv []string) Options {
 			}
 		case "--append":
 			opts.Append = true
-		case "--chain":
-			opts.Chain = true
 		default:
 			args = append(args, arg)
 		}

@@ -954,6 +954,132 @@ sources:
 	}
 }
 
+// =============================================================================
+// Recipe source validation
+// =============================================================================
+
+func TestRunCheck_RecipeValidSources(t *testing.T) {
+	dir := t.TempDir()
+	c3Dir := filepath.Join(dir, ".c3")
+	os.MkdirAll(filepath.Join(c3Dir, "c3-1-api"), 0755)
+	os.MkdirAll(filepath.Join(c3Dir, "recipes"), 0755)
+
+	writeFile(t, filepath.Join(c3Dir, "README.md"), `---
+id: c3-0
+title: Test
+---
+
+# Test
+
+## Goal
+
+Test.
+`)
+
+	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "README.md"), `---
+id: c3-1
+title: api
+type: container
+parent: c3-0
+---
+
+# api
+`)
+
+	writeFile(t, filepath.Join(c3Dir, "recipes", "recipe-auth.md"), `---
+id: recipe-auth
+title: Auth Flow
+description: End-to-end auth trace
+sources:
+  - c3-1#Goal
+  - c3-0
+---
+
+# Auth Flow
+
+## Goal
+
+Trace auth end-to-end.
+`)
+
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	opts := CheckOptions{Graph: graph, Docs: docs, JSON: false, C3Dir: c3Dir}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if strings.Contains(output, "recipe references nonexistent") {
+		t.Errorf("should NOT flag valid recipe sources, got: %s", output)
+	}
+}
+
+func TestRunCheck_RecipeInvalidSources(t *testing.T) {
+	dir := t.TempDir()
+	c3Dir := filepath.Join(dir, ".c3")
+	os.MkdirAll(filepath.Join(c3Dir, "recipes"), 0755)
+
+	writeFile(t, filepath.Join(c3Dir, "README.md"), `---
+id: c3-0
+title: Test
+---
+
+# Test
+
+## Goal
+
+Test.
+`)
+
+	writeFile(t, filepath.Join(c3Dir, "recipes", "recipe-auth.md"), `---
+id: recipe-auth
+title: Auth Flow
+description: End-to-end auth trace
+sources:
+  - c3-0
+  - c3-999#Overview
+---
+
+# Auth Flow
+
+## Goal
+
+Trace auth end-to-end.
+`)
+
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	opts := CheckOptions{Graph: graph, Docs: docs, JSON: false, C3Dir: c3Dir}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "c3-999") {
+		t.Errorf("should flag nonexistent entity c3-999, got: %s", output)
+	}
+	if !strings.Contains(output, "recipe references nonexistent entity") {
+		t.Errorf("should have recipe-specific message, got: %s", output)
+	}
+}
+
+func TestRunCheck_NoteEndingAtEOF(t *testing.T) {
+	// Test fix for #8: frontmatter ending with --- at EOF (no trailing newline)
+	content := "---\ntopic: test\nsources:\n  - c3-1#Goal\n---"
+	sources := parseNoteSources(content)
+	if len(sources) != 1 {
+		t.Fatalf("expected 1 source from EOF-terminated frontmatter, got %d: %v", len(sources), sources)
+	}
+	if sources[0] != "c3-1#Goal" {
+		t.Errorf("expected c3-1#Goal, got %s", sources[0])
+	}
+}
+
 func TestParseNoteSources(t *testing.T) {
 	tests := []struct {
 		name    string

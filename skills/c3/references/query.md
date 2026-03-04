@@ -27,6 +27,14 @@ Returns all entities: id, type, title, path, relationships, frontmatter. Match q
 
 Don't manually Glob/Read `.c3/`. JSON has everything for discovery. Read only after identifying specific entities.
 
+## Step 0a+: Check Recipes
+
+After loading topology, check for recipes that match the query:
+1. Filter entities with type `recipe` from `c3x list --json`
+2. Match query against recipe title + description
+3. If match found → read recipe, serve sources as the narrative trace
+4. If no match → proceed with normal query flow
+
 ## Step 0b: Clarify Intent
 
 Ask when (skip if ASSUMPTION_MODE):
@@ -124,3 +132,4 @@ src/auth/**/*.ts
 | `c3-NNN` | `.c3/c3-N-*/c3-NNN-*.md` |
 | `adr-*` | `.c3/adr/adr-*.md` |
 | `ref-*` | `.c3/refs/ref-*.md` |
+| `recipe-*` | `.c3/recipes/recipe-*.md` |

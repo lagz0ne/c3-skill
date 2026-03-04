@@ -95,7 +95,6 @@ func Build(graph *walker.C3Graph, cm codemap.CodeMap, c3Dir string) *StructuralI
 		}
 		sort.Strings(entry.ReverseDeps)
 
-		// Code paths from code-map
 		if patterns, ok := cm[e.ID]; ok {
 			entry.CodePaths = patterns
 		}
@@ -310,7 +309,6 @@ func computeHash(idx *StructuralIndex) string {
 		fmt.Fprintf(h, "%s|%s|%s|%s|%s|", id, e.Title, e.Type, e.Container, e.Context)
 		fmt.Fprintf(h, "refs:%s|", strings.Join(e.Refs, ","))
 		fmt.Fprintf(h, "code:%s|", strings.Join(e.CodePaths, ","))
-		// Sort block names for deterministic hash
 		blockNames := make([]string, 0, len(e.BlockFill))
 		for name := range e.BlockFill {
 			blockNames = append(blockNames, name)
@@ -321,7 +319,6 @@ func computeHash(idx *StructuralIndex) string {
 		}
 	}
 
-	// Include file map
 	patterns := make([]string, 0, len(idx.Files))
 	for p := range idx.Files {
 		patterns = append(patterns, p)

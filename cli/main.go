@@ -149,10 +149,9 @@ func main() {
 			fmt.Fprintln(os.Stderr, "hint: run 'c3x lookup --help' for usage")
 			os.Exit(1)
 		}
-		filePath := opts.Args[0]
 		err = cmd.RunLookup(cmd.LookupOptions{
 			Graph:      graph,
-			FilePath:   filePath,
+			FilePath:   opts.Args[0],
 			JSON:       opts.JSON,
 			ProjectDir: projectDir,
 			C3Dir:      c3Dir,

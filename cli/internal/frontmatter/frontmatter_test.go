@@ -98,6 +98,14 @@ func TestParseFrontmatter(t *testing.T) {
 			wantBody:  "Ref body",
 		},
 		{
+			name:     "EOF-terminated frontmatter (no trailing newline)",
+			content:  "---\nid: c3-1\ntitle: Test\n---",
+			wantFM:   true,
+			wantID:   "c3-1",
+			wantTitle: "Test",
+			wantBody: "",
+		},
+		{
 			name: "extra fields preserved via passthrough",
 			content: "---\nid: c3-1\ntitle: Test\ncustom_field: hello\n---\nBody",
 			wantFM:    true,
@@ -160,6 +168,24 @@ func TestParseFrontmatter(t *testing.T) {
 	}
 }
 
+func TestStripAnchor(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"c3-1#Goal", "c3-1"},
+		{"ref-jwt#Choice", "ref-jwt"},
+		{"c3-0", "c3-0"},
+		{"#bare-anchor", "#bare-anchor"}, // idx == 0, not > 0
+	}
+	for _, tt := range tests {
+		got := StripAnchor(tt.input)
+		if got != tt.want {
+			t.Errorf("StripAnchor(%q) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
+}
+
 func TestClassifyDoc(t *testing.T) {
 	tests := []struct {
 		name string
@@ -172,6 +198,8 @@ func TestClassifyDoc(t *testing.T) {
 		{"adr by type", Frontmatter{ID: "adr-20260101-test", Type: "adr"}, DocADR},
 		{"adr by prefix", Frontmatter{ID: "adr-20260101-test"}, DocADR},
 		{"ref by prefix", Frontmatter{ID: "ref-0001"}, DocRef},
+		{"recipe by type", Frontmatter{ID: "my-recipe", Type: "recipe"}, DocRecipe},
+		{"recipe by prefix", Frontmatter{ID: "recipe-auth"}, DocRecipe},
 		{"unknown", Frontmatter{ID: "something-else"}, DocUnknown},
 	}
 
@@ -211,6 +239,14 @@ func TestDeriveRelationships(t *testing.T) {
 			name: "no relationships",
 			fm:   Frontmatter{ID: "c3-0"},
 			want: []string{},
+		},
+		{
+			name: "sources with anchors",
+			fm: Frontmatter{
+				ID:      "recipe-auth",
+				Sources: []string{"c3-1#Goal", "ref-jwt#Choice", "c3-0"},
+			},
+			want: []string{"c3-1", "ref-jwt", "c3-0"},
 		},
 	}
 

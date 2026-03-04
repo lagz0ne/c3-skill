@@ -42,7 +42,7 @@ CLI: `bash <skill-dir>/bin/c3x.sh <command> [args]`
 | `lookup <file-or-glob>` | File or glob → component + refs (`--json`) |
 | `coverage` | Code-map coverage stats (JSON default) |
 
-Types for `add`: `container`, `component`, `ref`, `adr`
+Types for `add`: `container`, `component`, `ref`, `adr`, `recipe`
 
 ---
 
@@ -56,6 +56,7 @@ Types for `add`: `container`, `component`, `ref`, `adr`
 | add, change, fix, implement, refactor, remove, migrate, provision, design | **change** | `references/change.md` |
 | pattern, convention, "create ref", "update ref", "list refs", standardize | **ref** | `references/ref.md` |
 | impact, "what breaks", assess, sweep, "is this safe" | **sweep** | `references/sweep.md` |
+| recipe, "trace end-to-end", "cross-cutting flow", "how does X flow" | **query** (read) / **change** (create) | `references/query.md` / `references/change.md` |
 
 ---
 
@@ -113,6 +114,7 @@ No match = uncharted, proceed with caution.
 ├── README.md                    # Context (c3-0)
 ├── adr/adr-YYYYMMDD-slug.md
 ├── refs/ref-slug.md
+├── recipes/recipe-slug.md
 └── c3-N-name/
     ├── README.md                # Container
     └── c3-NNN-component.md
@@ -171,6 +173,7 @@ File lookup: `c3x lookup <file-or-glob>` maps files/directories to components + 
 | `/c3` change | Modify architecture |
 | `/c3` ref | Manage patterns |
 | `/c3` sweep | Impact assessment |
+| `/c3` recipe | Trace cross-cutting concern end-to-end |
 | `c3x lookup <file-or-glob>` | File or directory → components + governing refs |
 | `c3x coverage` | See what's mapped, excluded, unmapped |
 

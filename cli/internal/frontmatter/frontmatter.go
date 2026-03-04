@@ -16,6 +16,7 @@ const (
 	DocComponent
 	DocRef
 	DocADR
+	DocRecipe
 )
 
 func (d DocType) String() string {
@@ -30,6 +31,8 @@ func (d DocType) String() string {
 		return "ref"
 	case DocADR:
 		return "adr"
+	case DocRecipe:
+		return "recipe"
 	default:
 		return "unknown"
 	}
@@ -47,9 +50,11 @@ type Frontmatter struct {
 	Boundary string   `yaml:"boundary,omitempty"`
 	Status   string   `yaml:"status,omitempty"`
 	Date     string   `yaml:"date,omitempty"`
-	Affects  []string `yaml:"affects,omitempty"`
-	Refs     []string `yaml:"refs,omitempty"`
-	Scope    []string `yaml:"scope,omitempty"`
+	Affects     []string `yaml:"affects,omitempty"`
+	Refs        []string `yaml:"refs,omitempty"`
+	Scope       []string `yaml:"scope,omitempty"`
+	Description string   `yaml:"description,omitempty"`
+	Sources     []string `yaml:"sources,omitempty"`
 	// Extra holds any additional fields not in the known schema.
 	Extra map[string]interface{} `yaml:",inline"`
 }
@@ -69,12 +74,20 @@ func ParseFrontmatter(content string) (*Frontmatter, string) {
 	}
 
 	end := strings.Index(content[4:], "\n---\n")
+	var body string
 	if end == -1 {
-		return nil, content
+		// Handle EOF edge case: frontmatter ends with \n--- at end of string
+		if strings.HasSuffix(content[4:], "\n---") {
+			end = len(content[4:]) - 4
+			body = ""
+		} else {
+			return nil, content
+		}
+	} else {
+		body = content[4+end+5:]
 	}
 
 	yamlStr := content[4 : 4+end]
-	body := content[4+end+5:]
 
 	var raw map[string]interface{}
 	if err := yaml.Unmarshal([]byte(yamlStr), &raw); err != nil {
@@ -129,10 +142,21 @@ func ClassifyDoc(fm *Frontmatter) DocType {
 	if fm.Type == "adr" || strings.HasPrefix(fm.ID, "adr-") {
 		return DocADR
 	}
+	if fm.Type == "recipe" || strings.HasPrefix(fm.ID, "recipe-") {
+		return DocRecipe
+	}
 	if strings.HasPrefix(fm.ID, "ref-") {
 		return DocRef
 	}
 	return DocUnknown
+}
+
+// StripAnchor removes the #fragment suffix from a source reference.
+func StripAnchor(src string) string {
+	if idx := strings.Index(src, "#"); idx > 0 {
+		return src[:idx]
+	}
+	return src
 }
 
 // DeriveRelationships extracts all entity IDs this document references.
@@ -144,6 +168,9 @@ func DeriveRelationships(fm *Frontmatter) []string {
 	rels = append(rels, fm.Affects...)
 	rels = append(rels, fm.Refs...)
 	rels = append(rels, fm.Scope...)
+	for _, src := range fm.Sources {
+		rels = append(rels, StripAnchor(src))
+	}
 	if rels == nil {
 		rels = []string{}
 	}

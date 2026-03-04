@@ -74,10 +74,6 @@ func GlobFiles(fsys fs.FS, pattern string) ([]string, error) {
 }
 
 // Match returns sorted component IDs whose file patterns match filePath.
-// filePath should be relative to the project root.
-// Patterns support glob syntax including **.
-// Literal brackets (e.g. Next.js [id] routes) are handled automatically.
-// Keys prefixed with _ (e.g. _exclude) are skipped.
 func Match(cm CodeMap, filePath string) []string {
 	filePath = filepath.ToSlash(filepath.Clean(filePath))
 

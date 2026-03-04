@@ -118,8 +118,7 @@ func runSingleLookup(opts LookupOptions, cm codemap.CodeMap, w io.Writer) error 
 }
 
 func runGlobLookup(opts LookupOptions, cm codemap.CodeMap, w io.Writer) error {
-	fsys := os.DirFS(opts.ProjectDir)
-	matched, err := codemap.GlobFiles(fsys, opts.FilePath)
+	matched, err := codemap.GlobFiles(os.DirFS(opts.ProjectDir), opts.FilePath)
 	if err != nil {
 		return fmt.Errorf("glob error: %w", err)
 	}

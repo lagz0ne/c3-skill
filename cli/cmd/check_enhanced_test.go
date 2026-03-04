@@ -695,3 +695,308 @@ func TestHintFor(t *testing.T) {
 		}
 	}
 }
+
+// =============================================================================
+// Note health validation
+// =============================================================================
+
+func TestRunCheck_NoteOrphanedSource(t *testing.T) {
+	dir := t.TempDir()
+	c3Dir := filepath.Join(dir, ".c3")
+	os.MkdirAll(filepath.Join(c3Dir, "c3-1-api"), 0755)
+	os.MkdirAll(filepath.Join(c3Dir, "_index", "notes"), 0755)
+
+	writeFile(t, filepath.Join(c3Dir, "README.md"), `---
+id: c3-0
+title: Test
+---
+
+# Test
+
+## Goal
+
+Test.
+`)
+
+	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "README.md"), `---
+id: c3-1
+title: api
+type: container
+parent: c3-0
+---
+
+# api
+`)
+
+	// Note with a valid source (c3-1) and an orphaned source (c3-999)
+	writeFile(t, filepath.Join(c3Dir, "_index", "notes", "auth-flow.md"), `---
+topic: authentication-flow
+sources:
+  - c3-1#Goal
+  - c3-999#Overview
+source_hash: sha256:abc123
+---
+
+# Authentication Flow
+
+Some content about auth.
+`)
+
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	opts := CheckOptions{Graph: graph, Docs: docs, JSON: false, C3Dir: c3Dir}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "c3-999") {
+		t.Errorf("should flag orphaned source c3-999, got: %s", output)
+	}
+	if strings.Contains(output, "c3-1") && strings.Contains(output, "nonexistent entity: c3-1") {
+		t.Errorf("should NOT flag valid source c3-1, got: %s", output)
+	}
+}
+
+func TestRunCheck_NoteNoNotesDir(t *testing.T) {
+	// When _index/notes/ doesn't exist, check should pass without errors
+	dir := t.TempDir()
+	c3Dir := filepath.Join(dir, ".c3")
+	os.MkdirAll(c3Dir, 0755)
+
+	writeFile(t, filepath.Join(c3Dir, "README.md"), `---
+id: c3-0
+title: Test
+---
+
+# Test
+
+## Goal
+
+Test.
+
+## Containers
+
+| ID | Name | Purpose |
+|----|------|---------|
+|  | core | Core |
+
+## Abstract Constraints
+
+Keep it simple.
+`)
+
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	opts := CheckOptions{Graph: graph, Docs: docs, JSON: false, C3Dir: c3Dir}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "all clear") {
+		t.Errorf("should be all clear when no notes dir exists, got: %s", output)
+	}
+}
+
+func TestRunCheck_NoteNoFrontmatter(t *testing.T) {
+	dir := t.TempDir()
+	c3Dir := filepath.Join(dir, ".c3")
+	os.MkdirAll(filepath.Join(c3Dir, "_index", "notes"), 0755)
+
+	writeFile(t, filepath.Join(c3Dir, "README.md"), `---
+id: c3-0
+title: Test
+---
+
+# Test
+
+## Goal
+
+Test.
+
+## Containers
+
+| ID | Name | Purpose |
+|----|------|---------|
+|  | core | Core |
+
+## Abstract Constraints
+
+Keep it simple.
+`)
+
+	// Note without frontmatter — should be skipped
+	writeFile(t, filepath.Join(c3Dir, "_index", "notes", "plain.md"), `# Just a plain note
+
+No frontmatter here.
+`)
+
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	opts := CheckOptions{Graph: graph, Docs: docs, JSON: false, C3Dir: c3Dir}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "all clear") {
+		t.Errorf("note without frontmatter should be skipped, got: %s", output)
+	}
+}
+
+func TestRunCheck_NoteSourceWithoutAnchor(t *testing.T) {
+	dir := t.TempDir()
+	c3Dir := filepath.Join(dir, ".c3")
+	os.MkdirAll(filepath.Join(c3Dir, "_index", "notes"), 0755)
+
+	writeFile(t, filepath.Join(c3Dir, "README.md"), `---
+id: c3-0
+title: Test
+---
+
+# Test
+
+## Goal
+
+Test.
+`)
+
+	// Source without # anchor — use whole string as entity ID
+	writeFile(t, filepath.Join(c3Dir, "_index", "notes", "overview.md"), `---
+topic: overview
+sources:
+  - c3-0
+  - nonexistent-entity
+---
+
+# Overview
+`)
+
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	opts := CheckOptions{Graph: graph, Docs: docs, JSON: false, C3Dir: c3Dir}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "nonexistent-entity") {
+		t.Errorf("should flag nonexistent-entity, got: %s", output)
+	}
+	if strings.Contains(output, "nonexistent entity: c3-0") {
+		t.Errorf("should NOT flag valid c3-0, got: %s", output)
+	}
+}
+
+func TestRunCheck_NoteOrphanedJSON(t *testing.T) {
+	dir := t.TempDir()
+	c3Dir := filepath.Join(dir, ".c3")
+	os.MkdirAll(filepath.Join(c3Dir, "_index", "notes"), 0755)
+
+	writeFile(t, filepath.Join(c3Dir, "README.md"), `---
+id: c3-0
+title: Test
+---
+
+# Test
+
+## Goal
+
+Test.
+`)
+
+	writeFile(t, filepath.Join(c3Dir, "_index", "notes", "test.md"), `---
+topic: test
+sources:
+  - c3-gone#Details
+---
+
+# Test Note
+`)
+
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	opts := CheckOptions{Graph: graph, Docs: docs, JSON: true, C3Dir: c3Dir}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	var result CheckResult
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
+	}
+
+	found := false
+	for _, issue := range result.Issues {
+		if strings.Contains(issue.Message, "c3-gone") {
+			found = true
+			if issue.Hint == "" {
+				t.Error("note orphan issue should have a hint in JSON output")
+			}
+			if issue.Severity != "warning" {
+				t.Errorf("note orphan should be warning, got: %s", issue.Severity)
+			}
+		}
+	}
+	if !found {
+		t.Error("JSON output should include orphaned note issue for c3-gone")
+	}
+}
+
+func TestParseNoteSources(t *testing.T) {
+	tests := []struct {
+		name    string
+		content string
+		want    []string
+	}{
+		{
+			name:    "list style",
+			content: "---\ntopic: test\nsources:\n  - c3-101#Goal\n  - ref-jwt#Choice\n---\n",
+			want:    []string{"c3-101#Goal", "ref-jwt#Choice"},
+		},
+		{
+			name:    "inline style",
+			content: "---\ntopic: test\nsources: [c3-1, c3-2]\n---\n",
+			want:    []string{"c3-1", "c3-2"},
+		},
+		{
+			name:    "no frontmatter",
+			content: "# Just text\n",
+			want:    nil,
+		},
+		{
+			name:    "no sources key",
+			content: "---\ntopic: test\n---\n",
+			want:    nil,
+		},
+		{
+			name:    "empty sources",
+			content: "---\ntopic: test\nsources:\nstatus: current\n---\n",
+			want:    nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := parseNoteSources(tt.content)
+			if len(got) != len(tt.want) {
+				t.Fatalf("parseNoteSources() = %v, want %v", got, tt.want)
+			}
+			for i := range got {
+				if got[i] != tt.want[i] {
+					t.Errorf("parseNoteSources()[%d] = %q, want %q", i, got[i], tt.want[i])
+				}
+			}
+		})
+	}
+}

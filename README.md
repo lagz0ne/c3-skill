@@ -41,7 +41,6 @@ c3x <command> [args] [options]
   set <id> <field> <value>   Update frontmatter field or section content
   wire <src> cite <tgt>      Link component to ref (3-sided atomic update)
   unwire <src> cite <tgt>    Remove cite link (3-sided)
-  query [id] [section]       Extract structured blocks from entities
   schema <type>              Show known sections and column types
   codemap                    Scaffold code-map.yaml with stubs for all components + refs
   lookup <file-path>         Map file to component(s) + refs
@@ -66,6 +65,10 @@ The CLI implements a three-layer document engine:
 .c3/
 ├── README.md                  # System context (c3-0)
 ├── code-map.yaml              # Component → source file mappings (validated by check)
+├── _index/
+│   ├── structural.md          # Precomputed entity→files→refs→constraints (auto-rebuilt)
+│   └── notes/                 # LLM-generated cross-cutting topic notes
+│       └── *.md               # e.g. authentication-flow.md, data-persistence.md
 ├── c3-N-name/                 # Container
 │   ├── README.md              # Container overview + component table
 │   └── c3-NNN-component.md   # Component with deps, wiring
@@ -95,6 +98,12 @@ _exclude:
 Patterns support `*` and `**` glob syntax, plus literal bracket paths like `[id]` (Next.js/SvelteKit routes). The `_exclude` key marks files that are intentionally unmapped (tests, build output) — they won't count against your coverage percentage.
 
 `c3x check` validates all mappings: component IDs must exist in the graph, paths must be regular files on disk. `c3x coverage` shows how many project files are mapped, excluded, or unmapped. `c3x lookup <file>` resolves any file to its owning component(s) and governing refs.
+
+### Structural Index
+
+The CLI automatically maintains a structural index at `.c3/_index/structural.md` after mutating commands (`add`, `set`, `wire`, `unwire`). This precomputes entity→files→refs→reverse-deps→constraints mappings from the graph + code-map, giving LLMs instant discovery without multiple CLI calls.
+
+Topic notes in `.c3/_index/notes/` are LLM-generated cross-cutting narratives (e.g. "authentication-flow.md", "data-persistence-strategy.md") with YAML frontmatter tracking their sources. `c3x check` validates that note source citations reference entities that exist in the graph.
 
 ## Development
 

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -105,12 +104,7 @@ func runSingleLookup(opts LookupOptions, cm codemap.CodeMap, w io.Writer) error 
 	}
 
 	if opts.JSON {
-		out, err := json.MarshalIndent(result, "", "  ")
-		if err != nil {
-			return err
-		}
-		fmt.Fprintln(w, string(out))
-		return nil
+		return writeJSON(w, result)
 	}
 
 	fmt.Fprintf(w, "file: %s\n", result.File)
@@ -157,12 +151,7 @@ func runGlobLookup(opts LookupOptions, cm codemap.CodeMap, w io.Writer) error {
 	}
 
 	if opts.JSON {
-		out, err := json.MarshalIndent(result, "", "  ")
-		if err != nil {
-			return err
-		}
-		fmt.Fprintln(w, string(out))
-		return nil
+		return writeJSON(w, result)
 	}
 
 	fmt.Fprintf(w, "pattern: %s\n", result.Pattern)

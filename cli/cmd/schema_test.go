@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/lagz0ne/c3-design/cli/internal/schema"
 )
 
 // =============================================================================
@@ -252,7 +254,7 @@ func TestRunSchema_Ref_NoCitedBy(t *testing.T) {
 	}
 }
 
-func findColumn(cols []ColumnDef, name string) *ColumnDef {
+func findColumn(cols []schema.ColumnDef, name string) *schema.ColumnDef {
 	for i := range cols {
 		if cols[i].Name == name {
 			return &cols[i]

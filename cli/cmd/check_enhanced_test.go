@@ -515,3 +515,183 @@ Auth.
 		t.Errorf("should have no code-map issues, got: %s", output)
 	}
 }
+
+// =============================================================================
+// Output quality: summary, hints, legend
+// =============================================================================
+
+func TestRunCheck_CleanOutputSummary(t *testing.T) {
+	dir := t.TempDir()
+	c3Dir := filepath.Join(dir, ".c3")
+	os.MkdirAll(c3Dir, 0755)
+
+	writeFile(t, filepath.Join(c3Dir, "README.md"), `---
+id: c3-0
+title: Test
+---
+
+# Test
+
+## Goal
+
+Test.
+
+## Containers
+
+| ID | Name | Purpose |
+|----|------|---------|
+|  | core | Core |
+
+## Abstract Constraints
+
+Keep it simple.
+`)
+
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	opts := CheckOptions{Graph: graph, Docs: docs, JSON: false}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "all clear") {
+		t.Errorf("clean run should say 'all clear', got: %s", output)
+	}
+	if !strings.Contains(output, "Checked") {
+		t.Errorf("clean run should show 'Checked N docs', got: %s", output)
+	}
+}
+
+func TestRunCheck_IssuesSummaryAndLegend(t *testing.T) {
+	c3Dir := createRichFixture(t)
+
+	// Make c3-110's Goal section empty to guarantee a warning
+	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "c3-110-users.md"), `---
+id: c3-110
+title: users
+type: component
+category: feature
+parent: c3-1
+---
+
+# users
+
+## Goal
+
+## Dependencies
+
+| Direction | What | From/To |
+|-----------|------|---------|
+`)
+
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	opts := CheckOptions{Graph: graph, Docs: docs, JSON: false}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "Checked") {
+		t.Errorf("should have summary header, got: %s", output)
+	}
+	if !strings.Contains(output, "warning") {
+		t.Errorf("summary should mention warnings, got: %s", output)
+	}
+	if !strings.Contains(output, "Legend:") {
+		t.Errorf("should have legend footer, got: %s", output)
+	}
+}
+
+func TestRunCheck_HintsInTextOutput(t *testing.T) {
+	c3Dir := createRichFixture(t)
+
+	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "c3-110-users.md"), `---
+id: c3-110
+title: users
+type: component
+category: feature
+parent: c3-1
+---
+
+# users
+
+## Dependencies
+
+| Direction | What | From/To |
+|-----------|------|---------|
+`)
+
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	opts := CheckOptions{Graph: graph, Docs: docs, JSON: false}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	// Missing Goal should get a hint
+	if !strings.Contains(output, "→") {
+		t.Errorf("should have hint lines with →, got: %s", output)
+	}
+	if !strings.Contains(output, "add a ## Goal section") {
+		t.Errorf("should have specific hint for missing Goal, got: %s", output)
+	}
+}
+
+func TestRunCheck_HintsInJSONOutput(t *testing.T) {
+	c3Dir := createRichFixture(t)
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	opts := CheckOptions{Graph: graph, Docs: docs, JSON: true}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	var result CheckResult
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
+	}
+
+	hasHint := false
+	for _, issue := range result.Issues {
+		if issue.Hint != "" {
+			hasHint = true
+			break
+		}
+	}
+	if !hasHint {
+		t.Error("JSON output should include hint fields on issues")
+	}
+}
+
+func TestHintFor(t *testing.T) {
+	tests := []struct {
+		message  string
+		expected string
+	}{
+		{"broken YAML frontmatter: file has --- delimiters but failed to parse", "check for unquoted colons in values"},
+		{"missing required section: Goal", "add a ## Goal section with content"},
+		{"empty required section: Overview", "add content to the ## Overview section"},
+		{"empty required table: Dependencies (headers only, no data rows)", "add at least one data row below the table headers"},
+		{"unknown entity reference: c3-999", "verify the ID with 'c3x list'; check for typos"},
+		{"file does not exist: src/foo.ts", "create the file or fix the path"},
+		{"code-map parse error: yaml: unmarshal error", "fix YAML syntax in .c3/code-map.yaml"},
+		{"something unknown", ""},
+	}
+	for _, tt := range tests {
+		got := hintFor(tt.message)
+		if got != tt.expected {
+			t.Errorf("hintFor(%q) = %q, want %q", tt.message, got, tt.expected)
+		}
+	}
+}

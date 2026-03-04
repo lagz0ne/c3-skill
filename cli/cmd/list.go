@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"path/filepath"
@@ -85,12 +84,7 @@ func listJSON(graph *walker.C3Graph, w io.Writer) error {
 		})
 	}
 
-	out, err := json.MarshalIndent(data, "", "  ")
-	if err != nil {
-		return err
-	}
-	fmt.Fprintln(w, string(out))
-	return nil
+	return writeJSON(w, data)
 }
 
 func listFlat(graph *walker.C3Graph, w io.Writer) error {

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -12,6 +11,7 @@ import (
 	"github.com/lagz0ne/c3-design/cli/internal/codemap"
 	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
 	"github.com/lagz0ne/c3-design/cli/internal/markdown"
+	"github.com/lagz0ne/c3-design/cli/internal/schema"
 	"github.com/lagz0ne/c3-design/cli/internal/walker"
 )
 
@@ -20,6 +20,7 @@ type Issue struct {
 	Severity string `json:"severity"`
 	Entity   string `json:"entity,omitempty"`
 	Message  string `json:"message"`
+	Hint     string `json:"hint,omitempty"`
 }
 
 // CheckResult holds the validation output.
@@ -36,6 +37,77 @@ type CheckOptions struct {
 	ProjectDir    string
 	C3Dir         string // path to .c3/ directory (may differ from ProjectDir/.c3/ with --c3-dir)
 	ParseWarnings []walker.ParseWarning
+}
+
+// hintFor returns actionable guidance for a given issue message.
+func hintFor(message string) string {
+	patterns := []struct {
+		substr string
+		hint   string
+	}{
+		{"broken YAML frontmatter", "check for unquoted colons in values"},
+		{"code-map parse error", "fix YAML syntax in .c3/code-map.yaml"},
+		{"missing required section", ""},   // dynamic — handled below
+		{"empty required section", ""},     // dynamic — handled below
+		{"empty required table", "add at least one data row below the table headers"},
+		{"unknown entity reference", "verify the ID with 'c3x list'; check for typos"},
+		{"file does not exist", "create the file or fix the path"},
+		{"not found in C3 graph", "remove from code-map.yaml, or create the entity doc"},
+		{"not a component or ref", "only components and refs belong in code-map"},
+		{"empty path in code-map", "remove the empty entry or add a file pattern"},
+		{"absolute path not allowed", "use a relative path from the project root"},
+		{"escapes project root", "use a path within the project"},
+		{"is a directory", "point to source files, not directories"},
+		{"no files match pattern", "fix the glob pattern or create matching files"},
+	}
+	for _, p := range patterns {
+		if !strings.Contains(message, p.substr) {
+			continue
+		}
+		if p.hint != "" {
+			return p.hint
+		}
+		// Dynamic hints: extract section name from "missing required section: X" or "empty required section: X"
+		if strings.Contains(message, "missing required section: ") {
+			section := strings.TrimPrefix(message, "missing required section: ")
+			return fmt.Sprintf("add a ## %s section with content", section)
+		}
+		if strings.Contains(message, "empty required section: ") {
+			section := strings.TrimPrefix(message, "empty required section: ")
+			return fmt.Sprintf("add content to the ## %s section", section)
+		}
+	}
+	return ""
+}
+
+func countSeverities(issues []Issue) (errors, warnings int) {
+	for _, issue := range issues {
+		if issue.Severity == "error" {
+			errors++
+		} else {
+			warnings++
+		}
+	}
+	return
+}
+
+func formatCounts(errors, warnings int) string {
+	var parts []string
+	if errors > 0 {
+		noun := "error"
+		if errors > 1 {
+			noun = "errors"
+		}
+		parts = append(parts, fmt.Sprintf("%d %s", errors, noun))
+	}
+	if warnings > 0 {
+		noun := "warning"
+		if warnings > 1 {
+			noun = "warnings"
+		}
+		parts = append(parts, fmt.Sprintf("%d %s", warnings, noun))
+	}
+	return strings.Join(parts, ", ")
 }
 
 // RunCheckV2 validates entities against the schema registry.
@@ -61,8 +133,8 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 		docType := frontmatter.ClassifyDoc(entity.Frontmatter)
 		typeName := docType.String()
 
-		schemaSections, ok := schemaRegistry[typeName]
-		if !ok {
+		schemaSections := schema.ForType(typeName)
+		if schemaSections == nil {
 			continue
 		}
 
@@ -262,15 +334,21 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 
 	// Output
 	if opts.JSON {
-		out, err := json.MarshalIndent(result, "", "  ")
-		if err != nil {
-			return err
+		for i := range result.Issues {
+			result.Issues[i].Hint = hintFor(result.Issues[i].Message)
 		}
-		fmt.Fprintln(w, string(out))
-		return nil
+		return writeJSON(w, result)
 	}
 
-	// Text output
+	// Text output — summary header
+	errors, warnings := countSeverities(result.Issues)
+	if len(result.Issues) == 0 {
+		fmt.Fprintf(w, "Checked %d docs — all clear\n", result.Total)
+		return nil
+	}
+	fmt.Fprintf(w, "Checked %d docs — %s\n\n", result.Total, formatCounts(errors, warnings))
+
+	// Issue lines with hints
 	for _, issue := range result.Issues {
 		entityLabel := issue.Entity
 		if entityLabel == "" {
@@ -281,7 +359,14 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 			icon = "✗"
 		}
 		fmt.Fprintf(w, "  %s %s: %s\n", icon, entityLabel, issue.Message)
+		if hint := hintFor(issue.Message); hint != "" {
+			fmt.Fprintf(w, "    → %s\n", hint)
+		}
+		fmt.Fprintln(w)
 	}
+
+	// Legend
+	fmt.Fprintln(w, "Legend: ✗ = error (fix first)  ! = warning (incomplete, should fix)")
 
 	return nil
 }

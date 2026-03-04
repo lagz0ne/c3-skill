@@ -166,6 +166,14 @@ func main() {
 			ProjectDir: projectDir,
 			JSON:       opts.JSON,
 		}, w)
+	case "query":
+		err = cmd.RunQuery(cmd.QueryOptions{
+			Graph: graph,
+			C3Dir: c3Dir,
+			Args:  opts.Args,
+			JSON:  opts.JSON,
+			Chain: opts.Chain,
+		}, w)
 	case "schema":
 		entityType := ""
 		if len(opts.Args) >= 1 {

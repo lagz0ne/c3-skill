@@ -3,9 +3,12 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/lagz0ne/c3-design/cli/cmd"
+	"github.com/lagz0ne/c3-design/cli/internal/codemap"
 	"github.com/lagz0ne/c3-design/cli/internal/config"
+	"github.com/lagz0ne/c3-design/cli/internal/index"
 	"github.com/lagz0ne/c3-design/cli/internal/walker"
 )
 
@@ -166,14 +169,6 @@ func main() {
 			ProjectDir: projectDir,
 			JSON:       opts.JSON,
 		}, w)
-	case "query":
-		err = cmd.RunQuery(cmd.QueryOptions{
-			Graph: graph,
-			C3Dir: c3Dir,
-			Args:  opts.Args,
-			JSON:  opts.JSON,
-			Chain: opts.Chain,
-		}, w)
 	case "schema":
 		entityType := ""
 		if len(opts.Args) >= 1 {
@@ -189,6 +184,14 @@ func main() {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
+	}
+
+	// Rebuild structural index after mutating commands (best-effort, silent)
+	switch opts.Command {
+	case "add", "set", "wire", "unwire":
+		cm, _ := codemap.ParseCodeMap(filepath.Join(c3Dir, "code-map.yaml"))
+		idx := index.Build(graph, cm, c3Dir)
+		_ = index.WriteTo(c3Dir, idx)
 	}
 }
 

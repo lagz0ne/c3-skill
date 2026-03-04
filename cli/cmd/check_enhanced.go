@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strings"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/lagz0ne/c3-design/cli/internal/codemap"
 	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
 	"github.com/lagz0ne/c3-design/cli/internal/markdown"
@@ -59,6 +61,7 @@ func hintFor(message string) string {
 		{"escapes project root", "use a path within the project"},
 		{"is a directory", "point to source files, not directories"},
 		{"no files match pattern", "fix the glob pattern or create matching files"},
+		{"note references nonexistent entity", "remove the note or update its sources"},
 	}
 	for _, p := range patterns {
 		if !strings.Contains(message, p.substr) {
@@ -108,6 +111,62 @@ func formatCounts(errors, warnings int) string {
 		parts = append(parts, fmt.Sprintf("%d %s", warnings, noun))
 	}
 	return strings.Join(parts, ", ")
+}
+
+// checkNotes scans .c3/_index/notes/*.md for topic notes and validates
+// that source citations reference entities that exist in the graph.
+func checkNotes(c3Dir string, graph *walker.C3Graph) []Issue {
+	notesDir := filepath.Join(c3Dir, "_index", "notes")
+	entries, err := os.ReadDir(notesDir)
+	if err != nil {
+		return nil // directory doesn't exist — skip silently
+	}
+
+	var issues []Issue
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
+			continue
+		}
+		data, err := os.ReadFile(filepath.Join(notesDir, entry.Name()))
+		if err != nil {
+			continue
+		}
+		sources := parseNoteSources(string(data))
+		for _, src := range sources {
+			entityID := src
+			if idx := strings.Index(src, "#"); idx > 0 {
+				entityID = src[:idx]
+			}
+			if graph.Get(entityID) == nil {
+				issues = append(issues, Issue{
+					Severity: "warning",
+					Entity:   entry.Name(),
+					Message:  fmt.Sprintf("note references nonexistent entity: %s", entityID),
+				})
+			}
+		}
+	}
+	return issues
+}
+
+// parseNoteSources extracts the sources list from YAML frontmatter in a note.
+func parseNoteSources(content string) []string {
+	if !strings.HasPrefix(content, "---\n") {
+		return nil
+	}
+	end := strings.Index(content[4:], "\n---")
+	if end == -1 {
+		return nil
+	}
+	yamlBlock := content[4 : 4+end]
+
+	var fm struct {
+		Sources []string `yaml:"sources"`
+	}
+	if err := yaml.Unmarshal([]byte(yamlBlock), &fm); err != nil {
+		return nil
+	}
+	return fm.Sources
 }
 
 // RunCheckV2 validates entities against the schema registry.
@@ -322,6 +381,11 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 				})
 			}
 		}
+	}
+
+	// Note health validation
+	if c3Dir != "" {
+		issues = append(issues, checkNotes(c3Dir, opts.Graph)...)
 	}
 
 	result := CheckResult{

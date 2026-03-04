@@ -5,6 +5,22 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.6.0] - 2026-03-04
+
+### Added
+- **Structural index** (`cli/internal/index/`): Precomputed entity→files→refs→reverse-deps→constraints index at `.c3/_index/structural.md`. Gives LLMs instant architecture discovery without multiple CLI calls. Auto-rebuilt after mutating commands (`add`, `set`, `wire`, `unwire`).
+- **Note health checking**: `c3x check` validates that topic notes in `.c3/_index/notes/` reference entities that exist in the graph. Orphaned source citations reported as warnings with actionable hints.
+- **Design doc**: `docs/plans/2026-03-04-knowledge-index-design.md` — two-layer knowledge index design (structural index + topic notes).
+
+### Changed
+- **Index rebuild scoped to mutations**: Structural index only rebuilds after `add`, `set`, `wire`, `unwire` — read-only commands (`list`, `check`, `lookup`) skip the rebuild for faster execution.
+- **`parseNoteSources` simplified**: Replaced hand-rolled YAML line parser with `yaml.Unmarshal`.
+- **File map reuses computed refs**: Index build no longer re-traverses the graph for refs already computed in entity entries.
+
+### Removed
+- **`c3x query` command**: Eliminated — structural index + direct file reads replace the routing and block extraction that `query` provided.
+- **`cli/internal/blocks/` package**: Block extraction logic inlined into the index package; standalone package removed.
+
 ## [6.5.3] - 2026-03-03
 
 ### Added

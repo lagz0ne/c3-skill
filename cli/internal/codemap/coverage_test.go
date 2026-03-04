@@ -40,18 +40,10 @@ func TestCoverage_MixedMappedExcludedUnmapped(t *testing.T) {
 	if result.Total != 3 {
 		t.Errorf("total: got %d, want 3", result.Total)
 	}
-	// src/auth/login.ts → mapped by c3-101
-	// src/auth/login.test.ts → matched by c3-101 pattern (auth/**/*.ts), so mapped
-	// src/billing/invoice.ts → unmapped
-	// Actually wait - login.test.ts matches src/auth/**/*.ts so it IS mapped.
-	// Let me reconsider: the test file matches the c3-101 pattern, so it's mapped.
-	// Let me adjust: use a more specific pattern that won't match test files.
-
-	// The mapped count should be 2 (both auth files match src/auth/**/*.ts)
+	// Both auth files match src/auth/**/*.ts → mapped; billing is unmapped
 	if result.Mapped != 2 {
 		t.Errorf("mapped: got %d, want 2", result.Mapped)
 	}
-	// Excluded: 0 (test file was already mapped, so exclude doesn't apply)
 	if result.Excluded != 0 {
 		t.Errorf("excluded: got %d, want 0", result.Excluded)
 	}

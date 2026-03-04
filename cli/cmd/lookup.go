@@ -50,7 +50,6 @@ type GlobLookupResult struct {
 	Components []LookupMatch       `json:"components"`
 }
 
-
 func buildMatch(entity *walker.C3Entity, graph *walker.C3Graph) LookupMatch {
 	match := LookupMatch{
 		ID:      entity.ID,

@@ -112,7 +112,7 @@ func listTopology(graph *walker.C3Graph, cm codemap.CodeMap, compact bool, w io.
 	refs := graph.ByType(frontmatter.DocRef)
 	adrs := graph.ByType(frontmatter.DocADR)
 
-	// System header from context doc (c3-0)
+	// System header from context doc
 	contexts := graph.ByType(frontmatter.DocContext)
 	if len(contexts) > 0 {
 		ctx := contexts[0]

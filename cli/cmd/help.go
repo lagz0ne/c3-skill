@@ -18,7 +18,6 @@ Commands:
   set <id> --section <name>  Update section content (text or JSON table)
   wire <src> cite <tgt>      Link component to ref (3-sided)
   unwire <src> cite <tgt>    Remove cite link (3-sided)
-  query [id] [section]       Extract structured blocks from entities
   schema <type>              Show known sections for entity type
   codemap                    Scaffold code-map.yaml for all components + refs
   lookup <file-path>         Map file to component(s) + refs
@@ -156,32 +155,6 @@ JSON output lists added and existing IDs. Default output is JSON;
 set HUMAN=1 for human-readable text.
 
 Example: c3x codemap`,
-
-	"query": `Usage: c3x query [id] [section] [--chain] [--json]
-
-Extract structured blocks from C3 entities.
-
-Modes:
-  c3x query                    Catalog: list all entities with block fill status
-  c3x query <id>               Snapshot: all blocks for one entity
-  c3x query <id> <section>     Single block: extract one section
-  c3x query <id> --chain       Chain: entity + parent + context + refs
-  c3x query <file-path>        File resolution: map file to entity, then snapshot
-
-Options:
-  --chain      Walk up the hierarchy (component → container → context + refs)
-  --json       Machine-readable output
-
-Section names accept slug form (e.g., "related-refs" for "Related Refs").
-
-Examples:
-  c3x query                            # catalog overview
-  c3x query c3-101                     # component snapshot
-  c3x query c3-101 goal                # just the goal text
-  c3x query c3-101 dependencies        # just the dependencies table
-  c3x query c3-101 --chain             # full context chain
-  c3x query c3-101 --chain --json      # chain as JSON
-  c3x query src/auth/login.ts          # file → component snapshot`,
 
 	"coverage": `Usage: c3x coverage [--json]
 

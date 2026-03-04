@@ -68,6 +68,9 @@ var Registry = map[string][]SectionDef{
 	"adr": {
 		{Name: "Goal", ContentType: "text", Required: true, Purpose: "Decision context and objective"},
 	},
+	"recipe": {
+		{Name: "Goal", ContentType: "text", Required: true, Purpose: "What cross-cutting concern this traces"},
+	},
 }
 
 // ForType returns section definitions for an entity type, or nil if unknown.

@@ -47,14 +47,16 @@ func WalkC3Docs(c3Dir string) ([]frontmatter.ParsedDoc, error) {
 	return result.Docs, nil
 }
 
-// WalkC3DocsWithWarnings is like WalkC3Docs but also returns files that had
-// frontmatter delimiters (---) but failed to parse — likely broken YAML.
+// WalkC3DocsWithWarnings is like WalkC3Docs but also returns parse warnings.
 func WalkC3DocsWithWarnings(c3Dir string) (*WalkResult, error) {
 	result := &WalkResult{}
 
 	err := filepath.Walk(c3Dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
+		}
+		if info.IsDir() && info.Name() == "_index" {
+			return filepath.SkipDir
 		}
 		if info.IsDir() || !strings.HasSuffix(info.Name(), ".md") {
 			return nil
@@ -73,7 +75,6 @@ func WalkC3DocsWithWarnings(c3Dir string) (*WalkResult, error) {
 				Path:        rel,
 			})
 		} else if strings.HasPrefix(raw, "---\n") {
-			// File has frontmatter delimiters but parsing failed
 			result.Warnings = append(result.Warnings, ParseWarning{Path: rel})
 		}
 		return nil
@@ -85,7 +86,7 @@ func WalkC3DocsWithWarnings(c3Dir string) (*WalkResult, error) {
 	return result, nil
 }
 
-var slugPattern = regexp.MustCompile(`^(c3-\d+-|c3-\d+|ref-|adr-\d+-|README)`)
+var slugPattern = regexp.MustCompile(`^(c3-\d+-|c3-\d+|ref-|recipe-|adr-\d+-|README)`)
 
 // SlugFromPath derives a slug from a file path by stripping the ID prefix.
 // For README.md files (containers), the slug is derived from the parent directory name.

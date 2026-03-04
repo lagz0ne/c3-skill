@@ -23,7 +23,7 @@ Commands:
   lookup <file-path>         Map file to component(s) + refs
   coverage                   Code-map coverage stats
 
-Entity Types: context, container, component, ref, adr
+Entity Types: context, container, component, ref, adr, recipe
 
 Global Options:
   --json                     Machine-readable output
@@ -54,6 +54,10 @@ Workflows:
     c3x wire c3-101 cite ref-rate-limiting
     c3x set ref-rate-limiting --section "Code References" '[{"File":"src/middleware/rate.ts","Purpose":"Rate limiter"}]'
 
+  Trace an end-to-end concern:
+    c3x add recipe auth-flow
+    # Edit .c3/recipes/recipe-auth-flow.md: add description + sources
+
   Record an architectural decision:
     c3x add adr use-grpc --goal "Migrate to gRPC for internal services"
     c3x set adr-1 status accepted
@@ -80,7 +84,7 @@ Three-layer validation:
 
 	"add": `Usage: c3x add <type> <slug> [options]
 
-Types: container, component, ref, adr
+Types: container, component, ref, adr, recipe
 
 Options:
   --container <id>       Parent container (component only)
@@ -93,7 +97,8 @@ Examples:
   c3x add container payments --goal "Process payments" --boundary service
   c3x add component auth --container c3-1 --goal "JWT authentication"
   c3x add ref rate-limiting --goal "Consistent rate limiting"
-  c3x add adr use-grpc --goal "Migrate to gRPC"`,
+  c3x add adr use-grpc --goal "Migrate to gRPC"
+  c3x add recipe auth-flow`,
 
 	"set": `Usage: c3x set <id> <field> <value>
        c3x set <id> --section <name> <value> [--append]
@@ -125,7 +130,7 @@ Example: c3x unwire c3-101 cite ref-jwt`,
 	"schema": `Usage: c3x schema <type> [--json]
 
 Show known sections for an entity type.
-Types: context, container, component, ref, adr
+Types: context, container, component, ref, adr, recipe
 
 JSON output includes column types (filepath, entity_id, enum, ref_id).
 

@@ -5,6 +5,18 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.7.0] - 2026-03-04
+
+### Added
+- **Recipe entity type**: Cross-cutting concern traces that link entity sections into end-to-end narratives. Created via `c3x add recipe <topic>`, stored in `.c3/recipes/recipe-*.md`. Includes `description` and `sources` frontmatter for LLM-driven query matching. Validated by `c3x check` (source references must resolve). Shown in `c3x list` topology and JSON output.
+
+### Fixed
+- **Walker skips `_index/`**: `WalkC3Docs` now skips `.c3/_index/` directory, preventing index files from being parsed as entities (#7).
+- **Frontmatter delimiter consistency**: `parseNoteSources` aligned to use `\n---\n` delimiter matching (was `\n---`) with EOF edge case handling (#8).
+
+### Changed
+- **Code cleanup**: Removed AI-generated slop — unnecessary godoc on unexported functions, restating comments, single-use variables inlined, dead if/else branch collapsed.
+
 ## [6.6.0] - 2026-03-04
 
 ### Added

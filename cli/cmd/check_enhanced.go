@@ -41,7 +41,6 @@ type CheckOptions struct {
 	ParseWarnings []walker.ParseWarning
 }
 
-// hintFor returns actionable guidance for a given issue message.
 func hintFor(message string) string {
 	patterns := []struct {
 		substr string
@@ -62,6 +61,7 @@ func hintFor(message string) string {
 		{"is a directory", "point to source files, not directories"},
 		{"no files match pattern", "fix the glob pattern or create matching files"},
 		{"note references nonexistent entity", "remove the note or update its sources"},
+		{"recipe references nonexistent entity", "fix the source ID or remove it from the recipe"},
 	}
 	for _, p := range patterns {
 		if !strings.Contains(message, p.substr) {
@@ -113,8 +113,22 @@ func formatCounts(errors, warnings int) string {
 	return strings.Join(parts, ", ")
 }
 
-// checkNotes scans .c3/_index/notes/*.md for topic notes and validates
-// that source citations reference entities that exist in the graph.
+// Strips #fragment anchors before lookup.
+func validateSourceRefs(entityLabel string, sources []string, graph *walker.C3Graph, noun string) []Issue {
+	var issues []Issue
+	for _, src := range sources {
+		entityID := frontmatter.StripAnchor(src)
+		if graph.Get(entityID) == nil {
+			issues = append(issues, Issue{
+				Severity: "warning",
+				Entity:   entityLabel,
+				Message:  fmt.Sprintf("%s references nonexistent entity: %s", noun, entityID),
+			})
+		}
+	}
+	return issues
+}
+
 func checkNotes(c3Dir string, graph *walker.C3Graph) []Issue {
 	notesDir := filepath.Join(c3Dir, "_index", "notes")
 	entries, err := os.ReadDir(notesDir)
@@ -132,31 +146,23 @@ func checkNotes(c3Dir string, graph *walker.C3Graph) []Issue {
 			continue
 		}
 		sources := parseNoteSources(string(data))
-		for _, src := range sources {
-			entityID := src
-			if idx := strings.Index(src, "#"); idx > 0 {
-				entityID = src[:idx]
-			}
-			if graph.Get(entityID) == nil {
-				issues = append(issues, Issue{
-					Severity: "warning",
-					Entity:   entry.Name(),
-					Message:  fmt.Sprintf("note references nonexistent entity: %s", entityID),
-				})
-			}
-		}
+		issues = append(issues, validateSourceRefs(entry.Name(), sources, graph, "note")...)
 	}
 	return issues
 }
 
-// parseNoteSources extracts the sources list from YAML frontmatter in a note.
 func parseNoteSources(content string) []string {
 	if !strings.HasPrefix(content, "---\n") {
 		return nil
 	}
-	end := strings.Index(content[4:], "\n---")
+	end := strings.Index(content[4:], "\n---\n")
 	if end == -1 {
-		return nil
+		// Handle EOF edge case: frontmatter ends with \n--- at end of string
+		if strings.HasSuffix(content[4:], "\n---") {
+			end = len(content[4:]) - 4 // length minus "\n---"
+		} else {
+			return nil
+		}
 	}
 	yamlBlock := content[4 : 4+end]
 
@@ -169,11 +175,18 @@ func parseNoteSources(content string) []string {
 	return fm.Sources
 }
 
+func checkRecipeSources(graph *walker.C3Graph) []Issue {
+	var issues []Issue
+	for _, r := range graph.ByType(frontmatter.DocRecipe) {
+		issues = append(issues, validateSourceRefs(r.ID, r.Frontmatter.Sources, graph, "recipe")...)
+	}
+	return issues
+}
+
 // RunCheckV2 validates entities against the schema registry.
 func RunCheckV2(opts CheckOptions, w io.Writer) error {
 	var issues []Issue
 
-	// Report files with broken YAML frontmatter (have --- delimiters but failed to parse)
 	for _, pw := range opts.ParseWarnings {
 		issues = append(issues, Issue{
 			Severity: "error",
@@ -383,10 +396,10 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 		}
 	}
 
-	// Note health validation
 	if c3Dir != "" {
 		issues = append(issues, checkNotes(c3Dir, opts.Graph)...)
 	}
+	issues = append(issues, checkRecipeSources(opts.Graph)...)
 
 	result := CheckResult{
 		Total:  len(opts.Docs),

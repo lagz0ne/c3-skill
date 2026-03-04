@@ -73,6 +73,12 @@ func listJSON(graph *walker.C3Graph, w io.Writer) error {
 		if e.Frontmatter.Boundary != "" {
 			fm["boundary"] = e.Frontmatter.Boundary
 		}
+		if e.Frontmatter.Description != "" {
+			fm["description"] = e.Frontmatter.Description
+		}
+		if len(e.Frontmatter.Sources) > 0 {
+			fm["sources"] = e.Frontmatter.Sources
+		}
 
 		data = append(data, jsonEntity{
 			ID:            e.ID,
@@ -111,6 +117,7 @@ func listTopology(graph *walker.C3Graph, cm codemap.CodeMap, compact bool, w io.
 	components := graph.ByType(frontmatter.DocComponent)
 	refs := graph.ByType(frontmatter.DocRef)
 	adrs := graph.ByType(frontmatter.DocADR)
+	recipes := graph.ByType(frontmatter.DocRecipe)
 
 	// System header from context doc
 	contexts := graph.ByType(frontmatter.DocContext)
@@ -126,12 +133,16 @@ func listTopology(graph *walker.C3Graph, cm codemap.CodeMap, compact bool, w io.
 	}
 
 	// Architecture summary
-	fmt.Fprintf(w, "%s · %s · %s · %s\n\n",
+	summaryParts := []string{
 		plural(len(containers), "container"),
 		plural(len(components), "component"),
 		plural(len(refs), "ref"),
 		plural(len(adrs), "ADR"),
-	)
+	}
+	if len(recipes) > 0 {
+		summaryParts = append(summaryParts, plural(len(recipes), "recipe"))
+	}
+	fmt.Fprintf(w, "%s\n\n", strings.Join(summaryParts, " · "))
 
 	sort.Slice(containers, func(i, j int) bool {
 		return containers[i].ID < containers[j].ID
@@ -242,6 +253,30 @@ func listTopology(graph *walker.C3Graph, cm codemap.CodeMap, compact bool, w io.
 				if len(fileList) > 0 {
 					fmt.Fprintf(w, "    files: %s\n", strings.Join(fileList, ", "))
 				}
+			}
+		}
+		fmt.Fprintln(w)
+	}
+
+	// Recipes
+	if len(recipes) > 0 {
+		sort.Slice(recipes, func(i, j int) bool {
+			return recipes[i].ID < recipes[j].ID
+		})
+		fmt.Fprintln(w, "Recipes:")
+		for _, r := range recipes {
+			desc := r.Frontmatter.Description
+			if desc == "" {
+				desc = r.Frontmatter.Goal
+			}
+			line := fmt.Sprintf("  %s", r.ID)
+			if desc != "" {
+				line += " — " + desc
+			}
+			fmt.Fprintln(w, line)
+
+			if len(r.Frontmatter.Sources) > 0 && !compact {
+				fmt.Fprintf(w, "    sources: %s\n", strings.Join(r.Frontmatter.Sources, ", "))
 			}
 		}
 		fmt.Fprintln(w)

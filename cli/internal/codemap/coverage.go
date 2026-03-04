@@ -62,7 +62,6 @@ func Coverage(cm CodeMap, projectDir string) (*CoverageResult, error) {
 	}, nil
 }
 
-// matchesAny returns true if filePath matches any of the given glob patterns.
 func matchesAny(filePath string, patterns []string) bool {
 	for _, pattern := range patterns {
 		pattern = filepath.ToSlash(strings.TrimSpace(pattern))
@@ -77,7 +76,6 @@ func matchesAny(filePath string, patterns []string) bool {
 	return false
 }
 
-// skipPrefixes are directory prefixes excluded from coverage (not source code).
 var skipPrefixes = []string{".c3/", ".git/", "node_modules/", "dist/"}
 
 func isSkippedPath(p string) bool {

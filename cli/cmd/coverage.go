@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -32,12 +31,7 @@ func RunCoverage(opts CoverageOptions, w io.Writer) error {
 
 	// Default: JSON (agent-readable). Human-readable only when HUMAN env is set.
 	if opts.JSON || os.Getenv("HUMAN") == "" {
-		out, err := json.MarshalIndent(result, "", "  ")
-		if err != nil {
-			return err
-		}
-		fmt.Fprintln(w, string(out))
-		return nil
+		return writeJSON(w, result)
 	}
 
 	fmt.Fprintln(w, "C3 Code-Map Coverage")

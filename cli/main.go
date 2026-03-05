@@ -58,7 +58,7 @@ func main() {
 
 	switch opts.Command {
 	case "list":
-		err = cmd.RunList(cmd.ListOptions{Graph: graph, JSON: opts.JSON, Flat: opts.Flat, Compact: opts.Compact, C3Dir: c3Dir}, w)
+		err = cmd.RunList(cmd.ListOptions{Graph: graph, JSON: opts.JSON, Flat: opts.Flat, Compact: opts.Compact, C3Dir: c3Dir, IncludeADR: opts.IncludeADR}, w)
 	case "check":
 		checkOpts := cmd.CheckOptions{
 			Graph:         graph,
@@ -67,6 +67,7 @@ func main() {
 			ProjectDir:    projectDir,
 			C3Dir:         c3Dir,
 			ParseWarnings: walkResult.Warnings,
+			IncludeADR:    opts.IncludeADR,
 		}
 		err = cmd.RunCheckV2(checkOpts, w)
 	case "add":

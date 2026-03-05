@@ -15,9 +15,10 @@ type Options struct {
 	Summary   string
 	Boundary  string
 	Field     string
-	Section   string
-	Help      bool
-	Version   bool
+	Section    string
+	Help       bool
+	Version    bool
+	IncludeADR bool
 }
 
 // ParseArgs parses command-line arguments into Options.
@@ -77,6 +78,8 @@ func ParseArgs(argv []string) Options {
 			}
 		case "--append":
 			opts.Append = true
+		case "--include-adr":
+			opts.IncludeADR = true
 		default:
 			args = append(args, arg)
 		}

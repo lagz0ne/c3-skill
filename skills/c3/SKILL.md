@@ -91,8 +91,15 @@ First `AskUserQuestion` denial → `ASSUMPTION_MODE = true` for session.
 
 **Run `c3x check` frequently** — after creating/editing any `.c3/` doc. It catches broken YAML frontmatter, missing required sections, bad entity references, and codemap issues. Treat errors (`✗`) as blockers.
 
+**HARD RULE — ADR is the unit of change:**
+Every **change** operation MUST start with `c3x add adr <slug>` as its FIRST action.
+No code reads, no file edits, no exploration before the ADR exists.
+(Exception: **ref-add** creates its adoption ADR at completion — see `references/ref.md`.)
+The ADR is an ephemeral work order — it drives what to update, then gets hidden.
+`c3x list` and `c3x check` exclude ADRs by default; use `--include-adr` to see them.
+
 **Stop immediately if:**
-- Editing code without ADR → create ADR first
+- No ADR exists for current change → `c3x add adr <slug>` NOW
 - Guessing intent → `AskUserQuestion` (skip if ASSUMPTION_MODE)
 - Jumping to component → start Context down
 - Updating docs without code check
@@ -137,7 +144,7 @@ Details: `references/query.md`
 Details: `references/audit.md`
 
 ### change
-`c3x list --json` → `c3x lookup` each file → impact → ADR → approve → `c3x lookup` each file before edit → execute → `c3x check`.
+ADR first (`c3x add adr`) → `c3x list --json` → `c3x lookup` each file → fill ADR (impact, work breakdown) → approve → execute → `c3x check`.
 Provision gate: implement now or `status: provisioned`.
 Details: `references/change.md`
 

@@ -14,20 +14,21 @@ import (
 
 // ListOptions holds parameters for the list command.
 type ListOptions struct {
-	Graph   *walker.C3Graph
-	JSON    bool
-	Flat    bool
-	Compact bool
-	C3Dir   string
+	Graph      *walker.C3Graph
+	JSON       bool
+	Flat       bool
+	Compact    bool
+	C3Dir      string
+	IncludeADR bool
 }
 
 // RunList outputs the topology of a C3 graph.
 func RunList(opts ListOptions, w io.Writer) error {
 	if opts.JSON {
-		return listJSON(opts.Graph, w)
+		return listJSON(opts.Graph, opts.IncludeADR, w)
 	}
 	if opts.Flat {
-		return listFlat(opts.Graph, w)
+		return listFlat(opts.Graph, opts.IncludeADR, w)
 	}
 	var cm codemap.CodeMap
 	if !opts.Compact {
@@ -37,11 +38,20 @@ func RunList(opts ListOptions, w io.Writer) error {
 			return fmt.Errorf("code-map parse error: %w", err)
 		}
 	}
-	return listTopology(opts.Graph, cm, opts.Compact, w)
+	return listTopology(opts.Graph, cm, opts.Compact, opts.IncludeADR, w)
 }
 
-func listJSON(graph *walker.C3Graph, w io.Writer) error {
+func listJSON(graph *walker.C3Graph, includeADR bool, w io.Writer) error {
 	entities := graph.All()
+	if !includeADR {
+		filtered := entities[:0]
+		for _, e := range entities {
+			if frontmatter.ClassifyDoc(e.Frontmatter) != frontmatter.DocADR {
+				filtered = append(filtered, e)
+			}
+		}
+		entities = filtered
+	}
 	sort.Slice(entities, func(i, j int) bool {
 		return entities[i].ID < entities[j].ID
 	})
@@ -93,8 +103,17 @@ func listJSON(graph *walker.C3Graph, w io.Writer) error {
 	return writeJSON(w, data)
 }
 
-func listFlat(graph *walker.C3Graph, w io.Writer) error {
+func listFlat(graph *walker.C3Graph, includeADR bool, w io.Writer) error {
 	entities := graph.All()
+	if !includeADR {
+		filtered := entities[:0]
+		for _, e := range entities {
+			if frontmatter.ClassifyDoc(e.Frontmatter) != frontmatter.DocADR {
+				filtered = append(filtered, e)
+			}
+		}
+		entities = filtered
+	}
 	sort.Slice(entities, func(i, j int) bool {
 		return entities[i].Path < entities[j].Path
 	})
@@ -112,7 +131,7 @@ func plural(n int, word string) string {
 	return fmt.Sprintf("%d %ss", n, word)
 }
 
-func listTopology(graph *walker.C3Graph, cm codemap.CodeMap, compact bool, w io.Writer) error {
+func listTopology(graph *walker.C3Graph, cm codemap.CodeMap, compact bool, includeADR bool, w io.Writer) error {
 	containers := graph.ByType(frontmatter.DocContainer)
 	components := graph.ByType(frontmatter.DocComponent)
 	refs := graph.ByType(frontmatter.DocRef)
@@ -137,7 +156,9 @@ func listTopology(graph *walker.C3Graph, cm codemap.CodeMap, compact bool, w io.
 		plural(len(containers), "container"),
 		plural(len(components), "component"),
 		plural(len(refs), "ref"),
-		plural(len(adrs), "ADR"),
+	}
+	if includeADR {
+		summaryParts = append(summaryParts, plural(len(adrs), "ADR"))
 	}
 	if len(recipes) > 0 {
 		summaryParts = append(summaryParts, plural(len(recipes), "recipe"))

@@ -1,14 +1,14 @@
 # Change Reference
 
-Flow: `Understand → ADR → Provision Gate → Execute → Audit`
+Flow: `ADR → Understand → Approve → Execute → Audit`
 
 Spawn parallel subagents via Task tool for complex work.
 
 ## Progress Checklist
 
 ```
-- [ ] Phase 1: topology loaded, request clarified, impact analyzed
-- [ ] Phase 2: ADR created, user approves
+- [ ] Phase 1: ADR created (`c3x add adr <slug>`)
+- [ ] Phase 2: topology loaded, impact analyzed, ADR body filled
 - [ ] Phase 2b: provision gate (implement or design-only?)
 - [ ] Phase 3: execute work breakdown
 - [ ] Phase 4: audit + ADR marked implemented
@@ -16,7 +16,28 @@ Spawn parallel subagents via Task tool for complex work.
 
 ---
 
-## Phase 1: Understand
+## Phase 1: ADR (FIRST — non-negotiable)
+
+```bash
+bash <skill-dir>/bin/c3x.sh add adr <slug>
+```
+
+Create the ADR immediately. The slug should capture the change intent (e.g., `add-rate-limiting`, `migrate-to-postgres`).
+
+Edit the ADR frontmatter:
+```yaml
+---
+id: adr-YYYYMMDD-{slug}
+title: [Decision Title]
+status: proposed
+date: YYYY-MM-DD
+affects: []
+---
+```
+
+The body will be filled in Phase 2 after understanding impact.
+
+## Phase 2: Understand + Fill ADR
 
 ```bash
 bash <skill-dir>/bin/c3x.sh list --json
@@ -29,29 +50,11 @@ Clarify with user (ASSUMPTION_MODE: skip). Analyze:
 - Read upward: component → container → context → cited refs
 - Risks
 
-Complex changes: spawn parallel analyst + reviewer subagents, synthesize.
-
-## Phase 2: ADR
-
-```bash
-bash <skill-dir>/bin/c3x.sh add adr <slug>
-```
-
-```yaml
----
-id: adr-YYYYMMDD-{slug}
-title: [Decision Title]
-status: proposed
-date: YYYY-MM-DD
-base-commit: [git hash]
-affects: [c3-N, c3-NNN]
-approved-files: []
----
-```
-
-Body: problem, decision, work breakdown, affected layers, risks.
+Fill the ADR body: Goal, Work Breakdown, Risks. Update `affects:` in frontmatter.
 
 Present for approval (ASSUMPTION_MODE: mark `[ASSUMED]`).
+
+Complex changes: spawn parallel analyst + reviewer subagents, synthesize.
 
 ## Phase 2b: Provision Gate
 
@@ -104,21 +107,13 @@ bash <skill-dir>/bin/c3x.sh check
 
 ---
 
-## ADR Format
+## ADR Lifecycle
 
-```yaml
----
-id: adr-YYYYMMDD-{slug}
-title: [Decision Title]
-status: proposed | accepted | provisioned | implemented
-date: YYYY-MM-DD
-base-commit: [git hash]
-affects: [c3-N, c3-NNN]
-approved-files: []
----
-```
+ADRs are **ephemeral work orders**. They drive changes then become hidden.
 
 Status: `proposed → accepted → (provisioned | implemented)`
+
+`c3x list` and `c3x check` exclude ADRs by default. Use `--include-adr` to inspect.
 
 ---
 

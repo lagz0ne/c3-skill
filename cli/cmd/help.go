@@ -68,16 +68,17 @@ var commandHelp = map[string]string{
 
 Scaffold .c3/ skeleton (config, README, refs/, adr/).`,
 
-	"list": `Usage: c3x list [--compact] [--flat] [--json]
+	"list": `Usage: c3x list [--compact] [--flat] [--json] [--include-adr]
 
 Topology view with system goal, entity goals, file coverage, and ref usage.
-  --compact  Goals-only tree (no files/uses detail)
-  --flat     Simple file list (id, type, path)
-  --json     Machine-readable full output`,
+  --compact      Goals-only tree (no files/uses detail)
+  --flat         Simple file list (id, type, path)
+  --json         Machine-readable full output
+  --include-adr  Include ADR entities (hidden by default)`,
 
-	"check": `Usage: c3x check [--json]
+	"check": `Usage: c3x check [--json] [--include-adr]
 
-Three-layer validation:
+Three-layer validation (ADRs excluded by default; use --include-adr to validate them):
   Layer 1: Broken links, orphans, duplicates, missing parents
   Layer 2: Required sections empty/missing per schema
   Layer 3: Code refs exist on disk, entity IDs in graph, cite consistency`,

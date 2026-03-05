@@ -192,13 +192,11 @@ func addAdr(slug, c3Dir string, w io.Writer) error {
 		return fmt.Errorf("error: %s already exists", adrID)
 	}
 
-	today := time.Now().Format("20060102")
-	content, err := templates.Render("adr-000.md", map[string]string{
-		"adr-00000000-c3-adoption":               adrID,
-		"C3 Architecture Documentation Adoption":  slug,
-		"Adopt C3 methodology for ${PROJECT}.\n":  "",
-		"${DATE}":    today,
-		"${PROJECT}": "",
+	today := time.Now().Format("2006-01-02")
+	content, err := templates.Render("adr.md", map[string]string{
+		"${ID}":    adrID,
+		"${TITLE}": slug,
+		"${DATE}":  today,
 	})
 	if err != nil {
 		return fmt.Errorf("error: rendering template: %w", err)

@@ -50,6 +50,11 @@ func TestParseArgs(t *testing.T) {
 			argv: []string{},
 			want: Options{},
 		},
+		{
+			name: "include-adr flag",
+			argv: []string{"list", "--include-adr"},
+			want: Options{Command: "list", IncludeADR: true},
+		},
 	}
 
 	for _, tt := range tests {
@@ -78,6 +83,9 @@ func TestParseArgs(t *testing.T) {
 			}
 			if got.Version != tt.want.Version {
 				t.Errorf("Version = %v, want %v", got.Version, tt.want.Version)
+			}
+			if got.IncludeADR != tt.want.IncludeADR {
+				t.Errorf("IncludeADR = %v, want %v", got.IncludeADR, tt.want.IncludeADR)
 			}
 			if len(got.Args) != len(tt.want.Args) {
 				t.Errorf("Args len = %d, want %d", len(got.Args), len(tt.want.Args))

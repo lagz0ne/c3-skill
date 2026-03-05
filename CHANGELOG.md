@@ -5,6 +5,19 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.8.0] - 2026-03-05
+
+### Added
+- **`--include-adr` flag**: `c3x list` and `c3x check` now exclude ADRs by default. Use `--include-adr` to include them in output and validation. ADRs are ephemeral work orders — they drive changes, then stay out of the way.
+- **Lightweight ADR template**: `c3x add adr <slug>` now creates a minimal template (Goal, Work Breakdown, Risks) instead of the heavy onboarding template. Fast to create, drives the change, throwaway.
+- **11 new tests**: Full coverage for ADR filtering in list (topology, flat, JSON), check (skip/include), and `--include-adr` flag parsing.
+
+### Changed
+- **ADR-first enforcement**: Change operations now require `c3x add adr <slug>` as their first action (HARD RULE in skill instructions). No code reads, no file edits, no exploration before the ADR exists.
+- **Change flow reordered**: `ADR → Understand → Approve → Execute → Audit` (was `Understand → ADR → ...`). ADR creation is Phase 1, non-negotiable.
+- **Audit Phase 6 opt-in**: ADR Lifecycle audit only runs with `--include-adr`, since ADRs are ephemeral.
+- **Ref-add exception documented**: Ref operations create their adoption ADR at completion (not upfront), clearly noted in shared rules.
+
 ## [6.7.0] - 2026-03-04
 
 ### Added

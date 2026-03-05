@@ -50,6 +50,58 @@ parent: c3-1
 	}
 }
 
+func TestRunCheck_DefaultSkipsADR(t *testing.T) {
+	c3Dir := createRichFixture(t)
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	opts := CheckOptions{Graph: graph, Docs: docs, JSON: true}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	var result CheckResult
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
+	}
+
+	for _, issue := range result.Issues {
+		if strings.Contains(issue.Entity, "adr-") {
+			t.Errorf("default check should skip ADR validation, but found issue for: %s", issue.Entity)
+		}
+	}
+}
+
+func TestRunCheck_IncludeADRValidatesADR(t *testing.T) {
+	c3Dir := createRichFixture(t)
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	opts := CheckOptions{Graph: graph, Docs: docs, JSON: true, IncludeADR: true}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	var result CheckResult
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
+	}
+
+	// The fixture ADR has "Context" section but schema requires "Goal" — should produce a warning
+	hasADRIssue := false
+	for _, issue := range result.Issues {
+		if strings.Contains(issue.Entity, "adr-") {
+			hasADRIssue = true
+			break
+		}
+	}
+	if !hasADRIssue {
+		t.Error("--include-adr should validate ADR entities, expected issues for adr-20260226-use-go")
+	}
+}
+
 func TestRunCheck_EmptyRequiredTable(t *testing.T) {
 	c3Dir := createRichFixture(t)
 	docs := loadDocs(t, c3Dir)

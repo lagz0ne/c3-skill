@@ -47,6 +47,7 @@ c3x <command> [args] [options]
   coverage                   Code-map coverage stats
 
   --json                     Machine-readable output
+  --include-adr              Include ADRs in output (hidden by default)
   --c3-dir <path>            Override .c3/ auto-detection
 ```
 

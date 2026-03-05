@@ -64,7 +64,10 @@ Low coverage → WARN. Formula: `mapped / (total - excluded)` — `_exclude` pat
 
 All IDs in diagrams → verify exist in inventory. Stale reference → FAIL.
 
-## Phase 6: ADR Lifecycle
+## Phase 6: ADR Lifecycle (--include-adr only)
+
+ADRs are ephemeral work orders, hidden from default `c3x` operations.
+Only audit ADR lifecycle when explicitly requested or when running `c3x check --include-adr`.
 
 `status=accepted` + >30 days without `implemented` → WARN.
 

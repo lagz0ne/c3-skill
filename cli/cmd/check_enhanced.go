@@ -39,6 +39,7 @@ type CheckOptions struct {
 	ProjectDir    string
 	C3Dir         string // path to .c3/ directory (may differ from ProjectDir/.c3/ with --c3-dir)
 	ParseWarnings []walker.ParseWarning
+	IncludeADR    bool
 }
 
 func hintFor(message string) string {
@@ -203,6 +204,9 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 
 	for _, entity := range entities {
 		docType := frontmatter.ClassifyDoc(entity.Frontmatter)
+		if docType == frontmatter.DocADR && !opts.IncludeADR {
+			continue
+		}
 		typeName := docType.String()
 
 		schemaSections := schema.ForType(typeName)

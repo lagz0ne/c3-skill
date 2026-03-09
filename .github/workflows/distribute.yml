@@ -6,13 +6,11 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   distribute:
     runs-on: ubuntu-latest
-    outputs:
-      should_release: ${{ steps.version.outputs.should_release }}
-      version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout dev
         uses: actions/checkout@v4
@@ -31,116 +29,46 @@ jobs:
       - name: Cross-compile
         run: bash scripts/build.sh
 
-      - name: Distribute to main
+      - name: Distribute to main via PR
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Save built binaries
+          BRANCH="ci/distribute-dev-to-main"
+
+          # Save built binaries before switching branches
           mkdir -p /tmp/c3x-bins
-          cp skills/c3/bin/c3x-* /tmp/c3x-bins/
+          cp skills/c3/bin/c3x-*-*-* /tmp/c3x-bins/
 
-          # Switch to main (create if first run)
-          git checkout main 2>/dev/null || git checkout -b main
+          # Start from dev (already checked out)
+          git checkout -B "$BRANCH"
 
-          # Merge dev → main (-X theirs: dev is source of truth for code)
-          git merge dev -X theirs -m "merge: dev → main" --no-edit
-
-          # Remove stale binaries from previous versions, then add new ones
+          # Remove stale binaries, restore freshly built ones
           git rm -f skills/c3/bin/c3x-*-*-* 2>/dev/null || true
           cp /tmp/c3x-bins/* skills/c3/bin/
           git add -f skills/c3/bin/c3x-*
 
-          # Commit only if binaries changed
-          if git diff --staged --quiet; then
-            echo "No binary changes to commit"
-          else
+          if ! git diff --staged --quiet; then
             git commit -m "build: update c3x binaries"
           fi
 
-          git fetch origin main
-          git merge origin/main -X ours --no-edit
-          git push origin main
+          # Force-push the distribute branch
+          git push origin "$BRANCH" --force
 
-      - name: Check version for release
-        id: version
-        run: |
-          CURRENT_VERSION=$(cat VERSION | tr -d '[:space:]')
-          echo "Current version: $CURRENT_VERSION"
-
-          if git rev-parse "v$CURRENT_VERSION" >/dev/null 2>&1; then
-            echo "Tag v$CURRENT_VERSION already exists, skipping release"
-            echo "should_release=false" >> $GITHUB_OUTPUT
-          else
-            echo "New version detected: $CURRENT_VERSION"
-            echo "should_release=true" >> $GITHUB_OUTPUT
-            echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          # Close any existing PR from this branch
+          EXISTING_PR=$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number')
+          if [ -n "$EXISTING_PR" ]; then
+            gh pr close "$EXISTING_PR" --delete-branch=false
           fi
 
-  release:
-    needs: distribute
-    if: needs.distribute.outputs.should_release == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout main (with binaries)
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
+          # Create and auto-merge PR
+          PR_URL=$(gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "ci: distribute dev → main" \
+            --body "Automated merge of dev into main with built c3x binaries.")
 
-      - name: Get version
-        id: version
-        run: |
-          VERSION=${{ needs.distribute.outputs.version }}
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          gh pr merge "$PR_URL" --merge --delete-branch
 
-      - name: Generate changelog
-        run: |
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-
-          if [ -z "$LAST_TAG" ]; then
-            COMMITS=$(git log --pretty=format:"- %s" --no-merges)
-          else
-            COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s" --no-merges)
-          fi
-
-          echo "## What's Changed" > changelog.md
-          echo "" >> changelog.md
-          echo "$COMMITS" >> changelog.md
-          echo "" >> changelog.md
-          echo "---" >> changelog.md
-          echo "" >> changelog.md
-          echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG:-initial}...v${{ steps.version.outputs.version }}" >> changelog.md
-
-      - name: Prepare release assets
-        run: |
-          VERSION=${{ steps.version.outputs.version }}
-          mkdir -p dist/release
-
-          # Plugin zip — main has binaries in skills/c3/bin/
-          zip -r "dist/release/c3-skill-v${VERSION}.zip" \
-            .claude-plugin/ \
-            skills/ \
-            -x "*.DS_Store"
-
-          ls -la dist/release/
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: C3 v${{ steps.version.outputs.version }}
-          body_path: changelog.md
-          files: dist/release/*
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Summary
-        run: |
-          echo "## Release Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Version**: v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Tag**: v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Go CLI**: binaries bundled in plugin" >> $GITHUB_STEP_SUMMARY

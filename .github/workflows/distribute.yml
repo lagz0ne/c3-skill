@@ -31,14 +31,26 @@ jobs:
       - name: Cross-compile
         run: bash scripts/build.sh
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build VS Code extension
+        working-directory: vscode-c3-nav
+        run: |
+          npm ci
+          npm run package
+
       - name: Distribute to main
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Save built binaries
+          # Save built artifacts
           mkdir -p /tmp/c3x-bins
           cp skills/c3/bin/c3x-* /tmp/c3x-bins/
+          cp vscode-c3-nav/c3-nav.vsix /tmp/c3-nav.vsix
 
           # Switch to main (create if first run)
           git checkout main 2>/dev/null || git checkout -b main
@@ -51,11 +63,15 @@ jobs:
           cp /tmp/c3x-bins/* skills/c3/bin/
           git add -f skills/c3/bin/c3x-*
 
-          # Commit only if binaries changed
+          # Copy built .vsix to repo
+          cp /tmp/c3-nav.vsix vscode-c3-nav/c3-nav.vsix
+          git add -f vscode-c3-nav/c3-nav.vsix
+
+          # Commit only if build artifacts changed
           if git diff --staged --quiet; then
-            echo "No binary changes to commit"
+            echo "No build artifact changes to commit"
           else
-            git commit -m "build: update c3x binaries"
+            git commit -m "build: update c3x binaries and c3-nav.vsix"
           fi
 
           git fetch origin main
@@ -123,6 +139,9 @@ jobs:
             skills/ \
             -x "*.DS_Store"
 
+          # VS Code extension
+          cp vscode-c3-nav/c3-nav.vsix dist/release/c3-nav.vsix
+
           ls -la dist/release/
 
       - name: Create GitHub Release
@@ -144,3 +163,4 @@ jobs:
           echo "- **Version**: v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Tag**: v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Go CLI**: binaries bundled in plugin" >> $GITHUB_STEP_SUMMARY
+          echo "- **VS Code extension**: c3-nav.vsix" >> $GITHUB_STEP_SUMMARY

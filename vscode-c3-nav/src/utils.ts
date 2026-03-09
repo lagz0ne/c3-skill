@@ -32,20 +32,29 @@ export function parseFrontmatter(filePath: string): Pick<DocEntry, "title" | "go
 
   const titleMatch = fm.match(/^title:\s*(.+)$/m);
   if (titleMatch) {
-    result.title = titleMatch[1].trim();
+    result.title = stripYamlQuotes(titleMatch[1].trim());
   }
 
   const goalMatch = fm.match(/^goal:\s*(.+)$/m);
   if (goalMatch) {
-    result.goal = goalMatch[1].trim();
+    result.goal = stripYamlQuotes(goalMatch[1].trim());
   }
 
   const summaryMatch = fm.match(/^summary:\s*(.+)$/m);
   if (summaryMatch) {
-    result.summary = summaryMatch[1].trim();
+    result.summary = stripYamlQuotes(summaryMatch[1].trim());
   }
 
   return result;
+}
+
+/** Strip surrounding YAML quotes (single or double) from a value. */
+function stripYamlQuotes(value: string): string {
+  if ((value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))) {
+    return value.slice(1, -1);
+  }
+  return value;
 }
 
 /**

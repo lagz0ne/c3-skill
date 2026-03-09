@@ -38,12 +38,16 @@ jobs:
 
           BRANCH="ci/distribute-dev-to-main"
 
+          # Save built binaries before switching branches
+          mkdir -p /tmp/c3x-bins
+          cp skills/c3/bin/c3x-*-*-* /tmp/c3x-bins/
+
           # Start from dev (already checked out)
           git checkout -B "$BRANCH"
 
-          # Remove stale binaries, add freshly built ones
+          # Remove stale binaries, restore freshly built ones
           git rm -f skills/c3/bin/c3x-*-*-* 2>/dev/null || true
-          cp skills/c3/bin/c3x-* skills/c3/bin/ 2>/dev/null || true
+          cp /tmp/c3x-bins/* skills/c3/bin/
           git add -f skills/c3/bin/c3x-*
 
           if ! git diff --staged --quiet; then

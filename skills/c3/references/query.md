@@ -1,96 +1,87 @@
 # Query Reference
 
-Navigate C3 docs + corresponding code. Full context = docs + code.
+Navigate C3 docs and corresponding code. Full context = docs + code together.
 
 ## Flow
 
-`Query → Topology → Clarify → Navigate → Lookup → Explore Code`
+`Topology → Match Entity → Read Docs → Explore Code → Respond`
 
 ## Progress
 
 - [ ] Topology loaded (`c3x list --json`)
-- [ ] Intent clarified (or skipped if specific)
-- [ ] Entity matched from JSON
-- [ ] `c3x lookup` run on every file path surfaced
+- [ ] Entity matched
+- [ ] Docs read (component, container, refs)
 - [ ] Code explored
 - [ ] Response delivered
 
 ---
 
-## Step 0a: Topology
+## Step 1: Load Topology
 
-**First action:**
 ```bash
 bash <skill-dir>/bin/c3x.sh list --json
 ```
-Returns all entities: id, type, title, path, relationships, frontmatter. Match query to entities by title/type/relationship.
 
-Don't manually Glob/Read `.c3/`. JSON has everything for discovery. Read only after identifying specific entities.
+Returns all entities with IDs, types, titles, paths, relationships, frontmatter. Match the user's query to entities by title, type, or relationship.
 
-## Step 0a+: Check Recipes
+Don't manually Glob/Read `.c3/` for discovery — the JSON has everything. Only read individual docs after identifying them.
 
-After loading topology, check for recipes that match the query:
-1. Filter entities with type `recipe` from `c3x list --json`
-2. Match query against recipe title + description
-3. If match found → read recipe, serve sources as the narrative trace
-4. If no match → proceed with normal query flow
+Also check for **recipes** in the topology. If a recipe matches the query, read it and trace its sources as the narrative.
 
-## Step 0b: Clarify Intent
+## Step 2: Clarify Intent (if needed)
 
 Ask when (skip if ASSUMPTION_MODE):
-- Vague ("how does X work?")
-- Multiple interpretations ("authentication" — login? tokens?)
-- Scope unclear
+- Query is vague ("how does X work?" with multiple interpretations)
+- Multiple entities could match
+- Scope is unclear
 
-Skip when: C3 ID given, query is specific, "show me everything about X".
+Skip when: specific C3 ID given, query is precise, "show me everything about X".
 
-## Step 1: Navigate Layers
+## Step 3: Navigate and Read
 
-Top-down: Context → Container → Component.
+Navigate top-down: Context → Container → Component.
 
-Match from JSON. Read entity files only when body content not in frontmatter.
+Read the matched entity doc(s) for architecture context. Check the Related Refs table in component docs — read those refs for constraints and patterns.
 
-| Source | Use For |
-|--------|---------|
-| Component name | Class/module names |
-| code-map.yaml | Direct file paths, symbols |
-| Technology | Framework patterns |
+## Step 4: Explore Code
 
-## Step 2: Extract + Lookup
+How deeply you explore code depends on the query type:
 
-For every file path encountered:
-1. **Run `c3x lookup <file>` before reading any source file** — returns component + governing refs. For directory-level context, use `c3x lookup 'src/auth/**'`.
-2. Read `## Related Refs` in component doc
-3. Find `ref-*` entities from JSON. Read for body content.
+| Query Type | Approach |
+|------------|----------|
+| **"Where is X?"** / **"Explain X"** | Read docs, reference code-map entries, suggest code files to explore |
+| **"Trace X"** / **"Show me the code"** | Read docs for context, then follow the code path through source files |
+| **"What constraints apply to X?"** | Read upward through entity chain + all cited refs |
+| **"Explore X thoroughly"** | Full treatment: docs + code + related entities |
 
-Lookup-returned refs = constraints governing that file's code.
+**Code navigation: LSP first.** When tracing code paths, always start with LSP tools (go-to-definition, find-references, hover, workspace symbols) to follow function calls, resolve types, and find usages. LSP gives precise, type-aware results that are more reliable than text search. Only fall back to Grep/Glob when LSP is unavailable or returns no results.
 
-## Step 3: Explore Code
+Use `c3x lookup <file>` when you want to understand which component/refs govern a file — but don't treat it as a gate before every file read. It's most valuable when you encounter unfamiliar files or need to check constraints.
 
-```bash
-# Glob patterns
-src/auth/**/*.ts
-# Grep class/function names
-# Read specific files from code-map.yaml
+## Step 5: Respond
+
+```
+**Layer:** <c3-id> (<name>)
+
+<Architecture from docs>
+
+**Code Map:** `path/file.ts` - <role>
+
+**Key Insights:** <Observations from code>
+
+**Related:** <navigation hints to related entities>
 ```
 
 ---
 
-## Query Types
-
-| Type | When | Response |
-|------|------|---------|
-| Docs | "where is X", "explain X" | Docs + suggest code |
-| Code | "show me code for X" | Full flow through code |
-| Deep | "explore X thoroughly" | Docs + Code + Related |
-| Constraints | "what rules apply to X" | Full constraint chain |
-
 ## Constraint Chain Query
 
-1. Identify target (c3-NNN, c3-N, or c3-0)
+When the user asks "what rules apply to X":
+
+1. Identify target entity
 2. Read upward: component → container → context
 3. Extract: explicit constraints (MUST/MUST NOT), boundaries, layer rules
-4. Collect cited refs from Related Refs, read key rules
+4. Collect cited refs, read key rules
 
 ```
 **Constraint Chain for c3-NNN (Name)**
@@ -108,20 +99,6 @@ src/auth/**/*.ts
 | Topic not in C3 | Search code directly, suggest documenting |
 | Spans containers | List all affected, explain relationships |
 | Docs seem stale | Note, suggest audit |
-
-## Response Format
-
-```
-**Layer:** <c3-id> (<name>)
-
-<Architecture from docs>
-
-**Code Map:** `path/file.ts` - <role>
-
-**Key Insights:** <Observations>
-
-**Related:** <navigation hints>
-```
 
 ## ID → Path
 

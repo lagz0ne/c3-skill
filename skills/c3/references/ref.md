@@ -20,7 +20,7 @@ Hard rule: can't name a concrete file → create ref, not component.
 
 Flow: `Scaffold → Fill Content → Discover Usage → Update Citings → ADR`
 
-**HARD RULE: First Bash call must be scaffold.**
+Scaffold first — create the file before filling content.
 
 ### Step 1: Scaffold
 

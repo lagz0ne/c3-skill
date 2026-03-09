@@ -1,28 +1,28 @@
 # Change Reference
 
-Flow: `ADR → Understand → Approve → Execute → Audit`
+Flow: `ADR → Understand → Approve → Execute → Validate`
 
 Spawn parallel subagents via Task tool for complex work.
 
-## Progress Checklist
+## Progress
 
 ```
 - [ ] Phase 1: ADR created (`c3x add adr <slug>`)
-- [ ] Phase 2: topology loaded, impact analyzed, ADR body filled
-- [ ] Phase 2b: provision gate (implement or design-only?)
-- [ ] Phase 3: execute work breakdown
-- [ ] Phase 4: audit + ADR marked implemented
+- [ ] Phase 2: Topology loaded, impact analyzed, ADR body filled
+- [ ] Phase 2b: Provision gate (implement or design-only?)
+- [ ] Phase 3: Execute work breakdown
+- [ ] Phase 4: Validate + ADR marked implemented
 ```
 
 ---
 
-## Phase 1: ADR (FIRST — non-negotiable)
+## Phase 1: Create ADR
 
 ```bash
 bash <skill-dir>/bin/c3x.sh add adr <slug>
 ```
 
-Create the ADR immediately. The slug should capture the change intent (e.g., `add-rate-limiting`, `migrate-to-postgres`).
+This is the first action — before reading code or exploring files. The slug should capture the change intent (e.g., `add-rate-limiting`, `migrate-to-postgres`).
 
 Edit the ADR frontmatter:
 ```yaml
@@ -35,55 +35,46 @@ affects: []
 ---
 ```
 
-The body will be filled in Phase 2 after understanding impact.
-
 ## Phase 2: Understand + Fill ADR
 
 ```bash
 bash <skill-dir>/bin/c3x.sh list --json
 ```
 
-Clarify with user (ASSUMPTION_MODE: skip). Analyze:
-- Affected containers, components, refs
-- For every file mentioned or discovered: `c3x lookup <file>` — load constraint chain before reasoning
-- If lookup returns no mapping → file is uncharted territory, flag as coverage gap
-- Read upward: component → container → context → cited refs
-- Risks
+Analyze affected entities. Use `c3x lookup <file>` on files you plan to modify — the returned refs are constraints that must be honored.
+
+Read upward through entity docs: component → container → context → cited refs.
 
 Fill the ADR body: Goal, Work Breakdown, Risks. Update `affects:` in frontmatter.
 
 Present for approval (ASSUMPTION_MODE: mark `[ASSUMED]`).
 
-Complex changes: spawn parallel analyst + reviewer subagents, synthesize.
-
 ## Phase 2b: Provision Gate
 
-Ask (ASSUMPTION_MODE: skip):
+Ask (ASSUMPTION_MODE: auto-decide):
 - **Implement now** → Phase 3
-- **Design only** → create docs `status: provisioned`, no code-map entry, mark ADR `provisioned`, done
+- **Design only** → create docs with `status: provisioned`, skip code-map entries, mark ADR `provisioned`, done
 
-To implement provisioned later: invoke change, pick up ADR + docs, resume Phase 3.
+To implement provisioned work later: invoke change, pick up ADR + docs, resume Phase 3.
 
 ## Phase 3: Execute
 
-Scaffold:
+Scaffold new entities:
 ```bash
 bash <skill-dir>/bin/c3x.sh add container <slug>
 bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N [--feature]
 bash <skill-dir>/bin/c3x.sh add ref <slug>
 ```
 
-**REQUIRED before touching any file:**
-```bash
-bash <skill-dir>/bin/c3x.sh lookup <file-path>
-```
-Returned refs = hard constraints. Every one must be honored. No exceptions.
+Use `c3x lookup <file>` before modifying files — returned refs are hard constraints.
 
-Parallel subagents: decompose tasks, each reads component docs + refs before touching code.
+**Code navigation: LSP first.** When exploring affected code, use LSP tools (go-to-definition, find-references) to precisely understand call chains and dependencies before making changes. Only fall back to Grep/Glob when LSP is unavailable.
 
-Per task: verify code correct, docs updated (code-map.yaml, Related Refs), no regressions.
+For complex changes, decompose into parallel subagent tasks. Each task should read the relevant component docs and refs before touching code.
 
-## Phase 4: Audit
+Per task: verify code, update docs (code-map.yaml, Related Refs), check for regressions.
+
+## Phase 4: Validate
 
 ```bash
 bash <skill-dir>/bin/c3x.sh check
@@ -91,7 +82,7 @@ bash <skill-dir>/bin/c3x.sh check
 
 - Docs match code
 - Related Refs updated
-- CLAUDE.md blocks updated: `<!-- c3-generated: c3-NNN -->` ... `<!-- end-c3-generated -->`
+- CLAUDE.md blocks updated if applicable
 - ADR → `implemented`
 
 ---
@@ -109,7 +100,7 @@ bash <skill-dir>/bin/c3x.sh check
 
 ## ADR Lifecycle
 
-ADRs are **ephemeral work orders**. They drive changes then become hidden.
+ADRs are ephemeral work orders — they drive changes then become hidden.
 
 Status: `proposed → accepted → (provisioned | implemented)`
 

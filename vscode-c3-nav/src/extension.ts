@@ -1,4 +1,48 @@
 import * as vscode from "vscode";
+import { DocMap } from "./docMap";
+import { C3CodeLensProvider } from "./codeLensProvider";
+import { C3DefinitionProvider } from "./definitionProvider";
+import { C3HoverProvider } from "./hoverProvider";
 
-export function activate(context: vscode.ExtensionContext): void {}
-export function deactivate(): void {}
+const YAML_IN_C3: vscode.DocumentSelector = {
+  scheme: "file",
+  pattern: "**/.c3/**/*.yaml",
+};
+
+export async function activate(context: vscode.ExtensionContext): Promise<void> {
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+  if (!workspaceFolder) {
+    return;
+  }
+
+  const docMap = new DocMap();
+  await docMap.build(workspaceFolder);
+
+  const codeLensProvider = new C3CodeLensProvider(docMap);
+
+  context.subscriptions.push(
+    docMap.startWatching(workspaceFolder),
+    vscode.languages.registerCodeLensProvider(YAML_IN_C3, codeLensProvider),
+    vscode.languages.registerDefinitionProvider(YAML_IN_C3, new C3DefinitionProvider(docMap)),
+    vscode.languages.registerHoverProvider(YAML_IN_C3, new C3HoverProvider(docMap)),
+    vscode.commands.registerCommand("c3Nav.openDocument", (filePath: string) => {
+      const uri = vscode.Uri.file(filePath);
+      vscode.window.showTextDocument(uri, { preview: true });
+    })
+  );
+
+  // Refresh CodeLens when doc map rebuilds
+  const watcher = vscode.workspace.createFileSystemWatcher(
+    new vscode.RelativePattern(vscode.Uri.joinPath(workspaceFolder.uri, ".c3"), "**/*.md")
+  );
+  watcher.onDidCreate(() => codeLensProvider.refresh());
+  watcher.onDidDelete(() => codeLensProvider.refresh());
+  watcher.onDidChange(() => codeLensProvider.refresh());
+  context.subscriptions.push(watcher);
+
+  console.log("[C3 Nav] Extension activated");
+}
+
+export function deactivate(): void {
+  // cleanup handled by disposables
+}

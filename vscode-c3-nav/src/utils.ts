@@ -96,3 +96,40 @@ export function getIdAtPosition(
 
   return undefined;
 }
+
+/** Matches a quoted glob path in a YAML list item, e.g. - "backend-core/app/sysadmin/**" */
+const QUOTED_PATH_PATTERN = /["']([^"']+)["']/g;
+
+/**
+ * Get the quoted path string at a given position in a line of text.
+ * Returns the raw path (with glob), the folder path (glob stripped), and positions.
+ */
+export function getPathAtPosition(
+  lineText: string,
+  characterPos: number
+): { rawPath: string; folderPath: string; start: number; end: number } | undefined {
+  const regex = new RegExp(QUOTED_PATH_PATTERN.source, "g");
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(lineText)) !== null) {
+    // +1 / -1 to cover inside the quotes
+    const start = match.index + 1;
+    const end = start + match[1].length;
+    if (characterPos >= start && characterPos <= end) {
+      const rawPath = match[1];
+      const folderPath = stripGlobSuffix(rawPath);
+      return { rawPath, folderPath, start, end };
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * Strip glob suffixes from a path to get the navigable folder/file.
+ * "backend-core/app/sysadmin/**" → "backend-core/app/sysadmin"
+ * "ext/companion/main.go" → "ext/companion/main.go" (no glob, keep as-is)
+ */
+export function stripGlobSuffix(globPath: string): string {
+  return globPath.replace(/\/\*\*$/, "").replace(/\/\*\.[a-z]+$/, "");
+}

@@ -1,4 +1,6 @@
 import * as vscode from "vscode";
+import * as path from "path";
+import * as fs from "fs";
 import { DocMap } from "./docMap";
 import { C3CodeLensProvider } from "./codeLensProvider";
 import { C3DefinitionProvider } from "./definitionProvider";
@@ -31,6 +33,20 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.commands.registerCommand("c3Nav.openDocument", (filePath: string) => {
       const uri = vscode.Uri.file(filePath);
       vscode.window.showTextDocument(uri, { preview: true });
+    }),
+    vscode.commands.registerCommand("c3Nav.revealPath", async (relativePath: string) => {
+      const absPath = path.join(workspaceFolder.uri.fsPath, relativePath);
+      const uri = vscode.Uri.file(absPath);
+
+      if (fs.existsSync(absPath) && fs.statSync(absPath).isDirectory()) {
+        // Reveal in explorer, then expand the folder
+        await vscode.commands.executeCommand("revealInExplorer", uri);
+        await vscode.commands.executeCommand("list.expand");
+      } else if (fs.existsSync(absPath)) {
+        vscode.window.showTextDocument(uri, { preview: true });
+      } else {
+        vscode.window.showWarningMessage(`Path not found: ${relativePath}`);
+      }
     })
   );
 

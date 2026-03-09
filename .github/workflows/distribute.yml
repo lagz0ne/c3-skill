@@ -70,5 +70,5 @@ jobs:
             --title "ci: distribute dev → main" \
             --body "Automated merge of dev into main with built c3x binaries.")
 
-          gh pr merge "$PR_URL" --merge --auto --delete-branch
+          gh pr merge "$PR_URL" --merge --delete-branch
 

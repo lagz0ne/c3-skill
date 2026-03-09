@@ -11,10 +11,15 @@ Branch `feat/vscode-c3-nav-v2` currently derives from `main`. Rebase onto `origi
 - Delete `scripts/install-vscode-ext.sh`
 - Create `vscode-c3-nav/README.md` with manual install instructions (download .vsix from releases, or build from source)
 
-### 3. Update CI to build and release .vsix
-In `distribute.yml`:
-- **distribute job**: Add Node.js setup, `npm ci`, `npm run package` to build `c3-nav.vsix`. Copy it to main alongside Go binaries.
-- **release job**: Include `c3-nav.vsix` as a release asset.
+### 3. Dedicated CI for extension
+- New workflow: `.github/workflows/vscode-extension.yml`
+- Triggers on push to `dev` only when `vscode-c3-nav/**` files change
+- Reads version from `vscode-c3-nav/package.json`, creates `c3-nav-v{version}` tag
+- Releases `.vsix` as a standalone GitHub Release (separate from skill releases)
+- `distribute.yml` unchanged — skill release does NOT include the extension
 
 ### 4. Extension versioning
 Stays independent — version managed in `vscode-c3-nav/package.json` (currently `0.1.0`), not tied to main `VERSION` file.
+
+### 5. README
+Main `README.md` updated with VS Code extension section explaining usage and install-from-release instructions.

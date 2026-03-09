@@ -1,0 +1,69 @@
+name: VS Code Extension
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - 'vscode-c3-nav/**'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Get extension version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./vscode-c3-nav/package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+          if git rev-parse "c3-nav-v$VERSION" >/dev/null 2>&1; then
+            echo "Tag c3-nav-v$VERSION already exists, skipping release"
+            echo "should_release=false" >> $GITHUB_OUTPUT
+          else
+            echo "New extension version: $VERSION"
+            echo "should_release=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build extension
+        if: steps.version.outputs.should_release == 'true'
+        working-directory: vscode-c3-nav
+        run: |
+          npm ci
+          npm run package
+
+      - name: Create GitHub Release
+        if: steps.version.outputs.should_release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: c3-nav-v${{ steps.version.outputs.version }}
+          name: C3 Navigator v${{ steps.version.outputs.version }}
+          body: |
+            ## C3 Architecture Navigator v${{ steps.version.outputs.version }}
+
+            VS Code extension for navigating C3 architecture documents.
+
+            ### Install
+
+            ```bash
+            # Download and install
+            curl -fsSL -o c3-nav.vsix https://github.com/${{ github.repository }}/releases/download/c3-nav-v${{ steps.version.outputs.version }}/c3-nav.vsix
+            code --install-extension c3-nav.vsix --force
+            ```
+          files: vscode-c3-nav/c3-nav.vsix
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

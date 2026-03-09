@@ -20,6 +20,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   const codeLensProvider = new C3CodeLensProvider(docMap);
 
+  // Refresh CodeLens after doc map rebuilds (single watcher, no race condition)
+  docMap.onDidRebuild(() => codeLensProvider.refresh());
+
   context.subscriptions.push(
     docMap.startWatching(workspaceFolder),
     vscode.languages.registerCodeLensProvider(YAML_IN_C3, codeLensProvider),
@@ -30,15 +33,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       vscode.window.showTextDocument(uri, { preview: true });
     })
   );
-
-  // Refresh CodeLens when doc map rebuilds
-  const watcher = vscode.workspace.createFileSystemWatcher(
-    new vscode.RelativePattern(vscode.Uri.joinPath(workspaceFolder.uri, ".c3"), "**/*.md")
-  );
-  watcher.onDidCreate(() => codeLensProvider.refresh());
-  watcher.onDidDelete(() => codeLensProvider.refresh());
-  watcher.onDidChange(() => codeLensProvider.refresh());
-  context.subscriptions.push(watcher);
 
   console.log("[C3 Nav] Extension activated");
 }

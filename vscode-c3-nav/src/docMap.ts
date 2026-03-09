@@ -5,6 +5,8 @@ import { DocEntry, extractIdFromFilename, parseFrontmatter } from "./utils";
 export class DocMap {
   private map = new Map<string, DocEntry>();
   private watcher: vscode.FileSystemWatcher | undefined;
+  private _onDidRebuild = new vscode.EventEmitter<void>();
+  readonly onDidRebuild = this._onDidRebuild.event;
 
   async build(workspaceFolder: vscode.WorkspaceFolder): Promise<void> {
     this.map.clear();
@@ -33,6 +35,7 @@ export class DocMap {
     }
 
     console.log(`[C3 Nav] Built document map with ${this.map.size} entries`);
+    this._onDidRebuild.fire();
   }
 
   get(id: string): DocEntry | undefined {
@@ -58,5 +61,6 @@ export class DocMap {
 
   dispose(): void {
     this.watcher?.dispose();
+    this._onDidRebuild.dispose();
   }
 }

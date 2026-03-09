@@ -108,6 +108,20 @@ The CLI automatically maintains a structural index at `.c3/_index/structural.md`
 
 Topic notes in `.c3/_index/notes/` are LLM-generated cross-cutting narratives (e.g. "authentication-flow.md", "data-persistence-strategy.md") with YAML frontmatter tracking their sources. `c3x check` validates that note source citations reference entities that exist in the graph.
 
+## VS Code Extension
+
+The **C3 Architecture Navigator** extension adds in-editor navigation for C3 IDs (`c3-*`, `ref-*`, `adr-*`): CodeLens links, hover previews, Ctrl+Click to definition, and file path navigation in `code-map.yaml`.
+
+**Install from release:**
+
+```bash
+# Download the latest .vsix from GitHub Releases
+curl -fsSL -o c3-nav.vsix https://github.com/Lagz0ne/c3-skill/releases/latest/download/c3-nav.vsix
+code --install-extension c3-nav.vsix --force
+```
+
+The extension activates automatically when a workspace contains `.c3/code-map.yaml`. See [`vscode-c3-nav/README.md`](vscode-c3-nav/README.md) for build-from-source instructions.
+
 ## Development
 
 ```bash

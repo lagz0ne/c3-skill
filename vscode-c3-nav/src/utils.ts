@@ -8,13 +8,19 @@ export interface DocEntry {
   title?: string;
   goal?: string;
   summary?: string;
+  type?: "container" | "component" | "ref" | "adr";
+  category?: "foundation" | "feature";
+  parent?: string;
+  uses?: string[];
+  via?: string[];
+  status?: string;
 }
 
 /**
  * Parse YAML frontmatter from a markdown file.
  * Extracts title, goal, and summary fields from the --- delimited block.
  */
-export function parseFrontmatter(filePath: string): Pick<DocEntry, "title" | "goal" | "summary"> {
+export function parseFrontmatter(filePath: string): Omit<DocEntry, "path"> {
   let content: string;
   try {
     content = fs.readFileSync(filePath, "utf-8");
@@ -28,7 +34,7 @@ export function parseFrontmatter(filePath: string): Pick<DocEntry, "title" | "go
   }
 
   const fm = fmMatch[1];
-  const result: Pick<DocEntry, "title" | "goal" | "summary"> = {};
+  const result: Omit<DocEntry, "path"> = {};
 
   const titleMatch = fm.match(/^title:\s*(.+)$/m);
   if (titleMatch) {
@@ -44,6 +50,34 @@ export function parseFrontmatter(filePath: string): Pick<DocEntry, "title" | "go
   if (summaryMatch) {
     result.summary = stripYamlQuotes(summaryMatch[1].trim());
   }
+
+  const typeMatch = fm.match(/^type:\s*(.+)$/m);
+  if (typeMatch) {
+    result.type = stripYamlQuotes(typeMatch[1].trim()) as DocEntry["type"];
+  }
+
+  const categoryMatch = fm.match(/^category:\s*(.+)$/m);
+  if (categoryMatch) {
+    result.category = stripYamlQuotes(categoryMatch[1].trim()) as DocEntry["category"];
+  }
+
+  const parentMatch = fm.match(/^parent:\s*(.+)$/m);
+  if (parentMatch) {
+    result.parent = stripYamlQuotes(parentMatch[1].trim());
+  }
+
+  const usesMatch = fm.match(/^uses:\s*\[([^\]]*)\]$/m);
+  if (usesMatch) {
+    result.uses = usesMatch[1].split(",").map((s) => s.trim()).filter(Boolean);
+  }
+
+  const viaMatch = fm.match(/^via:\s*\[([^\]]*)\]$/m);
+  if (viaMatch) {
+    result.via = viaMatch[1].split(",").map((s) => s.trim()).filter(Boolean);
+  }
+
+  const statusMatch = fm.match(/^status:\s*(.+)$/m);
+  result.status = statusMatch ? stripYamlQuotes(statusMatch[1].trim()) : "active";
 
   return result;
 }

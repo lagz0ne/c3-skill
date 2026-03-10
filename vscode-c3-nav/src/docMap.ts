@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import * as path from "path";
+import * as fs from "fs";
 import { DocEntry, extractIdFromFilename, parseFrontmatter } from "./utils";
 
 export class DocMap {
@@ -17,7 +18,23 @@ export class DocMap {
 
     for (const file of files) {
       const filename = path.basename(file.fsPath);
-      const id = extractIdFromFilename(filename);
+      let id = extractIdFromFilename(filename);
+
+      // README.md files store their ID in frontmatter (containers like c3-0, c3-1, c3-2)
+      if (!id && filename === "README.md") {
+        const frontmatter = parseFrontmatter(file.fsPath);
+        id = this.readFrontmatterId(file.fsPath);
+        if (!id) {
+          continue;
+        }
+        if (this.map.has(id)) {
+          console.warn(`[C3 Nav] Duplicate ID "${id}" — keeping first match, skipping ${file.fsPath}`);
+          continue;
+        }
+        this.map.set(id, { path: file.fsPath, ...frontmatter });
+        continue;
+      }
+
       if (!id) {
         continue;
       }
@@ -28,10 +45,7 @@ export class DocMap {
       }
 
       const frontmatter = parseFrontmatter(file.fsPath);
-      this.map.set(id, {
-        path: file.fsPath,
-        ...frontmatter,
-      });
+      this.map.set(id, { path: file.fsPath, ...frontmatter });
     }
 
     console.log(`[C3 Nav] Built document map with ${this.map.size} entries`);
@@ -57,6 +71,21 @@ export class DocMap {
     this.watcher.onDidChange(rebuild);
 
     return this.watcher;
+  }
+
+  private readFrontmatterId(filePath: string): string | undefined {
+    let content: string;
+    try {
+      content = fs.readFileSync(filePath, "utf-8");
+    } catch {
+      return undefined;
+    }
+    const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
+    if (!fmMatch) {
+      return undefined;
+    }
+    const idMatch = fmMatch[1].match(/^id:\s*(.+)$/m);
+    return idMatch ? idMatch[1].trim() : undefined;
   }
 
   dispose(): void {

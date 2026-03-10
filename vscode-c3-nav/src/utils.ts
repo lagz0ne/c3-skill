@@ -106,6 +106,11 @@ export function extractIdFromFilename(filename: string): string | undefined {
     return refMatch[1];
   }
 
+  const adrMatch = filename.match(/^(adr-[\w-]+)\.md$/);
+  if (adrMatch) {
+    return adrMatch[1];
+  }
+
   return undefined;
 }
 

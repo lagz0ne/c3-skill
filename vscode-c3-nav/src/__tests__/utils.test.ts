@@ -15,6 +15,14 @@ describe("extractIdFromFilename", () => {
   it("returns undefined for README.md", () => {
     expect(extractIdFromFilename("README.md")).toBeUndefined();
   });
+
+  it("extracts ADR ID from filename", () => {
+    expect(extractIdFromFilename("adr-00000000-c3-adoption.md")).toBe("adr-00000000-c3-adoption");
+  });
+
+  it("extracts ADR ID with date prefix", () => {
+    expect(extractIdFromFilename("adr-20260309-add-diff-cmd.md")).toBe("adr-20260309-add-diff-cmd");
+  });
 });
 
 describe("stripGlobSuffix", () => {

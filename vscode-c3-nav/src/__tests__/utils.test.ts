@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { extractIdFromFilename, stripGlobSuffix, parseFrontmatter } from "../utils";
+import { extractIdFromFilename, stripGlobSuffix, parseFrontmatter, isInFrontmatter, isMarkdownTableRow, getBacktickPathAtPosition } from "../utils";
 import { writeFileSync, mkdirSync, rmSync } from "fs";
 import { join } from "path";
 
@@ -108,5 +108,72 @@ goal: Parse frontmatter
 
     const result = parseFrontmatter(file);
     expect(result.status).toBe("active");
+  });
+});
+
+describe("isInFrontmatter", () => {
+  const lines = [
+    "---",           // 0
+    "id: c3-113",    // 1
+    "parent: c3-1",  // 2
+    "uses: [c3-101]",// 3
+    "---",           // 4
+    "",              // 5
+    "# Title",       // 6
+    "Body text c3-101", // 7
+  ];
+
+  it("returns true for lines inside frontmatter", () => {
+    expect(isInFrontmatter(lines, 1)).toBe(true);
+    expect(isInFrontmatter(lines, 2)).toBe(true);
+    expect(isInFrontmatter(lines, 3)).toBe(true);
+  });
+
+  it("returns false for frontmatter delimiters", () => {
+    expect(isInFrontmatter(lines, 0)).toBe(false);
+    expect(isInFrontmatter(lines, 4)).toBe(false);
+  });
+
+  it("returns false for lines outside frontmatter", () => {
+    expect(isInFrontmatter(lines, 5)).toBe(false);
+    expect(isInFrontmatter(lines, 6)).toBe(false);
+    expect(isInFrontmatter(lines, 7)).toBe(false);
+  });
+});
+
+describe("isMarkdownTableRow", () => {
+  it("matches table data rows", () => {
+    expect(isMarkdownTableRow("| IN (uses) | Entity graph | c3-102 |")).toBe(true);
+  });
+
+  it("does not match separator rows", () => {
+    expect(isMarkdownTableRow("|-----------|------|---------|")).toBe(false);
+  });
+
+  it("does not match non-table lines", () => {
+    expect(isMarkdownTableRow("Some text mentioning c3-101")).toBe(false);
+  });
+});
+
+describe("getBacktickPathAtPosition", () => {
+  it("extracts path from backtick-wrapped text", () => {
+    const line = "| `cli/internal/frontmatter/parse.go` | Parses YAML |";
+    const result = getBacktickPathAtPosition(line, 10);
+    expect(result).toBeDefined();
+    expect(result!.rawPath).toBe("cli/internal/frontmatter/parse.go");
+    expect(result!.folderPath).toBe("cli/internal/frontmatter/parse.go");
+  });
+
+  it("returns undefined when position is outside backticks", () => {
+    const line = "| `cli/main.go` | Main entry |";
+    const result = getBacktickPathAtPosition(line, 25);
+    expect(result).toBeUndefined();
+  });
+
+  it("strips glob suffix from backtick paths", () => {
+    const line = "Maps to `backend-core/app/**` for coverage";
+    const result = getBacktickPathAtPosition(line, 15);
+    expect(result!.rawPath).toBe("backend-core/app/**");
+    expect(result!.folderPath).toBe("backend-core/app");
   });
 });

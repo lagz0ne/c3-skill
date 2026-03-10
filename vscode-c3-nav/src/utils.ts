@@ -172,3 +172,62 @@ export function getPathAtPosition(
 export function stripGlobSuffix(globPath: string): string {
   return globPath.replace(/\/\*\*$/, "").replace(/\/\*\.[a-z]+$/, "");
 }
+
+/**
+ * Check if a line index is inside the YAML frontmatter block.
+ * Frontmatter is between the first `---` (line 0) and the next `---`.
+ * Returns true for content lines, false for delimiters and outside.
+ */
+export function isInFrontmatter(lines: string[], lineIndex: number): boolean {
+  if (lines[0] !== "---") {
+    return false;
+  }
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i] === "---") {
+      return lineIndex > 0 && lineIndex < i;
+    }
+  }
+  return false;
+}
+
+/**
+ * Check if a line is a markdown table data row (not a separator row).
+ * Table rows start and end with | and contain non-dash content.
+ */
+export function isMarkdownTableRow(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith("|") || !trimmed.endsWith("|")) {
+    return false;
+  }
+  // Separator rows contain only |, -, :, and spaces
+  return !/^\|[\s|:-]+\|$/.test(trimmed);
+}
+
+/**
+ * Get a backtick-wrapped file path at a given position in a line.
+ * Matches patterns like `cli/internal/frontmatter/parse.go`.
+ * Returns path info with glob suffix stripped for navigation.
+ */
+export function getBacktickPathAtPosition(
+  lineText: string,
+  characterPos: number
+): { rawPath: string; folderPath: string; start: number; end: number } | undefined {
+  const regex = /`([^`]+\.[a-z]+[^`]*)`|`([^`]+\/[^`]+)`/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(lineText)) !== null) {
+    const pathValue = match[1] || match[2];
+    const start = match.index + 1; // after opening backtick
+    const end = start + pathValue.length;
+    if (characterPos >= start && characterPos <= end) {
+      return {
+        rawPath: pathValue,
+        folderPath: stripGlobSuffix(pathValue),
+        start,
+        end,
+      };
+    }
+  }
+
+  return undefined;
+}

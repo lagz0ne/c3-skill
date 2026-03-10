@@ -1,7 +1,7 @@
 import * as fs from "fs";
 
-/** Matches c3-0 through c3-999 and ref-xxx-yyy patterns */
-export const C3_ID_PATTERN = /\b(c3-\d{1,3}|ref-[a-z][\w-]*)\b/g;
+/** Matches c3-0 through c3-999, ref-xxx-yyy, and adr-xxx-yyy patterns */
+export const C3_ID_PATTERN = /\b(c3-\d{1,3}|ref-[a-z][\w-]*|adr-[\w-]+)\b/g;
 
 export interface DocEntry {
   path: string;
@@ -122,7 +122,7 @@ export function getIdAtPosition(
   lineText: string,
   characterPos: number
 ): { id: string; start: number; end: number } | undefined {
-  const regex = /\b(c3-\d{1,3}|ref-[a-z][\w-]*)\b/g;
+  const regex = /\b(c3-\d{1,3}|ref-[a-z][\w-]*|adr-[\w-]+)\b/g;
   let match: RegExpExecArray | null;
 
   while ((match = regex.exec(lineText)) !== null) {

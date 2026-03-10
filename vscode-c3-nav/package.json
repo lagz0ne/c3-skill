@@ -1,8 +1,8 @@
 {
   "name": "c3-nav",
   "displayName": "C3 Architecture Navigator",
-  "description": "Navigate C3 architecture documents from code-map.yaml and other .c3/ YAML files",
-  "version": "0.1.0",
+  "description": "Navigate C3 architecture documents — cross-reference links, hover previews, and tree view for .c3/ files",
+  "version": "0.3.0",
   "publisher": "lagz0ne",
   "license": "MIT",
   "repository": {
@@ -12,29 +12,99 @@
   "engines": {
     "vscode": "^1.85.0"
   },
-  "categories": ["Other"],
+  "categories": [
+    "Other"
+  ],
   "activationEvents": [
     "workspaceContains:.c3/code-map.yaml"
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "views": {
+      "explorer": [
+        {
+          "id": "c3Navigator",
+          "name": "C3 Architecture",
+          "when": "c3Nav.hasC3Folder"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "c3Nav.openDocument",
         "title": "C3: Open Architecture Document"
+      },
+      {
+        "command": "c3Nav.revealPath",
+        "title": "C3: Reveal Path"
+      },
+      {
+        "command": "c3Nav.toggleViewMode",
+        "title": "C3: Toggle Hierarchy/Flat View",
+        "icon": "$(list-tree)"
+      },
+      {
+        "command": "c3Nav.showDependencies",
+        "title": "Show Dependencies"
+      },
+      {
+        "command": "c3Nav.showDependents",
+        "title": "Show Dependents"
+      },
+      {
+        "command": "c3Nav.openInCodeMap",
+        "title": "Open in Code Map"
+      },
+      {
+        "command": "c3Nav.copyId",
+        "title": "Copy ID"
       }
-    ]
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "c3Nav.toggleViewMode",
+          "when": "view == c3Navigator",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "c3Nav.showDependencies",
+          "when": "view == c3Navigator && viewItem =~ /component|container/",
+          "group": "c3nav@1"
+        },
+        {
+          "command": "c3Nav.showDependents",
+          "when": "view == c3Navigator && viewItem =~ /component|ref/",
+          "group": "c3nav@2"
+        },
+        {
+          "command": "c3Nav.openInCodeMap",
+          "when": "view == c3Navigator && viewItem =~ /component|container|ref/",
+          "group": "c3nav@3"
+        },
+        {
+          "command": "c3Nav.copyId",
+          "when": "view == c3Navigator && viewItem != group && viewItem != category",
+          "group": "c3nav@4"
+        }
+      ]
+    }
   },
   "scripts": {
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "package": "vsce package --out c3-nav.vsix",
     "prepackage": "npm run compile"
   },
   "devDependencies": {
-    "@types/vscode": "^1.85.0",
     "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.0.0",
     "typescript": "^5.3.0",
-    "@vscode/vsce": "^3.0.0"
+    "vitest": "^4.0.18"
   }
 }

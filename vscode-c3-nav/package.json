@@ -2,7 +2,7 @@
   "name": "c3-nav",
   "displayName": "C3 Architecture Navigator",
   "description": "Navigate C3 architecture documents — cross-reference links, hover previews, and tree view for .c3/ files",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "lagz0ne",
   "license": "MIT",
   "repository": {

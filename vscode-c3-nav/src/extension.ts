@@ -86,7 +86,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // Register tree context menu commands
   registerTreeCommands(context, docMap, workspaceFolder);
 
-  console.log("[C3 Nav] Extension activated");
 }
 
 export function deactivate(): void {

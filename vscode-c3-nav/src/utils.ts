@@ -79,6 +79,18 @@ export function parseFrontmatter(filePath: string): Omit<DocEntry, "path"> {
   const statusMatch = fm.match(/^status:\s*(.+)$/m);
   result.status = statusMatch ? stripYamlQuotes(statusMatch[1].trim()) : "active";
 
+  // Infer type for root docs that lack an explicit type field
+  // c3-0 style root docs have an id but no type — treat as container
+  if (!result.type) {
+    const idMatch = fm.match(/^id:\s*(.+)$/m);
+    if (idMatch) {
+      const id = stripYamlQuotes(idMatch[1].trim());
+      if (/^c3-\d+$/.test(id)) {
+        result.type = "container";
+      }
+    }
+  }
+
   return result;
 }
 
@@ -137,16 +149,21 @@ export function getIdAtPosition(
 }
 
 /** Matches a quoted glob path in a YAML list item, e.g. - "backend-core/app/sysadmin/**" */
-const QUOTED_PATH_PATTERN = /["']([^"']+)["']/g;
+const QUOTED_PATH_PATTERN = /["']([^"']+)["']/;
+
+/** Matches an unquoted YAML list path, e.g. "  - cli/cmd/check_enhanced.go" */
+const YAML_LIST_PATH_PATTERN = /^\s*-\s+(\S+)/;
 
 /**
- * Get the quoted path string at a given position in a line of text.
+ * Get a path string at a given position in a line of text.
+ * Supports both quoted paths ("path/to/file") and unquoted YAML list paths (- path/to/file).
  * Returns the raw path (with glob), the folder path (glob stripped), and positions.
  */
 export function getPathAtPosition(
   lineText: string,
   characterPos: number
 ): { rawPath: string; folderPath: string; start: number; end: number } | undefined {
+  // Try quoted paths first
   const regex = new RegExp(QUOTED_PATH_PATTERN.source, "g");
   let match: RegExpExecArray | null;
 
@@ -159,6 +176,50 @@ export function getPathAtPosition(
       const folderPath = stripGlobSuffix(rawPath);
       return { rawPath, folderPath, start, end };
     }
+  }
+
+  // Try unquoted YAML list paths (e.g., "  - cli/cmd/check_enhanced.go")
+  const listMatch = lineText.match(YAML_LIST_PATH_PATTERN);
+  if (listMatch) {
+    const rawPath = listMatch[1];
+    const start = lineText.indexOf(rawPath);
+    const end = start + rawPath.length;
+    if (characterPos >= start && characterPos <= end) {
+      const folderPath = stripGlobSuffix(rawPath);
+      return { rawPath, folderPath, start, end };
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * Find the first navigable path on a line (no position required).
+ * Checks quoted paths first, then unquoted YAML list paths.
+ * Used by CodeLens which needs to find any path on a line.
+ */
+export function findFirstPathOnLine(
+  lineText: string
+): { rawPath: string; folderPath: string; start: number; end: number } | undefined {
+  // Try quoted path
+  const quoteMatch = lineText.match(QUOTED_PATH_PATTERN);
+  if (quoteMatch) {
+    const rawPath = quoteMatch[1];
+    const matchIdx = lineText.indexOf(quoteMatch[0]);
+    const start = matchIdx + 1; // after opening quote
+    const end = start + rawPath.length;
+    const folderPath = stripGlobSuffix(rawPath);
+    return { rawPath, folderPath, start, end };
+  }
+
+  // Try unquoted YAML list path
+  const listMatch = lineText.match(YAML_LIST_PATH_PATTERN);
+  if (listMatch) {
+    const rawPath = listMatch[1];
+    const start = lineText.indexOf(rawPath);
+    const end = start + rawPath.length;
+    const folderPath = stripGlobSuffix(rawPath);
+    return { rawPath, folderPath, start, end };
   }
 
   return undefined;

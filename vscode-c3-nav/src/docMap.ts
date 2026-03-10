@@ -56,6 +56,10 @@ export class DocMap {
     return this.map.get(id);
   }
 
+  size(): number {
+    return this.map.size;
+  }
+
   entries(): IterableIterator<[string, DocEntry]> {
     return this.map.entries();
   }

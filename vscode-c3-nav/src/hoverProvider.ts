@@ -18,26 +18,27 @@ export class C3HoverProvider implements vscode.HoverProvider {
     if (idMatch) {
       const entry = this.docMap.get(idMatch.id);
       if (entry) {
-        return this.buildDocHover(idMatch, entry);
+        return this.buildDocHover(position.line, idMatch, entry);
       }
     }
 
     // Try quoted path
     const pathMatch = getPathAtPosition(line, position.character);
     if (pathMatch) {
-      return this.buildPathHover(pathMatch);
+      return this.buildPathHover(position.line, pathMatch);
     }
 
     // Try backtick path (markdown files)
     const backtickMatch = getBacktickPathAtPosition(line, position.character);
     if (backtickMatch) {
-      return this.buildPathHover(backtickMatch);
+      return this.buildPathHover(position.line, backtickMatch);
     }
 
     return undefined;
   }
 
   private buildDocHover(
+    lineNumber: number,
     match: { id: string; start: number; end: number },
     entry: { path: string; title?: string; goal?: string; summary?: string; status?: string }
   ): vscode.Hover {
@@ -65,11 +66,12 @@ export class C3HoverProvider implements vscode.HoverProvider {
     const fileUri = vscode.Uri.file(entry.path);
     md.appendMarkdown(`[Open document](${fileUri})`);
 
-    const range = new vscode.Range(match.start, match.start, match.start, match.end);
+    const range = new vscode.Range(lineNumber, match.start, lineNumber, match.end);
     return new vscode.Hover(md, range);
   }
 
   private buildPathHover(
+    lineNumber: number,
     match: { rawPath: string; folderPath: string; start: number; end: number }
   ): vscode.Hover | undefined {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
@@ -93,7 +95,7 @@ export class C3HoverProvider implements vscode.HoverProvider {
       md.appendMarkdown(`*File* — [Open](command:c3Nav.revealPath?${encodeURIComponent(JSON.stringify(match.folderPath))})\n\n`);
     }
 
-    const range = new vscode.Range(0, match.start, 0, match.end);
+    const range = new vscode.Range(lineNumber, match.start, lineNumber, match.end);
     return new vscode.Hover(md, range);
   }
 }

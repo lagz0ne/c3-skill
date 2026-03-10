@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import { DocMap } from "./docMap";
-import { C3_ID_PATTERN, getPathAtPosition, isInFrontmatter, isMarkdownTableRow, getBacktickPathAtPosition } from "./utils";
+import { C3_ID_PATTERN, findFirstPathOnLine, isInFrontmatter, isMarkdownTableRow, getBacktickPathAtPosition } from "./utils";
 
 export class C3CodeLensProvider implements vscode.CodeLensProvider {
   private _onDidChangeCodeLenses = new vscode.EventEmitter<void>();
@@ -69,19 +69,16 @@ export class C3CodeLensProvider implements vscode.CodeLensProvider {
           }
         }
       } else {
-        const quoteIdx = line.text.indexOf('"');
-        if (quoteIdx >= 0) {
-          const pathMatch = getPathAtPosition(line.text, quoteIdx + 1);
-          if (pathMatch) {
-            const range = new vscode.Range(i, pathMatch.start, i, pathMatch.end);
-            lenses.push(
-              new vscode.CodeLens(range, {
-                title: `→ Open: ${pathMatch.folderPath}`,
-                command: "c3Nav.revealPath",
-                arguments: [pathMatch.folderPath],
-              })
-            );
-          }
+        const pathMatch = findFirstPathOnLine(line.text);
+        if (pathMatch) {
+          const range = new vscode.Range(i, pathMatch.start, i, pathMatch.end);
+          lenses.push(
+            new vscode.CodeLens(range, {
+              title: `→ Open: ${pathMatch.folderPath}`,
+              command: "c3Nav.revealPath",
+              arguments: [pathMatch.folderPath],
+            })
+          );
         }
       }
     }

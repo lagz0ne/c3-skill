@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import { DocMap } from "./docMap";
-import { getIdAtPosition, getPathAtPosition } from "./utils";
+import { getIdAtPosition, getPathAtPosition, getBacktickPathAtPosition } from "./utils";
 
 export class C3HoverProvider implements vscode.HoverProvider {
   constructor(private docMap: DocMap) {}
@@ -28,12 +28,18 @@ export class C3HoverProvider implements vscode.HoverProvider {
       return this.buildPathHover(pathMatch);
     }
 
+    // Try backtick path (markdown files)
+    const backtickMatch = getBacktickPathAtPosition(line, position.character);
+    if (backtickMatch) {
+      return this.buildPathHover(backtickMatch);
+    }
+
     return undefined;
   }
 
   private buildDocHover(
     match: { id: string; start: number; end: number },
-    entry: { path: string; title?: string; goal?: string; summary?: string }
+    entry: { path: string; title?: string; goal?: string; summary?: string; status?: string }
   ): vscode.Hover {
     const md = new vscode.MarkdownString("", true);
     md.isTrusted = true;
@@ -46,6 +52,10 @@ export class C3HoverProvider implements vscode.HoverProvider {
 
     if (entry.goal) {
       md.appendMarkdown(`*Goal:* ${entry.goal}\n\n`);
+    }
+
+    if (entry.status && entry.status !== "active") {
+      md.appendMarkdown(`*Status:* \`${entry.status}\`\n\n`);
     }
 
     if (entry.summary) {

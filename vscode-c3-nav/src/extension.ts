@@ -11,6 +11,11 @@ const YAML_IN_C3: vscode.DocumentSelector = {
   pattern: "**/.c3/**/*.yaml",
 };
 
+const MD_IN_C3: vscode.DocumentSelector = {
+  scheme: "file",
+  pattern: "**/.c3/**/*.md",
+};
+
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
   if (!workspaceFolder) {
@@ -30,6 +35,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.languages.registerCodeLensProvider(YAML_IN_C3, codeLensProvider),
     vscode.languages.registerDefinitionProvider(YAML_IN_C3, new C3DefinitionProvider(docMap)),
     vscode.languages.registerHoverProvider(YAML_IN_C3, new C3HoverProvider(docMap)),
+    vscode.languages.registerCodeLensProvider(MD_IN_C3, codeLensProvider),
+    vscode.languages.registerDefinitionProvider(MD_IN_C3, new C3DefinitionProvider(docMap)),
+    vscode.languages.registerHoverProvider(MD_IN_C3, new C3HoverProvider(docMap)),
     vscode.commands.registerCommand("c3Nav.openDocument", (filePath: string) => {
       const uri = vscode.Uri.file(filePath);
       vscode.window.showTextDocument(uri, { preview: true });

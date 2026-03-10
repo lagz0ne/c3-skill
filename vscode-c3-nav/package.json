@@ -12,7 +12,9 @@
   "engines": {
     "vscode": "^1.85.0"
   },
-  "categories": ["Other"],
+  "categories": [
+    "Other"
+  ],
   "activationEvents": [
     "workspaceContains:.c3/code-map.yaml"
   ],
@@ -28,13 +30,16 @@
   "scripts": {
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "package": "vsce package --out c3-nav.vsix",
     "prepackage": "npm run compile"
   },
   "devDependencies": {
-    "@types/vscode": "^1.85.0",
     "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.0.0",
     "typescript": "^5.3.0",
-    "@vscode/vsce": "^3.0.0"
+    "vitest": "^4.0.18"
   }
 }

@@ -30,6 +30,7 @@ jobs:
         run: bash scripts/build.sh
 
       - name: Distribute to main via PR
+        id: distribute
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -63,7 +64,7 @@ jobs:
             gh pr close "$EXISTING_PR" --delete-branch=false
           fi
 
-          # Create and auto-merge PR
+          # Create and merge PR
           PR_URL=$(gh pr create \
             --base main \
             --head "$BRANCH" \
@@ -72,3 +73,61 @@ jobs:
 
           gh pr merge "$PR_URL" --merge --delete-branch
 
+          # Read version for release step
+          CURRENT_VERSION=$(cat VERSION | tr -d '[:space:]')
+          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check if release needed
+        id: release_check
+        run: |
+          git fetch origin main
+          CURRENT_VERSION=${{ steps.distribute.outputs.version }}
+          if git rev-parse "v$CURRENT_VERSION" >/dev/null 2>&1; then
+            echo "Tag v$CURRENT_VERSION already exists, skipping"
+            echo "should_release=false" >> $GITHUB_OUTPUT
+          else
+            echo "New version: $CURRENT_VERSION"
+            echo "should_release=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout main for release
+        if: steps.release_check.outputs.should_release == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Create GitHub Release
+        if: steps.release_check.outputs.should_release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=${{ steps.distribute.outputs.version }}
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+          # Generate changelog
+          if [ -z "$LAST_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"- %s" --no-merges)
+          else
+            COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s" --no-merges)
+          fi
+
+          BODY="## What's Changed
+
+          $COMMITS
+
+          ---
+
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG:-initial}...v${VERSION}"
+
+          # Package release asset
+          zip -r "/tmp/c3-skill-v${VERSION}.zip" \
+            .claude-plugin/ \
+            skills/ \
+            -x "*.DS_Store"
+
+          # Create release
+          gh release create "v${VERSION}" \
+            --title "C3 v${VERSION}" \
+            --notes "$BODY" \
+            "/tmp/c3-skill-v${VERSION}.zip"

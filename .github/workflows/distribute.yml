@@ -29,7 +29,7 @@ jobs:
       - name: Cross-compile
         run: bash scripts/build.sh
 
-      - name: Distribute to main via PR
+      - name: Distribute to main
         id: distribute
         env:
           GH_TOKEN: ${{ github.token }}
@@ -37,16 +37,16 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          BRANCH="ci/distribute-dev-to-main"
-
-          # Save built binaries before switching branches
+          # Save built binaries
           mkdir -p /tmp/c3x-bins
           cp skills/c3/bin/c3x-*-*-* /tmp/c3x-bins/
 
-          # Start from dev (already checked out)
-          git checkout -B "$BRANCH"
+          # Start from main, merge dev in
+          git fetch origin main
+          git checkout -B ci/distribute origin/main
+          git merge origin/dev --no-edit
 
-          # Remove stale binaries, restore freshly built ones
+          # Remove stale binaries, add fresh ones
           git rm -f skills/c3/bin/c3x-*-*-* 2>/dev/null || true
           cp /tmp/c3x-bins/* skills/c3/bin/
           git add -f skills/c3/bin/c3x-*
@@ -55,23 +55,10 @@ jobs:
             git commit -m "build: update c3x binaries"
           fi
 
-          # Force-push the distribute branch
-          git push origin "$BRANCH" --force
-
-          # Close any existing PR from this branch
-          EXISTING_PR=$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number')
-          if [ -n "$EXISTING_PR" ]; then
-            gh pr close "$EXISTING_PR" --delete-branch=false
-          fi
-
-          # Create and merge PR
-          PR_URL=$(gh pr create \
-            --base main \
-            --head "$BRANCH" \
-            --title "ci: distribute dev → main" \
-            --body "Automated merge of dev into main with built c3x binaries.")
-
-          gh pr merge "$PR_URL" --merge --delete-branch
+          # Fast-forward main (ci/distribute is ahead of main, never behind)
+          git checkout main
+          git merge ci/distribute --ff-only
+          git push origin main
 
           # Read version for release step
           CURRENT_VERSION=$(cat VERSION | tr -d '[:space:]')
@@ -80,22 +67,14 @@ jobs:
       - name: Check if release needed
         id: release_check
         run: |
-          git fetch origin main
-          CURRENT_VERSION=${{ steps.distribute.outputs.version }}
-          if git rev-parse "v$CURRENT_VERSION" >/dev/null 2>&1; then
-            echo "Tag v$CURRENT_VERSION already exists, skipping"
+          VERSION=${{ steps.distribute.outputs.version }}
+          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            echo "Tag v$VERSION already exists, skipping"
             echo "should_release=false" >> $GITHUB_OUTPUT
           else
-            echo "New version: $CURRENT_VERSION"
+            echo "New version: $VERSION"
             echo "should_release=true" >> $GITHUB_OUTPUT
           fi
-
-      - name: Checkout main for release
-        if: steps.release_check.outputs.should_release == 'true'
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
 
       - name: Create GitHub Release
         if: steps.release_check.outputs.should_release == 'true'
@@ -112,13 +91,15 @@ jobs:
             COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s" --no-merges)
           fi
 
-          BODY="## What's Changed
+          cat > /tmp/changelog.md <<CHANGELOG_EOF
+## What's Changed
 
-          $COMMITS
+$COMMITS
 
-          ---
+---
 
-          **Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG:-initial}...v${VERSION}"
+**Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG:-initial}...v${VERSION}
+CHANGELOG_EOF
 
           # Package release asset
           zip -r "/tmp/c3-skill-v${VERSION}.zip" \
@@ -129,5 +110,5 @@ jobs:
           # Create release
           gh release create "v${VERSION}" \
             --title "C3 v${VERSION}" \
-            --notes "$BODY" \
+            --notes-file /tmp/changelog.md \
             "/tmp/c3-skill-v${VERSION}.zip"

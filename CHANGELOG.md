@@ -5,6 +5,15 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.9.0] - 2026-03-11
+
+### Added
+- **CoT Harness**: Context-led reasoning reflex in SKILL.md — before touching any file, `c3x lookup` it and follow what C3 knows. Re-enters when context shifts mid-task. Replaces assumptions with topology-driven decisions.
+- **Frontmatter examples for audit + ref**: Skill description now covers all 6 operations (was 4), improving trigger reliability for audit and ref invocations.
+
+### Changed
+- **CLAUDE.md Injection + Capabilities Reveal moved to `references/onboard.md`**: These onboard-specific blocks no longer live in the main SKILL.md — keeps the skill file focused on dispatch and reasoning.
+
 ## [6.8.0] - 2026-03-05
 
 ### Added

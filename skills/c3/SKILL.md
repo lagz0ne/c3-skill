@@ -5,7 +5,7 @@ description: |
   about a project with a .c3/ directory. Trigger phrases: "adopt C3", "onboard this
   project", "where is X", "audit the architecture", "check docs", "add a component",
   "implement feature", "what breaks if I change X", "add a ref". Handles operations:
-  onboard, query, audit, change, ref, sweep. Classifies intent, loads reference, executes.
+  onboard, query, audit, change, ref, sweep. Classifies intent, loads ref, executes.
 
   <example>
   user: "adopt C3 for this project"
@@ -25,6 +25,16 @@ description: |
   <example>
   user: "what breaks if I change the auth API?"
   assistant: "Using c3 to assess impact."
+  </example>
+
+  <example>
+  user: "audit C3 docs for drift"
+  assistant: "Using c3 to audit."
+  </example>
+
+  <example>
+  user: "add a ref for error handling"
+  assistant: "Using c3 to create a ref."
   </example>
 ---
 
@@ -75,6 +85,16 @@ Before every op except onboard:
 bash <skill-dir>/bin/c3x.sh list --json
 ```
 Fails/empty → route to **onboard**
+
+---
+
+## CoT Harness
+
+C3 context is already loaded. Every file, every directory has a place in the topology. Before touching anything, let C3 tell you what it knows — then follow its lead.
+
+`c3x lookup <file-or-glob>` → component docs, refs, constraints. Read them. They supersede assumptions.
+
+When context shifts to a new component mid-task, look it up again. The topology is the source of truth — just follow it.
 
 ---
 
@@ -156,33 +176,3 @@ Details: `references/ref.md`
 `c3x list --json` → affected entities → parallel assessment → synthesize. Advisory only.
 Details: `references/sweep.md`
 
----
-
-## CLAUDE.md Injection (onboard)
-
-```markdown
-# Architecture
-This project uses C3 docs in `.c3/`.
-For architecture questions, changes, audits, file context -> `/c3`.
-Operations: query, audit, change, ref, sweep.
-File lookup: `c3x lookup <file-or-glob>` maps files/directories to components + refs.
-```
-
-## Capabilities Reveal (onboard)
-
-```
-## Your C3 toolkit is ready
-
-| Command | What it does |
-|---------|-------------|
-| `/c3` query | Ask about architecture |
-| `/c3` audit | Validate docs |
-| `/c3` change | Modify architecture |
-| `/c3` ref | Manage patterns |
-| `/c3` sweep | Impact assessment |
-| `/c3` recipe | Trace cross-cutting concern end-to-end |
-| `c3x lookup <file-or-glob>` | File or directory → components + governing refs |
-| `c3x coverage` | See what's mapped, excluded, unmapped |
-
-Just say `/c3` + what you want.
-```

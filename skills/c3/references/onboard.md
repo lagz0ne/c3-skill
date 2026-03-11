@@ -222,7 +222,34 @@ bash <skill-dir>/bin/c3x.sh coverage                   # code-map coverage gaps
 
 ## Post-Onboard
 
-Inject CLAUDE.md block + show capabilities reveal (see SKILL.md).
+### CLAUDE.md Injection
+
+```markdown
+# Architecture
+This project uses C3 docs in `.c3/`.
+For architecture questions, changes, audits, file context -> `/c3`.
+Operations: query, audit, change, ref, sweep.
+File lookup: `c3x lookup <file-or-glob>` maps files/directories to components + refs.
+```
+
+### Capabilities Reveal
+
+```
+## Your C3 toolkit is ready
+
+| Command | What it does |
+|---------|-------------|
+| `/c3` query | Ask about architecture |
+| `/c3` audit | Validate docs |
+| `/c3` change | Modify architecture |
+| `/c3` ref | Manage patterns |
+| `/c3` sweep | Impact assessment |
+| `/c3` recipe | Trace cross-cutting concern end-to-end |
+| `c3x lookup <file-or-glob>` | File or directory → components + governing refs |
+| `c3x coverage` | See what's mapped, excluded, unmapped |
+
+Just say `/c3` + what you want.
+```
 
 ## Complexity Guide
 

@@ -91,15 +91,15 @@ jobs:
             COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s" --no-merges)
           fi
 
-          cat > /tmp/changelog.md <<CHANGELOG_EOF
-## What's Changed
-
-$COMMITS
-
----
-
-**Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG:-initial}...v${VERSION}
-CHANGELOG_EOF
+          {
+            echo "## What's Changed"
+            echo ""
+            echo "$COMMITS"
+            echo ""
+            echo "---"
+            echo ""
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG:-initial}...v${VERSION}"
+          } > /tmp/changelog.md
 
           # Package release asset
           zip -r "/tmp/c3-skill-v${VERSION}.zip" \

@@ -29,7 +29,7 @@ jobs:
       - name: Cross-compile
         run: bash scripts/build.sh
 
-      - name: Distribute to main
+      - name: Distribute to main via PR
         id: distribute
         env:
           GH_TOKEN: ${{ github.token }}
@@ -37,13 +37,17 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+          BRANCH="ci/distribute-dev-to-main"
+
           # Save built binaries
           mkdir -p /tmp/c3x-bins
           cp skills/c3/bin/c3x-*-*-* /tmp/c3x-bins/
 
-          # Start from main, merge dev in
+          # Start from main (not dev) to avoid merge conflicts with old binaries
           git fetch origin main
-          git checkout -B ci/distribute origin/main
+          git checkout -B "$BRANCH" origin/main
+
+          # Merge dev into the branch
           git merge origin/dev --no-edit
 
           # Remove stale binaries, add fresh ones
@@ -55,10 +59,23 @@ jobs:
             git commit -m "build: update c3x binaries"
           fi
 
-          # Fast-forward main (ci/distribute is ahead of main, never behind)
-          git checkout main
-          git merge ci/distribute --ff-only
-          git push origin main
+          # Force-push the distribute branch
+          git push origin "$BRANCH" --force
+
+          # Close any existing PR from this branch
+          EXISTING_PR=$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number')
+          if [ -n "$EXISTING_PR" ]; then
+            gh pr close "$EXISTING_PR" --delete-branch=false
+          fi
+
+          # Create and merge PR
+          PR_URL=$(gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "ci: distribute dev to main" \
+            --body "Automated merge of dev into main with built c3x binaries.")
+
+          gh pr merge "$PR_URL" --merge --delete-branch
 
           # Read version for release step
           CURRENT_VERSION=$(cat VERSION | tr -d '[:space:]')
@@ -66,15 +83,24 @@ jobs:
 
       - name: Check if release needed
         id: release_check
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           VERSION=${{ steps.distribute.outputs.version }}
-          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
-            echo "Tag v$VERSION already exists, skipping"
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "Release v$VERSION already exists, skipping"
             echo "should_release=false" >> $GITHUB_OUTPUT
           else
             echo "New version: $VERSION"
             echo "should_release=true" >> $GITHUB_OUTPUT
           fi
+
+      - name: Checkout main for release
+        if: steps.release_check.outputs.should_release == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
 
       - name: Create GitHub Release
         if: steps.release_check.outputs.should_release == 'true'

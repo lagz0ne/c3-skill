@@ -13,40 +13,27 @@ scope: []
 ${GOAL}
 
 <!--
-WHAT REFS DOCUMENT:
-Refs capture chosen options - "we chose X over Y for Z reason" specific to THIS codebase.
-NOT generic technology documentation (link to official docs instead).
+QUALITY RUBRIC — apply before marking ref complete:
 
-THE SEPARATION TEST:
-"Is this a technology/pattern choice we made?"
-- Yes → Belongs in ref (chosen option with rationale)
-- No → Belongs in component (business/domain logic)
+1. COMPLIANCE QUESTION: Can you express the pattern as 1-3 YES/NO questions?
+   "Does the code use RS256 for JWT signing?" — GOOD
+   "Is the code well-structured?" — BAD (subjective)
 
-KEY SECTIONS (use what serves your Goal):
-- Choice: What we chose and the context of that choice
-- Why: Why this over the alternatives we considered
-- How: Detailed implementation guidance for this codebase
-- Not This: Alternatives rejected and why
-- Scope: Where it applies and where it doesn't
-- Override: How to deviate from this choice
+2. MECHANISM OVER OUTCOME: Use greppable tokens, not adjectives.
+   "Use slog.With() for structured context" — GOOD
+   "Use good logging practices" — BAD
 
-CODE EXAMPLES AS GOLDEN REFERENCES:
-- Refs MAY include code examples showing the canonical pattern
-- These are prescriptive: "code should look like THIS"
-- They serve as review standards, not implementation pointers
-- Keep examples minimal — show the pattern, not a full implementation
+3. VIOLATION EXAMPLE: At least 1 concrete anti-example in Not This.
 
-ANTI-GOALS:
-- Don't duplicate official documentation (link instead)
-- Don't include business/domain logic (that goes in components)
-- Don't document technology generically (document YOUR chosen option)
-- Don't create overly broad refs (split by concern if needed)
-- Don't add a `## Code References` section (refs have no code counterpart — that section marks a component as implemented)
+4. SCOPE GROUNDING: WHERE section must be descriptive (what exists today),
+   not aspirational (what should exist someday).
 
-GUARDRAILS:
-- Must have: Goal section
-- Prefer: 2-4 focused sections
-- Each section must serve the Goal - if not, delete
+5. BREVITY: How section should be 2-15 lines, identifiable in 10 seconds.
+
+6. DEPENDENCY VISIBILITY: Name specific libraries/versions when relevant.
+
+7. SINGLE COMPLIANCE PATH: One way to do it, not "X or Y".
+   Split into separate refs if multiple valid approaches exist.
 
 Delete this comment block after drafting.
 -->
@@ -61,19 +48,27 @@ Delete this comment block after drafting.
 
 ## How
 
-<!-- Detailed implementation guidance for THIS codebase. Be concrete. -->
+<!--
+Golden pattern — format-flexible. Use whichever communicates the pattern most clearly:
+- Code blocks with // REQUIRED / // OPTIONAL annotations
+- Paired do/don't examples
+- Checklists with concrete criteria
+- Tables mapping situation → required action
 
-| Guideline | Example |
-|-----------|---------|
-| ... | ... |
+The test: can a reviewer check compliance in under 10 seconds?
+-->
 
 ## Not This
 
-<!-- Alternatives we rejected and why -->
+<!--
+Dual purpose:
+1. Rejected alternatives — options we considered and chose against (with reasons)
+2. Anti-examples — concrete code/patterns that violate this ref
 
-| Alternative | Rejected Because |
-|-------------|------------------|
+| What | Why It's Wrong |
+|------|---------------|
 | ... | ... |
+-->
 
 ## Scope
 

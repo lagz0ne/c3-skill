@@ -377,3 +377,54 @@ func appendUnique(slice []string, val string) []string {
 	}
 	return append(slice, val)
 }
+
+// RefGovernanceResult summarizes which components are governed by at least one ref.
+type RefGovernanceResult struct {
+	TotalComponents      int      `json:"total_components"`
+	Governed             int      `json:"governed"`
+	GovernancePct        float64  `json:"governance_pct"`
+	UngovernedComponents []string `json:"ungoverned_components"`
+}
+
+// RefGovernance computes which components in the index are governed by at least one ref.
+func RefGovernance(idx *StructuralIndex) *RefGovernanceResult {
+	var total int
+	var governed int
+	var ungoverned []string
+
+	// Sort entity IDs for deterministic output
+	ids := make([]string, 0, len(idx.Entities))
+	for id := range idx.Entities {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+
+	for _, id := range ids {
+		e := idx.Entities[id]
+		if e.Type != "component" {
+			continue
+		}
+		// Skip _none or internal exclusion patterns
+		if strings.HasPrefix(id, "_") {
+			continue
+		}
+		total++
+		if len(e.Refs) > 0 {
+			governed++
+		} else {
+			ungoverned = append(ungoverned, id)
+		}
+	}
+
+	pct := float64(0)
+	if total > 0 {
+		pct = float64(governed) / float64(total) * 100
+	}
+
+	return &RefGovernanceResult{
+		TotalComponents:      total,
+		Governed:             governed,
+		GovernancePct:        pct,
+		UngovernedComponents: ungoverned,
+	}
+}

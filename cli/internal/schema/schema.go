@@ -63,7 +63,7 @@ var Registry = map[string][]SectionDef{
 		{Name: "Goal", ContentType: "text", Required: true, Purpose: "What problem this ref addresses"},
 		{Name: "Choice", ContentType: "text", Required: true, Purpose: "The selected approach"},
 		{Name: "Why", ContentType: "text", Required: true, Purpose: "Rationale for this choice"},
-		{Name: "How", ContentType: "text", Required: false, Purpose: "Implementation guidance"},
+		{Name: "How", ContentType: "text", Required: false, Purpose: "Golden pattern — prescriptive examples and implementation guidance"},
 	},
 	"adr": {
 		{Name: "Goal", ContentType: "text", Required: true, Purpose: "Decision context and objective"},

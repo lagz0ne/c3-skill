@@ -31,6 +31,8 @@ c3-112:
 c3-113:
   - cli/cmd/check_enhanced.go
   - cli/cmd/check_enhanced_test.go
+  - cli/internal/schema/**
+  - cli/internal/index/**
 c3-114:
   - cli/cmd/lookup.go
   - cli/cmd/lookup_test.go

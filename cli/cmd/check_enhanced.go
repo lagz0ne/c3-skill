@@ -12,6 +12,7 @@ import (
 
 	"github.com/lagz0ne/c3-design/cli/internal/codemap"
 	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
+	"github.com/lagz0ne/c3-design/cli/internal/index"
 	"github.com/lagz0ne/c3-design/cli/internal/markdown"
 	"github.com/lagz0ne/c3-design/cli/internal/schema"
 	"github.com/lagz0ne/c3-design/cli/internal/walker"
@@ -500,6 +501,47 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 		issues = append(issues, checkNotes(c3Dir, opts.Graph)...)
 	}
 	issues = append(issues, checkRecipeSources(opts.Graph)...)
+
+	// Scope cross-check: if a ref scopes a container, all child components should cite it
+	if c3Dir != "" {
+		cmForScope, cmErr := codemap.ParseCodeMap(filepath.Join(c3Dir, "code-map.yaml"))
+		if cmErr == nil && len(cmForScope) > 0 {
+			idx := index.Build(opts.Graph, cmForScope, c3Dir)
+			for refID, re := range idx.Refs {
+				for _, scopeID := range re.Scope {
+					scopeEntity := opts.Graph.Get(scopeID)
+					if scopeEntity == nil {
+						continue
+					}
+					// Expand container/context scope to child components
+					children := opts.Graph.Children(scopeID)
+					for _, child := range children {
+						childType := frontmatter.ClassifyDoc(child.Frontmatter)
+						if childType != frontmatter.DocComponent {
+							continue
+						}
+						// Check if child cites this ref
+						cited := false
+						if entry, ok := idx.Entities[child.ID]; ok {
+							for _, r := range entry.Refs {
+								if r == refID {
+									cited = true
+									break
+								}
+							}
+						}
+						if !cited {
+							issues = append(issues, Issue{
+								Severity: "warning",
+								Entity:   child.ID,
+								Message:  fmt.Sprintf("ref %s scopes %s but %s does not cite it", refID, scopeID, child.ID),
+							})
+						}
+					}
+				}
+			}
+		}
+	}
 
 	// Apply fixes if --fix and we have suggestions
 	fixedCount := 0

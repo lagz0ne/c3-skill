@@ -396,6 +396,82 @@ func TestWriteTo(t *testing.T) {
 	}
 }
 
+func TestRefGovernance_AllGoverned(t *testing.T) {
+	c3Dir, cm := createFixture(t)
+	// The fixture has c3-101 with refs:[ref-jwt] and c3-110 without refs.
+	// Add a ref to c3-110 to make all governed.
+	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "c3-110-users.md"), `---
+id: c3-110
+title: users
+type: component
+category: feature
+parent: c3-1
+refs: [ref-jwt]
+---
+
+# users
+
+## Goal
+
+Manage user accounts.
+`)
+
+	graph := loadGraph(t, c3Dir)
+	idx := Build(graph, cm, c3Dir)
+	result := RefGovernance(idx)
+
+	if result.TotalComponents != 2 {
+		t.Errorf("total = %d, want 2", result.TotalComponents)
+	}
+	if result.Governed != 2 {
+		t.Errorf("governed = %d, want 2", result.Governed)
+	}
+	if result.GovernancePct != 100 {
+		t.Errorf("pct = %f, want 100", result.GovernancePct)
+	}
+	if len(result.UngovernedComponents) != 0 {
+		t.Errorf("ungoverned = %v, want empty", result.UngovernedComponents)
+	}
+}
+
+func TestRefGovernance_SomeUngoverned(t *testing.T) {
+	c3Dir, cm := createFixture(t)
+	graph := loadGraph(t, c3Dir)
+	idx := Build(graph, cm, c3Dir)
+	result := RefGovernance(idx)
+
+	// c3-101 has refs, c3-110 does not
+	if result.TotalComponents != 2 {
+		t.Errorf("total = %d, want 2", result.TotalComponents)
+	}
+	if result.Governed != 1 {
+		t.Errorf("governed = %d, want 1", result.Governed)
+	}
+	if result.GovernancePct != 50 {
+		t.Errorf("pct = %f, want 50", result.GovernancePct)
+	}
+	if !containsStr(result.UngovernedComponents, "c3-110") {
+		t.Errorf("ungoverned should include c3-110, got %v", result.UngovernedComponents)
+	}
+}
+
+func TestRefGovernance_NoComponents(t *testing.T) {
+	// Empty index — no components at all
+	idx := &StructuralIndex{
+		Entities: map[string]EntityEntry{},
+		Files:    map[string]FileEntry{},
+		Refs:     map[string]RefEntry{},
+	}
+	result := RefGovernance(idx)
+
+	if result.TotalComponents != 0 {
+		t.Errorf("total = %d, want 0", result.TotalComponents)
+	}
+	if result.GovernancePct != 0 {
+		t.Errorf("pct = %f, want 0", result.GovernancePct)
+	}
+}
+
 func containsStr(slice []string, val string) bool {
 	for _, s := range slice {
 		if s == val {

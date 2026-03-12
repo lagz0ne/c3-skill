@@ -5,22 +5,23 @@ title: coverage-cmd
 type: component
 category: feature
 parent: c3-1
-goal: Report what percentage of source files are mapped in code-map.yaml
-summary: JSON output showing mapped, excluded, and unmapped file counts per component
-uses: [c3-102, c3-105]
+goal: Report code-map coverage and ref governance metrics
+summary: JSON output showing mapped, excluded, and unmapped file counts per component plus ref governance percentages
+uses: [c3-102, c3-105, c3-113]
 ---
 
 # coverage-cmd
 
 ## Goal
 
-Report what percentage of source files are mapped in `code-map.yaml`.
+Report code-map coverage and ref governance metrics.
 
 ## Dependencies
 
 | Direction | What | From/To |
 |-----------|------|---------|
 | IN (uses) | Codemap matching | c3-105 |
+| IN (uses) | Structural index / ref governance | c3-113 |
 | OUT (provides) | Coverage stats JSON |  |
 
 ## Code References

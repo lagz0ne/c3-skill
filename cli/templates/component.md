@@ -70,15 +70,16 @@ Delete this comment block after drafting.
 ## Dependencies
 
 <!-- What this component uses (IN) and provides (OUT) -->
+<!-- From/To = entity ID from c3x list (e.g., c3-101, c3-2, ref-jwt). NOT a name. -->
 
 | Direction | What | From/To |
 |-----------|------|---------|
-| IN (uses) | | |
-| OUT (provides) | | |
+| IN (uses) | | c3-NNN |
+| OUT (provides) | | c3-NNN |
 
 ## Related Refs
 
-<!-- ref-* documents that govern this component's behavior -->
+<!-- Ref = ref ID (e.g., ref-jwt, ref-error-handling). Use c3x list to find IDs. -->
 | Ref | How It Serves Goal |
 |-----|-------------------|
 

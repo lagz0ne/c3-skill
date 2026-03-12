@@ -19,6 +19,7 @@ type Options struct {
 	Help       bool
 	Version    bool
 	IncludeADR bool
+	Fix        bool
 }
 
 // ParseArgs parses command-line arguments into Options.
@@ -80,6 +81,8 @@ func ParseArgs(argv []string) Options {
 			opts.Append = true
 		case "--include-adr":
 			opts.IncludeADR = true
+		case "--fix":
+			opts.Fix = true
 		default:
 			args = append(args, arg)
 		}

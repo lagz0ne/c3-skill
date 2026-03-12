@@ -44,7 +44,7 @@ c3x <command> [args] [options]
   schema <type>              Show known sections and column types
   codemap                    Scaffold code-map.yaml with stubs for all components + refs
   lookup <file-path>         Map file to component(s) + refs
-  coverage                   Code-map coverage stats
+  coverage                   Code-map coverage + ref governance stats
 
   --json                     Machine-readable output
   --include-adr              Include ADRs in output (hidden by default)
@@ -59,6 +59,7 @@ The CLI implements a three-layer document engine:
 | **1. Structure** | Broken links, orphans, duplicates, missing parents |
 | **2. Schema** | Required sections per entity type (Goal, Components, Dependencies, etc.) |
 | **3. Types** | Column types in tables: `filepath` exists on disk, `entity_id` in graph, `ref_id` valid, `enum` in allowed set |
+| **4. Scope** | Ref scope cross-check: warns when a ref scopes a container but a child component doesn't cite it |
 
 ## The `.c3/` Directory
 

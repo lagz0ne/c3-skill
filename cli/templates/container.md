@@ -67,8 +67,11 @@ Delete this comment block after drafting.
 
 ## Components
 
+<!-- ID = entity ID assigned by c3x add component (e.g., c3-101, c3-210). NOT a name. -->
+
 | ID | Name | Category | Status | Goal Contribution |
 |----|------|----------|--------|-------------------|
+| c3-N01 | | foundation | active | |
 <!-- Category: foundation (01-09) | feature (10+) -->
 <!-- Foundation components (01-09): infrastructure choices that enable features -->
 <!-- Feature components (10+): business capabilities built on foundations -->

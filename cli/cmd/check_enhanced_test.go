@@ -239,6 +239,216 @@ Auth.
 	}
 }
 
+func TestRunCheck_RefIdNotInGraph(t *testing.T) {
+	dir := t.TempDir()
+	c3Dir := filepath.Join(dir, ".c3")
+	os.MkdirAll(filepath.Join(c3Dir, "c3-1-api"), 0755)
+
+	writeFile(t, filepath.Join(c3Dir, "README.md"), `---
+id: c3-0
+title: Test
+---
+
+# Test
+
+## Goal
+
+Test.
+`)
+
+	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "README.md"), `---
+id: c3-1
+title: api
+type: container
+parent: c3-0
+---
+
+# api
+`)
+
+	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md"), `---
+id: c3-101
+title: auth
+type: component
+parent: c3-1
+---
+
+# auth
+
+## Goal
+
+Auth.
+
+## Dependencies
+
+| Direction | What | From/To |
+|-----------|------|---------|
+| IN | data | c3-1 |
+
+## Related Refs
+
+| Ref | How It Serves Goal |
+|-----|-------------------|
+| ref-nonexistent | Token format |
+`)
+
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	opts := CheckOptions{Graph: graph, Docs: docs, JSON: false}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "ref-nonexistent") {
+		t.Errorf("should flag nonexistent ref in Related Refs, got: %s", output)
+	}
+	if !strings.Contains(output, "unknown ref reference") {
+		t.Errorf("should use 'unknown ref reference' message, got: %s", output)
+	}
+}
+
+func TestRunCheck_SuggestsByTitle(t *testing.T) {
+	dir := t.TempDir()
+	c3Dir := filepath.Join(dir, ".c3")
+	os.MkdirAll(filepath.Join(c3Dir, "c3-1-api"), 0755)
+
+	writeFile(t, filepath.Join(c3Dir, "README.md"), `---
+id: c3-0
+title: Test
+---
+
+# Test
+
+## Goal
+
+Test.
+`)
+
+	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "README.md"), `---
+id: c3-1
+title: api
+type: container
+parent: c3-0
+---
+
+# api
+`)
+
+	// Component references "api" by title instead of "c3-1" by ID
+	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md"), `---
+id: c3-101
+title: auth
+type: component
+parent: c3-1
+---
+
+# auth
+
+## Goal
+
+Auth.
+
+## Dependencies
+
+| Direction | What | From/To |
+|-----------|------|---------|
+| IN | data | api |
+`)
+
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	opts := CheckOptions{Graph: graph, Docs: docs, JSON: false}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "did you mean c3-1?") {
+		t.Errorf("should suggest c3-1 for 'api', got: %s", output)
+	}
+}
+
+func TestRunCheck_FixReplacesByTitle(t *testing.T) {
+	dir := t.TempDir()
+	c3Dir := filepath.Join(dir, ".c3")
+	os.MkdirAll(filepath.Join(c3Dir, "c3-1-api"), 0755)
+
+	writeFile(t, filepath.Join(c3Dir, "README.md"), `---
+id: c3-0
+title: Test
+---
+
+# Test
+
+## Goal
+
+Test.
+`)
+
+	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "README.md"), `---
+id: c3-1
+title: api
+type: container
+parent: c3-0
+---
+
+# api
+`)
+
+	compPath := filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md")
+	writeFile(t, compPath, `---
+id: c3-101
+title: auth
+type: component
+parent: c3-1
+---
+
+# auth
+
+## Goal
+
+Auth.
+
+## Dependencies
+
+| Direction | What | From/To |
+|-----------|------|---------|
+| IN | data | api |
+`)
+
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	opts := CheckOptions{Graph: graph, Docs: docs, JSON: false, Fix: true, C3Dir: c3Dir}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "fixed 1 reference") {
+		t.Errorf("should report 1 fix, got: %s", output)
+	}
+
+	// Verify the file was actually modified
+	data, err := os.ReadFile(compPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	content := string(data)
+	if !strings.Contains(content, "| c3-1 |") {
+		t.Errorf("file should contain '| c3-1 |' after fix, got: %s", content)
+	}
+	if strings.Contains(content, "| api |") {
+		t.Errorf("file should NOT contain '| api |' after fix, got: %s", content)
+	}
+}
+
 func TestRunCheck_EnhancedJSON(t *testing.T) {
 	c3Dir := createRichFixture(t)
 	docs := loadDocs(t, c3Dir)
@@ -736,6 +946,7 @@ func TestHintFor(t *testing.T) {
 		{"empty required section: Overview", "add content to the ## Overview section"},
 		{"empty required table: Dependencies (headers only, no data rows)", "add at least one data row below the table headers"},
 		{"unknown entity reference: c3-999", "verify the ID with 'c3x list'; check for typos"},
+		{"unknown ref reference: ref-missing", "use a ref-* ID (e.g., ref-jwt); verify with 'c3x list'"},
 		{"file does not exist: src/foo.ts", "create the file or fix the path"},
 		{"code-map parse error: yaml: unmarshal error", "fix YAML syntax in .c3/code-map.yaml"},
 		{"something unknown", ""},

@@ -68,6 +68,7 @@ func main() {
 			C3Dir:         c3Dir,
 			ParseWarnings: walkResult.Warnings,
 			IncludeADR:    opts.IncludeADR,
+			Fix:           opts.Fix,
 		}
 		err = cmd.RunCheckV2(checkOpts, w)
 	case "add":

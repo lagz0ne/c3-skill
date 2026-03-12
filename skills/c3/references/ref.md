@@ -18,7 +18,7 @@ Hard rule: can't name a concrete file → create ref, not component.
 
 ## Add
 
-Flow: `Scaffold → Fill Content → Discover Usage → Update Citings → ADR`
+Flow: `Scaffold → Discover → Fill Content → Discover Usage → Update Citings → ADR`
 
 **HARD RULE: First Bash call must be scaffold.**
 
@@ -28,23 +28,47 @@ Flow: `Scaffold → Fill Content → Discover Usage → Update Citings → ADR`
 bash <skill-dir>/bin/c3x.sh add ref <slug>
 ```
 
-### Step 2: Fill Content
+### Step 2: Discover (2-5 Grep calls)
 
-From user's prompt:
+Search for existing implementations of the pattern in the codebase.
+
+| Findings | Mode | Action |
+|----------|------|--------|
+| 0 files | **Describe** | User describes pattern (original behavior) |
+| 1 file | **Extract** (low confidence) | Extract, flag to user for confirmation |
+| 2+ files | **Extract** (compare top 3) | Structural intersection = pattern |
+| User provides | **Accept** | Use user's description directly |
+
+### Step 2c: Extract Pattern
+
+From discovered code:
+- **Shared structure** → `## How` (golden pattern)
+- **Varies by context** → `## Choice` (decision point)
+- **Clearly wrong** → `## Not This` (anti-pattern)
+
+Annotate examples: `// REQUIRED` vs `// OPTIONAL` for structural elements.
+
+### Step 2d: Confirm
+
+`AskUserQuestion` — present extracted pattern for approval (ASSUMPTION_MODE: skip).
+
+### Step 2e: Quality Gate
+
+Write 1-3 YES/NO compliance questions derivable from `## How`. If you can't write them, the pattern is too vague — rework before proceeding.
+
+### Step 3: Fill Content
+
+From discovery + user input:
 - `## Goal` — what it standardizes
 - `## Choice` — option chosen (REQUIRED)
 - `## Why` — rationale (REQUIRED)
-- Other: How, Scope, Not This, Override
+- `## How` — golden pattern (format-flexible: code blocks, do/don't pairs, checklists)
+- `## Not This` — rejected alternatives + anti-examples
+- `## Scope`, `## Override` — as needed
 
-Don't search codebase first — user's description is enough for draft.
-
-### Step 3: Discover Usage (2-3 Grep calls)
+### Step 4: Discover Usage (2-3 Grep calls)
 
 Find components using this pattern.
-
-### Step 4: Refine (if needed)
-
-Update ref if discovery reveals variations or anti-patterns.
 
 ### Step 5: Update Citing Components
 

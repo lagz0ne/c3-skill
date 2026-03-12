@@ -58,8 +58,11 @@ Delete this comment block after drafting.
 
 ## Containers
 
+<!-- ID = entity ID assigned by c3x add container (e.g., c3-1, c3-2). NOT a name. -->
+
 | ID | Name | Boundary | Status | Responsibilities | Goal Contribution |
 |----|------|----------|--------|------------------|-------------------|
+| c3-N | | service | active | | |
 <!-- Boundary: service | app | library | worker -->
 <!-- Responsibilities: What responsibilities this container owns to satisfy abstract constraints -->
 <!-- Goal Contribution: How this container advances the system Goal -->

@@ -76,12 +76,16 @@ Topology view with system goal, entity goals, file coverage, and ref usage.
   --json         Machine-readable full output
   --include-adr  Include ADR entities (hidden by default)`,
 
-	"check": `Usage: c3x check [--json] [--include-adr]
+	"check": `Usage: c3x check [--json] [--include-adr] [--fix]
 
 Three-layer validation (ADRs excluded by default; use --include-adr to validate them):
   Layer 1: Broken links, orphans, duplicates, missing parents
   Layer 2: Required sections empty/missing per schema
-  Layer 3: Code refs exist on disk, entity IDs in graph, cite consistency`,
+  Layer 3: Code refs exist on disk, entity IDs in graph, cite consistency
+
+Options:
+  --fix            Auto-fix entity/ref references that match by title (e.g., "API" → c3-1)
+  --include-adr    Include ADR entities in validation`,
 
 	"add": `Usage: c3x add <type> <slug> [options]
 

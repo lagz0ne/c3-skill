@@ -12,6 +12,7 @@ import (
 
 	"github.com/lagz0ne/c3-design/cli/internal/codemap"
 	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
+	"github.com/lagz0ne/c3-design/cli/internal/index"
 	"github.com/lagz0ne/c3-design/cli/internal/markdown"
 	"github.com/lagz0ne/c3-design/cli/internal/schema"
 	"github.com/lagz0ne/c3-design/cli/internal/walker"
@@ -40,6 +41,50 @@ type CheckOptions struct {
 	C3Dir         string // path to .c3/ directory (may differ from ProjectDir/.c3/ with --c3-dir)
 	ParseWarnings []walker.ParseWarning
 	IncludeADR    bool
+	Fix           bool
+}
+
+// fixRecord tracks a single auto-fixable reference replacement.
+type fixRecord struct {
+	entityID string // entity containing the bad reference
+	filePath string // relative to .c3/
+	oldValue string
+	newValue string
+}
+
+// buildTitleMap creates a case-insensitive title/slug → entity ID lookup.
+// Only marks as ambiguous when different entities map to the same key.
+func buildTitleMap(graph *walker.C3Graph) map[string]string {
+	m := make(map[string]string)
+	for _, e := range graph.All() {
+		lower := strings.ToLower(e.Title)
+		if existing, exists := m[lower]; exists {
+			if existing != e.ID {
+				m[lower] = "" // ambiguous — different entities share this name
+			}
+		} else {
+			m[lower] = e.ID
+		}
+		if e.Slug != "" {
+			slugLower := strings.ToLower(e.Slug)
+			if existing, exists := m[slugLower]; exists {
+				if existing != e.ID {
+					m[slugLower] = "" // ambiguous
+				}
+			} else {
+				m[slugLower] = e.ID
+			}
+		}
+	}
+	return m
+}
+
+// suggestByTitle returns a suggested entity ID if the value matches a title/slug, or "".
+func suggestByTitle(val string, titleMap map[string]string) string {
+	if id := titleMap[strings.ToLower(val)]; id != "" {
+		return id
+	}
+	return ""
 }
 
 func hintFor(message string) string {
@@ -53,6 +98,7 @@ func hintFor(message string) string {
 		{"empty required section", ""},     // dynamic — handled below
 		{"empty required table", "add at least one data row below the table headers"},
 		{"unknown entity reference", "verify the ID with 'c3x list'; check for typos"},
+		{"unknown ref reference", "use a ref-* ID (e.g., ref-jwt); verify with 'c3x list'"},
 		{"file does not exist", "create the file or fix the path"},
 		{"not found in C3 graph", "remove from code-map.yaml, or create the entity doc"},
 		{"not a component or ref", "only components and refs belong in code-map"},
@@ -187,6 +233,9 @@ func checkRecipeSources(graph *walker.C3Graph) []Issue {
 // RunCheckV2 validates entities against the schema registry.
 func RunCheckV2(opts CheckOptions, w io.Writer) error {
 	var issues []Issue
+	var fixes []fixRecord
+
+	titleMap := buildTitleMap(opts.Graph)
 
 	for _, pw := range opts.ParseWarnings {
 		issues = append(issues, Issue{
@@ -294,10 +343,34 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 								continue
 							}
 							if opts.Graph.Get(val) == nil {
+								msg := fmt.Sprintf("unknown entity reference: %s", val)
+								if suggested := suggestByTitle(val, titleMap); suggested != "" {
+									msg = fmt.Sprintf("unknown entity reference: %s (did you mean %s?)", val, suggested)
+									fixes = append(fixes, fixRecord{entityID: entity.ID, filePath: entity.Path, oldValue: val, newValue: suggested})
+								}
 								issues = append(issues, Issue{
 									Severity: "warning",
 									Entity:   entity.ID,
-									Message:  fmt.Sprintf("unknown entity reference: %s", val),
+									Message:  msg,
+								})
+							}
+						}
+					case "ref_id":
+						for _, row := range table.Rows {
+							val := strings.TrimSpace(row[col.Name])
+							if val == "" {
+								continue
+							}
+							if opts.Graph.Get(val) == nil {
+								msg := fmt.Sprintf("unknown ref reference: %s", val)
+								if suggested := suggestByTitle(val, titleMap); suggested != "" {
+									msg = fmt.Sprintf("unknown ref reference: %s (did you mean %s?)", val, suggested)
+									fixes = append(fixes, fixRecord{entityID: entity.ID, filePath: entity.Path, oldValue: val, newValue: suggested})
+								}
+								issues = append(issues, Issue{
+									Severity: "warning",
+									Entity:   entity.ID,
+									Message:  msg,
 								})
 							}
 						}
@@ -341,10 +414,34 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 							continue
 						}
 						if opts.Graph.Get(val) == nil {
+							msg := fmt.Sprintf("unknown entity reference: %s", val)
+							if suggested := suggestByTitle(val, titleMap); suggested != "" {
+								msg = fmt.Sprintf("unknown entity reference: %s (did you mean %s?)", val, suggested)
+								fixes = append(fixes, fixRecord{entityID: entity.ID, filePath: entity.Path, oldValue: val, newValue: suggested})
+							}
 							issues = append(issues, Issue{
 								Severity: "warning",
 								Entity:   entity.ID,
-								Message:  fmt.Sprintf("unknown entity reference: %s", val),
+								Message:  msg,
+							})
+						}
+					}
+				case "ref_id":
+					for _, row := range table.Rows {
+						val := strings.TrimSpace(row[col.Name])
+						if val == "" {
+							continue
+						}
+						if opts.Graph.Get(val) == nil {
+							msg := fmt.Sprintf("unknown ref reference: %s", val)
+							if suggested := suggestByTitle(val, titleMap); suggested != "" {
+								msg = fmt.Sprintf("unknown ref reference: %s (did you mean %s?)", val, suggested)
+								fixes = append(fixes, fixRecord{entityID: entity.ID, filePath: entity.Path, oldValue: val, newValue: suggested})
+							}
+							issues = append(issues, Issue{
+								Severity: "warning",
+								Entity:   entity.ID,
+								Message:  msg,
 							})
 						}
 					}
@@ -405,6 +502,59 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 	}
 	issues = append(issues, checkRecipeSources(opts.Graph)...)
 
+	// Scope cross-check: if a ref scopes a container, all child components should cite it
+	if c3Dir != "" {
+		cmForScope, cmErr := codemap.ParseCodeMap(filepath.Join(c3Dir, "code-map.yaml"))
+		if cmErr == nil && len(cmForScope) > 0 {
+			idx := index.Build(opts.Graph, cmForScope, c3Dir)
+			for refID, re := range idx.Refs {
+				for _, scopeID := range re.Scope {
+					scopeEntity := opts.Graph.Get(scopeID)
+					if scopeEntity == nil {
+						continue
+					}
+					// Expand container/context scope to child components
+					children := opts.Graph.Children(scopeID)
+					for _, child := range children {
+						childType := frontmatter.ClassifyDoc(child.Frontmatter)
+						if childType != frontmatter.DocComponent {
+							continue
+						}
+						// Check if child cites this ref
+						cited := false
+						if entry, ok := idx.Entities[child.ID]; ok {
+							for _, r := range entry.Refs {
+								if r == refID {
+									cited = true
+									break
+								}
+							}
+						}
+						if !cited {
+							issues = append(issues, Issue{
+								Severity: "warning",
+								Entity:   child.ID,
+								Message:  fmt.Sprintf("ref %s scopes %s but %s does not cite it", refID, scopeID, child.ID),
+							})
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Apply fixes if --fix and we have suggestions
+	fixedCount := 0
+	if opts.Fix && len(fixes) > 0 {
+		c3Base := opts.C3Dir
+		if c3Base == "" && opts.ProjectDir != "" {
+			c3Base = filepath.Join(opts.ProjectDir, ".c3")
+		}
+		if c3Base != "" {
+			fixedCount = applyFixes(fixes, c3Base)
+		}
+	}
+
 	result := CheckResult{
 		Total:  len(opts.Docs),
 		Issues: issues,
@@ -423,14 +573,26 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 
 	// Text output — summary header
 	errors, warnings := countSeverities(result.Issues)
-	if len(result.Issues) == 0 {
+	if len(result.Issues) == 0 && fixedCount == 0 {
 		fmt.Fprintf(w, "Checked %d docs — all clear\n", result.Total)
 		return nil
 	}
-	fmt.Fprintf(w, "Checked %d docs — %s\n\n", result.Total, formatCounts(errors, warnings))
+	if fixedCount > 0 {
+		fmt.Fprintf(w, "Checked %d docs — fixed %d reference(s)\n", result.Total, fixedCount)
+		if errors+warnings-fixedCount > 0 {
+			fmt.Fprintf(w, "Remaining: %s\n", formatCounts(errors, warnings-fixedCount))
+		}
+		fmt.Fprintln(w)
+	} else {
+		fmt.Fprintf(w, "Checked %d docs — %s\n\n", result.Total, formatCounts(errors, warnings))
+	}
 
-	// Issue lines with hints
+	// Issue lines with hints (skip fixed issues)
 	for _, issue := range result.Issues {
+		// If --fix applied, skip issues that were fixed
+		if opts.Fix && fixedCount > 0 && strings.Contains(issue.Message, "did you mean") {
+			continue
+		}
 		entityLabel := issue.Entity
 		if entityLabel == "" {
 			entityLabel = "global"
@@ -447,7 +609,56 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 	}
 
 	// Legend
-	fmt.Fprintln(w, "Legend: ✗ = error (fix first)  ! = warning (incomplete, should fix)")
+	if fixedCount == 0 || errors+warnings-fixedCount > 0 {
+		fmt.Fprintln(w, "Legend: ✗ = error (fix first)  ! = warning (incomplete, should fix)")
+	}
 
 	return nil
+}
+
+// applyFixes reads entity files and replaces bad references with suggested IDs.
+// Returns the number of fixes successfully applied.
+func applyFixes(fixes []fixRecord, c3Dir string) int {
+	// Group fixes by file path to batch per-file
+	byFile := make(map[string][]fixRecord)
+	for _, f := range fixes {
+		byFile[f.filePath] = append(byFile[f.filePath], f)
+	}
+
+	applied := 0
+	for relPath, fileFixes := range byFile {
+		absPath := filepath.Join(c3Dir, relPath)
+		data, err := os.ReadFile(absPath)
+		if err != nil {
+			continue
+		}
+		content := string(data)
+		modified := false
+
+		for _, fix := range fileFixes {
+			// Replace in table cells: look for "| oldValue |" pattern
+			// Handle whitespace variations around the value
+			old1 := "| " + fix.oldValue + " |"
+			new1 := "| " + fix.newValue + " |"
+			if strings.Contains(content, old1) {
+				content = strings.ReplaceAll(content, old1, new1)
+				modified = true
+				applied++
+				continue
+			}
+			// Try without trailing space (end of row)
+			old2 := "| " + fix.oldValue + " |"
+			new2 := "| " + fix.newValue + " |"
+			if strings.Contains(content, old2) {
+				content = strings.ReplaceAll(content, old2, new2)
+				modified = true
+				applied++
+			}
+		}
+
+		if modified {
+			os.WriteFile(absPath, []byte(content), 0644)
+		}
+	}
+	return applied
 }

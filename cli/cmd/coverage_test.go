@@ -160,3 +160,61 @@ func TestRunCoverage_AllMapped(t *testing.T) {
 		t.Errorf("expected 100%% coverage, got %.1f%%", result.CoveragePct)
 	}
 }
+
+func TestRunCoverage_RefGovernance(t *testing.T) {
+	c3Dir, projectDir := createCoverageFixture(t)
+	writeFile(t, filepath.Join(c3Dir, "code-map.yaml"),
+		"c3-101:\n  - src/auth/login.ts\n_exclude:\n  - \"**/*.test.ts\"\n")
+
+	t.Setenv("HUMAN", "")
+
+	var buf bytes.Buffer
+	err := RunCoverage(CoverageOptions{
+		C3Dir:      c3Dir,
+		ProjectDir: projectDir,
+	}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var output map[string]interface{}
+	if err := json.Unmarshal(buf.Bytes(), &output); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
+	}
+
+	gov, ok := output["ref_governance"]
+	if !ok {
+		t.Fatal("expected ref_governance in output")
+	}
+
+	govMap, ok := gov.(map[string]interface{})
+	if !ok {
+		t.Fatal("ref_governance should be an object")
+	}
+
+	if govMap["total_components"] == nil {
+		t.Error("expected total_components in ref_governance")
+	}
+}
+
+func TestRunCoverage_RefGovernanceHuman(t *testing.T) {
+	c3Dir, projectDir := createCoverageFixture(t)
+	writeFile(t, filepath.Join(c3Dir, "code-map.yaml"),
+		"c3-101:\n  - src/auth/login.ts\n")
+
+	t.Setenv("HUMAN", "1")
+
+	var buf bytes.Buffer
+	err := RunCoverage(CoverageOptions{
+		C3Dir:      c3Dir,
+		ProjectDir: projectDir,
+	}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	out := buf.String()
+	if !strings.Contains(out, "Ref Governance") {
+		t.Errorf("expected Ref Governance section, got:\n%s", out)
+	}
+}

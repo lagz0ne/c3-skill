@@ -239,6 +239,216 @@ Auth.
 	}
 }
 
+func TestRunCheck_RefIdNotInGraph(t *testing.T) {
+	dir := t.TempDir()
+	c3Dir := filepath.Join(dir, ".c3")
+	os.MkdirAll(filepath.Join(c3Dir, "c3-1-api"), 0755)
+
+	writeFile(t, filepath.Join(c3Dir, "README.md"), `---
+id: c3-0
+title: Test
+---
+
+# Test
+
+## Goal
+
+Test.
+`)
+
+	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "README.md"), `---
+id: c3-1
+title: api
+type: container
+parent: c3-0
+---
+
+# api
+`)
+
+	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md"), `---
+id: c3-101
+title: auth
+type: component
+parent: c3-1
+---
+
+# auth
+
+## Goal
+
+Auth.
+
+## Dependencies
+
+| Direction | What | From/To |
+|-----------|------|---------|
+| IN | data | c3-1 |
+
+## Related Refs
+
+| Ref | How It Serves Goal |
+|-----|-------------------|
+| ref-nonexistent | Token format |
+`)
+
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	opts := CheckOptions{Graph: graph, Docs: docs, JSON: false}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "ref-nonexistent") {
+		t.Errorf("should flag nonexistent ref in Related Refs, got: %s", output)
+	}
+	if !strings.Contains(output, "unknown ref reference") {
+		t.Errorf("should use 'unknown ref reference' message, got: %s", output)
+	}
+}
+
+func TestRunCheck_SuggestsByTitle(t *testing.T) {
+	dir := t.TempDir()
+	c3Dir := filepath.Join(dir, ".c3")
+	os.MkdirAll(filepath.Join(c3Dir, "c3-1-api"), 0755)
+
+	writeFile(t, filepath.Join(c3Dir, "README.md"), `---
+id: c3-0
+title: Test
+---
+
+# Test
+
+## Goal
+
+Test.
+`)
+
+	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "README.md"), `---
+id: c3-1
+title: api
+type: container
+parent: c3-0
+---
+
+# api
+`)
+
+	// Component references "api" by title instead of "c3-1" by ID
+	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md"), `---
+id: c3-101
+title: auth
+type: component
+parent: c3-1
+---
+
+# auth
+
+## Goal
+
+Auth.
+
+## Dependencies
+
+| Direction | What | From/To |
+|-----------|------|---------|
+| IN | data | api |
+`)
+
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	opts := CheckOptions{Graph: graph, Docs: docs, JSON: false}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "did you mean c3-1?") {
+		t.Errorf("should suggest c3-1 for 'api', got: %s", output)
+	}
+}
+
+func TestRunCheck_FixReplacesByTitle(t *testing.T) {
+	dir := t.TempDir()
+	c3Dir := filepath.Join(dir, ".c3")
+	os.MkdirAll(filepath.Join(c3Dir, "c3-1-api"), 0755)
+
+	writeFile(t, filepath.Join(c3Dir, "README.md"), `---
+id: c3-0
+title: Test
+---
+
+# Test
+
+## Goal
+
+Test.
+`)
+
+	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "README.md"), `---
+id: c3-1
+title: api
+type: container
+parent: c3-0
+---
+
+# api
+`)
+
+	compPath := filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md")
+	writeFile(t, compPath, `---
+id: c3-101
+title: auth
+type: component
+parent: c3-1
+---
+
+# auth
+
+## Goal
+
+Auth.
+
+## Dependencies
+
+| Direction | What | From/To |
+|-----------|------|---------|
+| IN | data | api |
+`)
+
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	opts := CheckOptions{Graph: graph, Docs: docs, JSON: false, Fix: true, C3Dir: c3Dir}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "fixed 1 reference") {
+		t.Errorf("should report 1 fix, got: %s", output)
+	}
+
+	// Verify the file was actually modified
+	data, err := os.ReadFile(compPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	content := string(data)
+	if !strings.Contains(content, "| c3-1 |") {
+		t.Errorf("file should contain '| c3-1 |' after fix, got: %s", content)
+	}
+	if strings.Contains(content, "| api |") {
+		t.Errorf("file should NOT contain '| api |' after fix, got: %s", content)
+	}
+}
+
 func TestRunCheck_EnhancedJSON(t *testing.T) {
 	c3Dir := createRichFixture(t)
 	docs := loadDocs(t, c3Dir)
@@ -736,6 +946,7 @@ func TestHintFor(t *testing.T) {
 		{"empty required section: Overview", "add content to the ## Overview section"},
 		{"empty required table: Dependencies (headers only, no data rows)", "add at least one data row below the table headers"},
 		{"unknown entity reference: c3-999", "verify the ID with 'c3x list'; check for typos"},
+		{"unknown ref reference: ref-missing", "use a ref-* ID (e.g., ref-jwt); verify with 'c3x list'"},
 		{"file does not exist: src/foo.ts", "create the file or fix the path"},
 		{"code-map parse error: yaml: unmarshal error", "fix YAML syntax in .c3/code-map.yaml"},
 		{"something unknown", ""},
@@ -1176,5 +1387,252 @@ func TestParseNoteSources(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// =============================================================================
+// Scope cross-check: ref scopes container but child doesn't cite
+// =============================================================================
+
+func TestRunCheck_ScopeCrossCheck(t *testing.T) {
+	dir := t.TempDir()
+	c3Dir := filepath.Join(dir, ".c3")
+	os.MkdirAll(filepath.Join(c3Dir, "c3-1-api"), 0755)
+	os.MkdirAll(filepath.Join(c3Dir, "refs"), 0755)
+
+	writeFile(t, filepath.Join(c3Dir, "README.md"), `---
+id: c3-0
+title: Test
+---
+
+# Test
+
+## Goal
+
+Test.
+`)
+
+	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "README.md"), `---
+id: c3-1
+title: api
+type: container
+parent: c3-0
+---
+
+# api
+
+## Goal
+
+Serve API.
+
+## Components
+
+| ID | Name | Category | Status | Goal Contribution |
+|----|------|----------|--------|-------------------|
+| c3-101 | auth | foundation | active | Auth |
+| c3-110 | users | feature | active | Users |
+
+## Responsibilities
+
+Handle API.
+`)
+
+	// c3-101 cites ref-jwt
+	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md"), `---
+id: c3-101
+title: auth
+type: component
+category: foundation
+parent: c3-1
+refs: [ref-jwt]
+---
+
+# auth
+
+## Goal
+
+Auth.
+
+## Dependencies
+
+| Direction | What | From/To |
+|-----------|------|---------|
+| IN | data | c3-110 |
+`)
+
+	// c3-110 does NOT cite ref-jwt
+	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "c3-110-users.md"), `---
+id: c3-110
+title: users
+type: component
+category: feature
+parent: c3-1
+---
+
+# users
+
+## Goal
+
+Users.
+
+## Dependencies
+
+| Direction | What | From/To |
+|-----------|------|---------|
+| IN | data | c3-101 |
+`)
+
+	// ref-jwt scopes c3-1 (the container)
+	writeFile(t, filepath.Join(c3Dir, "refs", "ref-jwt.md"), `---
+id: ref-jwt
+title: JWT Auth
+goal: Auth tokens
+scope: [c3-1]
+---
+
+# JWT Auth
+
+## Goal
+
+Auth tokens.
+
+## Choice
+
+RS256.
+
+## Why
+
+Standard.
+`)
+
+	// code-map needed for index build
+	writeFile(t, filepath.Join(c3Dir, "code-map.yaml"), `c3-101:
+  - src/auth/**
+c3-110:
+  - src/users/**
+`)
+
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	opts := CheckOptions{Graph: graph, Docs: docs, JSON: false, ProjectDir: dir, C3Dir: c3Dir}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	// c3-110 should be warned: ref-jwt scopes c3-1 but c3-110 doesn't cite it
+	if !strings.Contains(output, "ref-jwt scopes c3-1 but c3-110 does not cite it") {
+		t.Errorf("should warn about c3-110 not citing ref-jwt, got: %s", output)
+	}
+	// c3-101 DOES cite ref-jwt — should NOT be warned
+	if strings.Contains(output, "c3-101 does not cite it") {
+		t.Errorf("should NOT warn about c3-101, got: %s", output)
+	}
+}
+
+func TestRunCheck_ScopeCrossCheck_AllCited(t *testing.T) {
+	dir := t.TempDir()
+	c3Dir := filepath.Join(dir, ".c3")
+	os.MkdirAll(filepath.Join(c3Dir, "c3-1-api"), 0755)
+	os.MkdirAll(filepath.Join(c3Dir, "refs"), 0755)
+
+	writeFile(t, filepath.Join(c3Dir, "README.md"), `---
+id: c3-0
+title: Test
+---
+
+# Test
+
+## Goal
+
+Test.
+`)
+
+	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "README.md"), `---
+id: c3-1
+title: api
+type: container
+parent: c3-0
+---
+
+# api
+
+## Goal
+
+Serve API.
+
+## Components
+
+| ID | Name | Category | Status | Goal Contribution |
+|----|------|----------|--------|-------------------|
+| c3-101 | auth | foundation | active | Auth |
+
+## Responsibilities
+
+Handle API.
+`)
+
+	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md"), `---
+id: c3-101
+title: auth
+type: component
+category: foundation
+parent: c3-1
+refs: [ref-jwt]
+---
+
+# auth
+
+## Goal
+
+Auth.
+
+## Dependencies
+
+| Direction | What | From/To |
+|-----------|------|---------|
+| IN | data | c3-1 |
+`)
+
+	writeFile(t, filepath.Join(c3Dir, "refs", "ref-jwt.md"), `---
+id: ref-jwt
+title: JWT Auth
+goal: Auth tokens
+scope: [c3-1]
+---
+
+# JWT Auth
+
+## Goal
+
+Auth tokens.
+
+## Choice
+
+RS256.
+
+## Why
+
+Standard.
+`)
+
+	writeFile(t, filepath.Join(c3Dir, "code-map.yaml"), `c3-101:
+  - src/auth/**
+`)
+
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+	var buf bytes.Buffer
+
+	opts := CheckOptions{Graph: graph, Docs: docs, JSON: false, ProjectDir: dir, C3Dir: c3Dir}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if strings.Contains(output, "does not cite it") {
+		t.Errorf("all components cite the ref, should have no scope warnings, got: %s", output)
 	}
 }

@@ -5,6 +5,26 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.10.0] - 2026-03-12
+
+### Added
+- **Ref governance metric**: `c3x coverage` now reports what percentage of components are governed by at least one ref, with an ungoverned components list. Appears in both JSON (`ref_governance` field) and human-readable output.
+- **Scope cross-check**: `c3x check` warns when a ref scopes a container but a child component doesn't cite that ref (e.g. "ref-jwt scopes c3-1 but c3-110 does not cite it").
+- **Ref quality rubric**: Ref template now includes a 7-criteria quality rubric (compliance questions, mechanism over outcome, violation examples, scope grounding, brevity, dependency visibility, single compliance path).
+- **Ref compliance gate (Phase 3b)**: Change workflow now includes an adversarial ref compliance check before audit — for each file touched, lookup applicable refs and verify compliance with structured verdict output.
+- **Ref compliance audit (Phase 7b)**: Audit workflow now spot-checks code against golden patterns in ref `## How` sections, with quality check for pattern actionability.
+
+### Changed
+- **Discovery-first ref creation**: Ref Add flow rewritten to discover existing implementations before drafting — `Scaffold → Discover → Fill → Usage → Cite → ADR`. Includes quality gate (must be able to derive YES/NO compliance questions from `## How`).
+- **Format-flexible `## How`**: Ref template `## How` section no longer prescribes a table — supports code blocks, do/don't pairs, checklists, or tables. The test: can a reviewer check compliance in under 10 seconds?
+- **Dual-purpose `## Not This`**: Ref template `## Not This` now serves both rejected alternatives and concrete anti-examples.
+- **Schema purpose**: `How` section purpose updated to "Golden pattern — prescriptive examples and implementation guidance".
+- **Codemap gaps fixed**: `cli/internal/schema/**` and `cli/internal/index/**` now mapped to c3-113 (check-cmd).
+
+### Fixed
+- **`ref_id` column validation**: `c3x check` now validates `ref_id` typed columns in Related Refs tables, with `--fix` auto-correcting bad references via title matching.
+- **CI**: 5 fixes — PR merge branching, YAML heredoc parsing, distribute branch conflicts, release step, merge strategy.
+
 ## [6.9.0] - 2026-03-11
 
 ### Added

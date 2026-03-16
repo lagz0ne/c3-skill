@@ -67,11 +67,12 @@ To implement provisioned later: invoke change, pick up ADR + docs, resume Phase 
 
 ## Phase 3: Execute
 
-Scaffold:
+Scaffold / tear down:
 ```bash
 bash <skill-dir>/bin/c3x.sh add container <slug>
 bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N [--feature]
 bash <skill-dir>/bin/c3x.sh add ref <slug>
+bash <skill-dir>/bin/c3x.sh delete <id> [--dry-run]
 ```
 
 **REQUIRED before touching any file:**

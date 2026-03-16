@@ -51,6 +51,7 @@ CLI: `bash <skill-dir>/bin/c3x.sh <command> [args]`
 | `codemap` | Scaffold `.c3/code-map.yaml` with stubs for all components + refs |
 | `lookup <file-or-glob>` | File or glob → component + refs (`--json`) |
 | `coverage` | Code-map coverage stats (JSON default) |
+| `delete <id>` | Remove entity + clean all references (`--dry-run`) |
 
 Types for `add`: `container`, `component`, `ref`, `adr`, `recipe`
 
@@ -108,6 +109,16 @@ First `AskUserQuestion` denial → `ASSUMPTION_MODE = true` for session.
 ---
 
 ## Shared Rules
+
+**HARD RULE — .c3/ is CLI-only:**
+NEVER use Edit, Write, or any file tool on files inside `.c3/`. ALL mutations go through c3x:
+- Create: `c3x add`, `c3x init`, `c3x codemap`
+- Update: `c3x set`, `c3x wire`, `c3x unwire`
+- Delete: `c3x delete`
+- Validate: `c3x check`
+
+Exception: `code-map.yaml` patterns may be edited directly (flat YAML, no integrity constraints).
+If c3x lacks a needed mutation, STOP and tell the user — do not work around it.
 
 **Run `c3x check` frequently** — after creating/editing any `.c3/` doc. It catches broken YAML frontmatter, missing required sections, bad entity references, and codemap issues. Treat errors (`✗`) as blockers.
 

@@ -176,6 +176,17 @@ func main() {
 			entityType = opts.Args[0]
 		}
 		err = cmd.RunSchema(entityType, opts.JSON, w)
+	case "delete":
+		id := ""
+		if len(opts.Args) >= 1 {
+			id = opts.Args[0]
+		}
+		err = cmd.RunDelete(cmd.DeleteOptions{
+			C3Dir:  c3Dir,
+			ID:     id,
+			Graph:  graph,
+			DryRun: opts.DryRun,
+		}, w)
 	default:
 		fmt.Fprintf(os.Stderr, "error: unknown command '%s'\n", opts.Command)
 		fmt.Fprintln(os.Stderr, "hint: run 'c3x --help' to see available commands")
@@ -189,7 +200,7 @@ func main() {
 
 	// Rebuild structural index after mutating commands (best-effort, silent)
 	switch opts.Command {
-	case "add", "set", "wire", "unwire":
+	case "add", "set", "wire", "unwire", "delete":
 		cm, _ := codemap.ParseCodeMap(filepath.Join(c3Dir, "code-map.yaml"))
 		idx := index.Build(graph, cm, c3Dir)
 		_ = index.WriteTo(c3Dir, idx)

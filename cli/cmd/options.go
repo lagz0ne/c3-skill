@@ -22,6 +22,7 @@ type Options struct {
 	Version    bool
 	IncludeADR bool
 	Fix        bool
+	Remove     bool
 	DryRun     bool
 	Depth      int
 	Direction  string
@@ -90,6 +91,8 @@ func ParseArgs(argv []string) Options {
 			opts.IncludeADR = true
 		case "--fix":
 			opts.Fix = true
+		case "--remove":
+			opts.Remove = true
 		case "--dry-run":
 			opts.DryRun = true
 		case "--depth":

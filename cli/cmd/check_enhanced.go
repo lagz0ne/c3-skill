@@ -8,8 +8,6 @@ import (
 	"sort"
 	"strings"
 
-	"gopkg.in/yaml.v3"
-
 	"github.com/lagz0ne/c3-design/cli/internal/codemap"
 	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
 	"github.com/lagz0ne/c3-design/cli/internal/index"
@@ -107,7 +105,6 @@ func hintFor(message string) string {
 		{"escapes project root", "use a path within the project"},
 		{"is a directory", "point to source files, not directories"},
 		{"no files match pattern", "fix the glob pattern or create matching files"},
-		{"note references nonexistent entity", "remove the note or update its sources"},
 		{"recipe references nonexistent entity", "fix the source ID or remove it from the recipe"},
 	}
 	for _, p := range patterns {
@@ -176,51 +173,6 @@ func validateSourceRefs(entityLabel string, sources []string, graph *walker.C3Gr
 	return issues
 }
 
-func checkNotes(c3Dir string, graph *walker.C3Graph) []Issue {
-	notesDir := filepath.Join(c3Dir, "_index", "notes")
-	entries, err := os.ReadDir(notesDir)
-	if err != nil {
-		return nil // directory doesn't exist — skip silently
-	}
-
-	var issues []Issue
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
-			continue
-		}
-		data, err := os.ReadFile(filepath.Join(notesDir, entry.Name()))
-		if err != nil {
-			continue
-		}
-		sources := parseNoteSources(string(data))
-		issues = append(issues, validateSourceRefs(entry.Name(), sources, graph, "note")...)
-	}
-	return issues
-}
-
-func parseNoteSources(content string) []string {
-	if !strings.HasPrefix(content, "---\n") {
-		return nil
-	}
-	end := strings.Index(content[4:], "\n---\n")
-	if end == -1 {
-		// Handle EOF edge case: frontmatter ends with \n--- at end of string
-		if strings.HasSuffix(content[4:], "\n---") {
-			end = len(content[4:]) - 4 // length minus "\n---"
-		} else {
-			return nil
-		}
-	}
-	yamlBlock := content[4 : 4+end]
-
-	var fm struct {
-		Sources []string `yaml:"sources"`
-	}
-	if err := yaml.Unmarshal([]byte(yamlBlock), &fm); err != nil {
-		return nil
-	}
-	return fm.Sources
-}
 
 func checkRecipeSources(graph *walker.C3Graph) []Issue {
 	var issues []Issue
@@ -497,9 +449,6 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 		}
 	}
 
-	if c3Dir != "" {
-		issues = append(issues, checkNotes(c3Dir, opts.Graph)...)
-	}
 	issues = append(issues, checkRecipeSources(opts.Graph)...)
 
 	// Scope cross-check: if a ref scopes a container, all child components should cite it

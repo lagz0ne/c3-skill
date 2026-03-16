@@ -16,8 +16,7 @@ Commands:
   add <type> <slug>          Create entity (auto-numbering + wiring)
   set <id> <field> <value>   Update frontmatter field
   set <id> --section <name>  Update section content (text or JSON table)
-  wire <src> cite <tgt>      Link component to ref (3-sided)
-  unwire <src> cite <tgt>    Remove cite link (3-sided)
+  wire <src> [cite] <tgt>    Link component to ref (--remove to unlink)
   schema <type>              Show known sections for entity type
   codemap                    Scaffold code-map.yaml for all components + refs
   lookup <file-path>         Map file to component(s) + refs
@@ -25,7 +24,7 @@ Commands:
   graph <entity-id>           Subgraph from entity (LLM-friendly output)
   delete <id>                Remove entity + clean all references
 
-Entity Types: context, container, component, ref, adr, recipe
+Entity Types: container, component, ref, adr, recipe (context created by init)
 
 Global Options:
   --json                     Machine-readable output
@@ -103,12 +102,13 @@ Options:
   --goal <text>          Pre-fill goal in frontmatter + body
   --summary <text>       Pre-fill summary
   --boundary <text>      Pre-fill boundary (container only)
+  --json                 Output created entity as JSON (id + path)
 
 Examples:
   c3x add container payments --goal "Process payments" --boundary service
   c3x add component auth --container c3-1 --goal "JWT authentication"
   c3x add ref rate-limiting --goal "Consistent rate limiting"
-  c3x add adr use-grpc --goal "Migrate to gRPC"
+  c3x add adr use-grpc --goal "Migrate to gRPC" --json
   c3x add recipe auth-flow`,
 
 	"set": `Usage: c3x set <id> <field> <value>
@@ -122,21 +122,24 @@ Section mode accepts text or JSON (array for replace, object for --append):
   c3x set c3-101 --section "Code References" '[{"File":"src/auth.ts","Purpose":"Auth"}]'
   c3x set c3-101 --section "Dependencies" --append '{"Direction":"IN","What":"creds","From/To":"c3-102"}'`,
 
-	"wire": `Usage: c3x wire <source> cite <target>
+	"wire": `Usage: c3x wire <source> <target>
+       c3x wire <source> cite <target>
+       c3x wire --remove <source> <target>
 
-Creates cite relationship (3 sides updated atomically):
+Creates or removes a cite relationship (updated atomically):
   1. source frontmatter refs[] += target
   2. source "Related Refs" table += row
-  3. target "Cited By" table += row
 
-Example: c3x wire c3-101 cite ref-jwt`,
+Options:
+  --remove   Remove the cite relationship instead of creating it
+             (idempotent — no error if not wired)
 
-	"unwire": `Usage: c3x unwire <source> cite <target>
+"cite" is optional (it's the only supported relation type).
 
-Removes cite relationship from all 3 sides.
-Idempotent — no error if not wired.
-
-Example: c3x unwire c3-101 cite ref-jwt`,
+Examples:
+  c3x wire c3-101 ref-jwt            # create link
+  c3x wire c3-101 cite ref-jwt       # same, explicit cite
+  c3x wire --remove c3-101 ref-jwt   # remove link`,
 
 	"schema": `Usage: c3x schema <type> [--json]
 

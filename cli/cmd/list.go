@@ -24,24 +24,25 @@ type ListOptions struct {
 
 // RunList outputs the topology of a C3 graph.
 func RunList(opts ListOptions, w io.Writer) error {
+	// Load codemap for file paths (used by JSON and topology modes)
+	var cm codemap.CodeMap
+	if !opts.Compact || opts.JSON {
+		var err error
+		cm, err = codemap.ParseCodeMap(filepath.Join(opts.C3Dir, "code-map.yaml"))
+		if err != nil {
+			cm = codemap.CodeMap{}
+		}
+	}
 	if opts.JSON {
-		return listJSON(opts.Graph, opts.IncludeADR, w)
+		return listJSON(opts.Graph, opts.IncludeADR, cm, w)
 	}
 	if opts.Flat {
 		return listFlat(opts.Graph, opts.IncludeADR, w)
 	}
-	var cm codemap.CodeMap
-	if !opts.Compact {
-		var err error
-		cm, err = codemap.ParseCodeMap(filepath.Join(opts.C3Dir, "code-map.yaml"))
-		if err != nil {
-			return fmt.Errorf("code-map parse error: %w", err)
-		}
-	}
 	return listTopology(opts.Graph, cm, opts.Compact, opts.IncludeADR, w)
 }
 
-func listJSON(graph *walker.C3Graph, includeADR bool, w io.Writer) error {
+func listJSON(graph *walker.C3Graph, includeADR bool, cm codemap.CodeMap, w io.Writer) error {
 	entities := graph.All()
 	if !includeADR {
 		filtered := entities[:0]
@@ -63,6 +64,7 @@ func listJSON(graph *walker.C3Graph, includeADR bool, w io.Writer) error {
 		Path          string                 `json:"path"`
 		Relationships []string               `json:"relationships"`
 		Frontmatter   map[string]interface{} `json:"frontmatter"`
+		Files         []string               `json:"files,omitempty"`
 	}
 
 	var data []jsonEntity
@@ -89,6 +91,21 @@ func listJSON(graph *walker.C3Graph, includeADR bool, w io.Writer) error {
 		if len(e.Frontmatter.Sources) > 0 {
 			fm["sources"] = e.Frontmatter.Sources
 		}
+		if len(e.Frontmatter.Refs) > 0 {
+			fm["refs"] = e.Frontmatter.Refs
+		}
+		if len(e.Frontmatter.Affects) > 0 {
+			fm["affects"] = e.Frontmatter.Affects
+		}
+		if len(e.Frontmatter.Scope) > 0 {
+			fm["scope"] = e.Frontmatter.Scope
+		}
+
+		var files []string
+		if f := cm[e.ID]; len(f) > 0 {
+			files = append([]string(nil), f...)
+			sort.Strings(files)
+		}
 
 		data = append(data, jsonEntity{
 			ID:            e.ID,
@@ -97,6 +114,7 @@ func listJSON(graph *walker.C3Graph, includeADR bool, w io.Writer) error {
 			Path:          e.Path,
 			Relationships: e.Relationships,
 			Frontmatter:   fm,
+			Files:         files,
 		})
 	}
 

@@ -5,6 +5,24 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.10.1] - 2026-03-16
+
+### Changed
+- **CLI surface rationalized to 12 LLM-visible commands**: Adversarial triage (triage-three) evaluated all 14 commands across mergeability, breakage risk, and LLM cognitive load. Result: single-purpose verbs beat merged flag-heavy commands for LLM use.
+- **`unwire` merged into `wire --remove`**: Symmetric pair collapsed. `unwire` remains as hidden backward-compat alias.
+- **`graph` demoted from LLM surface**: `list --json` now carries all relationship data (refs, affects, scope, files), making `graph --json` redundant for LLM workflows. `graph` stays in CLI for `--format mermaid` diagrams.
+- **`list --json` enriched**: Now includes `files` from code-map and `refs`/`affects`/`scope` arrays in frontmatter — one call gives the LLM everything it needs.
+- **`wire`/`unwire` cite now optional**: `wire <src> <tgt>` works (cite is the default). 3-arg form still accepted.
+- **`set --section` format detection**: Uses actual JSON parse instead of `[` prefix sniffing — plain text starting with `[` no longer misroutes to JSON table mode.
+- **Entity Types in help**: "context" removed from addable types, noted as "(created by init)".
+- **ADR date format unified**: `add_rich.go` now uses ISO `2006-01-02` matching `add.go` (was `20060102`).
+
+### Removed
+- **`_index/notes/` sunset**: Notes validation removed from `c3x check`. Cross-cutting concern traces are now handled exclusively by `recipes/`. Existing notes should be migrated to recipes via onboard.
+
+### Added
+- **`add --json`**: Returns `{"id":"c3-101","path":"..."}` for programmatic entity creation workflows.
+
 ## [6.10.0] - 2026-03-12
 
 ### Added

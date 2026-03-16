@@ -20,6 +20,7 @@ type Options struct {
 	Version    bool
 	IncludeADR bool
 	Fix        bool
+	DryRun     bool
 }
 
 // ParseArgs parses command-line arguments into Options.
@@ -83,6 +84,8 @@ func ParseArgs(argv []string) Options {
 			opts.IncludeADR = true
 		case "--fix":
 			opts.Fix = true
+		case "--dry-run":
+			opts.DryRun = true
 		default:
 			args = append(args, arg)
 		}

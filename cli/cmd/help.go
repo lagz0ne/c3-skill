@@ -22,6 +22,7 @@ Commands:
   codemap                    Scaffold code-map.yaml for all components + refs
   lookup <file-path>         Map file to component(s) + refs
   coverage                   Code-map coverage stats
+  delete <id>                Remove entity + clean all references
 
 Entity Types: context, container, component, ref, adr, recipe
 
@@ -48,6 +49,10 @@ Workflows:
     c3x add container payments --goal "Process payments" --boundary service
     c3x add component billing --container c3-1 --goal "Invoice generation via Stripe"
     c3x check
+
+  Remove an entity cleanly:
+    c3x delete c3-101              # removes file + cleans all references
+    c3x delete ref-jwt --dry-run   # preview cleanup plan without mutations
 
   Document a cross-cutting concern:
     c3x add ref rate-limiting --goal "Consistent rate limiting across services"
@@ -165,6 +170,28 @@ JSON output lists added and existing IDs. Default output is JSON;
 set HUMAN=1 for human-readable text.
 
 Example: c3x codemap`,
+
+	"delete": `Usage: c3x delete <id> [--dry-run]
+
+Remove an entity and clean all references to it across the graph.
+
+Safety:
+  - Refuses to delete c3-0 (context root)
+  - Refuses to delete containers with children (lists them)
+
+Cleanup:
+  - Removes id from refs[], affects[], scope[], sources[] on referencing entities
+  - Removes Related Refs table rows citing this entity
+  - Removes row from parent container's Components table
+  - Removes code-map.yaml entry
+  - Deletes the entity file
+
+Options:
+  --dry-run   Show cleanup plan without making changes
+
+Examples:
+  c3x delete c3-101
+  c3x delete ref-jwt --dry-run`,
 
 	"coverage": `Usage: c3x coverage [--json]
 

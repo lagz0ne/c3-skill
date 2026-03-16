@@ -1,9 +1,13 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"github.com/lagz0ne/c3-design/cli/cmd"
 	"github.com/lagz0ne/c3-design/cli/internal/codemap"
@@ -80,6 +84,12 @@ func main() {
 		if len(opts.Args) >= 2 {
 			slug = opts.Args[1]
 		}
+		// Capture output to support --json
+		var buf bytes.Buffer
+		var addW io.Writer = w
+		if opts.JSON {
+			addW = &buf
+		}
 		if opts.Goal != "" || opts.Summary != "" || opts.Boundary != "" {
 			addOpts := cmd.AddOptions{
 				EntityType: entityType,
@@ -92,9 +102,28 @@ func main() {
 				Summary:    opts.Summary,
 				Boundary:   opts.Boundary,
 			}
-			err = cmd.RunAddRich(addOpts, w)
+			err = cmd.RunAddRich(addOpts, addW)
 		} else {
-			err = cmd.RunAdd(entityType, slug, c3Dir, graph, opts.Container, opts.Feature, w)
+			err = cmd.RunAdd(entityType, slug, c3Dir, graph, opts.Container, opts.Feature, addW)
+		}
+		if err == nil && opts.JSON {
+			// Parse "Created: <path> (id: <id>)" from output
+			re := regexp.MustCompile(`\(id: ([^)]+)\)`)
+			m := re.FindStringSubmatch(buf.String())
+			if len(m) >= 2 {
+				result := cmd.AddResult{ID: m[1], Path: buf.String()}
+				// Clean path from first Created line
+				rePath := regexp.MustCompile(`Created: (\S+)`)
+				if mp := rePath.FindStringSubmatch(buf.String()); len(mp) >= 2 {
+					result.Path = mp[1]
+				}
+				enc := json.NewEncoder(w)
+				enc.SetIndent("", "  ")
+				err = enc.Encode(result)
+			} else {
+				// Fallback: emit raw output
+				w.Write(buf.Bytes())
+			}
 		}
 	case "set":
 		id := ""
@@ -121,30 +150,28 @@ func main() {
 			Append:  opts.Append,
 		}
 		err = cmd.RunSet(setOpts, w)
-	case "wire":
+	case "wire", "unwire":
 		source, relation, target := "", "", ""
-		if len(opts.Args) >= 1 {
+		if len(opts.Args) == 2 {
+			// Short form: wire <src> <tgt> (cite is default)
 			source = opts.Args[0]
+			target = opts.Args[1]
+		} else {
+			if len(opts.Args) >= 1 {
+				source = opts.Args[0]
+			}
+			if len(opts.Args) >= 2 {
+				relation = opts.Args[1]
+			}
+			if len(opts.Args) >= 3 {
+				target = opts.Args[2]
+			}
 		}
-		if len(opts.Args) >= 2 {
-			relation = opts.Args[1]
+		if opts.Remove || opts.Command == "unwire" {
+			err = cmd.RunUnwire(c3Dir, source, relation, target, w)
+		} else {
+			err = cmd.RunWire(c3Dir, source, relation, target, w)
 		}
-		if len(opts.Args) >= 3 {
-			target = opts.Args[2]
-		}
-		err = cmd.RunWire(c3Dir, source, relation, target, w)
-	case "unwire":
-		source, relation, target := "", "", ""
-		if len(opts.Args) >= 1 {
-			source = opts.Args[0]
-		}
-		if len(opts.Args) >= 2 {
-			relation = opts.Args[1]
-		}
-		if len(opts.Args) >= 3 {
-			target = opts.Args[2]
-		}
-		err = cmd.RunUnwire(c3Dir, source, relation, target, w)
 	case "lookup":
 		if len(opts.Args) < 1 {
 			fmt.Fprintln(os.Stderr, "error: lookup requires a <file-path> argument")
@@ -176,6 +203,36 @@ func main() {
 			entityType = opts.Args[0]
 		}
 		err = cmd.RunSchema(entityType, opts.JSON, w)
+	case "graph":
+		entityID := ""
+		if len(opts.Args) >= 1 {
+			entityID = opts.Args[0]
+		}
+		if entityID == "" {
+			fmt.Fprintln(os.Stderr, "error: graph requires an <entity-id> argument")
+			fmt.Fprintln(os.Stderr, "hint: run 'c3x graph --help' for usage")
+			os.Exit(1)
+		}
+		err = cmd.RunGraph(cmd.GraphOptions{
+			Graph:     graph,
+			EntityID:  entityID,
+			Depth:     opts.Depth,
+			Direction: opts.Direction,
+			Format:    opts.Format,
+			JSON:      opts.JSON,
+			C3Dir:     c3Dir,
+		}, w)
+	case "delete":
+		id := ""
+		if len(opts.Args) >= 1 {
+			id = opts.Args[0]
+		}
+		err = cmd.RunDelete(cmd.DeleteOptions{
+			C3Dir:  c3Dir,
+			ID:     id,
+			Graph:  graph,
+			DryRun: opts.DryRun,
+		}, w)
 	default:
 		fmt.Fprintf(os.Stderr, "error: unknown command '%s'\n", opts.Command)
 		fmt.Fprintln(os.Stderr, "hint: run 'c3x --help' to see available commands")
@@ -189,7 +246,7 @@ func main() {
 
 	// Rebuild structural index after mutating commands (best-effort, silent)
 	switch opts.Command {
-	case "add", "set", "wire", "unwire":
+	case "add", "set", "wire", "unwire", "delete":
 		cm, _ := codemap.ParseCodeMap(filepath.Join(c3Dir, "code-map.yaml"))
 		idx := index.Build(graph, cm, c3Dir)
 		_ = index.WriteTo(c3Dir, idx)

@@ -39,12 +39,13 @@ c3x <command> [args] [options]
   check                      Validate docs, schema, code refs, consistency
   add <type> <slug>          Create entity (container, component, ref, adr, recipe)
   set <id> <field> <value>   Update frontmatter field or section content
-  wire <src> cite <tgt>      Link component to ref (3-sided atomic update)
-  unwire <src> cite <tgt>    Remove cite link (3-sided)
+  wire <src> [cite] <tgt>    Link component to ref (--remove to unlink)
   schema <type>              Show known sections and column types
   codemap                    Scaffold code-map.yaml with stubs for all components + refs
   lookup <file-path>         Map file to component(s) + refs
   coverage                   Code-map coverage + ref governance stats
+  graph <entity-id>          Subgraph from entity (--format mermaid for diagrams)
+  delete <id>                Remove entity + clean all references (--dry-run)
 
   --json                     Machine-readable output
   --include-adr              Include ADRs in output (hidden by default)
@@ -68,9 +69,7 @@ The CLI implements a three-layer document engine:
 ├── README.md                  # System context (c3-0)
 ├── code-map.yaml              # Component → source file mappings (validated by check)
 ├── _index/
-│   ├── structural.md          # Precomputed entity→files→refs→constraints (auto-rebuilt)
-│   └── notes/                 # LLM-generated cross-cutting topic notes
-│       └── *.md               # e.g. authentication-flow.md, data-persistence.md
+│   └── structural.md          # Precomputed entity→files→refs→constraints (auto-rebuilt)
 ├── c3-N-name/                 # Container
 │   ├── README.md              # Container overview + component table
 │   └── c3-NNN-component.md   # Component with deps, wiring
@@ -82,7 +81,7 @@ The CLI implements a three-layer document engine:
     └── adr-YYYYMMDD-slug.md   # Architecture decision record
 ```
 
-Every entity has YAML frontmatter (`id`, `type`, `refs[]`, `status`) and markdown body with schema-defined sections. The CLI keeps wiring consistent — `wire`/`unwire` updates source frontmatter, source Related Refs table, and target Cited By table atomically.
+Every entity has YAML frontmatter (`id`, `type`, `refs[]`, `status`) and markdown body with schema-defined sections. The CLI keeps wiring consistent — `wire` (and `wire --remove`) updates source frontmatter and source Related Refs table atomically.
 
 `code-map.yaml` maps components and refs to their actual source files. Run `c3x codemap` to scaffold stubs for every entity, then fill in the glob patterns:
 
@@ -105,9 +104,9 @@ Patterns support `*` and `**` glob syntax, plus literal bracket paths like `[id]
 
 ### Structural Index
 
-The CLI automatically maintains a structural index at `.c3/_index/structural.md` after mutating commands (`add`, `set`, `wire`, `unwire`). This precomputes entity→files→refs→reverse-deps→constraints mappings from the graph + code-map, giving LLMs instant discovery without multiple CLI calls.
+The CLI automatically maintains a structural index at `.c3/_index/structural.md` after mutating commands (`add`, `set`, `wire`, `delete`). This precomputes entity→files→refs→reverse-deps→constraints mappings from the graph + code-map, giving LLMs instant discovery without multiple CLI calls.
 
-Topic notes in `.c3/_index/notes/` are LLM-generated cross-cutting narratives (e.g. "authentication-flow.md", "data-persistence-strategy.md") with YAML frontmatter tracking their sources. `c3x check` validates that note source citations reference entities that exist in the graph.
+Recipes in `.c3/recipes/` trace cross-cutting concerns end-to-end (e.g. "recipe-auth-flow.md") with YAML frontmatter tracking their entity sources. `c3x check` validates that recipe source citations reference entities that exist in the graph.
 
 ## VS Code Extension
 

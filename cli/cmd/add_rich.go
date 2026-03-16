@@ -206,7 +206,7 @@ func addRichAdr(opts AddOptions, w io.Writer) error {
 		return fmt.Errorf("error: %s already exists", adrID)
 	}
 
-	today := time.Now().Format("20060102")
+	today := time.Now().Format("2006-01-02")
 	content := buildDocument(
 		map[string]string{
 			"id":      adrID,

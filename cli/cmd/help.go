@@ -16,14 +16,15 @@ Commands:
   add <type> <slug>          Create entity (auto-numbering + wiring)
   set <id> <field> <value>   Update frontmatter field
   set <id> --section <name>  Update section content (text or JSON table)
-  wire <src> cite <tgt>      Link component to ref (3-sided)
-  unwire <src> cite <tgt>    Remove cite link (3-sided)
+  wire <src> [cite] <tgt>    Link component to ref (--remove to unlink)
   schema <type>              Show known sections for entity type
   codemap                    Scaffold code-map.yaml for all components + refs
   lookup <file-path>         Map file to component(s) + refs
   coverage                   Code-map coverage stats
+  graph <entity-id>           Subgraph from entity (LLM-friendly output)
+  delete <id>                Remove entity + clean all references
 
-Entity Types: context, container, component, ref, adr, recipe
+Entity Types: container, component, ref, adr, recipe (context created by init)
 
 Global Options:
   --json                     Machine-readable output
@@ -48,6 +49,10 @@ Workflows:
     c3x add container payments --goal "Process payments" --boundary service
     c3x add component billing --container c3-1 --goal "Invoice generation via Stripe"
     c3x check
+
+  Remove an entity cleanly:
+    c3x delete c3-101              # removes file + cleans all references
+    c3x delete ref-jwt --dry-run   # preview cleanup plan without mutations
 
   Document a cross-cutting concern:
     c3x add ref rate-limiting --goal "Consistent rate limiting across services"
@@ -97,12 +102,13 @@ Options:
   --goal <text>          Pre-fill goal in frontmatter + body
   --summary <text>       Pre-fill summary
   --boundary <text>      Pre-fill boundary (container only)
+  --json                 Output created entity as JSON (id + path)
 
 Examples:
   c3x add container payments --goal "Process payments" --boundary service
   c3x add component auth --container c3-1 --goal "JWT authentication"
   c3x add ref rate-limiting --goal "Consistent rate limiting"
-  c3x add adr use-grpc --goal "Migrate to gRPC"
+  c3x add adr use-grpc --goal "Migrate to gRPC" --json
   c3x add recipe auth-flow`,
 
 	"set": `Usage: c3x set <id> <field> <value>
@@ -116,21 +122,24 @@ Section mode accepts text or JSON (array for replace, object for --append):
   c3x set c3-101 --section "Code References" '[{"File":"src/auth.ts","Purpose":"Auth"}]'
   c3x set c3-101 --section "Dependencies" --append '{"Direction":"IN","What":"creds","From/To":"c3-102"}'`,
 
-	"wire": `Usage: c3x wire <source> cite <target>
+	"wire": `Usage: c3x wire <source> <target>
+       c3x wire <source> cite <target>
+       c3x wire --remove <source> <target>
 
-Creates cite relationship (3 sides updated atomically):
+Creates or removes a cite relationship (updated atomically):
   1. source frontmatter refs[] += target
   2. source "Related Refs" table += row
-  3. target "Cited By" table += row
 
-Example: c3x wire c3-101 cite ref-jwt`,
+Options:
+  --remove   Remove the cite relationship instead of creating it
+             (idempotent — no error if not wired)
 
-	"unwire": `Usage: c3x unwire <source> cite <target>
+"cite" is optional (it's the only supported relation type).
 
-Removes cite relationship from all 3 sides.
-Idempotent — no error if not wired.
-
-Example: c3x unwire c3-101 cite ref-jwt`,
+Examples:
+  c3x wire c3-101 ref-jwt            # create link
+  c3x wire c3-101 cite ref-jwt       # same, explicit cite
+  c3x wire --remove c3-101 ref-jwt   # remove link`,
 
 	"schema": `Usage: c3x schema <type> [--json]
 
@@ -165,6 +174,49 @@ JSON output lists added and existing IDs. Default output is JSON;
 set HUMAN=1 for human-readable text.
 
 Example: c3x codemap`,
+
+	"graph": `Usage: c3x graph <entity-id> [--depth N] [--direction forward|reverse] [--format mermaid] [--json]
+
+Emit a subgraph rooted at the given entity. Shows typed neighbors,
+file paths from code-map, and relationship edges.
+
+Options:
+  --depth N              BFS traversal depth (default: 1)
+                         0 = entity only, 1 = direct neighbors, 2+ = multi-hop
+  --direction forward    Impact analysis — children, affects, cited-by only
+  --direction reverse    Reverse deps — what points to this entity only
+                         (default: all neighbors in both directions)
+  --format mermaid       Mermaid flowchart output (pipe to diashort for rendering)
+  --json                 Machine-readable JSON output
+
+Examples:
+  c3x graph c3-1                          # container + direct children
+  c3x graph c3-101 --depth 0             # single entity detail
+  c3x graph ref-jwt --depth 2            # ref + citers + their containers
+  c3x graph c3-1 --format mermaid        # visual diagram
+  c3x graph c3-101 --direction reverse   # what points to this component`,
+
+	"delete": `Usage: c3x delete <id> [--dry-run]
+
+Remove an entity and clean all references to it across the graph.
+
+Safety:
+  - Refuses to delete c3-0 (context root)
+  - Refuses to delete containers with children (lists them)
+
+Cleanup:
+  - Removes id from refs[], affects[], scope[], sources[] on referencing entities
+  - Removes Related Refs table rows citing this entity
+  - Removes row from parent container's Components table
+  - Removes code-map.yaml entry
+  - Deletes the entity file
+
+Options:
+  --dry-run   Show cleanup plan without making changes
+
+Examples:
+  c3x delete c3-101
+  c3x delete ref-jwt --dry-run`,
 
 	"coverage": `Usage: c3x coverage [--json]
 

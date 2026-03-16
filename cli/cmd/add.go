@@ -17,6 +17,12 @@ import (
 
 var validSlug = regexp.MustCompile(`^[a-z][a-z0-9]*(-[a-z0-9]+)*$`)
 
+// AddResult is the JSON output from add commands.
+type AddResult struct {
+	ID   string `json:"id"`
+	Path string `json:"path"`
+}
+
 // RunAdd creates a new C3 entity.
 func RunAdd(entityType, slug, c3Dir string, graph *walker.C3Graph, container string, feature bool, w io.Writer) error {
 	if entityType == "" || slug == "" {

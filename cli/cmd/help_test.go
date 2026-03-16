@@ -17,7 +17,7 @@ func TestShowHelp_Global(t *testing.T) {
 	if !strings.Contains(output, "Commands:") {
 		t.Error("global help should list commands")
 	}
-	for _, cmd := range []string{"list", "check", "init", "add", "set", "wire", "unwire", "schema"} {
+	for _, cmd := range []string{"list", "check", "init", "add", "set", "wire", "schema"} {
 		if !strings.Contains(output, cmd) {
 			t.Errorf("global help should mention %s command", cmd)
 		}
@@ -25,7 +25,7 @@ func TestShowHelp_Global(t *testing.T) {
 }
 
 func TestShowHelp_Commands(t *testing.T) {
-	commands := []string{"list", "check", "init", "add", "set", "wire", "unwire", "schema"}
+	commands := []string{"list", "check", "init", "add", "set", "wire", "schema"}
 	for _, cmd := range commands {
 		t.Run(cmd, func(t *testing.T) {
 			var buf bytes.Buffer

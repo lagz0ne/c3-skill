@@ -45,12 +45,17 @@ CLI: `bash <skill-dir>/bin/c3x.sh <command> [args]`
 | Command | Purpose |
 |---------|---------|
 | `init` | Scaffold `.c3/` |
-| `list` | Topology (`--json`, `--flat`, `--compact`) |
-| `check` | Structural validation (`--json`) |
-| `add <type> <slug>` | Create entity (`--container`, `--feature`) |
+| `list` | Topology with files (`--json`, `--flat`, `--compact`) |
+| `check` | Structural validation (`--json`, `--fix`) |
+| `add <type> <slug>` | Create entity (`--container`, `--feature`, `--json`) |
+| `set <id> <field> <val>` | Update frontmatter field |
+| `set <id> --section <name>` | Update section content (text or JSON table) |
+| `wire <src> <tgt>` | Link component to ref (`--remove` to unlink) |
+| `schema <type>` | Section definitions for entity type (`--json`) |
 | `codemap` | Scaffold `.c3/code-map.yaml` with stubs for all components + refs |
 | `lookup <file-or-glob>` | File or glob → component + refs (`--json`) |
 | `coverage` | Code-map coverage stats (JSON default) |
+| `delete <id>` | Remove entity + clean all references (`--dry-run`) |
 
 Types for `add`: `container`, `component`, `ref`, `adr`, `recipe`
 
@@ -109,6 +114,17 @@ First `AskUserQuestion` denial → `ASSUMPTION_MODE = true` for session.
 
 ## Shared Rules
 
+**HARD RULE — .c3/ is CLI-only:**
+NEVER use Edit, Write, or any file tool on files inside `.c3/`. ALL mutations go through c3x:
+- Create: `c3x add`, `c3x init`, `c3x codemap`
+- Read:   `c3x list`, `c3x schema`, `c3x lookup`, `c3x coverage`
+- Update: `c3x set`, `c3x wire` (`--remove` to unwire)
+- Delete: `c3x delete`
+- Validate: `c3x check`
+
+Exception: `code-map.yaml` patterns may be edited directly (flat YAML, no integrity constraints).
+If c3x lacks a needed mutation, STOP and tell the user — do not work around it.
+
 **Run `c3x check` frequently** — after creating/editing any `.c3/` doc. It catches broken YAML frontmatter, missing required sections, bad entity references, and codemap issues. Treat errors (`✗`) as blockers.
 
 **HARD RULE — ADR is the unit of change:**
@@ -156,7 +172,7 @@ No `.c3/` or re-onboard. `c3x init` → discovery → inject CLAUDE.md → show 
 Details: `references/onboard.md`
 
 ### query
-`c3x list` → match entity → Read doc → explore code.
+`c3x list --json` → match entity (includes refs, affects, files) → Read doc → explore code.
 Details: `references/query.md`
 
 ### audit
@@ -164,7 +180,7 @@ Details: `references/query.md`
 Details: `references/audit.md`
 
 ### change
-ADR first (`c3x add adr`) → `c3x list --json` → `c3x lookup` each file → fill ADR (impact, work breakdown) → approve → execute → `c3x check`.
+ADR first (`c3x add adr --json`) → `c3x list --json` → identify affected entities (refs, affects in frontmatter) → `c3x lookup` each file → fill ADR → approve → execute → `c3x check`.
 Provision gate: implement now or `status: provisioned`.
 Details: `references/change.md`
 
@@ -173,6 +189,6 @@ Modes: Add / Update / List / Usage.
 Details: `references/ref.md`
 
 ### sweep
-`c3x list --json` → affected entities → parallel assessment → synthesize. Advisory only.
+`c3x list --json` → filter by refs/affects to find affected entities → parallel assessment → synthesize. Advisory only.
 Details: `references/sweep.md`
 

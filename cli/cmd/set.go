@@ -13,6 +13,18 @@ import (
 	"github.com/lagz0ne/c3-design/cli/internal/writer"
 )
 
+// isJSONArray checks if a string is a valid JSON array.
+// Uses actual parsing instead of prefix-sniffing to avoid misrouting
+// plain text that happens to start with '['.
+func isJSONArray(s string) bool {
+	s = strings.TrimSpace(s)
+	if !strings.HasPrefix(s, "[") {
+		return false
+	}
+	var v []json.RawMessage
+	return json.Unmarshal([]byte(s), &v) == nil
+}
+
 // SetOptions holds parameters for the set command.
 type SetOptions struct {
 	C3Dir   string
@@ -70,7 +82,7 @@ func runSetSection(path string, opts SetOptions, w io.Writer) error {
 		if err != nil {
 			return err
 		}
-	} else if strings.HasPrefix(strings.TrimSpace(opts.Value), "[") {
+	} else if isJSONArray(opts.Value) {
 		// JSON array: parse as table rows
 		var rows []map[string]string
 		if err := json.Unmarshal([]byte(opts.Value), &rows); err != nil {

@@ -22,6 +22,7 @@ Commands:
   codemap                    Scaffold code-map.yaml for all components + refs
   lookup <file-path>         Map file to component(s) + refs
   coverage                   Code-map coverage stats
+  graph <entity-id>           Subgraph from entity (LLM-friendly output)
   delete <id>                Remove entity + clean all references
 
 Entity Types: context, container, component, ref, adr, recipe
@@ -170,6 +171,27 @@ JSON output lists added and existing IDs. Default output is JSON;
 set HUMAN=1 for human-readable text.
 
 Example: c3x codemap`,
+
+	"graph": `Usage: c3x graph <entity-id> [--depth N] [--direction forward|reverse] [--format mermaid] [--json]
+
+Emit a subgraph rooted at the given entity. Shows typed neighbors,
+file paths from code-map, and relationship edges.
+
+Options:
+  --depth N              BFS traversal depth (default: 1)
+                         0 = entity only, 1 = direct neighbors, 2+ = multi-hop
+  --direction forward    Impact analysis — children, affects, cited-by only
+  --direction reverse    Reverse deps — what points to this entity only
+                         (default: all neighbors in both directions)
+  --format mermaid       Mermaid flowchart output (pipe to diashort for rendering)
+  --json                 Machine-readable JSON output
+
+Examples:
+  c3x graph c3-1                          # container + direct children
+  c3x graph c3-101 --depth 0             # single entity detail
+  c3x graph ref-jwt --depth 2            # ref + citers + their containers
+  c3x graph c3-1 --format mermaid        # visual diagram
+  c3x graph c3-101 --direction reverse   # what points to this component`,
 
 	"delete": `Usage: c3x delete <id> [--dry-run]
 

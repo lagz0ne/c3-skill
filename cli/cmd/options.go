@@ -1,5 +1,7 @@
 package cmd
 
+import "strconv"
+
 // Options holds parsed CLI flags and arguments.
 type Options struct {
 	Command   string
@@ -21,11 +23,15 @@ type Options struct {
 	IncludeADR bool
 	Fix        bool
 	DryRun     bool
+	Depth      int
+	Direction  string
+	Format     string
 }
 
 // ParseArgs parses command-line arguments into Options.
 func ParseArgs(argv []string) Options {
 	var opts Options
+	opts.Depth = 1
 	var args []string
 
 	for i := 0; i < len(argv); i++ {
@@ -86,6 +92,21 @@ func ParseArgs(argv []string) Options {
 			opts.Fix = true
 		case "--dry-run":
 			opts.DryRun = true
+		case "--depth":
+			if i+1 < len(argv) {
+				i++
+				opts.Depth, _ = strconv.Atoi(argv[i])
+			}
+		case "--direction":
+			if i+1 < len(argv) {
+				i++
+				opts.Direction = argv[i]
+			}
+		case "--format":
+			if i+1 < len(argv) {
+				i++
+				opts.Format = argv[i]
+			}
 		default:
 			args = append(args, arg)
 		}

@@ -176,6 +176,25 @@ func main() {
 			entityType = opts.Args[0]
 		}
 		err = cmd.RunSchema(entityType, opts.JSON, w)
+	case "graph":
+		entityID := ""
+		if len(opts.Args) >= 1 {
+			entityID = opts.Args[0]
+		}
+		if entityID == "" {
+			fmt.Fprintln(os.Stderr, "error: graph requires an <entity-id> argument")
+			fmt.Fprintln(os.Stderr, "hint: run 'c3x graph --help' for usage")
+			os.Exit(1)
+		}
+		err = cmd.RunGraph(cmd.GraphOptions{
+			Graph:     graph,
+			EntityID:  entityID,
+			Depth:     opts.Depth,
+			Direction: opts.Direction,
+			Format:    opts.Format,
+			JSON:      opts.JSON,
+			C3Dir:     c3Dir,
+		}, w)
 	case "delete":
 		id := ""
 		if len(opts.Args) >= 1 {

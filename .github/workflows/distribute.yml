@@ -35,14 +35,6 @@ jobs:
       - name: Cross-compile
         run: bash scripts/build.sh
 
-      - name: Build @c3x/cli
-        working-directory: packages/cli
-        run: |
-          VERSION=$(cat ../../skills/c3/bin/VERSION | tr -d '[:space:]')
-          npm pkg set version="$VERSION"
-          npm install
-          npm run build
-
       - name: Distribute to main via PR
         id: distribute
         env:
@@ -153,9 +145,14 @@ jobs:
             --notes-file /tmp/changelog.md \
             "/tmp/c3-skill-v${VERSION}.zip"
 
-      - name: Publish @c3x/cli to npm
+      - name: Build and publish @c3x/cli to npm
         if: steps.release_check.outputs.should_release == 'true'
         working-directory: packages/cli
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public
+        run: |
+          VERSION=$(cat ../../skills/c3/bin/VERSION | tr -d '[:space:]')
+          npm pkg set version="$VERSION"
+          npm install
+          npm run build
+          npm publish --access public

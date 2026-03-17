@@ -5,6 +5,14 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.12.0] - 2026-03-17
+
+### Added
+- **`@c3x/cli` npm package**: Thin Node.js CLI (`npx @c3x/cli`) that discovers installed c3x Go binaries across Claude/Codex skill paths and marketplace installations, picks the highest version, and delegates. Humans get text output; agents get JSON.
+- **`--agent` flag**: Restrict binary discovery to a specific agent type (`--agent claude` or `--agent codex`). Project scope is always included.
+- **`C3X_MODE` env var**: Go binary respects `C3X_MODE=agent` to output JSON by default for commands that support it. Explicit `--json`/`--compact` flags override.
+- **Automated npm publishing**: CI publishes `@c3x/cli` to npm alongside GitHub releases on version bumps.
+
 ## [6.11.1] - 2026-03-17
 
 ### Fixed

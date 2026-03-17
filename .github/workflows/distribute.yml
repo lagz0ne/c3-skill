@@ -49,6 +49,9 @@ jobs:
           mkdir -p /tmp/c3x-bins
           cp skills/c3/bin/c3x-*-*-* /tmp/c3x-bins/
 
+          # Reset build artifacts before checkout (merge will bring dev's versions)
+          git checkout -- skills/c3/bin/VERSION
+
           # Start from main (not dev) to avoid merge conflicts with old binaries
           git fetch origin main
           git checkout -B "$BRANCH" origin/main

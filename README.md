@@ -29,7 +29,17 @@ Six operations, one entry point:
 
 ### The `c3x` CLI
 
-Native Go binary, bundled with the plugin. Version-stamped binaries (`c3x-{version}-{os}-{arch}`) ensure the correct binary is always used after plugin updates.
+Native Go binary, bundled with the plugin. Also available as an npm package for direct human use:
+
+```bash
+npx @c3x/cli list              # run without installing
+npm install -g @c3x/cli        # or install globally
+c3x list                       # then use directly
+c3x --agent claude list        # restrict discovery to Claude skill paths
+c3x --agent codex list         # restrict discovery to Codex skill paths
+```
+
+The npm CLI is a thin wrapper that discovers installed c3x binaries (via Claude/Codex skill installations) and delegates. Humans get text output by default; agents get JSON via the `C3X_MODE=agent` env var.
 
 ```
 c3x <command> [args] [options]

@@ -46,6 +46,7 @@ c3x <command> [args] [options]
   coverage                   Code-map coverage + ref governance stats
   graph <entity-id>          Subgraph from entity (--format mermaid for diagrams)
   delete <id>                Remove entity + clean all references (--dry-run)
+  capabilities               List all commands as a markdown table
 
   --json                     Machine-readable output
   --include-adr              Include ADRs in output (hidden by default)

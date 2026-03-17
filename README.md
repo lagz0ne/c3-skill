@@ -29,17 +29,37 @@ Six operations, one entry point:
 
 ### The `c3x` CLI
 
-Native Go binary, bundled with the plugin. Also available as an npm package for direct human use:
+Native Go binary, bundled with the plugin. Agents use it through the `/c3` skill automatically. Humans can use it directly via the `@c3x/cli` npm package:
 
 ```bash
 npx @c3x/cli list              # run without installing
-npm install -g @c3x/cli        # or install globally
-c3x list                       # then use directly
-c3x --agent claude list        # restrict discovery to Claude skill paths
-c3x --agent codex list         # restrict discovery to Codex skill paths
+npm install -g @c3x/cli        # or install globally, then:
+c3x list                       # use directly
 ```
 
-The npm CLI is a thin wrapper that discovers installed c3x binaries (via Claude/Codex skill installations) and delegates. Humans get text output by default; agents get JSON via the `C3X_MODE=agent` env var.
+`@c3x/cli` is a thin wrapper — it doesn't bundle the Go binary. Instead, it discovers an already-installed binary from your agent skill installations and delegates to it. This means you install the c3 skill once (via Claude or Codex), and both agents and humans share the same binary.
+
+#### How resolution works
+
+The CLI searches these locations for the c3x binary, picks the highest version found:
+
+| Priority | Location | Source |
+|----------|----------|--------|
+| 1 | `<project>/skills/c3/bin/` | Local project (walks up from cwd, stops at `.git`) |
+| 2 | `~/.claude/skills/c3/bin/` | Claude Code skill installation |
+| 3 | `~/.codex/skills/c3/bin/` | Codex skill installation |
+| 4 | `~/.claude/plugins/marketplaces/*/skills/c3/bin/` | Claude marketplace |
+
+Use `--agent` to restrict the search:
+
+```bash
+c3x --agent claude list        # only Claude paths + project
+c3x --agent codex list         # only Codex paths + project
+```
+
+#### Human vs agent output
+
+When agents invoke c3x through the skill, `C3X_MODE=agent` is set automatically — output is JSON. When humans run `c3x` via the npm CLI, no mode is set — output is human-readable text. Explicit `--json` or `--compact` flags override either default.
 
 ```
 c3x <command> [args] [options]

@@ -1,6 +1,9 @@
 package cmd
 
-import "strconv"
+import (
+	"os"
+	"strconv"
+)
 
 // Options holds parsed CLI flags and arguments.
 type Options struct {
@@ -119,5 +122,13 @@ func ParseArgs(argv []string) Options {
 		opts.Command = args[0]
 		opts.Args = args[1:]
 	}
+	// C3X_MODE env var: "agent" implies --json for commands that support it.
+	// Explicit --json flag takes precedence (already set above).
+	if !opts.JSON {
+		if mode := os.Getenv("C3X_MODE"); mode == "agent" {
+			opts.JSON = true
+		}
+	}
+
 	return opts
 }

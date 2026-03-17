@@ -22,6 +22,12 @@ jobs:
         with:
           go-version-file: cli/go.mod
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
       - name: Run tests
         working-directory: cli
         run: go test ./...
@@ -138,3 +144,15 @@ jobs:
             --title "C3 v${VERSION}" \
             --notes-file /tmp/changelog.md \
             "/tmp/c3-skill-v${VERSION}.zip"
+
+      - name: Build and publish @c3x/cli to npm
+        if: steps.release_check.outputs.should_release == 'true'
+        working-directory: packages/cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          VERSION=$(cat ../../skills/c3/bin/VERSION | tr -d '[:space:]')
+          npm pkg set version="$VERSION"
+          npm install
+          npm run build
+          npm publish --access public

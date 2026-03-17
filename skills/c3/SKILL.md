@@ -40,7 +40,7 @@ description: |
 
 # C3
 
-CLI: `bash <skill-dir>/bin/c3x.sh <command> [args]`
+CLI: `C3X_MODE=agent bash <skill-dir>/bin/c3x.sh <command> [args]`
 
 | Command | Purpose |
 |---------|---------|

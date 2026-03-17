@@ -117,8 +117,9 @@ cd cli && go test ./...       # Run Go tests
 
 ## CI/CD
 
-- **Push to main** -> `release.yml` checks VERSION file
-- New version -> Go cross-compile -> GitHub Release with plugin zip
+- **Push to dev** -> `distribute.yml` builds, merges to main via PR, creates release
+- **Push to main** -> `release.yml` (fallback) checks `skills/c3/bin/VERSION`
+- New version -> GitHub Release with plugin zip
 
 ## Versioning
 
@@ -126,10 +127,8 @@ All version files must stay in sync:
 
 | File | Purpose |
 |------|---------|
-| `.claude-plugin/plugin.json` | Source of truth |
+| `skills/c3/bin/VERSION` | Source of truth — CI, c3x.sh, and build.sh all read this |
+| `.claude-plugin/plugin.json` | Plugin metadata |
 | `.claude-plugin/marketplace.json` | Marketplace listing |
-| `VERSION` | Triggers GitHub release |
-| `skills/c3/bin/VERSION` | Read by c3x.sh to select correct binary |
-| `package.json` | Dev repo version |
 
 Use `/release` command to bump versions consistently.

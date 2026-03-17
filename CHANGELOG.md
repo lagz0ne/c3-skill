@@ -5,6 +5,14 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.10.2] - 2026-03-17
+
+### Changed
+- **Single VERSION source of truth**: Consolidated from root `VERSION` + `skills/c3/bin/VERSION` to just `skills/c3/bin/VERSION`. CI workflows (`release.yml`, `distribute.yml`), `build.sh`, and `/release` command all read from the same file now.
+
+### Removed
+- **Root `VERSION` file**: Eliminated redundant version file. `skills/c3/bin/VERSION` is the sole source of truth for version detection.
+
 ## [6.10.1] - 2026-03-16
 
 ### Changed

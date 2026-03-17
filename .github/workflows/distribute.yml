@@ -78,7 +78,7 @@ jobs:
           gh pr merge "$PR_URL" --merge --delete-branch
 
           # Read version for release step
-          CURRENT_VERSION=$(cat VERSION | tr -d '[:space:]')
+          CURRENT_VERSION=$(cat skills/c3/bin/VERSION | tr -d '[:space:]')
           echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
 
       - name: Check if release needed

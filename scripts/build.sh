@@ -21,9 +21,9 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Read version from VERSION file if not explicitly set
-if [ "$VERSION" = "dev" ] && [ -f "$ROOT/VERSION" ]; then
-  VERSION=$(cat "$ROOT/VERSION" | tr -d '[:space:]')
+# Read version from skills VERSION file if not explicitly set
+if [ "$VERSION" = "dev" ] && [ -f "$ROOT/skills/c3/bin/VERSION" ]; then
+  VERSION=$(cat "$ROOT/skills/c3/bin/VERSION" | tr -d '[:space:]')
 fi
 
 echo "Building c3x CLI v${VERSION}"

@@ -41,6 +41,12 @@ func main() {
 		return
 	}
 
+	// capabilities is special — describes the CLI itself, no .c3/ needed
+	if opts.Command == "capabilities" {
+		cmd.ShowCapabilities(w)
+		return
+	}
+
 	// All other commands need a .c3/ directory
 	c3Dir := config.ResolveC3Dir(mustCwd(), opts.C3Dir)
 	if c3Dir == "" {

@@ -230,25 +230,27 @@ This project uses C3 docs in `.c3/`.
 For architecture questions, changes, audits, file context -> `/c3`.
 Operations: query, audit, change, ref, sweep.
 File lookup: `c3x lookup <file-or-glob>` maps files/directories to components + refs.
+CLI: `bash skills/c3/bin/c3x.sh <command>` (must build first: `bash scripts/build.sh`)
 ```
 
 ### Capabilities Reveal
 
+Show the user the typical workflow, then point to self-discovery:
+
 ```
 ## Your C3 toolkit is ready
 
-| Command | What it does |
-|---------|-------------|
-| `/c3` query | Ask about architecture |
-| `/c3` audit | Validate docs |
-| `/c3` change | Modify architecture |
-| `/c3` ref | Manage patterns |
-| `/c3` sweep | Impact assessment |
-| `/c3` recipe | Trace cross-cutting concern end-to-end |
-| `c3x lookup <file-or-glob>` | File or directory → components + governing refs |
-| `c3x coverage` | See what's mapped, excluded, unmapped |
+**Typical flow:**
 
-Just say `/c3` + what you want.
+1. Understand what exists: `c3x list` → topology, then `c3x lookup <file>` → which component owns it
+2. Make changes: `c3x add` / `c3x set` / `c3x wire` to create and connect entities
+3. Validate: `c3x check` catches broken links, schema gaps, orphans
+4. Explore impact: `c3x graph <id>` shows what connects to what
+
+For architecture questions, changes, audits → just say `/c3` + what you want.
+
+Run `c3x capabilities` to see all available commands.
+Run `c3x <command> --help` for detailed usage.
 ```
 
 ## Complexity Guide

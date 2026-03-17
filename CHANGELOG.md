@@ -5,6 +5,15 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.11.0] - 2026-03-17
+
+### Added
+- **`c3x capabilities` command**: Emits a markdown table of all non-hidden CLI commands. Single source of truth for feature documentation — onboard and README both consume this instead of maintaining separate lists.
+
+### Changed
+- **Registry-driven command metadata**: `help.go` refactored from hardcoded strings to a `[]CommandMeta` registry. Both `c3x --help` and `c3x capabilities` render from the same data. Adding a new command means adding one struct entry.
+- **Onboard post-reveal**: Replaced static capabilities table with a flow-based introduction (understand → change → validate → explore) and a pointer to `c3x capabilities` for self-discovery.
+
 ## [6.10.2] - 2026-03-17
 
 ### Changed

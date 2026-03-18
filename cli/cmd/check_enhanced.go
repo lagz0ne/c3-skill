@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -11,7 +10,9 @@ import (
 
 	"github.com/lagz0ne/c3-design/cli/internal/codemap"
 	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
+	"github.com/lagz0ne/c3-design/cli/internal/index"
 	"github.com/lagz0ne/c3-design/cli/internal/markdown"
+	"github.com/lagz0ne/c3-design/cli/internal/schema"
 	"github.com/lagz0ne/c3-design/cli/internal/walker"
 )
 
@@ -20,6 +21,7 @@ type Issue struct {
 	Severity string `json:"severity"`
 	Entity   string `json:"entity,omitempty"`
 	Message  string `json:"message"`
+	Hint     string `json:"hint,omitempty"`
 }
 
 // CheckResult holds the validation output.
@@ -30,16 +32,170 @@ type CheckResult struct {
 
 // CheckOptions holds parameters for the enhanced check command.
 type CheckOptions struct {
-	Graph      *walker.C3Graph
-	Docs       []frontmatter.ParsedDoc
-	JSON       bool
-	ProjectDir string
-	C3Dir      string // path to .c3/ directory (may differ from ProjectDir/.c3/ with --c3-dir)
+	Graph         *walker.C3Graph
+	Docs          []frontmatter.ParsedDoc
+	JSON          bool
+	ProjectDir    string
+	C3Dir         string // path to .c3/ directory (may differ from ProjectDir/.c3/ with --c3-dir)
+	ParseWarnings []walker.ParseWarning
+	IncludeADR    bool
+	Fix           bool
+}
+
+// fixRecord tracks a single auto-fixable reference replacement.
+type fixRecord struct {
+	entityID string // entity containing the bad reference
+	filePath string // relative to .c3/
+	oldValue string
+	newValue string
+}
+
+// buildTitleMap creates a case-insensitive title/slug → entity ID lookup.
+// Only marks as ambiguous when different entities map to the same key.
+func buildTitleMap(graph *walker.C3Graph) map[string]string {
+	m := make(map[string]string)
+	for _, e := range graph.All() {
+		lower := strings.ToLower(e.Title)
+		if existing, exists := m[lower]; exists {
+			if existing != e.ID {
+				m[lower] = "" // ambiguous — different entities share this name
+			}
+		} else {
+			m[lower] = e.ID
+		}
+		if e.Slug != "" {
+			slugLower := strings.ToLower(e.Slug)
+			if existing, exists := m[slugLower]; exists {
+				if existing != e.ID {
+					m[slugLower] = "" // ambiguous
+				}
+			} else {
+				m[slugLower] = e.ID
+			}
+		}
+	}
+	return m
+}
+
+// suggestByTitle returns a suggested entity ID if the value matches a title/slug, or "".
+func suggestByTitle(val string, titleMap map[string]string) string {
+	if id := titleMap[strings.ToLower(val)]; id != "" {
+		return id
+	}
+	return ""
+}
+
+func hintFor(message string) string {
+	patterns := []struct {
+		substr string
+		hint   string
+	}{
+		{"broken YAML frontmatter", "check for unquoted colons in values"},
+		{"code-map parse error", "fix YAML syntax in .c3/code-map.yaml"},
+		{"missing required section", ""},   // dynamic — handled below
+		{"empty required section", ""},     // dynamic — handled below
+		{"empty required table", "add at least one data row below the table headers"},
+		{"unknown entity reference", "verify the ID with 'c3x list'; check for typos"},
+		{"unknown ref reference", "use a ref-* ID (e.g., ref-jwt); verify with 'c3x list'"},
+		{"file does not exist", "create the file or fix the path"},
+		{"not found in C3 graph", "remove from code-map.yaml, or create the entity doc"},
+		{"not a component or ref", "only components and refs belong in code-map"},
+		{"empty path in code-map", "remove the empty entry or add a file pattern"},
+		{"absolute path not allowed", "use a relative path from the project root"},
+		{"escapes project root", "use a path within the project"},
+		{"is a directory", "point to source files, not directories"},
+		{"no files match pattern", "fix the glob pattern or create matching files"},
+		{"recipe references nonexistent entity", "fix the source ID or remove it from the recipe"},
+	}
+	for _, p := range patterns {
+		if !strings.Contains(message, p.substr) {
+			continue
+		}
+		if p.hint != "" {
+			return p.hint
+		}
+		// Dynamic hints: extract section name from "missing required section: X" or "empty required section: X"
+		if strings.Contains(message, "missing required section: ") {
+			section := strings.TrimPrefix(message, "missing required section: ")
+			return fmt.Sprintf("add a ## %s section with content", section)
+		}
+		if strings.Contains(message, "empty required section: ") {
+			section := strings.TrimPrefix(message, "empty required section: ")
+			return fmt.Sprintf("add content to the ## %s section", section)
+		}
+	}
+	return ""
+}
+
+func countSeverities(issues []Issue) (errors, warnings int) {
+	for _, issue := range issues {
+		if issue.Severity == "error" {
+			errors++
+		} else {
+			warnings++
+		}
+	}
+	return
+}
+
+func formatCounts(errors, warnings int) string {
+	var parts []string
+	if errors > 0 {
+		noun := "error"
+		if errors > 1 {
+			noun = "errors"
+		}
+		parts = append(parts, fmt.Sprintf("%d %s", errors, noun))
+	}
+	if warnings > 0 {
+		noun := "warning"
+		if warnings > 1 {
+			noun = "warnings"
+		}
+		parts = append(parts, fmt.Sprintf("%d %s", warnings, noun))
+	}
+	return strings.Join(parts, ", ")
+}
+
+// Strips #fragment anchors before lookup.
+func validateSourceRefs(entityLabel string, sources []string, graph *walker.C3Graph, noun string) []Issue {
+	var issues []Issue
+	for _, src := range sources {
+		entityID := frontmatter.StripAnchor(src)
+		if graph.Get(entityID) == nil {
+			issues = append(issues, Issue{
+				Severity: "warning",
+				Entity:   entityLabel,
+				Message:  fmt.Sprintf("%s references nonexistent entity: %s", noun, entityID),
+			})
+		}
+	}
+	return issues
+}
+
+
+func checkRecipeSources(graph *walker.C3Graph) []Issue {
+	var issues []Issue
+	for _, r := range graph.ByType(frontmatter.DocRecipe) {
+		issues = append(issues, validateSourceRefs(r.ID, r.Frontmatter.Sources, graph, "recipe")...)
+	}
+	return issues
 }
 
 // RunCheckV2 validates entities against the schema registry.
 func RunCheckV2(opts CheckOptions, w io.Writer) error {
 	var issues []Issue
+	var fixes []fixRecord
+
+	titleMap := buildTitleMap(opts.Graph)
+
+	for _, pw := range opts.ParseWarnings {
+		issues = append(issues, Issue{
+			Severity: "error",
+			Entity:   pw.Path,
+			Message:  "broken YAML frontmatter: file has --- delimiters but failed to parse (check for unquoted colons in values)",
+		})
+	}
 
 	// Build sorted entity list for deterministic output
 	entities := opts.Graph.All()
@@ -49,10 +205,13 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 
 	for _, entity := range entities {
 		docType := frontmatter.ClassifyDoc(entity.Frontmatter)
+		if docType == frontmatter.DocADR && !opts.IncludeADR {
+			continue
+		}
 		typeName := docType.String()
 
-		schemaSections, ok := schemaRegistry[typeName]
-		if !ok {
+		schemaSections := schema.ForType(typeName)
+		if schemaSections == nil {
 			continue
 		}
 
@@ -136,10 +295,34 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 								continue
 							}
 							if opts.Graph.Get(val) == nil {
+								msg := fmt.Sprintf("unknown entity reference: %s", val)
+								if suggested := suggestByTitle(val, titleMap); suggested != "" {
+									msg = fmt.Sprintf("unknown entity reference: %s (did you mean %s?)", val, suggested)
+									fixes = append(fixes, fixRecord{entityID: entity.ID, filePath: entity.Path, oldValue: val, newValue: suggested})
+								}
 								issues = append(issues, Issue{
 									Severity: "warning",
 									Entity:   entity.ID,
-									Message:  fmt.Sprintf("unknown entity reference: %s", val),
+									Message:  msg,
+								})
+							}
+						}
+					case "ref_id":
+						for _, row := range table.Rows {
+							val := strings.TrimSpace(row[col.Name])
+							if val == "" {
+								continue
+							}
+							if opts.Graph.Get(val) == nil {
+								msg := fmt.Sprintf("unknown ref reference: %s", val)
+								if suggested := suggestByTitle(val, titleMap); suggested != "" {
+									msg = fmt.Sprintf("unknown ref reference: %s (did you mean %s?)", val, suggested)
+									fixes = append(fixes, fixRecord{entityID: entity.ID, filePath: entity.Path, oldValue: val, newValue: suggested})
+								}
+								issues = append(issues, Issue{
+									Severity: "warning",
+									Entity:   entity.ID,
+									Message:  msg,
 								})
 							}
 						}
@@ -183,10 +366,34 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 							continue
 						}
 						if opts.Graph.Get(val) == nil {
+							msg := fmt.Sprintf("unknown entity reference: %s", val)
+							if suggested := suggestByTitle(val, titleMap); suggested != "" {
+								msg = fmt.Sprintf("unknown entity reference: %s (did you mean %s?)", val, suggested)
+								fixes = append(fixes, fixRecord{entityID: entity.ID, filePath: entity.Path, oldValue: val, newValue: suggested})
+							}
 							issues = append(issues, Issue{
 								Severity: "warning",
 								Entity:   entity.ID,
-								Message:  fmt.Sprintf("unknown entity reference: %s", val),
+								Message:  msg,
+							})
+						}
+					}
+				case "ref_id":
+					for _, row := range table.Rows {
+						val := strings.TrimSpace(row[col.Name])
+						if val == "" {
+							continue
+						}
+						if opts.Graph.Get(val) == nil {
+							msg := fmt.Sprintf("unknown ref reference: %s", val)
+							if suggested := suggestByTitle(val, titleMap); suggested != "" {
+								msg = fmt.Sprintf("unknown ref reference: %s (did you mean %s?)", val, suggested)
+								fixes = append(fixes, fixRecord{entityID: entity.ID, filePath: entity.Path, oldValue: val, newValue: suggested})
+							}
+							issues = append(issues, Issue{
+								Severity: "warning",
+								Entity:   entity.ID,
+								Message:  msg,
 							})
 						}
 					}
@@ -242,6 +449,61 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 		}
 	}
 
+	issues = append(issues, checkRecipeSources(opts.Graph)...)
+
+	// Scope cross-check: if a ref scopes a container, all child components should cite it
+	if c3Dir != "" {
+		cmForScope, cmErr := codemap.ParseCodeMap(filepath.Join(c3Dir, "code-map.yaml"))
+		if cmErr == nil && len(cmForScope) > 0 {
+			idx := index.Build(opts.Graph, cmForScope, c3Dir)
+			for refID, re := range idx.Refs {
+				for _, scopeID := range re.Scope {
+					scopeEntity := opts.Graph.Get(scopeID)
+					if scopeEntity == nil {
+						continue
+					}
+					// Expand container/context scope to child components
+					children := opts.Graph.Children(scopeID)
+					for _, child := range children {
+						childType := frontmatter.ClassifyDoc(child.Frontmatter)
+						if childType != frontmatter.DocComponent {
+							continue
+						}
+						// Check if child cites this ref
+						cited := false
+						if entry, ok := idx.Entities[child.ID]; ok {
+							for _, r := range entry.Refs {
+								if r == refID {
+									cited = true
+									break
+								}
+							}
+						}
+						if !cited {
+							issues = append(issues, Issue{
+								Severity: "warning",
+								Entity:   child.ID,
+								Message:  fmt.Sprintf("ref %s scopes %s but %s does not cite it", refID, scopeID, child.ID),
+							})
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Apply fixes if --fix and we have suggestions
+	fixedCount := 0
+	if opts.Fix && len(fixes) > 0 {
+		c3Base := opts.C3Dir
+		if c3Base == "" && opts.ProjectDir != "" {
+			c3Base = filepath.Join(opts.ProjectDir, ".c3")
+		}
+		if c3Base != "" {
+			fixedCount = applyFixes(fixes, c3Base)
+		}
+	}
+
 	result := CheckResult{
 		Total:  len(opts.Docs),
 		Issues: issues,
@@ -252,16 +514,34 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 
 	// Output
 	if opts.JSON {
-		out, err := json.MarshalIndent(result, "", "  ")
-		if err != nil {
-			return err
+		for i := range result.Issues {
+			result.Issues[i].Hint = hintFor(result.Issues[i].Message)
 		}
-		fmt.Fprintln(w, string(out))
-		return nil
+		return writeJSON(w, result)
 	}
 
-	// Text output
+	// Text output — summary header
+	errors, warnings := countSeverities(result.Issues)
+	if len(result.Issues) == 0 && fixedCount == 0 {
+		fmt.Fprintf(w, "Checked %d docs — all clear\n", result.Total)
+		return nil
+	}
+	if fixedCount > 0 {
+		fmt.Fprintf(w, "Checked %d docs — fixed %d reference(s)\n", result.Total, fixedCount)
+		if errors+warnings-fixedCount > 0 {
+			fmt.Fprintf(w, "Remaining: %s\n", formatCounts(errors, warnings-fixedCount))
+		}
+		fmt.Fprintln(w)
+	} else {
+		fmt.Fprintf(w, "Checked %d docs — %s\n\n", result.Total, formatCounts(errors, warnings))
+	}
+
+	// Issue lines with hints (skip fixed issues)
 	for _, issue := range result.Issues {
+		// If --fix applied, skip issues that were fixed
+		if opts.Fix && fixedCount > 0 && strings.Contains(issue.Message, "did you mean") {
+			continue
+		}
 		entityLabel := issue.Entity
 		if entityLabel == "" {
 			entityLabel = "global"
@@ -271,7 +551,63 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 			icon = "✗"
 		}
 		fmt.Fprintf(w, "  %s %s: %s\n", icon, entityLabel, issue.Message)
+		if hint := hintFor(issue.Message); hint != "" {
+			fmt.Fprintf(w, "    → %s\n", hint)
+		}
+		fmt.Fprintln(w)
+	}
+
+	// Legend
+	if fixedCount == 0 || errors+warnings-fixedCount > 0 {
+		fmt.Fprintln(w, "Legend: ✗ = error (fix first)  ! = warning (incomplete, should fix)")
 	}
 
 	return nil
+}
+
+// applyFixes reads entity files and replaces bad references with suggested IDs.
+// Returns the number of fixes successfully applied.
+func applyFixes(fixes []fixRecord, c3Dir string) int {
+	// Group fixes by file path to batch per-file
+	byFile := make(map[string][]fixRecord)
+	for _, f := range fixes {
+		byFile[f.filePath] = append(byFile[f.filePath], f)
+	}
+
+	applied := 0
+	for relPath, fileFixes := range byFile {
+		absPath := filepath.Join(c3Dir, relPath)
+		data, err := os.ReadFile(absPath)
+		if err != nil {
+			continue
+		}
+		content := string(data)
+		modified := false
+
+		for _, fix := range fileFixes {
+			// Replace in table cells: look for "| oldValue |" pattern
+			// Handle whitespace variations around the value
+			old1 := "| " + fix.oldValue + " |"
+			new1 := "| " + fix.newValue + " |"
+			if strings.Contains(content, old1) {
+				content = strings.ReplaceAll(content, old1, new1)
+				modified = true
+				applied++
+				continue
+			}
+			// Try without trailing space (end of row)
+			old2 := "| " + fix.oldValue + " |"
+			new2 := "| " + fix.newValue + " |"
+			if strings.Contains(content, old2) {
+				content = strings.ReplaceAll(content, old2, new2)
+				modified = true
+				applied++
+			}
+		}
+
+		if modified {
+			os.WriteFile(absPath, []byte(content), 0644)
+		}
+	}
+	return applied
 }

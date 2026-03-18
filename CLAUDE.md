@@ -1,3 +1,12 @@
+# Architecture
+This project uses C3 docs in `.c3/`.
+For architecture questions, changes, audits, file context -> `/c3`.
+Operations: query, audit, change, ref, sweep.
+File lookup: `c3x lookup <file-or-glob>` maps files/directories to components + refs.
+CLI: `bash skills/c3/bin/c3x.sh <command>` (must build first: `bash scripts/build.sh`)
+
+---
+
 # C3 skill design
 
 This is a repository containing a Claude code skill called c3. c3 is a trimmed down concept from c4, focusing on rationalizing architectural and architectural change for large codebase
@@ -84,9 +93,10 @@ c3-design/
 │   └── templates/            # Embedded doc templates
 ├── skills/c3/                # Unified skill (auto-discovered)
 │   ├── SKILL.md              # Skill definition + intent router
-│   ├── bin/                  # CLI binaries (built in CI)
-│   │   ├── c3x.sh           # Platform-detecting wrapper
-│   │   └── c3x-{os}-{arch}  # Cross-compiled binaries (gitignored)
+│   ├── bin/                           # CLI binaries (built in CI)
+│   │   ├── c3x.sh                    # Platform-detecting wrapper
+│   │   ├── VERSION                   # Current version (read by c3x.sh, committed)
+│   │   └── c3x-{version}-{os}-{arch} # Cross-compiled binaries (gitignored)
 │   └── references/           # Operation-specific guidance
 │       ├── onboard.md
 │       ├── query.md
@@ -107,8 +117,9 @@ cd cli && go test ./...       # Run Go tests
 
 ## CI/CD
 
-- **Push to main** -> `release.yml` checks VERSION file
-- New version -> Go cross-compile -> GitHub Release with plugin zip
+- **Push to dev** -> `distribute.yml` builds, merges to main via PR, creates release
+- **Push to main** -> `release.yml` (fallback) checks `skills/c3/bin/VERSION`
+- New version -> GitHub Release with plugin zip
 
 ## Versioning
 
@@ -116,9 +127,8 @@ All version files must stay in sync:
 
 | File | Purpose |
 |------|---------|
-| `.claude-plugin/plugin.json` | Source of truth |
+| `skills/c3/bin/VERSION` | Source of truth — CI, c3x.sh, and build.sh all read this |
+| `.claude-plugin/plugin.json` | Plugin metadata |
 | `.claude-plugin/marketplace.json` | Marketplace listing |
-| `VERSION` | Triggers GitHub release |
-| `package.json` | Dev repo version |
 
 Use `/release` command to bump versions consistently.

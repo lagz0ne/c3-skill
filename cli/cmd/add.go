@@ -17,10 +17,16 @@ import (
 
 var validSlug = regexp.MustCompile(`^[a-z][a-z0-9]*(-[a-z0-9]+)*$`)
 
+// AddResult is the JSON output from add commands.
+type AddResult struct {
+	ID   string `json:"id"`
+	Path string `json:"path"`
+}
+
 // RunAdd creates a new C3 entity.
 func RunAdd(entityType, slug, c3Dir string, graph *walker.C3Graph, container string, feature bool, w io.Writer) error {
 	if entityType == "" || slug == "" {
-		return fmt.Errorf("error: usage: c3 add <type> <slug>\nhint: types: container, component, ref, adr")
+		return fmt.Errorf("error: usage: c3 add <type> <slug>\nhint: types: container, component, ref, adr, recipe")
 	}
 
 	if !validSlug.MatchString(slug) {
@@ -36,8 +42,10 @@ func RunAdd(entityType, slug, c3Dir string, graph *walker.C3Graph, container str
 		return addRef(slug, c3Dir, w)
 	case "adr":
 		return addAdr(slug, c3Dir, w)
+	case "recipe":
+		return addRecipe(slug, c3Dir, w)
 	default:
-		return fmt.Errorf("error: unknown entity type '%s'\nhint: types: container, component, ref, adr", entityType)
+		return fmt.Errorf("error: unknown entity type '%s'\nhint: types: container, component, ref, adr, recipe", entityType)
 	}
 }
 
@@ -134,35 +142,46 @@ func addComponent(slug, c3Dir string, graph *walker.C3Graph, containerArg string
 	return nil
 }
 
-func addRef(slug, c3Dir string, w io.Writer) error {
-	refsDir := filepath.Join(c3Dir, "refs")
-	if err := os.MkdirAll(refsDir, 0755); err != nil {
-		return fmt.Errorf("error: creating refs/: %w", err)
+// addSubdirEntity creates a simple entity (ref, recipe) in a subdirectory of .c3/.
+func addSubdirEntity(slug, c3Dir, subDir, prefix, templateName string, templateVars map[string]string, w io.Writer) error {
+	dir := filepath.Join(c3Dir, subDir)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("error: creating %s/: %w", subDir, err)
 	}
 
-	fileName := fmt.Sprintf("ref-%s.md", slug)
-	filePath := filepath.Join(refsDir, fileName)
+	id := prefix + slug
+	filePath := filepath.Join(dir, id+".md")
 
 	if _, err := os.Stat(filePath); err == nil {
-		return fmt.Errorf("error: ref-%s already exists", slug)
+		return fmt.Errorf("error: %s already exists", id)
 	}
 
-	content, err := templates.Render("ref.md", map[string]string{
-		"${SLUG}":  slug,
-		"${TITLE}": slug,
-		"${GOAL}":  "",
-	})
+	content, err := templates.Render(templateName, templateVars)
 	if err != nil {
 		return fmt.Errorf("error: rendering template: %w", err)
 	}
 
 	if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
-		return fmt.Errorf("error: writing ref: %w", err)
+		return fmt.Errorf("error: writing %s: %w", subDir, err)
 	}
 
 	rel, _ := filepath.Rel(filepath.Dir(c3Dir), filePath)
-	fmt.Fprintf(w, "Created: %s (id: ref-%s)\n", rel, slug)
+	fmt.Fprintf(w, "Created: %s (id: %s)\n", rel, id)
 	return nil
+}
+
+func addRef(slug, c3Dir string, w io.Writer) error {
+	return addSubdirEntity(slug, c3Dir, "refs", "ref-", "ref.md", map[string]string{
+		"${SLUG}":  slug,
+		"${TITLE}": slug,
+		"${GOAL}":  "",
+	}, w)
+}
+
+func addRecipe(slug, c3Dir string, w io.Writer) error {
+	return addSubdirEntity(slug, c3Dir, "recipes", "recipe-", "recipe.md", map[string]string{
+		"${SLUG}": slug,
+	}, w)
 }
 
 func addAdr(slug, c3Dir string, w io.Writer) error {
@@ -179,13 +198,11 @@ func addAdr(slug, c3Dir string, w io.Writer) error {
 		return fmt.Errorf("error: %s already exists", adrID)
 	}
 
-	today := time.Now().Format("20060102")
-	content, err := templates.Render("adr-000.md", map[string]string{
-		"adr-00000000-c3-adoption":               adrID,
-		"C3 Architecture Documentation Adoption":  slug,
-		"Adopt C3 methodology for ${PROJECT}.\n":  "",
-		"${DATE}":    today,
-		"${PROJECT}": "",
+	today := time.Now().Format("2006-01-02")
+	content, err := templates.Render("adr.md", map[string]string{
+		"${ID}":    adrID,
+		"${TITLE}": slug,
+		"${DATE}":  today,
 	})
 	if err != nil {
 		return fmt.Errorf("error: rendering template: %w", err)

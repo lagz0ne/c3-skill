@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/lagz0ne/c3-design/cli/internal/numbering"
+	"github.com/lagz0ne/c3-design/cli/internal/schema"
 	"github.com/lagz0ne/c3-design/cli/internal/walker"
 	"github.com/lagz0ne/c3-design/cli/internal/wiring"
 )
@@ -28,15 +29,11 @@ type AddOptions struct {
 	Boundary   string
 }
 
-// hasContent returns true if any content flags were provided.
 func (o *AddOptions) hasContent() bool {
 	return o.Goal != "" || o.Summary != "" || o.Boundary != ""
 }
 
 // RunAddRich creates a new entity with optional content pre-populated.
-// When content flags are provided, it generates a richer document with
-// frontmatter fields and scaffolded body sections from the schema registry.
-// When no content flags are set, it falls back to the existing RunAdd.
 func RunAddRich(opts AddOptions, w io.Writer) error {
 	if !opts.hasContent() {
 		return RunAdd(opts.EntityType, opts.Slug, opts.C3Dir, opts.Graph, opts.Container, opts.Feature, w)
@@ -51,8 +48,10 @@ func RunAddRich(opts AddOptions, w io.Writer) error {
 		return addRichRef(opts, w)
 	case "adr":
 		return addRichAdr(opts, w)
+	case "recipe":
+		return addRichRecipe(opts, w)
 	default:
-		return fmt.Errorf("error: unknown entity type '%s'\nhint: types: container, component, ref, adr", opts.EntityType)
+		return fmt.Errorf("error: unknown entity type '%s'\nhint: types: container, component, ref, adr, recipe", opts.EntityType)
 	}
 }
 
@@ -207,7 +206,7 @@ func addRichAdr(opts AddOptions, w io.Writer) error {
 		return fmt.Errorf("error: %s already exists", adrID)
 	}
 
-	today := time.Now().Format("20060102")
+	today := time.Now().Format("2006-01-02")
 	content := buildDocument(
 		map[string]string{
 			"id":      adrID,
@@ -232,35 +231,58 @@ func addRichAdr(opts AddOptions, w io.Writer) error {
 	return nil
 }
 
-// buildDocument generates a markdown document with YAML frontmatter and
-// scaffolded body sections from the schema registry.
+func addRichRecipe(opts AddOptions, w io.Writer) error {
+	recipesDir := filepath.Join(opts.C3Dir, "recipes")
+	if err := os.MkdirAll(recipesDir, 0755); err != nil {
+		return fmt.Errorf("error: creating recipes/: %w", err)
+	}
+
+	id := fmt.Sprintf("recipe-%s", opts.Slug)
+	filePath := filepath.Join(recipesDir, id+".md")
+
+	if _, err := os.Stat(filePath); err == nil {
+		return fmt.Errorf("error: %s already exists", id)
+	}
+
+	content := buildDocument(
+		map[string]string{
+			"id":    id,
+			"title": opts.Slug,
+			"type":  "recipe",
+			"goal":  opts.Goal,
+		},
+		opts.Slug,
+		"recipe",
+		opts.Goal,
+	)
+
+	if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
+		return fmt.Errorf("error: writing recipe: %w", err)
+	}
+
+	rel, _ := filepath.Rel(filepath.Dir(opts.C3Dir), filePath)
+	fmt.Fprintf(w, "Created: %s (id: %s)\n", rel, id)
+	return nil
+}
+
 func buildDocument(fmFields map[string]string, title, entityType, goal string) string {
 	var b strings.Builder
 
-	// Frontmatter
 	b.WriteString("---\n")
-	// Write fields in a stable order
 	orderedKeys := []string{"id", "title", "type", "category", "boundary", "parent", "goal", "summary", "status", "date", "affects", "scope"}
 	for _, k := range orderedKeys {
 		v, ok := fmFields[k]
 		if !ok || v == "" {
 			continue
 		}
-		// Some fields are written as-is (arrays like affects, scope)
-		if k == "affects" || k == "scope" {
-			b.WriteString(fmt.Sprintf("%s: %s\n", k, v))
-		} else {
-			b.WriteString(fmt.Sprintf("%s: %s\n", k, v))
-		}
+		b.WriteString(fmt.Sprintf("%s: %s\n", k, v))
 	}
 	b.WriteString("---\n\n")
 
-	// Title heading
 	b.WriteString(fmt.Sprintf("# %s\n", title))
 
-	// Scaffold body sections from schema registry
-	sections, ok := schemaRegistry[entityType]
-	if !ok {
+	sections := schema.ForType(entityType)
+	if sections == nil {
 		return b.String()
 	}
 

@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-REPO="lagz0ne/c3-skill"
+
+VERSION_FILE="$SCRIPT_DIR/VERSION"
+if [ ! -f "$VERSION_FILE" ]; then
+  echo "Error: $VERSION_FILE not found — reinstall the plugin" >&2
+  exit 1
+fi
+VERSION=$(tr -d '[:space:]' < "$VERSION_FILE")
 
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 ARCH=$(uname -m)
@@ -10,25 +16,22 @@ case "$ARCH" in
   aarch64|arm64) ARCH="arm64" ;;
 esac
 
-BIN="$SCRIPT_DIR/c3x-${OS}-${ARCH}"
+BIN="$SCRIPT_DIR/c3x-${VERSION}-${OS}-${ARCH}"
 
 if [ ! -f "$BIN" ]; then
-  # Download from latest GitHub release
-  TAG=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name"' | cut -d'"' -f4)
-  if [ -z "$TAG" ]; then
-    echo "Error: could not determine latest release from ${REPO}" >&2
-    exit 1
-  fi
-  ASSET="c3-skill-${TAG}.zip"
-  URL="https://github.com/${REPO}/releases/download/${TAG}/${ASSET}"
-  TMP=$(mktemp -d)
-  echo "Downloading c3x ${TAG} for ${OS}-${ARCH}..." >&2
-  curl -fsSL -o "${TMP}/${ASSET}" "$URL"
-  unzip -qo "${TMP}/${ASSET}" "skills/c3/bin/c3x-${OS}-${ARCH}" -d "$TMP"
-  mv "${TMP}/skills/c3/bin/c3x-${OS}-${ARCH}" "$BIN"
-  chmod +x "$BIN"
-  rm -rf "$TMP"
-  echo "Installed c3x ${TAG}" >&2
+  echo "Error: binary not found: $BIN" >&2
+  echo "hint: reinstall the plugin or run: bash scripts/build.sh" >&2
+  exit 1
+fi
+
+# Remove stale binaries from previous versions (only in installed plugin, not source dir).
+# If multiple versioned binaries exist for different platforms, this is a source/build dir — skip cleanup.
+CURRENT_VERSION_COUNT=$(find "$SCRIPT_DIR" -maxdepth 1 -name "c3x-${VERSION}-*" -type f | wc -l)
+if [ "$CURRENT_VERSION_COUNT" -le 1 ]; then
+  for old in "$SCRIPT_DIR"/c3x-*; do
+    [ "$old" = "$BIN" ] && continue
+    rm -f "$old"
+  done
 fi
 
 exec "$BIN" "$@"

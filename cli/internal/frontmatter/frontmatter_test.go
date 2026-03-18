@@ -28,8 +28,8 @@ func TestParseFrontmatter(t *testing.T) {
 			wantBody:  "Body text here",
 		},
 		{
-			name: "valid component with parent and refs",
-			content: "---\nid: c3-101\ntitle: Auth Service\ntype: component\nparent: c3-1\nrefs:\n  - ref-0001\n  - ref-0002\n---\nComponent body",
+			name: "valid component with parent and uses",
+			content: "---\nid: c3-101\ntitle: Auth Service\ntype: component\nparent: c3-1\nuses:\n  - ref-0001\n  - ref-0002\n---\nComponent body",
 			wantFM:     true,
 			wantID:     "c3-101",
 			wantTitle:  "Auth Service",
@@ -37,6 +37,28 @@ func TestParseFrontmatter(t *testing.T) {
 			wantParent: "c3-1",
 			wantRefs:   []string{"ref-0001", "ref-0002"},
 			wantBody:   "Component body",
+		},
+		{
+			name: "backward compat: refs field still works",
+			content: "---\nid: c3-102\ntitle: Legacy\ntype: component\nparent: c3-1\nrefs:\n  - ref-0001\n---\nLegacy body",
+			wantFM:     true,
+			wantID:     "c3-102",
+			wantTitle:  "Legacy",
+			wantType:   "component",
+			wantParent: "c3-1",
+			wantRefs:   []string{"ref-0001"},
+			wantBody:   "Legacy body",
+		},
+		{
+			name: "both uses and refs merged with dedup",
+			content: "---\nid: c3-103\ntitle: Both\ntype: component\nparent: c3-1\nuses:\n  - ref-0001\nrefs:\n  - ref-0001\n  - ref-0002\n---\nBoth body",
+			wantFM:     true,
+			wantID:     "c3-103",
+			wantTitle:  "Both",
+			wantType:   "component",
+			wantParent: "c3-1",
+			wantRefs:   []string{"ref-0001", "ref-0002"},
+			wantBody:   "Both body",
 		},
 		{
 			name: "valid adr with affects and scope",
@@ -96,6 +118,14 @@ func TestParseFrontmatter(t *testing.T) {
 			wantID:    "ref-0001",
 			wantTitle: "Logging Convention",
 			wantBody:  "Ref body",
+		},
+		{
+			name:     "EOF-terminated frontmatter (no trailing newline)",
+			content:  "---\nid: c3-1\ntitle: Test\n---",
+			wantFM:   true,
+			wantID:   "c3-1",
+			wantTitle: "Test",
+			wantBody: "",
 		},
 		{
 			name: "extra fields preserved via passthrough",
@@ -160,6 +190,24 @@ func TestParseFrontmatter(t *testing.T) {
 	}
 }
 
+func TestStripAnchor(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"c3-1#Goal", "c3-1"},
+		{"ref-jwt#Choice", "ref-jwt"},
+		{"c3-0", "c3-0"},
+		{"#bare-anchor", "#bare-anchor"}, // idx == 0, not > 0
+	}
+	for _, tt := range tests {
+		got := StripAnchor(tt.input)
+		if got != tt.want {
+			t.Errorf("StripAnchor(%q) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
+}
+
 func TestClassifyDoc(t *testing.T) {
 	tests := []struct {
 		name string
@@ -172,6 +220,8 @@ func TestClassifyDoc(t *testing.T) {
 		{"adr by type", Frontmatter{ID: "adr-20260101-test", Type: "adr"}, DocADR},
 		{"adr by prefix", Frontmatter{ID: "adr-20260101-test"}, DocADR},
 		{"ref by prefix", Frontmatter{ID: "ref-0001"}, DocRef},
+		{"recipe by type", Frontmatter{ID: "my-recipe", Type: "recipe"}, DocRecipe},
+		{"recipe by prefix", Frontmatter{ID: "recipe-auth"}, DocRecipe},
 		{"unknown", Frontmatter{ID: "something-else"}, DocUnknown},
 	}
 
@@ -211,6 +261,14 @@ func TestDeriveRelationships(t *testing.T) {
 			name: "no relationships",
 			fm:   Frontmatter{ID: "c3-0"},
 			want: []string{},
+		},
+		{
+			name: "sources with anchors",
+			fm: Frontmatter{
+				ID:      "recipe-auth",
+				Sources: []string{"c3-1#Goal", "ref-jwt#Choice", "c3-0"},
+			},
+			want: []string{"c3-1", "ref-jwt", "c3-0"},
 		},
 	}
 

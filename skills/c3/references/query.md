@@ -1,135 +1,113 @@
 # Query Reference
 
-Navigate C3 docs AND explore corresponding code. Full context = docs + code.
+Navigate C3 docs + corresponding code. Full context = docs + code.
 
-## Query Flow
+## Flow
 
-```
-Query -> Load Topology (CLI) -> Clarify Intent -> Navigate Layers -> Extract References -> Explore Code
-```
+`Query → Topology → Clarify → Navigate → Lookup → Explore Code`
 
-## Progress Checklist
+## Progress
 
-```
-Query Progress:
-- [ ] Topology loaded via `c3x list --json`
+- [ ] Topology loaded (`c3x list --json`)
 - [ ] Intent clarified (or skipped if specific)
-- [ ] Context navigated (found relevant entity from JSON)
-- [ ] References extracted (code paths, symbols)
-- [ ] Code explored (verified against docs)
+- [ ] Entity matched from JSON
+- [ ] `c3x lookup` run on every file path surfaced
+- [ ] Code explored
 - [ ] Response delivered
-```
 
 ---
 
-## Step 0a: Load Topology
+## Step 0a: Topology
 
-**FIRST action:**
+**First action:**
 ```bash
 bash <skill-dir>/bin/c3x.sh list --json
 ```
+Returns all entities: id, type, title, path, relationships, frontmatter. Match query to entities by title/type/relationship.
 
-JSON contains every entity's id, type, title, path, relationships, frontmatter. Use to:
-- Identify containers, components, refs, ADRs
-- Match query to relevant entities by title/type/relationship
-- Resolve C3 IDs (c3-N, c3-NNN, adr-*, ref-*) to file paths
+Don't manually Glob/Read `.c3/`. JSON has everything for discovery. Read only after identifying specific entities.
 
-**Do NOT** manually Glob or Read `.c3/` directory. JSON has everything for discovery.
+## Step 0a+: Check Recipes
 
-Only Read **after** identifying specific entities — when body content (prose, edge cases) is needed. Use `.c3/code-map.yaml` for file paths.
+After loading topology, check for recipes that match the query:
+1. Filter entities with type `recipe` from `c3x list --json`
+2. Match query against recipe title + description
+3. If match found → read recipe, serve sources as the narrative trace
+4. If no match → proceed with normal query flow
 
 ## Step 0b: Clarify Intent
 
-**Ask when** (skip if ASSUMPTION_MODE):
-- Query vague ("how does X work?" — which aspect?)
-- Multiple interpretations ("authentication" — login? tokens? sessions?)
-- Scope unclear ("frontend" — whole container or specific component?)
+Ask when (skip if ASSUMPTION_MODE):
+- Vague ("how does X work?")
+- Multiple interpretations ("authentication" — login? tokens?)
+- Scope unclear
 
-**Skip when:**
-- Query includes C3 ID (c3-102)
-- Query specific ("where is login form submitted?")
-- User says "show me everything about X"
+Skip when: C3 ID given, query is specific, "show me everything about X".
 
 ## Step 1: Navigate Layers
 
-Top-down: Context -> Container -> Component
+Top-down: Context → Container → Component.
 
-1. **Match from JSON** — find relevant entities by title, type, relationships
-2. **Read for depth** — only Read entity files when body content not in JSON frontmatter
+Match from JSON. Read entity files only when body content not in frontmatter.
 
-| Source | Extract For Code |
-|--------|------------------|
+| Source | Use For |
+|--------|---------|
 | Component name | Class/module names |
-| `.c3/code-map.yaml` | Direct file paths, symbols |
+| code-map.yaml | Direct file paths, symbols |
 | Technology | Framework patterns |
-| Entry points | Main files, handlers |
 
-## Step 2: Extract References
+## Step 2: Extract + Lookup
 
-From identified component(s):
-- File paths from `.c3/code-map.yaml` (look up component ID)
-- Related patterns from `## Related Refs`
+For every file path encountered:
+1. **Run `c3x lookup <file>` before reading any source file** — returns component + governing refs. For directory-level context, use `c3x lookup 'src/auth/**'`.
+2. Read `## Related Refs` in component doc
+3. Find `ref-*` entities from JSON. Read for body content.
 
-**Ref lookup:** Find matching `ref-*` entities from JSON. Read ref file for body content. Return ref content + citing components.
+Lookup-returned refs = constraints governing that file's code.
 
 ## Step 3: Explore Code
 
-Use extracted references:
-- **Glob:** `src/auth/**/*.ts`
-- **Grep:** class names, functions
-- **Read:** specific files from `.c3/code-map.yaml`
+```bash
+# Glob patterns
+src/auth/**/*.ts
+# Grep class/function names
+# Read specific files from code-map.yaml
+```
 
 ---
 
 ## Query Types
 
-| Type | User Says | Response |
-|------|-----------|----------|
-| Docs | "where is X", "explain X" | Docs + suggest code exploration |
+| Type | When | Response |
+|------|------|---------|
+| Docs | "where is X", "explain X" | Docs + suggest code |
 | Code | "show me code for X" | Full flow through code |
 | Deep | "explore X thoroughly" | Docs + Code + Related |
 | Constraints | "what rules apply to X" | Full constraint chain |
 
 ## Constraint Chain Query
 
-For constraint queries ("what constraints apply to X?"):
+1. Identify target (c3-NNN, c3-N, or c3-0)
+2. Read upward: component → container → context
+3. Extract: explicit constraints (MUST/MUST NOT), boundaries, layer rules
+4. Collect cited refs from Related Refs, read key rules
 
-1. Identify target layer (c3-NNN, c3-N, or c3-0)
-2. Read upward through hierarchy:
-   - Component -> container -> context
-   - Container -> context
-3. At each level, extract:
-   - Explicit constraints ("MUST...", "MUST NOT...")
-   - Implicit boundaries (responsibilities)
-   - Layer-specific rules
-4. Collect cited refs from `Related Refs` sections
-5. Read each cited ref, extract key rules
-
-**Response format:**
 ```
 **Constraint Chain for c3-NNN (Name)**
 
-**Context Constraints (c3-0):**
-- [System-wide rule]
-
-**Container Constraints (c3-N):**
-- [Container boundary]
-
-**Cited Pattern Constraints:**
-- **ref-X:** [Key rules]
-
-**Layer Boundaries:**
-This component MAY: [permitted]
-This component MUST NOT: [prohibited]
+**Context (c3-0):** [system-wide rule]
+**Container (c3-N):** [container boundary]
+**Patterns:** ref-X: [key rules]
+**Layer Boundaries:** MAY: [...] MUST NOT: [...]
 ```
 
 ## Edge Cases
 
 | Situation | Action |
 |-----------|--------|
-| Topic not in C3 docs | Search code directly, suggest documenting |
-| Spans multiple containers | List all affected, explain relationships |
-| Docs seem stale | Note discrepancy, suggest audit |
+| Topic not in C3 | Search code directly, suggest documenting |
+| Spans containers | List all affected, explain relationships |
+| Docs seem stale | Note, suggest audit |
 
 ## Response Format
 
@@ -138,16 +116,14 @@ This component MUST NOT: [prohibited]
 
 <Architecture from docs>
 
-**Code Map:**
-- `path/file.ts` - <role>
+**Code Map:** `path/file.ts` - <role>
 
-**Key Insights:**
-<Observations from code>
+**Key Insights:** <Observations>
 
 **Related:** <navigation hints>
 ```
 
-## ID-to-Path Quick Reference
+## ID → Path
 
 | Pattern | File |
 |---------|------|
@@ -156,12 +132,4 @@ This component MUST NOT: [prohibited]
 | `c3-NNN` | `.c3/c3-N-*/c3-NNN-*.md` |
 | `adr-*` | `.c3/adr/adr-*.md` |
 | `ref-*` | `.c3/refs/ref-*.md` |
-
-## Reference Resolution
-
-When a pattern/convention is mentioned:
-1. Check if component cites a `ref-*`
-2. Look up ref in `.c3/refs/ref-{slug}.md`
-3. Refs explain patterns; components explain usage
-
-Hierarchy: Component (specific usage) -> Container (cross-component) -> Context (system-wide) -> Refs (pattern definitions)
+| `recipe-*` | `.c3/recipes/recipe-*.md` |

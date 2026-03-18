@@ -1,0 +1,33 @@
+---
+id: c3-113
+c3-version: 4
+title: check-cmd
+type: component
+category: feature
+parent: c3-1
+goal: Validate structural integrity of .c3/ docs and ref compliance — required fields, numbering, wiring, scope cross-checks
+summary: Reports PASS/WARN/FAIL for each entity; includes schema definitions, structural index building, and ref scope cross-checking
+uses: [c3-101, c3-102, c3-104]
+---
+
+# check-cmd
+
+## Goal
+
+Validate structural integrity of `.c3/` docs and ref compliance — required fields, numbering, wiring, scope cross-checks.
+
+## Dependencies
+
+| Direction | What | From/To |
+|-----------|------|---------|
+| IN (uses) | Entity graph | c3-102 |
+| IN (uses) | Citation validation | c3-104 |
+| OUT (provides) | PASS/WARN/FAIL report |  |
+
+## Code References
+
+| File | Purpose |
+|------|---------|
+| `cli/cmd/check_enhanced.go` | Enhanced check with structured output |
+| `cli/internal/schema/schema.go` | Section schema definitions |
+| `cli/internal/index/index.go` | Structural index builder |

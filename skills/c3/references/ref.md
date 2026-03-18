@@ -1,71 +1,82 @@
 # Ref Reference
 
-Manage scoped patterns and conventions as first-class architecture artifacts.
+Manage patterns as first-class architecture artifacts.
 
-## Component Categories Reminder
-
-- **Foundation/Feature** (components): Has entry in `.c3/code-map.yaml` — code counterpart exists
-- **Ref** (pattern): NO code-map entry — no code counterpart. May include golden code examples.
-
-Hard rule: If you cannot name a concrete file, create a ref, not a component.
+Hard rule: can't name a concrete file → create ref, not component.
 
 ## Mode Selection
 
-| User Intent | Mode |
-|-------------|------|
+| Intent | Mode |
+|--------|------|
 | "add/create/document a pattern" | **Add** |
-| "update/modify/evolve ref-X" | **Update** |
+| "update/modify ref-X" | **Update** |
 | "list patterns", "what refs exist" | **List** |
-| "who uses ref-X", "where is ref-X cited" | **Usage** |
-| "remove/deprecate ref-X" | Route to **change** (requires ADR) |
+| "who uses ref-X" | **Usage** |
+| "remove/deprecate ref-X" | **change** (needs ADR) |
 
 ---
 
-## Mode: Add
+## Add
 
-Create a new ref from discovered or proposed pattern.
+Flow: `Scaffold → Discover → Fill Content → Discover Usage → Update Citings → ADR`
 
-### Flow
+**HARD RULE: First Bash call must be scaffold.**
 
-```
-Scaffold via CLI -> Fill Content -> Discover Usage -> Update Citings -> Create ADR
-```
+### Step 1: Scaffold
 
-**HARD RULE: Your FIRST Bash call must be the scaffold.** Do not Read codebase, Grep, or look at existing refs before writing. Extract pattern name and slug from user's prompt.
-
-### Steps
-
-**Step 1: Scaffold**
 ```bash
 bash <skill-dir>/bin/c3x.sh add ref <slug>
 ```
-Creates `.c3/refs/ref-{slug}.md` with correct frontmatter and structure.
 
-**Step 2: Fill Content via Edit**
+### Step 2: Discover (2-5 Grep calls)
 
-From user's prompt:
+Search for existing implementations of the pattern in the codebase.
+
+| Findings | Mode | Action |
+|----------|------|--------|
+| 0 files | **Describe** | User describes pattern (original behavior) |
+| 1 file | **Extract** (low confidence) | Extract, flag to user for confirmation |
+| 2+ files | **Extract** (compare top 3) | Structural intersection = pattern |
+| User provides | **Accept** | Use user's description directly |
+
+### Step 2c: Extract Pattern
+
+From discovered code:
+- **Shared structure** → `## How` (golden pattern)
+- **Varies by context** → `## Choice` (decision point)
+- **Clearly wrong** → `## Not This` (anti-pattern)
+
+Annotate examples: `// REQUIRED` vs `// OPTIONAL` for structural elements.
+
+### Step 2d: Confirm
+
+`AskUserQuestion` — present extracted pattern for approval (ASSUMPTION_MODE: skip).
+
+### Step 2e: Quality Gate
+
+Write 1-3 YES/NO compliance questions derivable from `## How`. If you can't write them, the pattern is too vague — rework before proceeding.
+
+### Step 3: Fill Content
+
+From discovery + user input:
 - `## Goal` — what it standardizes
-- `## Choice` — what option was chosen (REQUIRED)
-- `## Why` — rationale over alternatives (REQUIRED)
-- Other sections as relevant (How, Scope, Not This, Override)
+- `## Choice` — option chosen (REQUIRED)
+- `## Why` — rationale (REQUIRED)
+- `## How` — golden pattern (format-flexible: code blocks, do/don't pairs, checklists)
+- `## Not This` — rejected alternatives + anti-examples
+- `## Scope`, `## Override` — as needed
 
-Do NOT search codebase first — user's description is sufficient for initial draft.
+### Step 4: Discover Usage (2-3 Grep calls)
 
-**Step 3: Discover Usage (brief, 2-3 Grep calls)**
+Find components using this pattern.
 
-Quick codebase scan to find components using this pattern. Not exhaustive — just identify main users.
+### Step 5: Update Citing Components
 
-**Step 4: Refine Ref (if needed)**
+For each component using pattern:
+1. Run `c3x lookup <file>` per code-map entry — loads constraint chain
+2. Read component doc
+3. Add to `## Related Refs`:
 
-If discovery reveals additional details (variations, anti-patterns), update ref file.
-
-**Step 5: Update Citing Components**
-
-For each component using this pattern:
-1. Read component doc
-2. Add ref to `## Related Refs` table (create table if missing)
-
-Example entry:
 ```markdown
 ## Related Refs
 
@@ -74,11 +85,9 @@ Example entry:
 | ref-error-handling | Uses error response format |
 ```
 
-**Scope:** Only modify `## Related Refs` table. Other content changes -> route to change.
+Only modify `## Related Refs`. Other changes → route to change.
 
-**Step 6: Create Adoption ADR**
-
-`.c3/adr/adr-YYYYMMDD-ref-{slug}-adoption.md`
+### Step 6: Adoption ADR
 
 ```yaml
 ---
@@ -88,101 +97,65 @@ status: implemented
 ---
 ```
 
-Ref adoption ADRs use `status: implemented` directly — the ref doc IS the deliverable.
+Ref adoption ADRs use `status: implemented` directly — ref doc IS the deliverable.
 
 ---
 
-## Mode: Update
+## Update
 
-Modify existing ref with impact analysis.
+Flow: `Clarify → Find Citings → Check Compliance → Surface Impact → Execute`
 
-### Flow
-
-```
-Clarify Change -> Find Citings -> Check Compliance -> Surface Impact -> Execute
-```
-
-**Step 1: Clarify Change**
-`AskUserQuestion`: "What change to ref-{slug}?" (skip if ASSUMPTION_MODE)
-- Add a new rule
-- Modify an existing rule
-- Remove a rule
-- Clarify/improve documentation
-
-**Step 2: Find All Citings**
-```bash
-bash <skill-dir>/bin/c3x.sh list --json
-```
-Find ref entity by id. `relationships` field lists citing components. For deeper search: Grep `ref-{slug}` in `.c3/`.
-
-**Step 3: Check Compliance**
-For each citing component:
-- Read code-map entries
-- Check if code complies with proposed change
-- Categorize: compliant / needs-update / breaking
-
-**Step 4: Surface Impact**
-`AskUserQuestion`: "This change affects N components. M compliant, K need updates." (skip if ASSUMPTION_MODE)
-- Proceed — update ref and K components
-- Narrow — only affect compliant ones
-- Cancel — too much impact
-
-**Step 5: Execute**
-1. Update ref document (documentation only)
-2. Create ADR for ref change
-3. Non-compliant components: note as TODO in ADR (do NOT modify code)
-
-**Step 6: Route to change for code changes**
-Ref updates documentation only. Code changes in components MUST go through change operation.
+1. **Clarify:** `AskUserQuestion` — add rule / modify rule / remove rule / clarify docs (ASSUMPTION_MODE: skip)
+2. **Find citings:** `c3x list --json` → ref entity → `relationships`. Grep `ref-{slug}` in `.c3/` for depth.
+3. **Check compliance:** `c3x lookup <file>` per code-map entry. Categorize: compliant / needs-update / breaking.
+4. **Surface impact:** `AskUserQuestion` — proceed / narrow / cancel (ASSUMPTION_MODE: skip)
+5. **Execute:** Update ref doc + create ADR. Non-compliant → note as TODO in ADR (don't touch code).
+6. Code changes → route to change.
 
 ---
 
-## Mode: List
+## List
 
 ```bash
 bash <skill-dir>/bin/c3x.sh list --json
 ```
 
-Filter by `type: "ref"`. Extract: id, title, frontmatter.goal, relationships (citing components).
+Filter `type: "ref"`. Show: id, title, goal, citing components.
 
-**Response:**
 ```
-**C3 Patterns (Refs)**
+**C3 Patterns**
 
 | Ref | Title | Goal |
 |-----|-------|------|
-| ref-error-handling | Error Handling | Consistent error responses |
+| ref-error-handling | Error Handling | Consistent errors |
 ```
 
 ---
 
-## Mode: Usage
+## Usage
 
 ```bash
 bash <skill-dir>/bin/c3x.sh list --json
 ```
 
-Find entry with `id: "ref-{slug}"`, read `relationships` for citing components. Read each citing doc for details.
+Find `id: "ref-{slug}"`, read `relationships`. Read each citing doc.
 
-**Response:**
 ```
 **ref-{slug} Usage**
 
 **Cited by:**
 - c3-101 (Auth Middleware) - JWT validation
-- c3-103 (User Service) - Login flow
 
-**Pattern Summary:**
-{Key rules from the ref}
+**Pattern Summary:** {Key rules}
 ```
 
 ---
 
 ## Anti-Patterns
 
-| Anti-Pattern | Why It Fails | Correct |
-|--------------|-------------|---------|
-| Create ref without user input | Vague, unhelpful | Extract specifics from prompt |
-| Update ref without impact check | Silent breakage | Always check citings |
-| Duplicate ref content in components | Maintenance nightmare | Cite, don't duplicate |
-| Create ref for one-off pattern | Unnecessary overhead | Refs for repeated patterns |
+| Anti-Pattern | Correct |
+|--------------|---------|
+| Create ref without user input | Extract specifics from prompt |
+| Update ref without impact check | Always check citings |
+| Duplicate ref content in components | Cite, don't duplicate |
+| Create ref for one-off pattern | Refs for repeated patterns only |

@@ -13,6 +13,9 @@ import (
 // RunWire creates a cite relationship between source and target.
 // Two sides: (1) source frontmatter refs[], (2) source "Related Refs" table.
 func RunWire(c3Dir, sourceID, relationType, targetID string, w io.Writer) error {
+	if relationType == "" {
+		relationType = "cite"
+	}
 	if relationType != "cite" {
 		return fmt.Errorf("unsupported relation type %q (only 'cite' supported)", relationType)
 	}
@@ -27,7 +30,7 @@ func RunWire(c3Dir, sourceID, relationType, targetID string, w io.Writer) error 
 	}
 
 	// Side 1: Add target to source's frontmatter refs[]
-	if err := writer.AddToArrayField(srcPath, "refs", targetID); err != nil {
+	if err := writer.AddToArrayField(srcPath, "uses", targetID); err != nil {
 		return fmt.Errorf("side 1 (refs): %w", err)
 	}
 
@@ -45,6 +48,9 @@ func RunWire(c3Dir, sourceID, relationType, targetID string, w io.Writer) error 
 
 // RunUnwire removes a cite relationship from both sides.
 func RunUnwire(c3Dir, sourceID, relationType, targetID string, w io.Writer) error {
+	if relationType == "" {
+		relationType = "cite"
+	}
 	if relationType != "cite" {
 		return fmt.Errorf("unsupported relation type %q (only 'cite' supported)", relationType)
 	}
@@ -58,7 +64,7 @@ func RunUnwire(c3Dir, sourceID, relationType, targetID string, w io.Writer) erro
 	}
 
 	// Side 1: Remove target from source's frontmatter refs[]
-	if err := writer.RemoveFromArrayField(srcPath, "refs", targetID); err != nil {
+	if err := writer.RemoveFromArrayField(srcPath, "uses", targetID); err != nil {
 		return fmt.Errorf("side 1 (refs): %w", err)
 	}
 

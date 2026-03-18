@@ -1,0 +1,91 @@
+# C3 code-map: maps component and ref IDs to source file glob patterns.
+# Edit patterns, then verify with: c3x coverage
+
+# Components
+c3-101:
+  - cli/internal/frontmatter/**
+  - cli/internal/markdown/**
+c3-102:
+  - cli/internal/walker/**
+c3-103:
+  - cli/internal/templates/**
+  - cli/templates/**
+c3-104:
+  - cli/internal/wiring/**
+  - cli/cmd/wire.go
+c3-105:
+  - cli/internal/codemap/**
+c3-110:
+  - cli/cmd/init.go
+  - cli/cmd/init_test.go
+c3-111:
+  - cli/cmd/add.go
+  - cli/cmd/add_rich.go
+  - cli/cmd/add_test.go
+  - cli/cmd/add_rich_test.go
+  - cli/internal/numbering/**
+  - cli/internal/writer/**
+c3-112:
+  - cli/cmd/list.go
+  - cli/cmd/list_test.go
+c3-113:
+  - cli/cmd/check_enhanced.go
+  - cli/cmd/check_enhanced_test.go
+  - cli/internal/schema/**
+  - cli/internal/index/**
+c3-114:
+  - cli/cmd/lookup.go
+  - cli/cmd/lookup_test.go
+c3-115:
+  - cli/cmd/codemap.go
+c3-116:
+  - cli/cmd/coverage.go
+  - cli/cmd/coverage_test.go
+c3-201:
+  - skills/c3/SKILL.md
+c3-210:
+  - skills/c3/references/**
+
+# Refs
+ref-cross-compiled-binary:
+  - scripts/build.sh
+  - skills/c3/bin/c3x.sh
+  - skills/c3/bin/VERSION
+  - .github/workflows/distribute.yml
+ref-embedded-templates:
+  - cli/internal/templates/**
+  - cli/templates/**
+ref-frontmatter-docs:
+  - cli/internal/frontmatter/**
+  - cli/internal/config/**
+
+# Exclusions
+_exclude:
+  - "**/*_test.go"
+  - "**/*.sum"
+  - "**/*.mod"
+  - .gitattributes
+  - .gitignore
+  - LICENSE
+  - VERSION
+  - "skills/c3/bin/c3x-*"
+  - cli/cmd/helpers.go
+  - cli/cmd/help.go
+  - cli/cmd/help_test.go
+  - cli/cmd/options.go
+  - cli/cmd/options_test.go
+  - cli/cmd/schema.go
+  - cli/cmd/schema_test.go
+  - cli/cmd/set.go
+  - cli/cmd/set_test.go
+  - cli/cmd/testhelper_test.go
+  - cli/main.go
+  - ".c3/**"
+  - docs/**
+  - "*.md"
+  - ".claude/**"
+  - ".claude-plugin/**"
+  - ".github/**"
+  - "*.json"
+  - "*.yaml"
+  - "*.sh"

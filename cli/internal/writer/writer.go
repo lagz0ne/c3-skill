@@ -15,7 +15,7 @@ var stringFields = map[string]bool{
 }
 
 var arrayFields = map[string]bool{
-	"refs": true, "affects": true, "scope": true,
+	"uses": true, "refs": true, "affects": true, "scope": true, "sources": true,
 }
 
 // SetField reads a markdown file, updates a single string frontmatter field,
@@ -124,23 +124,27 @@ func setStringField(fm *frontmatter.Frontmatter, field, value string) {
 
 func getArrayField(fm *frontmatter.Frontmatter, field string) []string {
 	switch field {
-	case "refs":
+	case "uses", "refs":
 		return fm.Refs
 	case "affects":
 		return fm.Affects
 	case "scope":
 		return fm.Scope
+	case "sources":
+		return fm.Sources
 	}
 	return nil
 }
 
 func setArrayField(fm *frontmatter.Frontmatter, field string, arr []string) {
 	switch field {
-	case "refs":
+	case "uses", "refs":
 		fm.Refs = arr
 	case "affects":
 		fm.Affects = arr
 	case "scope":
 		fm.Scope = arr
+	case "sources":
+		fm.Sources = arr
 	}
 }

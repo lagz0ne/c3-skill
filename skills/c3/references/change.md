@@ -1,168 +1,162 @@
 # Change Reference
 
-Orchestrate architectural changes through ADR-first workflow with parallel execution.
+Flow: `ADR → Understand → Approve → Execute → Audit`
 
-## How It Works
-
-```
-Understand -> ADR -> Provision Gate -> Execute -> Audit
-```
-
-Use Task tool to spawn anonymous subagents for parallel work (analysis, implementation, audit).
+Spawn parallel subagents via Task tool for complex work.
 
 ## Progress Checklist
 
 ```
-Change Progress:
-- [ ] Phase 1: Load topology, clarify request, analyze impact
-- [ ] Phase 2: Create ADR, user approves
-- [ ] Phase 2b: Provision gate (implement now or design only?)
-- [ ] Phase 3: Execute work breakdown
-- [ ] Phase 4: Audit (structural + semantic)
-- [ ] ADR marked implemented
+- [ ] Phase 1: ADR created (`c3x add adr <slug>`)
+- [ ] Phase 2: topology loaded, impact analyzed, ADR body filled
+- [ ] Phase 2b: provision gate (implement or design-only?)
+- [ ] Phase 3: execute work breakdown
+- [ ] Phase 3b: ref compliance gate
+- [ ] Phase 4: audit + ADR marked implemented
 ```
 
 ---
 
-## Phase 1: Understand
+## Phase 1: ADR (FIRST — non-negotiable)
 
-1. Load topology:
-```bash
-bash <skill-dir>/bin/c3x.sh list --json
-```
-
-2. Clarify request with user (skip if ASSUMPTION_MODE)
-3. Analyze impact:
-   - Which containers, components, refs are affected?
-   - What constraints apply? (read upward: component -> container -> context -> cited refs)
-   - What are the risks?
-
-**Subagent option:** For complex changes, spawn parallel analyst + reviewer subagents who debate impact. Synthesize findings.
-
-## Phase 2: ADR
-
-Create ADR:
 ```bash
 bash <skill-dir>/bin/c3x.sh add adr <slug>
 ```
 
-Fill ADR content:
+Create the ADR immediately. The slug should capture the change intent (e.g., `add-rate-limiting`, `migrate-to-postgres`).
 
+Edit the ADR frontmatter:
 ```yaml
 ---
 id: adr-YYYYMMDD-{slug}
 title: [Decision Title]
 status: proposed
 date: YYYY-MM-DD
-base-commit: [git hash]
-affects: [c3-N, c3-NNN]
-approved-files: []
+affects: []
 ---
 ```
 
-ADR body includes:
-- Problem statement
-- Decision
-- Work Breakdown (task list for Phase 3)
-- Affected Layers table
-- Risks and mitigations
+The body will be filled in Phase 2 after understanding impact.
 
-Present to user for approval (skip if ASSUMPTION_MODE; mark `[ASSUMED]`).
+## Phase 2: Understand + Fill ADR
+
+```bash
+bash <skill-dir>/bin/c3x.sh list --json
+```
+
+Clarify with user (ASSUMPTION_MODE: skip). Analyze:
+- Affected containers, components, refs
+- For every file mentioned or discovered: `c3x lookup <file>` — load constraint chain before reasoning
+- If lookup returns no mapping → file is uncharted territory, flag as coverage gap
+- Read upward: component → container → context → cited refs
+- Risks
+
+Fill the ADR body: Goal, Work Breakdown, Risks. Update `affects:` in frontmatter.
+
+Present for approval (ASSUMPTION_MODE: mark `[ASSUMED]`).
+
+Complex changes: spawn parallel analyst + reviewer subagents, synthesize.
 
 ## Phase 2b: Provision Gate
 
-After ADR acceptance, ask user (skip if ASSUMPTION_MODE):
+Ask (ASSUMPTION_MODE: skip):
+- **Implement now** → Phase 3
+- **Design only** → create docs `status: provisioned`, no code-map entry, mark ADR `provisioned`, done
 
-**"Implement now or design only?"**
-
-- **Implement now** -> Continue to Phase 3
-- **Design only (provision)** -> Create component docs with `status: provisioned`, no code-map entry (no code yet), mark ADR `provisioned`, done. Docs are visible to query and audit immediately.
-
-To implement a provisioned design later: invoke change again. Pick up existing provisioned ADR + docs as starting context, resume from Phase 3.
+To implement provisioned later: invoke change, pick up ADR + docs, resume Phase 3.
 
 ## Phase 3: Execute
 
-Create tasks from Work Breakdown in ADR.
-
-**Scaffolding via CLI:**
+Scaffold / tear down:
 ```bash
-# New container:
 bash <skill-dir>/bin/c3x.sh add container <slug>
-
-# New component:
-bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N
-bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N --feature
-
-# New ref:
+bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N [--feature]
 bash <skill-dir>/bin/c3x.sh add ref <slug>
+bash <skill-dir>/bin/c3x.sh delete <id> [--dry-run]
 ```
 
-**Subagent option:** Decompose into independent tasks, spawn parallel implementer subagents. Each task points to C3 component docs and refs (mandatory reading for subagents).
+**REQUIRED before touching any file:**
+```bash
+bash <skill-dir>/bin/c3x.sh lookup <file-path>
+```
+Returned refs = hard constraints. Every one must be honored. No exceptions.
 
-For each completed task, verify:
-- Code implemented correctly
-- C3 docs updated (code-map.yaml, Related Refs)
-- No regressions in other components
+Parallel subagents: decompose tasks, each reads component docs + refs before touching code.
+
+Per task: verify code correct, docs updated (code-map.yaml, Related Refs), no regressions.
+
+## Phase 3b: Ref Compliance Gate
+
+**Before moving to audit, verify changes comply with applicable refs.**
+
+For each file touched in Phase 3:
+```bash
+bash <skill-dir>/bin/c3x.sh lookup <file-path>
+```
+
+For each returned ref, check compliance using comparison mode:
+
+| Ref Section | Comparison Mode | What To Check |
+|-------------|-----------------|---------------|
+| `## How` (code examples) | Structural | Does code match the golden pattern structure? |
+| `## How` (prose) | Semantic | Does implementation follow the described approach? |
+| `## Choice` only | Negative | Does code contradict the stated choice? |
+| `## Not This` | Anti-pattern | Does code resemble any rejected alternative? |
+
+**ADVERSARIAL FRAMING: Look for violations — do not confirm compliance.**
+
+Mandatory output:
+
+```
+| Ref | Section Checked | Verdict | Evidence |
+|-----|-----------------|---------|----------|
+| ref-X | How | COMPLIANT | Matches pattern structure |
+| ref-Y | Not This | VIOLATION | Uses rejected approach Z |
+```
+
+Rules:
+- **Scope to YOUR CHANGES** — don't audit the entire codebase
+- **Ref wins** — if your code disagrees with a ref, the ref is right. Create an ADR if override needed.
+- **Override via `## Override`** — follow the ref's documented override process
+- **Conflicts** — when multiple refs apply, scope specificity wins (component ref > container ref > context ref)
 
 ## Phase 4: Audit
 
-1. Structural validation:
 ```bash
 bash <skill-dir>/bin/c3x.sh check
 ```
 
-2. Semantic review:
-   - Docs match code changes
-   - Related Refs updated
-   - ADR Affected Layers accurate
-
-3. CLAUDE.md propagation:
-   - Update c3-generated blocks in relevant CLAUDE.md files
-   - Format: `<!-- c3-generated: c3-NNN -->` ... `<!-- end-c3-generated -->`
-
-4. Transition ADR to `implemented`
+- Docs match code
+- Related Refs updated
+- CLAUDE.md blocks updated: `<!-- c3-generated: c3-NNN -->` ... `<!-- end-c3-generated -->`
+- ADR → `implemented`
 
 ---
 
 ## Regression
 
-Late discoveries during any phase:
-
 | Discovery | Action |
 |-----------|--------|
-| Changes the problem | Back to Phase 1 |
-| Changes the approach | Back to Phase 2 |
+| Changes problem | Back to Phase 1 |
+| Changes approach | Back to Phase 2 |
 | Expands scope | Amend ADR |
 | Implementation detail | Adjust tasks |
 
-Surface discoveries to user. Confirm anything that affects the ADR.
-
 ---
 
-## ADR Format
+## ADR Lifecycle
 
-Always use YAML frontmatter (not markdown-style headers):
+ADRs are **ephemeral work orders**. They drive changes then become hidden.
 
-```yaml
----
-id: adr-YYYYMMDD-{slug}
-title: [Decision Title]
-status: proposed | accepted | provisioned | implemented
-date: YYYY-MM-DD
-base-commit: [git hash]
-affects: [c3-N, c3-NNN]
-approved-files: []
----
-```
+Status: `proposed → accepted → (provisioned | implemented)`
 
-Status lifecycle: proposed -> accepted -> (provisioned | implemented)
+`c3x list` and `c3x check` exclude ADRs by default. Use `--include-adr` to inspect.
 
 ---
 
 ## Routing
 
-During change, if needed:
-- Impact assessment before starting -> sweep operation
-- Architecture questions -> query operation
-- Pattern management -> ref operation
-- Standalone audit -> audit operation
+- Pre-change impact → sweep
+- Architecture questions → query
+- Pattern management → ref
+- Standalone audit → audit

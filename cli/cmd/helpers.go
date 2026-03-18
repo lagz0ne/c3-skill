@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,6 +11,15 @@ import (
 	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
 	"github.com/lagz0ne/c3-design/cli/internal/writer"
 )
+
+func writeJSON(w io.Writer, v any) error {
+	data, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return err
+	}
+	fmt.Fprintln(w, string(data))
+	return nil
+}
 
 // findEntityFile walks the c3Dir to find the file matching the given entity ID.
 func findEntityFile(c3Dir string, id string) (string, error) {
@@ -40,7 +51,6 @@ func findEntityFile(c3Dir string, id string) (string, error) {
 	return found, nil
 }
 
-// writeEntityFile writes frontmatter + body back to the file.
 func writeEntityFile(path string, fm *frontmatter.Frontmatter, body string) error {
 	return writer.WriteBack(path, fm, body)
 }

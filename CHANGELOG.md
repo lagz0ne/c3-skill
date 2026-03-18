@@ -5,6 +5,201 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.12.0] - 2026-03-17
+
+### Added
+- **`@c3x/cli` npm package**: Thin Node.js CLI (`npx @c3x/cli`) that discovers installed c3x Go binaries across Claude/Codex skill paths and marketplace installations, picks the highest version, and delegates. Humans get text output; agents get JSON.
+- **`--agent` flag**: Restrict binary discovery to a specific agent type (`--agent claude` or `--agent codex`). Project scope is always included.
+- **`C3X_MODE` env var**: Go binary respects `C3X_MODE=agent` to output JSON by default for commands that support it. Explicit `--json`/`--compact` flags override.
+- **Automated npm publishing**: CI publishes `@c3x/cli` to npm alongside GitHub releases on version bumps.
+
+## [6.11.1] - 2026-03-17
+
+### Fixed
+- **Onboard CLAUDE.md injection**: Removed dev-only `CLI: bash skills/c3/bin/c3x.sh` path that broke c3x resolution in installed plugins. The skill resolves the binary path via `<skill-dir>` at runtime.
+
+## [6.11.0] - 2026-03-17 [YANKED]
+
+### Added
+- **`c3x capabilities` command**: Emits a markdown table of all non-hidden CLI commands. Single source of truth for feature documentation — onboard and README both consume this instead of maintaining separate lists.
+
+### Changed
+- **Registry-driven command metadata**: `help.go` refactored from hardcoded strings to a `[]CommandMeta` registry. Both `c3x --help` and `c3x capabilities` render from the same data. Adding a new command means adding one struct entry.
+- **Onboard post-reveal**: Replaced static capabilities table with a flow-based introduction (understand → change → validate → explore) and a pointer to `c3x capabilities` for self-discovery.
+
+## [6.10.2] - 2026-03-17
+
+### Changed
+- **Single VERSION source of truth**: Consolidated from root `VERSION` + `skills/c3/bin/VERSION` to just `skills/c3/bin/VERSION`. CI workflows (`release.yml`, `distribute.yml`), `build.sh`, and `/release` command all read from the same file now.
+
+### Removed
+- **Root `VERSION` file**: Eliminated redundant version file. `skills/c3/bin/VERSION` is the sole source of truth for version detection.
+
+## [6.10.1] - 2026-03-16
+
+### Changed
+- **CLI surface rationalized to 12 LLM-visible commands**: Adversarial triage (triage-three) evaluated all 14 commands across mergeability, breakage risk, and LLM cognitive load. Result: single-purpose verbs beat merged flag-heavy commands for LLM use.
+- **`unwire` merged into `wire --remove`**: Symmetric pair collapsed. `unwire` remains as hidden backward-compat alias.
+- **`graph` demoted from LLM surface**: `list --json` now carries all relationship data (refs, affects, scope, files), making `graph --json` redundant for LLM workflows. `graph` stays in CLI for `--format mermaid` diagrams.
+- **`list --json` enriched**: Now includes `files` from code-map and `refs`/`affects`/`scope` arrays in frontmatter — one call gives the LLM everything it needs.
+- **`wire`/`unwire` cite now optional**: `wire <src> <tgt>` works (cite is the default). 3-arg form still accepted.
+- **`set --section` format detection**: Uses actual JSON parse instead of `[` prefix sniffing — plain text starting with `[` no longer misroutes to JSON table mode.
+- **Entity Types in help**: "context" removed from addable types, noted as "(created by init)".
+- **ADR date format unified**: `add_rich.go` now uses ISO `2006-01-02` matching `add.go` (was `20060102`).
+
+### Removed
+- **`_index/notes/` sunset**: Notes validation removed from `c3x check`. Cross-cutting concern traces are now handled exclusively by `recipes/`. Existing notes should be migrated to recipes via onboard.
+
+### Added
+- **`add --json`**: Returns `{"id":"c3-101","path":"..."}` for programmatic entity creation workflows.
+
+## [6.10.0] - 2026-03-12
+
+### Added
+- **Ref governance metric**: `c3x coverage` now reports what percentage of components are governed by at least one ref, with an ungoverned components list. Appears in both JSON (`ref_governance` field) and human-readable output.
+- **Scope cross-check**: `c3x check` warns when a ref scopes a container but a child component doesn't cite that ref (e.g. "ref-jwt scopes c3-1 but c3-110 does not cite it").
+- **Ref quality rubric**: Ref template now includes a 7-criteria quality rubric (compliance questions, mechanism over outcome, violation examples, scope grounding, brevity, dependency visibility, single compliance path).
+- **Ref compliance gate (Phase 3b)**: Change workflow now includes an adversarial ref compliance check before audit — for each file touched, lookup applicable refs and verify compliance with structured verdict output.
+- **Ref compliance audit (Phase 7b)**: Audit workflow now spot-checks code against golden patterns in ref `## How` sections, with quality check for pattern actionability.
+
+### Changed
+- **Discovery-first ref creation**: Ref Add flow rewritten to discover existing implementations before drafting — `Scaffold → Discover → Fill → Usage → Cite → ADR`. Includes quality gate (must be able to derive YES/NO compliance questions from `## How`).
+- **Format-flexible `## How`**: Ref template `## How` section no longer prescribes a table — supports code blocks, do/don't pairs, checklists, or tables. The test: can a reviewer check compliance in under 10 seconds?
+- **Dual-purpose `## Not This`**: Ref template `## Not This` now serves both rejected alternatives and concrete anti-examples.
+- **Schema purpose**: `How` section purpose updated to "Golden pattern — prescriptive examples and implementation guidance".
+- **Codemap gaps fixed**: `cli/internal/schema/**` and `cli/internal/index/**` now mapped to c3-113 (check-cmd).
+
+### Fixed
+- **`ref_id` column validation**: `c3x check` now validates `ref_id` typed columns in Related Refs tables, with `--fix` auto-correcting bad references via title matching.
+- **CI**: 5 fixes — PR merge branching, YAML heredoc parsing, distribute branch conflicts, release step, merge strategy.
+
+## [6.9.0] - 2026-03-11
+
+### Added
+- **CoT Harness**: Context-led reasoning reflex in SKILL.md — before touching any file, `c3x lookup` it and follow what C3 knows. Re-enters when context shifts mid-task. Replaces assumptions with topology-driven decisions.
+- **Frontmatter examples for audit + ref**: Skill description now covers all 6 operations (was 4), improving trigger reliability for audit and ref invocations.
+
+### Changed
+- **CLAUDE.md Injection + Capabilities Reveal moved to `references/onboard.md`**: These onboard-specific blocks no longer live in the main SKILL.md — keeps the skill file focused on dispatch and reasoning.
+
+## [6.8.0] - 2026-03-05
+
+### Added
+- **`--include-adr` flag**: `c3x list` and `c3x check` now exclude ADRs by default. Use `--include-adr` to include them in output and validation. ADRs are ephemeral work orders — they drive changes, then stay out of the way.
+- **Lightweight ADR template**: `c3x add adr <slug>` now creates a minimal template (Goal, Work Breakdown, Risks) instead of the heavy onboarding template. Fast to create, drives the change, throwaway.
+- **11 new tests**: Full coverage for ADR filtering in list (topology, flat, JSON), check (skip/include), and `--include-adr` flag parsing.
+
+### Changed
+- **ADR-first enforcement**: Change operations now require `c3x add adr <slug>` as their first action (HARD RULE in skill instructions). No code reads, no file edits, no exploration before the ADR exists.
+- **Change flow reordered**: `ADR → Understand → Approve → Execute → Audit` (was `Understand → ADR → ...`). ADR creation is Phase 1, non-negotiable.
+- **Audit Phase 6 opt-in**: ADR Lifecycle audit only runs with `--include-adr`, since ADRs are ephemeral.
+- **Ref-add exception documented**: Ref operations create their adoption ADR at completion (not upfront), clearly noted in shared rules.
+
+## [6.7.0] - 2026-03-04
+
+### Added
+- **Recipe entity type**: Cross-cutting concern traces that link entity sections into end-to-end narratives. Created via `c3x add recipe <topic>`, stored in `.c3/recipes/recipe-*.md`. Includes `description` and `sources` frontmatter for LLM-driven query matching. Validated by `c3x check` (source references must resolve). Shown in `c3x list` topology and JSON output.
+
+### Fixed
+- **Walker skips `_index/`**: `WalkC3Docs` now skips `.c3/_index/` directory, preventing index files from being parsed as entities (#7).
+- **Frontmatter delimiter consistency**: `parseNoteSources` aligned to use `\n---\n` delimiter matching (was `\n---`) with EOF edge case handling (#8).
+
+### Changed
+- **Code cleanup**: Removed AI-generated slop — unnecessary godoc on unexported functions, restating comments, single-use variables inlined, dead if/else branch collapsed.
+
+## [6.6.0] - 2026-03-04
+
+### Added
+- **Structural index** (`cli/internal/index/`): Precomputed entity→files→refs→reverse-deps→constraints index at `.c3/_index/structural.md`. Gives LLMs instant architecture discovery without multiple CLI calls. Auto-rebuilt after mutating commands (`add`, `set`, `wire`, `unwire`).
+- **Note health checking**: `c3x check` validates that topic notes in `.c3/_index/notes/` reference entities that exist in the graph. Orphaned source citations reported as warnings with actionable hints.
+- **Design doc**: `docs/plans/2026-03-04-knowledge-index-design.md` — two-layer knowledge index design (structural index + topic notes).
+
+### Changed
+- **Index rebuild scoped to mutations**: Structural index only rebuilds after `add`, `set`, `wire`, `unwire` — read-only commands (`list`, `check`, `lookup`) skip the rebuild for faster execution.
+- **`parseNoteSources` simplified**: Replaced hand-rolled YAML line parser with `yaml.Unmarshal`.
+- **File map reuses computed refs**: Index build no longer re-traverses the graph for refs already computed in entity entries.
+
+### Removed
+- **`c3x query` command**: Eliminated — structural index + direct file reads replace the routing and block extraction that `query` provided.
+- **`cli/internal/blocks/` package**: Block extraction logic inlined into the index package; standalone package removed.
+
+## [6.5.3] - 2026-03-03
+
+### Added
+- **`c3x query` command**: Extract structured blocks from C3 entities. Modes: catalog (all entities with fill status), snapshot (all blocks for one entity), single block, chain walk (component → container → context + refs), and file resolution (file path → entity → snapshot). Supports `--chain` and `--json` flags.
+- **`check` output quality**: Summary header (`Checked N docs — all clear` or `Checked N docs — X errors, Y warnings`), actionable hint lines below each issue (`→ fix suggestion`), and a legend footer. JSON output now includes `hint` field on issues.
+
+### Changed
+- **Schema extracted to `internal/schema`**: Schema registry moved from `cmd/schema.go` to a standalone internal package, enabling reuse across `add`, `check`, and `query` commands.
+- **`writeJSON` helper**: Consolidated 5 duplicate `json.MarshalIndent` + `Fprintln` patterns into a single `writeJSON` helper in `helpers.go`.
+
+## [6.5.2] - 2026-02-27
+
+### Fixed
+- **CI: stale binaries accumulating on main**: Each release added new versioned binaries without removing old ones, doubling the plugin zip size. The distribute workflow now `git rm`s previous version binaries before adding new ones.
+- **Nonexistent `c3x wire` command in onboard reference**: `onboard.md` troubleshooting table referenced `c3x wire <id> cite <ref-id>` which doesn't match the skill's CLI reference. Replaced with correct instruction to edit component frontmatter directly.
+- **Ambiguous ref code-map audit rule**: `audit.md` Phase 9 flagged any ref with a code-map entry as a violation, but `c3x codemap` scaffolds empty stubs for refs by default. Clarified that scaffold stubs are acceptable — only filled-in file patterns are violations.
+
+## [6.5.1] - 2026-02-27
+
+### Fixed
+- **`c3x.sh` cleanup destroying cross-compiled binaries**: When run from the source directory (where all 4 platform binaries exist), the stale-version cleanup loop deleted binaries for other platforms. Now detects multi-binary source dirs and skips cleanup.
+- **Broken YAML frontmatter silently dropped entities**: Files with `---` delimiters but invalid YAML (e.g. unquoted `via:` colon-space in values) were silently excluded from the entity graph. `c3x check` now reports these as errors (`✗`) with a hint to check for unquoted colons.
+
+### Changed
+- **SKILL.md**: Added shared rule to run `c3x check` frequently after creating/editing `.c3/` docs. Check now catches broken YAML, missing sections, bad entity references, and codemap issues.
+
+### Documentation
+- **README.md**: Added Layer 0 (Parse) to the validation table — broken YAML frontmatter detection.
+- **CLAUDE.md**: Added Architecture block pointing to `.c3/` directory and `/c3` skill.
+
+## [6.5.0] - 2026-02-27
+
+### Added
+- **`c3x codemap` command**: Scaffold or update `.c3/code-map.yaml` with stubs for every component and ref in the C3 graph. Idempotent — existing patterns are preserved, missing entries get empty lists. Output groups components then refs with commented `_exclude` example. JSON by default, human-readable with `HUMAN=1`.
+- **Versioned binary naming**: Binaries are now named `c3x-{version}-{os}-{arch}` (e.g. `c3x-6.5.0-linux-amd64`). A `VERSION` file alongside the wrapper tells `c3x.sh` which binary to use.
+- **Stale binary cleanup**: `c3x.sh` removes binaries from previous versions on every invocation, eliminating the caching issue where plugin updates left old binaries in place.
+- **Refs in code-map**: Refs (e.g. `ref-jwt`) can now have code-map entries alongside components. Useful for refs that have concrete implementation files (shared middleware, utility libraries).
+
+### Changed
+- **`c3x.sh` simplified**: Removed download fallback — binaries are always bundled with the plugin release, so network fetching was unnecessary dead code.
+- **Onboarding flow**: Stage 2 now starts with `c3x codemap` scaffold step before structural checks. Gate 2 checklist includes code-map coverage as a requirement.
+- **`lookup` hint**: When `code-map.yaml` is empty or missing, `c3x lookup` now prints a hint to run `c3x codemap`.
+
+### Fixed
+- **Refs no longer warned in code-map validation**: `validate.go` previously flagged any non-component ID. Now only warns for `container`, `context`, and `adr` types in the codemap.
+
+## [6.4.0] - 2026-02-27
+
+### Added
+- **`c3x lookup` command**: Map any file path or glob pattern to its owning component(s) and governing refs. Single file returns component details + cited refs with goals. Glob pattern expands against project and shows file-to-component map.
+- **`c3x coverage` command**: Code-map coverage statistics — shows how many project files are mapped, excluded, or unmapped. Uses `git ls-files` for fast file discovery with filesystem walk fallback. JSON output by default (human-readable with `HUMAN=1`).
+- **`_exclude` key in code-map.yaml**: Mark files as intentionally unmapped (tests, build output, configs). Excluded files don't count against coverage percentage. Formula: `mapped / (total - excluded)`.
+- **Bracket path support**: Literal `[id]`, `[...slug]` paths (Next.js, SvelteKit route params) now work in code-map patterns. Double-try matching: glob interpretation first, then escaped brackets as fallback.
+- **`--compact` flag for `c3x list`**: Goals-only topology tree without file/ref detail.
+- **`doublestar/v4` dependency**: Powers `**` glob matching for code-map patterns.
+
+### Changed
+- **`c3x list` refactored**: Now accepts `ListOptions` struct with `C3Dir` for code-map integration. Shows file coverage and ref usage in topology output.
+- **Code-map validation**: `isGlobPattern` excludes brackets from glob detection — `[id]` paths are treated as literal, not character classes.
+- **Skill docs streamlined**: All 6 reference docs (onboard, query, audit, change, ref, sweep) trimmed for conciseness while adding coverage/lookup guidance.
+
+### Fixed
+- **`.c3/` files excluded from coverage**: `git ls-files` output now filtered by `skipPrefixes` (`.c3/`, `.git/`, `node_modules/`, `dist/`), preventing architecture docs from inflating file counts.
+- **Coverage percentage denominator**: Uses `(total - excluded)` not `total` — `_exclude` patterns don't penalize the coverage score.
+- **`c3x list` swallows code-map parse errors**: Now propagates malformed `code-map.yaml` errors instead of silently using empty map.
+- **`c3x lookup` with no argument**: Now exits with usage error instead of silently returning "no mapping found".
+- **JSON null for empty unmapped files**: `unmapped_files` is always `[]` in JSON output, never `null`.
+- **Duplicate `isGlobPattern`**: Exported as `IsGlobPattern` from codemap package, removed duplicate in cmd/lookup.go.
+
+## [6.3.0] - 2026-02-26
+
+### Changed
+- **CI pipeline hardened**: `distribute.yml` now does `git pull --rebase` before pushing to main, preventing push failures when manual main commits race with CI runs.
+- **Binary integrity**: Go binaries marked as `binary` in `.gitattributes` — prevents line-ending corruption on Windows CI runners.
+- **Dead code removed**: Removed v1 `RunCheck()` and its tests; `Issue`/`CheckResult` types consolidated into `check_enhanced.go`. Removed unused `internal/output` package.
+- **Node.js residues removed**: Deleted `package.json`, removed `node_modules/` from `.gitignore`, removed stale pre-2026 design docs (28 files).
+
 ## [6.2.0] - 2026-02-26
 
 ### Added

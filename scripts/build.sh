@@ -21,9 +21,9 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Read version from VERSION file if not explicitly set
-if [ "$VERSION" = "dev" ] && [ -f "$ROOT/VERSION" ]; then
-  VERSION=$(cat "$ROOT/VERSION" | tr -d '[:space:]')
+# Read version from skills VERSION file if not explicitly set
+if [ "$VERSION" = "dev" ] && [ -f "$ROOT/skills/c3/bin/VERSION" ]; then
+  VERSION=$(cat "$ROOT/skills/c3/bin/VERSION" | tr -d '[:space:]')
 fi
 
 echo "Building c3x CLI v${VERSION}"
@@ -41,9 +41,9 @@ mkdir -p "$BIN_DIR"
 for target in "${TARGETS[@]}"; do
   OS="${target%%:*}"
   ARCH="${target##*:}"
-  OUTPUT="$BIN_DIR/c3x-${OS}-${ARCH}"
+  OUTPUT="$BIN_DIR/c3x-${VERSION}-${OS}-${ARCH}"
 
-  echo "  Building ${OS}/${ARCH}..."
+  echo "  Building ${OS}/${ARCH} -> c3x-${VERSION}-${OS}-${ARCH}"
   GOOS="$OS" GOARCH="$ARCH" go build \
     -C "$CLI_DIR" \
     -ldflags="-s -w -X main.version=${VERSION}" \
@@ -51,9 +51,10 @@ for target in "${TARGETS[@]}"; do
     .
 done
 
-# Copy wrapper script
-cp "$ROOT/skills/c3/bin/c3x.sh" "$BIN_DIR/c3x.sh" 2>/dev/null || true
-chmod +x "$BIN_DIR"/*
+# Write VERSION file so c3x.sh knows which binary to use
+echo "$VERSION" > "$BIN_DIR/VERSION"
+
+chmod +x "$BIN_DIR"/c3x-*
 
 echo ""
 echo "Built binaries:"

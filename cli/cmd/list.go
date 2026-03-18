@@ -92,7 +92,7 @@ func listJSON(graph *walker.C3Graph, includeADR bool, cm codemap.CodeMap, w io.W
 			fm["sources"] = e.Frontmatter.Sources
 		}
 		if len(e.Frontmatter.Refs) > 0 {
-			fm["refs"] = e.Frontmatter.Refs
+			fm["uses"] = e.Frontmatter.Refs
 		}
 		if len(e.Frontmatter.Affects) > 0 {
 			fm["affects"] = e.Frontmatter.Affects

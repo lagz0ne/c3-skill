@@ -30,7 +30,7 @@ func RunWire(c3Dir, sourceID, relationType, targetID string, w io.Writer) error 
 	}
 
 	// Side 1: Add target to source's frontmatter refs[]
-	if err := writer.AddToArrayField(srcPath, "refs", targetID); err != nil {
+	if err := writer.AddToArrayField(srcPath, "uses", targetID); err != nil {
 		return fmt.Errorf("side 1 (refs): %w", err)
 	}
 
@@ -64,7 +64,7 @@ func RunUnwire(c3Dir, sourceID, relationType, targetID string, w io.Writer) erro
 	}
 
 	// Side 1: Remove target from source's frontmatter refs[]
-	if err := writer.RemoveFromArrayField(srcPath, "refs", targetID); err != nil {
+	if err := writer.RemoveFromArrayField(srcPath, "uses", targetID); err != nil {
 		return fmt.Errorf("side 1 (refs): %w", err)
 	}
 

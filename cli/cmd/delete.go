@@ -69,7 +69,7 @@ func RunDelete(opts DeleteOptions, w io.Writer) error {
 		}
 
 		// Clean refs[], affects[], scope[]
-		for _, field := range []string{"refs", "affects", "scope"} {
+		for _, field := range []string{"uses", "affects", "scope"} {
 			arr := getFieldValues(ref.Frontmatter, field)
 			if containsStr(arr, id) {
 				fmt.Fprintf(w, "%sRemove %s from %s.%s\n", prefix, id, ref.ID, field)
@@ -150,7 +150,7 @@ func RunDelete(opts DeleteOptions, w io.Writer) error {
 // getFieldValues returns the values for a known array field from frontmatter.
 func getFieldValues(fm *frontmatter.Frontmatter, field string) []string {
 	switch field {
-	case "refs":
+	case "uses", "refs":
 		return fm.Refs
 	case "affects":
 		return fm.Affects

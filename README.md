@@ -112,7 +112,7 @@ The CLI implements a three-layer document engine:
     └── adr-YYYYMMDD-slug.md   # Architecture decision record
 ```
 
-Every entity has YAML frontmatter (`id`, `type`, `refs[]`, `status`) and markdown body with schema-defined sections. The CLI keeps wiring consistent — `wire` (and `wire --remove`) updates source frontmatter and source Related Refs table atomically.
+Every entity has YAML frontmatter (`id`, `type`, `uses[]`, `status`) and markdown body with schema-defined sections. The CLI keeps wiring consistent — `wire` (and `wire --remove`) updates source frontmatter and source Related Refs table atomically.
 
 `code-map.yaml` maps components and refs to their actual source files. Run `c3x codemap` to scaffold stubs for every entity, then fill in the glob patterns:
 

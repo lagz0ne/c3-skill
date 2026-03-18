@@ -1129,7 +1129,7 @@ title: auth
 type: component
 category: foundation
 parent: c3-1
-refs: [ref-jwt]
+uses: [ref-jwt]
 ---
 
 # auth
@@ -1265,7 +1265,7 @@ title: auth
 type: component
 category: foundation
 parent: c3-1
-refs: [ref-jwt]
+uses: [ref-jwt]
 ---
 
 # auth

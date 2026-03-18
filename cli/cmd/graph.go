@@ -178,11 +178,11 @@ func graphText(entities []*walker.C3Entity, graph *walker.C3Graph, cm codemap.Co
 			fmt.Fprintf(w, "  children: %s\n", strings.Join(ids, ", "))
 		}
 
-		// Refs (cited by this entity)
+		// Uses (refs cited by this entity)
 		if len(e.Frontmatter.Refs) > 0 {
 			sorted := append([]string(nil), e.Frontmatter.Refs...)
 			sort.Strings(sorted)
-			fmt.Fprintf(w, "  refs: %s\n", strings.Join(sorted, ", "))
+			fmt.Fprintf(w, "  uses: %s\n", strings.Join(sorted, ", "))
 		}
 
 		// Cited-by (entities that cite this ref)

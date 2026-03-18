@@ -25,7 +25,7 @@ category: foundation
 parent: c3-1
 goal: Handle authentication and JWT issuance
 summary: JWT-based auth with Redis session store
-refs: [ref-jwt]
+uses: [ref-jwt]
 ---
 
 # auth
@@ -231,7 +231,7 @@ title: auth
 type: component
 category: foundation
 parent: c3-1
-refs: [ref-jwt]
+uses: [ref-jwt]
 ---
 # auth
 `)
@@ -262,7 +262,7 @@ type: component
 category: foundation
 parent: c3-1
 goal: Handle authentication
-refs: [ref-jwt]
+uses: [ref-jwt]
 ---
 # auth
 `)
@@ -309,8 +309,8 @@ summary: JWT auth
 	if !strings.Contains(out, "c3-101") {
 		t.Errorf("component should appear without refs, got:\n%s", out)
 	}
-	if strings.Contains(out, "refs:") {
-		t.Errorf("no refs section expected when component has no refs, got:\n%s", out)
+	if strings.Contains(out, "uses:") {
+		t.Errorf("no uses section expected when component has no uses, got:\n%s", out)
 	}
 }
 
@@ -352,7 +352,7 @@ type: component
 category: foundation
 parent: c3-1
 goal: Handle authentication
-refs: [ref-does-not-exist]
+uses: [ref-does-not-exist]
 ---
 # auth
 `)

@@ -194,7 +194,7 @@ func WriteMarkdown(w io.Writer, idx *StructuralIndex) error {
 		}
 
 		if len(e.Refs) > 0 {
-			fmt.Fprintf(w, "refs: %s\n", strings.Join(e.Refs, ", "))
+			fmt.Fprintf(w, "uses: %s\n", strings.Join(e.Refs, ", "))
 		}
 		if len(e.ReverseDeps) > 0 {
 			fmt.Fprintf(w, "reverse deps: %s\n", strings.Join(e.ReverseDeps, ", "))
@@ -241,7 +241,7 @@ func WriteMarkdown(w io.Writer, idx *StructuralIndex) error {
 			fe := idx.Files[p]
 			line := p + " → " + strings.Join(fe.Entities, ", ")
 			if len(fe.Refs) > 0 {
-				line += " | refs: " + strings.Join(fe.Refs, ", ")
+				line += " | uses: " + strings.Join(fe.Refs, ", ")
 			}
 			fmt.Fprintln(w, line)
 		}
@@ -307,7 +307,7 @@ func computeHash(idx *StructuralIndex) string {
 	for _, id := range ids {
 		e := idx.Entities[id]
 		fmt.Fprintf(h, "%s|%s|%s|%s|%s|", id, e.Title, e.Type, e.Container, e.Context)
-		fmt.Fprintf(h, "refs:%s|", strings.Join(e.Refs, ","))
+		fmt.Fprintf(h, "uses:%s|", strings.Join(e.Refs, ","))
 		fmt.Fprintf(h, "code:%s|", strings.Join(e.CodePaths, ","))
 		blockNames := make([]string, 0, len(e.BlockFill))
 		for name := range e.BlockFill {

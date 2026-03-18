@@ -51,7 +51,7 @@ type Frontmatter struct {
 	Status   string   `yaml:"status,omitempty"`
 	Date     string   `yaml:"date,omitempty"`
 	Affects     []string `yaml:"affects,omitempty"`
-	Refs        []string `yaml:"refs,omitempty"`
+	Refs        []string `yaml:"uses,omitempty"`
 	Scope       []string `yaml:"scope,omitempty"`
 	Description string   `yaml:"description,omitempty"`
 	Sources     []string `yaml:"sources,omitempty"`
@@ -99,6 +99,29 @@ func ParseFrontmatter(content string) (*Frontmatter, string) {
 		if v == nil {
 			delete(raw, k)
 		}
+	}
+
+	// Backward compat: merge "refs" into "uses" (canonical field)
+	if refsVal, hasRefs := raw["refs"]; hasRefs {
+		if usesVal, hasUses := raw["uses"]; hasUses {
+			// Both present: merge refs into uses, dedup
+			usesSlice := toStringSlice(usesVal)
+			refsSlice := toStringSlice(refsVal)
+			seen := make(map[string]bool, len(usesSlice))
+			for _, v := range usesSlice {
+				seen[v] = true
+			}
+			for _, v := range refsSlice {
+				if !seen[v] {
+					usesSlice = append(usesSlice, v)
+				}
+			}
+			raw["uses"] = usesSlice
+		} else {
+			// Only refs: rename to uses
+			raw["uses"] = refsVal
+		}
+		delete(raw, "refs")
 	}
 
 	// Check required field: id
@@ -149,6 +172,23 @@ func ClassifyDoc(fm *Frontmatter) DocType {
 		return DocRef
 	}
 	return DocUnknown
+}
+
+// toStringSlice converts an interface{} (expected []interface{} of strings) to []string.
+func toStringSlice(v interface{}) []string {
+	switch val := v.(type) {
+	case []interface{}:
+		out := make([]string, 0, len(val))
+		for _, item := range val {
+			if s, ok := item.(string); ok {
+				out = append(out, s)
+			}
+		}
+		return out
+	case []string:
+		return val
+	}
+	return nil
 }
 
 // StripAnchor removes the #fragment suffix from a source reference.

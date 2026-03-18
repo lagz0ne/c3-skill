@@ -87,7 +87,7 @@ title: auth
 type: component
 category: foundation
 parent: c3-1
-refs: [ref-jwt]
+uses: [ref-jwt]
 ---
 
 # auth
@@ -181,7 +181,7 @@ func TestBuild_EntityEntries(t *testing.T) {
 		t.Errorf("c3-101 context = %q, want c3-0", e.Context)
 	}
 	if len(e.Refs) != 1 || e.Refs[0] != "ref-jwt" {
-		t.Errorf("c3-101 refs = %v, want [ref-jwt]", e.Refs)
+		t.Errorf("c3-101 uses = %v, want [ref-jwt]", e.Refs)
 	}
 	if len(e.CodePaths) != 1 || e.CodePaths[0] != "src/auth/**/*.ts" {
 		t.Errorf("c3-101 code paths = %v, want [src/auth/**/*.ts]", e.CodePaths)
@@ -260,7 +260,7 @@ func TestBuild_FileMap(t *testing.T) {
 		t.Errorf("file entry entities should include c3-101, got %v", fe.Entities)
 	}
 	if !containsStr(fe.Refs, "ref-jwt") {
-		t.Errorf("file entry refs should include ref-jwt, got %v", fe.Refs)
+		t.Errorf("file entry uses should include ref-jwt, got %v", fe.Refs)
 	}
 }
 
@@ -334,8 +334,8 @@ func TestWriteMarkdown(t *testing.T) {
 	if !strings.Contains(out, "container: c3-1") {
 		t.Error("missing container line for c3-101")
 	}
-	if !strings.Contains(out, "refs: ref-jwt") {
-		t.Error("missing refs line for c3-101")
+	if !strings.Contains(out, "uses: ref-jwt") {
+		t.Error("missing uses line for c3-101")
 	}
 
 	// Check file map
@@ -398,7 +398,7 @@ func TestWriteTo(t *testing.T) {
 
 func TestRefGovernance_AllGoverned(t *testing.T) {
 	c3Dir, cm := createFixture(t)
-	// The fixture has c3-101 with refs:[ref-jwt] and c3-110 without refs.
+	// The fixture has c3-101 with uses:[ref-jwt] and c3-110 without uses.
 	// Add a ref to c3-110 to make all governed.
 	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "c3-110-users.md"), `---
 id: c3-110
@@ -406,7 +406,7 @@ title: users
 type: component
 category: feature
 parent: c3-1
-refs: [ref-jwt]
+uses: [ref-jwt]
 ---
 
 # users

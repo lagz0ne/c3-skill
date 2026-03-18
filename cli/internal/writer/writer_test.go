@@ -257,13 +257,13 @@ id: c3-101
 title: auth
 type: component
 parent: c3-1
-refs: [ref-jwt]
+uses: [ref-jwt]
 ---
 
 # auth
 `)
 
-	err := AddToArrayField(fp, "refs", "ref-logging")
+	err := AddToArrayField(fp, "uses", "ref-logging")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -277,10 +277,10 @@ refs: [ref-jwt]
 		t.Fatal("frontmatter should be parseable")
 	}
 	if len(fm.Refs) != 2 {
-		t.Fatalf("refs count = %d, want 2", len(fm.Refs))
+		t.Fatalf("uses count = %d, want 2", len(fm.Refs))
 	}
 	if fm.Refs[0] != "ref-jwt" || fm.Refs[1] != "ref-logging" {
-		t.Errorf("refs = %v, want [ref-jwt ref-logging]", fm.Refs)
+		t.Errorf("uses = %v, want [ref-jwt ref-logging]", fm.Refs)
 	}
 }
 
@@ -297,7 +297,7 @@ parent: c3-1
 # auth
 `)
 
-	err := AddToArrayField(fp, "refs", "ref-jwt")
+	err := AddToArrayField(fp, "uses", "ref-jwt")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -308,7 +308,7 @@ parent: c3-1
 	}
 	fm, _ := frontmatter.ParseFrontmatter(string(content))
 	if len(fm.Refs) != 1 || fm.Refs[0] != "ref-jwt" {
-		t.Errorf("refs = %v, want [ref-jwt]", fm.Refs)
+		t.Errorf("uses = %v, want [ref-jwt]", fm.Refs)
 	}
 }
 
@@ -320,13 +320,13 @@ id: c3-101
 title: auth
 type: component
 parent: c3-1
-refs: [ref-jwt]
+uses: [ref-jwt]
 ---
 
 # auth
 `)
 
-	err := AddToArrayField(fp, "refs", "ref-jwt")
+	err := AddToArrayField(fp, "uses", "ref-jwt")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -337,7 +337,7 @@ refs: [ref-jwt]
 	}
 	fm, _ := frontmatter.ParseFrontmatter(string(content))
 	if len(fm.Refs) != 1 {
-		t.Errorf("should not duplicate, refs = %v", fm.Refs)
+		t.Errorf("should not duplicate, uses = %v", fm.Refs)
 	}
 }
 
@@ -349,13 +349,13 @@ id: c3-101
 title: auth
 type: component
 parent: c3-1
-refs: [ref-jwt, ref-logging]
+uses: [ref-jwt, ref-logging]
 ---
 
 # auth
 `)
 
-	err := RemoveFromArrayField(fp, "refs", "ref-jwt")
+	err := RemoveFromArrayField(fp, "uses", "ref-jwt")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -366,7 +366,7 @@ refs: [ref-jwt, ref-logging]
 	}
 	fm, _ := frontmatter.ParseFrontmatter(string(content))
 	if len(fm.Refs) != 1 || fm.Refs[0] != "ref-logging" {
-		t.Errorf("refs = %v, want [ref-logging]", fm.Refs)
+		t.Errorf("uses = %v, want [ref-logging]", fm.Refs)
 	}
 }
 
@@ -378,13 +378,13 @@ id: c3-101
 title: auth
 type: component
 parent: c3-1
-refs: [ref-jwt]
+uses: [ref-jwt]
 ---
 
 # auth
 `)
 
-	err := RemoveFromArrayField(fp, "refs", "ref-jwt")
+	err := RemoveFromArrayField(fp, "uses", "ref-jwt")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -395,7 +395,7 @@ refs: [ref-jwt]
 	}
 	fm, _ := frontmatter.ParseFrontmatter(string(content))
 	if len(fm.Refs) != 0 {
-		t.Errorf("refs should be empty, got %v", fm.Refs)
+		t.Errorf("uses should be empty, got %v", fm.Refs)
 	}
 }
 

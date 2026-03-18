@@ -65,11 +65,11 @@ func TestRunDelete_Ref(t *testing.T) {
 		t.Error("ref file should be deleted")
 	}
 
-	// c3-101 should no longer have ref-jwt in refs[]
+	// c3-101 should no longer have ref-jwt in uses[]
 	content, _ := os.ReadFile(filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md"))
 	fm, _ := frontmatter.ParseFrontmatter(string(content))
 	if containsStr2(fm.Refs, "ref-jwt") {
-		t.Errorf("c3-101 refs should not contain ref-jwt after delete, got %v", fm.Refs)
+		t.Errorf("c3-101 uses should not contain ref-jwt after delete, got %v", fm.Refs)
 	}
 
 	// Related Refs table should not contain ref-jwt

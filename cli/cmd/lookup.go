@@ -33,7 +33,7 @@ type LookupMatch struct {
 	Title   string     `json:"title"`
 	Goal    string     `json:"goal"`
 	Summary string     `json:"summary,omitempty"`
-	Refs    []RefBrief `json:"refs"`
+	Refs    []RefBrief `json:"uses"`
 }
 
 // LookupResult is the output for a single-file lookup.
@@ -190,7 +190,7 @@ func printMatches(w io.Writer, matches []LookupMatch) {
 			fmt.Fprintf(w, "    summary: %s\n", m.Summary)
 		}
 		if len(m.Refs) > 0 {
-			fmt.Fprintln(w, "    refs:")
+			fmt.Fprintln(w, "    uses:")
 			for _, r := range m.Refs {
 				if r.Goal != "" {
 					fmt.Fprintf(w, "      %s: %s\n", r.ID, r.Goal)

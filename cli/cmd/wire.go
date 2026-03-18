@@ -11,7 +11,7 @@ import (
 )
 
 // RunWire creates a cite relationship between source and target.
-// Two sides: (1) source frontmatter refs[], (2) source "Related Refs" table.
+// Two sides: (1) source frontmatter uses[], (2) source "Related Refs" table.
 func RunWire(c3Dir, sourceID, relationType, targetID string, w io.Writer) error {
 	if relationType == "" {
 		relationType = "cite"
@@ -29,9 +29,9 @@ func RunWire(c3Dir, sourceID, relationType, targetID string, w io.Writer) error 
 		return err
 	}
 
-	// Side 1: Add target to source's frontmatter refs[]
-	if err := writer.AddToArrayField(srcPath, "refs", targetID); err != nil {
-		return fmt.Errorf("side 1 (refs): %w", err)
+	// Side 1: Add target to source's frontmatter uses[]
+	if err := writer.AddToArrayField(srcPath, "uses", targetID); err != nil {
+		return fmt.Errorf("side 1 (uses): %w", err)
 	}
 
 	// Side 2: Add row to source's "Related Refs" table
@@ -63,9 +63,9 @@ func RunUnwire(c3Dir, sourceID, relationType, targetID string, w io.Writer) erro
 		return err
 	}
 
-	// Side 1: Remove target from source's frontmatter refs[]
-	if err := writer.RemoveFromArrayField(srcPath, "refs", targetID); err != nil {
-		return fmt.Errorf("side 1 (refs): %w", err)
+	// Side 1: Remove target from source's frontmatter uses[]
+	if err := writer.RemoveFromArrayField(srcPath, "uses", targetID); err != nil {
+		return fmt.Errorf("side 1 (uses): %w", err)
 	}
 
 	// Side 2: Remove row from source's "Related Refs" table where Ref matches target

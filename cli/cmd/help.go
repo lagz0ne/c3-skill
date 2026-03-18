@@ -98,7 +98,7 @@ Section mode accepts text or JSON (array for replace, object for --append):
        c3x wire --remove <source> <target>
 
 Creates or removes a cite relationship (updated atomically):
-  1. source frontmatter refs[] += target
+  1. source frontmatter uses[] += target
   2. source "Related Refs" table += row
 
 Options:
@@ -213,7 +213,7 @@ Safety:
   - Refuses to delete containers with children (lists them)
 
 Cleanup:
-  - Removes id from refs[], affects[], scope[], sources[] on referencing entities
+  - Removes id from uses[], affects[], scope[], sources[] on referencing entities
   - Removes Related Refs table rows citing this entity
   - Removes row from parent container's Components table
   - Removes code-map.yaml entry

@@ -43,7 +43,7 @@ title: Auth Service
 type: component
 parent: c3-1
 category: foundation
-refs:
+uses:
   - ref-0001
 ---
 Auth component.`)
@@ -54,7 +54,7 @@ title: User Service
 type: component
 parent: c3-1
 category: feature
-refs:
+uses:
   - ref-0001
 ---
 User component.`)
@@ -304,7 +304,7 @@ func TestBuildGraph(t *testing.T) {
 
 	t.Run("transitive from ref depth 1", func(t *testing.T) {
 		trans := graph.Transitive("ref-0001", 1)
-		// ref-0001 forward: citedBy returns c3-101, c3-110 (they have refs: [ref-0001])
+		// ref-0001 forward: citedBy returns c3-101, c3-110 (they have uses: [ref-0001])
 		if len(trans) != 2 {
 			t.Errorf("expected 2 transitive from ref-0001 depth 1, got %d", len(trans))
 			for _, e := range trans {

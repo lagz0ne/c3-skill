@@ -23,14 +23,14 @@ func TestRunWire_CiteRef_UpdatesBothSides(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Side 1: source's frontmatter refs[] should include ref-error-handling
+	// Side 1: source's frontmatter uses[] should include ref-error-handling
 	srcContent, err := os.ReadFile(filepath.Join(c3Dir, "c3-2-web", "c3-201-renderer.md"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	fm, _ := frontmatter.ParseFrontmatter(string(srcContent))
 	if !containsStr2(fm.Refs, "ref-error-handling") {
-		t.Errorf("Side 1 fail: source refs should include ref-error-handling, got %v", fm.Refs)
+		t.Errorf("Side 1 fail: source uses should include ref-error-handling, got %v", fm.Refs)
 	}
 
 	// Side 2: source's Related Refs table should include ref-error-handling
@@ -126,14 +126,14 @@ func TestRunUnwire_CiteRef(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Side 1: refs[] should not contain ref-error-handling
+	// Side 1: uses[] should not contain ref-error-handling
 	srcContent, err := os.ReadFile(filepath.Join(c3Dir, "c3-2-web", "c3-201-renderer.md"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	fm, _ := frontmatter.ParseFrontmatter(string(srcContent))
 	if containsStr2(fm.Refs, "ref-error-handling") {
-		t.Errorf("source refs should not contain ref-error-handling after unwire, got %v", fm.Refs)
+		t.Errorf("source uses should not contain ref-error-handling after unwire, got %v", fm.Refs)
 	}
 
 	// Side 2: Related Refs should not contain ref-error-handling (as a table row)

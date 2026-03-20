@@ -34,6 +34,7 @@ type LookupMatch struct {
 	Goal    string     `json:"goal"`
 	Summary string     `json:"summary,omitempty"`
 	Refs    []RefBrief `json:"uses"`
+	Rules   []RefBrief `json:"rules,omitempty"`
 }
 
 // LookupResult is the output for a single-file lookup.
@@ -66,7 +67,12 @@ func buildMatch(entity *walker.C3Entity, graph *walker.C3Graph) LookupMatch {
 		if ref == nil {
 			continue
 		}
-		match.Refs = append(match.Refs, RefBrief{ID: ref.ID, Goal: ref.Frontmatter.Goal})
+		brief := RefBrief{ID: ref.ID, Goal: ref.Frontmatter.Goal}
+		if strings.HasPrefix(refID, "rule-") {
+			match.Rules = append(match.Rules, brief)
+		} else {
+			match.Refs = append(match.Refs, brief)
+		}
 	}
 	return match
 }
@@ -192,6 +198,16 @@ func printMatches(w io.Writer, matches []LookupMatch) {
 		if len(m.Refs) > 0 {
 			fmt.Fprintln(w, "    uses:")
 			for _, r := range m.Refs {
+				if r.Goal != "" {
+					fmt.Fprintf(w, "      %s: %s\n", r.ID, r.Goal)
+				} else {
+					fmt.Fprintf(w, "      %s\n", r.ID)
+				}
+			}
+		}
+		if len(m.Rules) > 0 {
+			fmt.Fprintln(w, "    rules:")
+			for _, r := range m.Rules {
 				if r.Goal != "" {
 					fmt.Fprintf(w, "      %s: %s\n", r.ID, r.Goal)
 				} else {

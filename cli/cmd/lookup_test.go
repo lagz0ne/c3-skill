@@ -7,6 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
+	"github.com/lagz0ne/c3-design/cli/internal/walker"
 )
 
 // createLookupFixture builds a fixture with goal/summary frontmatter and a code-map.yaml.
@@ -515,5 +518,23 @@ func TestRunLookup_JSONNoMatch(t *testing.T) {
 
 	if len(result.Matches) != 0 {
 		t.Errorf("expected empty matches, got %v", result.Matches)
+	}
+}
+
+func TestLookupSeparatesRulesFromRefs(t *testing.T) {
+	docs := []frontmatter.ParsedDoc{
+		{Frontmatter: &frontmatter.Frontmatter{ID: "c3-1", Type: "container"}, Path: "c3-1/README.md"},
+		{Frontmatter: &frontmatter.Frontmatter{ID: "c3-101", Type: "component", Parent: "c3-1", Refs: []string{"ref-jwt", "rule-logging"}}, Path: "c3-1/c3-101-auth.md"},
+		{Frontmatter: &frontmatter.Frontmatter{ID: "ref-jwt", Goal: "JWT auth"}, Path: "refs/ref-jwt.md"},
+		{Frontmatter: &frontmatter.Frontmatter{ID: "rule-logging", Type: "rule", Goal: "Structured logging"}, Path: "rules/rule-logging.md"},
+	}
+	g := walker.BuildGraph(docs)
+	match := buildMatch(g.Get("c3-101"), g)
+
+	if len(match.Refs) != 1 || match.Refs[0].ID != "ref-jwt" {
+		t.Errorf("Refs = %v, want [ref-jwt]", match.Refs)
+	}
+	if len(match.Rules) != 1 || match.Rules[0].ID != "rule-logging" {
+		t.Errorf("Rules = %v, want [rule-logging]", match.Rules)
 	}
 }

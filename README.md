@@ -1,166 +1,170 @@
-# C3: Architecture Documentation Toolkit
+# C3: Architecture That Agents Can Read
 
-C3 (Context-Container-Component) is a Claude Code plugin that brings structured architecture documentation to any codebase. A single `/c3` skill backed by a native Go CLI manages everything in a `.c3/` directory.
+C3 turns your codebase into something an LLM can navigate. A single `.c3/` directory holds architecture docs in a SQLite database — every component, every cross-cutting pattern, every decision, queryable and enforceable.
 
-![C3 Architecture](https://diashort.apps.quickable.co/e/492da1d8?theme=light)
-
-## Install
+One Claude Code plugin. One `/c3` command. The agent figures out the rest.
 
 ```bash
 claude plugin install lagz0ne/c3-skill
 ```
 
-Then say `/c3 onboard` to create architecture docs for your project.
+Then: `/c3 onboard this project`
+
+## Why
+
+Architecture docs rot because nobody enforces them. C3 fixes this by making the docs machine-writable and machine-verifiable:
+
+- **LLMs read them before touching code** — `c3x lookup src/auth/login.ts` tells the agent which component owns the file, which refs govern it, what rules apply
+- **Writes are validated** — every content update passes through schema enforcement. Missing a required section? Rejected with a hint
+- **One database, not scattered files** — entities, relationships, code-map, and changelog in a single `c3.db`. Full-text search. Graph traversal. Impact analysis
+- **Migration is safe** — `migrate --dry-run` shows every quality gap before you commit. Fix with the LLM, then migrate
 
 ## What You Get
 
-### The `/c3` Skill
+### Seven operations, one entry point
 
-Six operations, one entry point:
-
-| Say | What happens |
-|-----|-------------|
-| `/c3` adopt this project | **onboard** — Socratic discovery → scaffolds `.c3/` with context, containers, components |
-| `/c3` where is auth? | **query** — Navigates docs, traces relationships, answers architecture questions |
-| `/c3` add rate limiting | **change** — ADR-first workflow: impact analysis → decision record → execute → audit |
-| `/c3` create a ref for error handling | **ref** — Manage cross-cutting patterns as first-class docs with cite wiring |
-| `/c3` audit the docs | **audit** — 10-phase validation: structural, semantic, drift, consistency |
-| `/c3` what breaks if I change payments? | **sweep** — Impact assessment across entity graph |
+| Say this | C3 does this |
+|----------|-------------|
+| `/c3` adopt this project | **onboard** — discovers your architecture through conversation, scaffolds `.c3/` |
+| `/c3` where is auth? | **query** — full-text search, graph traversal, traces relationships |
+| `/c3` add rate limiting | **change** — ADR-first: impact analysis → decision record → execute → validate |
+| `/c3` create a ref for error handling | **ref** — cross-cutting pattern with Choice/Why/How sections and cite wiring |
+| `/c3` add a rule for structured logging | **rule** — enforceable standard with golden example and anti-patterns |
+| `/c3` audit the docs | **audit** — 10-phase validation: structural → semantic → drift → compliance |
+| `/c3` what breaks if I change payments? | **sweep** — transitive impact across the entity graph |
 
 ### The `c3x` CLI
 
-Native Go binary, bundled with the plugin. Agents use it through the `/c3` skill automatically. Humans can use it directly via the `@c3x/cli` npm package:
+A Go binary bundled inside the plugin. No separate install — the skill carries its own binary for every platform (linux/darwin x amd64/arm64).
 
+> **For agents:** The `/c3` skill handles invocation automatically via `bash <skill-dir>/bin/c3x.sh`. Never run bare `c3x` — always go through `/c3`. The examples below use `c3x` as shorthand for readability.
+
+**Read/Write cycle:**
 ```bash
-npx @c3x/cli list              # run without installing
-npm install -g @c3x/cli        # or install globally, then:
-c3x list                       # use directly
+c3x read c3-101                          # full entity as markdown
+c3x read c3-101 --json                   # structured JSON
+
+echo "New goal." | c3x write c3-101 --section "Goal"   # section update
+cat updated.md | c3x write c3-101                       # full replace
+
+# Writes are enforced:
+# error: missing required section: Dependencies
+#   hint: add ## Dependencies — Data flowing in and out
 ```
 
-`@c3x/cli` is a thin wrapper — it doesn't bundle the Go binary. Instead, it discovers an already-installed binary from your agent skill installations and delegates to it. This means you install the c3 skill once (via Claude or Codex), and both agents and humans share the same binary.
-
-#### How resolution works
-
-The CLI searches these locations for the c3x binary, picks the highest version found:
-
-| Priority | Location | Source |
-|----------|----------|--------|
-| 1 | `<project>/skills/c3/bin/` | Local project (walks up from cwd, stops at `.git`) |
-| 2 | `~/.claude/skills/c3/bin/` | Claude Code skill installation |
-| 3 | `~/.codex/skills/c3/bin/` | Codex skill installation |
-| 4 | `~/.claude/plugins/marketplaces/*/skills/c3/bin/` | Claude marketplace |
-
-Use `--agent` to restrict the search:
-
+**Search and navigate:**
 ```bash
-c3x --agent claude list        # only Claude paths + project
-c3x --agent codex list         # only Codex paths + project
+c3x query "authentication"               # full-text search with ranking
+c3x lookup src/auth/login.ts             # file → component + refs + rules
+c3x impact ref-jwt                       # what breaks if this changes?
+c3x graph c3-1 --format mermaid          # visual subgraph
 ```
 
-#### Human vs agent output
-
-When agents invoke c3x through the skill, `C3X_MODE=agent` is set automatically — output is JSON. When humans run `c3x` via the npm CLI, no mode is set — output is human-readable text. Explicit `--json` or `--compact` flags override either default.
-
-```
-c3x <command> [args] [options]
-
-  init                       Scaffold .c3/ skeleton
-  list                       Topology view with relationships
-  check                      Validate docs, schema, code refs, consistency
-  add <type> <slug>          Create entity (container, component, ref, adr, recipe)
-  set <id> <field> <value>   Update frontmatter field or section content
-  wire <src> [cite] <tgt>    Link component to ref (--remove to unlink)
-  schema <type>              Show known sections and column types
-  codemap                    Scaffold code-map.yaml with stubs for all components + refs
-  lookup <file-path>         Map file to component(s) + refs
-  coverage                   Code-map coverage + ref governance stats
-  graph <entity-id>          Subgraph from entity (--format mermaid for diagrams)
-  delete <id>                Remove entity + clean all references (--dry-run)
-  capabilities               List all commands as a markdown table
-
-  --json                     Machine-readable output
-  --include-adr              Include ADRs in output (hidden by default)
-  --c3-dir <path>            Override .c3/ auto-detection
+**Manage entities:**
+```bash
+c3x add component auth --container c3-1 --goal "JWT auth"
+c3x wire c3-101 cite ref-jwt
+c3x set c3-101 --section "Goal" "Handle JWT authentication"
+c3x delete ref-obsolete --dry-run
 ```
 
-The CLI implements a three-layer document engine:
+**Track changes:**
+```bash
+c3x diff                                 # what changed since last commit
+c3x diff --mark abc123                   # stamp changelog with commit hash
+c3x check                               # validate everything
+c3x coverage                            # code-map completeness stats
+```
 
-| Layer | What it validates |
-|-------|-------------------|
-| **0. Parse** | Broken YAML frontmatter (e.g. unquoted colons in values) |
-| **1. Structure** | Broken links, orphans, duplicates, missing parents |
-| **2. Schema** | Required sections per entity type (Goal, Components, Dependencies, etc.) |
-| **3. Types** | Column types in tables: `filepath` exists on disk, `entity_id` in graph, `ref_id` valid, `enum` in allowed set |
-| **4. Scope** | Ref scope cross-check: warns when a ref scopes a container but a child component doesn't cite it |
+**Full command list:** `c3x --help`
 
-## The `.c3/` Directory
+### Schema enforcement
+
+Every entity type has required sections. The CLI enforces them on write:
+
+| Entity | Required sections |
+|--------|------------------|
+| Component | Goal, Dependencies |
+| Container | Goal, Components, Responsibilities |
+| Ref | Goal, Choice, Why |
+| Rule | Goal, Rule, Golden Example |
+| ADR, Recipe | Goal |
+
+`c3x write` and `c3x set --section` validate the result before accepting. `c3x check` validates everything post-hoc.
+
+### The database
 
 ```
 .c3/
-├── README.md                  # System context (c3-0)
-├── code-map.yaml              # Component → source file mappings (validated by check)
-├── _index/
-│   └── structural.md          # Precomputed entity→files→refs→constraints (auto-rebuilt)
-├── c3-N-name/                 # Container
-│   ├── README.md              # Container overview + component table
-│   └── c3-NNN-component.md   # Component with deps, wiring
-├── refs/
-│   └── ref-pattern.md         # Cross-cutting convention (golden examples, no code pointers)
-├── recipes/
-│   └── recipe-topic.md        # Cross-cutting concern trace (end-to-end narrative with source refs)
-└── adr/
-    └── adr-YYYYMMDD-slug.md   # Architecture decision record
+├── c3.db           # everything lives here
+└── config.yaml
 ```
 
-Every entity has YAML frontmatter (`id`, `type`, `uses[]`, `status`) and markdown body with schema-defined sections. The CLI keeps wiring consistent — `wire` (and `wire --remove`) updates source frontmatter and source Related Refs table atomically.
+`c3.db` holds entities, relationships, code-map globs, and a mutation changelog. No scattered markdown files to manage — but `c3x export` dumps to files any time you need them.
 
-`code-map.yaml` maps components and refs to their actual source files. Run `c3x codemap` to scaffold stubs for every entity, then fill in the glob patterns:
+Entity types: `container`, `component`, `ref`, `rule`, `adr`, `recipe`.
 
-```yaml
-# .c3/code-map.yaml
-c3-101:  # Logger
-  - src/lib/logger.ts
-c3-102:  # Config
-  - src/lib/config.ts
-  - src/lib/config/**/*.ts
-_exclude:
-  - "**/*.test.ts"
-  - "**/*.spec.ts"
-  - dist/**
+Code-map entries link entities to source files via glob patterns. `c3x lookup` resolves any file to its architecture context. `c3x coverage` shows what's mapped and what isn't.
+
+### Marketplace
+
+Share and adopt curated rule collections:
+
+```bash
+c3x marketplace add https://github.com/org/go-patterns
+c3x marketplace list --tag errors
+c3x marketplace show rule-error-wrapping
 ```
 
-Patterns support `*` and `**` glob syntax, plus literal bracket paths like `[id]` (Next.js/SvelteKit routes). The `_exclude` key marks files that are intentionally unmapped (tests, build output) — they won't count against your coverage percentage.
+## Migrating from file-based `.c3/`
 
-`c3x check` validates all mappings: component IDs must exist in the graph, paths must be regular files on disk. `c3x coverage` shows how many project files are mapped, excluded, or unmapped. `c3x lookup <file>` resolves any file to its owning component(s) and governing refs.
+If you have an existing `.c3/` with markdown files (pre-v7), migrate in two steps:
 
-### Structural Index
+**Step 1: See what needs fixing**
+```bash
+c3x migrate --dry-run
+```
 
-The CLI automatically maintains a structural index at `.c3/_index/structural.md` after mutating commands (`add`, `set`, `wire`, `delete`). This precomputes entity→files→refs→reverse-deps→constraints mappings from the graph + code-map, giving LLMs instant discovery without multiple CLI calls.
+This produces a markdown checklist — every entity with missing frontmatter goals, empty sections, broken refs, or stale code-map patterns. The output is LLM-friendly: paste it into a conversation and let the agent fix the files.
 
-Recipes in `.c3/recipes/` trace cross-cutting concerns end-to-end (e.g. "recipe-auth-flow.md") with YAML frontmatter tracking their entity sources. `c3x check` validates that recipe source citations reference entities that exist in the graph.
+**Step 2: Migrate**
+```bash
+c3x migrate
+```
+
+One-shot import: entities, relationships, code-map → SQLite. Original files are removed (kept in git history). The `--keep-originals` flag preserves them if you want both.
+
+## Self-contained distribution
+
+The plugin ships with pre-built binaries — no Go toolchain, no npm, no PATH configuration:
+
+```
+skills/c3/bin/
+├── VERSION                    # "7.0.0"
+├── c3x.sh                    # detects OS/ARCH, runs the right binary
+├── c3x-7.0.0-linux-amd64
+├── c3x-7.0.0-linux-arm64
+├── c3x-7.0.0-darwin-amd64
+└── c3x-7.0.0-darwin-arm64
+```
+
+Each plugin version carries its own binary. Different projects can use different versions without conflict.
 
 ## VS Code Extension
 
-The **C3 Architecture Navigator** extension adds in-editor navigation for C3 IDs (`c3-*`, `ref-*`, `adr-*`): CodeLens links, hover previews, Ctrl+Click to definition, and file path navigation in `code-map.yaml`.
-
-**Install from release:**
+**C3 Architecture Navigator** — Ctrl+Click on `c3-101` or `ref-jwt` in your code to jump to the doc. CodeLens, hover previews, glob path navigation.
 
 ```bash
-# Download the latest .vsix from GitHub Releases
 curl -fsSL -o c3-nav.vsix https://github.com/Lagz0ne/c3-skill/releases/latest/download/c3-nav.vsix
 code --install-extension c3-nav.vsix --force
 ```
 
-The extension activates automatically when a workspace contains `.c3/code-map.yaml`. See [`vscode-c3-nav/README.md`](vscode-c3-nav/README.md) for build-from-source instructions.
-
 ## Development
 
 ```bash
-cd cli && go test ./...       # Run tests
-bash scripts/build.sh         # Cross-compile for 4 targets
+cd cli && go test ./...       # 89% coverage, 15 packages
+bash scripts/build.sh         # cross-compile for 4 targets
 ```
-
-Binaries are cross-compiled in CI and force-added to `main`. The `dev` branch has source only.
 
 ## License
 

@@ -177,7 +177,7 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) err
 		if err != nil {
 			return fmt.Errorf("error: reading stdin: %w", err)
 		}
-		return cmd.RunWrite(cmd.WriteOptions{Store: s, ID: entityID, Content: string(content)}, w)
+		return cmd.RunWrite(cmd.WriteOptions{Store: s, ID: entityID, Section: opts.Section, Content: string(content)}, w)
 	case "add":
 		return runAdd(opts, s, c3Dir, w)
 	case "set":

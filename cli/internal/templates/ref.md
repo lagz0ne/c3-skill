@@ -18,9 +18,10 @@ Refs capture chosen options - "we chose X over Y for Z reason" specific to THIS 
 NOT generic technology documentation (link to official docs instead).
 
 THE SEPARATION TEST:
-"Is this a technology/pattern choice we made?"
-- Yes → Belongs in ref (chosen option with rationale)
-- No → Belongs in component (business/domain logic)
+"Remove the Why section. Does the doc become useless?"
+- Yes → Belongs in ref (the value is in the rationale)
+- No → Belongs in rule (the value is in enforcement)
+- Neither → Belongs in component (business/domain logic)
 
 KEY SECTIONS (use what serves your Goal):
 - Choice: What we chose and the context of that choice

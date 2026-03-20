@@ -40,7 +40,6 @@ func RunWrite(opts WriteOptions, w io.Writer) error {
 func runWriteFull(existing *store.Entity, opts WriteOptions, w io.Writer) error {
 	fm, body := frontmatter.ParseFrontmatter(opts.Content)
 
-	// See also: runSetField in set.go maps the same fields via string key.
 	applyFrontmatter(existing, fm)
 
 	if fm != nil {
@@ -111,8 +110,6 @@ func availableSections(body string) string {
 	return strings.Join(names, ", ")
 }
 
-// applyFrontmatter updates entity fields from parsed frontmatter.
-// See also: runSetField in set.go maps the same fields via string key.
 func applyFrontmatter(e *store.Entity, fm *frontmatter.Frontmatter) {
 	if fm == nil {
 		return
@@ -215,15 +212,10 @@ func validateContent(e *store.Entity) []Issue {
 	return issues
 }
 
-// syncRelationships diffs existing relationships against frontmatter
-// and adds/removes to match. Prevents ghost edges from accumulating.
 func syncRelationships(s *store.Store, entityID string, fm *frontmatter.Frontmatter) error {
 	existing, _ := s.RelationshipsFrom(entityID)
 
-	// Build desired set from frontmatter
-	type relKey struct {
-		toID, relType string
-	}
+	type relKey struct{ toID, relType string }
 	desired := make(map[relKey]bool)
 	for _, rt := range []struct {
 		targets []string
@@ -247,22 +239,23 @@ func syncRelationships(s *store.Store, entityID string, fm *frontmatter.Frontmat
 		}
 	}
 
-	// Remove stale relationships
+	var errs []string
 	for _, r := range existing {
-		key := relKey{r.ToID, r.RelType}
-		if !desired[key] {
-			_ = s.RemoveRelationship(r)
+		if !desired[relKey{r.ToID, r.RelType}] {
+			if err := s.RemoveRelationship(r); err != nil {
+				errs = append(errs, err.Error())
+			}
 		}
 	}
-
-	// Add new relationships
 	for key := range desired {
-		_ = s.AddRelationship(&store.Relationship{
-			FromID:  entityID,
-			ToID:    key.toID,
-			RelType: key.relType,
-		})
+		if err := s.AddRelationship(&store.Relationship{
+			FromID: entityID, ToID: key.toID, RelType: key.relType,
+		}); err != nil {
+			errs = append(errs, err.Error())
+		}
 	}
-
+	if len(errs) > 0 {
+		return fmt.Errorf("%s", strings.Join(errs, "; "))
+	}
 	return nil
 }

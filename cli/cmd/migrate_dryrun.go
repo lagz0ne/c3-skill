@@ -66,7 +66,6 @@ func RunMigrateDryRun(c3Dir string, jsonOut bool, w io.Writer) error {
 		return fmt.Errorf("error: no documents found in %s", c3Dir)
 	}
 
-	// Build graph for cross-reference validation
 	graph := walker.BuildGraph(result.Docs)
 
 	var report MigrateDryRunResult
@@ -97,7 +96,6 @@ func RunMigrateDryRun(c3Dir string, jsonOut bool, w io.Writer) error {
 		}
 	}
 
-	// Validate code-map
 	report.CodeMapIssues = analyzeCodeMap(c3Dir, graph)
 	report.TotalGaps += len(report.CodeMapIssues)
 
@@ -255,7 +253,6 @@ func analyzeCodeMap(c3Dir string, graph *walker.C3Graph) []MigrateCodeMapIssue {
 		return nil
 	}
 
-	// Resolve project dir for file matching
 	projectDir := filepath.Dir(c3Dir)
 
 	var issues []MigrateCodeMapIssue

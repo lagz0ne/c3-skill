@@ -46,8 +46,6 @@ func RunSet(opts SetOptions, w io.Writer) error {
 	return runSetField(entity, opts, w)
 }
 
-// runSetField updates a frontmatter field via the store.
-// See also: applyFrontmatter in write.go maps the same fields from a Frontmatter struct.
 func runSetField(entity *store.Entity, opts SetOptions, w io.Writer) error {
 	// Map field name to entity field
 	switch opts.Field {

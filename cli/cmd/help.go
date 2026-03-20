@@ -379,7 +379,6 @@ Usage: c3x <command> [args] [options]
 
 Commands:
 `)
-	// Find max width for alignment
 	maxWidth := 0
 	for _, c := range Commands {
 		w := len(c.Name)

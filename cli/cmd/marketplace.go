@@ -29,7 +29,6 @@ func RunMarketplaceAdd(opts MarketplaceOptions, w io.Writer) error {
 		return fmt.Errorf("error: usage: c3x marketplace add <github-url>")
 	}
 
-	// Clone to temp, read manifest, then move to final location
 	tmpDir := filepath.Join(baseDir, ".tmp-clone")
 	os.RemoveAll(tmpDir)
 	defer os.RemoveAll(tmpDir)
@@ -49,7 +48,6 @@ func RunMarketplaceAdd(opts MarketplaceOptions, w io.Writer) error {
 		return fmt.Errorf("error: %w", err)
 	}
 
-	// Validate rule files exist
 	for _, r := range manifest.Rules {
 		ruleFile := filepath.Join(tmpDir, r.ID+".md")
 		if _, err := os.Stat(ruleFile); os.IsNotExist(err) {

@@ -95,7 +95,6 @@ func run(argv []string, w io.Writer) error {
 		return fmt.Errorf("error: .c3/ contains markdown files but no database (c3.db)\n\nThis version of c3x uses an embedded database.\nUse /c3 in Claude Code to run an LLM-assisted migration that\nvalidates and fixes malformed docs before importing.\n\nOr if docs are already valid: c3x migrate")
 	}
 
-	// Open the store (creates empty DB if none exists — fine for new projects via init)
 	s, err := store.Open(dbPath)
 	if err != nil {
 		return fmt.Errorf("error: opening database: %w", err)

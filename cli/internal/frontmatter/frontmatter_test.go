@@ -223,6 +223,9 @@ func TestClassifyDoc(t *testing.T) {
 		{"recipe by type", Frontmatter{ID: "my-recipe", Type: "recipe"}, DocRecipe},
 		{"recipe by prefix", Frontmatter{ID: "recipe-auth"}, DocRecipe},
 		{"unknown", Frontmatter{ID: "something-else"}, DocUnknown},
+		{"rule by type field", Frontmatter{ID: "rule-logging", Type: "rule"}, DocRule},
+		{"rule by prefix", Frontmatter{ID: "rule-logging"}, DocRule},
+		{"rule type takes precedence", Frontmatter{ID: "something", Type: "rule"}, DocRule},
 	}
 
 	for _, tt := range tests {
@@ -275,6 +278,7 @@ func TestDeriveRelationships(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := DeriveRelationships(&tt.fm)
+
 			if len(got) != len(tt.want) {
 				t.Fatalf("len = %d, want %d: %v", len(got), len(tt.want), got)
 			}
@@ -284,5 +288,40 @@ func TestDeriveRelationships(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestDocRuleString(t *testing.T) {
+	if DocRule.String() != "rule" {
+		t.Errorf("DocRule.String() = %q, want %q", DocRule.String(), "rule")
+	}
+}
+
+func TestOriginField(t *testing.T) {
+	content := "---\nid: rule-logging\ntype: rule\norigin:\n  - ref-logging-choice\n---\nbody"
+	fm, _ := ParseFrontmatter(content)
+	if fm == nil {
+		t.Fatal("expected frontmatter")
+	}
+	if len(fm.Origin) != 1 || fm.Origin[0] != "ref-logging-choice" {
+		t.Errorf("Origin = %v, want [ref-logging-choice]", fm.Origin)
+	}
+}
+
+func TestDeriveRelationshipsIncludesOrigin(t *testing.T) {
+	fm := &Frontmatter{
+		ID:     "rule-logging",
+		Origin: []string{"ref-logging-choice"},
+		Refs:   []string{"ref-other"},
+	}
+	rels := DeriveRelationships(fm)
+	found := false
+	for _, r := range rels {
+		if r == "ref-logging-choice" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("DeriveRelationships missing origin ref, got %v", rels)
 	}
 }

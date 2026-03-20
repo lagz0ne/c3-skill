@@ -4,17 +4,16 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/lagz0ne/c3-design/cli/internal/codemap"
-	"github.com/lagz0ne/c3-design/cli/internal/walker"
+	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
 // LookupOptions holds parameters for the lookup command.
 type LookupOptions struct {
-	Graph      *walker.C3Graph
+	Store      *store.Store
 	FilePath   string
 	JSON       bool
 	ProjectDir string
@@ -51,23 +50,26 @@ type GlobLookupResult struct {
 	Components []LookupMatch       `json:"components"`
 }
 
-func buildMatch(entity *walker.C3Entity, graph *walker.C3Graph) LookupMatch {
+func buildMatchFromStore(entity *store.Entity, s *store.Store) LookupMatch {
 	match := LookupMatch{
 		ID:      entity.ID,
 		Title:   entity.Title,
-		Goal:    entity.Frontmatter.Goal,
-		Summary: entity.Frontmatter.Summary,
+		Goal:    entity.Goal,
+		Summary: entity.Summary,
 		Refs:    []RefBrief{},
 	}
-	refIDs := make([]string, len(entity.Frontmatter.Refs))
-	copy(refIDs, entity.Frontmatter.Refs)
+	refs, _ := s.RefsFor(entity.ID)
+	var refIDs []string
+	for _, r := range refs {
+		refIDs = append(refIDs, r.ID)
+	}
 	sort.Strings(refIDs)
 	for _, refID := range refIDs {
-		ref := graph.Get(refID)
-		if ref == nil {
+		ref, err := s.GetEntity(refID)
+		if err != nil {
 			continue
 		}
-		brief := RefBrief{ID: ref.ID, Goal: ref.Frontmatter.Goal}
+		brief := RefBrief{ID: ref.ID, Goal: ref.Goal}
 		if strings.HasPrefix(refID, "rule-") {
 			match.Rules = append(match.Rules, brief)
 		} else {
@@ -79,33 +81,27 @@ func buildMatch(entity *walker.C3Entity, graph *walker.C3Graph) LookupMatch {
 
 // RunLookup maps a file path (or glob pattern) to owning components and their refs.
 func RunLookup(opts LookupOptions, w io.Writer) error {
-	cmPath := filepath.Join(opts.C3Dir, "code-map.yaml")
-	cm, err := codemap.ParseCodeMap(cmPath)
-	if err != nil {
-		return fmt.Errorf("code-map parse error: %w", err)
-	}
-	if len(cm) == 0 {
-		fmt.Fprintln(w, "hint: code-map.yaml is empty or missing — run 'c3x codemap' to scaffold it")
-	}
-
 	if codemap.IsGlobPattern(opts.FilePath) {
-		return runGlobLookup(opts, cm, w)
+		return runGlobLookup(opts, w)
 	}
-	return runSingleLookup(opts, cm, w)
+	return runSingleLookup(opts, w)
 }
 
-func runSingleLookup(opts LookupOptions, cm codemap.CodeMap, w io.Writer) error {
-	ids := codemap.Match(cm, opts.FilePath)
+func runSingleLookup(opts LookupOptions, w io.Writer) error {
+	ids, err := opts.Store.LookupByFile(opts.FilePath)
+	if err != nil {
+		return fmt.Errorf("lookup error: %w", err)
+	}
 	result := LookupResult{
 		File:    opts.FilePath,
 		Matches: []LookupMatch{},
 	}
 	for _, id := range ids {
-		entity := opts.Graph.Get(id)
-		if entity == nil {
+		entity, err := opts.Store.GetEntity(id)
+		if err != nil {
 			continue
 		}
-		result.Matches = append(result.Matches, buildMatch(entity, opts.Graph))
+		result.Matches = append(result.Matches, buildMatchFromStore(entity, opts.Store))
 	}
 
 	if opts.JSON {
@@ -123,7 +119,7 @@ func runSingleLookup(opts LookupOptions, cm codemap.CodeMap, w io.Writer) error 
 	return nil
 }
 
-func runGlobLookup(opts LookupOptions, cm codemap.CodeMap, w io.Writer) error {
+func runGlobLookup(opts LookupOptions, w io.Writer) error {
 	matched, err := codemap.GlobFiles(os.DirFS(opts.ProjectDir), opts.FilePath)
 	if err != nil {
 		return fmt.Errorf("glob error: %w", err)
@@ -139,18 +135,18 @@ func runGlobLookup(opts LookupOptions, cm codemap.CodeMap, w io.Writer) error {
 
 	seen := make(map[string]bool)
 	for _, file := range matched {
-		ids := codemap.Match(cm, file)
+		ids, _ := opts.Store.LookupByFile(file)
 		result.FileMap[file] = ids
 		for _, id := range ids {
 			if seen[id] {
 				continue
 			}
 			seen[id] = true
-			entity := opts.Graph.Get(id)
-			if entity == nil {
+			entity, err := opts.Store.GetEntity(id)
+			if err != nil {
 				continue
 			}
-			result.Components = append(result.Components, buildMatch(entity, opts.Graph))
+			result.Components = append(result.Components, buildMatchFromStore(entity, opts.Store))
 		}
 	}
 

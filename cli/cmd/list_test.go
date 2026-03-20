@@ -5,49 +5,40 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
 func TestRunList_Topology(t *testing.T) {
-	c3Dir := createFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s := createDBFixture(t)
 	var buf bytes.Buffer
 
-	if err := RunList(ListOptions{Graph: graph, C3Dir: c3Dir}, &buf); err != nil {
+	if err := RunList(ListOptions{Store: s}, &buf); err != nil {
 		t.Fatal(err)
 	}
 
 	output := buf.String()
-
-	// Architecture summary line
 	if !strings.Contains(output, "containers") {
 		t.Errorf("should show container count in summary, got:\n%s", output)
 	}
 	if !strings.Contains(output, "components") {
 		t.Errorf("should show component count in summary, got:\n%s", output)
 	}
-
-	// Containers: slug from "c3-1-api/README.md" -> "api"
 	if !strings.Contains(output, "c3-1-api (container)") {
 		t.Errorf("should list c3-1-api container, got:\n%s", output)
 	}
 	if !strings.Contains(output, "c3-2-web (container)") {
 		t.Errorf("should list c3-2-web container, got:\n%s", output)
 	}
-
-	// Components: slug from "c3-101-auth.md" -> "auth"
 	if !strings.Contains(output, "c3-101-auth (foundation)") {
 		t.Errorf("should list c3-101 auth component, got:\n%s", output)
 	}
 	if !strings.Contains(output, "c3-110-users (feature)") {
 		t.Errorf("should list c3-110 users component, got:\n%s", output)
 	}
-
-	// Should show ref usage via "uses:"
 	if !strings.Contains(output, "uses:") {
 		t.Errorf("should show ref usage for c3-101, got:\n%s", output)
 	}
-
-	// Should show cross-cutting refs
 	if !strings.Contains(output, "Cross-cutting:") {
 		t.Error("should have Cross-cutting section")
 	}
@@ -57,26 +48,17 @@ func TestRunList_Topology(t *testing.T) {
 }
 
 func TestRunList_TopologyProvisioning(t *testing.T) {
-	c3Dir := createFixture(t)
+	s := createDBFixture(t)
 
 	// Add a provisioning component
-	writeFile(t, c3Dir+"/c3-1-api/c3-120-payments.md", `---
-id: c3-120
-title: payments
-type: component
-category: feature
-parent: c3-1
-status: provisioning
-goal: Process payments via Stripe
----
+	s.InsertEntity(&store.Entity{
+		ID: "c3-120", Type: "component", Title: "payments", Slug: "payments",
+		Category: "feature", ParentID: "c3-1", Status: "provisioning",
+		Goal: "Process payments via Stripe", Metadata: "{}",
+	})
 
-# payments
-`)
-
-	graph := loadGraph(t, c3Dir)
 	var buf bytes.Buffer
-
-	if err := RunList(ListOptions{Graph: graph, C3Dir: c3Dir}, &buf); err != nil {
+	if err := RunList(ListOptions{Store: s}, &buf); err != nil {
 		t.Fatal(err)
 	}
 
@@ -87,11 +69,10 @@ goal: Process payments via Stripe
 }
 
 func TestRunList_Flat(t *testing.T) {
-	c3Dir := createFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s := createDBFixture(t)
 	var buf bytes.Buffer
 
-	if err := RunList(ListOptions{Graph: graph, Flat: true, C3Dir: c3Dir}, &buf); err != nil {
+	if err := RunList(ListOptions{Store: s, Flat: true}, &buf); err != nil {
 		t.Fatal(err)
 	}
 
@@ -102,7 +83,6 @@ func TestRunList_Flat(t *testing.T) {
 		t.Fatalf("expected at least 5 lines, got %d: %s", len(lines), output)
 	}
 
-	// Each line should be tab-separated: id\ttype\tpath
 	for _, line := range lines {
 		parts := strings.Split(line, "\t")
 		if len(parts) != 3 {
@@ -112,26 +92,24 @@ func TestRunList_Flat(t *testing.T) {
 }
 
 func TestRunList_DefaultExcludesADR(t *testing.T) {
-	c3Dir := createFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s := createDBFixture(t)
 	var buf bytes.Buffer
 
-	if err := RunList(ListOptions{Graph: graph, C3Dir: c3Dir}, &buf); err != nil {
+	if err := RunList(ListOptions{Store: s}, &buf); err != nil {
 		t.Fatal(err)
 	}
 
 	output := buf.String()
-	if strings.Contains(output, "ADR") {
+	if strings.Contains(output, "adr-") {
 		t.Errorf("default topology should not mention ADRs, got:\n%s", output)
 	}
 }
 
 func TestRunList_IncludeADRShowsADR(t *testing.T) {
-	c3Dir := createFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s := createDBFixture(t)
 	var buf bytes.Buffer
 
-	if err := RunList(ListOptions{Graph: graph, C3Dir: c3Dir, IncludeADR: true}, &buf); err != nil {
+	if err := RunList(ListOptions{Store: s, IncludeADR: true}, &buf); err != nil {
 		t.Fatal(err)
 	}
 
@@ -142,11 +120,10 @@ func TestRunList_IncludeADRShowsADR(t *testing.T) {
 }
 
 func TestRunList_FlatExcludesADR(t *testing.T) {
-	c3Dir := createFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s := createDBFixture(t)
 	var buf bytes.Buffer
 
-	if err := RunList(ListOptions{Graph: graph, Flat: true, C3Dir: c3Dir}, &buf); err != nil {
+	if err := RunList(ListOptions{Store: s, Flat: true}, &buf); err != nil {
 		t.Fatal(err)
 	}
 
@@ -157,11 +134,10 @@ func TestRunList_FlatExcludesADR(t *testing.T) {
 }
 
 func TestRunList_FlatIncludesADR(t *testing.T) {
-	c3Dir := createFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s := createDBFixture(t)
 	var buf bytes.Buffer
 
-	if err := RunList(ListOptions{Graph: graph, Flat: true, C3Dir: c3Dir, IncludeADR: true}, &buf); err != nil {
+	if err := RunList(ListOptions{Store: s, Flat: true, IncludeADR: true}, &buf); err != nil {
 		t.Fatal(err)
 	}
 
@@ -172,11 +148,10 @@ func TestRunList_FlatIncludesADR(t *testing.T) {
 }
 
 func TestRunList_JSONExcludesADR(t *testing.T) {
-	c3Dir := createFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s := createDBFixture(t)
 	var buf bytes.Buffer
 
-	if err := RunList(ListOptions{Graph: graph, JSON: true, C3Dir: c3Dir}, &buf); err != nil {
+	if err := RunList(ListOptions{Store: s, JSON: true}, &buf); err != nil {
 		t.Fatal(err)
 	}
 
@@ -193,11 +168,10 @@ func TestRunList_JSONExcludesADR(t *testing.T) {
 }
 
 func TestRunList_JSONIncludesADR(t *testing.T) {
-	c3Dir := createFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s := createDBFixture(t)
 	var buf bytes.Buffer
 
-	if err := RunList(ListOptions{Graph: graph, JSON: true, C3Dir: c3Dir, IncludeADR: true}, &buf); err != nil {
+	if err := RunList(ListOptions{Store: s, JSON: true, IncludeADR: true}, &buf); err != nil {
 		t.Fatal(err)
 	}
 
@@ -218,12 +192,25 @@ func TestRunList_JSONIncludesADR(t *testing.T) {
 	}
 }
 
+func TestListTopologyShowsRules(t *testing.T) {
+	s := createDBFixture(t)
+	s.InsertEntity(&store.Entity{
+		ID: "rule-logging", Type: "rule", Title: "Structured Logging", Slug: "logging",
+		Goal: "Structured logging", Status: "active", Metadata: "{}",
+	})
+
+	var buf bytes.Buffer
+	RunList(ListOptions{Store: s}, &buf)
+	if !strings.Contains(buf.String(), "rule-logging") {
+		t.Error("topology should show rules")
+	}
+}
+
 func TestRunList_JSON(t *testing.T) {
-	c3Dir := createFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s := createDBFixture(t)
 	var buf bytes.Buffer
 
-	if err := RunList(ListOptions{Graph: graph, JSON: true, C3Dir: c3Dir}, &buf); err != nil {
+	if err := RunList(ListOptions{Store: s, JSON: true}, &buf); err != nil {
 		t.Fatal(err)
 	}
 
@@ -236,16 +223,12 @@ func TestRunList_JSON(t *testing.T) {
 		t.Fatalf("expected at least 5 entities, got %d", len(data))
 	}
 
-	// Check required fields
 	for _, entity := range data {
 		if _, ok := entity["id"]; !ok {
 			t.Error("entity missing 'id' field")
 		}
 		if _, ok := entity["type"]; !ok {
 			t.Error("entity missing 'type' field")
-		}
-		if _, ok := entity["path"]; !ok {
-			t.Error("entity missing 'path' field")
 		}
 	}
 }

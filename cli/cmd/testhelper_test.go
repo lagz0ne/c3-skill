@@ -12,6 +12,7 @@ import (
 
 // createFixture sets up a .c3/ directory with common test data.
 // Returns the .c3/ directory path.
+// Kept for migration tests that need file-based fixtures.
 func createFixture(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
@@ -164,7 +165,7 @@ func loadGraph(t *testing.T, c3Dir string) *walker.C3Graph {
 }
 
 // createRichFixture sets up a .c3/ directory with decorated content sections (tables, refs, etc.)
-// Used by tests that exercise schema validation, wire/unwire, and enhanced check.
+// Kept for migration tests.
 func createRichFixture(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
@@ -180,7 +181,6 @@ func createRichFixture(t *testing.T) string {
 		os.MkdirAll(d, 0755)
 	}
 
-	// Context
 	writeFile(t, filepath.Join(c3Dir, "README.md"), `---
 id: c3-0
 title: TestProject
@@ -200,7 +200,6 @@ Test the system.
 | c3-2 | web | app | Web frontend |
 `)
 
-	// Container 1 — with Components table
 	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "README.md"), `---
 id: c3-1
 title: api
@@ -224,7 +223,6 @@ Serve API requests.
 | c3-110 | users | feature | active | User management |
 `)
 
-	// Component c3-101 — with Dependencies, Code References, Related Refs
 	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md"), `---
 id: c3-101
 title: auth
@@ -253,7 +251,6 @@ Handle authentication.
 | ref-jwt | Token format |
 `)
 
-	// Component c3-110 — with empty Code References
 	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "c3-110-users.md"), `---
 id: c3-110
 title: users
@@ -274,7 +271,6 @@ Manage user accounts.
 |-----------|------|---------|
 `)
 
-	// Container 2
 	writeFile(t, filepath.Join(c3Dir, "c3-2-web", "README.md"), `---
 id: c3-2
 title: web
@@ -296,7 +292,6 @@ Web frontend.
 | c3-201 | renderer | feature | active | Renders pages |
 `)
 
-	// Component c3-201 — with empty Code References
 	writeFile(t, filepath.Join(c3Dir, "c3-2-web", "c3-201-renderer.md"), `---
 id: c3-201
 title: renderer
@@ -322,7 +317,6 @@ Render pages.
 |-----|------|
 `)
 
-	// Ref
 	writeFile(t, filepath.Join(c3Dir, "refs", "ref-jwt.md"), `---
 id: ref-jwt
 title: JWT Authentication
@@ -345,7 +339,6 @@ Use RS256 signed JWTs.
 Industry standard, asymmetric verification.
 `)
 
-	// Second ref — for wire tests
 	writeFile(t, filepath.Join(c3Dir, "refs", "ref-error-handling.md"), `---
 id: ref-error-handling
 title: Error Handling
@@ -368,7 +361,6 @@ RFC 7807 Problem Details.
 Machine-readable error format.
 `)
 
-	// ADR
 	writeFile(t, filepath.Join(c3Dir, "adr", "adr-20260226-use-go.md"), `---
 id: adr-20260226-use-go
 title: Use Go for CLI
@@ -443,4 +435,66 @@ func createDBFixture(t *testing.T) *store.Store {
 	}
 
 	return s
+}
+
+// createRichDBFixture creates a store with the same entities as createRichFixture,
+// including body content with tables for wire/set/check tests.
+func createRichDBFixture(t *testing.T) *store.Store {
+	t.Helper()
+	s, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatalf("open test store: %v", err)
+	}
+	t.Cleanup(func() { s.Close() })
+
+	entities := []*store.Entity{
+		{ID: "c3-0", Type: "system", Title: "TestProject", Slug: "", Body: "# TestProject\n\n## Goal\n\nTest the system.\n\n## Containers\n\n| ID | Name | Boundary | Goal |\n|----|------|----------|------|\n| c3-1 | api | service | Serve API requests |\n| c3-2 | web | app | Web frontend |\n", Status: "active", Metadata: "{}"},
+		{ID: "c3-1", Type: "container", Title: "api", Slug: "api", ParentID: "c3-0", Goal: "Serve API requests", Boundary: "service", Body: "# api\n\n## Goal\n\nServe API requests.\n\n## Components\n\n| ID | Name | Category | Status | Goal Contribution |\n|----|------|----------|--------|-------------------|\n| c3-101 | auth | foundation | active | Authentication |\n| c3-110 | users | feature | active | User management |\n", Status: "active", Metadata: "{}"},
+		{ID: "c3-2", Type: "container", Title: "web", Slug: "web", ParentID: "c3-0", Boundary: "app", Body: "# web\n\n## Goal\n\nWeb frontend.\n\n## Components\n\n| ID | Name | Category | Status | Goal Contribution |\n|----|------|----------|--------|-------------------|\n| c3-201 | renderer | feature | active | Renders pages |\n", Status: "active", Metadata: "{}"},
+		{ID: "c3-101", Type: "component", Title: "auth", Slug: "auth", Category: "foundation", ParentID: "c3-1", Body: "# auth\n\n## Goal\n\nHandle authentication.\n\n## Dependencies\n\n| Direction | What | From/To |\n|-----------|------|----------|\n| IN | user credentials | c3-110 |\n\n## Related Refs\n\n| Ref | Role |\n|-----|------|\n| ref-jwt | Token format |\n", Status: "active", Metadata: "{}"},
+		{ID: "c3-110", Type: "component", Title: "users", Slug: "users", Category: "feature", ParentID: "c3-1", Body: "# users\n\n## Goal\n\nManage user accounts.\n\n## Dependencies\n\n| Direction | What | From/To |\n|-----------|------|----------|\n", Status: "active", Metadata: "{}"},
+		{ID: "c3-201", Type: "component", Title: "renderer", Slug: "renderer", Category: "feature", ParentID: "c3-2", Body: "# renderer\n\n## Goal\n\nRender pages.\n\n## Dependencies\n\n| Direction | What | From/To |\n|-----------|------|----------|\n\n## Related Refs\n\n| Ref | Role |\n|-----|------|\n", Status: "active", Metadata: "{}"},
+		{ID: "ref-jwt", Type: "ref", Title: "JWT Authentication", Slug: "jwt", Goal: "Standardize auth tokens", Body: "# JWT Authentication\n\n## Goal\n\nStandardize auth tokens.\n\n## Choice\n\nUse RS256 signed JWTs.\n\n## Why\n\nIndustry standard, asymmetric verification.\n", Status: "active", Metadata: "{}"},
+		{ID: "ref-error-handling", Type: "ref", Title: "Error Handling", Slug: "error-handling", Goal: "Consistent error responses", Body: "# Error Handling\n\n## Goal\n\nConsistent error responses.\n\n## Choice\n\nRFC 7807 Problem Details.\n\n## Why\n\nMachine-readable error format.\n", Status: "active", Metadata: "{}"},
+		{ID: "adr-20260226-use-go", Type: "adr", Title: "Use Go for CLI", Slug: "use-go", Status: "proposed", Date: "20260226", Body: "# Use Go for CLI\n\n## Context\n\nNeed fast CLI.\n", Metadata: "{}"},
+	}
+	for _, e := range entities {
+		if err := s.InsertEntity(e); err != nil {
+			t.Fatalf("seed entity %s: %v", e.ID, err)
+		}
+	}
+
+	rels := []*store.Relationship{
+		{FromID: "c3-101", ToID: "ref-jwt", RelType: "uses"},
+		{FromID: "ref-jwt", ToID: "c3-1", RelType: "scope"},
+		{FromID: "ref-error-handling", ToID: "c3-1", RelType: "scope"},
+		{FromID: "ref-error-handling", ToID: "c3-2", RelType: "scope"},
+		{FromID: "adr-20260226-use-go", ToID: "c3-0", RelType: "affects"},
+	}
+	for _, r := range rels {
+		if err := s.AddRelationship(r); err != nil {
+			t.Fatalf("seed rel %s->%s: %v", r.FromID, r.ToID, err)
+		}
+	}
+
+	return s
+}
+
+// createDBFixtureWithC3Dir creates a DB fixture AND a c3Dir on disk (needed for add commands that write files).
+func createDBFixtureWithC3Dir(t *testing.T) (*store.Store, string) {
+	t.Helper()
+	s := createDBFixture(t)
+
+	dir := t.TempDir()
+	c3Dir := filepath.Join(dir, ".c3")
+	// Create container directories matching the fixture
+	for _, d := range []string{
+		c3Dir,
+		filepath.Join(c3Dir, "c3-1-api"),
+		filepath.Join(c3Dir, "c3-2-web"),
+	} {
+		os.MkdirAll(d, 0755)
+	}
+
+	return s, c3Dir
 }

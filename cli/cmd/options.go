@@ -7,35 +7,40 @@ import (
 
 // Options holds parsed CLI flags and arguments.
 type Options struct {
-	Command   string
-	Args      []string
-	JSON      bool
-	Flat      bool
-	Compact   bool
-	Feature   bool
-	Append    bool
-	Container string
-	C3Dir     string
-	Goal      string
-	Summary   string
-	Boundary  string
-	Field     string
-	Section    string
-	Help       bool
-	Version    bool
-	IncludeADR bool
-	Fix        bool
-	Remove     bool
-	DryRun     bool
-	Depth      int
-	Direction  string
-	Format     string
+	Command       string
+	Args          []string
+	JSON          bool
+	Flat          bool
+	Compact       bool
+	Feature       bool
+	Append        bool
+	Container     string
+	C3Dir         string
+	Goal          string
+	Summary       string
+	Boundary      string
+	Field         string
+	Section       string
+	Help          bool
+	Version       bool
+	IncludeADR    bool
+	Fix           bool
+	Remove        bool
+	DryRun        bool
+	Depth         int
+	Direction     string
+	Format        string
+	TypeFilter    string
+	Mark          bool
+	KeepOriginals bool
+	Limit         int
 }
 
 // ParseArgs parses command-line arguments into Options.
 func ParseArgs(argv []string) Options {
 	var opts Options
 	opts.Depth = 1
+	opts.Limit = 20
 	var args []string
 
 	for i := 0; i < len(argv); i++ {
@@ -112,6 +117,20 @@ func ParseArgs(argv []string) Options {
 			if i+1 < len(argv) {
 				i++
 				opts.Format = argv[i]
+			}
+		case "--type":
+			if i+1 < len(argv) {
+				i++
+				opts.TypeFilter = argv[i]
+			}
+		case "--mark":
+			opts.Mark = true
+		case "--keep-originals":
+			opts.KeepOriginals = true
+		case "--limit":
+			if i+1 < len(argv) {
+				i++
+				opts.Limit, _ = strconv.Atoi(argv[i])
 			}
 		default:
 			args = append(args, arg)

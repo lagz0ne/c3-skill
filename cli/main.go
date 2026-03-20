@@ -10,10 +10,8 @@ import (
 	"regexp"
 
 	"github.com/lagz0ne/c3-design/cli/cmd"
-	"github.com/lagz0ne/c3-design/cli/internal/codemap"
 	"github.com/lagz0ne/c3-design/cli/internal/config"
-	"github.com/lagz0ne/c3-design/cli/internal/index"
-	"github.com/lagz0ne/c3-design/cli/internal/walker"
+	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
 var version = "dev"
@@ -32,7 +30,7 @@ func main() {
 		return
 	}
 
-	// init is special — creates .c3/, no graph needed
+	// init is special — creates .c3/, no store needed
 	if opts.Command == "init" {
 		if err := cmd.RunInit(mustCwd(), w); err != nil {
 			fmt.Fprintln(os.Stderr, err)
@@ -55,30 +53,39 @@ func main() {
 		os.Exit(1)
 	}
 
-	walkResult, err := walker.WalkC3DocsWithWarnings(c3Dir)
+	// migrate is special — reads files, creates DB
+	if opts.Command == "migrate" {
+		if err := cmd.RunMigrate(c3Dir, opts.KeepOriginals, w); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
+
+	// Open the store
+	dbPath := filepath.Join(c3Dir, "c3.db")
+	s, err := store.Open(dbPath)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: walking .c3/: %v\n", err)
+		fmt.Fprintf(os.Stderr, "error: opening database: %v\n", err)
+		fmt.Fprintln(os.Stderr, "hint: run 'c3x migrate' to create the database from .c3/ files")
 		os.Exit(1)
 	}
-	docs := walkResult.Docs
-	graph := walker.BuildGraph(docs)
+	defer s.Close()
 
 	// Resolve project root (parent of .c3/)
 	projectDir := config.ProjectDir(c3Dir)
 
 	switch opts.Command {
 	case "list":
-		err = cmd.RunList(cmd.ListOptions{Graph: graph, JSON: opts.JSON, Flat: opts.Flat, Compact: opts.Compact, C3Dir: c3Dir, IncludeADR: opts.IncludeADR}, w)
+		err = cmd.RunList(cmd.ListOptions{Store: s, JSON: opts.JSON, Flat: opts.Flat, Compact: opts.Compact, C3Dir: c3Dir, IncludeADR: opts.IncludeADR}, w)
 	case "check":
 		checkOpts := cmd.CheckOptions{
-			Graph:         graph,
-			Docs:          docs,
-			JSON:          opts.JSON,
-			ProjectDir:    projectDir,
-			C3Dir:         c3Dir,
-			ParseWarnings: walkResult.Warnings,
-			IncludeADR:    opts.IncludeADR,
-			Fix:           opts.Fix,
+			Store:      s,
+			JSON:       opts.JSON,
+			ProjectDir: projectDir,
+			C3Dir:      c3Dir,
+			IncludeADR: opts.IncludeADR,
+			Fix:        opts.Fix,
 		}
 		err = cmd.RunCheckV2(checkOpts, w)
 	case "add":
@@ -101,7 +108,7 @@ func main() {
 				EntityType: entityType,
 				Slug:       slug,
 				C3Dir:      c3Dir,
-				Graph:      graph,
+				Store:      s,
 				Container:  opts.Container,
 				Feature:    opts.Feature,
 				Goal:       opts.Goal,
@@ -110,7 +117,7 @@ func main() {
 			}
 			err = cmd.RunAddRich(addOpts, addW)
 		} else {
-			err = cmd.RunAdd(entityType, slug, c3Dir, graph, opts.Container, opts.Feature, addW)
+			err = cmd.RunAdd(entityType, slug, c3Dir, s, opts.Container, opts.Feature, addW)
 		}
 		if err == nil && opts.JSON {
 			// Parse "Created: <path> (id: <id>)" from output
@@ -148,6 +155,7 @@ func main() {
 			}
 		}
 		setOpts := cmd.SetOptions{
+			Store:   s,
 			C3Dir:   c3Dir,
 			ID:      id,
 			Field:   opts.Field,
@@ -174,9 +182,9 @@ func main() {
 			}
 		}
 		if opts.Remove || opts.Command == "unwire" {
-			err = cmd.RunUnwire(c3Dir, source, relation, target, w)
+			err = cmd.RunUnwire(s, source, relation, target, w)
 		} else {
-			err = cmd.RunWire(c3Dir, source, relation, target, w)
+			err = cmd.RunWire(s, source, relation, target, w)
 		}
 	case "lookup":
 		if len(opts.Args) < 1 {
@@ -185,7 +193,7 @@ func main() {
 			os.Exit(1)
 		}
 		err = cmd.RunLookup(cmd.LookupOptions{
-			Graph:      graph,
+			Store:      s,
 			FilePath:   opts.Args[0],
 			JSON:       opts.JSON,
 			ProjectDir: projectDir,
@@ -194,11 +202,12 @@ func main() {
 	case "codemap":
 		err = cmd.RunCodemap(cmd.CodemapOptions{
 			C3Dir: c3Dir,
-			Graph: graph,
+			Store: s,
 			JSON:  opts.JSON,
 		}, w)
 	case "coverage":
 		err = cmd.RunCoverage(cmd.CoverageOptions{
+			Store:      s,
 			C3Dir:      c3Dir,
 			ProjectDir: projectDir,
 			JSON:       opts.JSON,
@@ -220,7 +229,7 @@ func main() {
 			os.Exit(1)
 		}
 		err = cmd.RunGraph(cmd.GraphOptions{
-			Graph:     graph,
+			Store:     s,
 			EntityID:  entityID,
 			Depth:     opts.Depth,
 			Direction: opts.Direction,
@@ -236,7 +245,7 @@ func main() {
 		err = cmd.RunDelete(cmd.DeleteOptions{
 			C3Dir:  c3Dir,
 			ID:     id,
-			Graph:  graph,
+			Store:  s,
 			DryRun: opts.DryRun,
 		}, w)
 	default:
@@ -248,14 +257,6 @@ func main() {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
-	}
-
-	// Rebuild structural index after mutating commands (best-effort, silent)
-	switch opts.Command {
-	case "add", "set", "wire", "unwire", "delete":
-		cm, _ := codemap.ParseCodeMap(filepath.Join(c3Dir, "code-map.yaml"))
-		idx := index.Build(graph, cm, c3Dir)
-		_ = index.WriteTo(c3Dir, idx)
 	}
 }
 

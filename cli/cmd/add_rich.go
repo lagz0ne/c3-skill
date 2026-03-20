@@ -3,17 +3,13 @@ package cmd
 import (
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/lagz0ne/c3-design/cli/internal/numbering"
 	"github.com/lagz0ne/c3-design/cli/internal/schema"
-	"github.com/lagz0ne/c3-design/cli/internal/walker"
-	"github.com/lagz0ne/c3-design/cli/internal/wiring"
+	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
 // AddOptions holds parameters for the richer add command.
@@ -21,7 +17,7 @@ type AddOptions struct {
 	EntityType string
 	Slug       string
 	C3Dir      string
-	Graph      *walker.C3Graph
+	Store      *store.Store
 	Container  string
 	Feature    bool
 	Goal       string
@@ -36,7 +32,7 @@ func (o *AddOptions) hasContent() bool {
 // RunAddRich creates a new entity with optional content pre-populated.
 func RunAddRich(opts AddOptions, w io.Writer) error {
 	if !opts.hasContent() {
-		return RunAdd(opts.EntityType, opts.Slug, opts.C3Dir, opts.Graph, opts.Container, opts.Feature, w)
+		return RunAdd(opts.EntityType, opts.Slug, opts.C3Dir, opts.Store, opts.Container, opts.Feature, w)
 	}
 
 	switch opts.EntityType {
@@ -56,12 +52,9 @@ func RunAddRich(opts AddOptions, w io.Writer) error {
 }
 
 func addRichContainer(opts AddOptions, w io.Writer) error {
-	n := numbering.NextContainerId(opts.Graph)
-	dirName := fmt.Sprintf("c3-%d-%s", n, opts.Slug)
-	dirPath := filepath.Join(opts.C3Dir, dirName)
-
-	if err := os.MkdirAll(dirPath, 0755); err != nil {
-		return fmt.Errorf("error: creating directory: %w", err)
+	n, err := nextContainerNum(opts.Store)
+	if err != nil {
+		return fmt.Errorf("error: computing container number: %w", err)
 	}
 
 	boundary := opts.Boundary
@@ -84,13 +77,25 @@ func addRichContainer(opts AddOptions, w io.Writer) error {
 		opts.Goal,
 	)
 
-	readmePath := filepath.Join(dirPath, "README.md")
-	if err := os.WriteFile(readmePath, []byte(content), 0644); err != nil {
-		return fmt.Errorf("error: writing README.md: %w", err)
+	entity := &store.Entity{
+		ID:       fmt.Sprintf("c3-%d", n),
+		Type:     "container",
+		Title:    opts.Slug,
+		Slug:     opts.Slug,
+		ParentID: "c3-0",
+		Boundary: boundary,
+		Goal:     opts.Goal,
+		Summary:  opts.Summary,
+		Body:     content,
+		Status:   "active",
+		Metadata: "{}",
 	}
 
-	rel, _ := filepath.Rel(filepath.Dir(opts.C3Dir), readmePath)
-	fmt.Fprintf(w, "Created: %s (id: c3-%d)\n", rel, n)
+	if err := opts.Store.InsertEntity(entity); err != nil {
+		return fmt.Errorf("error: inserting container: %w", err)
+	}
+
+	fmt.Fprintf(w, "Created: container (id: c3-%d)\n", n)
 	return nil
 }
 
@@ -105,12 +110,11 @@ func addRichComponent(opts AddOptions, w io.Writer) error {
 	}
 	containerNum, _ := strconv.Atoi(containerMatch[1])
 
-	containerEntity := opts.Graph.Get(opts.Container)
-	if containerEntity == nil {
+	if _, err := opts.Store.GetEntity(opts.Container); err != nil {
 		return fmt.Errorf("error: container '%s' not found", opts.Container)
 	}
 
-	componentID, err := numbering.NextComponentId(opts.Graph, containerNum, opts.Feature)
+	componentID, err := nextComponentID(opts.Store, containerNum, opts.Feature)
 	if err != nil {
 		return fmt.Errorf("error: %w", err)
 	}
@@ -135,45 +139,37 @@ func addRichComponent(opts AddOptions, w io.Writer) error {
 		opts.Goal,
 	)
 
-	fileName := fmt.Sprintf("%s-%s.md", componentID, opts.Slug)
-	containerDir := filepath.Join(opts.C3Dir, filepath.Dir(containerEntity.Path))
-	filePath := filepath.Join(containerDir, fileName)
-
-	if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
-		return fmt.Errorf("error: writing component: %w", err)
+	entity := &store.Entity{
+		ID:       componentID,
+		Type:     "component",
+		Title:    opts.Slug,
+		Slug:     opts.Slug,
+		Category: category,
+		ParentID: opts.Container,
+		Goal:     opts.Goal,
+		Summary:  opts.Summary,
+		Body:     content,
+		Status:   "active",
+		Metadata: "{}",
 	}
 
-	rel, _ := filepath.Rel(filepath.Dir(opts.C3Dir), filePath)
-	fmt.Fprintf(w, "Created: %s (id: %s)\n", rel, componentID)
-
-	// Update container table
-	containerReadme := filepath.Join(containerDir, "README.md")
-	if _, err := os.Stat(containerReadme); err == nil {
-		if wiring.AddComponentToContainerTable(containerReadme, componentID, opts.Slug, category, opts.Goal) {
-			relReadme, _ := filepath.Rel(filepath.Dir(opts.C3Dir), containerReadme)
-			fmt.Fprintf(w, "Updated: %s (component list)\n", relReadme)
-		}
+	if err := opts.Store.InsertEntity(entity); err != nil {
+		return fmt.Errorf("error: inserting component: %w", err)
 	}
 
+	fmt.Fprintf(w, "Created: component (id: %s)\n", componentID)
 	return nil
 }
 
 func addRichRef(opts AddOptions, w io.Writer) error {
-	refsDir := filepath.Join(opts.C3Dir, "refs")
-	if err := os.MkdirAll(refsDir, 0755); err != nil {
-		return fmt.Errorf("error: creating refs/: %w", err)
-	}
-
-	fileName := fmt.Sprintf("ref-%s.md", opts.Slug)
-	filePath := filepath.Join(refsDir, fileName)
-
-	if _, err := os.Stat(filePath); err == nil {
+	id := fmt.Sprintf("ref-%s", opts.Slug)
+	if _, err := opts.Store.GetEntity(id); err == nil {
 		return fmt.Errorf("error: ref-%s already exists", opts.Slug)
 	}
 
 	content := buildDocument(
 		map[string]string{
-			"id":    fmt.Sprintf("ref-%s", opts.Slug),
+			"id":    id,
 			"title": opts.Slug,
 			"goal":  opts.Goal,
 			"scope": "[]",
@@ -183,26 +179,27 @@ func addRichRef(opts AddOptions, w io.Writer) error {
 		opts.Goal,
 	)
 
-	if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
-		return fmt.Errorf("error: writing ref: %w", err)
+	entity := &store.Entity{
+		ID:       id,
+		Type:     "ref",
+		Title:    opts.Slug,
+		Slug:     opts.Slug,
+		Goal:     opts.Goal,
+		Body:     content,
+		Status:   "active",
+		Metadata: "{}",
+	}
+	if err := opts.Store.InsertEntity(entity); err != nil {
+		return fmt.Errorf("error: inserting ref: %w", err)
 	}
 
-	rel, _ := filepath.Rel(filepath.Dir(opts.C3Dir), filePath)
-	fmt.Fprintf(w, "Created: %s (id: ref-%s)\n", rel, opts.Slug)
+	fmt.Fprintf(w, "Created: ref (id: ref-%s)\n", opts.Slug)
 	return nil
 }
 
 func addRichAdr(opts AddOptions, w io.Writer) error {
-	adrDir := filepath.Join(opts.C3Dir, "adr")
-	if err := os.MkdirAll(adrDir, 0755); err != nil {
-		return fmt.Errorf("error: creating adr/: %w", err)
-	}
-
-	adrID := numbering.NextAdrId(opts.Slug)
-	fileName := fmt.Sprintf("%s.md", adrID)
-	filePath := filepath.Join(adrDir, fileName)
-
-	if _, err := os.Stat(filePath); err == nil {
+	adrID := nextAdrID(opts.Slug)
+	if _, err := opts.Store.GetEntity(adrID); err == nil {
 		return fmt.Errorf("error: %s already exists", adrID)
 	}
 
@@ -222,25 +219,35 @@ func addRichAdr(opts AddOptions, w io.Writer) error {
 		opts.Goal,
 	)
 
-	if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
-		return fmt.Errorf("error: writing ADR: %w", err)
+	entity := &store.Entity{
+		ID:       adrID,
+		Type:     "adr",
+		Title:    opts.Slug,
+		Slug:     opts.Slug,
+		Status:   "proposed",
+		Date:     today,
+		Goal:     opts.Goal,
+		Body:     content,
+		Metadata: "{}",
+	}
+	if err := opts.Store.InsertEntity(entity); err != nil {
+		return fmt.Errorf("error: inserting ADR: %w", err)
 	}
 
-	rel, _ := filepath.Rel(filepath.Dir(opts.C3Dir), filePath)
-	fmt.Fprintf(w, "Created: %s (id: %s)\n", rel, adrID)
+	// Add affects relationship to c3-0
+	_ = opts.Store.AddRelationship(&store.Relationship{
+		FromID:  adrID,
+		ToID:    "c3-0",
+		RelType: "affects",
+	})
+
+	fmt.Fprintf(w, "Created: adr (id: %s)\n", adrID)
 	return nil
 }
 
 func addRichRecipe(opts AddOptions, w io.Writer) error {
-	recipesDir := filepath.Join(opts.C3Dir, "recipes")
-	if err := os.MkdirAll(recipesDir, 0755); err != nil {
-		return fmt.Errorf("error: creating recipes/: %w", err)
-	}
-
 	id := fmt.Sprintf("recipe-%s", opts.Slug)
-	filePath := filepath.Join(recipesDir, id+".md")
-
-	if _, err := os.Stat(filePath); err == nil {
+	if _, err := opts.Store.GetEntity(id); err == nil {
 		return fmt.Errorf("error: %s already exists", id)
 	}
 
@@ -256,12 +263,21 @@ func addRichRecipe(opts AddOptions, w io.Writer) error {
 		opts.Goal,
 	)
 
-	if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
-		return fmt.Errorf("error: writing recipe: %w", err)
+	entity := &store.Entity{
+		ID:       id,
+		Type:     "recipe",
+		Title:    opts.Slug,
+		Slug:     opts.Slug,
+		Goal:     opts.Goal,
+		Body:     content,
+		Status:   "active",
+		Metadata: "{}",
+	}
+	if err := opts.Store.InsertEntity(entity); err != nil {
+		return fmt.Errorf("error: inserting recipe: %w", err)
 	}
 
-	rel, _ := filepath.Rel(filepath.Dir(opts.C3Dir), filePath)
-	fmt.Fprintf(w, "Created: %s (id: %s)\n", rel, id)
+	fmt.Fprintf(w, "Created: recipe (id: %s)\n", id)
 	return nil
 }
 

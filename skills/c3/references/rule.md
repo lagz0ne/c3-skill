@@ -14,6 +14,7 @@ Hard rule: if it's enforceable at code level and has a golden example → create
 | "who uses rule-X" | **Usage** |
 | "migrate refs to rules", "split ref into rule" | **Migrate** |
 | "remove/deprecate rule-X" | **change** (needs ADR) |
+| "adopt rule-X", "install from marketplace", "marketplace adopt" | **Adopt** |
 
 ---
 
@@ -225,6 +226,74 @@ Confirm: no orphan refs, all rules have golden examples, all citations intact.
 
 ---
 
+---
+
+## Adopt
+
+Flow: `Preview → Discover Overlap → Guided Merge → Write → Wire → ADR`
+
+Adopt a rule from a registered marketplace source into the project's `.c3/rules/`.
+
+### Step 1: Preview
+
+```bash
+bash <skill-dir>/bin/c3x.sh marketplace show <rule-id>
+```
+
+Display full rule content. If `--source` needed to disambiguate, prompt with `AskUserQuestion` (ASSUMPTION_MODE: pick first match).
+
+### Step 2: Discover Overlap (2-5 Grep calls)
+
+Search the project codebase for existing patterns that overlap with the marketplace rule:
+- Existing `.c3/rules/` or `.c3/refs/` covering similar ground
+- Code matching the rule's `## Golden Example`
+- Anti-patterns matching `## Not This`
+
+If significant overlap found, present to user before merge.
+
+### Step 3: Section-by-Section Guided Merge
+
+For each rule section (Goal, Rule, Golden Example, Not This, Scope):
+
+`AskUserQuestion` with options (ASSUMPTION_MODE: adopt as-is):
+- **Adopt as-is** — take marketplace version verbatim
+- **Adapt** — LLM rewrites section for project conventions, tech stack, naming
+- **Skip** — omit section (only optional sections: Scope, Override)
+
+Required sections (Rule, Golden Example) cannot be skipped.
+
+### Step 4: Write
+
+```bash
+bash <skill-dir>/bin/c3x.sh add rule <slug>
+```
+
+Then fill content:
+```bash
+bash <skill-dir>/bin/c3x.sh set rule-<slug> goal "<adapted goal>"
+bash <skill-dir>/bin/c3x.sh set rule-<slug> --section "Rule" "<adapted rule statement>"
+bash <skill-dir>/bin/c3x.sh set rule-<slug> --section "Golden Example" "<adapted example>"
+bash <skill-dir>/bin/c3x.sh set rule-<slug> --section "Not This" "<adapted anti-patterns>"
+```
+
+### Step 5: Wire
+
+For each component the overlap search identified:
+```bash
+bash <skill-dir>/bin/c3x.sh wire <component-id> rule-<slug>
+```
+
+### Step 6: Adoption ADR
+
+```bash
+bash <skill-dir>/bin/c3x.sh add adr adopt-rule-<slug>
+bash <skill-dir>/bin/c3x.sh set adr-YYYYMMDD-adopt-rule-<slug> status implemented
+```
+
+Body: note the source marketplace and any adaptations made.
+
+---
+
 ## Anti-Patterns
 
 | Anti-Pattern | Correct |
@@ -234,3 +303,5 @@ Confirm: no orphan refs, all rules have golden examples, all citations intact.
 | Duplicate rule content in components | Cite, don't duplicate |
 | Create rule for one-off pattern | Rules for repeated standards only |
 | Confuse rule with ref | Rule = enforcement, Ref = rationale (use Separation Test) |
+| Adopt rule without checking overlap | Always discover existing patterns first |
+| Adopt rule and keep marketplace default verbatim | Adapt to project conventions |

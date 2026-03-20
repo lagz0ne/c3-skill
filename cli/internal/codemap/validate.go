@@ -35,7 +35,7 @@ func Validate(cm CodeMap, entities map[string]string, projectDir string) []Issue
 				Entity:   id,
 				Message:  fmt.Sprintf("ID %q not found in C3 graph", id),
 			})
-		} else if typ != "component" && typ != "ref" {
+		} else if typ != "component" && typ != "ref" && typ != "rule" {
 			issues = append(issues, Issue{
 				Severity: "warning",
 				Entity:   id,

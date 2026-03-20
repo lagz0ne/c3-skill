@@ -36,20 +36,23 @@ func RunCodemap(opts CodemapOptions, w io.Writer) error {
 		return fmt.Errorf("code-map parse error: %w", err)
 	}
 
-	var components, refs []*walker.C3Entity
+	var components, refs, rules []*walker.C3Entity
 	for _, e := range opts.Graph.All() {
 		switch frontmatter.ClassifyDoc(e.Frontmatter) {
 		case frontmatter.DocComponent:
 			components = append(components, e)
 		case frontmatter.DocRef:
 			refs = append(refs, e)
+		case frontmatter.DocRule:
+			rules = append(rules, e)
 		}
 	}
 	sort.Slice(components, func(i, j int) bool { return components[i].ID < components[j].ID })
 	sort.Slice(refs, func(i, j int) bool { return refs[i].ID < refs[j].ID })
+	sort.Slice(rules, func(i, j int) bool { return rules[i].ID < rules[j].ID })
 
 	var added, existing []string
-	for _, e := range append(components, refs...) {
+	for _, e := range append(append(components, refs...), rules...) {
 		if _, ok := cm[e.ID]; ok {
 			existing = append(existing, e.ID)
 		} else {
@@ -58,7 +61,7 @@ func RunCodemap(opts CodemapOptions, w io.Writer) error {
 		}
 	}
 
-	if err := writeCodeMap(cmPath, components, refs, cm); err != nil {
+	if err := writeCodeMap(cmPath, components, refs, rules, cm); err != nil {
 		return fmt.Errorf("write code-map: %w", err)
 	}
 
@@ -86,10 +89,10 @@ func RunCodemap(opts CodemapOptions, w io.Writer) error {
 
 // writeCodeMap serialises the code-map to disk, grouping components then refs.
 // Existing patterns are preserved; new entries get an empty list.
-func writeCodeMap(path string, components, refs []*walker.C3Entity, cm codemap.CodeMap) error {
+func writeCodeMap(path string, components, refs, rules []*walker.C3Entity, cm codemap.CodeMap) error {
 	var sb strings.Builder
 
-	sb.WriteString("# C3 code-map: maps component and ref IDs to source file glob patterns.\n")
+	sb.WriteString("# C3 code-map: maps component, ref, and rule IDs to source file glob patterns.\n")
 	sb.WriteString("# Edit patterns, then verify with: c3x coverage\n")
 
 	if len(components) > 0 {
@@ -102,6 +105,13 @@ func writeCodeMap(path string, components, refs []*walker.C3Entity, cm codemap.C
 	if len(refs) > 0 {
 		sb.WriteString("\n# Refs\n")
 		for _, e := range refs {
+			writeCodeMapEntry(&sb, e.ID, cm[e.ID])
+		}
+	}
+
+	if len(rules) > 0 {
+		sb.WriteString("\n# Rules\n")
+		for _, e := range rules {
 			writeCodeMapEntry(&sb, e.ID, cm[e.ID])
 		}
 	}

@@ -71,7 +71,7 @@ Types for `add`: `container`, `component`, `ref`, `adr`, `recipe`
 | audit, validate, "check docs", drift, "docs up to date", "verify docs" | **audit** | `references/audit.md` |
 | add, change, fix, implement, refactor, remove, migrate, provision, design | **change** | `references/change.md` |
 | pattern, convention, "create ref", "update ref", "list refs", standardize | **ref** | `references/ref.md` |
-| "add/create a coding rule", "document a rule", "coding standard", "coding convention" | **rule** | `references/rule.md` |
+| "add/create a coding rule", "document a rule", "coding standard", "coding convention", "migrate refs to rules", "split ref into rule" | **rule** | `references/rule.md` |
 | impact, "what breaks", assess, sweep, "is this safe" | **sweep** | `references/sweep.md` |
 | recipe, "trace end-to-end", "cross-cutting flow", "how does X flow" | **query** (read) / **change** (create) | `references/query.md` / `references/change.md` |
 

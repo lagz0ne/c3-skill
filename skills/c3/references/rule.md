@@ -12,6 +12,7 @@ Hard rule: if it's enforceable at code level and has a golden example → create
 | "update/modify rule-X" | **Update** |
 | "list rules", "what rules exist" | **List** |
 | "who uses rule-X" | **Usage** |
+| "migrate refs to rules", "split ref into rule" | **Migrate** |
 | "remove/deprecate rule-X" | **change** (needs ADR) |
 
 ---
@@ -127,6 +128,100 @@ bash <skill-dir>/bin/c3x.sh list --json
 ```
 
 Find `id: "rule-{slug}"`, read `relationships`. Read each citing doc.
+
+---
+
+## Migrate
+
+Flow: `Scan → Classify → Split/Convert → Rewire → ADR`
+
+Use when adopting rules in a project that already has refs, or when auditing existing refs for rule candidates.
+
+### Step 1: Scan existing refs
+
+```bash
+bash <skill-dir>/bin/c3x.sh list --json
+```
+
+Filter `type: "ref"`. For each ref, read its doc.
+
+### Step 2: Apply Separation Test
+
+For each ref, ask: **"Remove the Why section. Does the doc become useless?"**
+
+| Answer | Classification | Action |
+|--------|---------------|--------|
+| Yes — doc is useless without Why | **Pure ref** | Keep as-is |
+| No — doc still tells you what to do | **Pure rule** | Convert |
+| Partially — has both rationale AND enforceable standard | **Dual-nature** | Split |
+
+Present classification table to user for approval (ASSUMPTION_MODE: mark `[ASSUMED]`).
+
+### Step 3a: Convert (pure rule)
+
+The ref is entirely about enforcement, not rationale.
+
+1. `c3x add rule <slug>` — scaffold the rule doc
+2. Copy content from ref, adapting sections:
+   - `## Goal` → keep
+   - `## How` → becomes `## Golden Example`
+   - `## Choice` → becomes `## Rule` (one-line statement)
+   - `## Not This` → keep
+   - `## Why` → move to `origin:` if there's a parent ref, otherwise drop
+3. Set `origin: [ref-{old-slug}]` if the old ref is being kept for rationale
+4. Update all citing components: `c3x wire <component> rule-{slug}` for each
+5. If ref is being deleted: `c3x wire --remove <component> ref-{slug}` for each citer, then delete ref
+6. Update code-map: move ref's file patterns to rule
+
+### Step 3b: Split (dual-nature)
+
+The ref has both rationale (why we chose this) AND enforcement (what code must look like).
+
+1. **Narrow the ref** — keep only rationale sections:
+   - `## Choice` — the decision
+   - `## Why` — the reasoning
+   - Remove or thin `## How` to high-level guidance only
+   - Keep `## Not This` if it's about rejected alternatives (not code anti-patterns)
+
+2. **Create the rule** — extract enforcement content:
+   - `c3x add rule <slug>`
+   - `## Rule` — one-line standard extracted from `## How`
+   - `## Golden Example` — code patterns from ref's `## How`
+   - `## Not This` — code anti-patterns (not rejected alternatives)
+   - Set `origin: [ref-{original-slug}]`
+
+3. **Rewire citations:**
+   - Components that need the rationale → keep `ref-{slug}` in `uses:`
+   - Components that need enforcement → add `rule-{slug}` via `c3x wire`
+   - Most components need both → keep ref, add rule
+
+4. **Update code-map:**
+   - Ref keeps its patterns (or narrows them)
+   - Rule gets the file patterns where enforcement applies
+
+### Step 4: Adoption ADR
+
+One ADR per migration batch:
+
+```yaml
+---
+id: adr-YYYYMMDD-migrate-refs-to-rules
+title: Migrate enforcement refs to coding rules
+status: implemented
+affects: [ref-X, ref-Y, rule-A, rule-B]
+---
+```
+
+Body should list what was converted, split, or kept.
+
+### Step 5: Verify
+
+```bash
+bash <skill-dir>/bin/c3x.sh check
+bash <skill-dir>/bin/c3x.sh list
+```
+
+Confirm: no orphan refs, all rules have golden examples, all citations intact.
 
 ---
 

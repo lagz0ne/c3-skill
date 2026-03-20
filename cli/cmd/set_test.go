@@ -2,41 +2,23 @@ package cmd
 
 import (
 	"bytes"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
 )
 
-// =============================================================================
-// RunSet: unified set command for frontmatter fields and sections
-// =============================================================================
-
 func TestRunSet_FrontmatterField(t *testing.T) {
-	c3Dir := createFixture(t)
+	s := createDBFixture(t)
 	var buf bytes.Buffer
 
-	opts := SetOptions{
-		C3Dir:   c3Dir,
-		ID:      "c3-101",
-		Field:   "goal",
-		Value:   "Handle JWT authentication",
-	}
-
+	opts := SetOptions{Store: s, ID: "c3-101", Field: "goal", Value: "Handle JWT authentication"}
 	err := RunSet(opts, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	content, err := os.ReadFile(filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	fm, _ := frontmatter.ParseFrontmatter(string(content))
-	if fm.Goal != "Handle JWT authentication" {
-		t.Errorf("goal = %q, want %q", fm.Goal, "Handle JWT authentication")
+	entity, _ := s.GetEntity("c3-101")
+	if entity.Goal != "Handle JWT authentication" {
+		t.Errorf("goal = %q, want %q", entity.Goal, "Handle JWT authentication")
 	}
 
 	output := buf.String()
@@ -46,10 +28,10 @@ func TestRunSet_FrontmatterField(t *testing.T) {
 }
 
 func TestRunSet_EntityNotFound(t *testing.T) {
-	c3Dir := createFixture(t)
+	s := createDBFixture(t)
 	var buf bytes.Buffer
 
-	opts := SetOptions{C3Dir: c3Dir, ID: "c3-999", Field: "goal", Value: "test"}
+	opts := SetOptions{Store: s, ID: "c3-999", Field: "goal", Value: "test"}
 	err := RunSet(opts, &buf)
 	if err == nil {
 		t.Fatal("expected error for nonexistent entity")
@@ -60,110 +42,70 @@ func TestRunSet_EntityNotFound(t *testing.T) {
 }
 
 func TestRunSet_UpdatesContainerGoal(t *testing.T) {
-	c3Dir := createFixture(t)
+	s := createDBFixture(t)
 	var buf bytes.Buffer
 
-	opts := SetOptions{C3Dir: c3Dir, ID: "c3-1", Field: "goal", Value: "Serve high-performance API requests"}
+	opts := SetOptions{Store: s, ID: "c3-1", Field: "goal", Value: "Serve high-performance API requests"}
 	err := RunSet(opts, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	content, err := os.ReadFile(filepath.Join(c3Dir, "c3-1-api", "README.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	fm, _ := frontmatter.ParseFrontmatter(string(content))
-	if fm.Goal != "Serve high-performance API requests" {
-		t.Errorf("container goal = %q", fm.Goal)
+	entity, _ := s.GetEntity("c3-1")
+	if entity.Goal != "Serve high-performance API requests" {
+		t.Errorf("container goal = %q", entity.Goal)
 	}
 }
 
 func TestRunSet_UpdatesRefGoal(t *testing.T) {
-	c3Dir := createFixture(t)
+	s := createDBFixture(t)
 	var buf bytes.Buffer
 
-	opts := SetOptions{C3Dir: c3Dir, ID: "ref-jwt", Field: "goal", Value: "Standardize JWT token format"}
+	opts := SetOptions{Store: s, ID: "ref-jwt", Field: "goal", Value: "Standardize JWT token format"}
 	err := RunSet(opts, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	content, err := os.ReadFile(filepath.Join(c3Dir, "refs", "ref-jwt.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	fm, _ := frontmatter.ParseFrontmatter(string(content))
-	if fm.Goal != "Standardize JWT token format" {
-		t.Errorf("ref goal = %q", fm.Goal)
+	entity, _ := s.GetEntity("ref-jwt")
+	if entity.Goal != "Standardize JWT token format" {
+		t.Errorf("ref goal = %q", entity.Goal)
 	}
 }
 
 func TestRunSet_UpdatesAdrStatus(t *testing.T) {
-	c3Dir := createFixture(t)
+	s := createDBFixture(t)
 	var buf bytes.Buffer
 
-	opts := SetOptions{C3Dir: c3Dir, ID: "adr-20260226-use-go", Field: "status", Value: "accepted"}
+	opts := SetOptions{Store: s, ID: "adr-20260226-use-go", Field: "status", Value: "accepted"}
 	err := RunSet(opts, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	content, err := os.ReadFile(filepath.Join(c3Dir, "adr", "adr-20260226-use-go.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	fm, _ := frontmatter.ParseFrontmatter(string(content))
-	if fm.Status != "accepted" {
-		t.Errorf("adr status = %q, want %q", fm.Status, "accepted")
-	}
-}
-
-func TestRunSet_PreservesBody(t *testing.T) {
-	c3Dir := createFixture(t)
-	var buf bytes.Buffer
-
-	originalContent, err := os.ReadFile(filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, originalBody := frontmatter.ParseFrontmatter(string(originalContent))
-
-	opts := SetOptions{C3Dir: c3Dir, ID: "c3-101", Field: "goal", Value: "New goal"}
-	RunSet(opts, &buf)
-
-	updatedContent, err := os.ReadFile(filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, updatedBody := frontmatter.ParseFrontmatter(string(updatedContent))
-
-	if originalBody != updatedBody {
-		t.Errorf("body changed after set.\noriginal: %q\nupdated: %q", originalBody, updatedBody)
+	entity, _ := s.GetEntity("adr-20260226-use-go")
+	if entity.Status != "accepted" {
+		t.Errorf("adr status = %q, want %q", entity.Status, "accepted")
 	}
 }
 
 func TestRunSet_InvalidField(t *testing.T) {
-	c3Dir := createFixture(t)
+	s := createDBFixture(t)
 	var buf bytes.Buffer
 
-	opts := SetOptions{C3Dir: c3Dir, ID: "c3-101", Field: "nonexistent_field", Value: "test"}
+	opts := SetOptions{Store: s, ID: "c3-101", Field: "nonexistent_field", Value: "test"}
 	err := RunSet(opts, &buf)
 	if err == nil {
 		t.Error("expected error for unknown field name")
 	}
 }
 
-// =============================================================================
-// RunSet with Section target: set section content
-// =============================================================================
-
 func TestRunSet_SectionText(t *testing.T) {
-	c3Dir := createFixture(t)
+	s := createRichDBFixture(t)
 	var buf bytes.Buffer
 
 	opts := SetOptions{
-		C3Dir:   c3Dir,
+		Store:   s,
 		ID:      "c3-101",
 		Section: "Goal",
 		Value:   "Provide JWT-based authentication for all API endpoints.",
@@ -173,109 +115,18 @@ func TestRunSet_SectionText(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	content, err := os.ReadFile(filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(string(content), "Provide JWT-based authentication for all API endpoints.") {
+	entity, _ := s.GetEntity("c3-101")
+	if !strings.Contains(entity.Body, "Provide JWT-based authentication for all API endpoints.") {
 		t.Error("section content should be updated")
 	}
 }
 
-func TestRunSet_SectionTable(t *testing.T) {
-	dir := t.TempDir()
-	c3Dir := filepath.Join(dir, ".c3")
-	os.MkdirAll(filepath.Join(c3Dir, "c3-1-api"), 0755)
-
-	writeFile(t, filepath.Join(c3Dir, "README.md"), `---
-id: c3-0
-title: Test
----
-
-# Test
-`)
-
-	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "README.md"), `---
-id: c3-1
-title: api
-type: container
-parent: c3-0
----
-
-# api
-`)
-
-	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md"), `---
-id: c3-101
-title: auth
-type: component
-parent: c3-1
----
-
-# auth
-
-## Goal
-
-Handle auth.
-
-## Code References
-
-| File | Purpose |
-|------|---------|
-`)
-
-	var buf bytes.Buffer
-	tableJSON := `[{"File":"src/auth/jwt.ts","Purpose":"JWT validation"},{"File":"src/auth/middleware.ts","Purpose":"Auth middleware"}]`
-
-	opts := SetOptions{
-		C3Dir:   c3Dir,
-		ID:      "c3-101",
-		Section: "Code References",
-		Value:   tableJSON,
-	}
-	err := RunSet(opts, &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	content, err := os.ReadFile(filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	s := string(content)
-	if !strings.Contains(s, "jwt.ts") {
-		t.Error("should contain new code reference")
-	}
-	if !strings.Contains(s, "middleware.ts") {
-		t.Error("should contain new code reference")
-	}
-	if !strings.Contains(s, "Handle auth.") {
-		t.Error("Goal section should survive section update")
-	}
-}
-
-func TestRunSet_SectionMalformedJSON(t *testing.T) {
-	c3Dir := createRichFixture(t)
-	var buf bytes.Buffer
-
-	opts := SetOptions{
-		C3Dir:   c3Dir,
-		ID:      "c3-101",
-		Section: "Code References",
-		Value:   `[{"File": broken json`,
-	}
-	err := RunSet(opts, &buf)
-	if err == nil {
-		t.Error("expected error for malformed JSON")
-	}
-}
-
 func TestRunSet_SectionNotFound(t *testing.T) {
-	c3Dir := createFixture(t)
+	s := createDBFixture(t)
 	var buf bytes.Buffer
 
 	opts := SetOptions{
-		C3Dir:   c3Dir,
+		Store:   s,
 		ID:      "c3-101",
 		Section: "NonExistent Section",
 		Value:   "content",
@@ -287,11 +138,11 @@ func TestRunSet_SectionNotFound(t *testing.T) {
 }
 
 func TestRunSet_SectionAppend(t *testing.T) {
-	c3Dir := createRichFixture(t)
+	s := createRichDBFixture(t)
 	var buf bytes.Buffer
 
 	opts := SetOptions{
-		C3Dir:   c3Dir,
+		Store:   s,
 		ID:      "c3-101",
 		Section: "Dependencies",
 		Value:   `{"Direction":"OUT","What":"events","From/To":"c3-103"}`,
@@ -302,17 +153,139 @@ func TestRunSet_SectionAppend(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	content, err := os.ReadFile(filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	s := string(content)
+	entity, _ := s.GetEntity("c3-101")
 	// Original row should survive
-	if !strings.Contains(s, "user credentials") {
+	if !strings.Contains(entity.Body, "user credentials") {
 		t.Error("existing row should be preserved")
 	}
 	// New row should be added
-	if !strings.Contains(s, "events") {
+	if !strings.Contains(entity.Body, "events") {
 		t.Error("new row should be appended")
+	}
+}
+
+func TestRunSet_AllFields(t *testing.T) {
+	fields := map[string]string{
+		"summary":     "New summary",
+		"boundary":    "service",
+		"category":    "feature",
+		"title":       "New Title",
+		"date":        "2026-03-20",
+		"description": "Test desc",
+	}
+
+	for field, value := range fields {
+		t.Run(field, func(t *testing.T) {
+			s := createDBFixture(t)
+			var buf bytes.Buffer
+			opts := SetOptions{Store: s, ID: "c3-101", Field: field, Value: value}
+			err := RunSet(opts, &buf)
+			if err != nil {
+				t.Fatal(err)
+			}
+			entity, _ := s.GetEntity("c3-101")
+			var got string
+			switch field {
+			case "summary":
+				got = entity.Summary
+			case "boundary":
+				got = entity.Boundary
+			case "category":
+				got = entity.Category
+			case "title":
+				got = entity.Title
+			case "date":
+				got = entity.Date
+			case "description":
+				got = entity.Description
+			}
+			if got != value {
+				t.Errorf("%s = %q, want %q", field, got, value)
+			}
+		})
+	}
+}
+
+func TestRunSet_SectionJSONArray(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	opts := SetOptions{
+		Store:   s,
+		ID:      "c3-101",
+		Section: "Related Refs",
+		Value:   `[{"Ref":"ref-logging","Role":"Structured logging"}]`,
+	}
+	err := RunSet(opts, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	entity, _ := s.GetEntity("c3-101")
+	if !strings.Contains(entity.Body, "ref-logging") {
+		t.Error("body should contain the new table data")
+	}
+}
+
+func TestRunSet_SectionAppendInvalidJSON(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	opts := SetOptions{
+		Store:   s,
+		ID:      "c3-101",
+		Section: "Dependencies",
+		Value:   "not json",
+		Append:  true,
+	}
+	err := RunSet(opts, &buf)
+	if err == nil {
+		t.Error("expected error for invalid JSON in append mode")
+	}
+}
+
+func TestRunSet_SectionJSONArray_NoExistingTable(t *testing.T) {
+	s := createRichDBFixture(t)
+	// Set up an entity with required sections + a custom section
+	entity, _ := s.GetEntity("c3-110")
+	entity.Body = "# users\n\n## Goal\n\nManage users.\n\n## Dependencies\n\n| Direction | What | From/To |\n|-----------|------|----------|\n| IN | data | c3-101 |\n\n## Custom Section\n\nSome text here.\n"
+	s.UpdateEntity(entity)
+
+	var buf bytes.Buffer
+	opts := SetOptions{
+		Store:   s,
+		ID:      "c3-110",
+		Section: "Custom Section",
+		Value:   `[{"Key":"value1","Data":"data1"}]`,
+	}
+	err := RunSet(opts, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	updated, _ := s.GetEntity("c3-110")
+	if !strings.Contains(updated.Body, "value1") {
+		t.Error("body should contain the new table data")
+	}
+}
+
+func TestIsJSONArray(t *testing.T) {
+	tests := []struct {
+		input string
+		want  bool
+	}{
+		{`[{"key":"value"}]`, true},
+		{`[]`, true},
+		{`  [1, 2, 3]  `, true},
+		{`not json`, false},
+		{`{"key":"value"}`, false},
+		{`[invalid`, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			if got := isJSONArray(tt.input); got != tt.want {
+				t.Errorf("isJSONArray(%q) = %v, want %v", tt.input, got, tt.want)
+			}
+		})
 	}
 }

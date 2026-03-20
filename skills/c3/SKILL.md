@@ -4,8 +4,9 @@ description: |
   This skill should be used when the user invokes /c3 or asks architecture questions
   about a project with a .c3/ directory. Trigger phrases: "adopt C3", "onboard this
   project", "where is X", "audit the architecture", "check docs", "add a component",
-  "implement feature", "what breaks if I change X", "add a ref". Handles operations:
-  onboard, query, audit, change, ref, sweep. Classifies intent, loads ref, executes.
+  "implement feature", "what breaks if I change X", "add a ref", "add a coding rule",
+  "coding standard". Handles operations: onboard, query, audit, change, ref, rule, sweep.
+  Classifies intent, loads ref, executes.
 
   <example>
   user: "adopt C3 for this project"
@@ -56,8 +57,18 @@ CLI: `C3X_MODE=agent bash <skill-dir>/bin/c3x.sh <command> [args]`
 | `lookup <file-or-glob>` | File or glob → component + refs (`--json`) |
 | `coverage` | Code-map coverage stats (JSON default) |
 | `delete <id>` | Remove entity + clean all references (`--dry-run`) |
+| `query <terms>` | Full-text search across all entities (`--type`, `--limit`, `--json`) |
+| `impact <id>` | Transitive impact analysis — who depends on this? (`--depth`, `--json`) |
+| `diff` | Show uncommitted entity changes (`--mark <hash>`, `--json`) |
+| `export [dir]` | Dump DB to markdown files (escape hatch) |
+| `migrate` | Import .c3/ markdown files into database (LLM-assisted via migrate op) |
+| `marketplace add <url>` | Register marketplace rule source (shallow clone) |
+| `marketplace list` | Browse available rules (`--source`, `--tag`, `--json`) |
+| `marketplace show <rule-id>` | Preview marketplace rule content |
+| `marketplace update` | Pull latest from registered sources |
+| `marketplace remove <name>` | Unregister source + delete cache |
 
-Types for `add`: `container`, `component`, `ref`, `adr`, `recipe`
+Types for `add`: `container`, `component`, `ref`, `rule`, `adr`, `recipe`
 
 ---
 
@@ -68,8 +79,11 @@ Types for `add`: `container`, `component`, `ref`, `adr`, `recipe`
 | adopt, init, scaffold, bootstrap, onboard, "create .c3", "set up architecture" | **onboard** | `references/onboard.md` |
 | where, explain, how, diagram, trace, "show me", "what is", "list components" | **query** | `references/query.md` |
 | audit, validate, "check docs", drift, "docs up to date", "verify docs" | **audit** | `references/audit.md` |
-| add, change, fix, implement, refactor, remove, migrate, provision, design | **change** | `references/change.md` |
+| add, change, fix, implement, refactor, remove, provision, design | **change** | `references/change.md` |
+| "migrate to db", "convert to database", "upgrade c3", "migrate .c3" | **migrate** | `references/migrate.md` |
 | pattern, convention, "create ref", "update ref", "list refs", standardize | **ref** | `references/ref.md` |
+| "add/create a coding rule", "document a rule", "coding standard", "coding convention", "migrate refs to rules", "split ref into rule" | **rule** | `references/rule.md` |
+| marketplace, "browse rules", "adopt rule", "install rule from", "available rules" | **rule** (Adopt mode) | `references/rule.md` |
 | impact, "what breaks", assess, sweep, "is this safe" | **sweep** | `references/sweep.md` |
 | recipe, "trace end-to-end", "cross-cutting flow", "how does X flow" | **query** (read) / **change** (create) | `references/query.md` / `references/change.md` |
 
@@ -77,7 +91,7 @@ Types for `add`: `container`, `component`, `ref`, `adr`, `recipe`
 
 ## Dispatch
 
-1. Classify op (ambiguous → `AskUserQuestion` with 6 options)
+1. Classify op (ambiguous → `AskUserQuestion` with 7 options)
 2. Load `references/<op>.md`
 3. Execute (use Task tool for parallelism)
 
@@ -85,11 +99,12 @@ Types for `add`: `container`, `component`, `ref`, `adr`, `recipe`
 
 ## Precondition
 
-Before every op except onboard:
+Before every op except onboard and migrate:
 ```bash
 bash <skill-dir>/bin/c3x.sh list --json
 ```
-Fails/empty → route to **onboard**
+- If output contains "contains markdown files but no database" → route to **migrate**
+- Fails/empty → route to **onboard**
 
 ---
 
@@ -157,6 +172,7 @@ No match = uncharted, proceed with caution.
 ├── README.md                    # Context (c3-0)
 ├── adr/adr-YYYYMMDD-slug.md
 ├── refs/ref-slug.md
+├── rules/rule-slug.md
 ├── recipes/recipe-slug.md
 └── c3-N-name/
     ├── README.md                # Container
@@ -172,7 +188,7 @@ No `.c3/` or re-onboard. `c3x init` → discovery → inject CLAUDE.md → show 
 Details: `references/onboard.md`
 
 ### query
-`c3x list --json` → match entity (includes refs, affects, files) → Read doc → explore code.
+`c3x query "<terms>"` for search, `c3x list --json` for topology, `c3x impact <id>` for dependencies.
 Details: `references/query.md`
 
 ### audit
@@ -188,7 +204,15 @@ Details: `references/change.md`
 Modes: Add / Update / List / Usage.
 Details: `references/ref.md`
 
+### rule
+Modes: Add / Update / List / Usage.
+Details: `references/rule.md`
+
 ### sweep
-`c3x list --json` → filter by refs/affects to find affected entities → parallel assessment → synthesize. Advisory only.
+`c3x impact <id>` → transitive dependency analysis → parallel assessment → synthesize. Advisory only.
 Details: `references/sweep.md`
+
+### migrate
+Legacy `.c3/` has markdown files but no `c3.db`. LLM-assisted: check → repair malformed docs → validate → `c3x migrate` → verify.
+Details: `references/migrate.md`
 

@@ -11,6 +11,7 @@
 ├── README.md                    # Context (c3-0)
 ├── adr/adr-00000000-c3-adoption.md
 ├── refs/ref-<pattern>.md
+├── rules/rule-<pattern>.md
 └── c3-N-<container>/
     ├── README.md
     └── c3-NNN-<component>.md
@@ -25,7 +26,7 @@ Each component = separate file. Each container = separate directory.
 | Yes | Foundation (01-09) or Feature (10+) |
 | No (rules only) | **Ref** — code-map entry optional |
 
-Foundation: infrastructure others depend on. Feature: business logic. Ref: conventions or shared utilities. Refs with concrete implementation files (shared middleware, utility libraries) should have code-map entries; pure-convention refs may leave them empty.
+Foundation: infrastructure others depend on. Feature: business logic. Ref: conventions or shared utilities. Rule: coding standards and constraints that must be followed. Refs with concrete implementation files (shared middleware, utility libraries) should have code-map entries; pure-convention refs and rules may leave them empty.
 
 ## Progress Checklist
 
@@ -47,7 +48,7 @@ Foundation: infrastructure others depend on. Feature: business logic. Ref: conve
 ```bash
 bash <skill-dir>/bin/c3x.sh init
 ```
-Creates `.c3/` with config, README, refs/, adr/. Edit ADR-000 to fill discovery tables.
+Creates `.c3/` with config, README, refs/, rules/, adr/. Edit ADR-000 to fill discovery tables.
 
 ### 0.2 Context Discovery
 
@@ -86,7 +87,16 @@ Patterns repeating across components:
 
 Common: error handling, form patterns, data fetching, design system. Each ref requires Choice + Why minimum.
 
-### 0.6 Overview Diagram
+### 0.6 Rule Discovery
+
+Coding standards and constraints that must be followed project-wide:
+
+| SLUG | TITLE | GOAL | Scope | Applies To |
+|------|-------|------|-------|------------|
+
+Common: naming conventions, forbidden patterns, required lint rules, security constraints. Look for repeated code-review feedback, linter configs, and "we always/never do X" statements.
+
+### 0.7 Overview Diagram
 
 Mermaid: Actors → Containers → External Systems.
 
@@ -97,6 +107,7 @@ Mermaid: Actors → Containers → External Systems.
 - [ ] All containers with args (including BOUNDARY)
 - [ ] All components (brief) with category
 - [ ] Cross-cutting refs (Choice + Why minimum)
+- [ ] Coding standards as rules
 - [ ] Overview diagram
 
 ---
@@ -127,11 +138,15 @@ Bracket paths (`[id]`, `[...slug]`) for Next.js/SvelteKit routes work automatica
 
 **Extract Refs:** "Would this change if we swapped the underlying tech?" Yes → extract to ref.
 
+**Extract Rules:** "Is this a coding standard or constraint rather than a pattern choice?" Yes → extract to rule.
+
 | Signal | Action |
 |--------|--------|
 | "We use X with..." | ref-X |
 | "Our convention is..." | new/existing ref |
 | Same pattern in 2+ components | create ref, cite both |
+| "We always/never do X" | rule |
+| Lint rule, naming convention, security constraint | rule |
 
 ### 1.3 Ref Docs
 
@@ -140,11 +155,19 @@ bash <skill-dir>/bin/c3x.sh add ref <slug>
 ```
 Edit: Goal, Choice (required), Why (required), How/Scope/Not This/Override as needed.
 
+### 1.4 Rule Docs
+
+```bash
+bash <skill-dir>/bin/c3x.sh add rule <slug>
+```
+Edit: Goal, Constraint (required), Why (required), Scope/Exceptions as needed.
+
 ### Gate 1
 
 - [ ] All container README.md created
 - [ ] All component docs created
 - [ ] All refs documented
+- [ ] All rules documented
 - [ ] No new items (else update ADR-000, return to Stage 0)
 
 ---
@@ -157,7 +180,7 @@ Edit: Goal, Choice (required), Why (required), How/Scope/Not This/Override as ne
 bash <skill-dir>/bin/c3x.sh codemap
 ```
 
-Scaffolds `.c3/code-map.yaml` with empty stubs for every component and ref.
+Scaffolds `.c3/code-map.yaml` with empty stubs for every component, ref, and rule.
 Idempotent — safe to re-run; existing patterns are preserved.
 
 After scaffolding, fill in glob patterns for each entry, then verify:
@@ -228,7 +251,7 @@ bash <skill-dir>/bin/c3x.sh coverage                   # code-map coverage gaps
 # Architecture
 This project uses C3 docs in `.c3/`.
 For architecture questions, changes, audits, file context -> `/c3`.
-Operations: query, audit, change, ref, sweep.
+Operations: query, audit, change, ref, rule, sweep.
 File lookup: `c3x lookup <file-or-glob>` maps files/directories to components + refs.
 ```
 

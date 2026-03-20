@@ -17,6 +17,7 @@ const (
 	DocRef
 	DocADR
 	DocRecipe
+	DocRule
 )
 
 func (d DocType) String() string {
@@ -33,6 +34,8 @@ func (d DocType) String() string {
 		return "adr"
 	case DocRecipe:
 		return "recipe"
+	case DocRule:
+		return "rule"
 	default:
 		return "unknown"
 	}
@@ -55,6 +58,7 @@ type Frontmatter struct {
 	Scope       []string `yaml:"scope,omitempty"`
 	Description string   `yaml:"description,omitempty"`
 	Sources     []string `yaml:"sources,omitempty"`
+	Origin      []string `yaml:"origin,omitempty"`
 	// Extra holds any additional fields not in the known schema.
 	Extra map[string]interface{} `yaml:",inline"`
 }
@@ -168,6 +172,9 @@ func ClassifyDoc(fm *Frontmatter) DocType {
 	if fm.Type == "recipe" || strings.HasPrefix(fm.ID, "recipe-") {
 		return DocRecipe
 	}
+	if fm.Type == "rule" || strings.HasPrefix(fm.ID, "rule-") {
+		return DocRule
+	}
 	if strings.HasPrefix(fm.ID, "ref-") {
 		return DocRef
 	}
@@ -211,6 +218,7 @@ func DeriveRelationships(fm *Frontmatter) []string {
 	for _, src := range fm.Sources {
 		rels = append(rels, StripAnchor(src))
 	}
+	rels = append(rels, fm.Origin...)
 	if rels == nil {
 		rels = []string{}
 	}

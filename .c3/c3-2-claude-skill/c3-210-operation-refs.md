@@ -5,8 +5,8 @@ title: operation-refs
 type: component
 category: feature
 parent: c3-2
-goal: Provide step-by-step execution guidance for each of the six c3 operations
-summary: Six reference docs loaded on demand by skill-router; each defines preconditions, stages, gates, and final checks for its operation
+goal: Provide step-by-step execution guidance for each of the seven c3 operations
+summary: Seven reference docs loaded on demand by skill-router; each defines preconditions, stages, gates, and final checks for its operation
 uses: [c3-201]
 ---
 
@@ -14,7 +14,7 @@ uses: [c3-201]
 
 ## Goal
 
-Provide step-by-step execution guidance for each of the six c3 operations.
+Provide step-by-step execution guidance for each of the seven c3 operations.
 
 ## Dependencies
 

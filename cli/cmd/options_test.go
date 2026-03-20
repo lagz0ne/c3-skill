@@ -99,3 +99,183 @@ func TestParseArgs(t *testing.T) {
 		})
 	}
 }
+
+func TestParseArgs_Extended(t *testing.T) {
+	tests := []struct {
+		name  string
+		argv  []string
+		check func(t *testing.T, got Options)
+	}{
+		{
+			name: "goal flag",
+			argv: []string{"add", "component", "auth", "--goal", "Handle auth"},
+			check: func(t *testing.T, got Options) {
+				if got.Goal != "Handle auth" {
+					t.Errorf("Goal = %q", got.Goal)
+				}
+			},
+		},
+		{
+			name: "summary flag",
+			argv: []string{"add", "component", "auth", "--summary", "Auth service"},
+			check: func(t *testing.T, got Options) {
+				if got.Summary != "Auth service" {
+					t.Errorf("Summary = %q", got.Summary)
+				}
+			},
+		},
+		{
+			name: "boundary flag",
+			argv: []string{"add", "container", "api", "--boundary", "service"},
+			check: func(t *testing.T, got Options) {
+				if got.Boundary != "service" {
+					t.Errorf("Boundary = %q", got.Boundary)
+				}
+			},
+		},
+		{
+			name: "section and append",
+			argv: []string{"set", "c3-101", "--section", "Goal", "--append"},
+			check: func(t *testing.T, got Options) {
+				if got.Section != "Goal" {
+					t.Errorf("Section = %q", got.Section)
+				}
+				if !got.Append {
+					t.Error("Append should be true")
+				}
+			},
+		},
+		{
+			name: "field flag",
+			argv: []string{"set", "--field", "goal"},
+			check: func(t *testing.T, got Options) {
+				if got.Field != "goal" {
+					t.Errorf("Field = %q", got.Field)
+				}
+			},
+		},
+		{
+			name: "depth flag",
+			argv: []string{"graph", "c3-1", "--depth", "3"},
+			check: func(t *testing.T, got Options) {
+				if got.Depth != 3 {
+					t.Errorf("Depth = %d", got.Depth)
+				}
+			},
+		},
+		{
+			name: "direction flag",
+			argv: []string{"graph", "c3-1", "--direction", "forward"},
+			check: func(t *testing.T, got Options) {
+				if got.Direction != "forward" {
+					t.Errorf("Direction = %q", got.Direction)
+				}
+			},
+		},
+		{
+			name: "format flag",
+			argv: []string{"graph", "c3-1", "--format", "mermaid"},
+			check: func(t *testing.T, got Options) {
+				if got.Format != "mermaid" {
+					t.Errorf("Format = %q", got.Format)
+				}
+			},
+		},
+		{
+			name: "type filter",
+			argv: []string{"query", "auth", "--type", "component"},
+			check: func(t *testing.T, got Options) {
+				if got.TypeFilter != "component" {
+					t.Errorf("TypeFilter = %q", got.TypeFilter)
+				}
+			},
+		},
+		{
+			name: "mark flag",
+			argv: []string{"diff", "--mark"},
+			check: func(t *testing.T, got Options) {
+				if !got.Mark {
+					t.Error("Mark should be true")
+				}
+			},
+		},
+		{
+			name: "keep-originals",
+			argv: []string{"migrate", "--keep-originals"},
+			check: func(t *testing.T, got Options) {
+				if !got.KeepOriginals {
+					t.Error("KeepOriginals should be true")
+				}
+			},
+		},
+		{
+			name: "limit flag",
+			argv: []string{"query", "auth", "--limit", "5"},
+			check: func(t *testing.T, got Options) {
+				if got.Limit != 5 {
+					t.Errorf("Limit = %d", got.Limit)
+				}
+			},
+		},
+		{
+			name: "compact flag",
+			argv: []string{"list", "--compact"},
+			check: func(t *testing.T, got Options) {
+				if !got.Compact {
+					t.Error("Compact should be true")
+				}
+			},
+		},
+		{
+			name: "fix flag",
+			argv: []string{"check", "--fix"},
+			check: func(t *testing.T, got Options) {
+				if !got.Fix {
+					t.Error("Fix should be true")
+				}
+			},
+		},
+		{
+			name: "remove flag",
+			argv: []string{"wire", "--remove", "c3-101", "ref-jwt"},
+			check: func(t *testing.T, got Options) {
+				if !got.Remove {
+					t.Error("Remove should be true")
+				}
+			},
+		},
+		{
+			name: "dry-run flag",
+			argv: []string{"delete", "c3-101", "--dry-run"},
+			check: func(t *testing.T, got Options) {
+				if !got.DryRun {
+					t.Error("DryRun should be true")
+				}
+			},
+		},
+		{
+			name: "short help",
+			argv: []string{"-h"},
+			check: func(t *testing.T, got Options) {
+				if !got.Help {
+					t.Error("Help should be true")
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ParseArgs(tt.argv)
+			tt.check(t, got)
+		})
+	}
+}
+
+func TestParseArgs_C3XMode(t *testing.T) {
+	t.Setenv("C3X_MODE", "agent")
+	got := ParseArgs([]string{"list"})
+	if !got.JSON {
+		t.Error("C3X_MODE=agent should set JSON=true")
+	}
+}

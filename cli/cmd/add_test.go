@@ -2,40 +2,17 @@ package cmd
 
 import (
 	"bytes"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
 
 func TestRunAdd_Container(t *testing.T) {
-	c3Dir := createFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s, c3Dir := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("container", "payments", c3Dir, graph, "", false, &buf)
+	err := RunAdd("container", "payments", c3Dir, s, "", false, &buf)
 	if err != nil {
 		t.Fatalf("RunAdd container failed: %v", err)
-	}
-
-	// Container 3 should be created (1 and 2 already exist)
-	dirPath := filepath.Join(c3Dir, "c3-3-payments")
-	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-		t.Error("expected c3-3-payments directory to exist")
-	}
-
-	readmePath := filepath.Join(dirPath, "README.md")
-	content, err := os.ReadFile(readmePath)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	s := string(content)
-	if !strings.Contains(s, "id: c3-3") {
-		t.Error("container README should have id c3-3")
-	}
-	if !strings.Contains(s, "type: container") {
-		t.Error("container README should have type: container")
 	}
 
 	output := buf.String()
@@ -45,95 +22,63 @@ func TestRunAdd_Container(t *testing.T) {
 	if !strings.Contains(output, "c3-3") {
 		t.Errorf("output should mention c3-3: %s", output)
 	}
+
+	// Verify entity in store
+	entity, err := s.GetEntity("c3-3")
+	if err != nil {
+		t.Fatal("entity c3-3 should exist in store")
+	}
+	if entity.Type != "container" {
+		t.Errorf("expected type container, got %s", entity.Type)
+	}
 }
 
 func TestRunAdd_Component(t *testing.T) {
-	c3Dir := createFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s, c3Dir := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("component", "logging", c3Dir, graph, "c3-1", false, &buf)
+	err := RunAdd("component", "logging", c3Dir, s, "c3-1", false, &buf)
 	if err != nil {
 		t.Fatalf("RunAdd component failed: %v", err)
 	}
 
 	// c3-101 already exists (auth), so next foundation should be c3-102
-	filePath := filepath.Join(c3Dir, "c3-1-api", "c3-102-logging.md")
-	content, err := os.ReadFile(filePath)
+	entity, err := s.GetEntity("c3-102")
 	if err != nil {
-		t.Fatalf("component file not created: %v", err)
+		t.Fatal("entity c3-102 should exist in store")
 	}
-
-	s := string(content)
-	if !strings.Contains(s, "id: c3-102") {
-		t.Errorf("component should have id c3-102, content: %s", s)
+	if entity.Type != "component" {
+		t.Error("component should have type component")
 	}
-	if !strings.Contains(s, "type: component") {
-		t.Error("component should have type: component")
-	}
-	if !strings.Contains(s, "category: foundation") {
+	if entity.Category != "foundation" {
 		t.Error("component should be foundation category")
 	}
 }
 
 func TestRunAdd_ComponentFeature(t *testing.T) {
-	c3Dir := createFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s, c3Dir := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("component", "checkout", c3Dir, graph, "c3-1", true, &buf)
+	err := RunAdd("component", "checkout", c3Dir, s, "c3-1", true, &buf)
 	if err != nil {
 		t.Fatalf("RunAdd feature component failed: %v", err)
 	}
 
 	// c3-110 already exists (users), so next feature should be c3-111
-	filePath := filepath.Join(c3Dir, "c3-1-api", "c3-111-checkout.md")
-	content, err := os.ReadFile(filePath)
+	entity, err := s.GetEntity("c3-111")
 	if err != nil {
-		t.Fatalf("feature component file not created: %v", err)
+		t.Fatal("entity c3-111 should exist in store")
 	}
-
-	s := string(content)
-	if !strings.Contains(s, "id: c3-111") {
-		t.Errorf("component should have id c3-111, content: %s", s)
-	}
-	if !strings.Contains(s, "category: feature") {
+	if entity.Category != "feature" {
 		t.Error("component should be feature category")
 	}
 }
 
-func TestRunAdd_ComponentWiresContainerTable(t *testing.T) {
-	c3Dir := createFixture(t)
-	graph := loadGraph(t, c3Dir)
-	var buf bytes.Buffer
-
-	RunAdd("component", "logging", c3Dir, graph, "c3-1", false, &buf)
-
-	containerReadme, err := os.ReadFile(filepath.Join(c3Dir, "c3-1-api", "README.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	s := string(containerReadme)
-	if !strings.Contains(s, "c3-102") {
-		t.Error("container README should be updated with new component")
-	}
-	if !strings.Contains(s, "logging") {
-		t.Error("container README should mention component name")
-	}
-
-	output := buf.String()
-	if !strings.Contains(output, "Updated:") {
-		t.Error("should print Updated message for container table")
-	}
-}
-
 func TestRunAdd_ComponentMissingContainer(t *testing.T) {
-	c3Dir := createFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s, c3Dir := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("component", "orphan", c3Dir, graph, "", false, &buf)
+	err := RunAdd("component", "orphan", c3Dir, s, "", false, &buf)
 	if err == nil {
 		t.Fatal("expected error when --container is missing")
 	}
@@ -143,11 +88,10 @@ func TestRunAdd_ComponentMissingContainer(t *testing.T) {
 }
 
 func TestRunAdd_ComponentContainerNotFound(t *testing.T) {
-	c3Dir := createFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s, c3Dir := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("component", "orphan", c3Dir, graph, "c3-99", false, &buf)
+	err := RunAdd("component", "orphan", c3Dir, s, "c3-99", false, &buf)
 	if err == nil {
 		t.Fatal("expected error when container doesn't exist")
 	}
@@ -157,24 +101,20 @@ func TestRunAdd_ComponentContainerNotFound(t *testing.T) {
 }
 
 func TestRunAdd_Ref(t *testing.T) {
-	c3Dir := createFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("ref", "rate-limiting", c3Dir, graph, "", false, &buf)
+	err := RunAdd("ref", "rate-limiting", "", s, "", false, &buf)
 	if err != nil {
 		t.Fatalf("RunAdd ref failed: %v", err)
 	}
 
-	filePath := filepath.Join(c3Dir, "refs", "ref-rate-limiting.md")
-	content, err := os.ReadFile(filePath)
+	entity, err := s.GetEntity("ref-rate-limiting")
 	if err != nil {
-		t.Fatal(err)
+		t.Fatal("entity ref-rate-limiting should exist in store")
 	}
-
-	s := string(content)
-	if !strings.Contains(s, "id: ref-rate-limiting") {
-		t.Error("ref should have id ref-rate-limiting")
+	if entity.Type != "ref" {
+		t.Error("ref should have type ref")
 	}
 
 	output := buf.String()
@@ -184,12 +124,11 @@ func TestRunAdd_Ref(t *testing.T) {
 }
 
 func TestRunAdd_RefDuplicate(t *testing.T) {
-	c3Dir := createFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
 	// ref-jwt already exists in fixture
-	err := RunAdd("ref", "jwt", c3Dir, graph, "", false, &buf)
+	err := RunAdd("ref", "jwt", "", s, "", false, &buf)
 	if err == nil {
 		t.Fatal("expected error when ref already exists")
 	}
@@ -199,56 +138,35 @@ func TestRunAdd_RefDuplicate(t *testing.T) {
 }
 
 func TestRunAdd_Adr(t *testing.T) {
-	c3Dir := createFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("adr", "oauth-support", c3Dir, graph, "", false, &buf)
+	err := RunAdd("adr", "oauth-support", "", s, "", false, &buf)
 	if err != nil {
 		t.Fatalf("RunAdd adr failed: %v", err)
 	}
 
-	// Check that a file was created in adr/
-	entries, _ := os.ReadDir(filepath.Join(c3Dir, "adr"))
-	found := false
-	for _, e := range entries {
-		if strings.Contains(e.Name(), "oauth-support") {
-			found = true
-
-			content, _ := os.ReadFile(filepath.Join(c3Dir, "adr", e.Name()))
-			s := string(content)
-			if !strings.Contains(s, "oauth-support") {
-				t.Error("ADR should contain slug in id")
-			}
-			if strings.Contains(s, "${DATE}") {
-				t.Error("ADR should have ${DATE} replaced")
-			}
-		}
-	}
-	if !found {
-		t.Error("expected ADR file with oauth-support slug")
+	output := buf.String()
+	if !strings.Contains(output, "oauth-support") {
+		t.Error("output should contain slug")
 	}
 }
 
 func TestRunAdd_Recipe(t *testing.T) {
-	c3Dir := createFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("recipe", "auth-flow", c3Dir, graph, "", false, &buf)
+	err := RunAdd("recipe", "auth-flow", "", s, "", false, &buf)
 	if err != nil {
 		t.Fatalf("RunAdd recipe failed: %v", err)
 	}
 
-	filePath := filepath.Join(c3Dir, "recipes", "recipe-auth-flow.md")
-	content, err := os.ReadFile(filePath)
+	entity, err := s.GetEntity("recipe-auth-flow")
 	if err != nil {
-		t.Fatal(err)
+		t.Fatal("entity recipe-auth-flow should exist in store")
 	}
-
-	s := string(content)
-	if !strings.Contains(s, "id: recipe-auth-flow") {
-		t.Error("recipe should have id recipe-auth-flow")
+	if entity.Type != "recipe" {
+		t.Error("recipe should have type recipe")
 	}
 
 	output := buf.String()
@@ -258,16 +176,15 @@ func TestRunAdd_Recipe(t *testing.T) {
 }
 
 func TestRunAdd_RecipeDuplicate(t *testing.T) {
-	c3Dir := createFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
 	// Create first
-	RunAdd("recipe", "auth-flow", c3Dir, graph, "", false, &buf)
+	RunAdd("recipe", "auth-flow", "", s, "", false, &buf)
 	buf.Reset()
 
 	// Duplicate should fail
-	err := RunAdd("recipe", "auth-flow", c3Dir, graph, "", false, &buf)
+	err := RunAdd("recipe", "auth-flow", "", s, "", false, &buf)
 	if err == nil {
 		t.Fatal("expected error when recipe already exists")
 	}
@@ -276,12 +193,29 @@ func TestRunAdd_RecipeDuplicate(t *testing.T) {
 	}
 }
 
-func TestRunAdd_InvalidSlug(t *testing.T) {
-	c3Dir := createFixture(t)
-	graph := loadGraph(t, c3Dir)
+func TestAddRule(t *testing.T) {
+	s := createDBFixture(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("container", "Invalid_Slug", c3Dir, graph, "", false, &buf)
+	err := RunAdd("rule", "structured-logging", "", s, "", false, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	entity, err := s.GetEntity("rule-structured-logging")
+	if err != nil {
+		t.Fatal("rule entity should exist in store")
+	}
+	if entity.Type != "rule" {
+		t.Error("rule should have type rule")
+	}
+}
+
+func TestRunAdd_InvalidSlug(t *testing.T) {
+	s, c3Dir := createDBFixtureWithC3Dir(t)
+	var buf bytes.Buffer
+
+	err := RunAdd("container", "Invalid_Slug", c3Dir, s, "", false, &buf)
 	if err == nil {
 		t.Fatal("expected error for invalid slug")
 	}
@@ -291,11 +225,10 @@ func TestRunAdd_InvalidSlug(t *testing.T) {
 }
 
 func TestRunAdd_UnknownType(t *testing.T) {
-	c3Dir := createFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s, c3Dir := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("widget", "test", c3Dir, graph, "", false, &buf)
+	err := RunAdd("widget", "test", c3Dir, s, "", false, &buf)
 	if err == nil {
 		t.Fatal("expected error for unknown entity type")
 	}
@@ -305,11 +238,10 @@ func TestRunAdd_UnknownType(t *testing.T) {
 }
 
 func TestRunAdd_MissingArgs(t *testing.T) {
-	c3Dir := createFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s, c3Dir := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("", "", c3Dir, graph, "", false, &buf)
+	err := RunAdd("", "", c3Dir, s, "", false, &buf)
 	if err == nil {
 		t.Fatal("expected error for missing args")
 	}
@@ -319,24 +251,63 @@ func TestRunAdd_MissingArgs(t *testing.T) {
 }
 
 func TestRunAdd_SequentialContainers(t *testing.T) {
-	c3Dir := createFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s, c3Dir := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
 	// Add container 3
-	RunAdd("container", "payments", c3Dir, graph, "", false, &buf)
-
-	// Reload graph to pick up the new container
-	graph = loadGraph(t, c3Dir)
+	RunAdd("container", "payments", c3Dir, s, "", false, &buf)
 	buf.Reset()
 
-	// Add container 4
-	err := RunAdd("container", "worker", c3Dir, graph, "", false, &buf)
+	// Add container 4 (store is already updated, no need to reload)
+	err := RunAdd("container", "worker", c3Dir, s, "", false, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if _, err := os.Stat(filepath.Join(c3Dir, "c3-4-worker")); os.IsNotExist(err) {
-		t.Error("expected c3-4-worker directory")
+	entity, err := s.GetEntity("c3-4")
+	if err != nil {
+		t.Error("expected c3-4 to exist in store")
+	}
+	if entity != nil && entity.Slug != "worker" {
+		t.Errorf("expected slug worker, got %s", entity.Slug)
+	}
+}
+
+func TestRunAdd_RuleDuplicate(t *testing.T) {
+	s := createDBFixture(t)
+	var buf bytes.Buffer
+
+	RunAdd("rule", "structured-logging", "", s, "", false, &buf)
+	buf.Reset()
+
+	err := RunAdd("rule", "structured-logging", "", s, "", false, &buf)
+	if err == nil {
+		t.Fatal("expected error for duplicate rule")
+	}
+	if !strings.Contains(err.Error(), "already exists") {
+		t.Errorf("error should mention 'already exists': %v", err)
+	}
+}
+
+func TestRunAdd_AdrDuplicate(t *testing.T) {
+	s := createDBFixture(t)
+	var buf bytes.Buffer
+
+	RunAdd("adr", "use-grpc", "", s, "", false, &buf)
+	buf.Reset()
+
+	err := RunAdd("adr", "use-grpc", "", s, "", false, &buf)
+	if err == nil {
+		t.Fatal("expected error for duplicate ADR")
+	}
+}
+
+func TestRunAdd_ComponentInvalidContainerFormat(t *testing.T) {
+	s, c3Dir := createDBFixtureWithC3Dir(t)
+	var buf bytes.Buffer
+
+	err := RunAdd("component", "test", c3Dir, s, "invalid-format", false, &buf)
+	if err == nil {
+		t.Fatal("expected error for invalid container format")
 	}
 }

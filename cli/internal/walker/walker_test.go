@@ -43,7 +43,7 @@ title: Auth Service
 type: component
 parent: c3-1
 category: foundation
-refs:
+uses:
   - ref-0001
 ---
 Auth component.`)
@@ -54,7 +54,7 @@ title: User Service
 type: component
 parent: c3-1
 category: feature
-refs:
+uses:
   - ref-0001
 ---
 User component.`)
@@ -304,7 +304,7 @@ func TestBuildGraph(t *testing.T) {
 
 	t.Run("transitive from ref depth 1", func(t *testing.T) {
 		trans := graph.Transitive("ref-0001", 1)
-		// ref-0001 forward: citedBy returns c3-101, c3-110 (they have refs: [ref-0001])
+		// ref-0001 forward: citedBy returns c3-101, c3-110 (they have uses: [ref-0001])
 		if len(trans) != 2 {
 			t.Errorf("expected 2 transitive from ref-0001 depth 1, got %d", len(trans))
 			for _, e := range trans {
@@ -346,6 +346,32 @@ Note body`)
 		for _, d := range docs {
 			t.Logf("  %s (%s)", d.Frontmatter.ID, d.Path)
 		}
+	}
+}
+
+func TestSlugFromPathRule(t *testing.T) {
+	slug := SlugFromPath("rules/rule-structured-logging.md")
+	if slug != "structured-logging" {
+		t.Errorf("SlugFromPath(rule-...) = %q, want %q", slug, "structured-logging")
+	}
+}
+
+func TestForwardIncludesRuleCiters(t *testing.T) {
+	docs := []frontmatter.ParsedDoc{
+		{Frontmatter: &frontmatter.Frontmatter{ID: "rule-logging", Type: "rule"}, Path: "rules/rule-logging.md"},
+		{Frontmatter: &frontmatter.Frontmatter{ID: "c3-101", Type: "component", Parent: "c3-1", Refs: []string{"rule-logging"}}, Path: "c3-1-cli/c3-101-fm.md"},
+		{Frontmatter: &frontmatter.Frontmatter{ID: "c3-1", Type: "container"}, Path: "c3-1-cli/README.md"},
+	}
+	g := BuildGraph(docs)
+	fwd := g.Forward("rule-logging")
+	found := false
+	for _, e := range fwd {
+		if e.ID == "c3-101" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("Forward(rule-logging) should include c3-101 (citer)")
 	}
 }
 

@@ -24,7 +24,47 @@ var Commands = []CommandMeta{
 		Hidden:   true,
 		Help: `Usage: c3x init
 
-Scaffold .c3/ skeleton (config, README, refs/, adr/).`,
+Scaffold .c3/ skeleton (config, README, refs/, rules/, adr/).`,
+	},
+	{
+		Name:     "read",
+		Args:     "<entity-id>",
+		OneLiner: "Output full entity content (frontmatter + body)",
+		Help: `Usage: c3x read <entity-id> [--json]
+
+Output the full content of an entity as markdown (default) or structured JSON.
+Markdown output includes YAML frontmatter + body — same format accepted by write.
+
+Examples:
+  c3x read c3-101                # markdown output
+  c3x read ref-jwt --json        # structured JSON
+  c3x read c3-101 > backup.md    # save to file`,
+	},
+	{
+		Name:     "write",
+		Args:     "<entity-id>",
+		OneLiner: "Replace entity content with validation (stdin)",
+		Help: `Usage: c3x write <entity-id> < content.md
+
+Replace an entity's content from stdin. Parses YAML frontmatter for structured
+fields (goal, summary, status, etc.) and validates the body against the entity
+type's required schema sections before accepting.
+
+Validation rejects writes missing required sections:
+  - Component: Goal, Dependencies
+  - Container: Goal, Components, Responsibilities
+  - Ref: Goal, Choice, Why
+  - Rule: Goal, Rule, Golden Example
+
+If body ## Goal has content but frontmatter goal: is empty, the first line
+is auto-promoted to the goal field.
+
+Relationships (uses, affects, scope) in frontmatter are synced to the DB.
+
+Examples:
+  c3x read c3-101 | edit | c3x write c3-101
+  cat updated-ref.md | c3x write ref-jwt
+  c3x write c3-1 < container.md`,
 	},
 	{
 		Name:     "list",
@@ -57,7 +97,7 @@ Options:
 		OneLiner: "Create entity (auto-numbering + wiring)",
 		Help: `Usage: c3x add <type> <slug> [options]
 
-Types: container, component, ref, adr, recipe
+Types: container, component, ref, rule, adr, recipe
 
 Options:
   --container <id>       Parent container (component only)
@@ -71,6 +111,7 @@ Examples:
   c3x add container payments --goal "Process payments" --boundary service
   c3x add component auth --container c3-1 --goal "JWT authentication"
   c3x add ref rate-limiting --goal "Consistent rate limiting"
+  c3x add rule structured-logging --goal "Consistent structured logging"
   c3x add adr use-grpc --goal "Migrate to gRPC" --json
   c3x add recipe auth-flow`,
 	},
@@ -98,7 +139,7 @@ Section mode accepts text or JSON (array for replace, object for --append):
        c3x wire --remove <source> <target>
 
 Creates or removes a cite relationship (updated atomically):
-  1. source frontmatter refs[] += target
+  1. source frontmatter uses[] += target
   2. source "Related Refs" table += row
 
 Options:
@@ -119,7 +160,7 @@ Examples:
 		Help: `Usage: c3x schema <type> [--json]
 
 Show known sections for an entity type.
-Types: context, container, component, ref, adr, recipe
+Types: context, container, component, ref, rule, adr, recipe
 
 JSON output includes column types (filepath, entity_id, enum, ref_id).
 
@@ -127,7 +168,7 @@ Example: c3x schema component --json`,
 	},
 	{
 		Name:     "codemap",
-		OneLiner: "Scaffold code-map.yaml for all components + refs",
+		OneLiner: "Scaffold code-map.yaml for all components, refs + rules",
 		Help: `Usage: c3x codemap [--json]
 
 Scaffold or update .c3/code-map.yaml with stubs for every component and ref
@@ -201,6 +242,82 @@ Examples:
   c3x graph c3-101 --direction reverse   # what points to this component`,
 	},
 	{
+		Name:     "query",
+		Args:     "<search-terms>",
+		OneLiner: "Full-text search across all entities",
+		Help: `Usage: c3x query <search-terms> [--type <type>] [--limit N] [--json]
+
+Search entity titles, goals, summaries, and bodies using FTS5 with BM25 ranking.
+
+Options:
+  --type <type>   Filter results to entity type (component, ref, adr, etc.)
+  --limit N       Max results (default: 20)
+  --json          Machine-readable output
+
+Examples:
+  c3x query authentication
+  c3x query "error handling" --type ref
+  c3x query frontmatter --limit 5 --json`,
+	},
+	{
+		Name:     "diff",
+		OneLiner: "Show uncommitted changes (human-readable changelog)",
+		Help: `Usage: c3x diff [--mark <commit-hash>] [--json]
+
+Render all entity mutations since the last commit mark.
+
+Options:
+  --mark <hash>   Stamp current changes with commit hash (use in post-commit hook)
+  --json          Output raw changelog entries as JSON
+
+Examples:
+  c3x diff                    # show pending changes
+  c3x diff --mark abc123      # mark changes as committed`,
+	},
+	{
+		Name:     "impact",
+		Args:     "<entity-id>",
+		OneLiner: "Transitive impact analysis (who depends on this?)",
+		Help: `Usage: c3x impact <entity-id> [--depth N] [--json]
+
+Find all entities affected by changes to the given entity.
+Traverses reverse 'uses' + forward 'affects' relationships.
+
+Options:
+  --depth N   Max traversal depth (default: 3)
+  --json      Machine-readable output
+
+Examples:
+  c3x impact c3-101            # what breaks if auth changes?
+  c3x impact ref-jwt --depth 5 # deep impact of JWT ref`,
+	},
+	{
+		Name:     "export",
+		OneLiner: "Dump DB to markdown files (escape hatch)",
+		Help: `Usage: c3x export [<output-dir>]
+
+Export all entities from the database to markdown files with YAML frontmatter.
+Also exports code-map.yaml. Default output dir is current .c3/ directory.
+
+This is the escape hatch for inspecting or diffing DB content as files.
+
+Examples:
+  c3x export                   # export to .c3/
+  c3x export /tmp/c3-export    # export to custom dir`,
+	},
+	{
+		Name:     "migrate",
+		OneLiner: "Import .c3/ markdown files into SQLite database",
+		Hidden:   true,
+		Help: `Usage: c3x migrate [--keep-originals]
+
+Import all .c3/ markdown files and code-map.yaml into .c3/c3.db.
+Big bang migration — no coexistence mode.
+
+Options:
+  --keep-originals   Don't delete original .md files after import`,
+	},
+	{
 		Name:     "delete",
 		Args:     "<id>",
 		OneLiner: "Remove entity + clean all references",
@@ -213,7 +330,7 @@ Safety:
   - Refuses to delete containers with children (lists them)
 
 Cleanup:
-  - Removes id from refs[], affects[], scope[], sources[] on referencing entities
+  - Removes id from uses[], affects[], scope[], sources[] on referencing entities
   - Removes Related Refs table rows citing this entity
   - Removes row from parent container's Components table
   - Removes code-map.yaml entry
@@ -226,6 +343,31 @@ Examples:
   c3x delete c3-101
   c3x delete ref-jwt --dry-run`,
 	},
+	{
+		Name:     "marketplace",
+		Args:     "<subcommand>",
+		OneLiner: "Manage marketplace rule sources",
+		Help: `Usage: c3x marketplace <subcommand> [options]
+
+Subcommands:
+  add <github-url>          Clone marketplace repo, register as source
+  list [--source] [--tag]   List available rules across sources
+  show <rule-id>            Preview a rule's content
+  update [<source-name>]    Pull latest from registered sources
+  remove <source-name>      Unregister source + delete cache
+
+Options:
+  --source <name>   Filter by source name
+  --tag <tag>       Filter rules by tag
+  --json            Machine-readable output
+
+Examples:
+  c3x marketplace add https://github.com/org/go-patterns
+  c3x marketplace list --tag reliability
+  c3x marketplace show rule-error-handling
+  c3x marketplace update
+  c3x marketplace remove go-patterns`,
+	},
 }
 
 // buildGlobalHelp generates the global help text from the command registry.
@@ -237,7 +379,6 @@ Usage: c3x <command> [args] [options]
 
 Commands:
 `)
-	// Find max width for alignment
 	maxWidth := 0
 	for _, c := range Commands {
 		w := len(c.Name)
@@ -258,7 +399,7 @@ Commands:
 	}
 
 	b.WriteString(`
-Entity Types: container, component, ref, adr, recipe (context created by init)
+Entity Types: container, component, ref, rule, adr, recipe (context created by init)
 
 Global Options:
   --json                     Machine-readable output
@@ -301,6 +442,13 @@ Workflows:
     c3x add adr use-grpc --goal "Migrate to gRPC for internal services"
     c3x set adr-1 status accepted
     c3x set adr-1 --section "Context" "We need lower latency between services"`)
+
+	b.WriteString(`
+
+  Browse and adopt marketplace rules:
+    c3x marketplace add https://github.com/org/go-patterns
+    c3x marketplace list --tag reliability
+    c3x marketplace show rule-error-handling`)
 
 	return b.String()
 }

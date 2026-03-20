@@ -3,18 +3,15 @@ package cmd
 import (
 	"fmt"
 	"io"
-	"path/filepath"
 	"sort"
 	"strings"
 
-	"github.com/lagz0ne/c3-design/cli/internal/codemap"
-	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
-	"github.com/lagz0ne/c3-design/cli/internal/walker"
+	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
 // GraphOptions holds parameters for the graph command.
 type GraphOptions struct {
-	Graph     *walker.C3Graph
+	Store     *store.Store
 	EntityID  string
 	Depth     int
 	Direction string // "forward" or "reverse"
@@ -38,8 +35,7 @@ type graphNode struct {
 
 // RunGraph emits a subgraph rooted at the given entity.
 func RunGraph(opts GraphOptions, w io.Writer) error {
-	root := opts.Graph.Get(opts.EntityID)
-	if root == nil {
+	if _, err := opts.Store.GetEntity(opts.EntityID); err != nil {
 		return fmt.Errorf("entity %q not found", opts.EntityID)
 	}
 
@@ -47,35 +43,23 @@ func RunGraph(opts GraphOptions, w io.Writer) error {
 		return fmt.Errorf("--direction must be 'forward' or 'reverse', got %q", opts.Direction)
 	}
 
-	// Load code-map for file paths
-	var cm codemap.CodeMap
-	if opts.C3Dir != "" {
-		var err error
-		cm, err = codemap.ParseCodeMap(filepath.Join(opts.C3Dir, "code-map.yaml"))
-		if err != nil {
-			cm = codemap.CodeMap{}
-		}
-	}
-
-	// Collect subgraph: root + transitive reachable entities
-	entities := collectSubgraph(opts.Graph, opts.EntityID, opts.Depth, opts.Direction)
+	entities := collectSubgraphStore(opts.Store, opts.EntityID, opts.Depth, opts.Direction)
 
 	if opts.JSON {
-		return graphJSON(entities, opts.Graph, cm, w)
+		return graphJSONStore(entities, opts.Store, w)
 	}
 	if opts.Format == "mermaid" {
-		return graphMermaid(entities, opts.Graph, cm, w)
+		return graphMermaidStore(entities, opts.Store, w)
 	}
-	return graphText(entities, opts.Graph, cm, w)
+	return graphTextStore(entities, opts.Store, w)
 }
 
-// collectSubgraph returns the root entity plus all entities reachable within depth hops.
-// Direction "forward" uses Forward(), "reverse" uses Reverse(), default collects all neighbors.
-func collectSubgraph(graph *walker.C3Graph, rootID string, depth int, direction string) []*walker.C3Entity {
+// collectSubgraphStore returns entities reachable within depth hops from rootID.
+func collectSubgraphStore(s *store.Store, rootID string, depth int, direction string) []*store.Entity {
 	visited := map[string]bool{rootID: true}
-	var result []*walker.C3Entity
-	root := graph.Get(rootID)
-	if root != nil {
+	var result []*store.Entity
+	root, err := s.GetEntity(rootID)
+	if err == nil {
 		result = append(result, root)
 	}
 
@@ -83,7 +67,7 @@ func collectSubgraph(graph *walker.C3Graph, rootID string, depth int, direction 
 	for d := 0; d < depth && len(frontier) > 0; d++ {
 		var next []string
 		for _, id := range frontier {
-			neighbors := graphNeighbors(graph, id, direction)
+			neighbors := graphNeighborsStore(s, id, direction)
 			for _, e := range neighbors {
 				if !visited[e.ID] {
 					visited[e.ID] = true
@@ -99,53 +83,67 @@ func collectSubgraph(graph *walker.C3Graph, rootID string, depth int, direction 
 	return result
 }
 
-// graphNeighbors collects connected entities based on direction.
-// "forward": only Forward() edges (impact analysis — children, affects, cited-by for refs)
-// "reverse": only Reverse() edges (what points to me)
-// default: all neighbors (Forward + Reverse + explicit references from frontmatter)
-func graphNeighbors(graph *walker.C3Graph, id string, direction string) []*walker.C3Entity {
-	if direction == "forward" {
-		return graph.Forward(id)
-	}
-	if direction == "reverse" {
-		return graph.Reverse(id)
-	}
-
-	// Default: collect all connected entities
+// graphNeighborsStore collects connected entities based on direction.
+func graphNeighborsStore(s *store.Store, id string, direction string) []*store.Entity {
 	seen := make(map[string]bool)
-	var result []*walker.C3Entity
+	var result []*store.Entity
 
-	add := func(entities []*walker.C3Entity) {
-		for _, e := range entities {
-			if !seen[e.ID] {
-				seen[e.ID] = true
-				result = append(result, e)
+	add := func(entity *store.Entity) {
+		if entity != nil && !seen[entity.ID] {
+			seen[entity.ID] = true
+			result = append(result, entity)
+		}
+	}
+
+	if direction == "forward" || direction == "" {
+		// Children
+		children, _ := s.Children(id)
+		for _, c := range children {
+			add(c)
+		}
+		// Outbound affects
+		rels, _ := s.RelationshipsFrom(id)
+		for _, r := range rels {
+			if r.RelType == "affects" {
+				if e, err := s.GetEntity(r.ToID); err == nil {
+					add(e)
+				}
+			}
+		}
+		// For refs/rules: entities that cite this one
+		entity, err := s.GetEntity(id)
+		if err == nil && (entity.Type == "ref" || entity.Type == "rule") {
+			citers, _ := s.CitedBy(id)
+			for _, c := range citers {
+				add(c)
 			}
 		}
 	}
 
-	add(graph.Forward(id))
-	add(graph.Reverse(id))
+	if direction == "reverse" || direction == "" {
+		// Inbound relationships
+		inbound, _ := s.RelationshipsTo(id)
+		for _, r := range inbound {
+			if e, err := s.GetEntity(r.FromID); err == nil {
+				add(e)
+			}
+		}
+		// Parent
+		entity, err := s.GetEntity(id)
+		if err == nil && entity.ParentID != "" {
+			if p, err := s.GetEntity(entity.ParentID); err == nil {
+				add(p)
+			}
+		}
+	}
 
-	// Explicit frontmatter references (parent, refs, scope) that Forward/Reverse may miss
-	entity := graph.Get(id)
-	if entity != nil {
-		if entity.Frontmatter.Parent != "" {
-			if p := graph.Get(entity.Frontmatter.Parent); p != nil && !seen[p.ID] {
-				seen[p.ID] = true
-				result = append(result, p)
-			}
-		}
-		for _, refID := range entity.Frontmatter.Refs {
-			if r := graph.Get(refID); r != nil && !seen[r.ID] {
-				seen[r.ID] = true
-				result = append(result, r)
-			}
-		}
-		for _, scopeID := range entity.Frontmatter.Scope {
-			if s := graph.Get(scopeID); s != nil && !seen[s.ID] {
-				seen[s.ID] = true
-				result = append(result, s)
+	if direction == "" {
+		rels, _ := s.RelationshipsFrom(id)
+		for _, r := range rels {
+			if r.RelType == "uses" || r.RelType == "scope" {
+				if e, err := s.GetEntity(r.ToID); err == nil {
+					add(e)
+				}
 			}
 		}
 	}
@@ -153,22 +151,21 @@ func graphNeighbors(graph *walker.C3Graph, id string, direction string) []*walke
 	return result
 }
 
-// graphText emits the adjacency-list text format.
-func graphText(entities []*walker.C3Entity, graph *walker.C3Graph, cm codemap.CodeMap, w io.Writer) error {
+// graphTextStore emits the adjacency-list text format.
+func graphTextStore(entities []*store.Entity, s *store.Store, w io.Writer) error {
 	for i, e := range entities {
 		if i > 0 {
 			fmt.Fprintln(w)
 		}
-		docType := frontmatter.ClassifyDoc(e.Frontmatter)
-		fmt.Fprintf(w, "%s (%s) — %s\n", e.ID, docType.String(), e.Title)
+		fmt.Fprintf(w, "%s (%s) — %s\n", e.ID, e.Type, e.Title)
 
 		// Parent
-		if e.Frontmatter.Parent != "" {
-			fmt.Fprintf(w, "  parent: %s\n", e.Frontmatter.Parent)
+		if e.ParentID != "" {
+			fmt.Fprintf(w, "  parent: %s\n", e.ParentID)
 		}
 
 		// Children
-		children := graph.Children(e.ID)
+		children, _ := s.Children(e.ID)
 		if len(children) > 0 {
 			sort.Slice(children, func(i, j int) bool { return children[i].ID < children[j].ID })
 			ids := make([]string, len(children))
@@ -178,16 +175,26 @@ func graphText(entities []*walker.C3Entity, graph *walker.C3Graph, cm codemap.Co
 			fmt.Fprintf(w, "  children: %s\n", strings.Join(ids, ", "))
 		}
 
-		// Refs (cited by this entity)
-		if len(e.Frontmatter.Refs) > 0 {
-			sorted := append([]string(nil), e.Frontmatter.Refs...)
-			sort.Strings(sorted)
-			fmt.Fprintf(w, "  refs: %s\n", strings.Join(sorted, ", "))
+		// Uses (refs cited by this entity)
+		rels, _ := s.RelationshipsFrom(e.ID)
+		var usesIDs []string
+		var affectsIDs []string
+		for _, r := range rels {
+			if r.RelType == "uses" {
+				usesIDs = append(usesIDs, r.ToID)
+			}
+			if r.RelType == "affects" {
+				affectsIDs = append(affectsIDs, r.ToID)
+			}
+		}
+		if len(usesIDs) > 0 {
+			sort.Strings(usesIDs)
+			fmt.Fprintf(w, "  uses: %s\n", strings.Join(usesIDs, ", "))
 		}
 
-		// Cited-by (entities that cite this ref)
-		if docType == frontmatter.DocRef {
-			citers := graph.CitedBy(e.ID)
+		// Cited-by (entities that cite this ref or rule)
+		if e.Type == "ref" || e.Type == "rule" {
+			citers, _ := s.CitedBy(e.ID)
 			if len(citers) > 0 {
 				sort.Slice(citers, func(i, j int) bool { return citers[i].ID < citers[j].ID })
 				ids := make([]string, len(citers))
@@ -199,14 +206,13 @@ func graphText(entities []*walker.C3Entity, graph *walker.C3Graph, cm codemap.Co
 		}
 
 		// Affects
-		if len(e.Frontmatter.Affects) > 0 {
-			sorted := append([]string(nil), e.Frontmatter.Affects...)
-			sort.Strings(sorted)
-			fmt.Fprintf(w, "  affects: %s\n", strings.Join(sorted, ", "))
+		if len(affectsIDs) > 0 {
+			sort.Strings(affectsIDs)
+			fmt.Fprintf(w, "  affects: %s\n", strings.Join(affectsIDs, ", "))
 		}
 
 		// Files from code-map
-		if files := cm[e.ID]; len(files) > 0 {
+		if files, _ := s.CodeMapFor(e.ID); len(files) > 0 {
 			sorted := append([]string(nil), files...)
 			sort.Strings(sorted)
 			fmt.Fprintf(w, "  files: %s\n", strings.Join(sorted, ", "))
@@ -215,22 +221,21 @@ func graphText(entities []*walker.C3Entity, graph *walker.C3Graph, cm codemap.Co
 	return nil
 }
 
-// graphJSON emits the subgraph as JSON.
-func graphJSON(entities []*walker.C3Entity, graph *walker.C3Graph, cm codemap.CodeMap, w io.Writer) error {
+// graphJSONStore emits the subgraph as JSON.
+func graphJSONStore(entities []*store.Entity, s *store.Store, w io.Writer) error {
 	nodes := make([]graphNode, 0, len(entities))
 	for _, e := range entities {
-		docType := frontmatter.ClassifyDoc(e.Frontmatter)
 		node := graphNode{
 			ID:    e.ID,
-			Type:  docType.String(),
+			Type:  e.Type,
 			Title: e.Title,
 		}
 
-		if e.Frontmatter.Parent != "" {
-			node.Parent = e.Frontmatter.Parent
+		if e.ParentID != "" {
+			node.Parent = e.ParentID
 		}
 
-		children := graph.Children(e.ID)
+		children, _ := s.Children(e.ID)
 		if len(children) > 0 {
 			sort.Slice(children, func(i, j int) bool { return children[i].ID < children[j].ID })
 			for _, c := range children {
@@ -238,13 +243,24 @@ func graphJSON(entities []*walker.C3Entity, graph *walker.C3Graph, cm codemap.Co
 			}
 		}
 
-		if len(e.Frontmatter.Refs) > 0 {
-			node.Refs = append([]string(nil), e.Frontmatter.Refs...)
+		rels, _ := s.RelationshipsFrom(e.ID)
+		for _, r := range rels {
+			if r.RelType == "uses" {
+				node.Refs = append(node.Refs, r.ToID)
+			}
+			if r.RelType == "affects" {
+				node.Affects = append(node.Affects, r.ToID)
+			}
+		}
+		if len(node.Refs) > 0 {
 			sort.Strings(node.Refs)
 		}
+		if len(node.Affects) > 0 {
+			sort.Strings(node.Affects)
+		}
 
-		if docType == frontmatter.DocRef {
-			citers := graph.CitedBy(e.ID)
+		if e.Type == "ref" || e.Type == "rule" {
+			citers, _ := s.CitedBy(e.ID)
 			if len(citers) > 0 {
 				sort.Slice(citers, func(i, j int) bool { return citers[i].ID < citers[j].ID })
 				for _, c := range citers {
@@ -253,12 +269,7 @@ func graphJSON(entities []*walker.C3Entity, graph *walker.C3Graph, cm codemap.Co
 			}
 		}
 
-		if len(e.Frontmatter.Affects) > 0 {
-			node.Affects = append([]string(nil), e.Frontmatter.Affects...)
-			sort.Strings(node.Affects)
-		}
-
-		if files := cm[e.ID]; len(files) > 0 {
+		if files, _ := s.CodeMapFor(e.ID); len(files) > 0 {
 			node.Files = append([]string(nil), files...)
 			sort.Strings(node.Files)
 		}
@@ -268,28 +279,27 @@ func graphJSON(entities []*walker.C3Entity, graph *walker.C3Graph, cm codemap.Co
 	return writeJSON(w, nodes)
 }
 
-// graphMermaid emits the subgraph as a Mermaid flowchart.
-func graphMermaid(entities []*walker.C3Entity, graph *walker.C3Graph, cm codemap.CodeMap, w io.Writer) error {
+// graphMermaidStore emits the subgraph as a Mermaid flowchart.
+func graphMermaidStore(entities []*store.Entity, s *store.Store, w io.Writer) error {
 	fmt.Fprintln(w, "graph TD")
 
 	// Collect entities by container for subgraph grouping
-	containerChildren := make(map[string][]*walker.C3Entity)
+	containerChildren := make(map[string][]*store.Entity)
 	entitySet := make(map[string]bool)
-	var containers []*walker.C3Entity
-	var standaloneNodes []*walker.C3Entity
+	var containers []*store.Entity
+	var standaloneNodes []*store.Entity
 
 	for _, e := range entities {
 		entitySet[e.ID] = true
 	}
 
 	for _, e := range entities {
-		docType := frontmatter.ClassifyDoc(e.Frontmatter)
-		switch docType {
-		case frontmatter.DocContainer:
+		switch e.Type {
+		case "container":
 			containers = append(containers, e)
-		case frontmatter.DocComponent:
-			if entitySet[e.Frontmatter.Parent] {
-				containerChildren[e.Frontmatter.Parent] = append(containerChildren[e.Frontmatter.Parent], e)
+		case "component":
+			if entitySet[e.ParentID] {
+				containerChildren[e.ParentID] = append(containerChildren[e.ParentID], e)
 			} else {
 				standaloneNodes = append(standaloneNodes, e)
 			}
@@ -312,14 +322,16 @@ func graphMermaid(entities []*walker.C3Entity, graph *walker.C3Graph, cm codemap
 		fmt.Fprintln(w, "  end")
 	}
 
-	// Emit standalone nodes (refs, context, orphaned components)
+	// Emit standalone nodes
 	sort.Slice(standaloneNodes, func(i, j int) bool { return standaloneNodes[i].ID < standaloneNodes[j].ID })
 	for _, e := range standaloneNodes {
 		mID := mermaidSanitize(e.ID)
-		docType := frontmatter.ClassifyDoc(e.Frontmatter)
-		if docType == frontmatter.DocRef {
+		switch e.Type {
+		case "ref":
 			fmt.Fprintf(w, "  %s([\"%s\"])\n", mID, mermaidEscape(e.Title))
-		} else {
+		case "rule":
+			fmt.Fprintf(w, "  %s{{\"%s\"}}\n", mID, mermaidEscape(e.Title))
+		default:
 			fmt.Fprintf(w, "  %s[\"%s\"]\n", mID, mermaidEscape(e.Title))
 		}
 	}
@@ -327,24 +339,20 @@ func graphMermaid(entities []*walker.C3Entity, graph *walker.C3Graph, cm codemap
 	// Emit edges
 	for _, e := range entities {
 		srcID := mermaidSanitize(e.ID)
-		docType := frontmatter.ClassifyDoc(e.Frontmatter)
 
-		// Parent-child edges (only if both in subgraph and not already shown via subgraph nesting)
-		if docType != frontmatter.DocComponent && e.Frontmatter.Parent != "" && entitySet[e.Frontmatter.Parent] {
-			fmt.Fprintf(w, "  %s --> %s\n", mermaidSanitize(e.Frontmatter.Parent), srcID)
+		// Parent-child edges (only if not component inside subgraph)
+		if e.Type != "component" && e.ParentID != "" && entitySet[e.ParentID] {
+			fmt.Fprintf(w, "  %s --> %s\n", mermaidSanitize(e.ParentID), srcID)
 		}
 
 		// Ref citations (dashed)
-		for _, refID := range e.Frontmatter.Refs {
-			if entitySet[refID] {
-				fmt.Fprintf(w, "  %s -.->|cites| %s\n", srcID, mermaidSanitize(refID))
+		rels, _ := s.RelationshipsFrom(e.ID)
+		for _, r := range rels {
+			if r.RelType == "uses" && entitySet[r.ToID] {
+				fmt.Fprintf(w, "  %s -.->|cites| %s\n", srcID, mermaidSanitize(r.ToID))
 			}
-		}
-
-		// Affects edges
-		for _, affID := range e.Frontmatter.Affects {
-			if entitySet[affID] {
-				fmt.Fprintf(w, "  %s -->|affects| %s\n", srcID, mermaidSanitize(affID))
+			if r.RelType == "affects" && entitySet[r.ToID] {
+				fmt.Fprintf(w, "  %s -->|affects| %s\n", srcID, mermaidSanitize(r.ToID))
 			}
 		}
 	}
@@ -353,7 +361,6 @@ func graphMermaid(entities []*walker.C3Entity, graph *walker.C3Graph, cm codemap
 }
 
 // mermaidSanitize converts a C3 ID to a valid Mermaid node ID.
-// Mermaid allows hyphens in node IDs, so we just need to handle edge cases.
 func mermaidSanitize(id string) string {
 	return id
 }

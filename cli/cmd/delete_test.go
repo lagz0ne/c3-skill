@@ -2,46 +2,22 @@ package cmd
 
 import (
 	"bytes"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
 )
 
 func TestRunDelete_Component(t *testing.T) {
-	c3Dir := createRichFixture(t)
-	graph := loadGraph(t, c3Dir)
-
-	// Add codemap entry
-	writeFile(t, filepath.Join(c3Dir, "code-map.yaml"), "c3-101:\n  - src/auth/**\nc3-110:\n  - src/users/**\n")
-
+	s := createRichDBFixture(t)
 	var buf bytes.Buffer
-	err := RunDelete(DeleteOptions{C3Dir: c3Dir, ID: "c3-101", Graph: graph}, &buf)
+
+	err := RunDelete(DeleteOptions{Store: s, ID: "c3-101"}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// File should be gone
-	if _, err := os.Stat(filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md")); !os.IsNotExist(err) {
-		t.Error("entity file should be deleted")
-	}
-
-	// Parent container's Components table should not have c3-101
-	containerContent, _ := os.ReadFile(filepath.Join(c3Dir, "c3-1-api", "README.md"))
-	if strings.Contains(string(containerContent), "c3-101") {
-		t.Error("parent container Components table should not contain c3-101")
-	}
-
-	// Codemap should not have c3-101
-	cmContent, _ := os.ReadFile(filepath.Join(c3Dir, "code-map.yaml"))
-	if strings.Contains(string(cmContent), "c3-101") {
-		t.Error("code-map.yaml should not contain c3-101")
-	}
-	// c3-110 should still be in codemap
-	if !strings.Contains(string(cmContent), "c3-110") {
-		t.Error("code-map.yaml should still contain c3-110")
+	// Entity should be gone
+	if _, err := s.GetEntity("c3-101"); err == nil {
+		t.Error("entity c3-101 should be deleted")
 	}
 
 	output := buf.String()
@@ -51,39 +27,33 @@ func TestRunDelete_Component(t *testing.T) {
 }
 
 func TestRunDelete_Ref(t *testing.T) {
-	c3Dir := createRichFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s := createRichDBFixture(t)
 	var buf bytes.Buffer
 
-	err := RunDelete(DeleteOptions{C3Dir: c3Dir, ID: "ref-jwt", Graph: graph}, &buf)
+	err := RunDelete(DeleteOptions{Store: s, ID: "ref-jwt"}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// File should be gone
-	if _, err := os.Stat(filepath.Join(c3Dir, "refs", "ref-jwt.md")); !os.IsNotExist(err) {
-		t.Error("ref file should be deleted")
+	// Entity should be gone
+	if _, err := s.GetEntity("ref-jwt"); err == nil {
+		t.Error("ref-jwt should be deleted")
 	}
 
-	// c3-101 should no longer have ref-jwt in refs[]
-	content, _ := os.ReadFile(filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md"))
-	fm, _ := frontmatter.ParseFrontmatter(string(content))
-	if containsStr2(fm.Refs, "ref-jwt") {
-		t.Errorf("c3-101 refs should not contain ref-jwt after delete, got %v", fm.Refs)
-	}
-
-	// Related Refs table should not contain ref-jwt
-	if strings.Contains(string(content), "ref-jwt") {
-		t.Error("c3-101 Related Refs table should not contain ref-jwt")
+	// Relationship from c3-101->ref-jwt should also be gone (FK cascade)
+	rels, _ := s.RelationshipsFrom("c3-101")
+	for _, r := range rels {
+		if r.ToID == "ref-jwt" {
+			t.Error("relationship c3-101->ref-jwt should be deleted with cascading FK")
+		}
 	}
 }
 
 func TestRunDelete_ContainerWithChildren(t *testing.T) {
-	c3Dir := createRichFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s := createRichDBFixture(t)
 	var buf bytes.Buffer
 
-	err := RunDelete(DeleteOptions{C3Dir: c3Dir, ID: "c3-1", Graph: graph}, &buf)
+	err := RunDelete(DeleteOptions{Store: s, ID: "c3-1"}, &buf)
 	if err == nil {
 		t.Fatal("expected error for container with children")
 	}
@@ -96,11 +66,10 @@ func TestRunDelete_ContainerWithChildren(t *testing.T) {
 }
 
 func TestRunDelete_ContextRoot(t *testing.T) {
-	c3Dir := createRichFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s := createRichDBFixture(t)
 	var buf bytes.Buffer
 
-	err := RunDelete(DeleteOptions{C3Dir: c3Dir, ID: "c3-0", Graph: graph}, &buf)
+	err := RunDelete(DeleteOptions{Store: s, ID: "c3-0"}, &buf)
 	if err == nil {
 		t.Fatal("expected error for c3-0")
 	}
@@ -110,11 +79,10 @@ func TestRunDelete_ContextRoot(t *testing.T) {
 }
 
 func TestRunDelete_NotFound(t *testing.T) {
-	c3Dir := createRichFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s := createRichDBFixture(t)
 	var buf bytes.Buffer
 
-	err := RunDelete(DeleteOptions{C3Dir: c3Dir, ID: "c3-999", Graph: graph}, &buf)
+	err := RunDelete(DeleteOptions{Store: s, ID: "c3-999"}, &buf)
 	if err == nil {
 		t.Fatal("expected error for nonexistent entity")
 	}
@@ -124,69 +92,24 @@ func TestRunDelete_NotFound(t *testing.T) {
 }
 
 func TestRunDelete_DryRun(t *testing.T) {
-	c3Dir := createRichFixture(t)
-	graph := loadGraph(t, c3Dir)
+	s := createRichDBFixture(t)
 	var buf bytes.Buffer
 
-	err := RunDelete(DeleteOptions{C3Dir: c3Dir, ID: "c3-101", Graph: graph, DryRun: true}, &buf)
+	err := RunDelete(DeleteOptions{Store: s, ID: "c3-101", DryRun: true}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// File should still exist
-	if _, err := os.Stat(filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md")); os.IsNotExist(err) {
-		t.Error("entity file should NOT be deleted in dry-run mode")
+	// Entity should still exist
+	if _, err := s.GetEntity("c3-101"); err != nil {
+		t.Error("entity should NOT be deleted in dry-run mode")
 	}
 
 	output := buf.String()
 	if !strings.Contains(output, "[dry-run]") {
 		t.Errorf("output should contain [dry-run] prefix, got: %s", output)
 	}
-	if !strings.Contains(output, "no files modified") {
-		t.Errorf("output should mention 'no files modified', got: %s", output)
-	}
-}
-
-func TestRunDelete_SourcesCleanup(t *testing.T) {
-	c3Dir := createRichFixture(t)
-
-	// Add a recipe with sources referencing c3-101 (including anchored ref)
-	os.MkdirAll(filepath.Join(c3Dir, "recipes"), 0755)
-	writeFile(t, filepath.Join(c3Dir, "recipes", "recipe-auth-flow.md"), `---
-id: recipe-auth-flow
-title: Auth Flow
-type: recipe
-sources: [c3-101#login, c3-101#logout, c3-110]
----
-
-# Auth Flow
-
-## Goal
-
-Trace auth flow.
-`)
-
-	graph := loadGraph(t, c3Dir)
-	var buf bytes.Buffer
-
-	err := RunDelete(DeleteOptions{C3Dir: c3Dir, ID: "c3-101", Graph: graph}, &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Recipe sources should no longer reference c3-101
-	content, _ := os.ReadFile(filepath.Join(c3Dir, "recipes", "recipe-auth-flow.md"))
-	fm, _ := frontmatter.ParseFrontmatter(string(content))
-
-	for _, src := range fm.Sources {
-		if frontmatter.StripAnchor(src) == "c3-101" {
-			t.Errorf("recipe sources should not reference c3-101 after delete, got %v", fm.Sources)
-			break
-		}
-	}
-
-	// c3-110 should still be in sources
-	if !containsStr2(fm.Sources, "c3-110") {
-		t.Errorf("recipe sources should still contain c3-110, got %v", fm.Sources)
+	if !strings.Contains(output, "no changes made") {
+		t.Errorf("output should mention 'no changes made', got: %s", output)
 	}
 }

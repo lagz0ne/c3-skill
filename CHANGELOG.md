@@ -5,6 +5,49 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.0.0] - 2026-03-20
+
+### Breaking
+
+- Architecture data now stored in embedded SQLite (`c3.db`) instead of raw markdown files
+- Existing file-based `.c3/` directories must be migrated with `c3x migrate`
+- `write` and `set --section` enforce schema validation — incomplete content is rejected
+
+### Added
+
+- **Embedded SQLite store** — entities, relationships, code-map, and changelog in a single file
+- **8 new commands** — `query`, `diff`, `impact`, `export`, `graph`, `read`, `write`, `marketplace`
+- **Rules** — new entity type for enforceable coding standards with golden examples
+- **Marketplace** — browse and install community rule collections from git repos
+- **Migrate dry-run** — `c3x migrate --dry-run` reports all quality gaps before committing
+- **Schema enforcement** — `write` and `set --section` reject missing/empty required sections
+- **Goal auto-promotion** — body `## Goal` content auto-fills frontmatter `goal:` on write
+- **Full-text search** — `c3x query` with BM25 ranking across titles, goals, bodies
+- **Impact analysis** — `c3x impact <id>` finds all transitively affected entities
+- **Changelog tracking** — `c3x diff` shows mutations; `--mark` stamps with commit hash
+
+### Changed
+
+- All commands rewired from file-based walker to `*store.Store`
+- `main.go` refactored into testable `run()` function
+- Relationship sync on `write` diffs and removes stale edges
+- Test coverage: 73.4% → 89.0% across 15 packages
+
+### Fixed
+
+- Non-atomic marketplace registration — rename cache before registering source
+- Anchor-stripping consistency across migrate and write paths
+- TTY detection on `c3x write` — errors early instead of hanging
+
+## [6.12.1] - 2026-03-18
+
+### Fixed
+- **`uses:` frontmatter field**: CLI now reads `uses:` as the canonical field (matching skill docs and all `.c3/` files). `refs:` still accepted for backward compat with dedup merge when both present. Fixes 93 false warnings from `c3x check` on projects following the docs. (#26)
+- **User-facing output migrated**: All CLI output (`list`, `graph`, `lookup`, `check`), JSON tags, help text, and error messages now use `uses:` consistently
+
+### Removed
+- **Historical binaries purged**: 44 cross-compiled Go binaries removed from git history via `git filter-repo`, significantly reducing clone size
+
 ## [6.12.0] - 2026-03-17
 
 ### Added

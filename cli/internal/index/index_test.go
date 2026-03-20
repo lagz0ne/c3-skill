@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/lagz0ne/c3-design/cli/internal/codemap"
+	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
 	"github.com/lagz0ne/c3-design/cli/internal/walker"
 )
 
@@ -87,7 +88,7 @@ title: auth
 type: component
 category: foundation
 parent: c3-1
-refs: [ref-jwt]
+uses: [ref-jwt]
 ---
 
 # auth
@@ -181,7 +182,7 @@ func TestBuild_EntityEntries(t *testing.T) {
 		t.Errorf("c3-101 context = %q, want c3-0", e.Context)
 	}
 	if len(e.Refs) != 1 || e.Refs[0] != "ref-jwt" {
-		t.Errorf("c3-101 refs = %v, want [ref-jwt]", e.Refs)
+		t.Errorf("c3-101 uses = %v, want [ref-jwt]", e.Refs)
 	}
 	if len(e.CodePaths) != 1 || e.CodePaths[0] != "src/auth/**/*.ts" {
 		t.Errorf("c3-101 code paths = %v, want [src/auth/**/*.ts]", e.CodePaths)
@@ -260,7 +261,7 @@ func TestBuild_FileMap(t *testing.T) {
 		t.Errorf("file entry entities should include c3-101, got %v", fe.Entities)
 	}
 	if !containsStr(fe.Refs, "ref-jwt") {
-		t.Errorf("file entry refs should include ref-jwt, got %v", fe.Refs)
+		t.Errorf("file entry uses should include ref-jwt, got %v", fe.Refs)
 	}
 }
 
@@ -334,8 +335,8 @@ func TestWriteMarkdown(t *testing.T) {
 	if !strings.Contains(out, "container: c3-1") {
 		t.Error("missing container line for c3-101")
 	}
-	if !strings.Contains(out, "refs: ref-jwt") {
-		t.Error("missing refs line for c3-101")
+	if !strings.Contains(out, "uses: ref-jwt") {
+		t.Error("missing uses line for c3-101")
 	}
 
 	// Check file map
@@ -398,7 +399,7 @@ func TestWriteTo(t *testing.T) {
 
 func TestRefGovernance_AllGoverned(t *testing.T) {
 	c3Dir, cm := createFixture(t)
-	// The fixture has c3-101 with refs:[ref-jwt] and c3-110 without refs.
+	// The fixture has c3-101 with uses:[ref-jwt] and c3-110 without uses.
 	// Add a ref to c3-110 to make all governed.
 	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "c3-110-users.md"), `---
 id: c3-110
@@ -406,7 +407,7 @@ title: users
 type: component
 category: feature
 parent: c3-1
-refs: [ref-jwt]
+uses: [ref-jwt]
 ---
 
 # users
@@ -469,6 +470,55 @@ func TestRefGovernance_NoComponents(t *testing.T) {
 	}
 	if result.GovernancePct != 0 {
 		t.Errorf("pct = %f, want 0", result.GovernancePct)
+	}
+}
+
+func TestBuildIndexIncludesRules(t *testing.T) {
+	docs := []frontmatter.ParsedDoc{
+		{Frontmatter: &frontmatter.Frontmatter{ID: "c3-0"}, Path: "README.md", Body: "## Goal\ncontext"},
+		{Frontmatter: &frontmatter.Frontmatter{ID: "rule-logging", Type: "rule", Goal: "Structured logging"}, Path: "rules/rule-logging.md", Body: "## Goal\nlogging\n## Rule\nUse pino\n## Golden Example\n```\nlogger.info()\n```"},
+	}
+	g := walker.BuildGraph(docs)
+	cm := codemap.CodeMap{"rule-logging": {"src/**"}}
+	idx := Build(g, cm, "")
+
+	if _, ok := idx.Entities["rule-logging"]; !ok {
+		t.Fatal("rule-logging not in index entities")
+	}
+	if idx.Entities["rule-logging"].Type != "rule" {
+		t.Errorf("type = %q, want rule", idx.Entities["rule-logging"].Type)
+	}
+	if _, ok := idx.Refs["rule-logging"]; !ok {
+		t.Error("rule-logging not in Refs map")
+	}
+	fe := idx.Files["src/**"]
+	foundEntity := false
+	for _, e := range fe.Entities {
+		if e == "rule-logging" {
+			foundEntity = true
+		}
+	}
+	if !foundEntity {
+		t.Error("rule-logging should appear in file map entities")
+	}
+}
+
+func TestRuleGovernance(t *testing.T) {
+	docs := []frontmatter.ParsedDoc{
+		{Frontmatter: &frontmatter.Frontmatter{ID: "c3-0"}, Path: "README.md"},
+		{Frontmatter: &frontmatter.Frontmatter{ID: "c3-1", Type: "container"}, Path: "c3-1/README.md"},
+		{Frontmatter: &frontmatter.Frontmatter{ID: "c3-101", Type: "component", Parent: "c3-1", Refs: []string{"rule-logging"}}, Path: "c3-1/c3-101.md"},
+		{Frontmatter: &frontmatter.Frontmatter{ID: "c3-102", Type: "component", Parent: "c3-1"}, Path: "c3-1/c3-102.md"},
+		{Frontmatter: &frontmatter.Frontmatter{ID: "rule-logging", Type: "rule"}, Path: "rules/rule-logging.md"},
+	}
+	g := walker.BuildGraph(docs)
+	idx := Build(g, codemap.CodeMap{}, "")
+	gov := RuleGovernance(idx)
+	if gov.TotalComponents != 2 {
+		t.Errorf("TotalComponents = %d, want 2", gov.TotalComponents)
+	}
+	if gov.Governed != 1 {
+		t.Errorf("Governed = %d, want 1", gov.Governed)
 	}
 }
 

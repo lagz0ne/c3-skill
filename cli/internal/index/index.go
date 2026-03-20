@@ -117,7 +117,7 @@ func Build(graph *walker.C3Graph, cm codemap.CodeMap, c3Dir string) *StructuralI
 		idx.Entities[e.ID] = entry
 
 		// Build ref entries for ref-type entities
-		if docType == frontmatter.DocRef {
+		if docType == frontmatter.DocRef || docType == frontmatter.DocRule {
 			citers := graph.CitedBy(e.ID)
 			var citerIDs []string
 			for _, c := range citers {
@@ -194,7 +194,7 @@ func WriteMarkdown(w io.Writer, idx *StructuralIndex) error {
 		}
 
 		if len(e.Refs) > 0 {
-			fmt.Fprintf(w, "refs: %s\n", strings.Join(e.Refs, ", "))
+			fmt.Fprintf(w, "uses: %s\n", strings.Join(e.Refs, ", "))
 		}
 		if len(e.ReverseDeps) > 0 {
 			fmt.Fprintf(w, "reverse deps: %s\n", strings.Join(e.ReverseDeps, ", "))
@@ -241,7 +241,7 @@ func WriteMarkdown(w io.Writer, idx *StructuralIndex) error {
 			fe := idx.Files[p]
 			line := p + " → " + strings.Join(fe.Entities, ", ")
 			if len(fe.Refs) > 0 {
-				line += " | refs: " + strings.Join(fe.Refs, ", ")
+				line += " | uses: " + strings.Join(fe.Refs, ", ")
 			}
 			fmt.Fprintln(w, line)
 		}
@@ -307,7 +307,7 @@ func computeHash(idx *StructuralIndex) string {
 	for _, id := range ids {
 		e := idx.Entities[id]
 		fmt.Fprintf(h, "%s|%s|%s|%s|%s|", id, e.Title, e.Type, e.Container, e.Context)
-		fmt.Fprintf(h, "refs:%s|", strings.Join(e.Refs, ","))
+		fmt.Fprintf(h, "uses:%s|", strings.Join(e.Refs, ","))
 		fmt.Fprintf(h, "code:%s|", strings.Join(e.CodePaths, ","))
 		blockNames := make([]string, 0, len(e.BlockFill))
 		for name := range e.BlockFill {
@@ -386,13 +386,11 @@ type RefGovernanceResult struct {
 	UngovernedComponents []string `json:"ungoverned_components"`
 }
 
-// RefGovernance computes which components in the index are governed by at least one ref.
-func RefGovernance(idx *StructuralIndex) *RefGovernanceResult {
-	var total int
-	var governed int
+// governance computes which components pass a predicate over their refs.
+func governance(idx *StructuralIndex, pred func(refs []string) bool) *RefGovernanceResult {
+	var total, governed int
 	var ungoverned []string
 
-	// Sort entity IDs for deterministic output
 	ids := make([]string, 0, len(idx.Entities))
 	for id := range idx.Entities {
 		ids = append(ids, id)
@@ -401,15 +399,11 @@ func RefGovernance(idx *StructuralIndex) *RefGovernanceResult {
 
 	for _, id := range ids {
 		e := idx.Entities[id]
-		if e.Type != "component" {
-			continue
-		}
-		// Skip _none or internal exclusion patterns
-		if strings.HasPrefix(id, "_") {
+		if e.Type != "component" || strings.HasPrefix(id, "_") {
 			continue
 		}
 		total++
-		if len(e.Refs) > 0 {
+		if pred(e.Refs) {
 			governed++
 		} else {
 			ungoverned = append(ungoverned, id)
@@ -420,11 +414,27 @@ func RefGovernance(idx *StructuralIndex) *RefGovernanceResult {
 	if total > 0 {
 		pct = float64(governed) / float64(total) * 100
 	}
-
 	return &RefGovernanceResult{
 		TotalComponents:      total,
 		Governed:             governed,
 		GovernancePct:        pct,
 		UngovernedComponents: ungoverned,
 	}
+}
+
+// RefGovernance computes which components cite at least one ref.
+func RefGovernance(idx *StructuralIndex) *RefGovernanceResult {
+	return governance(idx, func(refs []string) bool { return len(refs) > 0 })
+}
+
+// RuleGovernance computes which components cite at least one rule-* entity.
+func RuleGovernance(idx *StructuralIndex) *RefGovernanceResult {
+	return governance(idx, func(refs []string) bool {
+		for _, r := range refs {
+			if strings.HasPrefix(r, "rule-") {
+				return true
+			}
+		}
+		return false
+	})
 }

@@ -4,32 +4,35 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 
 	"github.com/lagz0ne/c3-design/cli/internal/codemap"
-	"github.com/lagz0ne/c3-design/cli/internal/index"
-	"github.com/lagz0ne/c3-design/cli/internal/walker"
+	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
 // CoverageOptions holds parameters for the coverage command.
 type CoverageOptions struct {
+	Store      *store.Store
 	C3Dir      string
 	ProjectDir string
 	JSON       bool
 }
 
-// CoverageOutput combines code-map coverage and ref governance metrics.
+// CoverageOutput combines code-map coverage metrics.
 type CoverageOutput struct {
 	*codemap.CoverageResult
-	RefGovernance *index.RefGovernanceResult `json:"ref_governance,omitempty"`
 }
 
 // RunCoverage computes and displays code-map coverage.
 func RunCoverage(opts CoverageOptions, w io.Writer) error {
-	cmPath := filepath.Join(opts.C3Dir, "code-map.yaml")
-	cm, err := codemap.ParseCodeMap(cmPath)
+	allCM, err := opts.Store.AllCodeMap()
 	if err != nil {
-		return fmt.Errorf("code-map parse error: %w", err)
+		return fmt.Errorf("code-map error: %w", err)
+	}
+
+	cm := codemap.CodeMap(allCM)
+	excludes, _ := opts.Store.Excludes()
+	if len(excludes) > 0 {
+		cm["_exclude"] = excludes
 	}
 
 	result, err := codemap.Coverage(cm, opts.ProjectDir)
@@ -37,18 +40,8 @@ func RunCoverage(opts CoverageOptions, w io.Writer) error {
 		return fmt.Errorf("coverage error: %w", err)
 	}
 
-	// Build structural index for ref governance
-	var gov *index.RefGovernanceResult
-	docs, walkErr := walker.WalkC3Docs(opts.C3Dir)
-	if walkErr == nil && len(docs) > 0 {
-		graph := walker.BuildGraph(docs)
-		idx := index.Build(graph, cm, opts.C3Dir)
-		gov = index.RefGovernance(idx)
-	}
-
 	output := CoverageOutput{
 		CoverageResult: result,
-		RefGovernance:  gov,
 	}
 
 	// Default: JSON (agent-readable). Human-readable only when HUMAN env is set.
@@ -67,19 +60,6 @@ func RunCoverage(opts CoverageOptions, w io.Writer) error {
 		fmt.Fprintln(w, "unmapped files:")
 		for _, f := range result.UnmappedFiles {
 			fmt.Fprintf(w, "  %s\n", f)
-		}
-	}
-
-	if gov != nil {
-		fmt.Fprintln(w)
-		fmt.Fprintln(w, "Ref Governance")
-		fmt.Fprintf(w, "  components: %d\n", gov.TotalComponents)
-		fmt.Fprintf(w, "  governed:   %d (%d%%)\n", gov.Governed, int(gov.GovernancePct))
-		if len(gov.UngovernedComponents) > 0 {
-			fmt.Fprintln(w, "  ungoverned:")
-			for _, c := range gov.UngovernedComponents {
-				fmt.Fprintf(w, "    %s\n", c)
-			}
 		}
 	}
 

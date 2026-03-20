@@ -4,13 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
 	"strings"
 
-	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
 	"github.com/lagz0ne/c3-design/cli/internal/markdown"
-	"github.com/lagz0ne/c3-design/cli/internal/writer"
+	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
 // isJSONArray checks if a string is a valid JSON array.
@@ -27,6 +24,7 @@ func isJSONArray(s string) bool {
 
 // SetOptions holds parameters for the set command.
 type SetOptions struct {
+	Store   *store.Store
 	C3Dir   string
 	ID      string
 	Field   string
@@ -37,40 +35,53 @@ type SetOptions struct {
 
 // RunSet updates a frontmatter field or section content on an entity.
 func RunSet(opts SetOptions, w io.Writer) error {
-	// Find the file for this entity
-	path, err := findEntityFile(opts.C3Dir, opts.ID)
+	entity, err := opts.Store.GetEntity(opts.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("entity %q not found", opts.ID)
 	}
 
 	if opts.Section != "" {
-		return runSetSection(path, opts, w)
+		return runSetSection(entity, opts, w)
 	}
-	return runSetField(path, opts, w)
+	return runSetField(entity, opts, w)
 }
 
-// runSetField updates a frontmatter field.
-func runSetField(path string, opts SetOptions, w io.Writer) error {
-	if err := writer.SetField(path, opts.Field, opts.Value); err != nil {
-		return err
+func runSetField(entity *store.Entity, opts SetOptions, w io.Writer) error {
+	// Map field name to entity field
+	switch opts.Field {
+	case "goal":
+		entity.Goal = opts.Value
+	case "summary":
+		entity.Summary = opts.Value
+	case "status":
+		entity.Status = opts.Value
+	case "boundary":
+		entity.Boundary = opts.Value
+	case "category":
+		entity.Category = opts.Value
+	case "title":
+		entity.Title = opts.Value
+	case "date":
+		entity.Date = opts.Value
+	case "description":
+		entity.Description = opts.Value
+	default:
+		return fmt.Errorf("unknown field %q", opts.Field)
 	}
-	fmt.Fprintf(w, "Updated %s field %q on %s\n", opts.ID, opts.Field, filepath.Base(path))
+
+	if err := opts.Store.UpdateEntity(entity); err != nil {
+		return fmt.Errorf("updating entity: %w", err)
+	}
+
+	fmt.Fprintf(w, "Updated %s field %q\n", opts.ID, opts.Field)
 	return nil
 }
 
 // runSetSection updates a markdown section's content.
-func runSetSection(path string, opts SetOptions, w io.Writer) error {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-
-	fm, body := frontmatter.ParseFrontmatter(string(data))
-	if fm == nil {
-		return fmt.Errorf("no valid frontmatter in %s", path)
-	}
-
+func runSetSection(entity *store.Entity, opts SetOptions, w io.Writer) error {
+	body := entity.Body
 	var newBody string
+	var err error
 
 	if opts.Append {
 		// Append mode: parse single JSON object, append as row
@@ -120,7 +131,21 @@ func runSetSection(path string, opts SetOptions, w io.Writer) error {
 		}
 	}
 
-	// Write back: re-serialize frontmatter + new body
-	return writeEntityFile(path, fm, newBody)
-}
+	entity.Body = newBody
 
+	if opts.Section == "Goal" {
+		promoteGoalIfEmpty(entity)
+	}
+
+	issues := validateContent(entity)
+	if len(issues) > 0 {
+		return formatValidationError(opts.ID, issues)
+	}
+
+	if err := opts.Store.UpdateEntity(entity); err != nil {
+		return fmt.Errorf("updating entity body: %w", err)
+	}
+
+	fmt.Fprintf(w, "Updated %s section %q\n", opts.ID, opts.Section)
+	return nil
+}

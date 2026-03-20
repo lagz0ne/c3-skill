@@ -151,6 +151,20 @@ Find `id: "ref-{slug}"`, read `relationships`. Read each citing doc.
 
 ---
 
+## Separation Test: Ref vs Rule
+
+Before creating a ref, ask: **"Remove the Why section. Does the doc become useless?"**
+
+| Answer | Type | Action |
+|--------|------|--------|
+| Yes — useless without Why | **Ref** | Create ref (this flow) |
+| No — still tells you what to do | **Rule** | Route to `references/rule.md` Add flow |
+| Both — has rationale AND enforcement | **Dual** | Create ref for rationale + rule for enforcement (see `references/rule.md` Migrate flow) |
+
+If the pattern is primarily about enforcement (golden examples, coding standards), it belongs as a rule, not a ref.
+
+---
+
 ## Anti-Patterns
 
 | Anti-Pattern | Correct |
@@ -159,3 +173,4 @@ Find `id: "ref-{slug}"`, read `relationships`. Read each citing doc.
 | Update ref without impact check | Always check citings |
 | Duplicate ref content in components | Cite, don't duplicate |
 | Create ref for one-off pattern | Refs for repeated patterns only |
+| Create ref for enforceable coding standard | Use rule instead (Separation Test) |

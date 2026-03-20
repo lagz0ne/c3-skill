@@ -3,6 +3,7 @@ package codemap
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -158,5 +159,16 @@ func TestValidate_DotDotPath(t *testing.T) {
 	}
 	if !found {
 		t.Error("should flag path traversal ../../../etc/passwd as warning")
+	}
+}
+
+func TestValidateAcceptsRule(t *testing.T) {
+	cm := CodeMap{"rule-logging": {"src/**"}}
+	entities := map[string]string{"rule-logging": "rule"}
+	issues := Validate(cm, entities, "")
+	for _, issue := range issues {
+		if issue.Entity == "rule-logging" && strings.Contains(issue.Message, "not a component or ref") {
+			t.Error("validate should accept rule type")
+		}
 	}
 }

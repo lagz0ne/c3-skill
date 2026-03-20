@@ -5,8 +5,8 @@ title: coverage-cmd
 type: component
 category: feature
 parent: c3-1
-goal: Report code-map coverage and ref governance metrics
-summary: JSON output showing mapped, excluded, and unmapped file counts per component plus ref governance percentages
+goal: Report code-map coverage, ref governance, and rule governance metrics
+summary: JSON output showing mapped, excluded, and unmapped file counts per component plus ref and rule governance percentages
 uses: [c3-102, c3-105, c3-113]
 ---
 
@@ -14,7 +14,7 @@ uses: [c3-102, c3-105, c3-113]
 
 ## Goal
 
-Report code-map coverage and ref governance metrics.
+Report code-map coverage, ref governance, and rule governance metrics.
 
 ## Dependencies
 

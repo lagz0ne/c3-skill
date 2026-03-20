@@ -86,7 +86,7 @@ func WalkC3DocsWithWarnings(c3Dir string) (*WalkResult, error) {
 	return result, nil
 }
 
-var slugPattern = regexp.MustCompile(`^(c3-\d+-|c3-\d+|ref-|recipe-|adr-\d+-|README)`)
+var slugPattern = regexp.MustCompile(`^(c3-\d+-|c3-\d+|ref-|rule-|recipe-|adr-\d+-|README)`)
 
 // SlugFromPath derives a slug from a file path by stripping the ID prefix.
 // For README.md files (containers), the slug is derived from the parent directory name.
@@ -217,7 +217,7 @@ func (g *C3Graph) Forward(id string) []*C3Entity {
 		}
 	}
 
-	if entity.Type == frontmatter.DocRef {
+	if entity.Type == frontmatter.DocRef || entity.Type == frontmatter.DocRule {
 		result = append(result, g.CitedBy(id)...)
 	}
 

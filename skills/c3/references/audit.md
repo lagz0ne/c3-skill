@@ -13,7 +13,7 @@ Three tiers: **structural** (CLI) → **inventory** (CLI) → **semantic** (reas
 - [ ] Phase 4: Code Map Validation
 - [ ] Phase 5: Diagram Accuracy
 - [ ] Phase 6: ADR Lifecycle
-- [ ] Phase 7: Ref Validation
+- [ ] Phase 7: Ref & Rule Validation
 - [ ] Phase 7b: Ref Compliance
 - [ ] Phase 8: Abstraction Boundaries
 - [ ] Phase 9: Content Separation
@@ -72,11 +72,14 @@ Only audit ADR lifecycle when explicitly requested or when running `c3x check --
 
 `status=accepted` + >30 days without `implemented` → WARN.
 
-## Phase 7: Ref Validation
+## Phase 7: Ref & Rule Validation
 
 - Each ref: requires Choice + Why sections
 - Each ref: cited by at least one component (orphan → WARN)
 - Each citing component: ref file exists in `.c3/refs/`
+- Each rule: requires Rule + Golden Example sections
+- Each rule: cited by at least one component (orphan → WARN)
+- Each citing component: rule file exists in `.c3/rules/`
 
 ## Phase 7b: Ref Compliance
 
@@ -95,6 +98,20 @@ For each ref with `## How` containing golden patterns:
 - Yes → pattern is actionable
 - No → WARN: `## How` needs rework (too vague for enforcement)
 
+**Rule Compliance:** For each rule with `## Golden Example`:
+1. Find citing components via `c3x list --json`
+2. For each citing component, spot-check 1-2 mapped files from code-map
+3. Compare code against `## Golden Example` pattern
+
+| Result | Meaning |
+|--------|---------|
+| COMPLIANT | Code matches golden pattern exactly |
+| VIOLATION | Code deviates from required pattern |
+| INCOMPLETE | Rule lacks Golden Example section |
+| NOT CHECKED | No code-map mapping or no citing components |
+
+Rules use STRICT enforcement (code must match golden pattern exactly), unlike refs which use directional alignment. A rule VIOLATION is always FAIL severity — rules are non-negotiable constraints.
+
 ## Phase 8: Abstraction Boundaries
 
 | Signal | Check | Violation | Severity |
@@ -111,6 +128,8 @@ Code-map test:
 - Component WITHOUT code-map → provisioned or misclassified
 - Ref WITH code-map file patterns → VIOLATION (scaffold stubs OK)
 - Ref with code examples in body → VALID
+- Rule WITH code-map file patterns → VALID (rules govern code)
+- Rule WITHOUT Golden Example → WARN (rule is incomplete)
 
 Missing refs: scan deps for tech used in 3+ components. Does ref explain "how we use it HERE"?
 
@@ -119,6 +138,14 @@ Missing refs: scan deps for tech used in 3+ components. Does ref explain "how we
 | "We use X for..." | Tech usage pattern | Extract to ref |
 | "Our convention is..." | Cross-cutting pattern | Extract to ref |
 | Same pattern in 2+ components | Duplicated knowledge | Create ref |
+
+Missing rules: scan for patterns enforced in 3+ components without a rule doc. Does the pattern have a single correct form (not just a preference)?
+
+| Signal | Indicates | Action |
+|--------|-----------|--------|
+| Identical boilerplate in 3+ components | Enforced pattern without rule | Create rule with Golden Example |
+| PR reviews citing same pattern repeatedly | Implicit rule | Extract to rule |
+| Linter/CI check without C3 rule doc | External enforcement gap | Create rule linking to tooling |
 
 ## Phase 10: CLAUDE.md
 

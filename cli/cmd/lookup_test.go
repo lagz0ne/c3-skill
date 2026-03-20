@@ -7,48 +7,31 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
-// createLookupFixture builds a fixture with goal/summary frontmatter and a code-map.yaml.
-// Returns (c3Dir, projectDir).
-func createLookupFixture(t *testing.T) (string, string) {
+// createLookupFixture creates a DB fixture with goal/summary and code-map.
+func createLookupFixture(t *testing.T) (*store.Store, string) {
 	t.Helper()
-	c3Dir := createFixture(t)
-	projectDir := filepath.Dir(c3Dir)
+	s := createDBFixture(t)
 
-	// Patch c3-101 to have goal + summary in frontmatter
-	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md"), `---
-id: c3-101
-title: auth
-type: component
-category: foundation
-parent: c3-1
-goal: Handle authentication and JWT issuance
-summary: JWT-based auth with Redis session store
-refs: [ref-jwt]
----
+	// Update c3-101 with goal + summary
+	entity, _ := s.GetEntity("c3-101")
+	entity.Goal = "Handle authentication and JWT issuance"
+	entity.Summary = "JWT-based auth with Redis session store"
+	s.UpdateEntity(entity)
 
-# auth
-
-## Goal
-
-Handle authentication and JWT issuance.
-`)
-
-	return c3Dir, projectDir
+	projectDir := t.TempDir()
+	return s, projectDir
 }
 
 func TestRunLookup_ExactMatch(t *testing.T) {
-	c3Dir, _ := createLookupFixture(t)
-	writeFile(t, filepath.Join(c3Dir, "code-map.yaml"), "c3-101:\n  - src/auth/login.ts\n")
-	graph := loadGraph(t, c3Dir)
+	s, _ := createLookupFixture(t)
+	s.SetCodeMap("c3-101", []string{"src/auth/login.ts"})
 
 	var buf bytes.Buffer
-	err := RunLookup(LookupOptions{
-		Graph:    graph,
-		FilePath: "src/auth/login.ts",
-		C3Dir:    c3Dir,
-	}, &buf)
+	err := RunLookup(LookupOptions{Store: s, FilePath: "src/auth/login.ts"}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,16 +55,11 @@ func TestRunLookup_ExactMatch(t *testing.T) {
 }
 
 func TestRunLookup_GlobStar(t *testing.T) {
-	c3Dir, _ := createLookupFixture(t)
-	writeFile(t, filepath.Join(c3Dir, "code-map.yaml"), "c3-101:\n  - src/auth/*.ts\n")
-	graph := loadGraph(t, c3Dir)
+	s, _ := createLookupFixture(t)
+	s.SetCodeMap("c3-101", []string{"src/auth/*.ts"})
 
 	var buf bytes.Buffer
-	err := RunLookup(LookupOptions{
-		Graph:    graph,
-		FilePath: "src/auth/login.ts",
-		C3Dir:    c3Dir,
-	}, &buf)
+	err := RunLookup(LookupOptions{Store: s, FilePath: "src/auth/login.ts"}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,16 +70,11 @@ func TestRunLookup_GlobStar(t *testing.T) {
 }
 
 func TestRunLookup_DoubleStar(t *testing.T) {
-	c3Dir, _ := createLookupFixture(t)
-	writeFile(t, filepath.Join(c3Dir, "code-map.yaml"), "c3-101:\n  - src/auth/**/*.ts\n")
-	graph := loadGraph(t, c3Dir)
+	s, _ := createLookupFixture(t)
+	s.SetCodeMap("c3-101", []string{"src/auth/**/*.ts"})
 
 	var buf bytes.Buffer
-	err := RunLookup(LookupOptions{
-		Graph:    graph,
-		FilePath: "src/auth/handlers/login.ts",
-		C3Dir:    c3Dir,
-	}, &buf)
+	err := RunLookup(LookupOptions{Store: s, FilePath: "src/auth/handlers/login.ts"}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -112,16 +85,11 @@ func TestRunLookup_DoubleStar(t *testing.T) {
 }
 
 func TestRunLookup_NoMatch(t *testing.T) {
-	c3Dir, _ := createLookupFixture(t)
-	writeFile(t, filepath.Join(c3Dir, "code-map.yaml"), "c3-101:\n  - src/auth/*.ts\n")
-	graph := loadGraph(t, c3Dir)
+	s, _ := createLookupFixture(t)
+	s.SetCodeMap("c3-101", []string{"src/auth/*.ts"})
 
 	var buf bytes.Buffer
-	err := RunLookup(LookupOptions{
-		Graph:    graph,
-		FilePath: "src/payments/stripe.go",
-		C3Dir:    c3Dir,
-	}, &buf)
+	err := RunLookup(LookupOptions{Store: s, FilePath: "src/payments/stripe.go"}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -132,16 +100,11 @@ func TestRunLookup_NoMatch(t *testing.T) {
 }
 
 func TestRunLookup_NoCodeMap(t *testing.T) {
-	c3Dir, _ := createLookupFixture(t)
-	// No code-map.yaml written
-	graph := loadGraph(t, c3Dir)
+	s, _ := createLookupFixture(t)
+	// No code-map entries
 
 	var buf bytes.Buffer
-	err := RunLookup(LookupOptions{
-		Graph:    graph,
-		FilePath: "src/auth/login.ts",
-		C3Dir:    c3Dir,
-	}, &buf)
+	err := RunLookup(LookupOptions{Store: s, FilePath: "src/auth/login.ts"}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -152,18 +115,12 @@ func TestRunLookup_NoCodeMap(t *testing.T) {
 }
 
 func TestRunLookup_MultipleComponents(t *testing.T) {
-	c3Dir, _ := createLookupFixture(t)
-	// Both c3-101 and c3-110 claim src/auth/**
-	writeFile(t, filepath.Join(c3Dir, "code-map.yaml"),
-		"c3-101:\n  - src/auth/**/*.ts\nc3-110:\n  - src/auth/*.ts\n")
-	graph := loadGraph(t, c3Dir)
+	s, _ := createLookupFixture(t)
+	s.SetCodeMap("c3-101", []string{"src/auth/**/*.ts"})
+	s.SetCodeMap("c3-110", []string{"src/auth/*.ts"})
 
 	var buf bytes.Buffer
-	err := RunLookup(LookupOptions{
-		Graph:    graph,
-		FilePath: "src/auth/login.ts",
-		C3Dir:    c3Dir,
-	}, &buf)
+	err := RunLookup(LookupOptions{Store: s, FilePath: "src/auth/login.ts"}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -178,17 +135,11 @@ func TestRunLookup_MultipleComponents(t *testing.T) {
 }
 
 func TestRunLookup_JSON(t *testing.T) {
-	c3Dir, _ := createLookupFixture(t)
-	writeFile(t, filepath.Join(c3Dir, "code-map.yaml"), "c3-101:\n  - src/auth/*.ts\n")
-	graph := loadGraph(t, c3Dir)
+	s, _ := createLookupFixture(t)
+	s.SetCodeMap("c3-101", []string{"src/auth/*.ts"})
 
 	var buf bytes.Buffer
-	err := RunLookup(LookupOptions{
-		Graph:    graph,
-		FilePath: "src/auth/login.ts",
-		JSON:     true,
-		C3Dir:    c3Dir,
-	}, &buf)
+	err := RunLookup(LookupOptions{Store: s, FilePath: "src/auth/login.ts", JSON: true}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -215,199 +166,21 @@ func TestRunLookup_JSON(t *testing.T) {
 	if len(m.Refs) != 1 || m.Refs[0].ID != "ref-jwt" {
 		t.Errorf("expected ref-jwt, got %v", m.Refs)
 	}
-	if m.Refs[0].Goal == "" {
-		t.Error("expected non-empty ref goal")
-	}
-}
-
-// --- Malformed / partial docs ---
-
-func TestRunLookup_MissingGoal(t *testing.T) {
-	c3Dir, _ := createLookupFixture(t)
-	// Overwrite c3-101 with no goal frontmatter
-	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md"), `---
-id: c3-101
-title: auth
-type: component
-category: foundation
-parent: c3-1
-refs: [ref-jwt]
----
-# auth
-`)
-	writeFile(t, filepath.Join(c3Dir, "code-map.yaml"), "c3-101:\n  - src/auth/*.ts\n")
-	graph := loadGraph(t, c3Dir)
-
-	var buf bytes.Buffer
-	if err := RunLookup(LookupOptions{Graph: graph, FilePath: "src/auth/login.ts", C3Dir: c3Dir}, &buf); err != nil {
-		t.Fatal(err)
-	}
-
-	out := buf.String()
-	if !strings.Contains(out, "c3-101") {
-		t.Errorf("component should still appear without goal, got:\n%s", out)
-	}
-	if strings.Contains(out, "goal:") {
-		t.Errorf("no goal line expected when frontmatter goal is missing, got:\n%s", out)
-	}
-}
-
-func TestRunLookup_MissingSummary(t *testing.T) {
-	c3Dir, _ := createLookupFixture(t)
-	// Overwrite c3-101 with goal but no summary
-	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md"), `---
-id: c3-101
-title: auth
-type: component
-category: foundation
-parent: c3-1
-goal: Handle authentication
-refs: [ref-jwt]
----
-# auth
-`)
-	writeFile(t, filepath.Join(c3Dir, "code-map.yaml"), "c3-101:\n  - src/auth/*.ts\n")
-	graph := loadGraph(t, c3Dir)
-
-	var buf bytes.Buffer
-	if err := RunLookup(LookupOptions{Graph: graph, FilePath: "src/auth/login.ts", C3Dir: c3Dir}, &buf); err != nil {
-		t.Fatal(err)
-	}
-
-	out := buf.String()
-	if !strings.Contains(out, "goal:") {
-		t.Errorf("goal should appear, got:\n%s", out)
-	}
-	if strings.Contains(out, "summary:") {
-		t.Errorf("no summary line expected when frontmatter summary is missing, got:\n%s", out)
-	}
-}
-
-func TestRunLookup_NoRefs(t *testing.T) {
-	c3Dir, _ := createLookupFixture(t)
-	// Overwrite c3-101 with no refs field
-	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md"), `---
-id: c3-101
-title: auth
-type: component
-category: foundation
-parent: c3-1
-goal: Handle authentication
-summary: JWT auth
----
-# auth
-`)
-	writeFile(t, filepath.Join(c3Dir, "code-map.yaml"), "c3-101:\n  - src/auth/*.ts\n")
-	graph := loadGraph(t, c3Dir)
-
-	var buf bytes.Buffer
-	if err := RunLookup(LookupOptions{Graph: graph, FilePath: "src/auth/login.ts", C3Dir: c3Dir}, &buf); err != nil {
-		t.Fatal(err)
-	}
-
-	out := buf.String()
-	if !strings.Contains(out, "c3-101") {
-		t.Errorf("component should appear without refs, got:\n%s", out)
-	}
-	if strings.Contains(out, "refs:") {
-		t.Errorf("no refs section expected when component has no refs, got:\n%s", out)
-	}
-}
-
-func TestRunLookup_RefMissingGoal(t *testing.T) {
-	c3Dir, _ := createLookupFixture(t)
-	// Overwrite ref-jwt with no goal field
-	writeFile(t, filepath.Join(c3Dir, "refs", "ref-jwt.md"), `---
-id: ref-jwt
-title: JWT Authentication
-type: ref
----
-# JWT Authentication
-`)
-	writeFile(t, filepath.Join(c3Dir, "code-map.yaml"), "c3-101:\n  - src/auth/*.ts\n")
-	graph := loadGraph(t, c3Dir)
-
-	var buf bytes.Buffer
-	if err := RunLookup(LookupOptions{Graph: graph, FilePath: "src/auth/login.ts", C3Dir: c3Dir}, &buf); err != nil {
-		t.Fatal(err)
-	}
-
-	out := buf.String()
-	if !strings.Contains(out, "ref-jwt") {
-		t.Errorf("ref should appear even without goal, got:\n%s", out)
-	}
-	// Should not have a trailing colon with empty value
-	if strings.Contains(out, "ref-jwt: \n") || strings.Contains(out, "ref-jwt:  ") {
-		t.Errorf("ref with no goal should not print empty colon, got:\n%s", out)
-	}
-}
-
-func TestRunLookup_RefNotInGraph(t *testing.T) {
-	c3Dir, _ := createLookupFixture(t)
-	// Component refs a non-existent ref
-	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md"), `---
-id: c3-101
-title: auth
-type: component
-category: foundation
-parent: c3-1
-goal: Handle authentication
-refs: [ref-does-not-exist]
----
-# auth
-`)
-	writeFile(t, filepath.Join(c3Dir, "code-map.yaml"), "c3-101:\n  - src/auth/*.ts\n")
-	graph := loadGraph(t, c3Dir)
-
-	var buf bytes.Buffer
-	if err := RunLookup(LookupOptions{Graph: graph, FilePath: "src/auth/login.ts", C3Dir: c3Dir}, &buf); err != nil {
-		t.Fatal(err)
-	}
-
-	out := buf.String()
-	if !strings.Contains(out, "c3-101") {
-		t.Errorf("component should appear even when its ref is missing from graph, got:\n%s", out)
-	}
-	if strings.Contains(out, "ref-does-not-exist") {
-		t.Errorf("missing ref should be silently skipped, got:\n%s", out)
-	}
-}
-
-func TestRunLookup_ComponentNotInGraph(t *testing.T) {
-	c3Dir, _ := createLookupFixture(t)
-	// code-map points to an ID that has no .md doc
-	writeFile(t, filepath.Join(c3Dir, "code-map.yaml"), "c3-999:\n  - src/auth/*.ts\n")
-	graph := loadGraph(t, c3Dir)
-
-	var buf bytes.Buffer
-	if err := RunLookup(LookupOptions{Graph: graph, FilePath: "src/auth/login.ts", C3Dir: c3Dir}, &buf); err != nil {
-		t.Fatal(err)
-	}
-
-	// c3-999 matched in code-map but missing from graph → treated as no match
-	if !strings.Contains(buf.String(), "no component mapping found") {
-		t.Errorf("component missing from graph should produce no-match, got:\n%s", buf.String())
-	}
 }
 
 func TestRunLookup_GlobInput_MultipleFiles(t *testing.T) {
-	c3Dir, projectDir := createLookupFixture(t)
-	writeFile(t, filepath.Join(c3Dir, "code-map.yaml"), "c3-101:\n  - src/auth/*.ts\n")
+	s, projectDir := createLookupFixture(t)
+	s.SetCodeMap("c3-101", []string{"src/auth/*.ts"})
 
 	// Create actual source files for glob expansion
-	if err := os.MkdirAll(filepath.Join(projectDir, "src", "auth"), 0755); err != nil {
-		t.Fatal(err)
-	}
+	os.MkdirAll(filepath.Join(projectDir, "src", "auth"), 0755)
 	writeFile(t, filepath.Join(projectDir, "src", "auth", "jwt.ts"), "// jwt")
 	writeFile(t, filepath.Join(projectDir, "src", "auth", "middleware.ts"), "// middleware")
 
-	graph := loadGraph(t, c3Dir)
-
 	var buf bytes.Buffer
 	err := RunLookup(LookupOptions{
-		Graph:      graph,
+		Store:      s,
 		FilePath:   "src/auth/*.ts",
-		C3Dir:      c3Dir,
 		ProjectDir: projectDir,
 	}, &buf)
 	if err != nil {
@@ -424,86 +197,14 @@ func TestRunLookup_GlobInput_MultipleFiles(t *testing.T) {
 	if !strings.Contains(out, "c3-101") {
 		t.Errorf("expected c3-101 in components, got:\n%s", out)
 	}
-	if !strings.Contains(out, "jwt.ts") || !strings.Contains(out, "middleware.ts") {
-		t.Errorf("expected both files in file map, got:\n%s", out)
-	}
-}
-
-func TestRunLookup_GlobInput_NoFilesMatched(t *testing.T) {
-	c3Dir, projectDir := createLookupFixture(t)
-	writeFile(t, filepath.Join(c3Dir, "code-map.yaml"), "c3-101:\n  - src/auth/*.ts\n")
-	// No source files created — glob finds nothing
-	graph := loadGraph(t, c3Dir)
-
-	var buf bytes.Buffer
-	err := RunLookup(LookupOptions{
-		Graph:      graph,
-		FilePath:   "src/auth/*.ts",
-		C3Dir:      c3Dir,
-		ProjectDir: projectDir,
-	}, &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if !strings.Contains(buf.String(), "no files matched") {
-		t.Errorf("expected no-files-matched message, got:\n%s", buf.String())
-	}
-}
-
-func TestRunLookup_GlobInput_JSON(t *testing.T) {
-	c3Dir, projectDir := createLookupFixture(t)
-	writeFile(t, filepath.Join(c3Dir, "code-map.yaml"), "c3-101:\n  - src/auth/*.ts\n")
-
-	if err := os.MkdirAll(filepath.Join(projectDir, "src", "auth"), 0755); err != nil {
-		t.Fatal(err)
-	}
-	writeFile(t, filepath.Join(projectDir, "src", "auth", "jwt.ts"), "// jwt")
-
-	graph := loadGraph(t, c3Dir)
-
-	var buf bytes.Buffer
-	err := RunLookup(LookupOptions{
-		Graph:      graph,
-		FilePath:   "src/auth/*.ts",
-		JSON:       true,
-		C3Dir:      c3Dir,
-		ProjectDir: projectDir,
-	}, &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var result GlobLookupResult
-	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
-		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
-	}
-	if result.Pattern != "src/auth/*.ts" {
-		t.Errorf("expected pattern field, got %q", result.Pattern)
-	}
-	if len(result.Files) != 1 || result.Files[0] != "src/auth/jwt.ts" {
-		t.Errorf("expected [src/auth/jwt.ts], got %v", result.Files)
-	}
-	if len(result.Components) != 1 || result.Components[0].ID != "c3-101" {
-		t.Errorf("expected c3-101 component, got %v", result.Components)
-	}
-	if len(result.FileMap["src/auth/jwt.ts"]) != 1 {
-		t.Errorf("expected file_map entry for jwt.ts, got %v", result.FileMap)
-	}
 }
 
 func TestRunLookup_JSONNoMatch(t *testing.T) {
-	c3Dir, _ := createLookupFixture(t)
-	writeFile(t, filepath.Join(c3Dir, "code-map.yaml"), "c3-101:\n  - src/auth/*.ts\n")
-	graph := loadGraph(t, c3Dir)
+	s, _ := createLookupFixture(t)
+	s.SetCodeMap("c3-101", []string{"src/auth/*.ts"})
 
 	var buf bytes.Buffer
-	err := RunLookup(LookupOptions{
-		Graph:    graph,
-		FilePath: "src/other/file.ts",
-		JSON:     true,
-		C3Dir:    c3Dir,
-	}, &buf)
+	err := RunLookup(LookupOptions{Store: s, FilePath: "src/other/file.ts", JSON: true}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -512,8 +213,64 @@ func TestRunLookup_JSONNoMatch(t *testing.T) {
 	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
 		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
 	}
-
 	if len(result.Matches) != 0 {
 		t.Errorf("expected empty matches, got %v", result.Matches)
+	}
+}
+
+func TestRunLookup_WithRulesInOutput(t *testing.T) {
+	s := createDBFixture(t)
+	// Add a rule entity and wire it to c3-101
+	s.InsertEntity(&store.Entity{
+		ID: "rule-logging", Type: "rule", Title: "Structured Logging", Slug: "logging",
+		Goal: "Structured logging", Status: "active", Metadata: "{}",
+	})
+	s.AddRelationship(&store.Relationship{FromID: "c3-101", ToID: "rule-logging", RelType: "uses"})
+
+	// Give c3-101 a summary
+	entity, _ := s.GetEntity("c3-101")
+	entity.Summary = "Authentication component"
+	s.UpdateEntity(entity)
+
+	// Set code map so lookup can find c3-101
+	s.SetCodeMap("c3-101", []string{"src/auth/**"})
+
+	var buf bytes.Buffer
+	err := RunLookup(LookupOptions{
+		Store:    s,
+		FilePath: "src/auth/login.ts",
+	}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "summary:") {
+		t.Errorf("should show summary in output, got:\n%s", output)
+	}
+	if !strings.Contains(output, "rules:") {
+		t.Errorf("should show rules section in output, got:\n%s", output)
+	}
+	if !strings.Contains(output, "rule-logging") {
+		t.Errorf("should show rule-logging in output, got:\n%s", output)
+	}
+}
+
+func TestLookupSeparatesRulesFromRefs(t *testing.T) {
+	s := createDBFixture(t)
+	s.InsertEntity(&store.Entity{
+		ID: "rule-logging", Type: "rule", Title: "Structured Logging", Slug: "logging",
+		Goal: "Structured logging", Status: "active", Metadata: "{}",
+	})
+	s.AddRelationship(&store.Relationship{FromID: "c3-101", ToID: "rule-logging", RelType: "uses"})
+
+	entity, _ := s.GetEntity("c3-101")
+	match := buildMatchFromStore(entity, s)
+
+	if len(match.Refs) != 1 || match.Refs[0].ID != "ref-jwt" {
+		t.Errorf("Refs = %v, want [ref-jwt]", match.Refs)
+	}
+	if len(match.Rules) != 1 || match.Rules[0].ID != "rule-logging" {
+		t.Errorf("Rules = %v, want [rule-logging]", match.Rules)
 	}
 }

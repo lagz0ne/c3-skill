@@ -5,7 +5,7 @@ title: check-cmd
 type: component
 category: feature
 parent: c3-1
-goal: Validate structural integrity of .c3/ docs and ref compliance — required fields, numbering, wiring, scope cross-checks
+goal: Validate structural integrity of .c3/ docs, ref and rule compliance — required fields, numbering, wiring, scope cross-checks, origin validation
 summary: Reports PASS/WARN/FAIL for each entity; includes schema definitions, structural index building, and ref scope cross-checking
 uses: [c3-101, c3-102, c3-104]
 ---
@@ -14,7 +14,7 @@ uses: [c3-101, c3-102, c3-104]
 
 ## Goal
 
-Validate structural integrity of `.c3/` docs and ref compliance — required fields, numbering, wiring, scope cross-checks.
+Validate structural integrity of `.c3/` docs, ref and rule compliance — required fields, numbering, wiring, scope cross-checks, origin validation.
 
 ## Dependencies
 

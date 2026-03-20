@@ -5,7 +5,7 @@ title: templates
 type: component
 category: foundation
 parent: c3-1
-goal: Provide embedded markdown templates for scaffolding new .c3/ docs (context, container, component, ref, ADR)
+goal: Provide embedded markdown templates for scaffolding new .c3/ docs (context, container, component, ref, rule, ADR)
 summary: Go embed bundle of all doc templates; used by init-cmd and add-cmd to create well-structured stubs
 uses: []
 ---
@@ -14,7 +14,7 @@ uses: []
 
 ## Goal
 
-Provide embedded markdown templates for scaffolding new `.c3/` docs.
+Provide embedded markdown templates for scaffolding new `.c3/` docs (context, container, component, ref, rule, ADR).
 
 ## Container Connection
 

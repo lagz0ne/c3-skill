@@ -3,16 +3,22 @@ package cmd
 import (
 	"fmt"
 	"io"
-	"os"
+	"strings"
 
-	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
 	"github.com/lagz0ne/c3-design/cli/internal/markdown"
-	"github.com/lagz0ne/c3-design/cli/internal/writer"
+	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
+// citeTarget returns the section name and column name for a citation target.
+func citeTarget(targetID string) (sectionName, colName string) {
+	if strings.HasPrefix(targetID, "rule-") {
+		return "Related Rules", "Rule"
+	}
+	return "Related Refs", "Ref"
+}
+
 // RunWire creates a cite relationship between source and target.
-// Two sides: (1) source frontmatter refs[], (2) source "Related Refs" table.
-func RunWire(c3Dir, sourceID, relationType, targetID string, w io.Writer) error {
+func RunWire(s *store.Store, sourceID, relationType, targetID string, w io.Writer) error {
 	if relationType == "" {
 		relationType = "cite"
 	}
@@ -20,26 +26,31 @@ func RunWire(c3Dir, sourceID, relationType, targetID string, w io.Writer) error 
 		return fmt.Errorf("unsupported relation type %q (only 'cite' supported)", relationType)
 	}
 
-	// Resolve file paths (validates both entities exist)
-	srcPath, err := findEntityFile(c3Dir, sourceID)
+	// Validate both entities exist
+	srcEntity, err := s.GetEntity(sourceID)
 	if err != nil {
-		return err
+		return fmt.Errorf("entity %q not found", sourceID)
 	}
-	if _, err := findEntityFile(c3Dir, targetID); err != nil {
-		return err
-	}
-
-	// Side 1: Add target to source's frontmatter refs[]
-	if err := writer.AddToArrayField(srcPath, "uses", targetID); err != nil {
-		return fmt.Errorf("side 1 (refs): %w", err)
+	if _, err := s.GetEntity(targetID); err != nil {
+		return fmt.Errorf("entity %q not found", targetID)
 	}
 
-	// Side 2: Add row to source's "Related Refs" table
-	if err := addTableRowIfAbsent(srcPath, "Related Refs", "Ref", targetID, map[string]string{
-		"Ref":  targetID,
-		"Role": "",
+	// Add relationship in the store
+	if err := s.AddRelationship(&store.Relationship{
+		FromID:  sourceID,
+		ToID:    targetID,
+		RelType: "uses",
 	}); err != nil {
-		return fmt.Errorf("side 2 (Related Refs): %w", err)
+		return fmt.Errorf("adding relationship: %w", err)
+	}
+
+	// Update body table if source has a "Related Refs" or "Related Rules" section
+	sectionName, colName := citeTarget(targetID)
+	if err := addTableRowIfAbsentStore(s, srcEntity, sectionName, colName, targetID, map[string]string{
+		colName: targetID,
+		"Role":  "",
+	}); err != nil {
+		return fmt.Errorf("body table update: %w", err)
 	}
 
 	fmt.Fprintf(w, "Wired %s -[cite]-> %s\n", sourceID, targetID)
@@ -47,7 +58,7 @@ func RunWire(c3Dir, sourceID, relationType, targetID string, w io.Writer) error 
 }
 
 // RunUnwire removes a cite relationship from both sides.
-func RunUnwire(c3Dir, sourceID, relationType, targetID string, w io.Writer) error {
+func RunUnwire(s *store.Store, sourceID, relationType, targetID string, w io.Writer) error {
 	if relationType == "" {
 		relationType = "cite"
 	}
@@ -55,38 +66,38 @@ func RunUnwire(c3Dir, sourceID, relationType, targetID string, w io.Writer) erro
 		return fmt.Errorf("unsupported relation type %q (only 'cite' supported)", relationType)
 	}
 
-	srcPath, err := findEntityFile(c3Dir, sourceID)
+	srcEntity, err := s.GetEntity(sourceID)
 	if err != nil {
-		return err
+		return fmt.Errorf("entity %q not found", sourceID)
 	}
-	if _, err := findEntityFile(c3Dir, targetID); err != nil {
-		return err
-	}
-
-	// Side 1: Remove target from source's frontmatter refs[]
-	if err := writer.RemoveFromArrayField(srcPath, "uses", targetID); err != nil {
-		return fmt.Errorf("side 1 (refs): %w", err)
+	if _, err := s.GetEntity(targetID); err != nil {
+		return fmt.Errorf("entity %q not found", targetID)
 	}
 
-	// Side 2: Remove row from source's "Related Refs" table where Ref matches target
-	if err := removeTableRow(srcPath, "Related Refs", "Ref", targetID); err != nil {
-		return fmt.Errorf("side 2 (Related Refs): %w", err)
+	// Remove relationship from the store
+	if err := s.RemoveRelationship(&store.Relationship{
+		FromID:  sourceID,
+		ToID:    targetID,
+		RelType: "uses",
+	}); err != nil {
+		return fmt.Errorf("removing relationship: %w", err)
+	}
+
+	// Update body table
+	sectionName, colName := citeTarget(targetID)
+	if err := removeTableRowStore(s, srcEntity, sectionName, colName, targetID); err != nil {
+		return fmt.Errorf("body table update: %w", err)
 	}
 
 	fmt.Fprintf(w, "Unwired %s -[cite]-> %s\n", sourceID, targetID)
 	return nil
 }
 
-// addTableRowIfAbsent adds a row to a section's table if no row with matchCol==matchVal exists.
-func addTableRowIfAbsent(filePath, sectionName, matchCol, matchVal string, row map[string]string) error {
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return err
-	}
-
-	fm, body := frontmatter.ParseFrontmatter(string(data))
-	if fm == nil {
-		return fmt.Errorf("no frontmatter in %s", filePath)
+// addTableRowIfAbsentStore adds a row to a section's table if no row with matchCol==matchVal exists.
+func addTableRowIfAbsentStore(s *store.Store, entity *store.Entity, sectionName, matchCol, matchVal string, row map[string]string) error {
+	body := entity.Body
+	if body == "" {
+		return nil
 	}
 
 	// Check if row already exists
@@ -108,19 +119,15 @@ func addTableRowIfAbsent(filePath, sectionName, matchCol, matchVal string, row m
 		return nil // section/table not found — skip
 	}
 
-	return writeEntityFile(filePath, fm, newBody)
+	entity.Body = newBody
+	return s.UpdateEntity(entity)
 }
 
-// removeTableRow removes rows from a section's table where matchCol==matchVal.
-func removeTableRow(filePath, sectionName, matchCol, matchVal string) error {
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return err
-	}
-
-	fm, body := frontmatter.ParseFrontmatter(string(data))
-	if fm == nil {
-		return fmt.Errorf("no frontmatter in %s", filePath)
+// removeTableRowStore removes rows from a section's table where matchCol==matchVal.
+func removeTableRowStore(s *store.Store, entity *store.Entity, sectionName, matchCol, matchVal string) error {
+	body := entity.Body
+	if body == "" {
+		return nil
 	}
 
 	table, err := markdown.ExtractTableFromSection(body, sectionName)
@@ -145,5 +152,6 @@ func removeTableRow(filePath, sectionName, matchCol, matchVal string) error {
 		return err
 	}
 
-	return writeEntityFile(filePath, fm, newBody)
+	entity.Body = newBody
+	return s.UpdateEntity(entity)
 }

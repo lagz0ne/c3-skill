@@ -6,7 +6,7 @@ import (
 )
 
 func TestRead(t *testing.T) {
-	tests := []string{"context.md", "container.md", "component.md", "ref.md", "adr-000.md"}
+	tests := []string{"context.md", "container.md", "component.md", "ref.md", "rule.md", "adr-000.md"}
 
 	for _, name := range tests {
 		t.Run(name, func(t *testing.T) {

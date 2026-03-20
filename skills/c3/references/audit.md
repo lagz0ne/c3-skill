@@ -159,11 +159,8 @@ Expected block:
 <!-- c3-generated: c3-201 -->
 # c3-201: Component Title
 
-Before modifying this code, read:
-- Component: `.c3/c3-2-api/c3-201-component.md`
-- Patterns: `ref-error-handling`, `ref-logging`
-
-Full refs: `.c3/refs/ref-{name}.md`
+Before modifying this code, run: c3x read c3-201
+Patterns: ref-error-handling, ref-logging (run: c3x read ref-error-handling)
 <!-- end-c3-generated -->
 ```
 

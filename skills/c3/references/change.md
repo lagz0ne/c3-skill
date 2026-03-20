@@ -48,7 +48,7 @@ Clarify with user (ASSUMPTION_MODE: skip). Analyze:
 - Affected containers, components, refs
 - For every file mentioned or discovered: `c3x lookup <file>` — load constraint chain before reasoning
 - If lookup returns no mapping → file is uncharted territory, flag as coverage gap
-- Read upward: component → container → context → cited refs
+- `c3x read` upward: component → container → context → cited refs
 - Risks
 
 Fill the ADR body: Goal, Work Breakdown, Risks. Update `affects:` in frontmatter.
@@ -82,9 +82,9 @@ bash <skill-dir>/bin/c3x.sh lookup <file-path>
 ```
 Returned refs = hard constraints. Every one must be honored. No exceptions.
 
-Parallel subagents: decompose tasks, each reads component docs + refs before touching code.
+Parallel subagents: decompose tasks, each runs `c3x read` on component docs + refs before touching code.
 
-Per task: verify code correct, docs updated (code-map.yaml, Related Refs), no regressions.
+Per task: verify code correct, docs updated (code-map entries, Related Refs), no regressions.
 
 ## Phase 3b: Ref Compliance Gate
 

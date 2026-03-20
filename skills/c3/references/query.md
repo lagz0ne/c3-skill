@@ -48,7 +48,7 @@ Skip when: C3 ID given, query is specific, "show me everything about X".
 
 Top-down: Context → Container → Component.
 
-Match from JSON. Read entity files only when body content not in frontmatter.
+Match from JSON. Use `c3x read <id>` when body content is needed beyond what `list --json` provides.
 
 | Source | Use For |
 |--------|---------|
@@ -60,8 +60,8 @@ Match from JSON. Read entity files only when body content not in frontmatter.
 
 For every file path encountered:
 1. **Run `c3x lookup <file>` before reading any source file** — returns component + governing refs/rules. For directory-level context, use `c3x lookup 'src/auth/**'`.
-2. Read `## Related Refs` and `## Related Rules` in component doc
-3. Find `ref-*` and `rule-*` entities from JSON. Read for body content.
+2. Check relationships via `c3x read <id>` or `c3x graph <id>`
+3. Find `ref-*` and `rule-*` entities from JSON. Use `c3x read <id>` for body content.
 
 Lookup-returned refs/rules = constraints governing that file's code.
 

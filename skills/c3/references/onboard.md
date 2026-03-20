@@ -48,7 +48,7 @@ Foundation: infrastructure others depend on. Feature: business logic. Ref: conve
 ```bash
 bash <skill-dir>/bin/c3x.sh init
 ```
-Creates `.c3/` with config, README, refs/, rules/, adr/. Edit ADR-000 to fill discovery tables.
+Creates `.c3/` with config, README, refs/, rules/, adr/. Update ADR-000 via `c3x write` to fill discovery tables.
 
 ### 0.2 Context Discovery
 
@@ -124,7 +124,7 @@ Update c3-0 via `c3x set c3-0 --section "Goal" <text>` and `c3x write c3-0 < con
 ```bash
 bash <skill-dir>/bin/c3x.sh add container <slug>
 ```
-Edit: Goal, Responsibilities, Complexity, Components table.
+Fill via `c3x write <id>`: Goal, Responsibilities, Complexity, Components table.
 
 **Create components:**
 ```bash
@@ -133,7 +133,7 @@ bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N
 # Feature (10+):
 bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N --feature
 ```
-Edit: Goal, Container Connection, code-map entry (REQUIRED), Related Refs table.
+Fill via `c3x write <id>`: Goal, Container Connection, Related Refs table. Add code-map via `c3x codemap`.
 Bracket paths (`[id]`, `[...slug]`) for Next.js/SvelteKit routes work automatically in code-map patterns.
 
 **Extract Refs:** "Would this change if we swapped the underlying tech?" Yes → extract to ref.
@@ -153,14 +153,14 @@ Bracket paths (`[id]`, `[...slug]`) for Next.js/SvelteKit routes work automatica
 ```bash
 bash <skill-dir>/bin/c3x.sh add ref <slug>
 ```
-Edit: Goal, Choice (required), Why (required), How/Scope/Not This/Override as needed.
+Fill via `c3x write <id>`: Goal, Choice (required), Why (required), How/Scope/Not This/Override as needed.
 
 ### 1.4 Rule Docs
 
 ```bash
 bash <skill-dir>/bin/c3x.sh add rule <slug>
 ```
-Edit: Goal, Constraint (required), Why (required), Scope/Exceptions as needed.
+Fill via `c3x write <id>`: Goal, Constraint (required), Why (required), Scope/Exceptions as needed.
 
 ### Gate 1
 
@@ -233,9 +233,9 @@ bash <skill-dir>/bin/c3x.sh coverage                   # code-map coverage gaps
 
 | Signal | Problem | Fix |
 |--------|---------|-----|
-| No system goal | Missing `goal:` in README.md | Edit frontmatter |
+| No system goal | Missing `goal:` in README.md | `c3x set <id> <field> <value>` |
 | No `files:` | Missing code-map stubs | Run `c3x codemap`, then fill in patterns |
-| No `uses:` | Ref not wired | Add `uses: [ref-id]` to component frontmatter |
+| No `uses:` | Ref not wired | `c3x wire <component> <ref>` |
 | Ref has no `via:` | Uncited ref | Wire or delete |
 | `[provisioning]` | Design-only | Expected or implement |
 | `lookup <file>` returns nothing | No codemap or bad glob | Run `c3x codemap`; fix patterns; try `lookup 'src/**'` to see what IS mapped |

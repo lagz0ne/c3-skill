@@ -39,7 +39,7 @@ func Validate(cm CodeMap, entities map[string]string, projectDir string) []Issue
 			issues = append(issues, Issue{
 				Severity: "warning",
 				Entity:   id,
-				Message:  fmt.Sprintf("ID %q is not a component or ref (type: %s)", id, typ),
+				Message:  fmt.Sprintf("ID %q is not a component, ref, or rule (type: %s)", id, typ),
 			})
 		}
 

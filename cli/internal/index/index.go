@@ -386,8 +386,8 @@ type RefGovernanceResult struct {
 	UngovernedComponents []string `json:"ungoverned_components"`
 }
 
-// RuleGovernance computes which components cite at least one rule-* entity.
-func RuleGovernance(idx *StructuralIndex) *RefGovernanceResult {
+// governance computes which components pass a predicate over their refs.
+func governance(idx *StructuralIndex, pred func(refs []string) bool) *RefGovernanceResult {
 	var total, governed int
 	var ungoverned []string
 
@@ -403,14 +403,7 @@ func RuleGovernance(idx *StructuralIndex) *RefGovernanceResult {
 			continue
 		}
 		total++
-		hasRule := false
-		for _, r := range e.Refs {
-			if strings.HasPrefix(r, "rule-") {
-				hasRule = true
-				break
-			}
-		}
-		if hasRule {
+		if pred(e.Refs) {
 			governed++
 		} else {
 			ungoverned = append(ungoverned, id)
@@ -429,45 +422,19 @@ func RuleGovernance(idx *StructuralIndex) *RefGovernanceResult {
 	}
 }
 
-// RefGovernance computes which components in the index are governed by at least one ref.
+// RefGovernance computes which components cite at least one ref.
 func RefGovernance(idx *StructuralIndex) *RefGovernanceResult {
-	var total int
-	var governed int
-	var ungoverned []string
+	return governance(idx, func(refs []string) bool { return len(refs) > 0 })
+}
 
-	// Sort entity IDs for deterministic output
-	ids := make([]string, 0, len(idx.Entities))
-	for id := range idx.Entities {
-		ids = append(ids, id)
-	}
-	sort.Strings(ids)
-
-	for _, id := range ids {
-		e := idx.Entities[id]
-		if e.Type != "component" {
-			continue
+// RuleGovernance computes which components cite at least one rule-* entity.
+func RuleGovernance(idx *StructuralIndex) *RefGovernanceResult {
+	return governance(idx, func(refs []string) bool {
+		for _, r := range refs {
+			if strings.HasPrefix(r, "rule-") {
+				return true
+			}
 		}
-		// Skip _none or internal exclusion patterns
-		if strings.HasPrefix(id, "_") {
-			continue
-		}
-		total++
-		if len(e.Refs) > 0 {
-			governed++
-		} else {
-			ungoverned = append(ungoverned, id)
-		}
-	}
-
-	pct := float64(0)
-	if total > 0 {
-		pct = float64(governed) / float64(total) * 100
-	}
-
-	return &RefGovernanceResult{
-		TotalComponents:      total,
-		Governed:             governed,
-		GovernancePct:        pct,
-		UngovernedComponents: ungoverned,
-	}
+		return false
+	})
 }

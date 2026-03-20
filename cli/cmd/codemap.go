@@ -52,7 +52,11 @@ func RunCodemap(opts CodemapOptions, w io.Writer) error {
 	sort.Slice(rules, func(i, j int) bool { return rules[i].ID < rules[j].ID })
 
 	var added, existing []string
-	for _, e := range append(append(components, refs...), rules...) {
+	all := make([]*walker.C3Entity, 0, len(components)+len(refs)+len(rules))
+	all = append(all, components...)
+	all = append(all, refs...)
+	all = append(all, rules...)
+	for _, e := range all {
 		if _, ok := cm[e.ID]; ok {
 			existing = append(existing, e.ID)
 		} else {

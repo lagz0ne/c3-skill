@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
+	"github.com/lagz0ne/c3-design/cli/internal/store"
 	"github.com/lagz0ne/c3-design/cli/internal/walker"
 )
 
@@ -402,4 +403,44 @@ func writeFile(t *testing.T, path, content string) {
 	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
 		t.Fatalf("writeFile(%s): %v", path, err)
 	}
+}
+
+// createDBFixture creates an in-memory store populated with the same entities
+// and relationships as createFixture: c3-0, c3-1, c3-2, c3-101, c3-110,
+// ref-jwt, adr-20260226-use-go.
+func createDBFixture(t *testing.T) *store.Store {
+	t.Helper()
+	s, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatalf("open test store: %v", err)
+	}
+	t.Cleanup(func() { s.Close() })
+
+	entities := []*store.Entity{
+		{ID: "c3-0", Type: "system", Title: "TestProject", Slug: "", Goal: "", Summary: "", Body: "# TestProject\n\n## Goal\n\nTest the system.\n", Status: "active", Metadata: "{}"},
+		{ID: "c3-1", Type: "container", Title: "api", Slug: "api", ParentID: "c3-0", Goal: "Serve API requests", Boundary: "service", Status: "active", Metadata: "{}"},
+		{ID: "c3-2", Type: "container", Title: "web", Slug: "web", ParentID: "c3-0", Boundary: "app", Status: "active", Metadata: "{}"},
+		{ID: "c3-101", Type: "component", Title: "auth", Slug: "auth", Category: "foundation", ParentID: "c3-1", Status: "active", Metadata: "{}"},
+		{ID: "c3-110", Type: "component", Title: "users", Slug: "users", Category: "feature", ParentID: "c3-1", Status: "active", Metadata: "{}"},
+		{ID: "ref-jwt", Type: "ref", Title: "JWT Authentication", Slug: "jwt", Goal: "Standardize auth tokens", Status: "active", Metadata: "{}"},
+		{ID: "adr-20260226-use-go", Type: "adr", Title: "Use Go for CLI", Slug: "use-go", Status: "proposed", Date: "20260226", Metadata: "{}"},
+	}
+	for _, e := range entities {
+		if err := s.InsertEntity(e); err != nil {
+			t.Fatalf("seed entity %s: %v", e.ID, err)
+		}
+	}
+
+	rels := []*store.Relationship{
+		{FromID: "c3-101", ToID: "ref-jwt", RelType: "uses"},
+		{FromID: "ref-jwt", ToID: "c3-1", RelType: "scope"},
+		{FromID: "adr-20260226-use-go", ToID: "c3-0", RelType: "affects"},
+	}
+	for _, r := range rels {
+		if err := s.AddRelationship(r); err != nil {
+			t.Fatalf("seed rel %s->%s: %v", r.FromID, r.ToID, err)
+		}
+	}
+
+	return s
 }

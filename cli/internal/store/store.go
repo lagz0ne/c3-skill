@@ -50,7 +50,7 @@ func (s *Store) createSchema() error {
 const schemaSQL = `
 CREATE TABLE IF NOT EXISTS entities (
 	id          TEXT PRIMARY KEY,
-	type        TEXT NOT NULL CHECK(type IN ('system','container','component')),
+	type        TEXT NOT NULL CHECK(type IN ('system','container','component','ref','adr','rule','recipe')),
 	title       TEXT NOT NULL,
 	slug        TEXT NOT NULL,
 	category    TEXT NOT NULL DEFAULT '',

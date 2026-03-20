@@ -3,7 +3,7 @@ package schema
 import "testing"
 
 func TestRegistry_HasAllTypes(t *testing.T) {
-	for _, typ := range []string{"component", "container", "context", "ref", "adr"} {
+	for _, typ := range []string{"component", "container", "context", "ref", "rule", "adr"} {
 		if ForType(typ) == nil {
 			t.Errorf("Registry missing type %q", typ)
 		}
@@ -26,6 +26,37 @@ func TestPurposeOf(t *testing.T) {
 func TestPurposeOf_Unknown(t *testing.T) {
 	if PurposeOf("component", "NonExistent") != "" {
 		t.Error("expected empty purpose for unknown section")
+	}
+}
+
+func TestRuleSchemaExists(t *testing.T) {
+	sections := ForType("rule")
+	if sections == nil {
+		t.Fatal("no schema for 'rule'")
+	}
+	required := map[string]bool{}
+	for _, s := range sections {
+		if s.Required {
+			required[s.Name] = true
+		}
+	}
+	for _, name := range []string{"Goal", "Rule", "Golden Example"} {
+		if !required[name] {
+			t.Errorf("expected required section %q", name)
+		}
+	}
+}
+
+func TestComponentSchemaHasRelatedRules(t *testing.T) {
+	sections := ForType("component")
+	found := false
+	for _, s := range sections {
+		if s.Name == "Related Rules" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("component schema should have 'Related Rules' section")
 	}
 }
 

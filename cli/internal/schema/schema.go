@@ -29,6 +29,10 @@ var Registry = map[string][]SectionDef{
 			{Name: "Ref", Type: "ref_id"},
 			{Name: "Role", Type: "text"},
 		}},
+		{Name: "Related Rules", ContentType: "table", Required: false, Purpose: "Coding standards enforced here", Columns: []ColumnDef{
+			{Name: "Rule", Type: "ref_id"},
+			{Name: "Role", Type: "text"},
+		}},
 		{Name: "Container Connection", ContentType: "text", Required: false, Purpose: "How this component fits in the container"},
 	},
 	"container": {
@@ -64,6 +68,18 @@ var Registry = map[string][]SectionDef{
 		{Name: "Choice", ContentType: "text", Required: true, Purpose: "The selected approach"},
 		{Name: "Why", ContentType: "text", Required: true, Purpose: "Rationale for this choice"},
 		{Name: "How", ContentType: "text", Required: false, Purpose: "Golden pattern — prescriptive examples and implementation guidance"},
+	},
+	"rule": {
+		{Name: "Goal", ContentType: "text", Required: true, Purpose: "What standard this rule enforces"},
+		{Name: "Rule", ContentType: "text", Required: true, Purpose: "One-line statement of what must be true"},
+		{Name: "Golden Example", ContentType: "text", Required: true, Purpose: "Canonical code showing the correct pattern"},
+		{Name: "Not This", ContentType: "table", Required: false, Purpose: "Anti-patterns with why they're wrong here", Columns: []ColumnDef{
+			{Name: "Anti-Pattern", Type: "text"},
+			{Name: "Correct", Type: "text"},
+			{Name: "Why Wrong Here", Type: "text"},
+		}},
+		{Name: "Scope", ContentType: "text", Required: false, Purpose: "Where this rule applies and doesn't"},
+		{Name: "Override", ContentType: "text", Required: false, Purpose: "How to deviate from this rule when justified"},
 	},
 	"adr": {
 		{Name: "Goal", ContentType: "text", Required: true, Purpose: "Decision context and objective"},

@@ -133,6 +133,21 @@ func runSetSection(entity *store.Entity, opts SetOptions, w io.Writer) error {
 	}
 
 	entity.Body = newBody
+
+	// Auto-promote goal from body if setting the Goal section
+	if opts.Section == "Goal" && entity.Goal == "" {
+		line := strings.SplitN(strings.TrimSpace(opts.Value), "\n", 2)[0]
+		if line != "" {
+			entity.Goal = strings.TrimSpace(line)
+		}
+	}
+
+	// Validate the result against schema
+	issues := validateContent(entity)
+	if len(issues) > 0 {
+		return formatValidationError(opts.ID, issues)
+	}
+
 	if err := opts.Store.UpdateEntity(entity); err != nil {
 		return fmt.Errorf("updating entity body: %w", err)
 	}

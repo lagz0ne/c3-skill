@@ -303,6 +303,31 @@ Examples:
   c3x delete c3-101
   c3x delete ref-jwt --dry-run`,
 	},
+	{
+		Name:     "marketplace",
+		Args:     "<subcommand>",
+		OneLiner: "Manage marketplace rule sources",
+		Help: `Usage: c3x marketplace <subcommand> [options]
+
+Subcommands:
+  add <github-url>          Clone marketplace repo, register as source
+  list [--source] [--tag]   List available rules across sources
+  show <rule-id>            Preview a rule's content
+  update [<source-name>]    Pull latest from registered sources
+  remove <source-name>      Unregister source + delete cache
+
+Options:
+  --source <name>   Filter by source name
+  --tag <tag>       Filter rules by tag
+  --json            Machine-readable output
+
+Examples:
+  c3x marketplace add https://github.com/org/go-patterns
+  c3x marketplace list --tag reliability
+  c3x marketplace show rule-error-handling
+  c3x marketplace update
+  c3x marketplace remove go-patterns`,
+	},
 }
 
 // buildGlobalHelp generates the global help text from the command registry.
@@ -378,6 +403,13 @@ Workflows:
     c3x add adr use-grpc --goal "Migrate to gRPC for internal services"
     c3x set adr-1 status accepted
     c3x set adr-1 --section "Context" "We need lower latency between services"`)
+
+	b.WriteString(`
+
+  Browse and adopt marketplace rules:
+    c3x marketplace add https://github.com/org/go-patterns
+    c3x marketplace list --tag reliability
+    c3x marketplace show rule-error-handling`)
 
 	return b.String()
 }

@@ -49,6 +49,53 @@ func main() {
 		return
 	}
 
+	// marketplace is special — uses ~/.c3/marketplace/, no .c3/ needed
+	if opts.Command == "marketplace" {
+		subCmd := ""
+		if len(opts.Args) >= 1 {
+			subCmd = opts.Args[0]
+		}
+		mOpts := cmd.MarketplaceOptions{
+			JSON: opts.JSON,
+			Tag:  opts.Tag,
+		}
+		if len(opts.Args) >= 2 {
+			switch subCmd {
+			case "add":
+				mOpts.URL = opts.Args[1]
+			case "show":
+				mOpts.RuleID = opts.Args[1]
+			case "remove", "update":
+				mOpts.SourceName = opts.Args[1]
+			}
+		}
+		if opts.Source != "" {
+			mOpts.SourceName = opts.Source
+		}
+
+		var err error
+		switch subCmd {
+		case "add":
+			err = cmd.RunMarketplaceAdd(mOpts, w)
+		case "list":
+			err = cmd.RunMarketplaceList(mOpts, w)
+		case "show":
+			err = cmd.RunMarketplaceShow(mOpts, w)
+		case "update":
+			err = cmd.RunMarketplaceUpdate(mOpts, w)
+		case "remove":
+			err = cmd.RunMarketplaceRemove(mOpts, w)
+		default:
+			cmd.ShowHelp("marketplace", w)
+			return
+		}
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
+
 	// All other commands need a .c3/ directory
 	c3Dir := config.ResolveC3Dir(mustCwd(), opts.C3Dir)
 	if c3Dir == "" {

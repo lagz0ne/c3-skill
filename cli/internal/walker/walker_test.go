@@ -349,6 +349,32 @@ Note body`)
 	}
 }
 
+func TestSlugFromPathRule(t *testing.T) {
+	slug := SlugFromPath("rules/rule-structured-logging.md")
+	if slug != "structured-logging" {
+		t.Errorf("SlugFromPath(rule-...) = %q, want %q", slug, "structured-logging")
+	}
+}
+
+func TestForwardIncludesRuleCiters(t *testing.T) {
+	docs := []frontmatter.ParsedDoc{
+		{Frontmatter: &frontmatter.Frontmatter{ID: "rule-logging", Type: "rule"}, Path: "rules/rule-logging.md"},
+		{Frontmatter: &frontmatter.Frontmatter{ID: "c3-101", Type: "component", Parent: "c3-1", Refs: []string{"rule-logging"}}, Path: "c3-1-cli/c3-101-fm.md"},
+		{Frontmatter: &frontmatter.Frontmatter{ID: "c3-1", Type: "container"}, Path: "c3-1-cli/README.md"},
+	}
+	g := BuildGraph(docs)
+	fwd := g.Forward("rule-logging")
+	found := false
+	for _, e := range fwd {
+		if e.ID == "c3-101" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("Forward(rule-logging) should include c3-101 (citer)")
+	}
+}
+
 func TestSlugFromPath(t *testing.T) {
 	tests := []struct {
 		path string

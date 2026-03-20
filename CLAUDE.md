@@ -19,6 +19,7 @@ This is a repository containing a Claude code skill called c3. c3 is a trimmed d
 # Workflow
 - Starts with brainstorming to understand clearly the intention
 - Once it's all understood, use writing-plan and implement in parallel using subagent
+- Before claiming work is done: run `/noslop` to remove AI-generated slop, then `/c3 audit` to verify docs match code
 - Delegate to /release command once things is done, confirm with user as needed. Assume to patch by default
 
 ---

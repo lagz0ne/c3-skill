@@ -1,22 +1,33 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Autoresearch benchmark: Go test coverage
-cd "$(dirname "$0")/cli"
+# Autoresearch benchmark: count signals in skill docs that lead LLM to use file tools
 
-# Run tests with coverage
-go test ./... -coverprofile=coverage.out -count=1 2>&1 >/dev/null
+SKILL_DIR="skills/c3"
 
-# Get total coverage
-TOTAL=$(go tool cover -func=coverage.out | tail -1 | awk '{print $NF}' | tr -d '%')
+# 1. File paths to .c3/ docs (LLM sees path → tries Read tool)
+# Exclude structural references (directory layout, file structure descriptions)
+FILE_PATHS=$(grep -rn '\.c3/.*\.md\|\.c3/.*\.yaml' "$SKILL_DIR" --include="*.md" \
+  | grep -v 'code-map\.yaml\|c3\.db\|directory\|layout\|structure\|tree\|File Structure\|\.c3/ directory' \
+  | wc -l | tr -d ' ')
 
-# Count per-package coverage
-PKGS_AT_100=$(go tool cover -func=coverage.out | grep -E '^\S+\s+\S+\s+100\.0%' | wc -l)
+# 2. 'Read' instructions that don't specify c3x
+READ_WITHOUT_C3X=$(grep -rn -i 'read the\|read doc\|read file\|Read tool' "$SKILL_DIR" --include="*.md" \
+  | grep -v 'c3x read\|c3x lookup\|already read' \
+  | wc -l | tr -d ' ')
 
-# Count total functions
-TOTAL_FUNCS=$(go tool cover -func=coverage.out | grep -v '^total:' | wc -l)
-UNCOVERED=$(go tool cover -func=coverage.out | grep -v '^total:' | grep -v '100.0%' | wc -l)
+# 3. References to browsing/walking/scanning .c3/ (implies Glob usage)
+BROWSE_SIGNALS=$(grep -rn -i 'walk.*\.c3\|browse.*\.c3\|scan.*\.c3\|Glob.*\.c3\|glob.*c3\|No manual Glob\|manual.*Read' "$SKILL_DIR" --include="*.md" \
+  | wc -l | tr -d ' ')
 
-echo "METRIC coverage=$TOTAL"
-echo "METRIC funcs_at_100=$((TOTAL_FUNCS - UNCOVERED))"
-echo "METRIC total_funcs=$TOTAL_FUNCS"
-echo "METRIC uncovered_funcs=$UNCOVERED"
+# 4. Edit/Write on .c3/ files (should be c3x write/set)
+EDIT_SIGNALS=$(grep -rn -i 'Edit.*\.c3/\|Write.*\.c3/' "$SKILL_DIR" --include="*.md" \
+  | grep -v 'NEVER\|do not\|HARD RULE\|Edit, Write' \
+  | wc -l | tr -d ' ')
+
+TOTAL=$((FILE_PATHS + READ_WITHOUT_C3X + BROWSE_SIGNALS + EDIT_SIGNALS))
+
+echo "METRIC total_signals=$TOTAL"
+echo "METRIC file_paths=$FILE_PATHS"
+echo "METRIC read_without_c3x=$READ_WITHOUT_C3X"
+echo "METRIC browse_signals=$BROWSE_SIGNALS"
+echo "METRIC edit_signals=$EDIT_SIGNALS"

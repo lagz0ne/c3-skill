@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -58,15 +57,15 @@ func RunMarketplaceAdd(opts MarketplaceOptions, w io.Writer) error {
 		}
 	}
 
-	err = reg.Add(marketplace.Source{Name: manifest.Name, URL: opts.URL})
-	if err != nil {
-		return fmt.Errorf("error: %w", err)
-	}
-
 	cacheDir := reg.CacheDir(manifest.Name)
 	os.RemoveAll(cacheDir)
 	if err := os.Rename(tmpDir, cacheDir); err != nil {
 		return fmt.Errorf("error: moving clone to cache: %w", err)
+	}
+
+	if err := reg.Add(marketplace.Source{Name: manifest.Name, URL: opts.URL}); err != nil {
+		os.RemoveAll(cacheDir) // rollback on registration failure
+		return fmt.Errorf("error: %w", err)
 	}
 
 	fmt.Fprintf(w, "Added: %s (%d rules from %s)\n", manifest.Name, len(manifest.Rules), opts.URL)
@@ -134,9 +133,7 @@ func RunMarketplaceList(opts MarketplaceOptions, w io.Writer) error {
 	}
 
 	if opts.JSON {
-		enc := json.NewEncoder(w)
-		enc.SetIndent("", "  ")
-		return enc.Encode(result)
+		return writeJSON(w, result)
 	}
 
 	if len(result.Sources) == 0 {

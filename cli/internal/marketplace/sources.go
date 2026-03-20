@@ -70,6 +70,9 @@ func (r *Registry) Get(name string) (*Source, error) {
 }
 
 func (r *Registry) Add(src Source) error {
+	if strings.TrimSpace(src.Name) == "" {
+		return fmt.Errorf("source name is required")
+	}
 	sources, err := r.List()
 	if err != nil {
 		return err
@@ -78,9 +81,6 @@ func (r *Registry) Add(src Source) error {
 		if s.Name == src.Name {
 			return fmt.Errorf("source %q already exists (use remove + add to change URL)", src.Name)
 		}
-	}
-	if strings.TrimSpace(src.Name) == "" {
-		return fmt.Errorf("source name is required")
 	}
 	src.Fetched = time.Now().UTC()
 	sources = append(sources, src)

@@ -1,6 +1,7 @@
 package marketplace
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -59,7 +60,7 @@ func TestParseManifestValidation(t *testing.T) {
 			if err == nil {
 				t.Fatal("expected error")
 			}
-			if !containsStr(err.Error(), tt.wantErr) {
+			if !strings.Contains(err.Error(), tt.wantErr) {
 				t.Errorf("error = %q, want substring %q", err.Error(), tt.wantErr)
 			}
 		})
@@ -88,11 +89,4 @@ rules:
 	}
 }
 
-func containsStr(s, sub string) bool {
-	for i := 0; i <= len(s)-len(sub); i++ {
-		if s[i:i+len(sub)] == sub {
-			return true
-		}
-	}
-	return false
-}
+

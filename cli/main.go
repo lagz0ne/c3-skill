@@ -17,6 +17,11 @@ import (
 
 var version = "dev"
 
+var (
+	reAddID   = regexp.MustCompile(`\(id: ([^)]+)\)`)
+	reAddPath = regexp.MustCompile(`Created: (\S+)`)
+)
+
 func main() {
 	if err := run(os.Args[1:], os.Stdout); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -255,12 +260,10 @@ func runAdd(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) error {
 		err = cmd.RunAdd(entityType, slug, c3Dir, s, opts.Container, opts.Feature, addW)
 	}
 	if err == nil && opts.JSON {
-		re := regexp.MustCompile(`\(id: ([^)]+)\)`)
-		m := re.FindStringSubmatch(buf.String())
+		m := reAddID.FindStringSubmatch(buf.String())
 		if len(m) >= 2 {
 			result := cmd.AddResult{ID: m[1], Path: buf.String()}
-			rePath := regexp.MustCompile(`Created: (\S+)`)
-			if mp := rePath.FindStringSubmatch(buf.String()); len(mp) >= 2 {
+			if mp := reAddPath.FindStringSubmatch(buf.String()); len(mp) >= 2 {
 				result.Path = mp[1]
 			}
 			enc := json.NewEncoder(w)

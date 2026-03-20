@@ -82,9 +82,7 @@ CREATE TABLE IF NOT EXISTS code_map (
 );
 
 CREATE TABLE IF NOT EXISTS code_map_excludes (
-	entity_id TEXT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
-	pattern   TEXT NOT NULL,
-	PRIMARY KEY (entity_id, pattern)
+	pattern TEXT PRIMARY KEY
 );
 
 CREATE VIRTUAL TABLE IF NOT EXISTS entities_fts USING fts5(

@@ -72,7 +72,7 @@ Find components using this pattern.
 
 For each component using pattern:
 1. Run `c3x lookup <file>` per code-map entry
-2. Read component doc
+2. `c3x read <component-id>`
 3. Add to `## Related Rules`:
 
 ```markdown
@@ -104,7 +104,7 @@ Rule adoption ADRs use `status: implemented` directly — rule doc IS the delive
 Flow: `Clarify → Find Citings → Check Compliance → Surface Impact → Execute`
 
 1. **Clarify:** `AskUserQuestion` — add rule / modify rule / remove rule / clarify docs (ASSUMPTION_MODE: skip)
-2. **Find citings:** `c3x list --json` → rule entity → `relationships`. Grep `rule-{slug}` in `.c3/` for depth.
+2. **Find citings:** `c3x list --json` → rule entity → `relationships`. Search via `c3x query rule-{slug}` for depth.
 3. **Check compliance:** `c3x lookup <file>` per code-map entry. Compare against `## Golden Example` and `## Not This` for strict compliance. Categorize: compliant / needs-update / breaking.
 4. **Surface impact:** `AskUserQuestion` — proceed / narrow / cancel (ASSUMPTION_MODE: skip)
 5. **Execute:** Update rule doc + create ADR. Non-compliant → note as TODO in ADR (don't touch code).
@@ -128,7 +128,7 @@ Filter `type: "rule"`. Show: id, title, goal, citing components.
 bash <skill-dir>/bin/c3x.sh list --json
 ```
 
-Find `id: "rule-{slug}"`, read `relationships`. Read each citing doc.
+Find `id: "rule-{slug}"`, read `relationships`. `c3x read <id>` each citing doc.
 
 ---
 
@@ -144,7 +144,7 @@ Use when adopting rules in a project that already has refs, or when auditing exi
 bash <skill-dir>/bin/c3x.sh list --json
 ```
 
-Filter `type: "ref"`. For each ref, read its doc.
+Filter `type: "ref"`. For each ref, `c3x read <ref-id>`.
 
 ### Step 2: Apply Separation Test
 
@@ -245,7 +245,7 @@ Display full rule content. If `--source` needed to disambiguate, prompt with `As
 ### Step 2: Discover Overlap (2-5 Grep calls)
 
 Search the project codebase for existing patterns that overlap with the marketplace rule:
-- Existing `.c3/rules/` or `.c3/refs/` covering similar ground
+- Existing rules/refs covering similar ground (check via `c3x query`)
 - Code matching the rule's `## Golden Example`
 - Anti-patterns matching `## Not This`
 

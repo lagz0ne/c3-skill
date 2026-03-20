@@ -76,10 +76,10 @@ Only audit ADR lifecycle when explicitly requested or when running `c3x check --
 
 - Each ref: requires Choice + Why sections
 - Each ref: cited by at least one component (orphan → WARN)
-- Each citing component: ref file exists in `.c3/refs/`
+- Each citing component: ref entity exists in store (verify via `c3x list --json`)
 - Each rule: requires Rule + Golden Example sections
 - Each rule: cited by at least one component (orphan → WARN)
-- Each citing component: rule file exists in `.c3/rules/`
+- Each citing component: rule entity exists in store (verify via `c3x list --json`)
 
 ## Phase 7b: Ref Compliance
 

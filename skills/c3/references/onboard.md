@@ -2,7 +2,7 @@
 
 ## Precondition
 
-`.c3/README.md` exists → `AskUserQuestion`: re-onboard or cancel (skip if ASSUMPTION_MODE). Cancel → suggest audit/query.
+`c3x list` returns entities → already onboarded. `AskUserQuestion`: re-onboard or cancel (skip if ASSUMPTION_MODE). Cancel → suggest audit/query.
 
 ## File Structure
 
@@ -116,7 +116,7 @@ Mermaid: Actors → Containers → External Systems.
 
 ### 1.1 Context Doc
 
-Edit `.c3/README.md`: Goal, Abstract Constraints, diagram, Containers table.
+Update c3-0 via `c3x set c3-0 --section "Goal" <text>` and `c3x write c3-0 < content.md` for full body.
 
 ### 1.2 Container Docs
 

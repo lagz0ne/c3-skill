@@ -141,7 +141,7 @@ Architecture data lives in `.c3/c3.db` (SQLite). Raw file access bypasses the da
 
 If c3x lacks a needed operation, STOP and tell the user — do not work around it with file tools.
 
-**Run `c3x check` frequently** — after creating/editing any `.c3/` doc. It catches broken YAML frontmatter, missing required sections, bad entity references, and codemap issues. Treat errors (`✗`) as blockers.
+**Run `c3x check` frequently** — after any mutation (`add`, `write`, `set`, `wire`, `delete`). It catches missing required sections, bad entity references, and codemap issues. Treat errors as blockers.
 
 **HARD RULE — ADR is the unit of change:**
 Every **change** operation MUST start with `c3x add adr <slug>` as its FIRST action.

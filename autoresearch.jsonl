@@ -4,3 +4,5 @@
 {"run":4,"commit":"918e663","metrics":{"coverage":83.8,"funcs_at_100":102,"total_funcs":219,"uncovered_funcs":117},"status":"keep","description":"batch 3: targeted gaps in add, lookup, migrate, init, check_legacy, marketplace","timestamp":1773989937}
 {"run":5,"commit":"0db0bd8","metrics":{"coverage":86.6,"funcs_at_100":104,"total_funcs":224,"uncovered_funcs":120},"status":"keep","description":"refactor main.go: extract run() + write 18 tests for CLI dispatch","timestamp":1773990642}
 {"run":6,"commit":"462a34a","metrics":{"coverage":89.0,"funcs_at_100":106,"total_funcs":224,"uncovered_funcs":118},"status":"keep","description":"add 22 more dispatch tests for run() covering all commands","timestamp":1773990772}
+{"run":1,"commit":"4aedd5c","metrics":{"total_signals":21,"file_paths":12,"read_without_c3x":1,"browse_signals":4,"edit_signals":4},"status":"keep","description":"baseline","timestamp":1774005772}
+{"run":2,"commit":"a9ea4d1","metrics":{"total_signals":0,"file_paths":0,"read_without_c3x":0,"edit_signals":0},"status":"keep","description":"remove file paths, Edit refs, Read-without-c3x from skill docs","timestamp":1774005977}

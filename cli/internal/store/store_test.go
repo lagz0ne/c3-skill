@@ -28,6 +28,14 @@ func TestOpen_CreatesSchema(t *testing.T) {
 	}
 }
 
+func TestOpen_InvalidPath(t *testing.T) {
+	// Try to open a database at a path that can't be created
+	_, err := Open("/nonexistent/deep/path/test.db")
+	if err == nil {
+		t.Error("expected error for invalid path")
+	}
+}
+
 func TestOpen_Idempotent(t *testing.T) {
 	s := createTestStore(t)
 

@@ -409,3 +409,116 @@ func writeFile(t *testing.T, path, content string) {
 		t.Fatalf("writeFile(%s): %v", path, err)
 	}
 }
+
+func TestSetField_AllStringFields(t *testing.T) {
+	fields := map[string]struct {
+		check func(fm *frontmatter.Frontmatter) string
+	}{
+		"summary":  {func(fm *frontmatter.Frontmatter) string { return fm.Summary }},
+		"boundary": {func(fm *frontmatter.Frontmatter) string { return fm.Boundary }},
+		"category": {func(fm *frontmatter.Frontmatter) string { return fm.Category }},
+		"title":    {func(fm *frontmatter.Frontmatter) string { return fm.Title }},
+		"date":     {func(fm *frontmatter.Frontmatter) string { return fm.Date }},
+	}
+
+	for field, tc := range fields {
+		t.Run(field, func(t *testing.T) {
+			tmp := t.TempDir()
+			fp := filepath.Join(tmp, "test.md")
+			writeFile(t, fp, "---\nid: c3-1\ntitle: test\ntype: container\n---\n\n# test\n")
+
+			err := SetField(fp, field, "new-value")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			content, _ := os.ReadFile(fp)
+			fm, _ := frontmatter.ParseFrontmatter(string(content))
+			if fm == nil {
+				t.Fatal("frontmatter should be parseable")
+			}
+			if tc.check(fm) != "new-value" {
+				t.Errorf("%s = %q, want %q", field, tc.check(fm), "new-value")
+			}
+		})
+	}
+}
+
+func TestArrayField_Affects(t *testing.T) {
+	tmp := t.TempDir()
+	fp := filepath.Join(tmp, "test.md")
+	writeFile(t, fp, "---\nid: adr-1\ntitle: test\ntype: adr\naffects: [c3-0]\n---\n\n# test\n")
+
+	err := AddToArrayField(fp, "affects", "c3-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	content, _ := os.ReadFile(fp)
+	fm, _ := frontmatter.ParseFrontmatter(string(content))
+	if len(fm.Affects) != 2 {
+		t.Errorf("affects = %v, want 2 items", fm.Affects)
+	}
+
+	// Remove
+	err = RemoveFromArrayField(fp, "affects", "c3-0")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	content, _ = os.ReadFile(fp)
+	fm, _ = frontmatter.ParseFrontmatter(string(content))
+	if len(fm.Affects) != 1 || fm.Affects[0] != "c3-1" {
+		t.Errorf("affects after remove = %v", fm.Affects)
+	}
+}
+
+func TestArrayField_Scope(t *testing.T) {
+	tmp := t.TempDir()
+	fp := filepath.Join(tmp, "test.md")
+	writeFile(t, fp, "---\nid: ref-test\ntitle: test\nscope: [c3-1]\n---\n\n# test\n")
+
+	err := AddToArrayField(fp, "scope", "c3-2")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	content, _ := os.ReadFile(fp)
+	fm, _ := frontmatter.ParseFrontmatter(string(content))
+	if len(fm.Scope) != 2 {
+		t.Errorf("scope = %v, want 2 items", fm.Scope)
+	}
+}
+
+func TestArrayField_Sources(t *testing.T) {
+	tmp := t.TempDir()
+	fp := filepath.Join(tmp, "test.md")
+	writeFile(t, fp, "---\nid: rule-test\ntitle: test\ntype: rule\n---\n\n# test\n")
+
+	err := AddToArrayField(fp, "sources", "ref-jwt")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	content, _ := os.ReadFile(fp)
+	fm, _ := frontmatter.ParseFrontmatter(string(content))
+	if len(fm.Sources) != 1 || fm.Sources[0] != "ref-jwt" {
+		t.Errorf("sources = %v", fm.Sources)
+	}
+}
+
+func TestArrayField_InvalidField(t *testing.T) {
+	tmp := t.TempDir()
+	fp := filepath.Join(tmp, "test.md")
+	writeFile(t, fp, "---\nid: c3-1\ntitle: test\n---\n\n# test\n")
+
+	err := AddToArrayField(fp, "invalid", "value")
+	if err == nil {
+		t.Error("expected error for invalid array field")
+	}
+
+	err = RemoveFromArrayField(fp, "invalid", "value")
+	if err == nil {
+		t.Error("expected error for invalid array field on remove")
+	}
+}

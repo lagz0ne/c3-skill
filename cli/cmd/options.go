@@ -34,6 +34,8 @@ type Options struct {
 	Mark          bool
 	KeepOriginals bool
 	Limit         int
+	Source        string
+	Tag           string
 }
 
 // ParseArgs parses command-line arguments into Options.
@@ -131,6 +133,16 @@ func ParseArgs(argv []string) Options {
 			if i+1 < len(argv) {
 				i++
 				opts.Limit, _ = strconv.Atoi(argv[i])
+			}
+		case "--source":
+			if i+1 < len(argv) {
+				i++
+				opts.Source = argv[i]
+			}
+		case "--tag":
+			if i+1 < len(argv) {
+				i++
+				opts.Tag = argv[i]
 			}
 		default:
 			args = append(args, arg)

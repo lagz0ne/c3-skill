@@ -163,6 +163,30 @@ func TestCodeMap_ExcludesList(t *testing.T) {
 	}
 }
 
+func TestSortStrings(t *testing.T) {
+	tests := []struct {
+		input []string
+		want  []string
+	}{
+		{[]string{"b", "a", "c"}, []string{"a", "b", "c"}},
+		{[]string{"a"}, []string{"a"}},
+		{nil, nil},
+		{[]string{}, []string{}},
+	}
+	for _, tt := range tests {
+		sortStrings(tt.input)
+		if len(tt.input) != len(tt.want) {
+			t.Errorf("sortStrings(%v) length mismatch", tt.input)
+			continue
+		}
+		for i := range tt.want {
+			if tt.input[i] != tt.want[i] {
+				t.Errorf("sortStrings result[%d] = %q, want %q", i, tt.input[i], tt.want[i])
+			}
+		}
+	}
+}
+
 func TestCodeMap_AllCodeMap(t *testing.T) {
 	s := createTestStore(t)
 	seedFixture(t, s)

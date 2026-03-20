@@ -62,6 +62,11 @@ CLI: `C3X_MODE=agent bash <skill-dir>/bin/c3x.sh <command> [args]`
 | `diff` | Show uncommitted entity changes (`--mark <hash>`, `--json`) |
 | `export [dir]` | Dump DB to markdown files (escape hatch) |
 | `migrate` | Import .c3/ markdown files into database (LLM-assisted via migrate op) |
+| `marketplace add <url>` | Register marketplace rule source (shallow clone) |
+| `marketplace list` | Browse available rules (`--source`, `--tag`, `--json`) |
+| `marketplace show <rule-id>` | Preview marketplace rule content |
+| `marketplace update` | Pull latest from registered sources |
+| `marketplace remove <name>` | Unregister source + delete cache |
 
 Types for `add`: `container`, `component`, `ref`, `rule`, `adr`, `recipe`
 
@@ -78,6 +83,7 @@ Types for `add`: `container`, `component`, `ref`, `rule`, `adr`, `recipe`
 | "migrate to db", "convert to database", "upgrade c3", "migrate .c3" | **migrate** | `references/migrate.md` |
 | pattern, convention, "create ref", "update ref", "list refs", standardize | **ref** | `references/ref.md` |
 | "add/create a coding rule", "document a rule", "coding standard", "coding convention", "migrate refs to rules", "split ref into rule" | **rule** | `references/rule.md` |
+| marketplace, "browse rules", "adopt rule", "install rule from", "available rules" | **rule** (Adopt mode) | `references/rule.md` |
 | impact, "what breaks", assess, sweep, "is this safe" | **sweep** | `references/sweep.md` |
 | recipe, "trace end-to-end", "cross-cutting flow", "how does X flow" | **query** (read) / **change** (create) | `references/query.md` / `references/change.md` |
 

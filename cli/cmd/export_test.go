@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
 func TestRunExport(t *testing.T) {
@@ -129,5 +131,122 @@ func TestRunExport_CodeMap(t *testing.T) {
 	}
 	if !strings.Contains(string(content), "src/auth/**") {
 		t.Errorf("code-map.yaml should contain pattern, got:\n%s", string(content))
+	}
+}
+
+func TestRunExport_AllTypes(t *testing.T) {
+	s := createRichDBFixture(t)
+	// Add recipe and rule entities
+	s.InsertEntity(&store.Entity{
+		ID: "recipe-auth-flow", Type: "recipe", Title: "Auth Flow",
+		Slug: "auth-flow", Goal: "End-to-end auth", Status: "active", Metadata: "{}",
+		Body: "# Auth Flow\n",
+	})
+	s.InsertEntity(&store.Entity{
+		ID: "rule-logging", Type: "rule", Title: "Logging",
+		Slug: "logging", Goal: "Structured logging", Status: "active", Metadata: "{}",
+		Body: "# Logging\n",
+	})
+	s.SetCodeMap("c3-101", []string{"src/auth/**"})
+
+	outDir := filepath.Join(t.TempDir(), "export")
+	var buf bytes.Buffer
+	err := RunExport(ExportOptions{Store: s, OutputDir: outDir}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Check recipe file exists
+	if _, err := os.Stat(filepath.Join(outDir, "recipes", "recipe-auth-flow.md")); err != nil {
+		t.Error("recipe file should be exported")
+	}
+	// Check rule file exists
+	if _, err := os.Stat(filepath.Join(outDir, "rules", "rule-logging.md")); err != nil {
+		t.Error("rule file should be exported")
+	}
+	// Check ADR file exists (with date)
+	adrFiles, _ := filepath.Glob(filepath.Join(outDir, "adr", "adr-*.md"))
+	if len(adrFiles) == 0 {
+		t.Error("ADR file should be exported")
+	}
+	// Check code-map
+	if _, err := os.Stat(filepath.Join(outDir, "code-map.yaml")); err != nil {
+		t.Error("code-map.yaml should be exported")
+	}
+}
+
+func TestEntityExportPath_OrphanComponent(t *testing.T) {
+	e := &store.Entity{ID: "c3-999", Type: "component", Slug: "orphan", ParentID: "c3-missing"}
+	path := entityExportPath("/out", e, map[string]string{})
+	if !strings.Contains(path, "orphans") {
+		t.Errorf("orphan component path = %q, want 'orphans' dir", path)
+	}
+}
+
+func TestEntityExportPath_UnknownType(t *testing.T) {
+	e := &store.Entity{ID: "x", Type: "unknown", Slug: "x"}
+	path := entityExportPath("/out", e, map[string]string{})
+	if path != "" {
+		t.Errorf("unknown type should return empty path, got %q", path)
+	}
+}
+
+func TestEntityExportPath_System(t *testing.T) {
+	e := &store.Entity{ID: "c3-0", Type: "system", Slug: ""}
+	path := entityExportPath("/out", e, map[string]string{})
+	if path != filepath.Join("/out", "README.md") {
+		t.Errorf("system path = %q", path)
+	}
+}
+
+func TestEntityExportPath_Container(t *testing.T) {
+	e := &store.Entity{ID: "c3-1", Type: "container", Slug: "api"}
+	path := entityExportPath("/out", e, map[string]string{})
+	if path != filepath.Join("/out", "c3-1-api", "README.md") {
+		t.Errorf("container path = %q", path)
+	}
+}
+
+func TestEntityExportPath_Ref(t *testing.T) {
+	e := &store.Entity{ID: "ref-jwt", Type: "ref", Slug: "jwt"}
+	path := entityExportPath("/out", e, map[string]string{})
+	if path != filepath.Join("/out", "refs", "ref-jwt.md") {
+		t.Errorf("ref path = %q", path)
+	}
+}
+
+func TestEntityExportPath_ADRWithDate(t *testing.T) {
+	e := &store.Entity{ID: "adr-20260226-use-go", Type: "adr", Slug: "use-go", Date: "20260226"}
+	path := entityExportPath("/out", e, map[string]string{})
+	expected := filepath.Join("/out", "adr", "adr-20260226-use-go.md")
+	if path != expected {
+		t.Errorf("adr path with date = %q, want %q", path, expected)
+	}
+}
+
+func TestEntityExportPath_ADRWithoutDate(t *testing.T) {
+	e := &store.Entity{ID: "adr-use-go", Type: "adr", Slug: "use-go"}
+	path := entityExportPath("/out", e, map[string]string{})
+	expected := filepath.Join("/out", "adr", "adr-use-go.md")
+	if path != expected {
+		t.Errorf("adr path without date = %q, want %q", path, expected)
+	}
+}
+
+func TestEntityExportPath_Recipe(t *testing.T) {
+	e := &store.Entity{ID: "recipe-auth", Type: "recipe", Slug: "auth"}
+	path := entityExportPath("/out", e, map[string]string{})
+	expected := filepath.Join("/out", "recipes", "recipe-auth.md")
+	if path != expected {
+		t.Errorf("recipe path = %q, want %q", path, expected)
+	}
+}
+
+func TestEntityExportPath_Rule(t *testing.T) {
+	e := &store.Entity{ID: "rule-logging", Type: "rule", Slug: "logging"}
+	path := entityExportPath("/out", e, map[string]string{})
+	expected := filepath.Join("/out", "rules", "rule-logging.md")
+	if path != expected {
+		t.Errorf("rule path = %q, want %q", path, expected)
 	}
 }

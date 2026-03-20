@@ -218,6 +218,44 @@ func TestRunLookup_JSONNoMatch(t *testing.T) {
 	}
 }
 
+func TestRunLookup_WithRulesInOutput(t *testing.T) {
+	s := createDBFixture(t)
+	// Add a rule entity and wire it to c3-101
+	s.InsertEntity(&store.Entity{
+		ID: "rule-logging", Type: "rule", Title: "Structured Logging", Slug: "logging",
+		Goal: "Structured logging", Status: "active", Metadata: "{}",
+	})
+	s.AddRelationship(&store.Relationship{FromID: "c3-101", ToID: "rule-logging", RelType: "uses"})
+
+	// Give c3-101 a summary
+	entity, _ := s.GetEntity("c3-101")
+	entity.Summary = "Authentication component"
+	s.UpdateEntity(entity)
+
+	// Set code map so lookup can find c3-101
+	s.SetCodeMap("c3-101", []string{"src/auth/**"})
+
+	var buf bytes.Buffer
+	err := RunLookup(LookupOptions{
+		Store:    s,
+		FilePath: "src/auth/login.ts",
+	}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "summary:") {
+		t.Errorf("should show summary in output, got:\n%s", output)
+	}
+	if !strings.Contains(output, "rules:") {
+		t.Errorf("should show rules section in output, got:\n%s", output)
+	}
+	if !strings.Contains(output, "rule-logging") {
+		t.Errorf("should show rule-logging in output, got:\n%s", output)
+	}
+}
+
 func TestLookupSeparatesRulesFromRefs(t *testing.T) {
 	s := createDBFixture(t)
 	s.InsertEntity(&store.Entity{

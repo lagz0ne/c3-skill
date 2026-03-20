@@ -111,3 +111,11 @@ func TestFindC3Dir(t *testing.T) {
 		}
 	})
 }
+
+func TestProjectDir(t *testing.T) {
+	got := ProjectDir("/home/user/project/.c3")
+	want := "/home/user/project"
+	if got != want {
+		t.Errorf("ProjectDir() = %q, want %q", got, want)
+	}
+}

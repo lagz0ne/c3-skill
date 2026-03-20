@@ -163,3 +163,32 @@ func TestEntitiesByType(t *testing.T) {
 		t.Errorf("expected 1 system, got %d", len(systems))
 	}
 }
+
+func TestChildren(t *testing.T) {
+	s := createTestStore(t)
+	seedFixture(t, s)
+
+	children, err := s.Children("api-gateway")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(children) != 1 {
+		t.Fatalf("expected 1 child, got %d", len(children))
+	}
+	if children[0].ID != "auth-handler" {
+		t.Errorf("child ID = %q, want auth-handler", children[0].ID)
+	}
+}
+
+func TestChildren_NoChildren(t *testing.T) {
+	s := createTestStore(t)
+	seedFixture(t, s)
+
+	children, err := s.Children("auth-handler")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(children) != 0 {
+		t.Errorf("expected 0 children, got %d", len(children))
+	}
+}

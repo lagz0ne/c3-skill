@@ -160,3 +160,65 @@ func TestWireRuleUsesRelatedRulesSection(t *testing.T) {
 		t.Error("rule-logging relationship should exist")
 	}
 }
+
+func TestRunUnwire_UnsupportedRelType(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	err := RunUnwire(s, "c3-101", "invalid", "ref-jwt", &buf)
+	if err == nil {
+		t.Error("expected error for unsupported relation type")
+	}
+}
+
+func TestRunUnwire_SourceNotFound(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	err := RunUnwire(s, "c3-999", "", "ref-jwt", &buf)
+	if err == nil {
+		t.Error("expected error for nonexistent source")
+	}
+}
+
+func TestRunUnwire_TargetNotFound(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	err := RunUnwire(s, "c3-101", "", "ref-nonexistent", &buf)
+	if err == nil {
+		t.Error("expected error for nonexistent target")
+	}
+}
+
+func TestRunWire_DefaultRelationType(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	// Empty relation type defaults to "cite"
+	err := RunWire(s, "c3-201", "", "ref-error-handling", &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(buf.String(), "Wired") {
+		t.Error("should confirm wiring with default relation type")
+	}
+}
+
+func TestRunUnwire_DefaultRelationType(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	// Wire first
+	RunWire(s, "c3-201", "", "ref-error-handling", &buf)
+	buf.Reset()
+
+	// Unwire with empty relType (defaults to "cite")
+	err := RunUnwire(s, "c3-201", "", "ref-error-handling", &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(buf.String(), "Unwired") {
+		t.Error("should confirm unwiring with default relation type")
+	}
+}

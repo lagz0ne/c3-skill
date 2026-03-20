@@ -117,3 +117,16 @@ func TestSearch_WithLimit(t *testing.T) {
 		t.Errorf("expected at most 1 result with limit=1, got %d", len(results))
 	}
 }
+
+func TestSearchWithLimit_DefaultLimit(t *testing.T) {
+	s := createTestStore(t)
+	seedFixture(t, s)
+
+	results, err := s.SearchWithLimit("service", "", 0) // 0 should default to 20
+	if err != nil {
+		t.Fatalf("search: %v", err)
+	}
+	if len(results) == 0 {
+		t.Error("should find results with default limit")
+	}
+}

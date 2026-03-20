@@ -325,3 +325,46 @@ func TestDeriveRelationshipsIncludesOrigin(t *testing.T) {
 		t.Errorf("DeriveRelationships missing origin ref, got %v", rels)
 	}
 }
+
+func TestDocType_String(t *testing.T) {
+	tests := []struct {
+		dt   DocType
+		want string
+	}{
+		{DocContext, "context"},
+		{DocContainer, "container"},
+		{DocComponent, "component"},
+		{DocRef, "ref"},
+		{DocADR, "adr"},
+		{DocRecipe, "recipe"},
+		{DocRule, "rule"},
+		{DocUnknown, "unknown"},
+		{DocType(99), "unknown"}, // out of range
+	}
+	for _, tt := range tests {
+		got := tt.dt.String()
+		if got != tt.want {
+			t.Errorf("DocType(%d).String() = %q, want %q", tt.dt, got, tt.want)
+		}
+	}
+}
+
+func TestToStringSlice(t *testing.T) {
+	// Test []string case
+	got := toStringSlice([]string{"a", "b"})
+	if len(got) != 2 || got[0] != "a" || got[1] != "b" {
+		t.Errorf("toStringSlice([]string) = %v", got)
+	}
+
+	// Test nil/invalid case
+	got2 := toStringSlice("not a slice")
+	if got2 != nil {
+		t.Errorf("toStringSlice(string) should be nil, got %v", got2)
+	}
+
+	// Test []interface{} with non-string items
+	got3 := toStringSlice([]interface{}{"a", 42, "b"})
+	if len(got3) != 2 || got3[0] != "a" || got3[1] != "b" {
+		t.Errorf("toStringSlice with mixed types = %v, want [a b]", got3)
+	}
+}

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
@@ -241,6 +242,66 @@ _exclude:
 	}
 	if len(excludes) != 2 {
 		t.Errorf("expected 2 excludes, got %d: %v", len(excludes), excludes)
+	}
+}
+
+func TestDocTypeToStoreType(t *testing.T) {
+	tests := []struct {
+		dt   frontmatter.DocType
+		want string
+	}{
+		{frontmatter.DocContext, "system"},
+		{frontmatter.DocContainer, "container"},
+		{frontmatter.DocComponent, "component"},
+		{frontmatter.DocRef, "ref"},
+		{frontmatter.DocADR, "adr"},
+		{frontmatter.DocRule, "rule"},
+		{frontmatter.DocRecipe, "recipe"},
+		{frontmatter.DocUnknown, ""},
+	}
+	for _, tt := range tests {
+		got := docTypeToStoreType(tt.dt)
+		if got != tt.want {
+			t.Errorf("docTypeToStoreType(%d) = %q, want %q", tt.dt, got, tt.want)
+		}
+	}
+}
+
+func TestAddRelSafe_EmptyToID(t *testing.T) {
+	s := createDBFixture(t)
+	err := addRelSafe(s, "c3-101", "", "uses")
+	if err != nil {
+		t.Error("empty toID should be silently ignored")
+	}
+}
+
+func TestAddRelSafe_ValidRelationship(t *testing.T) {
+	s := createDBFixture(t)
+	// Both c3-101 and c3-1 exist in fixture
+	err := addRelSafe(s, "c3-101", "c3-1", "depends-on")
+	if err != nil {
+		t.Errorf("valid relationship should succeed: %v", err)
+	}
+}
+
+func TestRemoveEmptyDirs(t *testing.T) {
+	dir := t.TempDir()
+	// Create nested empty dirs
+	os.MkdirAll(filepath.Join(dir, "a", "b"), 0755)
+	os.MkdirAll(filepath.Join(dir, "c"), 0755)
+	// Create non-empty dir
+	os.MkdirAll(filepath.Join(dir, "d"), 0755)
+	os.WriteFile(filepath.Join(dir, "d", "file.txt"), []byte("data"), 0644)
+
+	removeEmptyDirs(dir)
+
+	// Empty dirs should be removed
+	if _, err := os.Stat(filepath.Join(dir, "c")); !os.IsNotExist(err) {
+		t.Error("empty dir 'c' should be removed")
+	}
+	// Non-empty dir should survive
+	if _, err := os.Stat(filepath.Join(dir, "d")); err != nil {
+		t.Error("non-empty dir 'd' should survive")
 	}
 }
 

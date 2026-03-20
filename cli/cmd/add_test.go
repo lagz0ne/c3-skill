@@ -272,3 +272,42 @@ func TestRunAdd_SequentialContainers(t *testing.T) {
 		t.Errorf("expected slug worker, got %s", entity.Slug)
 	}
 }
+
+func TestRunAdd_RuleDuplicate(t *testing.T) {
+	s := createDBFixture(t)
+	var buf bytes.Buffer
+
+	RunAdd("rule", "structured-logging", "", s, "", false, &buf)
+	buf.Reset()
+
+	err := RunAdd("rule", "structured-logging", "", s, "", false, &buf)
+	if err == nil {
+		t.Fatal("expected error for duplicate rule")
+	}
+	if !strings.Contains(err.Error(), "already exists") {
+		t.Errorf("error should mention 'already exists': %v", err)
+	}
+}
+
+func TestRunAdd_AdrDuplicate(t *testing.T) {
+	s := createDBFixture(t)
+	var buf bytes.Buffer
+
+	RunAdd("adr", "use-grpc", "", s, "", false, &buf)
+	buf.Reset()
+
+	err := RunAdd("adr", "use-grpc", "", s, "", false, &buf)
+	if err == nil {
+		t.Fatal("expected error for duplicate ADR")
+	}
+}
+
+func TestRunAdd_ComponentInvalidContainerFormat(t *testing.T) {
+	s, c3Dir := createDBFixtureWithC3Dir(t)
+	var buf bytes.Buffer
+
+	err := RunAdd("component", "test", c3Dir, s, "invalid-format", false, &buf)
+	if err == nil {
+		t.Fatal("expected error for invalid container format")
+	}
+}

@@ -48,3 +48,20 @@ func TestShowHelp_UnknownCommand(t *testing.T) {
 		t.Error("unknown command should show global help")
 	}
 }
+
+func TestShowCapabilities(t *testing.T) {
+	var buf bytes.Buffer
+	ShowCapabilities(&buf)
+
+	output := buf.String()
+	if !strings.Contains(output, "Command") {
+		t.Error("capabilities should have Command header")
+	}
+	if !strings.Contains(output, "c3x list") {
+		t.Error("capabilities should list the list command")
+	}
+	// Hidden commands (init, migrate) should be excluded
+	if strings.Contains(output, "c3x init") {
+		t.Error("capabilities should not include hidden commands")
+	}
+}

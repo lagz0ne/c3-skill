@@ -77,6 +77,9 @@ func run(argv []string, w io.Writer) error {
 
 	// migrate works on legacy files — special path, before DB detection
 	if opts.Command == "migrate" {
+		if opts.DryRun {
+			return cmd.RunMigrateDryRun(c3Dir, opts.JSON, w)
+		}
 		return cmd.RunMigrate(c3Dir, opts.KeepOriginals, w)
 	}
 

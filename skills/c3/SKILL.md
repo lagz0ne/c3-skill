@@ -129,16 +129,17 @@ First `AskUserQuestion` denial → `ASSUMPTION_MODE = true` for session.
 
 ## Shared Rules
 
-**HARD RULE — .c3/ is CLI-only:**
-NEVER use Edit, Write, or any file tool on files inside `.c3/`. ALL mutations go through c3x:
-- Create: `c3x add`, `c3x init`, `c3x codemap`
-- Read:   `c3x list`, `c3x schema`, `c3x lookup`, `c3x coverage`
-- Update: `c3x set`, `c3x wire` (`--remove` to unwire)
-- Delete: `c3x delete`
-- Validate: `c3x check`
+**HARD RULE — .c3/ is CLI-only. NEVER use Read, Glob, Edit, or Write tools on `.c3/` files.**
 
-Exception: `code-map.yaml` patterns may be edited directly (flat YAML, no integrity constraints).
-If c3x lacks a needed mutation, STOP and tell the user — do not work around it.
+Architecture data lives in `.c3/c3.db` (SQLite). Raw file access bypasses the database and returns stale or empty content. ALL access goes through c3x:
+
+- Create:   `c3x add`, `c3x init`, `c3x codemap`
+- Read:     `c3x read <id>`, `c3x list`, `c3x query`, `c3x lookup`, `c3x graph`, `c3x impact`
+- Update:   `c3x write <id>`, `c3x set`, `c3x wire` (`--remove` to unwire)
+- Delete:   `c3x delete`
+- Validate: `c3x check`, `c3x coverage`, `c3x schema`
+
+If c3x lacks a needed operation, STOP and tell the user — do not work around it with file tools.
 
 **Run `c3x check` frequently** — after creating/editing any `.c3/` doc. It catches broken YAML frontmatter, missing required sections, bad entity references, and codemap issues. Treat errors (`✗`) as blockers.
 

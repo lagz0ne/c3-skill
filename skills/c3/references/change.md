@@ -103,6 +103,8 @@ For each returned ref, check compliance using comparison mode:
 | `## Choice` only | Negative | Does code contradict the stated choice? |
 | `## Not This` | Anti-pattern | Does code resemble any rejected alternative? |
 
+**Rule Compliance (strict):** For each `rule-*` entity returned by lookup, compare code against `## Golden Example` and `## Not This` for exact compliance. Rules use strict enforcement — code must match the golden pattern. Flag any deviation as a violation.
+
 **ADVERSARIAL FRAMING: Look for violations — do not confirm compliance.**
 
 Mandatory output:
@@ -159,4 +161,5 @@ Status: `proposed → accepted → (provisioned | implemented)`
 - Pre-change impact → sweep
 - Architecture questions → query
 - Pattern management → ref
+- Coding standards → rule
 - Standalone audit → audit

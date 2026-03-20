@@ -4,8 +4,9 @@ description: |
   This skill should be used when the user invokes /c3 or asks architecture questions
   about a project with a .c3/ directory. Trigger phrases: "adopt C3", "onboard this
   project", "where is X", "audit the architecture", "check docs", "add a component",
-  "implement feature", "what breaks if I change X", "add a ref". Handles operations:
-  onboard, query, audit, change, ref, sweep. Classifies intent, loads ref, executes.
+  "implement feature", "what breaks if I change X", "add a ref", "add a coding rule",
+  "coding standard". Handles operations: onboard, query, audit, change, ref, rule, sweep.
+  Classifies intent, loads ref, executes.
 
   <example>
   user: "adopt C3 for this project"
@@ -70,6 +71,7 @@ Types for `add`: `container`, `component`, `ref`, `adr`, `recipe`
 | audit, validate, "check docs", drift, "docs up to date", "verify docs" | **audit** | `references/audit.md` |
 | add, change, fix, implement, refactor, remove, migrate, provision, design | **change** | `references/change.md` |
 | pattern, convention, "create ref", "update ref", "list refs", standardize | **ref** | `references/ref.md` |
+| "add/create a coding rule", "document a rule", "coding standard", "coding convention" | **rule** | `references/rule.md` |
 | impact, "what breaks", assess, sweep, "is this safe" | **sweep** | `references/sweep.md` |
 | recipe, "trace end-to-end", "cross-cutting flow", "how does X flow" | **query** (read) / **change** (create) | `references/query.md` / `references/change.md` |
 
@@ -77,7 +79,7 @@ Types for `add`: `container`, `component`, `ref`, `adr`, `recipe`
 
 ## Dispatch
 
-1. Classify op (ambiguous → `AskUserQuestion` with 6 options)
+1. Classify op (ambiguous → `AskUserQuestion` with 7 options)
 2. Load `references/<op>.md`
 3. Execute (use Task tool for parallelism)
 
@@ -187,6 +189,10 @@ Details: `references/change.md`
 ### ref
 Modes: Add / Update / List / Usage.
 Details: `references/ref.md`
+
+### rule
+Modes: Add / Update / List / Usage.
+Details: `references/rule.md`
 
 ### sweep
 `c3x list --json` → filter by refs/affects to find affected entities → parallel assessment → synthesize. Advisory only.

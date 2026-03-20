@@ -95,6 +95,8 @@ For each ref with `## How` containing golden patterns:
 - Yes → pattern is actionable
 - No → WARN: `## How` needs rework (too vague for enforcement)
 
+**Rule Compliance:** For each rule with `## Golden Example`, spot-check cited components for strict compliance. Rules use exact enforcement (code must match golden pattern), unlike refs which use directional alignment.
+
 ## Phase 8: Abstraction Boundaries
 
 | Signal | Check | Violation | Severity |

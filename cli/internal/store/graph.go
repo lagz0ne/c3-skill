@@ -115,7 +115,7 @@ func (s *Store) Transitive(entityID string, maxDepth int) ([]ImpactResult, error
 // scanImpactResults scans rows into a slice of ImpactResult.
 func scanImpactResults(rows interface {
 	Next() bool
-	Scan(dest ...interface{}) error
+	Scan(dest ...any) error
 	Err() error
 }) ([]ImpactResult, error) {
 	var results []ImpactResult

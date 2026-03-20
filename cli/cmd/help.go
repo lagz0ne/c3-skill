@@ -24,7 +24,7 @@ var Commands = []CommandMeta{
 		Hidden:   true,
 		Help: `Usage: c3x init
 
-Scaffold .c3/ skeleton (config, README, refs/, adr/).`,
+Scaffold .c3/ skeleton (config, README, refs/, rules/, adr/).`,
 	},
 	{
 		Name:     "list",
@@ -57,7 +57,7 @@ Options:
 		OneLiner: "Create entity (auto-numbering + wiring)",
 		Help: `Usage: c3x add <type> <slug> [options]
 
-Types: container, component, ref, adr, recipe
+Types: container, component, ref, rule, adr, recipe
 
 Options:
   --container <id>       Parent container (component only)
@@ -71,6 +71,7 @@ Examples:
   c3x add container payments --goal "Process payments" --boundary service
   c3x add component auth --container c3-1 --goal "JWT authentication"
   c3x add ref rate-limiting --goal "Consistent rate limiting"
+  c3x add rule structured-logging --goal "Consistent structured logging"
   c3x add adr use-grpc --goal "Migrate to gRPC" --json
   c3x add recipe auth-flow`,
 	},
@@ -119,7 +120,7 @@ Examples:
 		Help: `Usage: c3x schema <type> [--json]
 
 Show known sections for an entity type.
-Types: context, container, component, ref, adr, recipe
+Types: context, container, component, ref, rule, adr, recipe
 
 JSON output includes column types (filepath, entity_id, enum, ref_id).
 
@@ -127,7 +128,7 @@ Example: c3x schema component --json`,
 	},
 	{
 		Name:     "codemap",
-		OneLiner: "Scaffold code-map.yaml for all components + refs",
+		OneLiner: "Scaffold code-map.yaml for all components, refs + rules",
 		Help: `Usage: c3x codemap [--json]
 
 Scaffold or update .c3/code-map.yaml with stubs for every component and ref
@@ -201,6 +202,82 @@ Examples:
   c3x graph c3-101 --direction reverse   # what points to this component`,
 	},
 	{
+		Name:     "query",
+		Args:     "<search-terms>",
+		OneLiner: "Full-text search across all entities",
+		Help: `Usage: c3x query <search-terms> [--type <type>] [--limit N] [--json]
+
+Search entity titles, goals, summaries, and bodies using FTS5 with BM25 ranking.
+
+Options:
+  --type <type>   Filter results to entity type (component, ref, adr, etc.)
+  --limit N       Max results (default: 20)
+  --json          Machine-readable output
+
+Examples:
+  c3x query authentication
+  c3x query "error handling" --type ref
+  c3x query frontmatter --limit 5 --json`,
+	},
+	{
+		Name:     "diff",
+		OneLiner: "Show uncommitted changes (human-readable changelog)",
+		Help: `Usage: c3x diff [--mark <commit-hash>] [--json]
+
+Render all entity mutations since the last commit mark.
+
+Options:
+  --mark <hash>   Stamp current changes with commit hash (use in post-commit hook)
+  --json          Output raw changelog entries as JSON
+
+Examples:
+  c3x diff                    # show pending changes
+  c3x diff --mark abc123      # mark changes as committed`,
+	},
+	{
+		Name:     "impact",
+		Args:     "<entity-id>",
+		OneLiner: "Transitive impact analysis (who depends on this?)",
+		Help: `Usage: c3x impact <entity-id> [--depth N] [--json]
+
+Find all entities affected by changes to the given entity.
+Traverses reverse 'uses' + forward 'affects' relationships.
+
+Options:
+  --depth N   Max traversal depth (default: 3)
+  --json      Machine-readable output
+
+Examples:
+  c3x impact c3-101            # what breaks if auth changes?
+  c3x impact ref-jwt --depth 5 # deep impact of JWT ref`,
+	},
+	{
+		Name:     "export",
+		OneLiner: "Dump DB to markdown files (escape hatch)",
+		Help: `Usage: c3x export [<output-dir>]
+
+Export all entities from the database to markdown files with YAML frontmatter.
+Also exports code-map.yaml. Default output dir is current .c3/ directory.
+
+This is the escape hatch for inspecting or diffing DB content as files.
+
+Examples:
+  c3x export                   # export to .c3/
+  c3x export /tmp/c3-export    # export to custom dir`,
+	},
+	{
+		Name:     "migrate",
+		OneLiner: "Import .c3/ markdown files into SQLite database",
+		Hidden:   true,
+		Help: `Usage: c3x migrate [--keep-originals]
+
+Import all .c3/ markdown files and code-map.yaml into .c3/c3.db.
+Big bang migration — no coexistence mode.
+
+Options:
+  --keep-originals   Don't delete original .md files after import`,
+	},
+	{
 		Name:     "delete",
 		Args:     "<id>",
 		OneLiner: "Remove entity + clean all references",
@@ -258,7 +335,7 @@ Commands:
 	}
 
 	b.WriteString(`
-Entity Types: container, component, ref, adr, recipe (context created by init)
+Entity Types: container, component, ref, rule, adr, recipe (context created by init)
 
 Global Options:
   --json                     Machine-readable output

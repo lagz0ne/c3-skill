@@ -12,6 +12,7 @@ import (
 	"github.com/lagz0ne/c3-design/cli/cmd"
 	"github.com/lagz0ne/c3-design/cli/internal/config"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
+	"github.com/lagz0ne/c3-design/cli/internal/walker"
 )
 
 var version = "dev"
@@ -30,9 +31,12 @@ func main() {
 		return
 	}
 
-	// init is special — creates .c3/, no store needed
+	// init is special — creates .c3/ with DB, no store needed
 	if opts.Command == "init" {
-		if err := cmd.RunInit(mustCwd(), w); err != nil {
+		cwd := mustCwd()
+		c3Dir := filepath.Join(cwd, ".c3")
+		projectName := filepath.Base(cwd)
+		if err := cmd.RunInitDB(c3Dir, projectName, w); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
@@ -53,7 +57,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// migrate is special — reads files, creates DB
+	// migrate works on legacy files — special path, before DB detection
 	if opts.Command == "migrate" {
 		if err := cmd.RunMigrate(c3Dir, opts.KeepOriginals, w); err != nil {
 			fmt.Fprintln(os.Stderr, err)
@@ -62,12 +66,31 @@ func main() {
 		return
 	}
 
-	// Open the store
+	// Detect format: DB vs legacy files
 	dbPath := filepath.Join(c3Dir, "c3.db")
+	hasDB := fileExists(dbPath)
+
+	// Legacy format detected — block all commands except check
+	if !hasDB && hasMarkdownFiles(c3Dir) {
+		if opts.Command == "check" {
+			// check still works on file-based .c3/ via walker
+			runLegacyCheck(c3Dir, opts, w)
+			return
+		}
+		fmt.Fprintln(os.Stderr, "error: .c3/ contains markdown files but no database (c3.db)")
+		fmt.Fprintln(os.Stderr, "")
+		fmt.Fprintln(os.Stderr, "This version of c3x uses an embedded database.")
+		fmt.Fprintln(os.Stderr, "Use /c3 in Claude Code to run an LLM-assisted migration that")
+		fmt.Fprintln(os.Stderr, "validates and fixes malformed docs before importing.")
+		fmt.Fprintln(os.Stderr, "")
+		fmt.Fprintln(os.Stderr, "Or if docs are already valid: c3x migrate")
+		os.Exit(1)
+	}
+
+	// Open the store (creates empty DB if none exists — fine for new projects via init)
 	s, err := store.Open(dbPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: opening database: %v\n", err)
-		fmt.Fprintln(os.Stderr, "hint: run 'c3x migrate' to create the database from .c3/ files")
 		os.Exit(1)
 	}
 	defer s.Close()
@@ -248,6 +271,45 @@ func main() {
 			Store:  s,
 			DryRun: opts.DryRun,
 		}, w)
+	case "query":
+		queryTerm := ""
+		if len(opts.Args) >= 1 {
+			queryTerm = opts.Args[0]
+		}
+		err = cmd.RunQuery(cmd.QueryOptions{
+			Store:      s,
+			Query:      queryTerm,
+			TypeFilter: opts.TypeFilter,
+			Limit:      opts.Limit,
+			JSON:       opts.JSON,
+		}, w)
+	case "diff":
+		commitHash := ""
+		if len(opts.Args) >= 1 {
+			commitHash = opts.Args[0]
+		}
+		err = cmd.RunDiff(s, opts.Mark, commitHash, opts.JSON, w)
+	case "impact":
+		entityID := ""
+		if len(opts.Args) >= 1 {
+			entityID = opts.Args[0]
+		}
+		err = cmd.RunImpact(cmd.ImpactOptions{
+			Store:    s,
+			EntityID: entityID,
+			Depth:    opts.Depth,
+			JSON:     opts.JSON,
+		}, w)
+	case "export":
+		outputDir := c3Dir
+		if len(opts.Args) >= 1 {
+			outputDir = opts.Args[0]
+		}
+		err = cmd.RunExport(cmd.ExportOptions{
+			Store:     s,
+			OutputDir: outputDir,
+			JSON:      opts.JSON,
+		}, w)
 	default:
 		fmt.Fprintf(os.Stderr, "error: unknown command '%s'\n", opts.Command)
 		fmt.Fprintln(os.Stderr, "hint: run 'c3x --help' to see available commands")
@@ -267,4 +329,55 @@ func mustCwd() string {
 		os.Exit(1)
 	}
 	return dir
+}
+
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}
+
+func hasMarkdownFiles(c3Dir string) bool {
+	entries, err := os.ReadDir(c3Dir)
+	if err != nil {
+		return false
+	}
+	for _, e := range entries {
+		if !e.IsDir() && filepath.Ext(e.Name()) == ".md" {
+			return true
+		}
+		// Check subdirectories (containers have .md files inside)
+		if e.IsDir() && e.Name() != "_index" {
+			subEntries, _ := os.ReadDir(filepath.Join(c3Dir, e.Name()))
+			for _, se := range subEntries {
+				if !se.IsDir() && filepath.Ext(se.Name()) == ".md" {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+func runLegacyCheck(c3Dir string, opts cmd.Options, w io.Writer) {
+	// Use the old walker-based check for pre-migration validation
+	walkResult, err := walker.WalkC3DocsWithWarnings(c3Dir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: walking .c3/: %v\n", err)
+		os.Exit(1)
+	}
+	projectDir := config.ProjectDir(c3Dir)
+	checkOpts := cmd.LegacyCheckOptions{
+		Docs:          walkResult.Docs,
+		Graph:         walker.BuildGraph(walkResult.Docs),
+		JSON:          opts.JSON,
+		ProjectDir:    projectDir,
+		C3Dir:         c3Dir,
+		ParseWarnings: walkResult.Warnings,
+		IncludeADR:    opts.IncludeADR,
+		Fix:           opts.Fix,
+	}
+	if err := cmd.RunLegacyCheck(checkOpts, w); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 }

@@ -36,7 +36,7 @@ func (s *Store) searchFTS(query, entityType string, limit int) ([]SearchResult, 
 		FROM entities_fts
 		JOIN entities e ON entities_fts.rowid = e.rowid
 		WHERE entities_fts MATCH ?`
-	args := []interface{}{query}
+	args := []any{query}
 	if entityType != "" {
 		q += " AND e.type = ?"
 		args = append(args, entityType)

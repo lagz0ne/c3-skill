@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/lagz0ne/c3-design/cli/internal/codemap"
 	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
@@ -70,7 +69,6 @@ func RunMigrate(c3Dir string, keepOriginals bool, w io.Writer) error {
 	// Track migrated file paths for cleanup
 	var migratedFiles []string
 
-	// Import entities
 	entityCount := 0
 	relCount := 0
 
@@ -134,45 +132,32 @@ func RunMigrate(c3Dir string, keepOriginals bool, w io.Writer) error {
 			continue
 		}
 
-		// uses (fm.Refs maps to yaml field "uses:")
-		for _, ref := range fm.Refs {
-			if err := addRelSafe(s, fm.ID, ref, "uses"); err != nil {
-				fmt.Fprintf(w, "warning: %s\n", err)
-			} else {
-				relCount++
+		// Import typed relationships (table-driven)
+		for _, rel := range []struct {
+			targets []string
+			relType string
+			strip   bool
+		}{
+			{fm.Refs, "uses", false},
+			{fm.Affects, "affects", false},
+			{fm.Scope, "scope", true},
+			{fm.Sources, "sources", true},
+			{fm.Origin, "origin", true},
+		} {
+			for _, t := range rel.targets {
+				target := t
+				if rel.strip {
+					target = frontmatter.StripAnchor(t)
+				}
+				if err := addRelSafe(s, fm.ID, target, rel.relType); err != nil {
+					fmt.Fprintf(w, "warning: %s\n", err)
+				} else {
+					relCount++
+				}
 			}
 		}
 
-		// affects
-		for _, affected := range fm.Affects {
-			if err := addRelSafe(s, fm.ID, affected, "affects"); err != nil {
-				fmt.Fprintf(w, "warning: %s\n", err)
-			} else {
-				relCount++
-			}
-		}
-
-		// scope (strip anchors)
-		for _, sc := range fm.Scope {
-			target := frontmatter.StripAnchor(sc)
-			if err := addRelSafe(s, fm.ID, target, "scope"); err != nil {
-				fmt.Fprintf(w, "warning: %s\n", err)
-			} else {
-				relCount++
-			}
-		}
-
-		// sources (strip anchors)
-		for _, src := range fm.Sources {
-			target := frontmatter.StripAnchor(src)
-			if err := addRelSafe(s, fm.ID, target, "sources"); err != nil {
-				fmt.Fprintf(w, "warning: %s\n", err)
-			} else {
-				relCount++
-			}
-		}
-
-		// via from Extra
+		// via from Extra (special: reads from untyped Extra map)
 		if viaVal, ok := fm.Extra["via"]; ok {
 			switch v := viaVal.(type) {
 			case string:
@@ -181,7 +166,7 @@ func RunMigrate(c3Dir string, keepOriginals bool, w io.Writer) error {
 				} else {
 					relCount++
 				}
-			case []interface{}:
+			case []any:
 				for _, item := range v {
 					if vs, ok := item.(string); ok {
 						if err := addRelSafe(s, fm.ID, vs, "via"); err != nil {
@@ -302,39 +287,3 @@ func removeEmptyDirs(root string) {
 	})
 }
 
-// findC3Dir searches upward from startDir for a .c3/ directory.
-// Used by commands that need to locate the project root.
-func findC3Dir(startDir string) string {
-	dir := startDir
-	for {
-		candidate := filepath.Join(dir, ".c3")
-		if info, err := os.Stat(candidate); err == nil && info.IsDir() {
-			return candidate
-		}
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			return ""
-		}
-		dir = parent
-	}
-}
-
-// hasDBFile checks whether a c3.db file exists in the given .c3/ directory.
-func hasDBFile(c3Dir string) bool {
-	_, err := os.Stat(filepath.Join(c3Dir, "c3.db"))
-	return err == nil
-}
-
-// openStoreFromDir opens the store from a .c3/ directory.
-func openStoreFromDir(c3Dir string) (*store.Store, error) {
-	dbPath := filepath.Join(c3Dir, "c3.db")
-	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("no c3.db found in %s — run 'c3x migrate' first", c3Dir)
-	}
-	return store.Open(dbPath)
-}
-
-// entityTypeLabel returns a human-friendly label for display.
-func entityTypeLabel(t string) string {
-	return strings.ToUpper(t[:1]) + t[1:]
-}

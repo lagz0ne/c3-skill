@@ -18,99 +18,61 @@ import (
 var version = "dev"
 
 func main() {
-	opts := cmd.ParseArgs(os.Args[1:])
-	w := os.Stdout
+	if err := run(os.Args[1:], os.Stdout); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+// run contains all CLI logic, returning errors instead of calling os.Exit.
+func run(argv []string, w io.Writer) error {
+	opts := cmd.ParseArgs(argv)
 
 	if opts.Version {
-		fmt.Println(version)
-		return
+		fmt.Fprintln(w, version)
+		return nil
 	}
 
 	if opts.Help || opts.Command == "" {
 		cmd.ShowHelp(opts.Command, w)
-		return
+		return nil
 	}
 
 	// init is special — creates .c3/ with DB, no store needed
 	if opts.Command == "init" {
-		cwd := mustCwd()
+		cwd, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("error: cannot get working directory: %w", err)
+		}
 		c3Dir := filepath.Join(cwd, ".c3")
 		projectName := filepath.Base(cwd)
-		if err := cmd.RunInitDB(c3Dir, projectName, w); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-		return
+		return cmd.RunInitDB(c3Dir, projectName, w)
 	}
 
 	// capabilities is special — describes the CLI itself, no .c3/ needed
 	if opts.Command == "capabilities" {
 		cmd.ShowCapabilities(w)
-		return
+		return nil
 	}
 
 	// marketplace is special — uses ~/.c3/marketplace/, no .c3/ needed
 	if opts.Command == "marketplace" {
-		subCmd := ""
-		if len(opts.Args) >= 1 {
-			subCmd = opts.Args[0]
-		}
-		mOpts := cmd.MarketplaceOptions{
-			JSON: opts.JSON,
-			Tag:  opts.Tag,
-		}
-		if len(opts.Args) >= 2 {
-			switch subCmd {
-			case "add":
-				mOpts.URL = opts.Args[1]
-			case "show":
-				mOpts.RuleID = opts.Args[1]
-			case "remove", "update":
-				mOpts.SourceName = opts.Args[1]
-			}
-		}
-		if opts.Source != "" {
-			mOpts.SourceName = opts.Source
-		}
-
-		var err error
-		switch subCmd {
-		case "add":
-			err = cmd.RunMarketplaceAdd(mOpts, w)
-		case "list":
-			err = cmd.RunMarketplaceList(mOpts, w)
-		case "show":
-			err = cmd.RunMarketplaceShow(mOpts, w)
-		case "update":
-			err = cmd.RunMarketplaceUpdate(mOpts, w)
-		case "remove":
-			err = cmd.RunMarketplaceRemove(mOpts, w)
-		default:
-			cmd.ShowHelp("marketplace", w)
-			return
-		}
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-		return
+		return runMarketplace(opts, w)
 	}
 
 	// All other commands need a .c3/ directory
-	c3Dir := config.ResolveC3Dir(mustCwd(), opts.C3Dir)
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("error: cannot get working directory: %w", err)
+	}
+	c3Dir := config.ResolveC3Dir(cwd, opts.C3Dir)
 	if c3Dir == "" {
-		fmt.Fprintln(os.Stderr, "error: No .c3/ directory found")
-		fmt.Fprintln(os.Stderr, "hint: run 'c3x init' to create one, or use --c3-dir <path>")
-		os.Exit(1)
+		return fmt.Errorf("error: No .c3/ directory found\nhint: run 'c3x init' to create one, or use --c3-dir <path>")
 	}
 
 	// migrate works on legacy files — special path, before DB detection
 	if opts.Command == "migrate" {
-		if err := cmd.RunMigrate(c3Dir, opts.KeepOriginals, w); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-		return
+		return cmd.RunMigrate(c3Dir, opts.KeepOriginals, w)
 	}
 
 	// Detect format: DB vs legacy files
@@ -120,149 +82,89 @@ func main() {
 	// Legacy format detected — block all commands except check
 	if !hasDB && hasMarkdownFiles(c3Dir) {
 		if opts.Command == "check" {
-			// check still works on file-based .c3/ via walker
-			runLegacyCheck(c3Dir, opts, w)
-			return
+			return runLegacyCheck(c3Dir, opts, w)
 		}
-		fmt.Fprintln(os.Stderr, "error: .c3/ contains markdown files but no database (c3.db)")
-		fmt.Fprintln(os.Stderr, "")
-		fmt.Fprintln(os.Stderr, "This version of c3x uses an embedded database.")
-		fmt.Fprintln(os.Stderr, "Use /c3 in Claude Code to run an LLM-assisted migration that")
-		fmt.Fprintln(os.Stderr, "validates and fixes malformed docs before importing.")
-		fmt.Fprintln(os.Stderr, "")
-		fmt.Fprintln(os.Stderr, "Or if docs are already valid: c3x migrate")
-		os.Exit(1)
+		return fmt.Errorf("error: .c3/ contains markdown files but no database (c3.db)\n\nThis version of c3x uses an embedded database.\nUse /c3 in Claude Code to run an LLM-assisted migration that\nvalidates and fixes malformed docs before importing.\n\nOr if docs are already valid: c3x migrate")
 	}
 
 	// Open the store (creates empty DB if none exists — fine for new projects via init)
 	s, err := store.Open(dbPath)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: opening database: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("error: opening database: %w", err)
 	}
 	defer s.Close()
 
-	// Resolve project root (parent of .c3/)
+	return runCommand(opts, s, c3Dir, w)
+}
+
+// runMarketplace handles the marketplace subcommands.
+func runMarketplace(opts cmd.Options, w io.Writer) error {
+	subCmd := ""
+	if len(opts.Args) >= 1 {
+		subCmd = opts.Args[0]
+	}
+	mOpts := cmd.MarketplaceOptions{
+		JSON: opts.JSON,
+		Tag:  opts.Tag,
+	}
+	if len(opts.Args) >= 2 {
+		switch subCmd {
+		case "add":
+			mOpts.URL = opts.Args[1]
+		case "show":
+			mOpts.RuleID = opts.Args[1]
+		case "remove", "update":
+			mOpts.SourceName = opts.Args[1]
+		}
+	}
+	if opts.Source != "" {
+		mOpts.SourceName = opts.Source
+	}
+
+	switch subCmd {
+	case "add":
+		return cmd.RunMarketplaceAdd(mOpts, w)
+	case "list":
+		return cmd.RunMarketplaceList(mOpts, w)
+	case "show":
+		return cmd.RunMarketplaceShow(mOpts, w)
+	case "update":
+		return cmd.RunMarketplaceUpdate(mOpts, w)
+	case "remove":
+		return cmd.RunMarketplaceRemove(mOpts, w)
+	default:
+		cmd.ShowHelp("marketplace", w)
+		return nil
+	}
+}
+
+// runCommand dispatches to the appropriate command handler.
+func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) error {
 	projectDir := config.ProjectDir(c3Dir)
 
 	switch opts.Command {
 	case "list":
-		err = cmd.RunList(cmd.ListOptions{Store: s, JSON: opts.JSON, Flat: opts.Flat, Compact: opts.Compact, C3Dir: c3Dir, IncludeADR: opts.IncludeADR}, w)
+		return cmd.RunList(cmd.ListOptions{Store: s, JSON: opts.JSON, Flat: opts.Flat, Compact: opts.Compact, C3Dir: c3Dir, IncludeADR: opts.IncludeADR}, w)
 	case "check":
-		checkOpts := cmd.CheckOptions{
+		return cmd.RunCheckV2(cmd.CheckOptions{
 			Store:      s,
 			JSON:       opts.JSON,
 			ProjectDir: projectDir,
 			C3Dir:      c3Dir,
 			IncludeADR: opts.IncludeADR,
 			Fix:        opts.Fix,
-		}
-		err = cmd.RunCheckV2(checkOpts, w)
+		}, w)
 	case "add":
-		entityType := ""
-		slug := ""
-		if len(opts.Args) >= 1 {
-			entityType = opts.Args[0]
-		}
-		if len(opts.Args) >= 2 {
-			slug = opts.Args[1]
-		}
-		// Capture output to support --json
-		var buf bytes.Buffer
-		var addW io.Writer = w
-		if opts.JSON {
-			addW = &buf
-		}
-		if opts.Goal != "" || opts.Summary != "" || opts.Boundary != "" {
-			addOpts := cmd.AddOptions{
-				EntityType: entityType,
-				Slug:       slug,
-				C3Dir:      c3Dir,
-				Store:      s,
-				Container:  opts.Container,
-				Feature:    opts.Feature,
-				Goal:       opts.Goal,
-				Summary:    opts.Summary,
-				Boundary:   opts.Boundary,
-			}
-			err = cmd.RunAddRich(addOpts, addW)
-		} else {
-			err = cmd.RunAdd(entityType, slug, c3Dir, s, opts.Container, opts.Feature, addW)
-		}
-		if err == nil && opts.JSON {
-			// Parse "Created: <path> (id: <id>)" from output
-			re := regexp.MustCompile(`\(id: ([^)]+)\)`)
-			m := re.FindStringSubmatch(buf.String())
-			if len(m) >= 2 {
-				result := cmd.AddResult{ID: m[1], Path: buf.String()}
-				// Clean path from first Created line
-				rePath := regexp.MustCompile(`Created: (\S+)`)
-				if mp := rePath.FindStringSubmatch(buf.String()); len(mp) >= 2 {
-					result.Path = mp[1]
-				}
-				enc := json.NewEncoder(w)
-				enc.SetIndent("", "  ")
-				err = enc.Encode(result)
-			} else {
-				// Fallback: emit raw output
-				w.Write(buf.Bytes())
-			}
-		}
+		return runAdd(opts, s, c3Dir, w)
 	case "set":
-		id := ""
-		value := ""
-		if len(opts.Args) >= 1 {
-			id = opts.Args[0]
-		}
-		if len(opts.Args) >= 2 {
-			value = opts.Args[1]
-		}
-		// If "section" is the second arg and no --section flag, treat positionally
-		if opts.Field == "" && opts.Section == "" && len(opts.Args) >= 2 {
-			opts.Field = opts.Args[1]
-			if len(opts.Args) >= 3 {
-				value = opts.Args[2]
-			}
-		}
-		setOpts := cmd.SetOptions{
-			Store:   s,
-			C3Dir:   c3Dir,
-			ID:      id,
-			Field:   opts.Field,
-			Section: opts.Section,
-			Value:   value,
-			Append:  opts.Append,
-		}
-		err = cmd.RunSet(setOpts, w)
+		return runSet(opts, s, c3Dir, w)
 	case "wire", "unwire":
-		source, relation, target := "", "", ""
-		if len(opts.Args) == 2 {
-			// Short form: wire <src> <tgt> (cite is default)
-			source = opts.Args[0]
-			target = opts.Args[1]
-		} else {
-			if len(opts.Args) >= 1 {
-				source = opts.Args[0]
-			}
-			if len(opts.Args) >= 2 {
-				relation = opts.Args[1]
-			}
-			if len(opts.Args) >= 3 {
-				target = opts.Args[2]
-			}
-		}
-		if opts.Remove || opts.Command == "unwire" {
-			err = cmd.RunUnwire(s, source, relation, target, w)
-		} else {
-			err = cmd.RunWire(s, source, relation, target, w)
-		}
+		return runWire(opts, s, w)
 	case "lookup":
 		if len(opts.Args) < 1 {
-			fmt.Fprintln(os.Stderr, "error: lookup requires a <file-path> argument")
-			fmt.Fprintln(os.Stderr, "hint: run 'c3x lookup --help' for usage")
-			os.Exit(1)
+			return fmt.Errorf("error: lookup requires a <file-path> argument\nhint: run 'c3x lookup --help' for usage")
 		}
-		err = cmd.RunLookup(cmd.LookupOptions{
+		return cmd.RunLookup(cmd.LookupOptions{
 			Store:      s,
 			FilePath:   opts.Args[0],
 			JSON:       opts.JSON,
@@ -270,112 +172,148 @@ func main() {
 			C3Dir:      c3Dir,
 		}, w)
 	case "codemap":
-		err = cmd.RunCodemap(cmd.CodemapOptions{
-			C3Dir: c3Dir,
-			Store: s,
-			JSON:  opts.JSON,
-		}, w)
+		return cmd.RunCodemap(cmd.CodemapOptions{C3Dir: c3Dir, Store: s, JSON: opts.JSON}, w)
 	case "coverage":
-		err = cmd.RunCoverage(cmd.CoverageOptions{
-			Store:      s,
-			C3Dir:      c3Dir,
-			ProjectDir: projectDir,
-			JSON:       opts.JSON,
-		}, w)
+		return cmd.RunCoverage(cmd.CoverageOptions{Store: s, C3Dir: c3Dir, ProjectDir: projectDir, JSON: opts.JSON}, w)
 	case "schema":
 		entityType := ""
 		if len(opts.Args) >= 1 {
 			entityType = opts.Args[0]
 		}
-		err = cmd.RunSchema(entityType, opts.JSON, w)
+		return cmd.RunSchema(entityType, opts.JSON, w)
 	case "graph":
 		entityID := ""
 		if len(opts.Args) >= 1 {
 			entityID = opts.Args[0]
 		}
 		if entityID == "" {
-			fmt.Fprintln(os.Stderr, "error: graph requires an <entity-id> argument")
-			fmt.Fprintln(os.Stderr, "hint: run 'c3x graph --help' for usage")
-			os.Exit(1)
+			return fmt.Errorf("error: graph requires an <entity-id> argument\nhint: run 'c3x graph --help' for usage")
 		}
-		err = cmd.RunGraph(cmd.GraphOptions{
-			Store:     s,
-			EntityID:  entityID,
-			Depth:     opts.Depth,
-			Direction: opts.Direction,
-			Format:    opts.Format,
-			JSON:      opts.JSON,
-			C3Dir:     c3Dir,
+		return cmd.RunGraph(cmd.GraphOptions{
+			Store: s, EntityID: entityID, Depth: opts.Depth,
+			Direction: opts.Direction, Format: opts.Format,
+			JSON: opts.JSON, C3Dir: c3Dir,
 		}, w)
 	case "delete":
 		id := ""
 		if len(opts.Args) >= 1 {
 			id = opts.Args[0]
 		}
-		err = cmd.RunDelete(cmd.DeleteOptions{
-			C3Dir:  c3Dir,
-			ID:     id,
-			Store:  s,
-			DryRun: opts.DryRun,
-		}, w)
+		return cmd.RunDelete(cmd.DeleteOptions{C3Dir: c3Dir, ID: id, Store: s, DryRun: opts.DryRun}, w)
 	case "query":
 		queryTerm := ""
 		if len(opts.Args) >= 1 {
 			queryTerm = opts.Args[0]
 		}
-		err = cmd.RunQuery(cmd.QueryOptions{
-			Store:      s,
-			Query:      queryTerm,
-			TypeFilter: opts.TypeFilter,
-			Limit:      opts.Limit,
-			JSON:       opts.JSON,
-		}, w)
+		return cmd.RunQuery(cmd.QueryOptions{Store: s, Query: queryTerm, TypeFilter: opts.TypeFilter, Limit: opts.Limit, JSON: opts.JSON}, w)
 	case "diff":
 		commitHash := ""
 		if len(opts.Args) >= 1 {
 			commitHash = opts.Args[0]
 		}
-		err = cmd.RunDiff(s, opts.Mark, commitHash, opts.JSON, w)
+		return cmd.RunDiff(s, opts.Mark, commitHash, opts.JSON, w)
 	case "impact":
 		entityID := ""
 		if len(opts.Args) >= 1 {
 			entityID = opts.Args[0]
 		}
-		err = cmd.RunImpact(cmd.ImpactOptions{
-			Store:    s,
-			EntityID: entityID,
-			Depth:    opts.Depth,
-			JSON:     opts.JSON,
-		}, w)
+		return cmd.RunImpact(cmd.ImpactOptions{Store: s, EntityID: entityID, Depth: opts.Depth, JSON: opts.JSON}, w)
 	case "export":
 		outputDir := c3Dir
 		if len(opts.Args) >= 1 {
 			outputDir = opts.Args[0]
 		}
-		err = cmd.RunExport(cmd.ExportOptions{
-			Store:     s,
-			OutputDir: outputDir,
-			JSON:      opts.JSON,
-		}, w)
+		return cmd.RunExport(cmd.ExportOptions{Store: s, OutputDir: outputDir, JSON: opts.JSON}, w)
 	default:
-		fmt.Fprintf(os.Stderr, "error: unknown command '%s'\n", opts.Command)
-		fmt.Fprintln(os.Stderr, "hint: run 'c3x --help' to see available commands")
-		os.Exit(1)
-	}
-
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		return fmt.Errorf("error: unknown command '%s'\nhint: run 'c3x --help' to see available commands", opts.Command)
 	}
 }
 
-func mustCwd() string {
-	dir, err := os.Getwd()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: cannot get working directory: %v\n", err)
-		os.Exit(1)
+func runAdd(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) error {
+	entityType := ""
+	slug := ""
+	if len(opts.Args) >= 1 {
+		entityType = opts.Args[0]
 	}
-	return dir
+	if len(opts.Args) >= 2 {
+		slug = opts.Args[1]
+	}
+	var buf bytes.Buffer
+	var addW io.Writer = w
+	if opts.JSON {
+		addW = &buf
+	}
+	var err error
+	if opts.Goal != "" || opts.Summary != "" || opts.Boundary != "" {
+		addOpts := cmd.AddOptions{
+			EntityType: entityType, Slug: slug, C3Dir: c3Dir, Store: s,
+			Container: opts.Container, Feature: opts.Feature,
+			Goal: opts.Goal, Summary: opts.Summary, Boundary: opts.Boundary,
+		}
+		err = cmd.RunAddRich(addOpts, addW)
+	} else {
+		err = cmd.RunAdd(entityType, slug, c3Dir, s, opts.Container, opts.Feature, addW)
+	}
+	if err == nil && opts.JSON {
+		re := regexp.MustCompile(`\(id: ([^)]+)\)`)
+		m := re.FindStringSubmatch(buf.String())
+		if len(m) >= 2 {
+			result := cmd.AddResult{ID: m[1], Path: buf.String()}
+			rePath := regexp.MustCompile(`Created: (\S+)`)
+			if mp := rePath.FindStringSubmatch(buf.String()); len(mp) >= 2 {
+				result.Path = mp[1]
+			}
+			enc := json.NewEncoder(w)
+			enc.SetIndent("", "  ")
+			return enc.Encode(result)
+		}
+		w.Write(buf.Bytes())
+	}
+	return err
+}
+
+func runSet(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) error {
+	id := ""
+	value := ""
+	if len(opts.Args) >= 1 {
+		id = opts.Args[0]
+	}
+	if len(opts.Args) >= 2 {
+		value = opts.Args[1]
+	}
+	if opts.Field == "" && opts.Section == "" && len(opts.Args) >= 2 {
+		opts.Field = opts.Args[1]
+		if len(opts.Args) >= 3 {
+			value = opts.Args[2]
+		}
+	}
+	return cmd.RunSet(cmd.SetOptions{
+		Store: s, C3Dir: c3Dir, ID: id,
+		Field: opts.Field, Section: opts.Section,
+		Value: value, Append: opts.Append,
+	}, w)
+}
+
+func runWire(opts cmd.Options, s *store.Store, w io.Writer) error {
+	source, relation, target := "", "", ""
+	if len(opts.Args) == 2 {
+		source = opts.Args[0]
+		target = opts.Args[1]
+	} else {
+		if len(opts.Args) >= 1 {
+			source = opts.Args[0]
+		}
+		if len(opts.Args) >= 2 {
+			relation = opts.Args[1]
+		}
+		if len(opts.Args) >= 3 {
+			target = opts.Args[2]
+		}
+	}
+	if opts.Remove || opts.Command == "unwire" {
+		return cmd.RunUnwire(s, source, relation, target, w)
+	}
+	return cmd.RunWire(s, source, relation, target, w)
 }
 
 func fileExists(path string) bool {
@@ -392,7 +330,6 @@ func hasMarkdownFiles(c3Dir string) bool {
 		if !e.IsDir() && filepath.Ext(e.Name()) == ".md" {
 			return true
 		}
-		// Check subdirectories (containers have .md files inside)
 		if e.IsDir() && e.Name() != "_index" {
 			subEntries, _ := os.ReadDir(filepath.Join(c3Dir, e.Name()))
 			for _, se := range subEntries {
@@ -405,12 +342,10 @@ func hasMarkdownFiles(c3Dir string) bool {
 	return false
 }
 
-func runLegacyCheck(c3Dir string, opts cmd.Options, w io.Writer) {
-	// Use the old walker-based check for pre-migration validation
+func runLegacyCheck(c3Dir string, opts cmd.Options, w io.Writer) error {
 	walkResult, err := walker.WalkC3DocsWithWarnings(c3Dir)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: walking .c3/: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("error: walking .c3/: %w", err)
 	}
 	projectDir := config.ProjectDir(c3Dir)
 	checkOpts := cmd.LegacyCheckOptions{
@@ -423,8 +358,5 @@ func runLegacyCheck(c3Dir string, opts cmd.Options, w io.Writer) {
 		IncludeADR:    opts.IncludeADR,
 		Fix:           opts.Fix,
 	}
-	if err := cmd.RunLegacyCheck(checkOpts, w); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+	return cmd.RunLegacyCheck(checkOpts, w)
 }

@@ -1,3 +1,4 @@
 {"run":1,"commit":"f82fda3","metrics":{"coverage":73.4,"funcs_at_100":71,"total_funcs":198,"uncovered_funcs":127},"status":"keep","description":"baseline","timestamp":1773988527}
 {"run":2,"commit":"fa2887e","metrics":{},"status":"keep","description":"batch 1: 0% functions + low-coverage branches across cmd and internal packages","timestamp":1773989041}
 {"run":3,"commit":"41efdf1","metrics":{"coverage":83.1,"funcs_at_100":99,"total_funcs":219,"uncovered_funcs":120},"status":"keep","description":"batch 2: marketplace tests + cmd gaps (wire, export, list, check_enhanced)","timestamp":1773989552}
+{"run":4,"commit":"918e663","metrics":{"coverage":83.8,"funcs_at_100":102,"total_funcs":219,"uncovered_funcs":117},"status":"keep","description":"batch 3: targeted gaps in add, lookup, migrate, init, check_legacy, marketplace","timestamp":1773989937}

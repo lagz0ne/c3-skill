@@ -143,3 +143,14 @@ func TestAdd_WhitespaceName(t *testing.T) {
 		t.Error("expected error for whitespace-only name")
 	}
 }
+
+func TestList_CorruptYAML(t *testing.T) {
+	dir := t.TempDir()
+	os.WriteFile(filepath.Join(dir, "sources.yaml"), []byte("not: valid: yaml: ["), 0644)
+
+	reg := NewRegistry(dir)
+	_, err := reg.List()
+	if err == nil {
+		t.Error("expected error for corrupt YAML")
+	}
+}

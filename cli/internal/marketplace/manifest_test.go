@@ -66,6 +66,28 @@ func TestParseManifestValidation(t *testing.T) {
 	}
 }
 
+func TestParseManifest_EmptyRuleID(t *testing.T) {
+	_, err := ParseManifest([]byte(`name: test
+rules:
+  - id: ""
+    summary: test
+`))
+	if err == nil {
+		t.Error("expected error for empty rule ID")
+	}
+}
+
+func TestParseManifest_WhitespaceRuleID(t *testing.T) {
+	_, err := ParseManifest([]byte(`name: test
+rules:
+  - id: "   "
+    summary: test
+`))
+	if err == nil {
+		t.Error("expected error for whitespace-only rule ID")
+	}
+}
+
 func containsStr(s, sub string) bool {
 	for i := 0; i <= len(s)-len(sub); i++ {
 		if s[i:i+len(sub)] == sub {

@@ -196,6 +196,78 @@ Bad parent.
 	}
 }
 
+func TestRunLegacyCheck_SuggestFix(t *testing.T) {
+	c3Dir := createFixture(t)
+	// Add component with broken reference "jwt" (not "ref-jwt")
+	// suggestLegacyFix should match via title prefix: "jwt authentication" starts with "jwt"
+	writeFile(t, c3Dir+"/c3-1-api/c3-105-suggest.md", `---
+id: c3-105
+title: suggest
+type: component
+parent: c3-1
+uses: [jwt]
+---
+
+# suggest
+
+## Goal
+
+Test suggest fix.
+`)
+
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+
+	var buf bytes.Buffer
+	RunLegacyCheck(LegacyCheckOptions{
+		Docs:  docs,
+		Graph: graph,
+		JSON:  false,
+	}, &buf)
+
+	output := buf.String()
+	if !strings.Contains(output, "broken reference") {
+		t.Errorf("should report broken reference for 'jwt', got: %s", output)
+	}
+	if !strings.Contains(output, "Did you mean") {
+		t.Errorf("should suggest a fix via title prefix match, got: %s", output)
+	}
+}
+
+func TestRunLegacyCheck_DuplicateTitle(t *testing.T) {
+	c3Dir := createFixture(t)
+	// Add a component with same title "auth" as c3-101 to exercise duplicate title handling
+	writeFile(t, c3Dir+"/c3-1-api/c3-106-dup.md", `---
+id: c3-106
+title: auth
+type: component
+parent: c3-1
+---
+
+# auth duplicate
+
+## Goal
+
+Duplicate title test.
+`)
+
+	docs := loadDocs(t, c3Dir)
+	graph := loadGraph(t, c3Dir)
+
+	var buf bytes.Buffer
+	RunLegacyCheck(LegacyCheckOptions{
+		Docs:  docs,
+		Graph: graph,
+		JSON:  true,
+	}, &buf)
+
+	// This exercises buildLegacyTitleMap with duplicate titles (both "auth")
+	// Just verify it doesn't crash and produces valid output
+	if buf.Len() == 0 {
+		t.Error("should produce output")
+	}
+}
+
 func TestRunLegacyCheck_RuleOrigin(t *testing.T) {
 	c3Dir := createFixture(t)
 

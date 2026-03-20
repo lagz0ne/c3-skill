@@ -244,6 +244,31 @@ func TestRunSet_SectionAppendInvalidJSON(t *testing.T) {
 	}
 }
 
+func TestRunSet_SectionJSONArray_NoExistingTable(t *testing.T) {
+	s := createRichDBFixture(t)
+	// Set up an entity with a section that has no table
+	entity, _ := s.GetEntity("c3-110")
+	entity.Body = "# users\n\n## Goal\n\nManage users.\n\n## Custom Section\n\nSome text here.\n"
+	s.UpdateEntity(entity)
+
+	var buf bytes.Buffer
+	opts := SetOptions{
+		Store:   s,
+		ID:      "c3-110",
+		Section: "Custom Section",
+		Value:   `[{"Key":"value1","Data":"data1"}]`,
+	}
+	err := RunSet(opts, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	updated, _ := s.GetEntity("c3-110")
+	if !strings.Contains(updated.Body, "value1") {
+		t.Error("body should contain the new table data")
+	}
+}
+
 func TestIsJSONArray(t *testing.T) {
 	tests := []struct {
 		input string

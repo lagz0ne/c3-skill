@@ -117,7 +117,7 @@ func Build(graph *walker.C3Graph, cm codemap.CodeMap, c3Dir string) *StructuralI
 		idx.Entities[e.ID] = entry
 
 		// Build ref entries for ref-type entities
-		if docType == frontmatter.DocRef {
+		if docType == frontmatter.DocRef || docType == frontmatter.DocRule {
 			citers := graph.CitedBy(e.ID)
 			var citerIDs []string
 			for _, c := range citers {

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/lagz0ne/c3-design/cli/internal/codemap"
+	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
 	"github.com/lagz0ne/c3-design/cli/internal/walker"
 )
 
@@ -469,6 +470,36 @@ func TestRefGovernance_NoComponents(t *testing.T) {
 	}
 	if result.GovernancePct != 0 {
 		t.Errorf("pct = %f, want 0", result.GovernancePct)
+	}
+}
+
+func TestBuildIndexIncludesRules(t *testing.T) {
+	docs := []frontmatter.ParsedDoc{
+		{Frontmatter: &frontmatter.Frontmatter{ID: "c3-0"}, Path: "README.md", Body: "## Goal\ncontext"},
+		{Frontmatter: &frontmatter.Frontmatter{ID: "rule-logging", Type: "rule", Goal: "Structured logging"}, Path: "rules/rule-logging.md", Body: "## Goal\nlogging\n## Rule\nUse pino\n## Golden Example\n```\nlogger.info()\n```"},
+	}
+	g := walker.BuildGraph(docs)
+	cm := codemap.CodeMap{"rule-logging": {"src/**"}}
+	idx := Build(g, cm, "")
+
+	if _, ok := idx.Entities["rule-logging"]; !ok {
+		t.Fatal("rule-logging not in index entities")
+	}
+	if idx.Entities["rule-logging"].Type != "rule" {
+		t.Errorf("type = %q, want rule", idx.Entities["rule-logging"].Type)
+	}
+	if _, ok := idx.Refs["rule-logging"]; !ok {
+		t.Error("rule-logging not in Refs map")
+	}
+	fe := idx.Files["src/**"]
+	foundEntity := false
+	for _, e := range fe.Entities {
+		if e == "rule-logging" {
+			foundEntity = true
+		}
+	}
+	if !foundEntity {
+		t.Error("rule-logging should appear in file map entities")
 	}
 }
 

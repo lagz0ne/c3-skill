@@ -503,6 +503,25 @@ func TestBuildIndexIncludesRules(t *testing.T) {
 	}
 }
 
+func TestRuleGovernance(t *testing.T) {
+	docs := []frontmatter.ParsedDoc{
+		{Frontmatter: &frontmatter.Frontmatter{ID: "c3-0"}, Path: "README.md"},
+		{Frontmatter: &frontmatter.Frontmatter{ID: "c3-1", Type: "container"}, Path: "c3-1/README.md"},
+		{Frontmatter: &frontmatter.Frontmatter{ID: "c3-101", Type: "component", Parent: "c3-1", Refs: []string{"rule-logging"}}, Path: "c3-1/c3-101.md"},
+		{Frontmatter: &frontmatter.Frontmatter{ID: "c3-102", Type: "component", Parent: "c3-1"}, Path: "c3-1/c3-102.md"},
+		{Frontmatter: &frontmatter.Frontmatter{ID: "rule-logging", Type: "rule"}, Path: "rules/rule-logging.md"},
+	}
+	g := walker.BuildGraph(docs)
+	idx := Build(g, codemap.CodeMap{}, "")
+	gov := RuleGovernance(idx)
+	if gov.TotalComponents != 2 {
+		t.Errorf("TotalComponents = %d, want 2", gov.TotalComponents)
+	}
+	if gov.Governed != 1 {
+		t.Errorf("Governed = %d, want 1", gov.Governed)
+	}
+}
+
 func containsStr(slice []string, val string) bool {
 	for _, s := range slice {
 		if s == val {

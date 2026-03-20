@@ -386,6 +386,49 @@ type RefGovernanceResult struct {
 	UngovernedComponents []string `json:"ungoverned_components"`
 }
 
+// RuleGovernance computes which components cite at least one rule-* entity.
+func RuleGovernance(idx *StructuralIndex) *RefGovernanceResult {
+	var total, governed int
+	var ungoverned []string
+
+	ids := make([]string, 0, len(idx.Entities))
+	for id := range idx.Entities {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+
+	for _, id := range ids {
+		e := idx.Entities[id]
+		if e.Type != "component" || strings.HasPrefix(id, "_") {
+			continue
+		}
+		total++
+		hasRule := false
+		for _, r := range e.Refs {
+			if strings.HasPrefix(r, "rule-") {
+				hasRule = true
+				break
+			}
+		}
+		if hasRule {
+			governed++
+		} else {
+			ungoverned = append(ungoverned, id)
+		}
+	}
+
+	pct := float64(0)
+	if total > 0 {
+		pct = float64(governed) / float64(total) * 100
+	}
+	return &RefGovernanceResult{
+		TotalComponents:      total,
+		Governed:             governed,
+		GovernancePct:        pct,
+		UngovernedComponents: ungoverned,
+	}
+}
+
 // RefGovernance computes which components in the index are governed by at least one ref.
 func RefGovernance(idx *StructuralIndex) *RefGovernanceResult {
 	var total int

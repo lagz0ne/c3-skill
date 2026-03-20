@@ -21,7 +21,8 @@ type CoverageOptions struct {
 // CoverageOutput combines code-map coverage and ref governance metrics.
 type CoverageOutput struct {
 	*codemap.CoverageResult
-	RefGovernance *index.RefGovernanceResult `json:"ref_governance,omitempty"`
+	RefGovernance  *index.RefGovernanceResult `json:"ref_governance,omitempty"`
+	RuleGovernance *index.RefGovernanceResult `json:"rule_governance,omitempty"`
 }
 
 // RunCoverage computes and displays code-map coverage.
@@ -38,17 +39,19 @@ func RunCoverage(opts CoverageOptions, w io.Writer) error {
 	}
 
 	// Build structural index for ref governance
-	var gov *index.RefGovernanceResult
+	var gov, ruleGov *index.RefGovernanceResult
 	docs, walkErr := walker.WalkC3Docs(opts.C3Dir)
 	if walkErr == nil && len(docs) > 0 {
 		graph := walker.BuildGraph(docs)
 		idx := index.Build(graph, cm, opts.C3Dir)
 		gov = index.RefGovernance(idx)
+		ruleGov = index.RuleGovernance(idx)
 	}
 
 	output := CoverageOutput{
 		CoverageResult: result,
 		RefGovernance:  gov,
+		RuleGovernance: ruleGov,
 	}
 
 	// Default: JSON (agent-readable). Human-readable only when HUMAN env is set.
@@ -81,6 +84,13 @@ func RunCoverage(opts CoverageOptions, w io.Writer) error {
 				fmt.Fprintf(w, "    %s\n", c)
 			}
 		}
+	}
+
+	if ruleGov != nil {
+		fmt.Fprintln(w)
+		fmt.Fprintln(w, "Rule Governance")
+		fmt.Fprintf(w, "  components: %d\n", ruleGov.TotalComponents)
+		fmt.Fprintf(w, "  governed:   %d (%d%%)\n", ruleGov.Governed, int(ruleGov.GovernancePct))
 	}
 
 	return nil

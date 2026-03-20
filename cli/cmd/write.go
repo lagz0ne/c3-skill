@@ -40,6 +40,7 @@ func RunWrite(opts WriteOptions, w io.Writer) error {
 func runWriteFull(existing *store.Entity, opts WriteOptions, w io.Writer) error {
 	fm, body := frontmatter.ParseFrontmatter(opts.Content)
 
+	// See also: runSetField in set.go maps the same fields via string key.
 	applyFrontmatter(existing, fm)
 
 	if fm != nil {
@@ -47,6 +48,8 @@ func runWriteFull(existing *store.Entity, opts WriteOptions, w io.Writer) error 
 	} else {
 		existing.Body = opts.Content
 	}
+
+	promoteGoalIfEmpty(existing)
 
 	issues := validateContent(existing)
 	if len(issues) > 0 {
@@ -77,10 +80,8 @@ func runWriteSection(existing *store.Entity, opts WriteOptions, w io.Writer) err
 
 	existing.Body = newBody
 
-	// Auto-promote goal from body if writing the Goal section
-	if opts.Section == "Goal" && existing.Goal == "" {
-		line := strings.SplitN(strings.TrimSpace(opts.Content), "\n", 2)[0]
-		existing.Goal = strings.TrimSpace(line)
+	if opts.Section == "Goal" {
+		promoteGoalIfEmpty(existing)
 	}
 
 	issues := validateContent(existing)
@@ -110,6 +111,8 @@ func availableSections(body string) string {
 	return strings.Join(names, ", ")
 }
 
+// applyFrontmatter updates entity fields from parsed frontmatter.
+// See also: runSetField in set.go maps the same fields via string key.
 func applyFrontmatter(e *store.Entity, fm *frontmatter.Frontmatter) {
 	if fm == nil {
 		return
@@ -140,27 +143,37 @@ func applyFrontmatter(e *store.Entity, fm *frontmatter.Frontmatter) {
 	}
 }
 
-type validationIssue struct {
-	severity string
-	message  string
-	hint     string
+// promoteGoalIfEmpty extracts the first line of ## Goal body section
+// into entity.Goal if the frontmatter goal is empty.
+func promoteGoalIfEmpty(e *store.Entity) {
+	if e.Goal != "" {
+		return
+	}
+	sections := markdown.ParseSections(e.Body)
+	for _, s := range sections {
+		if s.Name == "Goal" {
+			content := strings.TrimSpace(s.Content)
+			if content != "" {
+				e.Goal = strings.SplitN(content, "\n", 2)[0]
+			}
+			return
+		}
+	}
 }
 
-func formatValidationError(id string, issues []validationIssue) error {
+func formatValidationError(id string, issues []Issue) error {
 	var sb strings.Builder
 	for _, issue := range issues {
-		fmt.Fprintf(&sb, "  %s: %s\n", issue.severity, issue.message)
-		if issue.hint != "" {
-			fmt.Fprintf(&sb, "    hint: %s\n", issue.hint)
+		fmt.Fprintf(&sb, "  %s: %s\n", issue.Severity, issue.Message)
+		if issue.Hint != "" {
+			fmt.Fprintf(&sb, "    hint: %s\n", issue.Hint)
 		}
 	}
 	return fmt.Errorf("error: content validation failed for %s\n%s", id, sb.String())
 }
 
-// validateContent checks required schema sections and goal presence.
-func validateContent(e *store.Entity) []validationIssue {
-	var issues []validationIssue
-
+// validateContent checks required schema sections. Pure validation — no mutations.
+func validateContent(e *store.Entity) []Issue {
 	schemaSections := schema.ForType(e.Type)
 	if schemaSections == nil {
 		return nil
@@ -174,6 +187,7 @@ func validateContent(e *store.Entity) []validationIssue {
 		}
 	}
 
+	var issues []Issue
 	for _, sec := range schemaSections {
 		if !sec.Required {
 			continue
@@ -181,57 +195,74 @@ func validateContent(e *store.Entity) []validationIssue {
 
 		content, exists := sectionMap[sec.Name]
 		if !exists {
-			issues = append(issues, validationIssue{
-				severity: "error",
-				message:  fmt.Sprintf("missing required section: %s", sec.Name),
-				hint:     fmt.Sprintf("add ## %s — %s", sec.Name, sec.Purpose),
+			issues = append(issues, Issue{
+				Severity: "error",
+				Message:  fmt.Sprintf("missing required section: %s", sec.Name),
+				Hint:     fmt.Sprintf("add ## %s — %s", sec.Name, sec.Purpose),
 			})
 			continue
 		}
 
 		if content == "" {
-			issues = append(issues, validationIssue{
-				severity: "error",
-				message:  fmt.Sprintf("empty required section: %s", sec.Name),
-				hint:     fmt.Sprintf("add content to ## %s — %s", sec.Name, sec.Purpose),
+			issues = append(issues, Issue{
+				Severity: "error",
+				Message:  fmt.Sprintf("empty required section: %s", sec.Name),
+				Hint:     fmt.Sprintf("add content to ## %s — %s", sec.Name, sec.Purpose),
 			})
-		}
-	}
-
-	// Auto-promote goal from body if frontmatter goal is empty
-	if e.Goal == "" {
-		if bodyGoal, ok := sectionMap["Goal"]; ok && bodyGoal != "" {
-			line := strings.SplitN(bodyGoal, "\n", 2)[0]
-			e.Goal = strings.TrimSpace(line)
 		}
 	}
 
 	return issues
 }
 
-// syncRelationships updates uses/affects/scope relationships from frontmatter.
+// syncRelationships diffs existing relationships against frontmatter
+// and adds/removes to match. Prevents ghost edges from accumulating.
 func syncRelationships(s *store.Store, entityID string, fm *frontmatter.Frontmatter) error {
-	for _, relType := range []struct {
+	existing, _ := s.RelationshipsFrom(entityID)
+
+	// Build desired set from frontmatter
+	type relKey struct {
+		toID, relType string
+	}
+	desired := make(map[relKey]bool)
+	for _, rt := range []struct {
 		targets []string
 		name    string
+		strip   bool
 	}{
-		{fm.Refs, "uses"},
-		{fm.Affects, "affects"},
-		{fm.Scope, "scope"},
-		{fm.Sources, "sources"},
-		{fm.Origin, "origin"},
+		{fm.Refs, "uses", false},
+		{fm.Affects, "affects", false},
+		{fm.Scope, "scope", true},
+		{fm.Sources, "sources", true},
+		{fm.Origin, "origin", true},
 	} {
-		for _, target := range relType.targets {
-			target = frontmatter.StripAnchor(target)
+		for _, target := range rt.targets {
+			if rt.strip {
+				target = frontmatter.StripAnchor(target)
+			}
 			if target == "" {
 				continue
 			}
-			_ = s.AddRelationship(&store.Relationship{
-				FromID:  entityID,
-				ToID:    target,
-				RelType: relType.name,
-			})
+			desired[relKey{target, rt.name}] = true
 		}
 	}
+
+	// Remove stale relationships
+	for _, r := range existing {
+		key := relKey{r.ToID, r.RelType}
+		if !desired[key] {
+			_ = s.RemoveRelationship(r)
+		}
+	}
+
+	// Add new relationships
+	for key := range desired {
+		_ = s.AddRelationship(&store.Relationship{
+			FromID:  entityID,
+			ToID:    key.toID,
+			RelType: key.relType,
+		})
+	}
+
 	return nil
 }

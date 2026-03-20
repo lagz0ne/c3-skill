@@ -173,6 +173,10 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) err
 		if len(opts.Args) >= 1 {
 			entityID = opts.Args[0]
 		}
+		stat, _ := os.Stdin.Stat()
+		if (stat.Mode() & os.ModeCharDevice) != 0 {
+			return fmt.Errorf("error: no input on stdin\nhint: pipe content: echo '...' | c3x write <id>, or: c3x read <id> | c3x write <id>")
+		}
 		content, err := io.ReadAll(os.Stdin)
 		if err != nil {
 			return fmt.Errorf("error: reading stdin: %w", err)

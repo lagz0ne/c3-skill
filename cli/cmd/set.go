@@ -47,6 +47,7 @@ func RunSet(opts SetOptions, w io.Writer) error {
 }
 
 // runSetField updates a frontmatter field via the store.
+// See also: applyFrontmatter in write.go maps the same fields from a Frontmatter struct.
 func runSetField(entity *store.Entity, opts SetOptions, w io.Writer) error {
 	// Map field name to entity field
 	switch opts.Field {
@@ -134,15 +135,10 @@ func runSetSection(entity *store.Entity, opts SetOptions, w io.Writer) error {
 
 	entity.Body = newBody
 
-	// Auto-promote goal from body if setting the Goal section
-	if opts.Section == "Goal" && entity.Goal == "" {
-		line := strings.SplitN(strings.TrimSpace(opts.Value), "\n", 2)[0]
-		if line != "" {
-			entity.Goal = strings.TrimSpace(line)
-		}
+	if opts.Section == "Goal" {
+		promoteGoalIfEmpty(entity)
 	}
 
-	// Validate the result against schema
 	issues := validateContent(entity)
 	if len(issues) > 0 {
 		return formatValidationError(opts.ID, issues)

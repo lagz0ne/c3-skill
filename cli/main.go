@@ -162,6 +162,22 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) err
 			IncludeADR: opts.IncludeADR,
 			Fix:        opts.Fix,
 		}, w)
+	case "read":
+		entityID := ""
+		if len(opts.Args) >= 1 {
+			entityID = opts.Args[0]
+		}
+		return cmd.RunRead(cmd.ReadOptions{Store: s, ID: entityID, JSON: opts.JSON}, w)
+	case "write":
+		entityID := ""
+		if len(opts.Args) >= 1 {
+			entityID = opts.Args[0]
+		}
+		content, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return fmt.Errorf("error: reading stdin: %w", err)
+		}
+		return cmd.RunWrite(cmd.WriteOptions{Store: s, ID: entityID, Content: string(content)}, w)
 	case "add":
 		return runAdd(opts, s, c3Dir, w)
 	case "set":

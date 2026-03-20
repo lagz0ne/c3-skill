@@ -27,6 +27,46 @@ var Commands = []CommandMeta{
 Scaffold .c3/ skeleton (config, README, refs/, rules/, adr/).`,
 	},
 	{
+		Name:     "read",
+		Args:     "<entity-id>",
+		OneLiner: "Output full entity content (frontmatter + body)",
+		Help: `Usage: c3x read <entity-id> [--json]
+
+Output the full content of an entity as markdown (default) or structured JSON.
+Markdown output includes YAML frontmatter + body — same format accepted by write.
+
+Examples:
+  c3x read c3-101                # markdown output
+  c3x read ref-jwt --json        # structured JSON
+  c3x read c3-101 > backup.md    # save to file`,
+	},
+	{
+		Name:     "write",
+		Args:     "<entity-id>",
+		OneLiner: "Replace entity content with validation (stdin)",
+		Help: `Usage: c3x write <entity-id> < content.md
+
+Replace an entity's content from stdin. Parses YAML frontmatter for structured
+fields (goal, summary, status, etc.) and validates the body against the entity
+type's required schema sections before accepting.
+
+Validation rejects writes missing required sections:
+  - Component: Goal, Dependencies
+  - Container: Goal, Components, Responsibilities
+  - Ref: Goal, Choice, Why
+  - Rule: Goal, Rule, Golden Example
+
+If body ## Goal has content but frontmatter goal: is empty, the first line
+is auto-promoted to the goal field.
+
+Relationships (uses, affects, scope) in frontmatter are synced to the DB.
+
+Examples:
+  c3x read c3-101 | edit | c3x write c3-101
+  cat updated-ref.md | c3x write ref-jwt
+  c3x write c3-1 < container.md`,
+	},
+	{
 		Name:     "list",
 		OneLiner: "Topology view with relationships",
 		Help: `Usage: c3x list [--compact] [--flat] [--json] [--include-adr]

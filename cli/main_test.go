@@ -207,6 +207,204 @@ func TestHasMarkdownFiles(t *testing.T) {
 	})
 }
 
+func TestRun_Add(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "add", "ref", "rate-limiting"}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRun_AddJSON(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "add", "ref", "caching", "--json"}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(buf.String(), "ref-caching") {
+		t.Errorf("JSON add output should contain ref-caching: %s", buf.String())
+	}
+}
+
+func TestRun_AddRich(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "add", "ref", "logging", "--goal", "Structured logging"}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRun_Set(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "set", "c3-0", "goal", "Updated goal"}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRun_Wire(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "wire", "c3-101", "ref-jwt"}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRun_Unwire(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	var buf bytes.Buffer
+	// Wire first
+	run([]string{"--c3-dir", c3Dir, "wire", "c3-101", "ref-jwt"}, &buf)
+	buf.Reset()
+	err := run([]string{"--c3-dir", c3Dir, "unwire", "c3-101", "ref-jwt"}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRun_WireThreeArgs(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "wire", "c3-101", "cite", "ref-jwt"}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRun_Delete(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "delete", "ref-jwt", "--dry-run"}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRun_Query(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "query", "auth", "--json"}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRun_Diff(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "diff"}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRun_DiffMark(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "diff", "--mark"}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRun_Impact(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "impact", "c3-101", "--json"}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRun_Export(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	outDir := filepath.Join(t.TempDir(), "exported")
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "export", outDir}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRun_Graph(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "graph", "c3-0"}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRun_Codemap(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "codemap"}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRun_Lookup(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "lookup", "src/main.go"}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRun_MarketplaceList(t *testing.T) {
+	var buf bytes.Buffer
+	err := run([]string{"marketplace", "list"}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRun_ListFlat(t *testing.T) {
+	c3Dir := setupC3DB(t)
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "list", "--flat"}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRun_ListCompact(t *testing.T) {
+	c3Dir := setupC3DB(t)
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "list", "--compact"}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRun_SetWithSection(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "set", "c3-0", "--section", "Goal", "New goal text"}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRun_WireRemoveFlag(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	var buf bytes.Buffer
+	// Wire first
+	run([]string{"--c3-dir", c3Dir, "wire", "c3-101", "ref-jwt"}, &buf)
+	buf.Reset()
+	err := run([]string{"--c3-dir", c3Dir, "wire", "--remove", "c3-101", "ref-jwt"}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 // setupC3DB creates a temp .c3/ dir with a SQLite DB containing a minimal fixture.
 func setupC3DB(t *testing.T) string {
 	t.Helper()
@@ -226,6 +424,38 @@ func setupC3DB(t *testing.T) string {
 		Slug: "", Status: "active", Metadata: "{}",
 		Body: "# TestProject\n\n## Goal\n\nTest.\n",
 	})
+
+	return c3Dir
+}
+
+// setupRichC3DB creates a .c3/ dir with DB containing containers, components, refs.
+func setupRichC3DB(t *testing.T) string {
+	t.Helper()
+	dir := t.TempDir()
+	c3Dir := filepath.Join(dir, ".c3")
+	os.MkdirAll(c3Dir, 0755)
+	// Create container dirs for add commands that write files
+	os.MkdirAll(filepath.Join(c3Dir, "c3-1-api"), 0755)
+
+	dbPath := filepath.Join(c3Dir, "c3.db")
+	s, err := store.Open(dbPath)
+	if err != nil {
+		t.Fatalf("open test db: %v", err)
+	}
+	defer s.Close()
+
+	entities := []*store.Entity{
+		{ID: "c3-0", Type: "system", Title: "TestProject", Slug: "", Body: "# TestProject\n\n## Goal\n\nTest.\n\n## Containers\n\n| ID | Name | Boundary | Goal |\n|----|------|----------|------|\n", Status: "active", Metadata: "{}"},
+		{ID: "c3-1", Type: "container", Title: "api", Slug: "api", ParentID: "c3-0", Goal: "Serve API", Boundary: "service", Body: "# api\n\n## Goal\n\nServe API.\n\n## Components\n\n| ID | Name | Category | Status | Goal Contribution |\n|----|------|----------|--------|-------------------|\n", Status: "active", Metadata: "{}"},
+		{ID: "c3-101", Type: "component", Title: "auth", Slug: "auth", Category: "foundation", ParentID: "c3-1", Body: "# auth\n\n## Goal\n\nHandle auth.\n\n## Related Refs\n\n| Ref | Role |\n|-----|------|\n", Status: "active", Metadata: "{}"},
+		{ID: "ref-jwt", Type: "ref", Title: "JWT", Slug: "jwt", Goal: "JWT tokens", Body: "# JWT\n\n## Goal\n\nJWT tokens.\n", Status: "active", Metadata: "{}"},
+	}
+	for _, e := range entities {
+		if err := s.InsertEntity(e); err != nil {
+			t.Fatalf("seed: %v", err)
+		}
+	}
+	s.AddRelationship(&store.Relationship{FromID: "ref-jwt", ToID: "c3-1", RelType: "scope"})
 
 	return c3Dir
 }

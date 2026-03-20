@@ -5,7 +5,7 @@ title: codemap-lib
 type: component
 category: foundation
 parent: c3-1
-goal: Parse code-map.yaml, match files to components via glob patterns, validate map completeness
+goal: Parse code-map.yaml, match files to components and rules via glob patterns, validate map completeness
 summary: Core library for all codemap operations — used by lookup, codemap-cmd, and coverage-cmd
 uses: [c3-102]
 ---
@@ -14,7 +14,7 @@ uses: [c3-102]
 
 ## Goal
 
-Parse `code-map.yaml`, match files to components via glob patterns, validate map completeness.
+Parse `code-map.yaml`, match files to components and rules via glob patterns, validate map completeness.
 
 ## Container Connection
 

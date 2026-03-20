@@ -5,7 +5,7 @@ title: skill-router
 type: component
 category: foundation
 parent: c3-2
-goal: Classify user intent into one of six operations (onboard/query/audit/change/ref/sweep) and dispatch to the correct reference doc
+goal: Classify user intent into one of seven operations (onboard/query/audit/change/ref/rule/sweep) and dispatch to the correct reference doc
 summary: SKILL.md entry point — the only file Claude Code loads; must fit triggering constraints (≤1024 chars description)
 uses: []
 ---
@@ -14,7 +14,7 @@ uses: []
 
 ## Goal
 
-Classify user intent into one of six operations and dispatch to the correct operation reference.
+Classify user intent into one of seven operations and dispatch to the correct operation reference.
 
 ## Container Connection
 

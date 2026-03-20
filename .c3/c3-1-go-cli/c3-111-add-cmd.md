@@ -5,7 +5,7 @@ title: add-cmd
 type: component
 category: feature
 parent: c3-1
-goal: Create new containers, components, refs, or ADRs with correct numbering and wired into the parent doc
+goal: Create new containers, components, refs, rules, or ADRs with correct numbering and wired into the parent doc
 summary: Assigns IDs via the numbering library, creates stub docs from templates, and updates parent component tables
 uses: [c3-101, c3-102, c3-103, c3-104]
 ---
@@ -14,7 +14,7 @@ uses: [c3-101, c3-102, c3-103, c3-104]
 
 ## Goal
 
-Create new containers, components, refs, or ADRs with correct numbering and wired into the parent doc.
+Create new containers, components, refs, rules, or ADRs with correct numbering and wired into the parent doc.
 
 ## Dependencies
 

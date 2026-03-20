@@ -5,7 +5,7 @@ title: lookup-cmd
 type: component
 category: feature
 parent: c3-1
-goal: Map a file path or glob to the component(s) and refs that govern it
+goal: Map a file path or glob to the component(s), refs, and rules that govern it
 summary: The primary "file context" tool — skill calls this before reading or editing any file
 uses: [c3-101, c3-102, c3-105]
 ---
@@ -14,7 +14,7 @@ uses: [c3-101, c3-102, c3-105]
 
 ## Goal
 
-Map a file path or glob to the component(s) and refs that govern it.
+Map a file path or glob to the component(s), refs, and rules that govern it.
 
 ## Dependencies
 

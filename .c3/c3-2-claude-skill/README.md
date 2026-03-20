@@ -17,7 +17,7 @@ Expose c3 architecture workflows through natural language by routing user intent
 
 ## Responsibilities
 
-- Classify natural language intent into one of six operations
+- Classify natural language intent into one of seven operations
 - Load and execute the appropriate operation reference
 - Call c3x commands at each step of an operation
 - Apply ASSUMPTION_MODE when the user declines to answer clarifying questions
@@ -32,4 +32,4 @@ Expose c3 architecture workflows through natural language by routing user intent
 | ID | Name | Category | Status | Goal Contribution |
 |----|------|----------|--------|-------------------|
 | c3-201 | skill-router | foundation | active | Classifies intent and dispatches to the correct operation reference |
-| c3-210 | operation-refs | feature | active | Provides step-by-step guidance for each operation (onboard/query/audit/change/ref/sweep) |
+| c3-210 | operation-refs | feature | active | Provides step-by-step guidance for each operation (onboard/query/audit/change/ref/rule/sweep) |

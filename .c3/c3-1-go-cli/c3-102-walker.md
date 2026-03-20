@@ -5,7 +5,7 @@ title: walker
 type: component
 category: foundation
 parent: c3-1
-goal: Traverse the .c3/ directory tree to discover all containers, components, refs, and ADRs
+goal: Traverse the .c3/ directory tree to discover all containers, components, refs, rules, and ADRs
 summary: Canonical entity discovery used by list, check, lookup, and codemap commands
 uses: [c3-101]
 ---
@@ -14,7 +14,7 @@ uses: [c3-101]
 
 ## Goal
 
-Traverse the `.c3/` directory tree to discover all containers, components, refs, and ADRs.
+Traverse the `.c3/` directory tree to discover all containers, components, refs, rules, and ADRs.
 
 ## Container Connection
 

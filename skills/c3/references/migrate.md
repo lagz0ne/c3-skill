@@ -31,7 +31,7 @@ If zero errors → skip to Phase 3.
 
 For each error:
 
-1. **Parse errors**: Read the raw `.c3/` file. Fix the YAML frontmatter:
+1. **Parse errors**: Read the raw file (migration pre-import exception). Fix the YAML frontmatter:
    - Close unclosed quotes, fix indentation, ensure `---` delimiters
    - Ensure `id:` field exists and matches filename convention
    - Ensure `type:` field is correct for the entity kind

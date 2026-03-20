@@ -124,14 +124,12 @@ src/auth/**/*.ts
 **Related:** <navigation hints>
 ```
 
-## ID → Path
+## Reading Entities
 
-| Pattern | File |
-|---------|------|
-| `c3-0` | `.c3/README.md` |
-| `c3-N` | `.c3/c3-N-*/README.md` |
-| `c3-NNN` | `.c3/c3-N-*/c3-NNN-*.md` |
-| `adr-*` | `.c3/adr/adr-*.md` |
-| `ref-*` | `.c3/refs/ref-*.md` |
-| `rule-*` | `.c3/rules/rule-*.md` |
-| `recipe-*` | `.c3/recipes/recipe-*.md` |
+All entity content is in the database. Use c3x to read:
+
+```bash
+c3x read <entity-id>              # full content as markdown
+c3x read <entity-id> --json       # structured JSON
+c3x graph <entity-id> --depth 0   # entity summary with relationships
+```

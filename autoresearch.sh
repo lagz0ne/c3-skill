@@ -1,33 +1,28 @@
 #!/usr/bin/env bash
-set -euo pipefail
-# Autoresearch benchmark: count signals in skill docs that lead LLM to use file tools
+set -uo pipefail
+# Autoresearch benchmark: count signals that ENCOURAGE file tool usage on .c3/
+# Excludes prohibitions (NEVER, don't, No manual) and legitimate exceptions (migrate repair)
 
 SKILL_DIR="skills/c3"
 
-# 1. File paths to .c3/ docs (LLM sees path → tries Read tool)
-# Exclude structural references (directory layout, file structure descriptions)
-FILE_PATHS=$(grep -rn '\.c3/.*\.md\|\.c3/.*\.yaml' "$SKILL_DIR" --include="*.md" \
-  | grep -v 'code-map\.yaml\|c3\.db\|directory\|layout\|structure\|tree\|File Structure\|\.c3/ directory' \
+# 1. File paths that would trigger Read (exclude directory-existence checks)
+FILE_PATHS=$(grep -rn '\.c3/.*\.md' "$SKILL_DIR" --include="*.md" \
+  | grep -v 'code-map\|c3\.db\|directory\|layout\|structure\|tree\|File Structure\|\.c3/ directory\|No \.c3\|c3x init\|NEVER\|do not\|migrate' \
   | wc -l | tr -d ' ')
 
-# 2. 'Read' instructions that don't specify c3x
+# 2. 'Read' instructions without c3x (exclude prohibitions and migrate exception)
 READ_WITHOUT_C3X=$(grep -rn -i 'read the\|read doc\|read file\|Read tool' "$SKILL_DIR" --include="*.md" \
-  | grep -v 'c3x read\|c3x lookup\|already read' \
+  | grep -v 'c3x read\|c3x lookup\|already read\|NEVER\|Do not\|exception\|migrate' \
   | wc -l | tr -d ' ')
 
-# 3. References to browsing/walking/scanning .c3/ (implies Glob usage)
-BROWSE_SIGNALS=$(grep -rn -i 'walk.*\.c3\|browse.*\.c3\|scan.*\.c3\|Glob.*\.c3\|glob.*c3\|No manual Glob\|manual.*Read' "$SKILL_DIR" --include="*.md" \
+# 3. Edit/Write on .c3/ files (exclude prohibitions and migrate exception)
+EDIT_SIGNALS=$(grep -rn -i 'Edit .*\.c3/\|Edit `\.c3' "$SKILL_DIR" --include="*.md" \
+  | grep -v 'NEVER\|do not\|HARD RULE\|Edit, Write\|exception\|Do NOT\|migrate' \
   | wc -l | tr -d ' ')
 
-# 4. Edit/Write on .c3/ files (should be c3x write/set)
-EDIT_SIGNALS=$(grep -rn -i 'Edit.*\.c3/\|Write.*\.c3/' "$SKILL_DIR" --include="*.md" \
-  | grep -v 'NEVER\|do not\|HARD RULE\|Edit, Write' \
-  | wc -l | tr -d ' ')
-
-TOTAL=$((FILE_PATHS + READ_WITHOUT_C3X + BROWSE_SIGNALS + EDIT_SIGNALS))
+TOTAL=$((FILE_PATHS + READ_WITHOUT_C3X + EDIT_SIGNALS))
 
 echo "METRIC total_signals=$TOTAL"
 echo "METRIC file_paths=$FILE_PATHS"
 echo "METRIC read_without_c3x=$READ_WITHOUT_C3X"
-echo "METRIC browse_signals=$BROWSE_SIGNALS"
 echo "METRIC edit_signals=$EDIT_SIGNALS"

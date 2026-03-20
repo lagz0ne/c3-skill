@@ -59,11 +59,11 @@ Match from JSON. Read entity files only when body content not in frontmatter.
 ## Step 2: Extract + Lookup
 
 For every file path encountered:
-1. **Run `c3x lookup <file>` before reading any source file** — returns component + governing refs. For directory-level context, use `c3x lookup 'src/auth/**'`.
-2. Read `## Related Refs` in component doc
-3. Find `ref-*` entities from JSON. Read for body content.
+1. **Run `c3x lookup <file>` before reading any source file** — returns component + governing refs/rules. For directory-level context, use `c3x lookup 'src/auth/**'`.
+2. Read `## Related Refs` and `## Related Rules` in component doc
+3. Find `ref-*` and `rule-*` entities from JSON. Read for body content.
 
-Lookup-returned refs = constraints governing that file's code.
+Lookup-returned refs/rules = constraints governing that file's code.
 
 ## Step 3: Explore Code
 
@@ -83,21 +83,22 @@ src/auth/**/*.ts
 | Docs | "where is X", "explain X" | Docs + suggest code |
 | Code | "show me code for X" | Full flow through code |
 | Deep | "explore X thoroughly" | Docs + Code + Related |
-| Constraints | "what rules apply to X" | Full constraint chain |
+| Constraints | "what rules/refs apply to X" | Full constraint chain |
 
 ## Constraint Chain Query
 
 1. Identify target (c3-NNN, c3-N, or c3-0)
 2. Read upward: component → container → context
 3. Extract: explicit constraints (MUST/MUST NOT), boundaries, layer rules
-4. Collect cited refs from Related Refs, read key rules
+4. Collect cited refs and rules from Related Refs / Related Rules, read key constraints
 
 ```
 **Constraint Chain for c3-NNN (Name)**
 
 **Context (c3-0):** [system-wide rule]
 **Container (c3-N):** [container boundary]
-**Patterns:** ref-X: [key rules]
+**Refs:** ref-X: [key patterns]
+**Rules:** rule-X: [key constraints]
 **Layer Boundaries:** MAY: [...] MUST NOT: [...]
 ```
 
@@ -132,4 +133,5 @@ src/auth/**/*.ts
 | `c3-NNN` | `.c3/c3-N-*/c3-NNN-*.md` |
 | `adr-*` | `.c3/adr/adr-*.md` |
 | `ref-*` | `.c3/refs/ref-*.md` |
+| `rule-*` | `.c3/rules/rule-*.md` |
 | `recipe-*` | `.c3/recipes/recipe-*.md` |

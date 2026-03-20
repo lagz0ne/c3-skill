@@ -72,6 +72,7 @@ Scaffold / tear down:
 bash <skill-dir>/bin/c3x.sh add container <slug>
 bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N [--feature]
 bash <skill-dir>/bin/c3x.sh add ref <slug>
+bash <skill-dir>/bin/c3x.sh add rule <slug>
 bash <skill-dir>/bin/c3x.sh delete <id> [--dry-run]
 ```
 

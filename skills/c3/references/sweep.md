@@ -43,10 +43,12 @@ Use subagents for parallelism when multiple containers affected.
 
 **Ref:** Read ref → does proposed change comply or violate? → note severity + override requirements.
 
+**Rule:** Read rule → does proposed change violate the golden pattern? Note severity + remediation.
+
 ## Step 4: Constraint Chain
 
 For each affected component, trace upward:
-- Component constraints → container → context → cited refs
+- Component constraints → container → context → cited refs + rules
 
 Flag any proposed violation.
 

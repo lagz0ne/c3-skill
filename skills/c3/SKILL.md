@@ -58,7 +58,7 @@ CLI: `C3X_MODE=agent bash <skill-dir>/bin/c3x.sh <command> [args]`
 | `coverage` | Code-map coverage stats (JSON default) |
 | `delete <id>` | Remove entity + clean all references (`--dry-run`) |
 
-Types for `add`: `container`, `component`, `ref`, `adr`, `recipe`
+Types for `add`: `container`, `component`, `ref`, `rule`, `adr`, `recipe`
 
 ---
 
@@ -159,6 +159,7 @@ No match = uncharted, proceed with caution.
 ├── README.md                    # Context (c3-0)
 ├── adr/adr-YYYYMMDD-slug.md
 ├── refs/ref-slug.md
+├── rules/rule-slug.md
 ├── recipes/recipe-slug.md
 └── c3-N-name/
     ├── README.md                # Container

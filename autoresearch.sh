@@ -1,22 +1,28 @@
 #!/usr/bin/env bash
-set -euo pipefail
-# Autoresearch benchmark: Go test coverage
-cd "$(dirname "$0")/cli"
+set -uo pipefail
+# Autoresearch benchmark: count signals that ENCOURAGE file tool usage on .c3/
+# Excludes prohibitions (NEVER, don't, No manual) and legitimate exceptions (migrate repair)
 
-# Run tests with coverage
-go test ./... -coverprofile=coverage.out -count=1 2>&1 >/dev/null
+SKILL_DIR="skills/c3"
 
-# Get total coverage
-TOTAL=$(go tool cover -func=coverage.out | tail -1 | awk '{print $NF}' | tr -d '%')
+# 1. File paths that would trigger Read (exclude directory-existence checks)
+FILE_PATHS=$(grep -rn '\.c3/.*\.md' "$SKILL_DIR" --include="*.md" \
+  | grep -v 'code-map\|c3\.db\|directory\|layout\|structure\|tree\|File Structure\|\.c3/ directory\|No \.c3\|c3x init\|NEVER\|do not\|migrate' \
+  | wc -l | tr -d ' ')
 
-# Count per-package coverage
-PKGS_AT_100=$(go tool cover -func=coverage.out | grep -E '^\S+\s+\S+\s+100\.0%' | wc -l)
+# 2. 'Read' instructions without c3x (exclude prohibitions and migrate exception)
+READ_WITHOUT_C3X=$(grep -rn -i 'read the\|read doc\|read file\|Read tool' "$SKILL_DIR" --include="*.md" \
+  | grep -v 'c3x read\|c3x lookup\|already read\|NEVER\|Do not\|exception\|migrate' \
+  | wc -l | tr -d ' ')
 
-# Count total functions
-TOTAL_FUNCS=$(go tool cover -func=coverage.out | grep -v '^total:' | wc -l)
-UNCOVERED=$(go tool cover -func=coverage.out | grep -v '^total:' | grep -v '100.0%' | wc -l)
+# 3. Edit/Write on .c3/ files (exclude prohibitions and migrate exception)
+EDIT_SIGNALS=$(grep -rn -i 'Edit .*\.c3/\|Edit `\.c3' "$SKILL_DIR" --include="*.md" \
+  | grep -v 'NEVER\|do not\|HARD RULE\|Edit, Write\|exception\|Do NOT\|migrate' \
+  | wc -l | tr -d ' ')
 
-echo "METRIC coverage=$TOTAL"
-echo "METRIC funcs_at_100=$((TOTAL_FUNCS - UNCOVERED))"
-echo "METRIC total_funcs=$TOTAL_FUNCS"
-echo "METRIC uncovered_funcs=$UNCOVERED"
+TOTAL=$((FILE_PATHS + READ_WITHOUT_C3X + EDIT_SIGNALS))
+
+echo "METRIC total_signals=$TOTAL"
+echo "METRIC file_paths=$FILE_PATHS"
+echo "METRIC read_without_c3x=$READ_WITHOUT_C3X"
+echo "METRIC edit_signals=$EDIT_SIGNALS"

@@ -163,3 +163,104 @@ func TestRunSet_SectionAppend(t *testing.T) {
 		t.Error("new row should be appended")
 	}
 }
+
+func TestRunSet_AllFields(t *testing.T) {
+	fields := map[string]string{
+		"summary":     "New summary",
+		"boundary":    "service",
+		"category":    "feature",
+		"title":       "New Title",
+		"date":        "2026-03-20",
+		"description": "Test desc",
+	}
+
+	for field, value := range fields {
+		t.Run(field, func(t *testing.T) {
+			s := createDBFixture(t)
+			var buf bytes.Buffer
+			opts := SetOptions{Store: s, ID: "c3-101", Field: field, Value: value}
+			err := RunSet(opts, &buf)
+			if err != nil {
+				t.Fatal(err)
+			}
+			entity, _ := s.GetEntity("c3-101")
+			var got string
+			switch field {
+			case "summary":
+				got = entity.Summary
+			case "boundary":
+				got = entity.Boundary
+			case "category":
+				got = entity.Category
+			case "title":
+				got = entity.Title
+			case "date":
+				got = entity.Date
+			case "description":
+				got = entity.Description
+			}
+			if got != value {
+				t.Errorf("%s = %q, want %q", field, got, value)
+			}
+		})
+	}
+}
+
+func TestRunSet_SectionJSONArray(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	opts := SetOptions{
+		Store:   s,
+		ID:      "c3-101",
+		Section: "Related Refs",
+		Value:   `[{"Ref":"ref-logging","Role":"Structured logging"}]`,
+	}
+	err := RunSet(opts, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	entity, _ := s.GetEntity("c3-101")
+	if !strings.Contains(entity.Body, "ref-logging") {
+		t.Error("body should contain the new table data")
+	}
+}
+
+func TestRunSet_SectionAppendInvalidJSON(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	opts := SetOptions{
+		Store:   s,
+		ID:      "c3-101",
+		Section: "Dependencies",
+		Value:   "not json",
+		Append:  true,
+	}
+	err := RunSet(opts, &buf)
+	if err == nil {
+		t.Error("expected error for invalid JSON in append mode")
+	}
+}
+
+func TestIsJSONArray(t *testing.T) {
+	tests := []struct {
+		input string
+		want  bool
+	}{
+		{`[{"key":"value"}]`, true},
+		{`[]`, true},
+		{`  [1, 2, 3]  `, true},
+		{`not json`, false},
+		{`{"key":"value"}`, false},
+		{`[invalid`, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			if got := isJSONArray(tt.input); got != tt.want {
+				t.Errorf("isJSONArray(%q) = %v, want %v", tt.input, got, tt.want)
+			}
+		})
+	}
+}

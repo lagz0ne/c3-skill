@@ -1,1 +1,2 @@
 {"run":1,"commit":"f82fda3","metrics":{"coverage":73.4,"funcs_at_100":71,"total_funcs":198,"uncovered_funcs":127},"status":"keep","description":"baseline","timestamp":1773988527}
+{"run":2,"commit":"fa2887e","metrics":{},"status":"keep","description":"batch 1: 0% functions + low-coverage branches across cmd and internal packages","timestamp":1773989041}

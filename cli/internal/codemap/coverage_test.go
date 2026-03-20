@@ -270,6 +270,53 @@ func TestMatch_BracketAndGlobMixed(t *testing.T) {
 	}
 }
 
+func TestIsSkippedPath(t *testing.T) {
+	tests := []struct {
+		path string
+		want bool
+	}{
+		{".c3/something", true},
+		{".git/HEAD", true},
+		{"node_modules/pkg/index.js", true},
+		{"dist/bundle.js", true},
+		{"src/main.ts", false},
+		{"README.md", false},
+	}
+	for _, tt := range tests {
+		if got := isSkippedPath(tt.path); got != tt.want {
+			t.Errorf("isSkippedPath(%q) = %v, want %v", tt.path, got, tt.want)
+		}
+	}
+}
+
+func TestListProjectFiles_Fallback(t *testing.T) {
+	dir := t.TempDir()
+	// Not a git repo, so it'll fall back to walk
+	os.WriteFile(filepath.Join(dir, "main.go"), []byte(""), 0644)
+	os.MkdirAll(filepath.Join(dir, "src"), 0755)
+	os.WriteFile(filepath.Join(dir, "src", "app.ts"), []byte(""), 0644)
+	// These should be skipped
+	os.MkdirAll(filepath.Join(dir, ".git"), 0755)
+	os.WriteFile(filepath.Join(dir, ".git", "HEAD"), []byte(""), 0644)
+	os.MkdirAll(filepath.Join(dir, "node_modules"), 0755)
+	os.WriteFile(filepath.Join(dir, "node_modules", "pkg.js"), []byte(""), 0644)
+
+	files, err := ListProjectFiles(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, f := range files {
+		if isSkippedPath(f) {
+			t.Errorf("should not include skipped path: %s", f)
+		}
+	}
+
+	if len(files) != 2 {
+		t.Errorf("expected 2 files, got %d: %v", len(files), files)
+	}
+}
+
 func TestMatch_TraditionalGlobStillWorks(t *testing.T) {
 	// Traditional glob character classes should still work
 	cm := CodeMap{

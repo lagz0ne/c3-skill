@@ -24,16 +24,12 @@ type CoverageOutput struct {
 
 // RunCoverage computes and displays code-map coverage.
 func RunCoverage(opts CoverageOptions, w io.Writer) error {
-	// Build codemap from store
 	allCM, err := opts.Store.AllCodeMap()
 	if err != nil {
 		return fmt.Errorf("code-map error: %w", err)
 	}
 
-	// Convert to codemap.CodeMap type
 	cm := codemap.CodeMap(allCM)
-
-	// Add excludes
 	excludes, _ := opts.Store.Excludes()
 	if len(excludes) > 0 {
 		cm["_exclude"] = excludes

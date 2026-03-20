@@ -160,7 +160,6 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 
 	titleMap := buildTitleMapStore(opts.Store)
 
-	// Build sorted entity list
 	entities, _ := opts.Store.AllEntities()
 	sort.Slice(entities, func(i, j int) bool {
 		return entities[i].ID < entities[j].ID

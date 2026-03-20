@@ -79,51 +79,17 @@ func listJSON(s *store.Store, includeADR bool, w io.Writer) error {
 			fm["description"] = e.Description
 		}
 
-		// Collect uses relationships
 		rels, _ := s.RelationshipsFrom(e.ID)
 		var relationships []string
-		var usesIDs []string
+		relsByType := make(map[string][]string)
 		for _, r := range rels {
 			relationships = append(relationships, r.ToID)
-			if r.RelType == "uses" {
-				usesIDs = append(usesIDs, r.ToID)
+			relsByType[r.RelType] = append(relsByType[r.RelType], r.ToID)
+		}
+		for _, rt := range []string{"uses", "affects", "scope", "sources"} {
+			if ids := relsByType[rt]; len(ids) > 0 {
+				fm[rt] = ids
 			}
-		}
-		if len(usesIDs) > 0 {
-			fm["uses"] = usesIDs
-		}
-
-		// Collect affects
-		var affectsIDs []string
-		for _, r := range rels {
-			if r.RelType == "affects" {
-				affectsIDs = append(affectsIDs, r.ToID)
-			}
-		}
-		if len(affectsIDs) > 0 {
-			fm["affects"] = affectsIDs
-		}
-
-		// Collect scope
-		var scopeIDs []string
-		for _, r := range rels {
-			if r.RelType == "scope" {
-				scopeIDs = append(scopeIDs, r.ToID)
-			}
-		}
-		if len(scopeIDs) > 0 {
-			fm["scope"] = scopeIDs
-		}
-
-		// Collect sources
-		var sourceIDs []string
-		for _, r := range rels {
-			if r.RelType == "sources" {
-				sourceIDs = append(sourceIDs, r.ToID)
-			}
-		}
-		if len(sourceIDs) > 0 {
-			fm["sources"] = sourceIDs
 		}
 
 		var files []string

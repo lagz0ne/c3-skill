@@ -28,7 +28,6 @@ type CodemapResult struct {
 // RunCodemap scaffolds or updates code-map entries in the store for all
 // components and refs. Existing entries are preserved.
 func RunCodemap(opts CodemapOptions, w io.Writer) error {
-	// Get all entities that should be in code-map
 	allEntities, err := opts.Store.AllEntities()
 	if err != nil {
 		return fmt.Errorf("listing entities: %w", err)
@@ -49,7 +48,6 @@ func RunCodemap(opts CodemapOptions, w io.Writer) error {
 	sort.Slice(refs, func(i, j int) bool { return refs[i].ID < refs[j].ID })
 	sort.Slice(rules, func(i, j int) bool { return rules[i].ID < rules[j].ID })
 
-	// Get existing code-map
 	existingCM, _ := opts.Store.AllCodeMap()
 
 	var added, existing []string

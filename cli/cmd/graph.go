@@ -35,8 +35,7 @@ type graphNode struct {
 
 // RunGraph emits a subgraph rooted at the given entity.
 func RunGraph(opts GraphOptions, w io.Writer) error {
-	root, err := opts.Store.GetEntity(opts.EntityID)
-	if err != nil {
+	if _, err := opts.Store.GetEntity(opts.EntityID); err != nil {
 		return fmt.Errorf("entity %q not found", opts.EntityID)
 	}
 
@@ -44,19 +43,7 @@ func RunGraph(opts GraphOptions, w io.Writer) error {
 		return fmt.Errorf("--direction must be 'forward' or 'reverse', got %q", opts.Direction)
 	}
 
-	// Collect subgraph: root + transitive reachable entities
 	entities := collectSubgraphStore(opts.Store, opts.EntityID, opts.Depth, opts.Direction)
-	// Ensure root is included
-	found := false
-	for _, e := range entities {
-		if e.ID == root.ID {
-			found = true
-			break
-		}
-	}
-	if !found {
-		entities = append([]*store.Entity{root}, entities...)
-	}
 
 	if opts.JSON {
 		return graphJSONStore(entities, opts.Store, w)
@@ -151,21 +138,9 @@ func graphNeighborsStore(s *store.Store, id string, direction string) []*store.E
 	}
 
 	if direction == "" {
-		// Also add outbound refs (uses)
 		rels, _ := s.RelationshipsFrom(id)
 		for _, r := range rels {
-			if r.RelType == "uses" {
-				if e, err := s.GetEntity(r.ToID); err == nil {
-					add(e)
-				}
-			}
-		}
-		// scope
-		for _, r := range func() []*store.Relationship {
-			rs, _ := s.RelationshipsFrom(id)
-			return rs
-		}() {
-			if r.RelType == "scope" {
+			if r.RelType == "uses" || r.RelType == "scope" {
 				if e, err := s.GetEntity(r.ToID); err == nil {
 					add(e)
 				}

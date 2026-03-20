@@ -3,7 +3,7 @@ package store
 import (
 	"fmt"
 	"path/filepath"
-	"strings"
+	"sort"
 
 	"github.com/bmatcuk/doublestar/v4"
 )
@@ -132,11 +132,6 @@ func (s *Store) AllCodeMap() (map[string][]string, error) {
 	return result, rows.Err()
 }
 
-// sortStrings sorts a string slice in place (avoid importing "sort" for a tiny helper).
 func sortStrings(s []string) {
-	for i := 1; i < len(s); i++ {
-		for j := i; j > 0 && strings.Compare(s[j-1], s[j]) > 0; j-- {
-			s[j-1], s[j] = s[j], s[j-1]
-		}
-	}
+	sort.Strings(s)
 }

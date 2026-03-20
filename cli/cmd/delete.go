@@ -28,7 +28,6 @@ func RunDelete(opts DeleteOptions, w io.Writer) error {
 		return fmt.Errorf("refusing to delete c3-0 (context root)")
 	}
 
-	// Find entity
 	entity, err := opts.Store.GetEntity(id)
 	if err != nil {
 		return fmt.Errorf("entity %q not found", id)
@@ -50,7 +49,6 @@ func RunDelete(opts DeleteOptions, w io.Writer) error {
 		prefix = "[dry-run] "
 	}
 
-	// Find entities that reference this one via relationships
 	inbound, _ := opts.Store.RelationshipsTo(id)
 	for _, rel := range inbound {
 		fmt.Fprintf(w, "%sRemove relationship %s -[%s]-> %s\n", prefix, rel.FromID, rel.RelType, id)

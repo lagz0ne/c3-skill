@@ -137,7 +137,6 @@ func addContainer(slug, c3Dir string, s *store.Store, w io.Writer) error {
 		Metadata: "{}",
 	}
 
-	// Generate body from template
 	content, err := templates.Render("container.md", map[string]string{
 		"${N}":              strconv.Itoa(n),
 		"${CONTAINER_NAME}": slug,

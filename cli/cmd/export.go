@@ -29,7 +29,6 @@ func RunExport(opts ExportOptions, w io.Writer) error {
 		return fmt.Errorf("export: create output dir: %w", err)
 	}
 
-	// Build a lookup of parent entities for path resolution
 	parentSlug := make(map[string]string) // id -> "c3-N-slug"
 	for _, e := range entities {
 		if e.Type == "container" {

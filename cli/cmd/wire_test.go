@@ -151,3 +151,32 @@ func TestRunUnwire_NotWired(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
+
+// =============================================================================
+// Wire: rule- target detection (uses Related Rules section)
+// =============================================================================
+
+func TestWireRuleUsesRelatedRulesSection(t *testing.T) {
+	dir := t.TempDir()
+	c3Dir := filepath.Join(dir, ".c3")
+	os.MkdirAll(filepath.Join(c3Dir, "c3-1"), 0755)
+	os.MkdirAll(filepath.Join(c3Dir, "rules"), 0755)
+
+	compContent := "---\nid: c3-101\ntype: component\nparent: c3-1\nuses: []\n---\n\n# Auth\n\n## Goal\nAuth\n\n## Related Refs\n\n| Ref | Role |\n|-----|------|\n\n## Related Rules\n\n| Rule | Role |\n|------|------|\n"
+	ruleContent := "---\nid: rule-logging\ntype: rule\n---\n\n# Logging\n"
+
+	os.WriteFile(filepath.Join(c3Dir, "c3-1", "c3-101-auth.md"), []byte(compContent), 0644)
+	os.WriteFile(filepath.Join(c3Dir, "rules", "rule-logging.md"), []byte(ruleContent), 0644)
+
+	var buf bytes.Buffer
+	err := RunWire(c3Dir, "c3-101", "cite", "rule-logging", &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	data, _ := os.ReadFile(filepath.Join(c3Dir, "c3-1", "c3-101-auth.md"))
+	body := string(data)
+	if !strings.Contains(body, "rule-logging") {
+		t.Error("rule-logging should appear in component file")
+	}
+}

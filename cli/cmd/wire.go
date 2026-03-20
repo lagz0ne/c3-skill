@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
 	"github.com/lagz0ne/c3-design/cli/internal/markdown"
@@ -34,12 +35,18 @@ func RunWire(c3Dir, sourceID, relationType, targetID string, w io.Writer) error 
 		return fmt.Errorf("side 1 (uses): %w", err)
 	}
 
-	// Side 2: Add row to source's "Related Refs" table
-	if err := addTableRowIfAbsent(srcPath, "Related Refs", "Ref", targetID, map[string]string{
-		"Ref":  targetID,
-		"Role": "",
+	// Side 2: Add row to appropriate table based on target type
+	sectionName := "Related Refs"
+	colName := "Ref"
+	if strings.HasPrefix(targetID, "rule-") {
+		sectionName = "Related Rules"
+		colName = "Rule"
+	}
+	if err := addTableRowIfAbsent(srcPath, sectionName, colName, targetID, map[string]string{
+		colName: targetID,
+		"Role":  "",
 	}); err != nil {
-		return fmt.Errorf("side 2 (Related Refs): %w", err)
+		return fmt.Errorf("side 2 (%s): %w", sectionName, err)
 	}
 
 	fmt.Fprintf(w, "Wired %s -[cite]-> %s\n", sourceID, targetID)
@@ -68,9 +75,15 @@ func RunUnwire(c3Dir, sourceID, relationType, targetID string, w io.Writer) erro
 		return fmt.Errorf("side 1 (uses): %w", err)
 	}
 
-	// Side 2: Remove row from source's "Related Refs" table where Ref matches target
-	if err := removeTableRow(srcPath, "Related Refs", "Ref", targetID); err != nil {
-		return fmt.Errorf("side 2 (Related Refs): %w", err)
+	// Side 2: Remove row from appropriate table based on target type
+	sectionName := "Related Refs"
+	colName := "Ref"
+	if strings.HasPrefix(targetID, "rule-") {
+		sectionName = "Related Rules"
+		colName = "Rule"
+	}
+	if err := removeTableRow(srcPath, sectionName, colName, targetID); err != nil {
+		return fmt.Errorf("side 2 (%s): %w", sectionName, err)
 	}
 
 	fmt.Fprintf(w, "Unwired %s -[cite]-> %s\n", sourceID, targetID)

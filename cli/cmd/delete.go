@@ -99,6 +99,14 @@ func RunDelete(opts DeleteOptions, w io.Writer) error {
 			}
 		}
 
+		// Clean "Related Rules" table rows where Rule=id
+		if strings.HasPrefix(id, "rule-") {
+			fmt.Fprintf(w, "%sRemove %s from %s Related Rules table\n", prefix, id, ref.ID)
+			if !opts.DryRun {
+				_ = removeTableRow(refPath, "Related Rules", "Rule", id)
+			}
+		}
+
 		// Clean parent reference (component's parent field pointing to deleted container)
 		// This shouldn't happen because we refuse containers with children above
 	}

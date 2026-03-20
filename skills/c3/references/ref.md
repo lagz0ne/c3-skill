@@ -74,7 +74,7 @@ Find components using this pattern.
 
 For each component using pattern:
 1. Run `c3x lookup <file>` per code-map entry — loads constraint chain
-2. Read component doc
+2. `c3x read <component-id>`
 3. Add to `## Related Refs`:
 
 ```markdown
@@ -106,7 +106,7 @@ Ref adoption ADRs use `status: implemented` directly — ref doc IS the delivera
 Flow: `Clarify → Find Citings → Check Compliance → Surface Impact → Execute`
 
 1. **Clarify:** `AskUserQuestion` — add rule / modify rule / remove rule / clarify docs (ASSUMPTION_MODE: skip)
-2. **Find citings:** `c3x list --json` → ref entity → `relationships`. Grep `ref-{slug}` in `.c3/` for depth.
+2. **Find citings:** `c3x list --json` → ref entity → `relationships`. Search via `c3x query ref-{slug}` for depth.
 3. **Check compliance:** `c3x lookup <file>` per code-map entry. Categorize: compliant / needs-update / breaking.
 4. **Surface impact:** `AskUserQuestion` — proceed / narrow / cancel (ASSUMPTION_MODE: skip)
 5. **Execute:** Update ref doc + create ADR. Non-compliant → note as TODO in ADR (don't touch code).
@@ -138,7 +138,7 @@ Filter `type: "ref"`. Show: id, title, goal, citing components.
 bash <skill-dir>/bin/c3x.sh list --json
 ```
 
-Find `id: "ref-{slug}"`, read `relationships`. Read each citing doc.
+Find `id: "ref-{slug}"`, read `relationships`. `c3x read <id>` each citing doc.
 
 ```
 **ref-{slug} Usage**

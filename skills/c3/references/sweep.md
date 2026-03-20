@@ -32,18 +32,18 @@ From proposed change, identify:
 
 Use subagents for parallelism when multiple containers affected.
 
-**Container:** Read README → does change affect responsibilities? → identify affected components.
+**Container:** `c3x read <container-id>` → does change affect responsibilities? → identify affected components.
 
 **Component:**
-1. Read component doc
+1. `c3x read <component-id>`
 2. For each file in code-map: `c3x lookup <file>` — loads constraint chain before inspecting code
 3. Check code against constraints
 4. Does change modify behavior, API, dependencies?
 5. Check applicable refs. Identify downstream dependents.
 
-**Ref:** Read ref → does proposed change comply or violate? → note severity + override requirements.
+**Ref:** `c3x read <ref-id>` → does proposed change comply or violate? → note severity + override requirements.
 
-**Rule:** Read rule → does proposed change violate the golden pattern? Note severity + remediation.
+**Rule:** `c3x read <rule-id>` → does proposed change violate the golden pattern? Note severity + remediation.
 
 ## Step 4: Constraint Chain
 

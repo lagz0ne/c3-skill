@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/lagz0ne/c3-design/cli/internal/markdown"
+	"github.com/lagz0ne/c3-design/cli/internal/schema"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
@@ -268,5 +270,204 @@ func TestRunCheck_RecipeInvalidSources(t *testing.T) {
 	output := buf.String()
 	if strings.Contains(output, "recipe references nonexistent") {
 		t.Errorf("valid sources should not be flagged, got: %s", output)
+	}
+}
+
+func TestValidateColumn_EntityID(t *testing.T) {
+	s := createRichDBFixture(t)
+	titleMap := buildTitleMapStore(s)
+
+	table := &markdown.Table{
+		Headers: []string{"Direction", "What", "From/To"},
+		Rows: []map[string]string{
+			{"Direction": "IN", "What": "data", "From/To": "c3-999"},
+		},
+	}
+	entity := &store.Entity{ID: "c3-101"}
+	col := schema.ColumnDef{Name: "From/To", Type: "entity_id"}
+
+	issues := validateColumn(col, table, entity, CheckOptions{Store: s}, titleMap)
+	if len(issues) == 0 {
+		t.Error("should report unknown entity reference")
+	}
+}
+
+func TestValidateColumn_EntityID_Valid(t *testing.T) {
+	s := createRichDBFixture(t)
+	titleMap := buildTitleMapStore(s)
+
+	table := &markdown.Table{
+		Headers: []string{"Direction", "What", "From/To"},
+		Rows: []map[string]string{
+			{"Direction": "IN", "What": "data", "From/To": "c3-110"},
+		},
+	}
+	entity := &store.Entity{ID: "c3-101"}
+	col := schema.ColumnDef{Name: "From/To", Type: "entity_id"}
+
+	issues := validateColumn(col, table, entity, CheckOptions{Store: s}, titleMap)
+	if len(issues) != 0 {
+		t.Errorf("valid entity reference should produce no issues, got %d", len(issues))
+	}
+}
+
+func TestValidateColumn_RefID(t *testing.T) {
+	s := createRichDBFixture(t)
+	titleMap := buildTitleMapStore(s)
+
+	table := &markdown.Table{
+		Headers: []string{"Ref", "Role"},
+		Rows: []map[string]string{
+			{"Ref": "ref-nonexistent", "Role": "test"},
+		},
+	}
+	entity := &store.Entity{ID: "c3-101"}
+	col := schema.ColumnDef{Name: "Ref", Type: "ref_id"}
+
+	issues := validateColumn(col, table, entity, CheckOptions{Store: s}, titleMap)
+	if len(issues) == 0 {
+		t.Error("should report unknown ref reference")
+	}
+}
+
+func TestValidateColumn_RefID_Valid(t *testing.T) {
+	s := createRichDBFixture(t)
+	titleMap := buildTitleMapStore(s)
+
+	table := &markdown.Table{
+		Headers: []string{"Ref", "Role"},
+		Rows: []map[string]string{
+			{"Ref": "ref-jwt", "Role": "auth"},
+		},
+	}
+	entity := &store.Entity{ID: "c3-101"}
+	col := schema.ColumnDef{Name: "Ref", Type: "ref_id"}
+
+	issues := validateColumn(col, table, entity, CheckOptions{Store: s}, titleMap)
+	if len(issues) != 0 {
+		t.Errorf("valid ref reference should produce no issues, got %d", len(issues))
+	}
+}
+
+func TestValidateColumn_Filepath(t *testing.T) {
+	s := createRichDBFixture(t)
+	projectDir := t.TempDir()
+
+	table := &markdown.Table{
+		Headers: []string{"File", "Purpose"},
+		Rows: []map[string]string{
+			{"File": "nonexistent/file.ts", "Purpose": "test"},
+		},
+	}
+	entity := &store.Entity{ID: "c3-101"}
+	col := schema.ColumnDef{Name: "File", Type: "filepath"}
+
+	issues := validateColumn(col, table, entity, CheckOptions{Store: s, ProjectDir: projectDir}, nil)
+	if len(issues) == 0 {
+		t.Error("should report file does not exist")
+	}
+}
+
+func TestValidateColumn_Filepath_NoProjectDir(t *testing.T) {
+	s := createRichDBFixture(t)
+
+	table := &markdown.Table{
+		Headers: []string{"File", "Purpose"},
+		Rows: []map[string]string{
+			{"File": "nonexistent/file.ts", "Purpose": "test"},
+		},
+	}
+	entity := &store.Entity{ID: "c3-101"}
+	col := schema.ColumnDef{Name: "File", Type: "filepath"}
+
+	// Without ProjectDir, filepath validation is skipped
+	issues := validateColumn(col, table, entity, CheckOptions{Store: s}, nil)
+	if len(issues) != 0 {
+		t.Errorf("should skip filepath validation without ProjectDir, got %d issues", len(issues))
+	}
+}
+
+func TestValidateColumn_EmptyValues(t *testing.T) {
+	s := createRichDBFixture(t)
+	titleMap := buildTitleMapStore(s)
+
+	table := &markdown.Table{
+		Headers: []string{"Direction", "What", "From/To"},
+		Rows: []map[string]string{
+			{"Direction": "IN", "What": "data", "From/To": ""},
+		},
+	}
+	entity := &store.Entity{ID: "c3-101"}
+	col := schema.ColumnDef{Name: "From/To", Type: "entity_id"}
+
+	issues := validateColumn(col, table, entity, CheckOptions{Store: s}, titleMap)
+	if len(issues) != 0 {
+		t.Errorf("empty values should be skipped, got %d issues", len(issues))
+	}
+}
+
+func TestFormatCounts(t *testing.T) {
+	tests := []struct {
+		errors, warnings int
+		want             string
+	}{
+		{1, 0, "1 error"},
+		{2, 0, "2 errors"},
+		{0, 1, "1 warning"},
+		{0, 2, "2 warnings"},
+		{1, 1, "1 error, 1 warning"},
+		{3, 2, "3 errors, 2 warnings"},
+	}
+	for _, tt := range tests {
+		got := formatCounts(tt.errors, tt.warnings)
+		if got != tt.want {
+			t.Errorf("formatCounts(%d, %d) = %q, want %q", tt.errors, tt.warnings, got, tt.want)
+		}
+	}
+}
+
+func TestCountSeverities(t *testing.T) {
+	issues := []Issue{
+		{Severity: "error"},
+		{Severity: "warning"},
+		{Severity: "error"},
+		{Severity: "warning"},
+		{Severity: "warning"},
+	}
+	e, w := countSeverities(issues)
+	if e != 2 || w != 3 {
+		t.Errorf("countSeverities = (%d, %d), want (2, 3)", e, w)
+	}
+}
+
+func TestCountSeverities_Empty(t *testing.T) {
+	e, w := countSeverities(nil)
+	if e != 0 || w != 0 {
+		t.Errorf("countSeverities(nil) = (%d, %d), want (0, 0)", e, w)
+	}
+}
+
+func TestBuildTitleMapStore(t *testing.T) {
+	s := createRichDBFixture(t)
+	titleMap := buildTitleMapStore(s)
+
+	// Should map title -> entity ID
+	if id := titleMap["auth"]; id != "c3-101" {
+		t.Errorf("titleMap[auth] = %q, want c3-101", id)
+	}
+	if id := titleMap["jwt authentication"]; id != "ref-jwt" {
+		t.Errorf("titleMap[jwt authentication] = %q, want ref-jwt", id)
+	}
+}
+
+func TestSuggestByTitle(t *testing.T) {
+	s := createRichDBFixture(t)
+	titleMap := buildTitleMapStore(s)
+
+	if id := suggestByTitle("auth", titleMap); id != "c3-101" {
+		t.Errorf("suggestByTitle(auth) = %q, want c3-101", id)
+	}
+	if id := suggestByTitle("nonexistent", titleMap); id != "" {
+		t.Errorf("suggestByTitle(nonexistent) = %q, want empty", id)
 	}
 }

@@ -86,3 +86,60 @@ func TestDefaultBaseDir(t *testing.T) {
 		t.Errorf("DefaultBaseDir = %q, want %q", d, expected)
 	}
 }
+
+func TestUpdateFetched(t *testing.T) {
+	dir := t.TempDir()
+	reg := NewRegistry(dir)
+
+	reg.Add(Source{Name: "test-source", URL: "https://example.com"})
+
+	err := reg.UpdateFetched("test-source")
+	if err != nil {
+		t.Fatalf("UpdateFetched: %v", err)
+	}
+
+	s, _ := reg.Get("test-source")
+	if s.Fetched.IsZero() {
+		t.Error("fetched time should be updated")
+	}
+}
+
+func TestUpdateFetched_NotFound(t *testing.T) {
+	dir := t.TempDir()
+	reg := NewRegistry(dir)
+
+	err := reg.UpdateFetched("nonexistent")
+	if err == nil {
+		t.Error("expected error for nonexistent source")
+	}
+}
+
+func TestGet_NotFound(t *testing.T) {
+	dir := t.TempDir()
+	reg := NewRegistry(dir)
+
+	_, err := reg.Get("nonexistent")
+	if err == nil {
+		t.Error("expected error for nonexistent source")
+	}
+}
+
+func TestAdd_EmptyName(t *testing.T) {
+	dir := t.TempDir()
+	reg := NewRegistry(dir)
+
+	err := reg.Add(Source{Name: "", URL: "https://example.com"})
+	if err == nil {
+		t.Error("expected error for empty name")
+	}
+}
+
+func TestAdd_WhitespaceName(t *testing.T) {
+	dir := t.TempDir()
+	reg := NewRegistry(dir)
+
+	err := reg.Add(Source{Name: "   ", URL: "https://example.com"})
+	if err == nil {
+		t.Error("expected error for whitespace-only name")
+	}
+}

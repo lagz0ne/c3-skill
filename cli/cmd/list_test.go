@@ -232,3 +232,113 @@ func TestRunList_JSON(t *testing.T) {
 		}
 	}
 }
+
+func TestListTopology_WithRecipes(t *testing.T) {
+	s := createRichDBFixture(t)
+	s.InsertEntity(&store.Entity{
+		ID: "recipe-auth", Type: "recipe", Title: "Auth Flow",
+		Slug: "auth", Description: "Auth flow recipe", Status: "active", Metadata: "{}",
+	})
+	s.AddRelationship(&store.Relationship{FromID: "recipe-auth", ToID: "c3-101", RelType: "sources"})
+
+	var buf bytes.Buffer
+	err := RunList(ListOptions{Store: s, Compact: false}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "Recipes:") {
+		t.Error("should show Recipes section")
+	}
+	if !strings.Contains(output, "recipe-auth") {
+		t.Error("should list recipe-auth")
+	}
+	if !strings.Contains(output, "sources:") {
+		t.Error("should show sources for recipe")
+	}
+}
+
+func TestListTopology_Compact(t *testing.T) {
+	s := createRichDBFixture(t)
+	s.SetCodeMap("c3-101", []string{"src/auth/**"})
+
+	var buf bytes.Buffer
+	err := RunList(ListOptions{Store: s, Compact: true}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if strings.Contains(output, "files:") {
+		t.Error("compact mode should not show files")
+	}
+	if strings.Contains(output, "uses:") {
+		t.Error("compact mode should not show uses")
+	}
+}
+
+func TestListTopology_WithCodeMap(t *testing.T) {
+	s := createRichDBFixture(t)
+	s.SetCodeMap("c3-101", []string{"src/auth/**"})
+
+	var buf bytes.Buffer
+	err := RunList(ListOptions{Store: s, Compact: false}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "files:") {
+		t.Error("non-compact should show files")
+	}
+	if !strings.Contains(output, "src/auth/**") {
+		t.Error("should show code-map pattern")
+	}
+}
+
+func TestListTopology_RulesWithCiters(t *testing.T) {
+	s := createRichDBFixture(t)
+	s.InsertEntity(&store.Entity{
+		ID: "rule-logging", Type: "rule", Title: "Logging",
+		Slug: "logging", Goal: "Structured logging", Status: "active", Metadata: "{}",
+	})
+	s.AddRelationship(&store.Relationship{FromID: "c3-101", ToID: "rule-logging", RelType: "uses"})
+
+	var buf bytes.Buffer
+	err := RunList(ListOptions{Store: s, Compact: false}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "Coding Rules:") {
+		t.Error("should show Coding Rules section")
+	}
+	if !strings.Contains(output, "enforced on:") {
+		t.Error("should show enforced on for cited rules")
+	}
+}
+
+func TestListTopology_RecipesCompact(t *testing.T) {
+	s := createRichDBFixture(t)
+	s.InsertEntity(&store.Entity{
+		ID: "recipe-auth", Type: "recipe", Title: "Auth Flow",
+		Slug: "auth", Description: "Auth flow recipe", Status: "active", Metadata: "{}",
+	})
+	s.AddRelationship(&store.Relationship{FromID: "recipe-auth", ToID: "c3-101", RelType: "sources"})
+
+	var buf bytes.Buffer
+	err := RunList(ListOptions{Store: s, Compact: true}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "recipe-auth") {
+		t.Error("compact should still list recipe-auth")
+	}
+	if strings.Contains(output, "sources:") {
+		t.Error("compact should not show sources detail")
+	}
+}

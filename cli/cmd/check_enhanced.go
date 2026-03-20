@@ -418,6 +418,20 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 				}
 			}
 		}
+
+		// Validate origin references for rules
+		if docType == frontmatter.DocRule && len(entity.Frontmatter.Origin) > 0 {
+			for _, originID := range entity.Frontmatter.Origin {
+				if opts.Graph.Get(originID) == nil {
+					issues = append(issues, Issue{
+						Severity: "error",
+						Entity:   entity.ID,
+						Message:  fmt.Sprintf("origin reference %q not found in graph", originID),
+						Hint:     "origin should reference an existing ref or ADR entity",
+					})
+				}
+			}
+		}
 	}
 
 	// Code-map validation

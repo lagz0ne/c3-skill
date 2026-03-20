@@ -7,6 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
+	"github.com/lagz0ne/c3-design/cli/internal/walker"
 )
 
 // =============================================================================
@@ -1319,5 +1322,30 @@ Standard.
 	output := buf.String()
 	if strings.Contains(output, "does not cite it") {
 		t.Errorf("all components cite the ref, should have no scope warnings, got: %s", output)
+	}
+}
+
+// =============================================================================
+// Origin validation: rules referencing nonexistent origin entities
+// =============================================================================
+
+func TestCheckOriginValidation(t *testing.T) {
+	docs := []frontmatter.ParsedDoc{
+		{Frontmatter: &frontmatter.Frontmatter{ID: "c3-0"}, Path: "README.md", Body: "## Goal\ncontext"},
+		{Frontmatter: &frontmatter.Frontmatter{ID: "rule-logging", Type: "rule", Origin: []string{"ref-nonexistent"}}, Path: "rules/rule-logging.md", Body: "## Goal\nlog\n## Rule\nUse pino\n## Golden Example\n```\nlogger.info()\n```"},
+	}
+	g := walker.BuildGraph(docs)
+	var buf bytes.Buffer
+	opts := CheckOptions{
+		Graph: g,
+		Docs:  docs,
+		JSON:  true,
+		C3Dir: t.TempDir(),
+	}
+	RunCheckV2(opts, &buf)
+
+	output := buf.String()
+	if !strings.Contains(output, "ref-nonexistent") {
+		t.Error("check should flag invalid origin reference")
 	}
 }

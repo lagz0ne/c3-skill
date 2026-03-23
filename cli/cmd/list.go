@@ -22,7 +22,7 @@ type ListOptions struct {
 // RunList outputs the topology of entities from the store.
 func RunList(opts ListOptions, w io.Writer) error {
 	if opts.JSON {
-		return listJSON(opts.Store, opts.IncludeADR, w)
+		return listJSON(opts.Store, opts.IncludeADR, opts.Compact, w)
 	}
 	if opts.Flat {
 		return listFlat(opts.Store, opts.IncludeADR, w)
@@ -30,7 +30,7 @@ func RunList(opts ListOptions, w io.Writer) error {
 	return listTopology(opts.Store, opts.Compact, opts.IncludeADR, w)
 }
 
-func listJSON(s *store.Store, includeADR bool, w io.Writer) error {
+func listJSON(s *store.Store, includeADR, compact bool, w io.Writer) error {
 	entities, err := s.AllEntities()
 	if err != nil {
 		return err
@@ -47,6 +47,24 @@ func listJSON(s *store.Store, includeADR bool, w io.Writer) error {
 	sort.Slice(entities, func(i, j int) bool {
 		return entities[i].ID < entities[j].ID
 	})
+
+	if compact {
+		type compactEntity struct {
+			ID     string `json:"id"`
+			Type   string `json:"type"`
+			Title  string `json:"title"`
+			Parent string `json:"parent,omitempty"`
+			Status string `json:"status,omitempty"`
+		}
+		var result []compactEntity
+		for _, e := range entities {
+			result = append(result, compactEntity{
+				ID: e.ID, Type: e.Type, Title: e.Title,
+				Parent: e.ParentID, Status: e.Status,
+			})
+		}
+		return writeJSON(w, result)
+	}
 
 	type jsonEntity struct {
 		ID            string                 `json:"id"`

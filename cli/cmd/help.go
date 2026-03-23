@@ -168,11 +168,11 @@ Example: c3x schema component --json`,
 	},
 	{
 		Name:     "codemap",
-		OneLiner: "Scaffold code-map.yaml for all components, refs + rules",
+		OneLiner: "Scaffold code-map entries for all components, refs + rules",
 		Help: `Usage: c3x codemap [--json]
 
-Scaffold or update .c3/code-map.yaml with stubs for every component and ref
-in the C3 graph. Existing entries (patterns already set) are preserved.
+Scaffold or update code-map entries in the store for every component, ref,
+and rule in the C3 graph. Existing entries (patterns already set) are preserved.
 New entries are added with empty pattern lists for you to fill in.
 
 After scaffolding, edit patterns manually or with your LLM, then check:
@@ -189,7 +189,7 @@ Example: c3x codemap`,
 		OneLiner: "Map file to component(s) + refs",
 		Help: `Usage: c3x lookup <file-or-glob> [--json]
 
-Map a file path (or glob pattern) to owning component(s) from code-map.yaml.
+Map a file path (or glob pattern) to owning component(s) from the code-map.
 Shows component goal, summary, and cited refs with their goals.
 Glob arguments expand against the project and show a file map.
 Bracket paths ([id], [...slug]) for Next.js/SvelteKit routes work automatically.
@@ -208,7 +208,7 @@ Coverage % = mapped / (total - excluded), so _exclude patterns don't penalize yo
 Uses git ls-files for file discovery (falls back to filesystem walk).
 Default output is JSON; set HUMAN=1 for human-readable text.
 
-Add _exclude patterns to code-map.yaml to mark intentional exclusions:
+Add _exclude patterns to mark intentional exclusions:
   _exclude:
     - "**/*.test.ts"
     - "**/*.spec.ts"

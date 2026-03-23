@@ -180,7 +180,7 @@ Fill via `c3x write <id>`: Goal, Constraint (required), Why (required), Scope/Ex
 bash <skill-dir>/bin/c3x.sh codemap
 ```
 
-Scaffolds `.c3/code-map.yaml` with empty stubs for every component, ref, and rule.
+Scaffolds code-map entries in the store for every component, ref, and rule.
 Idempotent — safe to re-run; existing patterns are preserved.
 
 After scaffolding, fill in glob patterns for each entry, then verify:
@@ -221,7 +221,7 @@ Issues → Inventory (Gate 0) or Detail (Gate 1).
 ## Final Checks
 
 ```bash
-bash <skill-dir>/bin/c3x.sh codemap                    # scaffold/update code-map.yaml stubs
+bash <skill-dir>/bin/c3x.sh codemap                    # scaffold/update code-map entries
 bash <skill-dir>/bin/c3x.sh list
 bash <skill-dir>/bin/c3x.sh check
 bash <skill-dir>/bin/c3x.sh lookup <any-mapped-file>   # spot-check single file

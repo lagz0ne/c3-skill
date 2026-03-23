@@ -3,8 +3,6 @@ package cmd
 import (
 	"bytes"
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -13,11 +11,9 @@ import (
 
 func TestRunCodemap_ScaffoldsEntries(t *testing.T) {
 	s := createRichDBFixture(t)
-	c3Dir := filepath.Join(t.TempDir(), ".c3")
-	os.MkdirAll(c3Dir, 0755)
 
 	var buf bytes.Buffer
-	err := RunCodemap(CodemapOptions{C3Dir: c3Dir, Store: s, JSON: false}, &buf)
+	err := RunCodemap(CodemapOptions{Store: s, JSON: false}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -32,18 +28,14 @@ func TestRunCodemap_ScaffoldsEntries(t *testing.T) {
 		t.Error("should have added code-map entries for components/refs")
 	}
 
-	// Verify code-map.yaml was written
-	cmPath := filepath.Join(c3Dir, "code-map.yaml")
-	data, err := os.ReadFile(cmPath)
-	if err != nil {
-		t.Fatal("code-map.yaml should be created")
-	}
-	content := string(data)
-	if !strings.Contains(content, "# Components") {
-		t.Error("code-map should have Components section")
-	}
-	if !strings.Contains(content, "# Refs") {
-		t.Error("code-map should have Refs section")
+	for _, id := range result.Added {
+		patterns, err := s.CodeMapFor(id)
+		if err != nil {
+			t.Fatalf("CodeMapFor(%s): %v", id, err)
+		}
+		if len(patterns) > 0 {
+			t.Errorf("scaffolded entry %s should have empty patterns, got %v", id, patterns)
+		}
 	}
 }
 
@@ -52,11 +44,8 @@ func TestRunCodemap_PreservesExisting(t *testing.T) {
 	// Pre-set code-map entry for c3-101
 	s.SetCodeMap("c3-101", []string{"src/auth/**"})
 
-	c3Dir := filepath.Join(t.TempDir(), ".c3")
-	os.MkdirAll(c3Dir, 0755)
-
 	var buf bytes.Buffer
-	err := RunCodemap(CodemapOptions{C3Dir: c3Dir, Store: s, JSON: false}, &buf)
+	err := RunCodemap(CodemapOptions{Store: s, JSON: false}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,24 +56,27 @@ func TestRunCodemap_PreservesExisting(t *testing.T) {
 	if !containsStr2(result.Existing, "c3-101") {
 		t.Error("c3-101 should be in existing list")
 	}
+
+	patterns, _ := s.CodeMapFor("c3-101")
+	if len(patterns) != 1 || patterns[0] != "src/auth/**" {
+		t.Errorf("expected preserved pattern, got %v", patterns)
+	}
 }
 
 func TestRunCodemap_HumanOutput(t *testing.T) {
 	s := createRichDBFixture(t)
-	c3Dir := filepath.Join(t.TempDir(), ".c3")
-	os.MkdirAll(c3Dir, 0755)
 
 	t.Setenv("HUMAN", "1")
 
 	var buf bytes.Buffer
-	err := RunCodemap(CodemapOptions{C3Dir: c3Dir, Store: s, JSON: false}, &buf)
+	err := RunCodemap(CodemapOptions{Store: s, JSON: false}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	output := buf.String()
-	if !strings.Contains(output, "code-map:") {
-		t.Error("human output should contain 'code-map:'")
+	if !strings.Contains(output, "codemap scaffolded") {
+		t.Error("human output should contain 'codemap scaffolded'")
 	}
 	if !strings.Contains(output, "added:") {
 		t.Error("human output should contain 'added:'")
@@ -95,18 +87,15 @@ func TestRunCodemap_WithExcludes(t *testing.T) {
 	s := createRichDBFixture(t)
 	s.AddExclude("**/*.test.ts")
 
-	c3Dir := filepath.Join(t.TempDir(), ".c3")
-	os.MkdirAll(c3Dir, 0755)
-
 	var buf bytes.Buffer
-	err := RunCodemap(CodemapOptions{C3Dir: c3Dir, Store: s}, &buf)
+	err := RunCodemap(CodemapOptions{Store: s}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	data, _ := os.ReadFile(filepath.Join(c3Dir, "code-map.yaml"))
-	if !strings.Contains(string(data), "_exclude") {
-		t.Error("code-map should contain _exclude section")
+	excludes, _ := s.Excludes()
+	if len(excludes) != 1 || excludes[0] != "**/*.test.ts" {
+		t.Errorf("expected exclude pattern in store, got %v", excludes)
 	}
 }
 
@@ -118,17 +107,15 @@ func TestRunCodemap_WithRules(t *testing.T) {
 		Slug: "logging", Status: "active", Metadata: "{}",
 	})
 
-	c3Dir := filepath.Join(t.TempDir(), ".c3")
-	os.MkdirAll(c3Dir, 0755)
-
 	var buf bytes.Buffer
-	err := RunCodemap(CodemapOptions{C3Dir: c3Dir, Store: s}, &buf)
+	err := RunCodemap(CodemapOptions{Store: s}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	data, _ := os.ReadFile(filepath.Join(c3Dir, "code-map.yaml"))
-	if !strings.Contains(string(data), "# Rules") {
-		t.Error("code-map should have Rules section")
+	var result CodemapResult
+	json.Unmarshal(buf.Bytes(), &result)
+	if !containsStr2(result.Added, "rule-logging") {
+		t.Error("rule-logging should be in added list")
 	}
 }

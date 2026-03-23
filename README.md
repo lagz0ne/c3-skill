@@ -140,12 +140,12 @@ The plugin ships with pre-built binaries — no Go toolchain, no npm, no PATH co
 
 ```
 skills/c3/bin/
-├── VERSION                    # "7.0.0"
+├── VERSION                    # "7.0.2"
 ├── c3x.sh                    # detects OS/ARCH, runs the right binary
-├── c3x-7.0.0-linux-amd64
-├── c3x-7.0.0-linux-arm64
-├── c3x-7.0.0-darwin-amd64
-└── c3x-7.0.0-darwin-arm64
+├── c3x-7.0.2-linux-amd64
+├── c3x-7.0.2-linux-arm64
+├── c3x-7.0.2-darwin-amd64
+└── c3x-7.0.2-darwin-arm64
 ```
 
 Each plugin version carries its own binary. Different projects can use different versions without conflict.

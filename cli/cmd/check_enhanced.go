@@ -77,7 +77,7 @@ func hintFor(message string) string {
 		substr string
 		hint   string
 	}{
-		{"code-map parse error", "fix YAML syntax in .c3/code-map.yaml"},
+		{"code-map parse error", "check code-map entries with 'c3x list'"},
 		{"missing required section", ""},
 		{"empty required section", ""},
 		{"empty required table", "add at least one data row below the table headers"},

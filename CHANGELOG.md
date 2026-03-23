@@ -5,6 +5,18 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.0.2] - 2026-03-23
+
+### Changed
+
+- **Codemap is DB-only** — `c3x codemap` no longer writes `.c3/code-map.yaml`; all code-map data lives exclusively in the SQLite store. `c3x export` still produces the YAML file when needed.
+- Removed no-op `SetCodeMap` calls for empty scaffolds — eliminates unnecessary DB transactions
+
+### Fixed
+
+- Skill docs enforced c3x-only access — bare `Read`/`Glob`/`Grep` on `.c3/` files replaced with `c3x` commands throughout all operation references
+- Updated stale hint text referencing `code-map.yaml` in validation output
+
 ## [7.0.0] - 2026-03-20
 
 ### Breaking

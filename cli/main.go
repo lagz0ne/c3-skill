@@ -199,7 +199,7 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) err
 			C3Dir:      c3Dir,
 		}, w)
 	case "codemap":
-		return cmd.RunCodemap(cmd.CodemapOptions{C3Dir: c3Dir, Store: s, JSON: opts.JSON}, w)
+		return cmd.RunCodemap(cmd.CodemapOptions{Store: s, JSON: opts.JSON}, w)
 	case "coverage":
 		return cmd.RunCoverage(cmd.CoverageOptions{Store: s, C3Dir: c3Dir, ProjectDir: projectDir, JSON: opts.JSON}, w)
 	case "schema":

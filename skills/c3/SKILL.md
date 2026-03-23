@@ -53,7 +53,7 @@ CLI: `C3X_MODE=agent bash <skill-dir>/bin/c3x.sh <command> [args]`
 | `set <id> --section <name>` | Update section content (text or JSON table) |
 | `wire <src> <tgt>` | Link component to ref (`--remove` to unlink) |
 | `schema <type>` | Section definitions for entity type (`--json`) |
-| `codemap` | Scaffold `.c3/code-map.yaml` with stubs for all components + refs |
+| `codemap` | Scaffold code-map entries for all components, refs + rules |
 | `lookup <file-or-glob>` | File or glob → component + refs (`--json`) |
 | `coverage` | Code-map coverage stats (JSON default) |
 | `delete <id>` | Remove entity + clean all references (`--dry-run`) |

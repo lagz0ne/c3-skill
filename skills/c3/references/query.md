@@ -53,7 +53,7 @@ Match from JSON. Use `c3x read <id>` when body content is needed beyond what `li
 | Source | Use For |
 |--------|---------|
 | Component name | Class/module names |
-| code-map.yaml | Direct file paths, symbols |
+| code-map (DB) | Direct file paths, symbols |
 | Technology | Framework patterns |
 
 ## Step 2: Extract + Lookup
@@ -71,7 +71,7 @@ Lookup-returned refs/rules = constraints governing that file's code.
 # Glob patterns
 src/auth/**/*.ts
 # Grep class/function names
-# Read specific files from code-map.yaml
+# Read specific files from code-map lookup
 ```
 
 ---

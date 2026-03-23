@@ -7,10 +7,10 @@ import (
 )
 
 func TestRunAdd_Container(t *testing.T) {
-	s, c3Dir := createDBFixtureWithC3Dir(t)
+	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("container", "payments", c3Dir, s, "", false, &buf)
+	err := RunAdd("container", "payments", s, "", false, &buf)
 	if err != nil {
 		t.Fatalf("RunAdd container failed: %v", err)
 	}
@@ -34,10 +34,10 @@ func TestRunAdd_Container(t *testing.T) {
 }
 
 func TestRunAdd_Component(t *testing.T) {
-	s, c3Dir := createDBFixtureWithC3Dir(t)
+	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("component", "logging", c3Dir, s, "c3-1", false, &buf)
+	err := RunAdd("component", "logging", s, "c3-1", false, &buf)
 	if err != nil {
 		t.Fatalf("RunAdd component failed: %v", err)
 	}
@@ -56,10 +56,10 @@ func TestRunAdd_Component(t *testing.T) {
 }
 
 func TestRunAdd_ComponentFeature(t *testing.T) {
-	s, c3Dir := createDBFixtureWithC3Dir(t)
+	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("component", "checkout", c3Dir, s, "c3-1", true, &buf)
+	err := RunAdd("component", "checkout", s, "c3-1", true, &buf)
 	if err != nil {
 		t.Fatalf("RunAdd feature component failed: %v", err)
 	}
@@ -75,10 +75,10 @@ func TestRunAdd_ComponentFeature(t *testing.T) {
 }
 
 func TestRunAdd_ComponentMissingContainer(t *testing.T) {
-	s, c3Dir := createDBFixtureWithC3Dir(t)
+	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("component", "orphan", c3Dir, s, "", false, &buf)
+	err := RunAdd("component", "orphan", s, "", false, &buf)
 	if err == nil {
 		t.Fatal("expected error when --container is missing")
 	}
@@ -88,10 +88,10 @@ func TestRunAdd_ComponentMissingContainer(t *testing.T) {
 }
 
 func TestRunAdd_ComponentContainerNotFound(t *testing.T) {
-	s, c3Dir := createDBFixtureWithC3Dir(t)
+	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("component", "orphan", c3Dir, s, "c3-99", false, &buf)
+	err := RunAdd("component", "orphan", s, "c3-99", false, &buf)
 	if err == nil {
 		t.Fatal("expected error when container doesn't exist")
 	}
@@ -104,7 +104,7 @@ func TestRunAdd_Ref(t *testing.T) {
 	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("ref", "rate-limiting", "", s, "", false, &buf)
+	err := RunAdd("ref", "rate-limiting", s, "", false, &buf)
 	if err != nil {
 		t.Fatalf("RunAdd ref failed: %v", err)
 	}
@@ -128,7 +128,7 @@ func TestRunAdd_RefDuplicate(t *testing.T) {
 	var buf bytes.Buffer
 
 	// ref-jwt already exists in fixture
-	err := RunAdd("ref", "jwt", "", s, "", false, &buf)
+	err := RunAdd("ref", "jwt", s, "", false, &buf)
 	if err == nil {
 		t.Fatal("expected error when ref already exists")
 	}
@@ -141,7 +141,7 @@ func TestRunAdd_Adr(t *testing.T) {
 	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("adr", "oauth-support", "", s, "", false, &buf)
+	err := RunAdd("adr", "oauth-support", s, "", false, &buf)
 	if err != nil {
 		t.Fatalf("RunAdd adr failed: %v", err)
 	}
@@ -156,7 +156,7 @@ func TestRunAdd_Recipe(t *testing.T) {
 	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("recipe", "auth-flow", "", s, "", false, &buf)
+	err := RunAdd("recipe", "auth-flow", s, "", false, &buf)
 	if err != nil {
 		t.Fatalf("RunAdd recipe failed: %v", err)
 	}
@@ -180,11 +180,11 @@ func TestRunAdd_RecipeDuplicate(t *testing.T) {
 	var buf bytes.Buffer
 
 	// Create first
-	RunAdd("recipe", "auth-flow", "", s, "", false, &buf)
+	RunAdd("recipe", "auth-flow", s, "", false, &buf)
 	buf.Reset()
 
 	// Duplicate should fail
-	err := RunAdd("recipe", "auth-flow", "", s, "", false, &buf)
+	err := RunAdd("recipe", "auth-flow", s, "", false, &buf)
 	if err == nil {
 		t.Fatal("expected error when recipe already exists")
 	}
@@ -197,7 +197,7 @@ func TestAddRule(t *testing.T) {
 	s := createDBFixture(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("rule", "structured-logging", "", s, "", false, &buf)
+	err := RunAdd("rule", "structured-logging", s, "", false, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -212,10 +212,10 @@ func TestAddRule(t *testing.T) {
 }
 
 func TestRunAdd_InvalidSlug(t *testing.T) {
-	s, c3Dir := createDBFixtureWithC3Dir(t)
+	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("container", "Invalid_Slug", c3Dir, s, "", false, &buf)
+	err := RunAdd("container", "Invalid_Slug", s, "", false, &buf)
 	if err == nil {
 		t.Fatal("expected error for invalid slug")
 	}
@@ -225,10 +225,10 @@ func TestRunAdd_InvalidSlug(t *testing.T) {
 }
 
 func TestRunAdd_UnknownType(t *testing.T) {
-	s, c3Dir := createDBFixtureWithC3Dir(t)
+	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("widget", "test", c3Dir, s, "", false, &buf)
+	err := RunAdd("widget", "test", s, "", false, &buf)
 	if err == nil {
 		t.Fatal("expected error for unknown entity type")
 	}
@@ -238,10 +238,10 @@ func TestRunAdd_UnknownType(t *testing.T) {
 }
 
 func TestRunAdd_MissingArgs(t *testing.T) {
-	s, c3Dir := createDBFixtureWithC3Dir(t)
+	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("", "", c3Dir, s, "", false, &buf)
+	err := RunAdd("", "", s, "", false, &buf)
 	if err == nil {
 		t.Fatal("expected error for missing args")
 	}
@@ -251,15 +251,15 @@ func TestRunAdd_MissingArgs(t *testing.T) {
 }
 
 func TestRunAdd_SequentialContainers(t *testing.T) {
-	s, c3Dir := createDBFixtureWithC3Dir(t)
+	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
 	// Add container 3
-	RunAdd("container", "payments", c3Dir, s, "", false, &buf)
+	RunAdd("container", "payments", s, "", false, &buf)
 	buf.Reset()
 
 	// Add container 4 (store is already updated, no need to reload)
-	err := RunAdd("container", "worker", c3Dir, s, "", false, &buf)
+	err := RunAdd("container", "worker", s, "", false, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -277,10 +277,10 @@ func TestRunAdd_RuleDuplicate(t *testing.T) {
 	s := createDBFixture(t)
 	var buf bytes.Buffer
 
-	RunAdd("rule", "structured-logging", "", s, "", false, &buf)
+	RunAdd("rule", "structured-logging", s, "", false, &buf)
 	buf.Reset()
 
-	err := RunAdd("rule", "structured-logging", "", s, "", false, &buf)
+	err := RunAdd("rule", "structured-logging", s, "", false, &buf)
 	if err == nil {
 		t.Fatal("expected error for duplicate rule")
 	}
@@ -293,20 +293,20 @@ func TestRunAdd_AdrDuplicate(t *testing.T) {
 	s := createDBFixture(t)
 	var buf bytes.Buffer
 
-	RunAdd("adr", "use-grpc", "", s, "", false, &buf)
+	RunAdd("adr", "use-grpc", s, "", false, &buf)
 	buf.Reset()
 
-	err := RunAdd("adr", "use-grpc", "", s, "", false, &buf)
+	err := RunAdd("adr", "use-grpc", s, "", false, &buf)
 	if err == nil {
 		t.Fatal("expected error for duplicate ADR")
 	}
 }
 
 func TestRunAdd_ComponentInvalidContainerFormat(t *testing.T) {
-	s, c3Dir := createDBFixtureWithC3Dir(t)
+	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("component", "test", c3Dir, s, "invalid-format", false, &buf)
+	err := RunAdd("component", "test", s, "invalid-format", false, &buf)
 	if err == nil {
 		t.Fatal("expected error for invalid container format")
 	}

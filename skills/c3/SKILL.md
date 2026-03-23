@@ -1,42 +1,12 @@
 ---
 name: c3
-description: |
+description: >
   This skill should be used when the user invokes /c3 or asks architecture questions
   about a project with a .c3/ directory. Trigger phrases: "adopt C3", "onboard this
   project", "where is X", "audit the architecture", "check docs", "add a component",
   "implement feature", "what breaks if I change X", "add a ref", "add a coding rule",
   "coding standard". Handles operations: onboard, query, audit, change, ref, rule, sweep.
   Classifies intent, loads ref, executes.
-
-  <example>
-  user: "adopt C3 for this project"
-  assistant: "Using c3 to onboard this project."
-  </example>
-
-  <example>
-  user: "where is auth in the C3 docs?"
-  assistant: "Using c3 to query the architecture."
-  </example>
-
-  <example>
-  user: "add a new API component"
-  assistant: "Using c3 to orchestrate the change."
-  </example>
-
-  <example>
-  user: "what breaks if I change the auth API?"
-  assistant: "Using c3 to assess impact."
-  </example>
-
-  <example>
-  user: "audit C3 docs for drift"
-  assistant: "Using c3 to audit."
-  </example>
-
-  <example>
-  user: "add a ref for error handling"
-  assistant: "Using c3 to create a ref."
-  </example>
 ---
 
 # C3

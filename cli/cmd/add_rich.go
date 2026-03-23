@@ -16,7 +16,6 @@ import (
 type AddOptions struct {
 	EntityType string
 	Slug       string
-	C3Dir      string
 	Store      *store.Store
 	Container  string
 	Feature    bool
@@ -32,7 +31,7 @@ func (o *AddOptions) hasContent() bool {
 // RunAddRich creates a new entity with optional content pre-populated.
 func RunAddRich(opts AddOptions, w io.Writer) error {
 	if !opts.hasContent() {
-		return RunAdd(opts.EntityType, opts.Slug, opts.C3Dir, opts.Store, opts.Container, opts.Feature, w)
+		return RunAdd(opts.EntityType, opts.Slug, opts.Store, opts.Container, opts.Feature, w)
 	}
 
 	switch opts.EntityType {
@@ -198,12 +197,13 @@ func addRichRef(opts AddOptions, w io.Writer) error {
 }
 
 func addRichAdr(opts AddOptions, w io.Writer) error {
-	adrID := nextAdrID(opts.Slug)
+	now := time.Now()
+	adrID := fmt.Sprintf("adr-%s-%s", now.Format("20060102"), opts.Slug)
 	if _, err := opts.Store.GetEntity(adrID); err == nil {
 		return fmt.Errorf("error: %s already exists", adrID)
 	}
 
-	today := time.Now().Format("2006-01-02")
+	today := now.Format("2006-01-02")
 	content := buildDocument(
 		map[string]string{
 			"id":      adrID,

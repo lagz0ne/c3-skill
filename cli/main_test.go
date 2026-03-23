@@ -114,32 +114,18 @@ func TestRun_LookupMissingArg(t *testing.T) {
 	}
 }
 
-func TestRun_LegacyFormatBlocked(t *testing.T) {
-	// Create .c3/ with markdown files but no DB
+func TestRun_NoDatabaseBlocked(t *testing.T) {
+	// Create .c3/ without a database
 	dir := t.TempDir()
 	c3Dir := filepath.Join(dir, ".c3")
 	os.MkdirAll(c3Dir, 0755)
-	os.WriteFile(filepath.Join(c3Dir, "README.md"), []byte("---\nid: c3-0\ntitle: test\n---\n"), 0644)
 
 	err := run([]string{"--c3-dir", c3Dir, "list"}, &bytes.Buffer{})
 	if err == nil {
-		t.Error("expected error for legacy format without DB")
+		t.Error("expected error when no database exists")
 	}
-	if !strings.Contains(err.Error(), "markdown files") {
-		t.Errorf("error should mention markdown files: %v", err)
-	}
-}
-
-func TestRun_LegacyCheckAllowed(t *testing.T) {
-	dir := t.TempDir()
-	c3Dir := filepath.Join(dir, ".c3")
-	os.MkdirAll(c3Dir, 0755)
-	os.WriteFile(filepath.Join(c3Dir, "README.md"), []byte("---\nid: c3-0\ntitle: test\n---\n# test\n\n## Goal\n\nTest.\n"), 0644)
-
-	var buf bytes.Buffer
-	err := run([]string{"--c3-dir", c3Dir, "check"}, &buf)
-	if err != nil {
-		t.Fatalf("legacy check should work: %v", err)
+	if !strings.Contains(err.Error(), "no database found") {
+		t.Errorf("error should mention 'no database found': %v", err)
 	}
 }
 
@@ -164,48 +150,6 @@ func TestFileExists(t *testing.T) {
 	}
 }
 
-func TestHasMarkdownFiles(t *testing.T) {
-	t.Run("empty dir", func(t *testing.T) {
-		dir := t.TempDir()
-		if hasMarkdownFiles(dir) {
-			t.Error("empty dir should not have markdown files")
-		}
-	})
-
-	t.Run("top-level md", func(t *testing.T) {
-		dir := t.TempDir()
-		os.WriteFile(filepath.Join(dir, "README.md"), []byte("test"), 0644)
-		if !hasMarkdownFiles(dir) {
-			t.Error("should detect top-level .md files")
-		}
-	})
-
-	t.Run("nested md", func(t *testing.T) {
-		dir := t.TempDir()
-		sub := filepath.Join(dir, "containers")
-		os.MkdirAll(sub, 0755)
-		os.WriteFile(filepath.Join(sub, "c3-1.md"), []byte("test"), 0644)
-		if !hasMarkdownFiles(dir) {
-			t.Error("should detect .md files in subdirectories")
-		}
-	})
-
-	t.Run("nonexistent dir", func(t *testing.T) {
-		if hasMarkdownFiles("/nonexistent/path") {
-			t.Error("should return false for nonexistent dir")
-		}
-	})
-
-	t.Run("_index dir skipped", func(t *testing.T) {
-		dir := t.TempDir()
-		idx := filepath.Join(dir, "_index")
-		os.MkdirAll(idx, 0755)
-		os.WriteFile(filepath.Join(idx, "index.md"), []byte("test"), 0644)
-		if hasMarkdownFiles(dir) {
-			t.Error("_index dir should be skipped")
-		}
-	})
-}
 
 func TestRun_Add(t *testing.T) {
 	c3Dir := setupRichC3DB(t)

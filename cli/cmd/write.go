@@ -83,11 +83,6 @@ func runWriteSection(existing *store.Entity, opts WriteOptions, w io.Writer) err
 		promoteGoalIfEmpty(existing)
 	}
 
-	issues := validateContent(existing)
-	if len(issues) > 0 {
-		return formatValidationError(opts.ID, issues)
-	}
-
 	if err := opts.Store.UpdateEntity(existing); err != nil {
 		return fmt.Errorf("error: updating entity: %w", err)
 	}

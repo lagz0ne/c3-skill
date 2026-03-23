@@ -42,14 +42,11 @@ A Go binary bundled inside the plugin. No separate install — the skill carries
 **Read/Write cycle:**
 ```bash
 c3x read c3-101                          # full entity as markdown
+c3x read c3-101 --section Goal           # just one section
 c3x read c3-101 --json                   # structured JSON
 
-echo "New goal." | c3x write c3-101 --section "Goal"   # section update
-cat updated.md | c3x write c3-101                       # full replace
-
-# Writes are enforced:
-# error: missing required section: Dependencies
-#   hint: add ## Dependencies — Data flowing in and out
+echo "New goal." | c3x write c3-101 --section "Goal"   # section update (no validation)
+cat updated.md | c3x write c3-101                       # full replace (validates)
 ```
 
 **Search and navigate:**
@@ -62,9 +59,15 @@ c3x graph c3-1 --format mermaid          # visual subgraph
 
 **Manage entities:**
 ```bash
-c3x add component auth --container c3-1 --goal "JWT auth"
-c3x wire c3-101 cite ref-jwt
+c3x add component auth --container c3-1 --goal "JWT auth" --json
+# → {"id":"c3-101","type":"component","sections":["Goal","Dependencies",...]}
+
+c3x wire c3-101 ref-jwt ref-error-handling   # batch wire multiple targets
 c3x set c3-101 --section "Goal" "Handle JWT authentication"
+
+# Batch update (fields + sections in one call):
+echo '{"fields":{"goal":"X"},"sections":{"Choice":"Use RS256"}}' | c3x set ref-jwt --stdin
+
 c3x delete ref-obsolete --dry-run
 ```
 
@@ -90,7 +93,7 @@ Every entity type has required sections. The CLI enforces them on write:
 | Rule | Goal, Rule, Golden Example |
 | ADR, Recipe | Goal |
 
-`c3x write` and `c3x set --section` validate the result before accepting. `c3x check` validates everything post-hoc.
+`c3x write` (full body) validates required sections before accepting. Section-level updates (`write --section`, `set --section`) skip validation to allow incremental filling. `c3x check` validates everything post-hoc.
 
 ### The database
 
@@ -140,12 +143,12 @@ The plugin ships with pre-built binaries — no Go toolchain, no npm, no PATH co
 
 ```
 skills/c3/bin/
-├── VERSION                    # "7.0.2"
+├── VERSION                    # "7.0.4"
 ├── c3x.sh                    # detects OS/ARCH, runs the right binary
-├── c3x-7.0.2-linux-amd64
-├── c3x-7.0.2-linux-arm64
-├── c3x-7.0.2-darwin-amd64
-└── c3x-7.0.2-darwin-arm64
+├── c3x-7.0.4-linux-amd64
+├── c3x-7.0.4-linux-arm64
+├── c3x-7.0.4-darwin-amd64
+└── c3x-7.0.4-darwin-arm64
 ```
 
 Each plugin version carries its own binary. Different projects can use different versions without conflict.

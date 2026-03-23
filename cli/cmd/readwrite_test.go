@@ -87,6 +87,61 @@ func TestRunRead_WithRelationships(t *testing.T) {
 	}
 }
 
+// === READ --section ===
+
+func TestRunRead_Section(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	err := RunRead(ReadOptions{Store: s, ID: "c3-101", Section: "Goal"}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "Handle authentication") {
+		t.Errorf("should contain Goal content, got: %s", output)
+	}
+	// Should NOT contain other sections
+	if strings.Contains(output, "## Dependencies") {
+		t.Error("should not contain other sections")
+	}
+}
+
+func TestRunRead_Section_JSON(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	err := RunRead(ReadOptions{Store: s, ID: "c3-101", Section: "Goal", JSON: true}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var result ReadSectionResult
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("JSON parse: %v", err)
+	}
+	if result.Section != "Goal" {
+		t.Errorf("section = %q", result.Section)
+	}
+	if result.Content == "" {
+		t.Error("content should not be empty")
+	}
+}
+
+func TestRunRead_Section_NotFound(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	err := RunRead(ReadOptions{Store: s, ID: "c3-101", Section: "Nonexistent"}, &buf)
+	if err == nil {
+		t.Error("expected error for nonexistent section")
+	}
+	if !strings.Contains(err.Error(), "not found") {
+		t.Errorf("error should mention 'not found': %v", err)
+	}
+}
+
 // === WRITE ===
 
 func TestRunWrite_ValidContent(t *testing.T) {
@@ -323,18 +378,18 @@ func TestRunWrite_Section_NotFound(t *testing.T) {
 	}
 }
 
-func TestRunWrite_Section_StillValidates(t *testing.T) {
+func TestRunWrite_Section_NoValidation(t *testing.T) {
 	s := createRichDBFixture(t)
 	var buf bytes.Buffer
 
-	// Clear the Goal section content — should fail validation
+	// Writing an empty Goal section should succeed (no section-level validation)
 	err := RunWrite(WriteOptions{
 		Store:   s,
 		ID:      "c3-101",
 		Section: "Goal",
-		Content: "", // empty goal
+		Content: "", // empty goal — allowed in section mode
 	}, &buf)
-	if err == nil {
-		t.Error("expected validation error for empty Goal")
+	if err != nil {
+		t.Errorf("section write should succeed without full validation: %v", err)
 	}
 }

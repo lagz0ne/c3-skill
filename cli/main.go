@@ -11,6 +11,7 @@ import (
 
 	"github.com/lagz0ne/c3-design/cli/cmd"
 	"github.com/lagz0ne/c3-design/cli/internal/config"
+	"github.com/lagz0ne/c3-design/cli/internal/schema"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
@@ -158,7 +159,7 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) err
 		if len(opts.Args) >= 1 {
 			entityID = opts.Args[0]
 		}
-		return cmd.RunRead(cmd.ReadOptions{Store: s, ID: entityID, JSON: opts.JSON}, w)
+		return cmd.RunRead(cmd.ReadOptions{Store: s, ID: entityID, JSON: opts.JSON, Section: opts.Section}, w)
 	case "write":
 		entityID := ""
 		if len(opts.Args) >= 1 {
@@ -276,9 +277,17 @@ func runAdd(opts cmd.Options, s *store.Store, w io.Writer) error {
 	if err == nil && opts.JSON {
 		m := reAddID.FindStringSubmatch(buf.String())
 		if len(m) >= 2 {
+			result := cmd.AddResult{ID: m[1], Type: entityType}
+			if sections := schema.ForType(entityType); sections != nil {
+				for _, sec := range sections {
+					result.Sections = append(result.Sections, sec.Name)
+				}
+			}
 			enc := json.NewEncoder(w)
-			enc.SetIndent("", "  ")
-			return enc.Encode(cmd.AddResult{ID: m[1]})
+			if os.Getenv("C3X_MODE") != "agent" {
+				enc.SetIndent("", "  ")
+			}
+			return enc.Encode(result)
 		}
 		w.Write(buf.Bytes())
 	}
@@ -294,39 +303,59 @@ func runSet(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) error {
 	if len(opts.Args) >= 2 {
 		value = opts.Args[1]
 	}
-	if opts.Field == "" && opts.Section == "" && len(opts.Args) >= 2 {
+	if opts.Field == "" && opts.Section == "" && !opts.Stdin && len(opts.Args) >= 2 {
 		opts.Field = opts.Args[1]
 		if len(opts.Args) >= 3 {
 			value = opts.Args[2]
 		}
 	}
+	if opts.Stdin {
+		stat, _ := os.Stdin.Stat()
+		if (stat.Mode() & os.ModeCharDevice) != 0 {
+			return fmt.Errorf("error: --stdin requires piped input\nhint: echo '{\"fields\":{...}}' | c3x set <id> --stdin")
+		}
+		data, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return fmt.Errorf("error: reading stdin: %w", err)
+		}
+		value = string(data)
+	}
 	return cmd.RunSet(cmd.SetOptions{
 		Store: s, C3Dir: c3Dir, ID: id,
 		Field: opts.Field, Section: opts.Section,
-		Value: value, Append: opts.Append,
+		Value: value, Append: opts.Append, Stdin: opts.Stdin,
 	}, w)
 }
 
 func runWire(opts cmd.Options, s *store.Store, w io.Writer) error {
-	source, relation, target := "", "", ""
-	if len(opts.Args) == 2 {
-		source = opts.Args[0]
-		target = opts.Args[1]
+	if len(opts.Args) < 2 {
+		return fmt.Errorf("error: usage: c3x wire <source> <target> [target2 ...]\nhint: c3x wire c3-101 ref-jwt ref-error-handling")
+	}
+
+	source := opts.Args[0]
+	var targets []string
+	relation := ""
+
+	// Check if second arg is a relation type
+	if len(opts.Args) >= 3 && opts.Args[1] == "cite" {
+		relation = opts.Args[1]
+		targets = opts.Args[2:]
 	} else {
-		if len(opts.Args) >= 1 {
-			source = opts.Args[0]
-		}
-		if len(opts.Args) >= 2 {
-			relation = opts.Args[1]
-		}
-		if len(opts.Args) >= 3 {
-			target = opts.Args[2]
+		targets = opts.Args[1:]
+	}
+
+	for _, target := range targets {
+		if opts.Remove || opts.Command == "unwire" {
+			if err := cmd.RunUnwire(s, source, relation, target, w); err != nil {
+				return err
+			}
+		} else {
+			if err := cmd.RunWire(s, source, relation, target, w); err != nil {
+				return err
+			}
 		}
 	}
-	if opts.Remove || opts.Command == "unwire" {
-		return cmd.RunUnwire(s, source, relation, target, w)
-	}
-	return cmd.RunWire(s, source, relation, target, w)
+	return nil
 }
 
 func fileExists(path string) bool {

@@ -269,6 +269,39 @@ func TestRunSet_SectionJSONArray_NoExistingTable(t *testing.T) {
 	}
 }
 
+func TestRunSet_BatchStdin(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	payload := `{"fields":{"goal":"New batch goal","summary":"Batch summary"},"sections":{"Goal":"New goal content from batch."}}`
+	opts := SetOptions{
+		Store: s,
+		ID:    "c3-101",
+		Value: payload,
+		Stdin: true,
+	}
+	err := RunSet(opts, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	entity, _ := s.GetEntity("c3-101")
+	if entity.Goal != "New batch goal" {
+		t.Errorf("goal = %q, want %q", entity.Goal, "New batch goal")
+	}
+	if entity.Summary != "Batch summary" {
+		t.Errorf("summary = %q, want %q", entity.Summary, "Batch summary")
+	}
+	if !strings.Contains(entity.Body, "New goal content from batch.") {
+		t.Error("body should contain updated Goal section")
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "2 fields") {
+		t.Errorf("output should mention field count: %s", output)
+	}
+}
+
 func TestIsJSONArray(t *testing.T) {
 	tests := []struct {
 		input string

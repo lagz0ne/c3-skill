@@ -4,10 +4,36 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
+	"regexp"
+
+	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
 )
 
+// stripFrontmatter removes YAML frontmatter (---\n...\n---) from content,
+// returning only the body after the closing ---.
+func stripFrontmatter(s string) string {
+	_, body := frontmatter.ParseFrontmatter(s)
+	return body
+}
+
+// stripHTMLComments removes all HTML comment blocks from content.
+func stripHTMLComments(s string) string {
+	re := regexp.MustCompile(`(?s)<!--.*?-->`)
+	result := re.ReplaceAllString(s, "")
+	// Clean up any resulting blank lines (multiple consecutive newlines → max 2)
+	reBlank := regexp.MustCompile(`\n{3,}`)
+	return reBlank.ReplaceAllString(result, "\n\n")
+}
+
 func writeJSON(w io.Writer, v any) error {
-	data, err := json.MarshalIndent(v, "", "  ")
+	var data []byte
+	var err error
+	if os.Getenv("C3X_MODE") == "agent" {
+		data, err = json.Marshal(v)
+	} else {
+		data, err = json.MarshalIndent(v, "", "  ")
+	}
 	if err != nil {
 		return err
 	}

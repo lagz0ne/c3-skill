@@ -33,6 +33,7 @@ type Options struct {
 	TypeFilter    string
 	Mark          bool
 	KeepOriginals bool
+	Stdin         bool
 	Limit         int
 	Source        string
 	Tag           string
@@ -125,6 +126,8 @@ func ParseArgs(argv []string) Options {
 				i++
 				opts.TypeFilter = argv[i]
 			}
+		case "--stdin":
+			opts.Stdin = true
 		case "--mark":
 			opts.Mark = true
 		case "--keep-originals":

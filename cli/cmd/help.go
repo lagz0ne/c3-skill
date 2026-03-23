@@ -30,41 +30,46 @@ Scaffold .c3/ skeleton (config, README, refs/, rules/, adr/).`,
 		Name:     "read",
 		Args:     "<entity-id>",
 		OneLiner: "Output full entity content (frontmatter + body)",
-		Help: `Usage: c3x read <entity-id> [--json]
+		Help: `Usage: c3x read <entity-id> [--section <name>] [--json]
 
 Output the full content of an entity as markdown (default) or structured JSON.
 Markdown output includes YAML frontmatter + body — same format accepted by write.
 
+Options:
+  --section <name>   Output only the named section's content
+  --json             Structured JSON output
+
 Examples:
-  c3x read c3-101                # markdown output
-  c3x read ref-jwt --json        # structured JSON
-  c3x read c3-101 > backup.md    # save to file`,
+  c3x read c3-101                        # full markdown output
+  c3x read ref-jwt --json                # structured JSON
+  c3x read c3-101 --section Goal         # just the Goal section
+  c3x read c3-101 --section Goal --json  # section as JSON`,
 	},
 	{
 		Name:     "write",
 		Args:     "<entity-id>",
 		OneLiner: "Replace entity content with validation (stdin)",
-		Help: `Usage: c3x write <entity-id> < content.md
+		Help: `Usage: c3x write <entity-id> [--section <name>] < content
 
-Replace an entity's content from stdin. Parses YAML frontmatter for structured
-fields (goal, summary, status, etc.) and validates the body against the entity
-type's required schema sections before accepting.
 
-Validation rejects writes missing required sections:
-  - Component: Goal, Dependencies
-  - Container: Goal, Components, Responsibilities
-  - Ref: Goal, Choice, Why
-  - Rule: Goal, Rule, Golden Example
-
-If body ## Goal has content but frontmatter goal: is empty, the first line
-is auto-promoted to the goal field.
-
+Full write: replace entity content from stdin. Parses YAML frontmatter for
+structured fields and validates required sections before accepting.
 Relationships (uses, affects, scope) in frontmatter are synced to the DB.
+
+Section write (--section): replace only the named section. Skips full-document
+validation — allows incremental filling of sections.
+
+When to use set vs write:
+  set --field <f> <v>           Single frontmatter field
+  set --section <s> <v>         Single section (supports JSON tables, --append)
+  set --stdin                   Batch fields + sections from JSON
+  write --section <s> < stdin   Single section from stdin (plain text)
+  write < stdin                 Full body + frontmatter (validates, syncs rels)
 
 Examples:
   c3x read c3-101 | edit | c3x write c3-101
-  cat updated-ref.md | c3x write ref-jwt
-  c3x write c3-1 < container.md`,
+  echo "New goal text" | c3x write c3-101 --section Goal
+  cat updated-ref.md | c3x write ref-jwt`,
 	},
 	{
 		Name:     "list",
@@ -72,9 +77,9 @@ Examples:
 		Help: `Usage: c3x list [--compact] [--flat] [--json] [--include-adr]
 
 Topology view with system goal, entity goals, file coverage, and ref usage.
-  --compact      Goals-only tree (no files/uses detail)
+  --compact      Goals-only tree (no files/uses detail); with --json: lightweight output (id, type, title, parent, status only)
   --flat         Simple file list (id, type, path)
-  --json         Machine-readable full output
+  --json         Machine-readable output
   --include-adr  Include ADR entities (hidden by default)`,
 	},
 	{
@@ -105,7 +110,7 @@ Options:
   --goal <text>          Pre-fill goal in frontmatter + body
   --summary <text>       Pre-fill summary
   --boundary <text>      Pre-fill boundary (container only)
-  --json                 Output created entity as JSON (id + path)
+  --json                 Output as JSON (id, type, sections list)
 
 Examples:
   c3x add container payments --goal "Process payments" --boundary service
@@ -118,40 +123,49 @@ Examples:
 	{
 		Name:     "set",
 		Args:     "<id> <field> <value>",
-		OneLiner: "Update frontmatter field",
+		OneLiner: "Update frontmatter field or section",
 		Help: `Usage: c3x set <id> <field> <value>
        c3x set <id> --section <name> <value> [--append]
+       echo '{"fields":{...},"sections":{...}}' | c3x set <id> --stdin
 
-Frontmatter fields: goal, summary, status, boundary, category, title, date
-Array via JSON:     scope, affects, refs
+Frontmatter fields: goal, summary, status, boundary, category, title, date, description
 
-Section mode accepts text or JSON (array for replace, object for --append):
+Section mode accepts text or JSON (array for replace, object for --append).
+Section updates skip full-document validation — fill sections incrementally.
+
+Batch mode (--stdin) accepts a JSON payload with multiple fields and sections:
+  {"fields": {"goal": "X", "summary": "Y"}, "sections": {"Choice": "content..."}}
+
+Note: set does NOT sync relationships. Use wire/unwire for relationship changes,
+or write with full frontmatter for bulk updates including relationship sync.
+
+Examples:
   c3x set c3-101 goal "Handle JWT auth"
-  c3x set c3-101 --section "Code References" '[{"File":"src/auth.ts","Purpose":"Auth"}]'
-  c3x set c3-101 --section "Dependencies" --append '{"Direction":"IN","What":"creds","From/To":"c3-102"}'`,
+  c3x set c3-101 --section "Choice" "Use RS256 signed JWTs"
+  c3x set c3-101 --section "Dependencies" --append '{"Direction":"IN","What":"creds","From/To":"c3-102"}'
+  echo '{"fields":{"goal":"X"},"sections":{"Goal":"X"}}' | c3x set c3-101 --stdin`,
 	},
 	{
 		Name:     "wire",
-		Args:     "<src> [cite] <tgt>",
-		OneLiner: "Link component to ref (--remove to unlink)",
-		Help: `Usage: c3x wire <source> <target>
-       c3x wire <source> cite <target>
-       c3x wire --remove <source> <target>
+		Args:     "<src> <tgt> [tgt2 ...]",
+		OneLiner: "Link component to ref(s) (--remove to unlink)",
+		Help: `Usage: c3x wire <source> <target> [target2 ...]
+       c3x wire <source> cite <target> [target2 ...]
+       c3x unwire <source> <target> [target2 ...]
 
-Creates or removes a cite relationship (updated atomically):
-  1. source frontmatter uses[] += target
+Creates or removes cite relationships (updated atomically per target):
+  1. source uses[] += target
   2. source "Related Refs" table += row
 
-Options:
-  --remove   Remove the cite relationship instead of creating it
-             (idempotent — no error if not wired)
+Supports multiple targets in a single call for batch wiring.
 
 "cite" is optional (it's the only supported relation type).
 
 Examples:
-  c3x wire c3-101 ref-jwt            # create link
-  c3x wire c3-101 cite ref-jwt       # same, explicit cite
-  c3x wire --remove c3-101 ref-jwt   # remove link`,
+  c3x wire c3-101 ref-jwt                            # single target
+  c3x wire c3-101 ref-jwt ref-error-handling          # multiple targets
+  c3x wire c3-101 cite ref-jwt ref-error-handling     # explicit cite
+  c3x unwire c3-101 ref-jwt                           # remove link`,
 	},
 	{
 		Name:     "schema",

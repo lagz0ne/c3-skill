@@ -18,7 +18,9 @@ var (
 
 // AddResult is the JSON output from add commands.
 type AddResult struct {
-	ID string `json:"id"`
+	ID       string   `json:"id"`
+	Type     string   `json:"type,omitempty"`
+	Sections []string `json:"sections,omitempty"`
 }
 
 // RunAdd creates a new C3 entity in the store.
@@ -147,7 +149,7 @@ func addContainer(slug string, s *store.Store, w io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("error: rendering template: %w", err)
 	}
-	entity.Body = content
+	entity.Body = stripFrontmatter(stripHTMLComments(content))
 
 	if err := s.InsertEntity(entity); err != nil {
 		return fmt.Errorf("error: inserting container: %w", err)
@@ -205,7 +207,7 @@ func addComponent(slug string, s *store.Store, containerArg string, feature bool
 		ParentID: containerArg,
 		Goal:     "",
 		Summary:  "",
-		Body:     content,
+		Body:     stripFrontmatter(stripHTMLComments(content)),
 		Status:   "active",
 		Metadata: "{}",
 	}
@@ -241,7 +243,7 @@ func addRef(slug string, s *store.Store, w io.Writer) error {
 		Title:    slug,
 		Slug:     slug,
 		Goal:     "",
-		Body:     content,
+		Body:     stripFrontmatter(stripHTMLComments(content)),
 		Status:   "active",
 		Metadata: "{}",
 	}
@@ -274,7 +276,7 @@ func addRule(slug string, s *store.Store, w io.Writer) error {
 		Title:    slug,
 		Slug:     slug,
 		Goal:     "",
-		Body:     content,
+		Body:     stripFrontmatter(stripHTMLComments(content)),
 		Status:   "active",
 		Metadata: "{}",
 	}
@@ -305,7 +307,7 @@ func addRecipe(slug string, s *store.Store, w io.Writer) error {
 		Title:    slug,
 		Slug:     slug,
 		Goal:     "",
-		Body:     content,
+		Body:     stripFrontmatter(stripHTMLComments(content)),
 		Status:   "active",
 		Metadata: "{}",
 	}
@@ -341,7 +343,7 @@ func addAdr(slug string, s *store.Store, w io.Writer) error {
 		Slug:     slug,
 		Status:   "proposed",
 		Date:     today,
-		Body:     content,
+		Body:     stripFrontmatter(stripHTMLComments(content)),
 		Metadata: "{}",
 	}
 	if err := s.InsertEntity(entity); err != nil {

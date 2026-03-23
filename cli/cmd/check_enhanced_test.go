@@ -239,7 +239,7 @@ func TestHintFor(t *testing.T) {
 		{"unknown entity reference: c3-999", "verify the ID with 'c3x list'; check for typos"},
 		{"unknown ref reference: ref-missing", "use a ref-* ID (e.g., ref-jwt); verify with 'c3x list'"},
 		{"file does not exist: src/foo.ts", "create the file or fix the path"},
-		{"code-map parse error: yaml: unmarshal error", "fix YAML syntax in .c3/code-map.yaml"},
+		{"code-map parse error: yaml: unmarshal error", "check code-map entries with 'c3x list'"},
 		{"something unknown", ""},
 	}
 	for _, tt := range tests {

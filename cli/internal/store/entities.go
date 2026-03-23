@@ -97,8 +97,20 @@ func (s *Store) UpdateEntity(e *Entity) error {
 // logFieldChange logs a single field change if values differ.
 func logFieldChange(s *Store, entityID, field, oldVal, newVal string) {
 	if oldVal != newVal {
+		if field == "body" {
+			oldVal = truncateForLog(oldVal)
+			newVal = truncateForLog(newVal)
+		}
 		s.logChange(entityID, "update", field, oldVal, newVal)
 	}
+}
+
+func truncateForLog(s string) string {
+	const limit = 200
+	if len(s) <= limit {
+		return s
+	}
+	return fmt.Sprintf("%s... (%d chars total)", s[:limit], len(s))
 }
 
 // DeleteEntity removes an entity. Returns an error if it does not exist.

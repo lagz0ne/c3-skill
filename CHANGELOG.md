@@ -5,6 +5,28 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.0.4] - 2026-03-23
+
+### Fixed
+
+- **Body corruption on `read | write` roundtrip** — templates stored YAML frontmatter in `entity.Body`; `read` prepended another frontmatter block; each cycle nested another `---` block. Now stripped at insert time
+- **Validation catch-22** — `set --section` and `write --section` validated ALL required sections, blocking incremental filling. Section-level updates now skip full-document validation
+- **Template comment bloat** — HTML comment blocks (40-50 lines per template) stored in Body and returned on every `read`. Stripped at insert time; `buildDocument` path already clean
+- **Changelog body bloat** — `UpdateEntity` logged full old+new body text in changelog. Now truncated to 200 chars
+
+### Added
+
+- **`read --section <name>`** — extract a single section's content (text or JSON mode) without reading the full entity body
+- **`set --stdin`** batch mode — pipe `{"fields":{...},"sections":{...}}` JSON to update multiple fields and sections in one call
+- **`wire` multiple targets** — `c3x wire c3-101 ref-jwt ref-error-handling` wires to multiple targets in a single invocation
+- **`add --json` returns sections** — response now includes `type` and `sections[]` from schema, eliminating the follow-up `read` call
+- **`list --json --compact`** — lightweight JSON output (id, type, title, parent, status) skipping per-entity relationship and codemap queries
+- **Compact JSON in agent mode** — `C3X_MODE=agent` now uses `json.Marshal` (no indentation) instead of `json.MarshalIndent`
+
+### Removed
+
+- Orphaned `cli/templates/` directory (6 files) — source of truth is `cli/internal/templates/` via `go:embed`
+
 ## [7.0.3] - 2026-03-23
 
 ### Changed

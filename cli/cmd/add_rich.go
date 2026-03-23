@@ -284,17 +284,6 @@ func addRichRecipe(opts AddOptions, w io.Writer) error {
 func buildDocument(fmFields map[string]string, title, entityType, goal string) string {
 	var b strings.Builder
 
-	b.WriteString("---\n")
-	orderedKeys := []string{"id", "title", "type", "category", "boundary", "parent", "goal", "summary", "status", "date", "affects", "scope"}
-	for _, k := range orderedKeys {
-		v, ok := fmFields[k]
-		if !ok || v == "" {
-			continue
-		}
-		b.WriteString(fmt.Sprintf("%s: %s\n", k, v))
-	}
-	b.WriteString("---\n\n")
-
 	b.WriteString(fmt.Sprintf("# %s\n", title))
 
 	sections := schema.ForType(entityType)

@@ -31,6 +31,13 @@ type SetOptions struct {
 	Section string
 	Value   string
 	Append  bool
+	Stdin   bool
+}
+
+// BatchSetPayload is the JSON format for batch set via stdin.
+type BatchSetPayload struct {
+	Fields   map[string]string `json:"fields,omitempty"`
+	Sections map[string]string `json:"sections,omitempty"`
 }
 
 // RunSet updates a frontmatter field or section content on an entity.
@@ -40,10 +47,67 @@ func RunSet(opts SetOptions, w io.Writer) error {
 		return fmt.Errorf("entity %q not found", opts.ID)
 	}
 
+	if opts.Stdin {
+		return runSetBatch(entity, opts, w)
+	}
+
 	if opts.Section != "" {
 		return runSetSection(entity, opts, w)
 	}
 	return runSetField(entity, opts, w)
+}
+
+func runSetBatch(entity *store.Entity, opts SetOptions, w io.Writer) error {
+	var payload BatchSetPayload
+	if err := json.Unmarshal([]byte(opts.Value), &payload); err != nil {
+		return fmt.Errorf("error: invalid JSON payload\nhint: expected {\"fields\": {...}, \"sections\": {...}}")
+	}
+
+	// Apply fields
+	for field, value := range payload.Fields {
+		switch field {
+		case "goal":
+			entity.Goal = value
+		case "summary":
+			entity.Summary = value
+		case "status":
+			entity.Status = value
+		case "boundary":
+			entity.Boundary = value
+		case "category":
+			entity.Category = value
+		case "title":
+			entity.Title = value
+		case "date":
+			entity.Date = value
+		case "description":
+			entity.Description = value
+		default:
+			return fmt.Errorf("unknown field %q", field)
+		}
+	}
+
+	// Apply sections
+	for section, content := range payload.Sections {
+		newBody, err := markdown.ReplaceSection(entity.Body, section, content)
+		if err != nil {
+			return fmt.Errorf("error: section %q not found in %s\nhint: available sections: %s",
+				section, opts.ID, availableSections(entity.Body))
+		}
+		entity.Body = newBody
+	}
+
+	// Promote goal if updated via section
+	if _, hasGoalSection := payload.Sections["Goal"]; hasGoalSection {
+		promoteGoalIfEmpty(entity)
+	}
+
+	if err := opts.Store.UpdateEntity(entity); err != nil {
+		return fmt.Errorf("updating entity: %w", err)
+	}
+
+	fmt.Fprintf(w, "Updated %s (%d fields, %d sections)\n", opts.ID, len(payload.Fields), len(payload.Sections))
+	return nil
 }
 
 func runSetField(entity *store.Entity, opts SetOptions, w io.Writer) error {
@@ -135,11 +199,6 @@ func runSetSection(entity *store.Entity, opts SetOptions, w io.Writer) error {
 
 	if opts.Section == "Goal" {
 		promoteGoalIfEmpty(entity)
-	}
-
-	issues := validateContent(entity)
-	if len(issues) > 0 {
-		return formatValidationError(opts.ID, issues)
 	}
 
 	if err := opts.Store.UpdateEntity(entity); err != nil {

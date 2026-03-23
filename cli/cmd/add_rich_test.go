@@ -11,13 +11,12 @@ import (
 // =============================================================================
 
 func TestRunAddRich_ContainerWithGoal(t *testing.T) {
-	s, c3Dir := createDBFixtureWithC3Dir(t)
+	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
 	opts := AddOptions{
 		EntityType: "container",
 		Slug:       "payments",
-		C3Dir:      c3Dir,
 		Store:      s,
 		Goal:       "Process payments securely",
 		Summary:    "Handles all payment processing",
@@ -56,13 +55,12 @@ func TestRunAddRich_ContainerWithGoal(t *testing.T) {
 }
 
 func TestRunAddRich_ComponentWithGoal(t *testing.T) {
-	s, c3Dir := createDBFixtureWithC3Dir(t)
+	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
 	opts := AddOptions{
 		EntityType: "component",
 		Slug:       "rate-limiter",
-		C3Dir:      c3Dir,
 		Store:      s,
 		Container:  "c3-1",
 		Feature:    false,
@@ -161,13 +159,12 @@ func TestRunAddRich_AdrWithGoal(t *testing.T) {
 
 func TestRunAddRich_FallsBackToLegacy(t *testing.T) {
 	// When no content flags are provided, should work exactly like current add
-	s, c3Dir := createDBFixtureWithC3Dir(t)
+	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
 	opts := AddOptions{
 		EntityType: "container",
 		Slug:       "worker",
-		C3Dir:      c3Dir,
 		Store:      s,
 		// No Goal, Summary, etc.
 	}

@@ -5,6 +5,21 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.0.3] - 2026-03-23
+
+### Changed
+
+- **Add commands are DB-only** — `c3x add container` and `c3x add component` no longer write backward-compat `.md` files to disk; all entity data lives exclusively in SQLite
+- **`c3x init` creates only `c3.db`** — removed vestigial `config.yaml` write and dead legacy markdown scaffolding (`RunInit`)
+- **Removed `AddResult.Path` from JSON output** — field was semantically broken after disk write removal; `--json` add now returns `{"id": "..."}` only
+- **Trimmed SKILL.md description** to 460 chars (was 4372) — fixes "exceeds maximum length of 1024" error in some plugin loaders
+
+### Fixed
+
+- **Midnight race in ADR ID generation** — `addAdr` and `addRichAdr` called `time.Now()` twice (once for ID, once for date field); could produce mismatched dates at midnight boundary. Now captures a single instant
+- **Inline `regexp.MustCompile` in `addComponent`** — hoisted to package-level `reContainer` var, consistent with `validSlug` pattern
+- **Removed legacy format detection** — `hasMarkdownFiles()`, `runLegacyCheck()`, and the legacy block in `main.go` removed; no-DB case now returns a clean error pointing to `c3x init` or `c3x migrate`
+
 ## [7.0.2] - 2026-03-23
 
 ### Changed

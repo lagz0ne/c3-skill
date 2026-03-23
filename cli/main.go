@@ -12,15 +12,11 @@ import (
 	"github.com/lagz0ne/c3-design/cli/cmd"
 	"github.com/lagz0ne/c3-design/cli/internal/config"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
-	"github.com/lagz0ne/c3-design/cli/internal/walker"
 )
 
 var version = "dev"
 
-var (
-	reAddID   = regexp.MustCompile(`\(id: ([^)]+)\)`)
-	reAddPath = regexp.MustCompile(`Created: (\S+)`)
-)
+var reAddID = regexp.MustCompile(`\(id: ([^)]+)\)`)
 
 func main() {
 	if err := run(os.Args[1:], os.Stdout); err != nil {
@@ -83,16 +79,12 @@ func run(argv []string, w io.Writer) error {
 		return cmd.RunMigrate(c3Dir, opts.KeepOriginals, w)
 	}
 
-	// Detect format: DB vs legacy files
+	// Detect format: DB
 	dbPath := filepath.Join(c3Dir, "c3.db")
 	hasDB := fileExists(dbPath)
 
-	// Legacy format detected — block all commands except check
-	if !hasDB && hasMarkdownFiles(c3Dir) {
-		if opts.Command == "check" {
-			return runLegacyCheck(c3Dir, opts, w)
-		}
-		return fmt.Errorf("error: .c3/ contains markdown files but no database (c3.db)\n\nThis version of c3x uses an embedded database.\nUse /c3 in Claude Code to run an LLM-assisted migration that\nvalidates and fixes malformed docs before importing.\n\nOr if docs are already valid: c3x migrate")
+	if !hasDB {
+		return fmt.Errorf("error: no database found at %s\nhint: run 'c3x init' to create one, or 'c3x migrate' if you have legacy .c3/ markdown files", dbPath)
 	}
 
 	s, err := store.Open(dbPath)
@@ -182,7 +174,7 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) err
 		}
 		return cmd.RunWrite(cmd.WriteOptions{Store: s, ID: entityID, Section: opts.Section, Content: string(content)}, w)
 	case "add":
-		return runAdd(opts, s, c3Dir, w)
+		return runAdd(opts, s, w)
 	case "set":
 		return runSet(opts, s, c3Dir, w)
 	case "wire", "unwire":
@@ -256,7 +248,7 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) err
 	}
 }
 
-func runAdd(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) error {
+func runAdd(opts cmd.Options, s *store.Store, w io.Writer) error {
 	entityType := ""
 	slug := ""
 	if len(opts.Args) >= 1 {
@@ -273,24 +265,20 @@ func runAdd(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) error {
 	var err error
 	if opts.Goal != "" || opts.Summary != "" || opts.Boundary != "" {
 		addOpts := cmd.AddOptions{
-			EntityType: entityType, Slug: slug, C3Dir: c3Dir, Store: s,
+			EntityType: entityType, Slug: slug, Store: s,
 			Container: opts.Container, Feature: opts.Feature,
 			Goal: opts.Goal, Summary: opts.Summary, Boundary: opts.Boundary,
 		}
 		err = cmd.RunAddRich(addOpts, addW)
 	} else {
-		err = cmd.RunAdd(entityType, slug, c3Dir, s, opts.Container, opts.Feature, addW)
+		err = cmd.RunAdd(entityType, slug, s, opts.Container, opts.Feature, addW)
 	}
 	if err == nil && opts.JSON {
 		m := reAddID.FindStringSubmatch(buf.String())
 		if len(m) >= 2 {
-			result := cmd.AddResult{ID: m[1], Path: buf.String()}
-			if mp := reAddPath.FindStringSubmatch(buf.String()); len(mp) >= 2 {
-				result.Path = mp[1]
-			}
 			enc := json.NewEncoder(w)
 			enc.SetIndent("", "  ")
-			return enc.Encode(result)
+			return enc.Encode(cmd.AddResult{ID: m[1]})
 		}
 		w.Write(buf.Bytes())
 	}
@@ -346,42 +334,3 @@ func fileExists(path string) bool {
 	return err == nil
 }
 
-func hasMarkdownFiles(c3Dir string) bool {
-	entries, err := os.ReadDir(c3Dir)
-	if err != nil {
-		return false
-	}
-	for _, e := range entries {
-		if !e.IsDir() && filepath.Ext(e.Name()) == ".md" {
-			return true
-		}
-		if e.IsDir() && e.Name() != "_index" {
-			subEntries, _ := os.ReadDir(filepath.Join(c3Dir, e.Name()))
-			for _, se := range subEntries {
-				if !se.IsDir() && filepath.Ext(se.Name()) == ".md" {
-					return true
-				}
-			}
-		}
-	}
-	return false
-}
-
-func runLegacyCheck(c3Dir string, opts cmd.Options, w io.Writer) error {
-	walkResult, err := walker.WalkC3DocsWithWarnings(c3Dir)
-	if err != nil {
-		return fmt.Errorf("error: walking .c3/: %w", err)
-	}
-	projectDir := config.ProjectDir(c3Dir)
-	checkOpts := cmd.LegacyCheckOptions{
-		Docs:          walkResult.Docs,
-		Graph:         walker.BuildGraph(walkResult.Docs),
-		JSON:          opts.JSON,
-		ProjectDir:    projectDir,
-		C3Dir:         c3Dir,
-		ParseWarnings: walkResult.Warnings,
-		IncludeADR:    opts.IncludeADR,
-		Fix:           opts.Fix,
-	}
-	return cmd.RunLegacyCheck(checkOpts, w)
-}

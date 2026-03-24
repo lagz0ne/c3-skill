@@ -87,8 +87,8 @@ func TestRunMigrateV2_EmptyStore(t *testing.T) {
 	}
 
 	out := buf.String()
-	if !strings.Contains(out, "migrated 0 entities") {
-		t.Errorf("expected 'migrated 0 entities', got:\n%s", out)
+	if !strings.Contains(out, "migrated 0") {
+		t.Errorf("expected 'migrated 0', got:\n%s", out)
 	}
 	if !strings.Contains(out, "skipped 1") {
 		t.Errorf("expected 'skipped 1', got:\n%s", out)

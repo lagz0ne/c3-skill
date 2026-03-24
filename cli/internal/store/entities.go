@@ -151,6 +151,14 @@ func scanEntity(row *sql.Row) (*Entity, error) {
 	return &e, nil
 }
 
+// LegacyBody reads the body column from a pre-v8 database via raw SQL.
+// Returns empty string if the column doesn't exist.
+func (s *Store) LegacyBody(entityID string) string {
+	var body string
+	s.db.QueryRow(`SELECT body FROM entities WHERE id = ?`, entityID).Scan(&body)
+	return body
+}
+
 func scanEntityFromRows(rows *sql.Rows) (*Entity, error) {
 	var e Entity
 	var parentID sql.NullString

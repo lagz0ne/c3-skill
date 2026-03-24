@@ -3,13 +3,14 @@ package content
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
 // WriteEntity parses markdown, stores nodes, creates a version, and updates the entity merkle.
 func WriteEntity(s *store.Store, entityID, markdown string) error {
-	tree := ParseMarkdown(entityID, markdown)
+	tree := ParseMarkdown(entityID, stripFrontmatter(markdown))
 
 	tx, err := s.DB().Begin()
 	if err != nil {
@@ -83,6 +84,48 @@ func collectMerkle(nodes []*store.Node) string {
 		hashes[i] = n.Hash
 	}
 	return store.ComputeRootMerkle(hashes)
+}
+
+// stripFrontmatter removes YAML frontmatter (--- delimited) and any
+// stale key: value lines before the first markdown heading.
+func stripFrontmatter(md string) string {
+	// Strip --- delimited frontmatter block.
+	if strings.HasPrefix(md, "---\n") {
+		if idx := strings.Index(md[4:], "\n---"); idx >= 0 {
+			md = strings.TrimLeft(md[idx+8:], "\n")
+		}
+	}
+	// Strip stale key: value lines before the first heading.
+	lines := strings.Split(md, "\n")
+	start := 0
+	for start < len(lines) {
+		l := strings.TrimSpace(lines[start])
+		if l == "" || strings.HasPrefix(l, "#") {
+			break
+		}
+		// Keep lines that don't look like YAML key: value.
+		if !isYAMLLine(l) {
+			break
+		}
+		start++
+	}
+	if start > 0 {
+		md = strings.Join(lines[start:], "\n")
+	}
+	return strings.TrimLeft(md, "\n")
+}
+
+func isYAMLLine(line string) bool {
+	// Matches: "key: value", "key:", "- item" (YAML array items).
+	if strings.HasPrefix(line, "- ") {
+		return true
+	}
+	idx := strings.Index(line, ":")
+	if idx <= 0 {
+		return false
+	}
+	key := line[:idx]
+	return !strings.Contains(key, " ") || strings.HasPrefix(key, "##")
 }
 
 func syncGoalFromNodes(entity *store.Entity, tree *NodeTree) {

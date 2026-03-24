@@ -19,8 +19,8 @@ func RunMigrateV2(opts MigrateV2Options, w io.Writer) error {
 		return fmt.Errorf("listing entities: %w", err)
 	}
 
-	migrated := 0
-	skipped := 0
+	migrated, hasNodes, empty, failed := 0, 0, 0, 0
+	var emptyIDs []string
 
 	for _, e := range entities {
 		nodes, err := opts.Store.NodesForEntity(e.ID)
@@ -28,34 +28,52 @@ func RunMigrateV2(opts MigrateV2Options, w io.Writer) error {
 			return fmt.Errorf("checking nodes for %s: %w", e.ID, err)
 		}
 		if len(nodes) > 0 {
-			skipped++
+			hasNodes++
 			continue
 		}
 
 		body := opts.Store.LegacyBody(e.ID)
 		if body == "" {
-			skipped++
+			empty++
+			emptyIDs = append(emptyIDs, e.ID)
 			continue
 		}
 
 		if opts.DryRun {
-			fmt.Fprintf(w, "  would migrate: %s (%s)\n", e.ID, e.Title)
+			fmt.Fprintf(w, "  will migrate: %s (%s)\n", e.ID, e.Title)
 			migrated++
 			continue
 		}
 
 		if err := content.WriteEntity(opts.Store, e.ID, body); err != nil {
-			fmt.Fprintf(w, "  FAILED: %s — %v\n", e.ID, err)
+			fmt.Fprintf(w, "  FAILED %s: %v\n", e.ID, err)
+			failed++
 			continue
 		}
-		fmt.Fprintf(w, "  migrated: %s (%s)\n", e.ID, e.Title)
+		fmt.Fprintf(w, "  migrated: %s\n", e.ID)
 		migrated++
 	}
 
+	fmt.Fprintln(w)
 	if opts.DryRun {
-		fmt.Fprintf(w, "\ndry-run: would migrate %d, skipped %d\n", migrated, skipped)
+		fmt.Fprintf(w, "dry-run: %d to migrate", migrated)
 	} else {
-		fmt.Fprintf(w, "\nmigrated %d, skipped %d\n", migrated, skipped)
+		fmt.Fprintf(w, "%d migrated", migrated)
 	}
+	if hasNodes > 0 {
+		fmt.Fprintf(w, ", %d already have nodes (ok)", hasNodes)
+	}
+	if failed > 0 {
+		fmt.Fprintf(w, ", %d failed", failed)
+	}
+	fmt.Fprintln(w)
+
+	if empty > 0 {
+		fmt.Fprintf(w, "\n%d entities have no content yet:\n", empty)
+		for _, id := range emptyIDs {
+			fmt.Fprintf(w, "  %s — write content with: c3x write %s\n", id, id)
+		}
+	}
+
 	return nil
 }

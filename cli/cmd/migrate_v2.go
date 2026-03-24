@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/lagz0ne/c3-design/cli/internal/content"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
@@ -21,6 +22,7 @@ func RunMigrateV2(opts MigrateV2Options, w io.Writer) error {
 
 	migrated, hasNodes, empty, failed := 0, 0, 0, 0
 	var emptyIDs []string
+	var dirtyIDs []string
 
 	for _, e := range entities {
 		nodes, err := opts.Store.NodesForEntity(e.ID)
@@ -37,6 +39,10 @@ func RunMigrateV2(opts MigrateV2Options, w io.Writer) error {
 			empty++
 			emptyIDs = append(emptyIDs, e.ID)
 			continue
+		}
+
+		if hasStaleFrontmatter(body) {
+			dirtyIDs = append(dirtyIDs, e.ID)
 		}
 
 		if opts.DryRun {
@@ -68,12 +74,39 @@ func RunMigrateV2(opts MigrateV2Options, w io.Writer) error {
 	}
 	fmt.Fprintln(w)
 
+	if len(dirtyIDs) > 0 {
+		fmt.Fprintf(w, "\nWARNING: %d entities had stale frontmatter in body (auto-stripped during migration).\n", len(dirtyIDs))
+		fmt.Fprintln(w, "Review and rewrite with accurate content:")
+		for _, id := range dirtyIDs {
+			fmt.Fprintf(w, "  c3x read %s        # review current content\n", id)
+			fmt.Fprintf(w, "  c3x write %s       # pipe corrected markdown\n", id)
+		}
+	}
+
 	if empty > 0 {
 		fmt.Fprintf(w, "\n%d entities have no content yet:\n", empty)
 		for _, id := range emptyIDs {
-			fmt.Fprintf(w, "  %s — write content with: c3x write %s\n", id, id)
+			fmt.Fprintf(w, "  c3x write %s\n", id)
 		}
 	}
 
 	return nil
+}
+
+func hasStaleFrontmatter(body string) bool {
+	if strings.HasPrefix(body, "---\n") {
+		return true
+	}
+	lines := strings.SplitN(body, "\n", 5)
+	for _, l := range lines {
+		l = strings.TrimSpace(l)
+		if l == "" || strings.HasPrefix(l, "#") {
+			return false
+		}
+		idx := strings.Index(l, ":")
+		if idx > 0 && !strings.Contains(l[:idx], " ") {
+			return true
+		}
+	}
+	return false
 }

@@ -4,17 +4,15 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/lagz0ne/c3-design/cli/internal/content"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
-// MigrateV2Options configures the migrate-v2 command.
 type MigrateV2Options struct {
 	Store  *store.Store
 	DryRun bool
 }
 
-// RunMigrateV2 recomputes node trees for entities that don't have any yet.
-// Entities that already have nodes are skipped.
 func RunMigrateV2(opts MigrateV2Options, w io.Writer) error {
 	entities, err := opts.Store.AllEntities()
 	if err != nil {
@@ -34,14 +32,30 @@ func RunMigrateV2(opts MigrateV2Options, w io.Writer) error {
 			continue
 		}
 
-		// No nodes and no Body field — nothing to migrate.
-		skipped++
+		body := opts.Store.LegacyBody(e.ID)
+		if body == "" {
+			skipped++
+			continue
+		}
+
+		if opts.DryRun {
+			fmt.Fprintf(w, "  would migrate: %s (%s)\n", e.ID, e.Title)
+			migrated++
+			continue
+		}
+
+		if err := content.WriteEntity(opts.Store, e.ID, body); err != nil {
+			fmt.Fprintf(w, "  FAILED: %s — %v\n", e.ID, err)
+			continue
+		}
+		fmt.Fprintf(w, "  migrated: %s (%s)\n", e.ID, e.Title)
+		migrated++
 	}
 
 	if opts.DryRun {
-		fmt.Fprintf(w, "\ndry-run: would migrate %d entities, skipped %d (already have nodes or no content)\n", migrated, skipped)
+		fmt.Fprintf(w, "\ndry-run: would migrate %d, skipped %d\n", migrated, skipped)
 	} else {
-		fmt.Fprintf(w, "\nmigrated %d entities, skipped %d (already have nodes or no content)\n", migrated, skipped)
+		fmt.Fprintf(w, "\nmigrated %d, skipped %d\n", migrated, skipped)
 	}
 	return nil
 }

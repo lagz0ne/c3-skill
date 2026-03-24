@@ -320,13 +320,105 @@ Examples:
   c3x export /tmp/c3-export    # export to custom dir`,
 	},
 	{
+		Name:     "nodes",
+		Args:     "<entity-id>",
+		OneLiner: "List content nodes with IDs, types, and hashes",
+		Help: `Usage: c3x nodes <entity-id> [--json]
+
+Display the content node tree for an entity. Every heading, paragraph, list item,
+table row, and code block has a unique ID and SHA256 content hash.
+
+Options:
+  --json   Machine-readable JSON array
+
+Examples:
+  c3x nodes c3-101           # text table with indentation
+  c3x nodes c3-101 --json    # full node data as JSON`,
+	},
+	{
+		Name:     "hash",
+		Args:     "<entity-id>",
+		OneLiner: "Show entity content hash (root merkle)",
+		Help: `Usage: c3x hash <entity-id> [--recompute]
+
+Output the root merkle hash for an entity's content. This is a single SHA256 that
+changes whenever any content in the entity changes — useful for change detection.
+
+Options:
+  --recompute   Recompute from node content and compare with stored hash.
+                Shows OK if they match, DRIFT if they differ.
+
+Examples:
+  c3x hash c3-101              # stored root hash
+  c3x hash c3-101 --recompute  # verify integrity`,
+	},
+	{
+		Name:     "versions",
+		Args:     "<entity-id>",
+		OneLiner: "List content version history",
+		Help: `Usage: c3x versions <entity-id> [--json]
+
+Show all content versions for an entity, newest first. Each write creates a new
+version with a full content snapshot and root merkle hash.
+
+Options:
+  --json   Machine-readable JSON array
+
+Examples:
+  c3x versions c3-101
+  c3x versions ref-jwt --json`,
+	},
+	{
+		Name:     "version",
+		Args:     "<entity-id> <n>",
+		OneLiner: "Show content at a specific version",
+		Help: `Usage: c3x version <entity-id> <version-number>
+
+Output the full content of an entity as it was at a specific version.
+
+Examples:
+  c3x version c3-101 1    # content at version 1
+  c3x version c3-101 3    # content at version 3`,
+	},
+	{
+		Name:     "prune",
+		Args:     "<entity-id>",
+		OneLiner: "Delete old content versions",
+		Help: `Usage: c3x prune <entity-id> --keep <n>
+
+Delete old content versions, keeping the most recent N. Versions marked with a
+git commit hash (via c3x diff --mark) are always preserved.
+
+Options:
+  --keep <n>   Number of recent versions to keep (required, minimum 1)
+
+Examples:
+  c3x prune c3-101 --keep 10   # keep last 10, delete the rest`,
+	},
+	{
 		Name:     "migrate",
+		OneLiner: "Populate content node tree for all entities",
+		Help: `Usage: c3x migrate [--dry-run]
+
+Populates the content node tree for entities that don't have one yet.
+Reads legacy body content, parses into element-level nodes with hashing
+and versioning. Warns about entities with stale frontmatter in body.
+
+Options:
+  --dry-run   Show what would be migrated without making changes
+
+Examples:
+  c3x migrate --dry-run   # preview
+  c3x migrate             # run migration`,
+	},
+	{
+		Name:     "migrate-legacy",
 		OneLiner: "Import .c3/ markdown files into SQLite database",
 		Hidden:   true,
-		Help: `Usage: c3x migrate [--keep-originals]
+		Help: `Usage: c3x migrate-legacy [--keep-originals]
 
-Import all .c3/ markdown files and code-map.yaml into .c3/c3.db.
-Big bang migration — no coexistence mode.
+Import .c3/ markdown files and code-map.yaml into .c3/c3.db.
+For pre-v7 file-based projects. After this, run 'c3x migrate' to populate nodes.
 
 Options:
   --keep-originals   Don't delete original .md files after import`,

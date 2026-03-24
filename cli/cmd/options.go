@@ -17,7 +17,6 @@ type Options struct {
 	Container     string
 	C3Dir         string
 	Goal          string
-	Summary       string
 	Boundary      string
 	Field         string
 	Section       string
@@ -37,6 +36,8 @@ type Options struct {
 	Limit         int
 	Source        string
 	Tag           string
+	Recompute     bool
+	Keep          int
 }
 
 // ParseArgs parses command-line arguments into Options.
@@ -75,11 +76,6 @@ func ParseArgs(argv []string) Options {
 			if i+1 < len(argv) {
 				i++
 				opts.Goal = argv[i]
-			}
-		case "--summary":
-			if i+1 < len(argv) {
-				i++
-				opts.Summary = argv[i]
 			}
 		case "--boundary":
 			if i+1 < len(argv) {
@@ -146,6 +142,13 @@ func ParseArgs(argv []string) Options {
 			if i+1 < len(argv) {
 				i++
 				opts.Tag = argv[i]
+			}
+		case "--recompute":
+			opts.Recompute = true
+		case "--keep":
+			if i+1 < len(argv) {
+				i++
+				opts.Keep, _ = strconv.Atoi(argv[i])
 			}
 		default:
 			args = append(args, arg)

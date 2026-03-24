@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/lagz0ne/c3-design/cli/internal/content"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
@@ -366,7 +367,6 @@ func setupC3DB(t *testing.T) string {
 	s.InsertEntity(&store.Entity{
 		ID: "c3-0", Type: "system", Title: "TestProject",
 		Slug: "", Status: "active", Metadata: "{}",
-		Body: "# TestProject\n\n## Goal\n\nTest.\n",
 	})
 
 	return c3Dir
@@ -389,10 +389,10 @@ func setupRichC3DB(t *testing.T) string {
 	defer s.Close()
 
 	entities := []*store.Entity{
-		{ID: "c3-0", Type: "system", Title: "TestProject", Slug: "", Body: "# TestProject\n\n## Goal\n\nTest.\n\n## Containers\n\n| ID | Name | Boundary | Goal |\n|----|------|----------|------|\n", Status: "active", Metadata: "{}"},
-		{ID: "c3-1", Type: "container", Title: "api", Slug: "api", ParentID: "c3-0", Goal: "Serve API", Boundary: "service", Body: "# api\n\n## Goal\n\nServe API.\n\n## Components\n\n| ID | Name | Category | Status | Goal Contribution |\n|----|------|----------|--------|-------------------|\n", Status: "active", Metadata: "{}"},
-		{ID: "c3-101", Type: "component", Title: "auth", Slug: "auth", Category: "foundation", ParentID: "c3-1", Body: "# auth\n\n## Goal\n\nHandle auth.\n\n## Related Refs\n\n| Ref | Role |\n|-----|------|\n", Status: "active", Metadata: "{}"},
-		{ID: "ref-jwt", Type: "ref", Title: "JWT", Slug: "jwt", Goal: "JWT tokens", Body: "# JWT\n\n## Goal\n\nJWT tokens.\n", Status: "active", Metadata: "{}"},
+		{ID: "c3-0", Type: "system", Title: "TestProject", Slug: "", Status: "active", Metadata: "{}"},
+		{ID: "c3-1", Type: "container", Title: "api", Slug: "api", ParentID: "c3-0", Goal: "Serve API", Boundary: "service", Status: "active", Metadata: "{}"},
+		{ID: "c3-101", Type: "component", Title: "auth", Slug: "auth", Category: "foundation", ParentID: "c3-1", Status: "active", Metadata: "{}"},
+		{ID: "ref-jwt", Type: "ref", Title: "JWT", Slug: "jwt", Goal: "JWT tokens", Status: "active", Metadata: "{}"},
 	}
 	for _, e := range entities {
 		if err := s.InsertEntity(e); err != nil {
@@ -400,6 +400,19 @@ func setupRichC3DB(t *testing.T) string {
 		}
 	}
 	s.AddRelationship(&store.Relationship{FromID: "ref-jwt", ToID: "c3-1", RelType: "scope"})
+
+	// Populate node trees
+	bodies := map[string]string{
+		"c3-0":    "# TestProject\n\n## Goal\n\nTest.\n\n## Containers\n\n| ID | Name | Boundary | Goal |\n|----|------|----------|------|\n",
+		"c3-1":    "# api\n\n## Goal\n\nServe API.\n\n## Components\n\n| ID | Name | Category | Status | Goal Contribution |\n|----|------|----------|--------|-------------------|\n",
+		"c3-101":  "# auth\n\n## Goal\n\nHandle auth.\n\n## Related Refs\n\n| Ref | Role |\n|-----|------|\n",
+		"ref-jwt": "# JWT\n\n## Goal\n\nJWT tokens.\n",
+	}
+	for id, body := range bodies {
+		if err := content.WriteEntity(s, id, body); err != nil {
+			t.Fatalf("seed nodes %s: %v", id, err)
+		}
+	}
 
 	return c3Dir
 }

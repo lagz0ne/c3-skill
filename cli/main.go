@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 
 	"github.com/lagz0ne/c3-design/cli/cmd"
 	"github.com/lagz0ne/c3-design/cli/internal/config"
@@ -72,8 +73,7 @@ func run(argv []string, w io.Writer) error {
 		return fmt.Errorf("error: No .c3/ directory found\nhint: run 'c3x init' to create one, or use --c3-dir <path>")
 	}
 
-	// migrate works on legacy files — special path, before DB detection
-	if opts.Command == "migrate" {
+	if opts.Command == "migrate-legacy" {
 		if opts.DryRun {
 			return cmd.RunMigrateDryRun(c3Dir, opts.JSON, w)
 		}
@@ -85,7 +85,7 @@ func run(argv []string, w io.Writer) error {
 	hasDB := fileExists(dbPath)
 
 	if !hasDB {
-		return fmt.Errorf("error: no database found at %s\nhint: run 'c3x init' to create one, or 'c3x migrate' if you have legacy .c3/ markdown files", dbPath)
+		return fmt.Errorf("error: no database found at %s\nhint: run 'c3x init' to create one, or 'c3x migrate-legacy' if you have legacy .c3/ markdown files", dbPath)
 	}
 
 	s, err := store.Open(dbPath)
@@ -244,6 +244,42 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) err
 			outputDir = opts.Args[0]
 		}
 		return cmd.RunExport(cmd.ExportOptions{Store: s, OutputDir: outputDir, JSON: opts.JSON}, w)
+	case "nodes":
+		entityID := ""
+		if len(opts.Args) >= 1 {
+			entityID = opts.Args[0]
+		}
+		return cmd.RunNodes(cmd.NodesOptions{Store: s, EntityID: entityID, JSON: opts.JSON}, w)
+	case "hash":
+		entityID := ""
+		if len(opts.Args) >= 1 {
+			entityID = opts.Args[0]
+		}
+		return cmd.RunHash(cmd.HashOptions{Store: s, EntityID: entityID, Recompute: opts.Recompute}, w)
+	case "versions":
+		entityID := ""
+		if len(opts.Args) >= 1 {
+			entityID = opts.Args[0]
+		}
+		return cmd.RunVersions(cmd.VersionsOptions{Store: s, EntityID: entityID, JSON: opts.JSON}, w)
+	case "version":
+		entityID := ""
+		versionNum := 0
+		if len(opts.Args) >= 1 {
+			entityID = opts.Args[0]
+		}
+		if len(opts.Args) >= 2 {
+			versionNum, _ = strconv.Atoi(opts.Args[1])
+		}
+		return cmd.RunVersion(cmd.VersionOptions{Store: s, EntityID: entityID, Version: versionNum}, w)
+	case "prune":
+		entityID := ""
+		if len(opts.Args) >= 1 {
+			entityID = opts.Args[0]
+		}
+		return cmd.RunPrune(cmd.PruneOptions{Store: s, EntityID: entityID, Keep: opts.Keep}, w)
+	case "migrate":
+		return cmd.RunMigrateV2(cmd.MigrateV2Options{Store: s, DryRun: opts.DryRun}, w)
 	default:
 		return fmt.Errorf("error: unknown command '%s'\nhint: run 'c3x --help' to see available commands", opts.Command)
 	}
@@ -264,11 +300,11 @@ func runAdd(opts cmd.Options, s *store.Store, w io.Writer) error {
 		addW = &buf
 	}
 	var err error
-	if opts.Goal != "" || opts.Summary != "" || opts.Boundary != "" {
+	if opts.Goal != "" || opts.Boundary != "" {
 		addOpts := cmd.AddOptions{
 			EntityType: entityType, Slug: slug, Store: s,
 			Container: opts.Container, Feature: opts.Feature,
-			Goal: opts.Goal, Summary: opts.Summary, Boundary: opts.Boundary,
+			Goal: opts.Goal, Boundary: opts.Boundary,
 		}
 		err = cmd.RunAddRich(addOpts, addW)
 	} else {

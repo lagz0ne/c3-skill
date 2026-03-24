@@ -5,10 +5,8 @@ import (
 	"io"
 	"regexp"
 	"strconv"
-	"strings"
 	"time"
 
-	"github.com/lagz0ne/c3-design/cli/internal/schema"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
@@ -19,13 +17,12 @@ type AddOptions struct {
 	Store      *store.Store
 	Container  string
 	Feature    bool
-	Goal       string
-	Summary    string
-	Boundary   string
+	Goal     string
+	Boundary string
 }
 
 func (o *AddOptions) hasContent() bool {
-	return o.Goal != "" || o.Summary != "" || o.Boundary != ""
+	return o.Goal != "" || o.Boundary != ""
 }
 
 // RunAddRich creates a new entity with optional content pre-populated.
@@ -61,21 +58,6 @@ func addRichContainer(opts AddOptions, w io.Writer) error {
 		boundary = "service"
 	}
 
-	content := buildDocument(
-		map[string]string{
-			"id":       fmt.Sprintf("c3-%d", n),
-			"title":    opts.Slug,
-			"type":     "container",
-			"boundary": boundary,
-			"parent":   "c3-0",
-			"goal":     opts.Goal,
-			"summary":  opts.Summary,
-		},
-		opts.Slug,
-		"container",
-		opts.Goal,
-	)
-
 	entity := &store.Entity{
 		ID:       fmt.Sprintf("c3-%d", n),
 		Type:     "container",
@@ -84,8 +66,6 @@ func addRichContainer(opts AddOptions, w io.Writer) error {
 		ParentID: "c3-0",
 		Boundary: boundary,
 		Goal:     opts.Goal,
-		Summary:  opts.Summary,
-		Body:     content,
 		Status:   "active",
 		Metadata: "{}",
 	}
@@ -123,21 +103,6 @@ func addRichComponent(opts AddOptions, w io.Writer) error {
 		category = "feature"
 	}
 
-	content := buildDocument(
-		map[string]string{
-			"id":       componentID,
-			"title":    opts.Slug,
-			"type":     "component",
-			"category": category,
-			"parent":   opts.Container,
-			"goal":     opts.Goal,
-			"summary":  opts.Summary,
-		},
-		opts.Slug,
-		"component",
-		opts.Goal,
-	)
-
 	entity := &store.Entity{
 		ID:       componentID,
 		Type:     "component",
@@ -146,8 +111,6 @@ func addRichComponent(opts AddOptions, w io.Writer) error {
 		Category: category,
 		ParentID: opts.Container,
 		Goal:     opts.Goal,
-		Summary:  opts.Summary,
-		Body:     content,
 		Status:   "active",
 		Metadata: "{}",
 	}
@@ -166,25 +129,12 @@ func addRichRef(opts AddOptions, w io.Writer) error {
 		return fmt.Errorf("error: ref-%s already exists", opts.Slug)
 	}
 
-	content := buildDocument(
-		map[string]string{
-			"id":    id,
-			"title": opts.Slug,
-			"goal":  opts.Goal,
-			"scope": "[]",
-		},
-		opts.Slug,
-		"ref",
-		opts.Goal,
-	)
-
 	entity := &store.Entity{
 		ID:       id,
 		Type:     "ref",
 		Title:    opts.Slug,
 		Slug:     opts.Slug,
 		Goal:     opts.Goal,
-		Body:     content,
 		Status:   "active",
 		Metadata: "{}",
 	}
@@ -204,20 +154,6 @@ func addRichAdr(opts AddOptions, w io.Writer) error {
 	}
 
 	today := now.Format("2006-01-02")
-	content := buildDocument(
-		map[string]string{
-			"id":      adrID,
-			"title":   opts.Slug,
-			"type":    "adr",
-			"status":  "proposed",
-			"date":    today,
-			"affects": "[c3-0]",
-			"goal":    opts.Goal,
-		},
-		opts.Slug,
-		"adr",
-		opts.Goal,
-	)
 
 	entity := &store.Entity{
 		ID:       adrID,
@@ -227,7 +163,6 @@ func addRichAdr(opts AddOptions, w io.Writer) error {
 		Status:   "proposed",
 		Date:     today,
 		Goal:     opts.Goal,
-		Body:     content,
 		Metadata: "{}",
 	}
 	if err := opts.Store.InsertEntity(entity); err != nil {
@@ -251,25 +186,12 @@ func addRichRecipe(opts AddOptions, w io.Writer) error {
 		return fmt.Errorf("error: %s already exists", id)
 	}
 
-	content := buildDocument(
-		map[string]string{
-			"id":    id,
-			"title": opts.Slug,
-			"type":  "recipe",
-			"goal":  opts.Goal,
-		},
-		opts.Slug,
-		"recipe",
-		opts.Goal,
-	)
-
 	entity := &store.Entity{
 		ID:       id,
 		Type:     "recipe",
 		Title:    opts.Slug,
 		Slug:     opts.Slug,
 		Goal:     opts.Goal,
-		Body:     content,
 		Status:   "active",
 		Metadata: "{}",
 	}
@@ -281,39 +203,3 @@ func addRichRecipe(opts AddOptions, w io.Writer) error {
 	return nil
 }
 
-func buildDocument(fmFields map[string]string, title, entityType, goal string) string {
-	var b strings.Builder
-
-	b.WriteString(fmt.Sprintf("# %s\n", title))
-
-	sections := schema.ForType(entityType)
-	if sections == nil {
-		return b.String()
-	}
-
-	for _, sec := range sections {
-		b.WriteString(fmt.Sprintf("\n## %s\n", sec.Name))
-
-		if sec.Name == "Goal" && goal != "" {
-			b.WriteString(fmt.Sprintf("\n%s\n", goal))
-			continue
-		}
-
-		if sec.ContentType == "table" && len(sec.Columns) > 0 {
-			b.WriteString("\n")
-			// Header row
-			headers := make([]string, len(sec.Columns))
-			seps := make([]string, len(sec.Columns))
-			for i, col := range sec.Columns {
-				headers[i] = col.Name
-				seps[i] = strings.Repeat("-", len(col.Name))
-			}
-			b.WriteString(fmt.Sprintf("| %s |\n", strings.Join(headers, " | ")))
-			b.WriteString(fmt.Sprintf("| %s |\n", strings.Join(seps, " | ")))
-		} else {
-			b.WriteString("\n")
-		}
-	}
-
-	return b.String()
-}

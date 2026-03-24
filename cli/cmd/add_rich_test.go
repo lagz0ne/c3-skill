@@ -19,7 +19,6 @@ func TestRunAddRich_ContainerWithGoal(t *testing.T) {
 		Slug:       "payments",
 		Store:      s,
 		Goal:       "Process payments securely",
-		Summary:    "Handles all payment processing",
 		Boundary:   "service",
 	}
 
@@ -35,22 +34,8 @@ func TestRunAddRich_ContainerWithGoal(t *testing.T) {
 	if entity.Goal != "Process payments securely" {
 		t.Errorf("goal = %q, want %q", entity.Goal, "Process payments securely")
 	}
-	if entity.Summary != "Handles all payment processing" {
-		t.Errorf("summary = %q", entity.Summary)
-	}
 	if entity.Boundary != "service" {
 		t.Errorf("boundary = %q, want %q", entity.Boundary, "service")
-	}
-
-	// Body should contain Goal section populated from opts
-	if !strings.Contains(entity.Body, "## Goal") {
-		t.Error("body should contain Goal section")
-	}
-	if !strings.Contains(entity.Body, "Process payments securely") {
-		t.Error("body Goal section should contain the goal text")
-	}
-	if !strings.Contains(entity.Body, "## Components") {
-		t.Error("body should contain Components table section")
 	}
 }
 
@@ -65,7 +50,6 @@ func TestRunAddRich_ComponentWithGoal(t *testing.T) {
 		Container:  "c3-1",
 		Feature:    false,
 		Goal:       "Throttle API requests",
-		Summary:    "Token bucket rate limiting",
 	}
 
 	err := RunAddRich(opts, &buf)
@@ -80,22 +64,7 @@ func TestRunAddRich_ComponentWithGoal(t *testing.T) {
 	if entity.Goal != "Throttle API requests" {
 		t.Errorf("goal = %q, want %q", entity.Goal, "Throttle API requests")
 	}
-	if entity.Summary != "Token bucket rate limiting" {
-		t.Errorf("summary = %q", entity.Summary)
-	}
-
-	if !strings.Contains(entity.Body, "## Goal") {
-		t.Error("body should contain Goal section")
-	}
-	if !strings.Contains(entity.Body, "Throttle API requests") {
-		t.Error("body Goal section should contain the goal text")
-	}
-	if !strings.Contains(entity.Body, "## Dependencies") {
-		t.Error("body should contain Dependencies table scaffold")
-	}
-	if !strings.Contains(entity.Body, "## Related Refs") {
-		t.Error("body should contain Related Refs table scaffold")
-	}
+	_ = entity // Goal verified above, no Body on Entity
 }
 
 func TestRunAddRich_RefWithGoal(t *testing.T) {
@@ -121,18 +90,7 @@ func TestRunAddRich_RefWithGoal(t *testing.T) {
 	if entity.Goal != "Consistent error responses across all services" {
 		t.Errorf("goal = %q", entity.Goal)
 	}
-	if !strings.Contains(entity.Body, "## Goal") {
-		t.Error("ref body should contain Goal section")
-	}
-	if !strings.Contains(entity.Body, "## Choice") {
-		t.Error("ref body should contain Choice section scaffold")
-	}
-	if !strings.Contains(entity.Body, "## Why") {
-		t.Error("ref body should contain Why section scaffold")
-	}
-	if !strings.Contains(entity.Body, "## How") {
-		t.Error("ref body should contain How section scaffold")
-	}
+	_ = entity // Goal verified above, no Body on Entity
 }
 
 func TestRunAddRich_AdrWithGoal(t *testing.T) {

@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/lagz0ne/c3-design/cli/internal/content"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
@@ -125,9 +126,6 @@ func buildExportContent(s *store.Store, e *store.Entity) string {
 	if e.Goal != "" {
 		b.WriteString(fmt.Sprintf("goal: %s\n", e.Goal))
 	}
-	if e.Summary != "" {
-		b.WriteString(fmt.Sprintf("summary: %s\n", e.Summary))
-	}
 	if e.Boundary != "" {
 		b.WriteString(fmt.Sprintf("boundary: %s\n", e.Boundary))
 	}
@@ -137,10 +135,6 @@ func buildExportContent(s *store.Store, e *store.Entity) string {
 	if e.Date != "" {
 		b.WriteString(fmt.Sprintf("date: \"%s\"\n", e.Date))
 	}
-	if e.Description != "" {
-		b.WriteString(fmt.Sprintf("description: %s\n", e.Description))
-	}
-
 	// Relationships
 	rels, _ := s.RelationshipsFrom(e.ID)
 	relsByType := make(map[string][]string)
@@ -156,9 +150,13 @@ func buildExportContent(s *store.Store, e *store.Entity) string {
 
 	b.WriteString("---\n")
 
-	if e.Body != "" {
+	body, err := content.ReadEntity(s, e.ID)
+	if err != nil {
+		body = ""
+	}
+	if body != "" {
 		b.WriteString("\n")
-		b.WriteString(e.Body)
+		b.WriteString(body)
 	}
 
 	return b.String()

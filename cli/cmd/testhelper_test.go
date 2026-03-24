@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/lagz0ne/c3-design/cli/internal/content"
 	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 	"github.com/lagz0ne/c3-design/cli/internal/walker"
@@ -409,7 +410,7 @@ func createDBFixture(t *testing.T) *store.Store {
 	t.Cleanup(func() { s.Close() })
 
 	entities := []*store.Entity{
-		{ID: "c3-0", Type: "system", Title: "TestProject", Slug: "", Goal: "", Summary: "", Body: "# TestProject\n\n## Goal\n\nTest the system.\n", Status: "active", Metadata: "{}"},
+		{ID: "c3-0", Type: "system", Title: "TestProject", Slug: "", Goal: "", Status: "active", Metadata: "{}"},
 		{ID: "c3-1", Type: "container", Title: "api", Slug: "api", ParentID: "c3-0", Goal: "Serve API requests", Boundary: "service", Status: "active", Metadata: "{}"},
 		{ID: "c3-2", Type: "container", Title: "web", Slug: "web", ParentID: "c3-0", Boundary: "app", Status: "active", Metadata: "{}"},
 		{ID: "c3-101", Type: "component", Title: "auth", Slug: "auth", Category: "foundation", ParentID: "c3-1", Status: "active", Metadata: "{}"},
@@ -434,6 +435,16 @@ func createDBFixture(t *testing.T) *store.Store {
 		}
 	}
 
+	// Populate node trees via content.WriteEntity
+	bodies := map[string]string{
+		"c3-0": "# TestProject\n\n## Goal\n\nTest the system.\n",
+	}
+	for id, body := range bodies {
+		if err := content.WriteEntity(s, id, body); err != nil {
+			t.Fatalf("seed nodes %s: %v", id, err)
+		}
+	}
+
 	return s
 }
 
@@ -448,15 +459,15 @@ func createRichDBFixture(t *testing.T) *store.Store {
 	t.Cleanup(func() { s.Close() })
 
 	entities := []*store.Entity{
-		{ID: "c3-0", Type: "system", Title: "TestProject", Slug: "", Body: "# TestProject\n\n## Goal\n\nTest the system.\n\n## Containers\n\n| ID | Name | Boundary | Goal |\n|----|------|----------|------|\n| c3-1 | api | service | Serve API requests |\n| c3-2 | web | app | Web frontend |\n", Status: "active", Metadata: "{}"},
-		{ID: "c3-1", Type: "container", Title: "api", Slug: "api", ParentID: "c3-0", Goal: "Serve API requests", Boundary: "service", Body: "# api\n\n## Goal\n\nServe API requests.\n\n## Components\n\n| ID | Name | Category | Status | Goal Contribution |\n|----|------|----------|--------|-------------------|\n| c3-101 | auth | foundation | active | Authentication |\n| c3-110 | users | feature | active | User management |\n", Status: "active", Metadata: "{}"},
-		{ID: "c3-2", Type: "container", Title: "web", Slug: "web", ParentID: "c3-0", Boundary: "app", Body: "# web\n\n## Goal\n\nWeb frontend.\n\n## Components\n\n| ID | Name | Category | Status | Goal Contribution |\n|----|------|----------|--------|-------------------|\n| c3-201 | renderer | feature | active | Renders pages |\n", Status: "active", Metadata: "{}"},
-		{ID: "c3-101", Type: "component", Title: "auth", Slug: "auth", Category: "foundation", ParentID: "c3-1", Body: "# auth\n\n## Goal\n\nHandle authentication.\n\n## Dependencies\n\n| Direction | What | From/To |\n|-----------|------|----------|\n| IN | user credentials | c3-110 |\n\n## Related Refs\n\n| Ref | Role |\n|-----|------|\n| ref-jwt | Token format |\n", Status: "active", Metadata: "{}"},
-		{ID: "c3-110", Type: "component", Title: "users", Slug: "users", Category: "feature", ParentID: "c3-1", Body: "# users\n\n## Goal\n\nManage user accounts.\n\n## Dependencies\n\n| Direction | What | From/To |\n|-----------|------|----------|\n", Status: "active", Metadata: "{}"},
-		{ID: "c3-201", Type: "component", Title: "renderer", Slug: "renderer", Category: "feature", ParentID: "c3-2", Body: "# renderer\n\n## Goal\n\nRender pages.\n\n## Dependencies\n\n| Direction | What | From/To |\n|-----------|------|----------|\n\n## Related Refs\n\n| Ref | Role |\n|-----|------|\n", Status: "active", Metadata: "{}"},
-		{ID: "ref-jwt", Type: "ref", Title: "JWT Authentication", Slug: "jwt", Goal: "Standardize auth tokens", Body: "# JWT Authentication\n\n## Goal\n\nStandardize auth tokens.\n\n## Choice\n\nUse RS256 signed JWTs.\n\n## Why\n\nIndustry standard, asymmetric verification.\n", Status: "active", Metadata: "{}"},
-		{ID: "ref-error-handling", Type: "ref", Title: "Error Handling", Slug: "error-handling", Goal: "Consistent error responses", Body: "# Error Handling\n\n## Goal\n\nConsistent error responses.\n\n## Choice\n\nRFC 7807 Problem Details.\n\n## Why\n\nMachine-readable error format.\n", Status: "active", Metadata: "{}"},
-		{ID: "adr-20260226-use-go", Type: "adr", Title: "Use Go for CLI", Slug: "use-go", Status: "proposed", Date: "20260226", Body: "# Use Go for CLI\n\n## Context\n\nNeed fast CLI.\n", Metadata: "{}"},
+		{ID: "c3-0", Type: "system", Title: "TestProject", Slug: "", Status: "active", Metadata: "{}"},
+		{ID: "c3-1", Type: "container", Title: "api", Slug: "api", ParentID: "c3-0", Goal: "Serve API requests", Boundary: "service", Status: "active", Metadata: "{}"},
+		{ID: "c3-2", Type: "container", Title: "web", Slug: "web", ParentID: "c3-0", Boundary: "app", Status: "active", Metadata: "{}"},
+		{ID: "c3-101", Type: "component", Title: "auth", Slug: "auth", Category: "foundation", ParentID: "c3-1", Status: "active", Metadata: "{}"},
+		{ID: "c3-110", Type: "component", Title: "users", Slug: "users", Category: "feature", ParentID: "c3-1", Status: "active", Metadata: "{}"},
+		{ID: "c3-201", Type: "component", Title: "renderer", Slug: "renderer", Category: "feature", ParentID: "c3-2", Status: "active", Metadata: "{}"},
+		{ID: "ref-jwt", Type: "ref", Title: "JWT Authentication", Slug: "jwt", Goal: "Standardize auth tokens", Status: "active", Metadata: "{}"},
+		{ID: "ref-error-handling", Type: "ref", Title: "Error Handling", Slug: "error-handling", Goal: "Consistent error responses", Status: "active", Metadata: "{}"},
+		{ID: "adr-20260226-use-go", Type: "adr", Title: "Use Go for CLI", Slug: "use-go", Status: "proposed", Date: "20260226", Metadata: "{}"},
 	}
 	for _, e := range entities {
 		if err := s.InsertEntity(e); err != nil {
@@ -474,6 +485,24 @@ func createRichDBFixture(t *testing.T) *store.Store {
 	for _, r := range rels {
 		if err := s.AddRelationship(r); err != nil {
 			t.Fatalf("seed rel %s->%s: %v", r.FromID, r.ToID, err)
+		}
+	}
+
+	// Populate node trees via content.WriteEntity
+	bodies := map[string]string{
+		"c3-0":                "# TestProject\n\n## Goal\n\nTest the system.\n\n## Containers\n\n| ID | Name | Boundary | Goal |\n|----|------|----------|------|\n| c3-1 | api | service | Serve API requests |\n| c3-2 | web | app | Web frontend |\n",
+		"c3-1":                "# api\n\n## Goal\n\nServe API requests.\n\n## Components\n\n| ID | Name | Category | Status | Goal Contribution |\n|----|------|----------|--------|-------------------|\n| c3-101 | auth | foundation | active | Authentication |\n| c3-110 | users | feature | active | User management |\n",
+		"c3-2":                "# web\n\n## Goal\n\nWeb frontend.\n\n## Components\n\n| ID | Name | Category | Status | Goal Contribution |\n|----|------|----------|--------|-------------------|\n| c3-201 | renderer | feature | active | Renders pages |\n",
+		"c3-101":              "# auth\n\n## Goal\n\nHandle authentication.\n\n## Dependencies\n\n| Direction | What | From/To |\n|-----------|------|----------|\n| IN | user credentials | c3-110 |\n\n## Related Refs\n\n| Ref | Role |\n|-----|------|\n| ref-jwt | Token format |\n",
+		"c3-110":              "# users\n\n## Goal\n\nManage user accounts.\n\n## Dependencies\n\n| Direction | What | From/To |\n|-----------|------|----------|\n",
+		"c3-201":              "# renderer\n\n## Goal\n\nRender pages.\n\n## Dependencies\n\n| Direction | What | From/To |\n|-----------|------|----------|\n\n## Related Refs\n\n| Ref | Role |\n|-----|------|\n",
+		"ref-jwt":             "# JWT Authentication\n\n## Goal\n\nStandardize auth tokens.\n\n## Choice\n\nUse RS256 signed JWTs.\n\n## Why\n\nIndustry standard, asymmetric verification.\n",
+		"ref-error-handling":  "# Error Handling\n\n## Goal\n\nConsistent error responses.\n\n## Choice\n\nRFC 7807 Problem Details.\n\n## Why\n\nMachine-readable error format.\n",
+		"adr-20260226-use-go": "# Use Go for CLI\n\n## Context\n\nNeed fast CLI.\n",
+	}
+	for id, body := range bodies {
+		if err := content.WriteEntity(s, id, body); err != nil {
+			t.Fatalf("seed nodes %s: %v", id, err)
 		}
 	}
 

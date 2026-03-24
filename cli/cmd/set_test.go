@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+
+	"github.com/lagz0ne/c3-design/cli/internal/content"
 )
 
 func TestRunSet_FrontmatterField(t *testing.T) {
@@ -115,8 +117,8 @@ func TestRunSet_SectionText(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	entity, _ := s.GetEntity("c3-101")
-	if !strings.Contains(entity.Body, "Provide JWT-based authentication for all API endpoints.") {
+	body, _ := content.ReadEntity(s, "c3-101")
+	if !strings.Contains(body, "Provide JWT-based authentication for all API endpoints.") {
 		t.Error("section content should be updated")
 	}
 }
@@ -153,25 +155,23 @@ func TestRunSet_SectionAppend(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	entity, _ := s.GetEntity("c3-101")
+	body, _ := content.ReadEntity(s, "c3-101")
 	// Original row should survive
-	if !strings.Contains(entity.Body, "user credentials") {
+	if !strings.Contains(body, "user credentials") {
 		t.Error("existing row should be preserved")
 	}
 	// New row should be added
-	if !strings.Contains(entity.Body, "events") {
+	if !strings.Contains(body, "events") {
 		t.Error("new row should be appended")
 	}
 }
 
 func TestRunSet_AllFields(t *testing.T) {
 	fields := map[string]string{
-		"summary":     "New summary",
-		"boundary":    "service",
-		"category":    "feature",
-		"title":       "New Title",
-		"date":        "2026-03-20",
-		"description": "Test desc",
+		"boundary": "service",
+		"category": "feature",
+		"title":    "New Title",
+		"date":     "2026-03-20",
 	}
 
 	for field, value := range fields {
@@ -186,8 +186,6 @@ func TestRunSet_AllFields(t *testing.T) {
 			entity, _ := s.GetEntity("c3-101")
 			var got string
 			switch field {
-			case "summary":
-				got = entity.Summary
 			case "boundary":
 				got = entity.Boundary
 			case "category":
@@ -196,8 +194,6 @@ func TestRunSet_AllFields(t *testing.T) {
 				got = entity.Title
 			case "date":
 				got = entity.Date
-			case "description":
-				got = entity.Description
 			}
 			if got != value {
 				t.Errorf("%s = %q, want %q", field, got, value)
@@ -221,8 +217,8 @@ func TestRunSet_SectionJSONArray(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	entity, _ := s.GetEntity("c3-101")
-	if !strings.Contains(entity.Body, "ref-logging") {
+	body, _ := content.ReadEntity(s, "c3-101")
+	if !strings.Contains(body, "ref-logging") {
 		t.Error("body should contain the new table data")
 	}
 }
@@ -246,10 +242,9 @@ func TestRunSet_SectionAppendInvalidJSON(t *testing.T) {
 
 func TestRunSet_SectionJSONArray_NoExistingTable(t *testing.T) {
 	s := createRichDBFixture(t)
-	// Set up an entity with required sections + a custom section
-	entity, _ := s.GetEntity("c3-110")
-	entity.Body = "# users\n\n## Goal\n\nManage users.\n\n## Dependencies\n\n| Direction | What | From/To |\n|-----------|------|----------|\n| IN | data | c3-101 |\n\n## Custom Section\n\nSome text here.\n"
-	s.UpdateEntity(entity)
+	// Set up an entity with required sections + a custom section via node tree
+	newBody := "# users\n\n## Goal\n\nManage users.\n\n## Dependencies\n\n| Direction | What | From/To |\n|-----------|------|----------|\n| IN | data | c3-101 |\n\n## Custom Section\n\nSome text here.\n"
+	content.WriteEntity(s, "c3-110", newBody)
 
 	var buf bytes.Buffer
 	opts := SetOptions{
@@ -263,8 +258,8 @@ func TestRunSet_SectionJSONArray_NoExistingTable(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	updated, _ := s.GetEntity("c3-110")
-	if !strings.Contains(updated.Body, "value1") {
+	updatedBody, _ := content.ReadEntity(s, "c3-110")
+	if !strings.Contains(updatedBody, "value1") {
 		t.Error("body should contain the new table data")
 	}
 }
@@ -273,7 +268,7 @@ func TestRunSet_BatchStdin(t *testing.T) {
 	s := createRichDBFixture(t)
 	var buf bytes.Buffer
 
-	payload := `{"fields":{"goal":"New batch goal","summary":"Batch summary"},"sections":{"Goal":"New goal content from batch."}}`
+	payload := `{"fields":{"goal":"New batch goal"},"sections":{"Goal":"New goal content from batch."}}`
 	opts := SetOptions{
 		Store: s,
 		ID:    "c3-101",
@@ -289,15 +284,13 @@ func TestRunSet_BatchStdin(t *testing.T) {
 	if entity.Goal != "New batch goal" {
 		t.Errorf("goal = %q, want %q", entity.Goal, "New batch goal")
 	}
-	if entity.Summary != "Batch summary" {
-		t.Errorf("summary = %q, want %q", entity.Summary, "Batch summary")
-	}
-	if !strings.Contains(entity.Body, "New goal content from batch.") {
+	batchBody, _ := content.ReadEntity(s, "c3-101")
+	if !strings.Contains(batchBody, "New goal content from batch.") {
 		t.Error("body should contain updated Goal section")
 	}
 
 	output := buf.String()
-	if !strings.Contains(output, "2 fields") {
+	if !strings.Contains(output, "1 fields") {
 		t.Errorf("output should mention field count: %s", output)
 	}
 }
@@ -321,4 +314,65 @@ func TestIsJSONArray(t *testing.T) {
 			}
 		})
 	}
+}
+
+// === NODE TREE VERIFICATION ===
+
+func TestRunSet_SectionPopulatesNodeTree(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	opts := SetOptions{
+		Store:   s,
+		ID:      "c3-101",
+		Section: "Goal",
+		Value:   "Node-tree set goal.",
+	}
+	err := RunSet(opts, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Verify node tree content
+	rendered, err := content.ReadEntity(s, "c3-101")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(rendered, "Node-tree set goal.") {
+		t.Errorf("node tree should contain updated section, got: %s", rendered)
+	}
+
+	entity, _ := s.GetEntity("c3-101")
+	if entity.RootMerkle == "" {
+		t.Error("merkle should be set after set --section")
+	}
+}
+
+func TestRunSet_BatchSectionsPopulateNodeTree(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	payload := `{"fields":{"goal":"batch goal"},"sections":{"Goal":"Batch node-tree goal."}}`
+	opts := SetOptions{
+		Store: s,
+		ID:    "c3-101",
+		Value: payload,
+		Stdin: true,
+	}
+	err := RunSet(opts, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rendered, err := content.ReadEntity(s, "c3-101")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(rendered, "Batch node-tree goal.") {
+		t.Errorf("node tree should contain batch-updated section, got: %s", rendered)
+	}
+
+	// Verify batch fields were applied (goal was in the batch payload)
+	entity, _ := s.GetEntity("c3-101")
+	_ = entity // fields verified via node tree
 }

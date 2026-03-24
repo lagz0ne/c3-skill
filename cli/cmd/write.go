@@ -5,6 +5,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/lagz0ne/c3-design/cli/internal/content"
 	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
 	"github.com/lagz0ne/c3-design/cli/internal/markdown"
 	"github.com/lagz0ne/c3-design/cli/internal/schema"
@@ -40,20 +41,32 @@ func RunWrite(opts WriteOptions, w io.Writer) error {
 func runWriteFull(existing *store.Entity, opts WriteOptions, w io.Writer) error {
 	fm, body := frontmatter.ParseFrontmatter(opts.Content)
 
-	applyFrontmatter(existing, fm)
-
-	if fm != nil {
-		existing.Body = body
-	} else {
-		existing.Body = opts.Content
+	// Determine the markdown body to write.
+	mdBody := body
+	if fm == nil {
+		mdBody = opts.Content
 	}
 
-	promoteGoalIfEmpty(existing)
-
-	issues := validateContent(existing)
+	// Validate against schema before writing.
+	issues := validateBodyContent(mdBody, existing.Type)
 	if len(issues) > 0 {
 		return formatValidationError(opts.ID, issues)
 	}
+
+	// Write content through the node tree (handles nodes, merkle, versioning, goal sync).
+	if err := content.WriteEntity(opts.Store, opts.ID, mdBody); err != nil {
+		return fmt.Errorf("error: writing content: %w", err)
+	}
+
+	// Re-fetch entity (WriteEntity updated merkle/version/goal from nodes).
+	existing, err := opts.Store.GetEntity(opts.ID)
+	if err != nil {
+		return fmt.Errorf("error: re-fetch entity: %w", err)
+	}
+
+	// Apply frontmatter metadata — FM fields override node-synced values.
+	applyFrontmatter(existing, fm)
+	promoteGoalIfEmpty(existing, opts.Store)
 
 	if err := opts.Store.UpdateEntity(existing); err != nil {
 		return fmt.Errorf("error: updating entity: %w", err)
@@ -71,20 +84,33 @@ func runWriteFull(existing *store.Entity, opts WriteOptions, w io.Writer) error 
 
 // runWriteSection replaces a single section's content, validates the result.
 func runWriteSection(existing *store.Entity, opts WriteOptions, w io.Writer) error {
-	newBody, err := markdown.ReplaceSection(existing.Body, opts.Section, opts.Content)
+	// Read current content from node tree.
+	currentBody, err := content.ReadEntity(opts.Store, opts.ID)
+	if err != nil {
+		currentBody = ""
+	}
+
+	newBody, err := markdown.ReplaceSection(currentBody, opts.Section, opts.Content)
 	if err != nil {
 		return fmt.Errorf("error: section %q not found in %s\nhint: available sections: %s",
-			opts.Section, opts.ID, availableSections(existing.Body))
+			opts.Section, opts.ID, availableSections(currentBody))
 	}
 
-	existing.Body = newBody
+	// Write through node tree.
+	if err := content.WriteEntity(opts.Store, opts.ID, newBody); err != nil {
+		return fmt.Errorf("error: writing content: %w", err)
+	}
 
 	if opts.Section == "Goal" {
-		promoteGoalIfEmpty(existing)
-	}
-
-	if err := opts.Store.UpdateEntity(existing); err != nil {
-		return fmt.Errorf("error: updating entity: %w", err)
+		// Re-fetch and promote goal if needed.
+		existing, err = opts.Store.GetEntity(opts.ID)
+		if err != nil {
+			return fmt.Errorf("error: re-fetch entity: %w", err)
+		}
+		promoteGoalIfEmpty(existing, opts.Store)
+		if err := opts.Store.UpdateEntity(existing); err != nil {
+			return fmt.Errorf("error: updating entity: %w", err)
+		}
 	}
 
 	fmt.Fprintf(w, "Updated %s section %q\n", opts.ID, opts.Section)
@@ -112,12 +138,6 @@ func applyFrontmatter(e *store.Entity, fm *frontmatter.Frontmatter) {
 	if fm.Goal != "" {
 		e.Goal = fm.Goal
 	}
-	if fm.Summary != "" {
-		e.Summary = fm.Summary
-	}
-	if fm.Description != "" {
-		e.Description = fm.Description
-	}
 	if fm.Status != "" {
 		e.Status = fm.Status
 	}
@@ -135,18 +155,22 @@ func applyFrontmatter(e *store.Entity, fm *frontmatter.Frontmatter) {
 	}
 }
 
-// promoteGoalIfEmpty extracts the first line of ## Goal body section
-// into entity.Goal if the frontmatter goal is empty.
-func promoteGoalIfEmpty(e *store.Entity) {
+// promoteGoalIfEmpty reads the node-tree body and extracts the first line
+// of ## Goal into entity.Goal if the frontmatter goal is empty.
+func promoteGoalIfEmpty(e *store.Entity, s *store.Store) {
 	if e.Goal != "" {
 		return
 	}
-	sections := markdown.ParseSections(e.Body)
-	for _, s := range sections {
-		if s.Name == "Goal" {
-			content := strings.TrimSpace(s.Content)
-			if content != "" {
-				e.Goal = strings.SplitN(content, "\n", 2)[0]
+	body, err := content.ReadEntity(s, e.ID)
+	if err != nil || body == "" {
+		return
+	}
+	sections := markdown.ParseSections(body)
+	for _, sec := range sections {
+		if sec.Name == "Goal" {
+			c := strings.TrimSpace(sec.Content)
+			if c != "" {
+				e.Goal = strings.SplitN(c, "\n", 2)[0]
 			}
 			return
 		}
@@ -164,14 +188,14 @@ func formatValidationError(id string, issues []Issue) error {
 	return fmt.Errorf("error: content validation failed for %s\n%s", id, sb.String())
 }
 
-// validateContent checks required schema sections. Pure validation — no mutations.
-func validateContent(e *store.Entity) []Issue {
-	schemaSections := schema.ForType(e.Type)
+// validateBodyContent checks required schema sections against a markdown body string.
+func validateBodyContent(body, entityType string) []Issue {
+	schemaSections := schema.ForType(entityType)
 	if schemaSections == nil {
 		return nil
 	}
 
-	sections := markdown.ParseSections(e.Body)
+	sections := markdown.ParseSections(body)
 	sectionMap := make(map[string]string)
 	for _, s := range sections {
 		if s.Name != "" {
@@ -185,7 +209,7 @@ func validateContent(e *store.Entity) []Issue {
 			continue
 		}
 
-		content, exists := sectionMap[sec.Name]
+		c, exists := sectionMap[sec.Name]
 		if !exists {
 			issues = append(issues, Issue{
 				Severity: "error",
@@ -195,7 +219,7 @@ func validateContent(e *store.Entity) []Issue {
 			continue
 		}
 
-		if content == "" {
+		if c == "" {
 			issues = append(issues, Issue{
 				Severity: "error",
 				Message:  fmt.Sprintf("empty required section: %s", sec.Name),

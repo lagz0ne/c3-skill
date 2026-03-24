@@ -3,6 +3,7 @@ package store
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	_ "modernc.org/sqlite"
 )
@@ -27,6 +28,10 @@ func Open(dbPath string) (*Store, error) {
 	if err := s.createSchema(); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("create schema: %w", err)
+	}
+	if err := s.migrateSchema(); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("migrate schema: %w", err)
 	}
 	return s, nil
 }
@@ -56,13 +61,12 @@ CREATE TABLE IF NOT EXISTS entities (
 	category    TEXT NOT NULL DEFAULT '',
 	parent_id   TEXT REFERENCES entities(id) ON DELETE SET NULL,
 	goal        TEXT NOT NULL DEFAULT '',
-	summary     TEXT NOT NULL DEFAULT '',
-	description TEXT NOT NULL DEFAULT '',
-	body        TEXT NOT NULL DEFAULT '',
 	status      TEXT NOT NULL DEFAULT 'active',
 	boundary    TEXT NOT NULL DEFAULT '',
 	date        TEXT NOT NULL DEFAULT '',
 	metadata    TEXT NOT NULL DEFAULT '{}',
+	root_merkle TEXT NOT NULL DEFAULT '',
+	version     INTEGER NOT NULL DEFAULT 0,
 	created_at  TEXT NOT NULL DEFAULT (datetime('now')),
 	updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -86,35 +90,71 @@ CREATE TABLE IF NOT EXISTS code_map_excludes (
 );
 
 CREATE VIRTUAL TABLE IF NOT EXISTS entities_fts USING fts5(
-	title, goal, summary, description, body,
+	title, goal,
 	content='entities',
 	content_rowid='rowid'
 );
 
--- FTS triggers: keep the FTS index in sync via rowid.
 CREATE TRIGGER IF NOT EXISTS entities_ai AFTER INSERT ON entities BEGIN
-	INSERT INTO entities_fts(rowid, title, goal, summary, description, body)
-	VALUES (new.rowid, new.title, new.goal, new.summary, new.description, new.body);
+	INSERT INTO entities_fts(rowid, title, goal)
+	VALUES (new.rowid, new.title, new.goal);
 END;
 CREATE TRIGGER IF NOT EXISTS entities_ad AFTER DELETE ON entities BEGIN
-	INSERT INTO entities_fts(entities_fts, rowid, title, goal, summary, description, body)
-	VALUES ('delete', old.rowid, old.title, old.goal, old.summary, old.description, old.body);
+	INSERT INTO entities_fts(entities_fts, rowid, title, goal)
+	VALUES ('delete', old.rowid, old.title, old.goal);
 END;
 CREATE TRIGGER IF NOT EXISTS entities_au AFTER UPDATE ON entities BEGIN
-	INSERT INTO entities_fts(entities_fts, rowid, title, goal, summary, description, body)
-	VALUES ('delete', old.rowid, old.title, old.goal, old.summary, old.description, old.body);
-	INSERT INTO entities_fts(rowid, title, goal, summary, description, body)
-	VALUES (new.rowid, new.title, new.goal, new.summary, new.description, new.body);
+	INSERT INTO entities_fts(entities_fts, rowid, title, goal)
+	VALUES ('delete', old.rowid, old.title, old.goal);
+	INSERT INTO entities_fts(rowid, title, goal)
+	VALUES (new.rowid, new.title, new.goal);
 END;
 
-CREATE TABLE IF NOT EXISTS chunks (
-	id        INTEGER PRIMARY KEY AUTOINCREMENT,
-	entity_id TEXT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
-	heading   TEXT NOT NULL DEFAULT '',
-	body      TEXT NOT NULL DEFAULT '',
-	seq       INTEGER NOT NULL DEFAULT 0
+-- Content node tree: every markdown element has identity + hash.
+CREATE TABLE IF NOT EXISTS nodes (
+	id          INTEGER PRIMARY KEY AUTOINCREMENT,
+	entity_id   TEXT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+	parent_id   INTEGER REFERENCES nodes(id) ON DELETE CASCADE,
+	type        TEXT NOT NULL,
+	level       INTEGER NOT NULL DEFAULT 0,
+	seq         INTEGER NOT NULL,
+	content     TEXT NOT NULL DEFAULT '',
+	hash        TEXT NOT NULL DEFAULT ''
 );
-CREATE INDEX IF NOT EXISTS idx_chunks_entity ON chunks(entity_id);
+-- Composite index: covers entity lookups and ORDER BY parent_id, seq.
+-- COALESCE handles NULL parent_id (SQLite treats NULL != NULL in UNIQUE).
+CREATE UNIQUE INDEX IF NOT EXISTS idx_nodes_order
+	ON nodes(entity_id, COALESCE(parent_id, 0), seq);
+
+-- Content FTS: full-text search over node content.
+CREATE VIRTUAL TABLE IF NOT EXISTS content_fts USING fts5(
+	content,
+	content='nodes',
+	content_rowid='rowid'
+);
+CREATE TRIGGER IF NOT EXISTS content_fts_ai AFTER INSERT ON nodes BEGIN
+	INSERT INTO content_fts(rowid, content) VALUES (new.rowid, new.content);
+END;
+CREATE TRIGGER IF NOT EXISTS content_fts_ad AFTER DELETE ON nodes BEGIN
+	INSERT INTO content_fts(content_fts, rowid, content)
+	VALUES ('delete', old.rowid, old.content);
+END;
+CREATE TRIGGER IF NOT EXISTS content_fts_au AFTER UPDATE ON nodes BEGIN
+	INSERT INTO content_fts(content_fts, rowid, content)
+	VALUES ('delete', old.rowid, old.content);
+	INSERT INTO content_fts(rowid, content) VALUES (new.rowid, new.content);
+END;
+
+-- Version history: full content snapshots per entity.
+CREATE TABLE IF NOT EXISTS versions (
+	entity_id   TEXT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+	version     INTEGER NOT NULL,
+	content     TEXT NOT NULL DEFAULT '',
+	root_merkle TEXT NOT NULL DEFAULT '',
+	commit_hash TEXT NOT NULL DEFAULT '',
+	created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+	PRIMARY KEY (entity_id, version)
+);
 
 CREATE TABLE IF NOT EXISTS changelog (
 	id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -132,3 +172,21 @@ CREATE TABLE IF NOT EXISTS store_meta (
 	value TEXT NOT NULL DEFAULT ''
 );
 `
+
+func (s *Store) migrateSchema() error {
+	var count int
+	s.db.QueryRow(`SELECT COUNT(*) FROM pragma_table_info('entities') WHERE name = 'root_merkle'`).Scan(&count)
+	if count > 0 {
+		return nil
+	}
+	migrations := []string{
+		`ALTER TABLE entities ADD COLUMN root_merkle TEXT NOT NULL DEFAULT ''`,
+		`ALTER TABLE entities ADD COLUMN version INTEGER NOT NULL DEFAULT 0`,
+	}
+	for _, m := range migrations {
+		if _, err := s.db.Exec(m); err != nil && !strings.Contains(err.Error(), "duplicate column") {
+			return fmt.Errorf("migrate: %w", err)
+		}
+	}
+	return nil
+}

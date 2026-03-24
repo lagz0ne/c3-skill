@@ -5,6 +5,12 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.0.1] - 2026-03-24
+
+### Fixed
+
+- **`c3x migrate` reads legacy body column via raw SQL** — the v8.0.0 migration command couldn't read the old `body` column since it was removed from the Entity struct. Now uses direct SQL query to read pre-v8 body content for node tree population.
+
 ## [8.0.0] - 2026-03-24
 
 ### BREAKING

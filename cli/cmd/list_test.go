@@ -237,7 +237,7 @@ func TestListTopology_WithRecipes(t *testing.T) {
 	s := createRichDBFixture(t)
 	s.InsertEntity(&store.Entity{
 		ID: "recipe-auth", Type: "recipe", Title: "Auth Flow",
-		Slug: "auth", Description: "Auth flow recipe", Status: "active", Metadata: "{}",
+		Slug: "auth", Goal: "Auth flow recipe", Status: "active", Metadata: "{}",
 	})
 	s.AddRelationship(&store.Relationship{FromID: "recipe-auth", ToID: "c3-101", RelType: "sources"})
 
@@ -324,7 +324,7 @@ func TestListTopology_RecipesCompact(t *testing.T) {
 	s := createRichDBFixture(t)
 	s.InsertEntity(&store.Entity{
 		ID: "recipe-auth", Type: "recipe", Title: "Auth Flow",
-		Slug: "auth", Description: "Auth flow recipe", Status: "active", Metadata: "{}",
+		Slug: "auth", Goal: "Auth flow recipe", Status: "active", Metadata: "{}",
 	})
 	s.AddRelationship(&store.Relationship{FromID: "recipe-auth", ToID: "c3-101", RelType: "sources"})
 

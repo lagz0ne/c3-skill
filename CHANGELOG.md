@@ -5,6 +5,41 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.0.0] - 2026-03-24
+
+### BREAKING
+
+- **Content Database** — entity content is now stored as an element-level node tree in SQLite. Every heading, paragraph, list item, table row, and code block has its own ID and SHA256 content hash. The `Body`, `Summary`, and `Description` fields have been removed from the Entity struct.
+- **`c3x migrate`** now populates the node tree (was `migrate-v2`). The old file-based migration is `c3x migrate-legacy`.
+- **FTS on entities** trimmed to `title` + `goal` only. Content search now uses `content_fts` over the node tree.
+
+### Added
+
+- **Node tree storage** — `nodes` table with element-level content decomposition via goldmark AST parser. Parent-child relationships, sequence ordering, per-node content hashing.
+- **Version history** — `versions` table stores full content snapshots on every write. `c3x versions`, `c3x version <n>`, `c3x prune --keep <n>`.
+- **Content hashing** — per-node SHA256 hashes + entity-level root merkle. `c3x hash` with `--recompute` for integrity checks.
+- **`c3x nodes <entity-id>`** — inspect the content tree with IDs, types, hashes. JSON and text modes.
+- **`c3x hash <entity-id>`** — root merkle hash with optional recompute/drift detection.
+- **`c3x versions <entity-id>`** — version history with timestamps and commit marks.
+- **`c3x version <entity-id> <n>`** — retrieve content at a specific version.
+- **`c3x prune <entity-id> --keep <n>`** — prune old versions, preserving git-marked ones.
+- **Content-level FTS** — `c3x query` now searches both entity metadata and node content, merging results.
+- **`content` package** — `ParseMarkdown` (goldmark AST to nodes), `RenderMarkdown` (nodes to markdown), `WriteEntity`/`ReadEntity` bridge layer with transactional node insertion.
+
+### Changed
+
+- **Write path** — `write`, `set`, `wire` commands now route through the node tree via `content.WriteEntity`. Each write creates a version snapshot and updates the root merkle.
+- **Read path** — `read`, `export`, `check` commands reconstruct content from the node tree via `content.ReadEntity`.
+- **Schema** — `entities_fts` indexes only `title` and `goal`. `content_fts` indexes node content with auto-sync triggers.
+
+### Removed
+
+- `Entity.Body`, `Entity.Summary`, `Entity.Description` fields and corresponding database columns
+- `internal/writer/` package (dead code, zero imports)
+- `internal/wiring/` package (dead code, zero imports)
+- `chunks` table (replaced by `nodes`)
+- `truncateForLog` helper (no body field to truncate)
+
 ## [7.0.4] - 2026-03-23
 
 ### Fixed

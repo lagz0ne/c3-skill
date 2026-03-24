@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/lagz0ne/c3-design/cli/internal/content"
 	"github.com/lagz0ne/c3-design/cli/internal/markdown"
 	"github.com/lagz0ne/c3-design/cli/internal/schema"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
@@ -15,9 +16,7 @@ func TestRunCheck_EmptyRequiredSection(t *testing.T) {
 	s := createRichDBFixture(t)
 
 	// Update c3-110 to have empty Goal section
-	entity, _ := s.GetEntity("c3-110")
-	entity.Body = "# users\n\n## Goal\n\n## Dependencies\n\n| Direction | What | From/To |\n|-----------|------|----------|\n"
-	s.UpdateEntity(entity)
+	content.WriteEntity(s, "c3-110", "# users\n\n## Goal\n\n## Dependencies\n\n| Direction | What | From/To |\n|-----------|------|----------|\n")
 
 	var buf bytes.Buffer
 	opts := CheckOptions{Store: s, JSON: false}
@@ -99,9 +98,9 @@ func TestRunCheck_MissingRequiredSection_Ref(t *testing.T) {
 	// Add an incomplete ref missing required sections
 	s.InsertEntity(&store.Entity{
 		ID: "ref-incomplete", Type: "ref", Title: "Incomplete Ref", Slug: "incomplete",
-		Goal: "Some pattern", Body: "# Incomplete Ref\n\n## Goal\n\nSome pattern.\n",
-		Status: "active", Metadata: "{}",
+		Goal: "Some pattern", Status: "active", Metadata: "{}",
 	})
+	content.WriteEntity(s, "ref-incomplete", "# Incomplete Ref\n\n## Goal\n\nSome pattern.\n")
 
 	var buf bytes.Buffer
 	opts := CheckOptions{Store: s, JSON: false}
@@ -122,9 +121,7 @@ func TestRunCheck_EntityIdNotInStore(t *testing.T) {
 	s := createDBFixture(t)
 
 	// Update c3-101 to reference c3-999 in body table
-	entity, _ := s.GetEntity("c3-101")
-	entity.Body = "# auth\n\n## Goal\n\nAuth.\n\n## Dependencies\n\n| Direction | What | From/To |\n|-----------|------|----------|\n| IN | data | c3-999 |\n"
-	s.UpdateEntity(entity)
+	content.WriteEntity(s, "c3-101", "# auth\n\n## Goal\n\nAuth.\n\n## Dependencies\n\n| Direction | What | From/To |\n|-----------|------|----------|\n| IN | data | c3-999 |\n")
 
 	var buf bytes.Buffer
 	opts := CheckOptions{Store: s, JSON: false}
@@ -142,9 +139,7 @@ func TestRunCheck_SuggestsByTitle(t *testing.T) {
 	s := createDBFixture(t)
 
 	// c3-101 body references "api" instead of "c3-1"
-	entity, _ := s.GetEntity("c3-101")
-	entity.Body = "# auth\n\n## Goal\n\nAuth.\n\n## Dependencies\n\n| Direction | What | From/To |\n|-----------|------|----------|\n| IN | data | api |\n"
-	s.UpdateEntity(entity)
+	content.WriteEntity(s, "c3-101", "# auth\n\n## Goal\n\nAuth.\n\n## Dependencies\n\n| Direction | What | From/To |\n|-----------|------|----------|\n| IN | data | api |\n")
 
 	var buf bytes.Buffer
 	opts := CheckOptions{Store: s, JSON: false}
@@ -193,9 +188,9 @@ func TestRunCheck_CleanOutputSummary(t *testing.T) {
 
 	s.InsertEntity(&store.Entity{
 		ID: "c3-0", Type: "system", Title: "Test", Slug: "",
-		Body: "# Test\n\n## Goal\n\nTest.\n\n## Containers\n\n| ID | Name | Purpose |\n|----|------|---------|\n| | core | Core |\n\n## Abstract Constraints\n\nKeep it simple.\n",
 		Status: "active", Metadata: "{}",
 	})
+	content.WriteEntity(s, "c3-0", "# Test\n\n## Goal\n\nTest.\n\n## Containers\n\n| ID | Name | Purpose |\n|----|------|---------|\n| | core | Core |\n\n## Abstract Constraints\n\nKeep it simple.\n")
 
 	var buf bytes.Buffer
 	opts := CheckOptions{Store: s, JSON: false}
@@ -254,8 +249,9 @@ func TestRunCheck_RecipeInvalidSources(t *testing.T) {
 	s := createDBFixture(t)
 	s.InsertEntity(&store.Entity{
 		ID: "recipe-auth", Type: "recipe", Title: "Auth Flow", Slug: "auth",
-		Body: "# Auth Flow\n\n## Goal\n\nTrace auth.\n", Status: "active", Metadata: "{}",
+		Status: "active", Metadata: "{}",
 	})
+	content.WriteEntity(s, "recipe-auth", "# Auth Flow\n\n## Goal\n\nTrace auth.\n")
 	// Add valid source
 	s.AddRelationship(&store.Relationship{FromID: "recipe-auth", ToID: "c3-0", RelType: "sources"})
 	// Add invalid source — entity doesn't exist, but relationship can't be created with FK

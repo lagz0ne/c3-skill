@@ -5,6 +5,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/lagz0ne/c3-design/cli/internal/content"
 	"github.com/lagz0ne/c3-design/cli/internal/markdown"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
@@ -19,21 +20,19 @@ type ReadOptions struct {
 
 // ReadResult is the JSON output for read.
 type ReadResult struct {
-	ID          string   `json:"id"`
-	Type        string   `json:"type"`
-	Title       string   `json:"title"`
-	Goal        string   `json:"goal,omitempty"`
-	Summary     string   `json:"summary,omitempty"`
-	Description string   `json:"description,omitempty"`
-	Status      string   `json:"status,omitempty"`
-	Category    string   `json:"category,omitempty"`
-	ParentID    string   `json:"parent,omitempty"`
-	Boundary    string   `json:"boundary,omitempty"`
-	Date        string   `json:"date,omitempty"`
-	Uses        []string `json:"uses,omitempty"`
-	Affects     []string `json:"affects,omitempty"`
-	Scope       []string `json:"scope,omitempty"`
-	Body        string   `json:"body"`
+	ID       string   `json:"id"`
+	Type     string   `json:"type"`
+	Title    string   `json:"title"`
+	Goal     string   `json:"goal,omitempty"`
+	Status   string   `json:"status,omitempty"`
+	Category string   `json:"category,omitempty"`
+	ParentID string   `json:"parent,omitempty"`
+	Boundary string   `json:"boundary,omitempty"`
+	Date     string   `json:"date,omitempty"`
+	Uses     []string `json:"uses,omitempty"`
+	Affects  []string `json:"affects,omitempty"`
+	Scope    []string `json:"scope,omitempty"`
+	Body     string   `json:"body"`
 }
 
 // ReadSectionResult is the JSON output for read --section.
@@ -53,8 +52,14 @@ func RunRead(opts ReadOptions, w io.Writer) error {
 		return fmt.Errorf("error: entity %q not found", opts.ID)
 	}
 
+	// Read body from node tree.
+	body, err := content.ReadEntity(opts.Store, entity.ID)
+	if err != nil {
+		body = ""
+	}
+
 	if opts.Section != "" {
-		sections := markdown.ParseSections(entity.Body)
+		sections := markdown.ParseSections(body)
 		for _, s := range sections {
 			if s.Name == opts.Section {
 				if opts.JSON {
@@ -65,23 +70,21 @@ func RunRead(opts ReadOptions, w io.Writer) error {
 			}
 		}
 		return fmt.Errorf("error: section %q not found in %s\nhint: available sections: %s",
-			opts.Section, opts.ID, readAvailableSections(entity.Body))
+			opts.Section, opts.ID, readAvailableSections(body))
 	}
 
 	if opts.JSON {
 		result := ReadResult{
-			ID:          entity.ID,
-			Type:        entity.Type,
-			Title:       entity.Title,
-			Goal:        entity.Goal,
-			Summary:     entity.Summary,
-			Description: entity.Description,
-			Status:      entity.Status,
-			Category:    entity.Category,
-			ParentID:    entity.ParentID,
-			Boundary:    entity.Boundary,
-			Date:        entity.Date,
-			Body:        entity.Body,
+			ID:       entity.ID,
+			Type:     entity.Type,
+			Title:    entity.Title,
+			Goal:     entity.Goal,
+			Status:   entity.Status,
+			Category: entity.Category,
+			ParentID: entity.ParentID,
+			Boundary: entity.Boundary,
+			Date:     entity.Date,
+			Body:     body,
 		}
 
 		rels, _ := opts.Store.RelationshipsFrom(entity.ID)

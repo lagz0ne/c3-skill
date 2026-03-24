@@ -116,15 +116,6 @@ func TestParseArgs_Extended(t *testing.T) {
 			},
 		},
 		{
-			name: "summary flag",
-			argv: []string{"add", "component", "auth", "--summary", "Auth service"},
-			check: func(t *testing.T, got Options) {
-				if got.Summary != "Auth service" {
-					t.Errorf("Summary = %q", got.Summary)
-				}
-			},
-		},
-		{
 			name: "boundary flag",
 			argv: []string{"add", "container", "api", "--boundary", "service"},
 			check: func(t *testing.T, got Options) {

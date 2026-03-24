@@ -93,10 +93,6 @@ func listJSON(s *store.Store, includeADR, compact bool, w io.Writer) error {
 		if e.Boundary != "" {
 			fm["boundary"] = e.Boundary
 		}
-		if e.Description != "" {
-			fm["description"] = e.Description
-		}
-
 		rels, _ := s.RelationshipsFrom(e.ID)
 		var relationships []string
 		relsByType := make(map[string][]string)
@@ -175,8 +171,6 @@ func listTopology(s *store.Store, compact bool, includeADR bool, w io.Writer) er
 		header := ctx.Title
 		if ctx.Goal != "" {
 			header += " — " + ctx.Goal
-		} else if ctx.Summary != "" {
-			header += " — " + ctx.Summary
 		}
 		fmt.Fprintln(w, header)
 	}
@@ -356,13 +350,9 @@ func listTopology(s *store.Store, compact bool, includeADR bool, w io.Writer) er
 		})
 		fmt.Fprintln(w, "Recipes:")
 		for _, r := range recipes {
-			desc := r.Description
-			if desc == "" {
-				desc = r.Goal
-			}
 			line := fmt.Sprintf("  %s", r.ID)
-			if desc != "" {
-				line += " — " + desc
+			if r.Goal != "" {
+				line += " — " + r.Goal
 			}
 			fmt.Fprintln(w, line)
 

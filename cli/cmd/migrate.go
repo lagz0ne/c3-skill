@@ -96,20 +96,17 @@ func RunMigrate(c3Dir string, keepOriginals bool, w io.Writer) error {
 		}
 
 		entity := &store.Entity{
-			ID:          fm.ID,
-			Type:        storeType,
-			Title:       title,
-			Slug:        slug,
-			Category:    fm.Category,
-			ParentID:    fm.Parent,
-			Goal:        fm.Goal,
-			Summary:     fm.Summary,
-			Description: fm.Description,
-			Body:        doc.Body,
-			Status:      fm.Status,
-			Boundary:    fm.Boundary,
-			Date:        fm.Date,
-			Metadata:    metadata,
+			ID:       fm.ID,
+			Type:     storeType,
+			Title:    title,
+			Slug:     slug,
+			Category: fm.Category,
+			ParentID: fm.Parent,
+			Goal:     fm.Goal,
+			Status:   fm.Status,
+			Boundary: fm.Boundary,
+			Date:     fm.Date,
+			Metadata: metadata,
 		}
 		if entity.Status == "" {
 			entity.Status = "active"

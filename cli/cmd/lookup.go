@@ -28,12 +28,11 @@ type RefBrief struct {
 
 // LookupMatch is one matched component with its brief and refs.
 type LookupMatch struct {
-	ID      string     `json:"id"`
-	Title   string     `json:"title"`
-	Goal    string     `json:"goal"`
-	Summary string     `json:"summary,omitempty"`
-	Refs    []RefBrief `json:"uses"`
-	Rules   []RefBrief `json:"rules,omitempty"`
+	ID    string     `json:"id"`
+	Title string     `json:"title"`
+	Goal  string     `json:"goal"`
+	Refs  []RefBrief `json:"uses"`
+	Rules []RefBrief `json:"rules,omitempty"`
 }
 
 // LookupResult is the output for a single-file lookup.
@@ -52,11 +51,10 @@ type GlobLookupResult struct {
 
 func buildMatchFromStore(entity *store.Entity, s *store.Store) LookupMatch {
 	match := LookupMatch{
-		ID:      entity.ID,
-		Title:   entity.Title,
-		Goal:    entity.Goal,
-		Summary: entity.Summary,
-		Refs:    []RefBrief{},
+		ID:    entity.ID,
+		Title: entity.Title,
+		Goal:  entity.Goal,
+		Refs:  []RefBrief{},
 	}
 	refs, _ := s.RefsFor(entity.ID)
 	var refIDs []string
@@ -187,9 +185,6 @@ func printMatches(w io.Writer, matches []LookupMatch) {
 		fmt.Fprintf(w, "  %s (%s)\n", m.ID, m.Title)
 		if m.Goal != "" {
 			fmt.Fprintf(w, "    goal: %s\n", m.Goal)
-		}
-		if m.Summary != "" {
-			fmt.Fprintf(w, "    summary: %s\n", m.Summary)
 		}
 		if len(m.Refs) > 0 {
 			fmt.Fprintln(w, "    uses:")

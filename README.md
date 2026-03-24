@@ -16,8 +16,8 @@ Architecture docs rot because nobody enforces them. C3 fixes this by making the 
 
 - **LLMs read them before touching code** — `c3x lookup src/auth/login.ts` tells the agent which component owns the file, which refs govern it, what rules apply
 - **Writes are validated** — every content update passes through schema enforcement. Missing a required section? Rejected with a hint
-- **One database, not scattered files** — entities, relationships, code-map, and changelog in a single `c3.db`. Full-text search. Graph traversal. Impact analysis
-- **Migration is safe** — `migrate --dry-run` shows every quality gap before you commit. Fix with the LLM, then migrate
+- **One database, not scattered files** — entities, content node trees, relationships, code-map, version history, and changelog in a single `c3.db`. Full-text search. Graph traversal. Impact analysis
+- **Every element is trackable** — headings, paragraphs, table rows, list items each have a unique ID and SHA256 hash. Entity-level merkle for O(1) change detection. Full version history with pruning
 
 ## What You Get
 
@@ -41,12 +41,12 @@ A Go binary bundled inside the plugin. No separate install — the skill carries
 
 **Read/Write cycle:**
 ```bash
-c3x read c3-101                          # full entity as markdown
+c3x read c3-101                          # entity content rendered from node tree
 c3x read c3-101 --section Goal           # just one section
 c3x read c3-101 --json                   # structured JSON
 
-echo "New goal." | c3x write c3-101 --section "Goal"   # section update (no validation)
-cat updated.md | c3x write c3-101                       # full replace (validates)
+echo "New goal." | c3x write c3-101 --section "Goal"   # section update
+cat updated.md | c3x write c3-101                       # full replace (validates + versions)
 ```
 
 **Search and navigate:**

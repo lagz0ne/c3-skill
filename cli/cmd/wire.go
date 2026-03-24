@@ -5,6 +5,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/lagz0ne/c3-design/cli/internal/content"
 	"github.com/lagz0ne/c3-design/cli/internal/markdown"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
@@ -95,8 +96,9 @@ func RunUnwire(s *store.Store, sourceID, relationType, targetID string, w io.Wri
 
 // addTableRowIfAbsentStore adds a row to a section's table if no row with matchCol==matchVal exists.
 func addTableRowIfAbsentStore(s *store.Store, entity *store.Entity, sectionName, matchCol, matchVal string, row map[string]string) error {
-	body := entity.Body
-	if body == "" {
+	// Read current content from node tree.
+	body, err := content.ReadEntity(s, entity.ID)
+	if err != nil || body == "" {
 		return nil
 	}
 
@@ -119,14 +121,14 @@ func addTableRowIfAbsentStore(s *store.Store, entity *store.Entity, sectionName,
 		return nil // section/table not found — skip
 	}
 
-	entity.Body = newBody
-	return s.UpdateEntity(entity)
+	return content.WriteEntity(s, entity.ID, newBody)
 }
 
 // removeTableRowStore removes rows from a section's table where matchCol==matchVal.
 func removeTableRowStore(s *store.Store, entity *store.Entity, sectionName, matchCol, matchVal string) error {
-	body := entity.Body
-	if body == "" {
+	// Read current content from node tree.
+	body, err := content.ReadEntity(s, entity.ID)
+	if err != nil || body == "" {
 		return nil
 	}
 
@@ -152,6 +154,5 @@ func removeTableRowStore(s *store.Store, entity *store.Entity, sectionName, matc
 		return err
 	}
 
-	entity.Body = newBody
-	return s.UpdateEntity(entity)
+	return content.WriteEntity(s, entity.ID, newBody)
 }

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/lagz0ne/c3-design/cli/internal/content"
 )
 
 // === READ ===
@@ -287,7 +289,7 @@ func TestRunWrite_NoFrontmatter(t *testing.T) {
 	var buf bytes.Buffer
 
 	// Plain markdown without frontmatter — treated as body replacement
-	content := `# auth
+	mdContent := `# auth
 
 ## Goal
 
@@ -300,13 +302,13 @@ New goal text.
 | IN | data | c3-110 |
 `
 
-	err := RunWrite(WriteOptions{Store: s, ID: "c3-101", Content: content}, &buf)
+	err := RunWrite(WriteOptions{Store: s, ID: "c3-101", Content: mdContent}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	entity, _ := s.GetEntity("c3-101")
-	if !strings.Contains(entity.Body, "New goal text") {
+	body, _ := content.ReadEntity(s, "c3-101")
+	if !strings.Contains(body, "New goal text") {
 		t.Error("body should be updated")
 	}
 }
@@ -327,8 +329,8 @@ func TestRunWrite_Section(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	entity, _ := s.GetEntity("c3-101")
-	if !strings.Contains(entity.Body, "Completely rewritten authentication goal.") {
+	body, _ := content.ReadEntity(s, "c3-101")
+	if !strings.Contains(body, "Completely rewritten authentication goal.") {
 		t.Error("section should be updated in body")
 	}
 	if !strings.Contains(buf.String(), "section") {
@@ -391,5 +393,119 @@ func TestRunWrite_Section_NoValidation(t *testing.T) {
 	}, &buf)
 	if err != nil {
 		t.Errorf("section write should succeed without full validation: %v", err)
+	}
+}
+
+// === NODE TREE VERIFICATION ===
+
+func TestRunWrite_FullPopulatesNodeTree(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	mdContent := `---
+id: c3-101
+title: auth
+goal: Updated goal
+---
+
+# auth
+
+## Goal
+
+Updated goal via full write.
+
+## Dependencies
+
+| Direction | What | From/To |
+|-----------|------|---------|
+| IN | credentials | c3-110 |
+`
+	err := RunWrite(WriteOptions{Store: s, ID: "c3-101", Content: mdContent}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Verify nodes exist in DB
+	nodes, err := s.NodesForEntity("c3-101")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(nodes) == 0 {
+		t.Fatal("node tree should be populated after write")
+	}
+
+	// Verify rendered content matches node tree
+	rendered := content.RenderMarkdown(nodes)
+	bodyFromTree, _ := content.ReadEntity(s, "c3-101")
+	if rendered != bodyFromTree {
+		t.Errorf("rendered nodes should match node tree\nrendered: %q\nbody: %q", rendered, bodyFromTree)
+	}
+
+	// Verify merkle is set
+	entity, _ := s.GetEntity("c3-101")
+	if entity.RootMerkle == "" {
+		t.Error("root_merkle should be set after write")
+	}
+}
+
+func TestRunWrite_SectionPopulatesNodeTree(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	err := RunWrite(WriteOptions{
+		Store:   s,
+		ID:      "c3-101",
+		Section: "Goal",
+		Content: "Node-tree-verified goal.",
+	}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Verify node tree is updated
+	rendered, err := content.ReadEntity(s, "c3-101")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(rendered, "Node-tree-verified goal.") {
+		t.Errorf("node tree should contain updated section, got: %s", rendered)
+	}
+
+	// Verify node tree body matches
+	bodyFromTree, _ := content.ReadEntity(s, "c3-101")
+	if !strings.Contains(bodyFromTree, "Node-tree-verified goal.") {
+		t.Error("node tree should reflect updated content")
+	}
+}
+
+func TestRunWrite_VersionIncrementsOnWrite(t *testing.T) {
+	s := createRichDBFixture(t)
+
+	entity, _ := s.GetEntity("c3-101")
+	v0 := entity.Version
+
+	var buf bytes.Buffer
+	mdContent := `---
+id: c3-101
+title: auth
+---
+
+# auth
+
+## Goal
+
+Version test.
+
+## Dependencies
+
+| Direction | What | From/To |
+|-----------|------|---------|
+| IN | data | c3-110 |
+`
+	RunWrite(WriteOptions{Store: s, ID: "c3-101", Content: mdContent}, &buf)
+
+	entity, _ = s.GetEntity("c3-101")
+	if entity.Version <= v0 {
+		t.Errorf("version should increment: was %d, now %d", v0, entity.Version)
 	}
 }

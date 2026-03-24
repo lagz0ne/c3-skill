@@ -140,12 +140,10 @@ func TestRunExport_AllTypes(t *testing.T) {
 	s.InsertEntity(&store.Entity{
 		ID: "recipe-auth-flow", Type: "recipe", Title: "Auth Flow",
 		Slug: "auth-flow", Goal: "End-to-end auth", Status: "active", Metadata: "{}",
-		Body: "# Auth Flow\n",
 	})
 	s.InsertEntity(&store.Entity{
 		ID: "rule-logging", Type: "rule", Title: "Logging",
 		Slug: "logging", Goal: "Structured logging", Status: "active", Metadata: "{}",
-		Body: "# Logging\n",
 	})
 	s.SetCodeMap("c3-101", []string{"src/auth/**"})
 

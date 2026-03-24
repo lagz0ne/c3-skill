@@ -6,6 +6,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/lagz0ne/c3-design/cli/internal/content"
 	"github.com/lagz0ne/c3-design/cli/internal/markdown"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
@@ -68,8 +69,6 @@ func runSetBatch(entity *store.Entity, opts SetOptions, w io.Writer) error {
 		switch field {
 		case "goal":
 			entity.Goal = value
-		case "summary":
-			entity.Summary = value
 		case "status":
 			entity.Status = value
 		case "boundary":
@@ -80,26 +79,59 @@ func runSetBatch(entity *store.Entity, opts SetOptions, w io.Writer) error {
 			entity.Title = value
 		case "date":
 			entity.Date = value
-		case "description":
-			entity.Description = value
 		default:
 			return fmt.Errorf("unknown field %q", field)
 		}
 	}
 
-	// Apply sections
-	for section, content := range payload.Sections {
-		newBody, err := markdown.ReplaceSection(entity.Body, section, content)
+	// Apply sections through node tree
+	if len(payload.Sections) > 0 {
+		body, err := content.ReadEntity(opts.Store, opts.ID)
 		if err != nil {
-			return fmt.Errorf("error: section %q not found in %s\nhint: available sections: %s",
-				section, opts.ID, availableSections(entity.Body))
+			body = ""
 		}
-		entity.Body = newBody
+
+		for section, sectionContent := range payload.Sections {
+			newBody, err := markdown.ReplaceSection(body, section, sectionContent)
+			if err != nil {
+				return fmt.Errorf("error: section %q not found in %s\nhint: available sections: %s",
+					section, opts.ID, availableSections(body))
+			}
+			body = newBody
+		}
+
+		if err := content.WriteEntity(opts.Store, opts.ID, body); err != nil {
+			return fmt.Errorf("writing content: %w", err)
+		}
+
+		// Re-fetch to pick up rendered body/merkle/version.
+		entity, err = opts.Store.GetEntity(opts.ID)
+		if err != nil {
+			return fmt.Errorf("re-fetch entity: %w", err)
+		}
+
+		// Re-apply fields (WriteEntity may have overwritten metadata).
+		for field, value := range payload.Fields {
+			switch field {
+			case "goal":
+				entity.Goal = value
+			case "status":
+				entity.Status = value
+			case "boundary":
+				entity.Boundary = value
+			case "category":
+				entity.Category = value
+			case "title":
+				entity.Title = value
+			case "date":
+				entity.Date = value
+			}
+		}
 	}
 
 	// Promote goal if updated via section
 	if _, hasGoalSection := payload.Sections["Goal"]; hasGoalSection {
-		promoteGoalIfEmpty(entity)
+		promoteGoalIfEmpty(entity, opts.Store)
 	}
 
 	if err := opts.Store.UpdateEntity(entity); err != nil {
@@ -115,8 +147,6 @@ func runSetField(entity *store.Entity, opts SetOptions, w io.Writer) error {
 	switch opts.Field {
 	case "goal":
 		entity.Goal = opts.Value
-	case "summary":
-		entity.Summary = opts.Value
 	case "status":
 		entity.Status = opts.Value
 	case "boundary":
@@ -127,8 +157,6 @@ func runSetField(entity *store.Entity, opts SetOptions, w io.Writer) error {
 		entity.Title = opts.Value
 	case "date":
 		entity.Date = opts.Value
-	case "description":
-		entity.Description = opts.Value
 	default:
 		return fmt.Errorf("unknown field %q", opts.Field)
 	}
@@ -143,9 +171,13 @@ func runSetField(entity *store.Entity, opts SetOptions, w io.Writer) error {
 
 // runSetSection updates a markdown section's content.
 func runSetSection(entity *store.Entity, opts SetOptions, w io.Writer) error {
-	body := entity.Body
+	// Read current content from node tree.
+	body, err := content.ReadEntity(opts.Store, opts.ID)
+	if err != nil {
+		body = ""
+	}
+
 	var newBody string
-	var err error
 
 	if opts.Append {
 		// Append mode: parse single JSON object, append as row
@@ -195,14 +227,20 @@ func runSetSection(entity *store.Entity, opts SetOptions, w io.Writer) error {
 		}
 	}
 
-	entity.Body = newBody
-
-	if opts.Section == "Goal" {
-		promoteGoalIfEmpty(entity)
+	// Write through node tree.
+	if err := content.WriteEntity(opts.Store, opts.ID, newBody); err != nil {
+		return fmt.Errorf("writing content: %w", err)
 	}
 
-	if err := opts.Store.UpdateEntity(entity); err != nil {
-		return fmt.Errorf("updating entity body: %w", err)
+	if opts.Section == "Goal" {
+		entity, err = opts.Store.GetEntity(opts.ID)
+		if err != nil {
+			return fmt.Errorf("re-fetch entity: %w", err)
+		}
+		promoteGoalIfEmpty(entity, opts.Store)
+		if err := opts.Store.UpdateEntity(entity); err != nil {
+			return fmt.Errorf("updating entity: %w", err)
+		}
 	}
 
 	fmt.Fprintf(w, "Updated %s section %q\n", opts.ID, opts.Section)

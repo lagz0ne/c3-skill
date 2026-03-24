@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/lagz0ne/c3-design/cli/internal/content"
 	"github.com/lagz0ne/c3-design/cli/internal/markdown"
 	"github.com/lagz0ne/c3-design/cli/internal/schema"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
@@ -175,7 +176,13 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 			continue
 		}
 
-		bodySections := markdown.ParseSections(entity.Body)
+		// Read body from node tree.
+		body, err := content.ReadEntity(opts.Store, entity.ID)
+		if err != nil {
+			body = ""
+		}
+
+		bodySections := markdown.ParseSections(body)
 
 		// Build lookup of parsed sections by name
 		sectionMap := make(map[string]markdown.Section)

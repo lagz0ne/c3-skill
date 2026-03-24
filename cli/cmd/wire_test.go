@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/lagz0ne/c3-design/cli/internal/content"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
@@ -30,8 +31,8 @@ func TestRunWire_CiteRef_UpdatesBothSides(t *testing.T) {
 	}
 
 	// Side 2: source's Related Refs table body should include ref-error-handling
-	entity, _ := s.GetEntity("c3-201")
-	if !strings.Contains(entity.Body, "ref-error-handling") {
+	body, _ := content.ReadEntity(s, "c3-201")
+	if !strings.Contains(body, "ref-error-handling") {
 		t.Error("Side 2 fail: source's Related Refs table should include ref-error-handling")
 	}
 
@@ -140,7 +141,7 @@ func TestWireRuleUsesRelatedRulesSection(t *testing.T) {
 	// Add a rule entity
 	s.InsertEntity(&store.Entity{
 		ID: "rule-logging", Type: "rule", Title: "Logging", Slug: "logging",
-		Body: "# Logging\n", Status: "active", Metadata: "{}",
+		Status: "active", Metadata: "{}",
 	})
 
 	var buf bytes.Buffer
@@ -220,5 +221,61 @@ func TestRunUnwire_DefaultRelationType(t *testing.T) {
 	}
 	if !strings.Contains(buf.String(), "Unwired") {
 		t.Error("should confirm unwiring with default relation type")
+	}
+}
+
+// === NODE TREE VERIFICATION ===
+
+func TestRunWire_PopulatesNodeTree(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	err := RunWire(s, "c3-201", "cite", "ref-error-handling", &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Verify node tree contains the wired ref
+	rendered, err := content.ReadEntity(s, "c3-201")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(rendered, "ref-error-handling") {
+		t.Errorf("node tree should contain wired ref, got: %s", rendered)
+	}
+
+	// Verify node tree body matches
+	bodyFromTree, _ := content.ReadEntity(s, "c3-201")
+	if !strings.Contains(bodyFromTree, "ref-error-handling") {
+		t.Error("node tree should contain wired ref")
+	}
+
+	entity, _ := s.GetEntity("c3-201")
+	if entity.RootMerkle == "" {
+		t.Error("merkle should be updated after wire")
+	}
+}
+
+func TestRunUnwire_UpdatesNodeTree(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	// Wire first
+	RunWire(s, "c3-201", "cite", "ref-error-handling", &buf)
+	buf.Reset()
+
+	// Unwire
+	err := RunUnwire(s, "c3-201", "cite", "ref-error-handling", &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Verify node tree no longer contains the ref
+	rendered, err := content.ReadEntity(s, "c3-201")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(rendered, "ref-error-handling") {
+		t.Errorf("node tree should not contain unwired ref, got: %s", rendered)
 	}
 }

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/lagz0ne/c3-design/cli/internal/store"
-	"github.com/lagz0ne/c3-design/cli/internal/templates"
 )
 
 var (
@@ -134,22 +133,9 @@ func addContainer(slug string, s *store.Store, w io.Writer) error {
 		ParentID: "c3-0",
 		Boundary: "service",
 		Goal:     "",
-		Summary:  "",
 		Status:   "active",
 		Metadata: "{}",
 	}
-
-	content, err := templates.Render("container.md", map[string]string{
-		"${N}":              strconv.Itoa(n),
-		"${CONTAINER_NAME}": slug,
-		"${BOUNDARY}":       "service",
-		"${GOAL}":           "",
-		"${SUMMARY}":        "",
-	})
-	if err != nil {
-		return fmt.Errorf("error: rendering template: %w", err)
-	}
-	entity.Body = stripFrontmatter(stripHTMLComments(content))
 
 	if err := s.InsertEntity(entity); err != nil {
 		return fmt.Errorf("error: inserting container: %w", err)
@@ -184,20 +170,6 @@ func addComponent(slug string, s *store.Store, containerArg string, feature bool
 		category = "feature"
 	}
 
-	nn := componentID[len(fmt.Sprintf("c3-%d", containerNum)):]
-	content, err := templates.Render("component.md", map[string]string{
-		"${N}${NN}":         componentID[len("c3-"):],
-		"${N}":              strconv.Itoa(containerNum),
-		"${NN}":             nn,
-		"${COMPONENT_NAME}": slug,
-		"${CATEGORY}":       category,
-		"${GOAL}":           "",
-		"${SUMMARY}":        "",
-	})
-	if err != nil {
-		return fmt.Errorf("error: rendering template: %w", err)
-	}
-
 	entity := &store.Entity{
 		ID:       componentID,
 		Type:     "component",
@@ -206,8 +178,6 @@ func addComponent(slug string, s *store.Store, containerArg string, feature bool
 		Category: category,
 		ParentID: containerArg,
 		Goal:     "",
-		Summary:  "",
-		Body:     stripFrontmatter(stripHTMLComments(content)),
 		Status:   "active",
 		Metadata: "{}",
 	}
@@ -228,22 +198,12 @@ func addRef(slug string, s *store.Store, w io.Writer) error {
 		return fmt.Errorf("error: %s already exists", id)
 	}
 
-	content, err := templates.Render("ref.md", map[string]string{
-		"${SLUG}":  slug,
-		"${TITLE}": slug,
-		"${GOAL}":  "",
-	})
-	if err != nil {
-		return fmt.Errorf("error: rendering template: %w", err)
-	}
-
 	entity := &store.Entity{
 		ID:       id,
 		Type:     "ref",
 		Title:    slug,
 		Slug:     slug,
 		Goal:     "",
-		Body:     stripFrontmatter(stripHTMLComments(content)),
 		Status:   "active",
 		Metadata: "{}",
 	}
@@ -261,22 +221,12 @@ func addRule(slug string, s *store.Store, w io.Writer) error {
 		return fmt.Errorf("error: %s already exists", id)
 	}
 
-	content, err := templates.Render("rule.md", map[string]string{
-		"${SLUG}":  slug,
-		"${TITLE}": slug,
-		"${GOAL}":  "",
-	})
-	if err != nil {
-		return fmt.Errorf("error: rendering template: %w", err)
-	}
-
 	entity := &store.Entity{
 		ID:       id,
 		Type:     "rule",
 		Title:    slug,
 		Slug:     slug,
 		Goal:     "",
-		Body:     stripFrontmatter(stripHTMLComments(content)),
 		Status:   "active",
 		Metadata: "{}",
 	}
@@ -294,20 +244,12 @@ func addRecipe(slug string, s *store.Store, w io.Writer) error {
 		return fmt.Errorf("error: %s already exists", id)
 	}
 
-	content, err := templates.Render("recipe.md", map[string]string{
-		"${SLUG}": slug,
-	})
-	if err != nil {
-		return fmt.Errorf("error: rendering template: %w", err)
-	}
-
 	entity := &store.Entity{
 		ID:       id,
 		Type:     "recipe",
 		Title:    slug,
 		Slug:     slug,
 		Goal:     "",
-		Body:     stripFrontmatter(stripHTMLComments(content)),
 		Status:   "active",
 		Metadata: "{}",
 	}
@@ -327,14 +269,6 @@ func addAdr(slug string, s *store.Store, w io.Writer) error {
 	}
 
 	today := now.Format("2006-01-02")
-	content, err := templates.Render("adr.md", map[string]string{
-		"${ID}":    adrID,
-		"${TITLE}": slug,
-		"${DATE}":  today,
-	})
-	if err != nil {
-		return fmt.Errorf("error: rendering template: %w", err)
-	}
 
 	entity := &store.Entity{
 		ID:       adrID,
@@ -343,7 +277,6 @@ func addAdr(slug string, s *store.Store, w io.Writer) error {
 		Slug:     slug,
 		Status:   "proposed",
 		Date:     today,
-		Body:     stripFrontmatter(stripHTMLComments(content)),
 		Metadata: "{}",
 	}
 	if err := s.InsertEntity(entity); err != nil {

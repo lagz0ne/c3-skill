@@ -10,8 +10,7 @@ func TestInsertAndGetEntity(t *testing.T) {
 
 	e := &Entity{
 		ID: "my-sys", Type: "system", Title: "My System", Slug: "my-sys",
-		Category: "core", Goal: "Do things", Summary: "A summary",
-		Description: "Detailed desc", Body: "Full body text",
+		Category: "core", Goal: "Do things",
 		Status: "active", Boundary: "internal", Date: "2025-01-01",
 		Metadata: `{"key":"val"}`,
 	}

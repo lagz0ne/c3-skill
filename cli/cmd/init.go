@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/lagz0ne/c3-design/cli/internal/store"
-	"github.com/lagz0ne/c3-design/cli/internal/templates"
 )
 
 // RunInitDB scaffolds a new .c3/ directory with a SQLite database.
@@ -32,22 +31,12 @@ func RunInitDB(c3Dir string, projectName string, w io.Writer) error {
 	defer s.Close()
 
 	// Insert c3-0 context entity
-	contextBody, err := templates.Render("context.md", map[string]string{
-		"${PROJECT}": projectName,
-		"${GOAL}":    "",
-		"${SUMMARY}": "",
-	})
-	if err != nil {
-		return fmt.Errorf("error: rendering context template: %w", err)
-	}
 	if err := s.InsertEntity(&store.Entity{
 		ID:       "c3-0",
 		Type:     "system",
 		Title:    projectName,
 		Slug:     "",
 		Goal:     "",
-		Summary:  "",
-		Body:     contextBody,
 		Status:   "active",
 		Metadata: "{}",
 	}); err != nil {
@@ -55,13 +44,6 @@ func RunInitDB(c3Dir string, projectName string, w io.Writer) error {
 	}
 
 	// Insert adoption ADR entity
-	adrBody, err := templates.Render("adr-000.md", map[string]string{
-		"${DATE}":    today,
-		"${PROJECT}": projectName,
-	})
-	if err != nil {
-		return fmt.Errorf("error: rendering ADR template: %w", err)
-	}
 	if err := s.InsertEntity(&store.Entity{
 		ID:       "adr-00000000-c3-adoption",
 		Type:     "adr",
@@ -69,7 +51,6 @@ func RunInitDB(c3Dir string, projectName string, w io.Writer) error {
 		Slug:     "c3-adoption",
 		Status:   "in-progress",
 		Date:     today,
-		Body:     adrBody,
 		Metadata: "{}",
 	}); err != nil {
 		return fmt.Errorf("error: inserting ADR entity: %w", err)

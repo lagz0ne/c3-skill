@@ -79,6 +79,17 @@ c3x check                               # validate everything
 c3x coverage                            # code-map completeness stats
 ```
 
+**Content database:**
+```bash
+c3x nodes c3-101                         # tree of all nodes with IDs + hashes
+c3x nodes c3-101 --json                  # JSON output
+c3x hash c3-101                          # root merkle hash
+c3x hash c3-101 --recompute             # verify hash integrity
+c3x versions c3-101                      # version history
+c3x version c3-101 3                     # content at version 3
+c3x prune c3-101 --keep 10             # prune old versions
+```
+
 **Full command list:** `c3x --help`
 
 ### Schema enforcement
@@ -103,7 +114,9 @@ Every entity type has required sections. The CLI enforces them on write:
 └── config.yaml
 ```
 
-`c3.db` holds entities, relationships, code-map globs, and a mutation changelog. No scattered markdown files to manage — but `c3x export` dumps to files any time you need them.
+`c3.db` holds entities, a **content node tree** (every heading, paragraph, list item, table row), relationships, code-map globs, version history, and a mutation changelog. No scattered markdown files — but `c3x export` dumps to files any time you need them.
+
+Every content element has an **ID** and a **SHA256 hash** for change tracking. Entity-level merkle hashes detect any content change with a single comparison. Full version history with configurable pruning.
 
 Entity types: `container`, `component`, `ref`, `rule`, `adr`, `recipe`.
 
@@ -119,23 +132,19 @@ c3x marketplace list --tag errors
 c3x marketplace show rule-error-wrapping
 ```
 
-## Migrating from file-based `.c3/`
+## Migrating
 
-If you have an existing `.c3/` with markdown files (pre-v7), migrate in two steps:
-
-**Step 1: See what needs fixing**
+**From v7 (body-based entities):**
 ```bash
-c3x migrate --dry-run
+c3x migrate                  # populates node tree for all entities
+c3x migrate --dry-run        # preview without changes
 ```
 
-This produces a markdown checklist — every entity with missing frontmatter goals, empty sections, broken refs, or stale code-map patterns. The output is LLM-friendly: paste it into a conversation and let the agent fix the files.
-
-**Step 2: Migrate**
+**From pre-v7 (file-based `.c3/`):**
 ```bash
-c3x migrate
+c3x migrate-legacy           # markdown files → SQLite
+c3x migrate                  # then populate node tree
 ```
-
-One-shot import: entities, relationships, code-map → SQLite. Original files are removed (kept in git history). The `--keep-originals` flag preserves them if you want both.
 
 ## Self-contained distribution
 
@@ -143,12 +152,12 @@ The plugin ships with pre-built binaries — no Go toolchain, no npm, no PATH co
 
 ```
 skills/c3/bin/
-├── VERSION                    # "7.0.4"
+├── VERSION                    # "8.0.0"
 ├── c3x.sh                    # detects OS/ARCH, runs the right binary
-├── c3x-7.0.4-linux-amd64
-├── c3x-7.0.4-linux-arm64
-├── c3x-7.0.4-darwin-amd64
-└── c3x-7.0.4-darwin-arm64
+├── c3x-8.0.0-linux-amd64
+├── c3x-8.0.0-linux-arm64
+├── c3x-8.0.0-darwin-amd64
+└── c3x-8.0.0-darwin-arm64
 ```
 
 Each plugin version carries its own binary. Different projects can use different versions without conflict.
@@ -165,7 +174,7 @@ code --install-extension c3-nav.vsix --force
 ## Development
 
 ```bash
-cd cli && go test ./...       # 89% coverage, 15 packages
+cd cli && go test ./...       # 14 packages
 bash scripts/build.sh         # cross-compile for 4 targets
 ```
 

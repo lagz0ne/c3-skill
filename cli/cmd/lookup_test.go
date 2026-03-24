@@ -19,7 +19,6 @@ func createLookupFixture(t *testing.T) (*store.Store, string) {
 	// Update c3-101 with goal + summary
 	entity, _ := s.GetEntity("c3-101")
 	entity.Goal = "Handle authentication and JWT issuance"
-	entity.Summary = "JWT-based auth with Redis session store"
 	s.UpdateEntity(entity)
 
 	projectDir := t.TempDir()
@@ -42,9 +41,6 @@ func TestRunLookup_ExactMatch(t *testing.T) {
 	}
 	if !strings.Contains(out, "Handle authentication") {
 		t.Errorf("expected goal in output, got:\n%s", out)
-	}
-	if !strings.Contains(out, "JWT-based auth") {
-		t.Errorf("expected summary in output, got:\n%s", out)
 	}
 	if !strings.Contains(out, "ref-jwt") {
 		t.Errorf("expected ref-jwt listed, got:\n%s", out)
@@ -227,9 +223,9 @@ func TestRunLookup_WithRulesInOutput(t *testing.T) {
 	})
 	s.AddRelationship(&store.Relationship{FromID: "c3-101", ToID: "rule-logging", RelType: "uses"})
 
-	// Give c3-101 a summary
+	// Give c3-101 a goal
 	entity, _ := s.GetEntity("c3-101")
-	entity.Summary = "Authentication component"
+	entity.Goal = "Authentication component"
 	s.UpdateEntity(entity)
 
 	// Set code map so lookup can find c3-101
@@ -245,9 +241,6 @@ func TestRunLookup_WithRulesInOutput(t *testing.T) {
 	}
 
 	output := buf.String()
-	if !strings.Contains(output, "summary:") {
-		t.Errorf("should show summary in output, got:\n%s", output)
-	}
 	if !strings.Contains(output, "rules:") {
 		t.Errorf("should show rules section in output, got:\n%s", output)
 	}

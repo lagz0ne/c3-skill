@@ -5,6 +5,14 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.0.6] - 2026-03-26
+
+### Fixed
+
+- **Migration warnings go to stdout, not stderr** — all c3x output (warnings + JSON) goes to stdout. With `--json`, parse failure warnings appear as text lines before the JSON blob. Removed incorrect `2>&1` and stderr references throughout migrate.md.
+- **Tightened migration reference** — 401→215 lines. Runbook tone, no hand-holding. Markdown is source of truth framing scoped correctly (before migration; after migration, database is authoritative).
+- **Phase B export verification** — B1 now verifies export file count matches entity count. B5 restores FTS5 search check.
+
 ## [8.0.5] - 2026-03-26
 
 ### Fixed

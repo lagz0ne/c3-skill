@@ -64,9 +64,11 @@ c3x add component auth --container c3-1 --goal "JWT auth" --json
 
 c3x wire c3-101 ref-jwt ref-error-handling   # batch wire multiple targets
 c3x set c3-101 --section "Goal" "Handle JWT authentication"
+c3x set c3-101 codemap "src/auth/**,src/auth.go"   # set code-map patterns
+c3x set c3-101 codemap "src/new/**" --append        # add a pattern
 
-# Batch update (fields + sections in one call):
-echo '{"fields":{"goal":"X"},"sections":{"Choice":"Use RS256"}}' | c3x set ref-jwt --stdin
+# Batch update (fields + sections + codemap in one call):
+echo '{"fields":{"goal":"X"},"codemap":["src/**"]}' | c3x set ref-jwt --stdin
 
 c3x delete ref-obsolete --dry-run
 ```

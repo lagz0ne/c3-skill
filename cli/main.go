@@ -359,7 +359,7 @@ func runSet(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) error {
 	return cmd.RunSet(cmd.SetOptions{
 		Store: s, C3Dir: c3Dir, ID: id,
 		Field: opts.Field, Section: opts.Section,
-		Value: value, Append: opts.Append, Stdin: opts.Stdin,
+		Value: value, Append: opts.Append, Remove: opts.Remove, Stdin: opts.Stdin,
 	}, w)
 }
 

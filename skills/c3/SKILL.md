@@ -31,7 +31,8 @@ CLI: `C3X_MODE=agent bash <skill-dir>/bin/c3x.sh <command> [args]`
 | `impact <id>` | Transitive impact analysis — who depends on this? (`--depth`, `--json`) |
 | `diff` | Show uncommitted entity changes (`--mark <hash>`, `--json`) |
 | `export [dir]` | Dump DB to markdown files (escape hatch) |
-| `migrate` | Import .c3/ markdown files into database (LLM-assisted via migrate op) |
+| `migrate` | Populate content node tree (v7→v8, requires DB) |
+| `migrate-legacy` | Import .c3/ markdown files into database (v6→v7, no DB needed) |
 | `marketplace add <url>` | Register marketplace rule source (shallow clone) |
 | `marketplace list` | Browse available rules (`--source`, `--tag`, `--json`) |
 | `marketplace show <rule-id>` | Preview marketplace rule content |
@@ -184,6 +185,6 @@ Details: `references/rule.md`
 Details: `references/sweep.md`
 
 ### migrate
-Legacy `.c3/` has markdown files but no `c3.db`. LLM-assisted: check → repair malformed docs → validate → `c3x migrate` → verify.
+Two paths: **v6→v7** (file→DB via `c3x migrate-legacy`) and **v7→v8** (body→nodes via `c3x migrate`). Both are LLM-assisted with evidence gates: dry-run → repair → validate zero issues → migrate → verify content fidelity. Warnings are errors — every warning means silent data loss.
 Details: `references/migrate.md`
 

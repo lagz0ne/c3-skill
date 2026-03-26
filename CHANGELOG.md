@@ -5,6 +5,15 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.0.5] - 2026-03-26
+
+### Fixed
+
+- **Migration reference hardened against silent data loss** — complete rewrite of `references/migrate.md` (98→401 lines). Now version-aware with two distinct paths: v6→v7 (`migrate-legacy`) and v7→v8 (`migrate`). Adds evidence gates at every phase, recovery table for 6 failure scenarios, and "warnings are errors" enforcement throughout.
+- **Correct CLI command routing in migration docs** — Phase A now uses `c3x migrate-legacy` (not `c3x migrate`), and documents that `c3x check` is unavailable before database exists.
+- **`--keep-originals` enforced during migration** — source `.md` files preserved until post-migration verification passes, preventing irrecoverable data loss on migration failure.
+- **SKILL.md command table** — now lists both `migrate` and `migrate-legacy` with correct descriptions and version requirements.
+
 ## [8.0.4] - 2026-03-24
 
 ### Added

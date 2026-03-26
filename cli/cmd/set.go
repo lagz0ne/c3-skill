@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 
 	"github.com/lagz0ne/c3-design/cli/internal/content"
@@ -32,6 +33,7 @@ type SetOptions struct {
 	Section string
 	Value   string
 	Append  bool
+	Remove  bool
 	Stdin   bool
 }
 
@@ -39,6 +41,7 @@ type SetOptions struct {
 type BatchSetPayload struct {
 	Fields   map[string]string `json:"fields,omitempty"`
 	Sections map[string]string `json:"sections,omitempty"`
+	Codemap  *[]string         `json:"codemap,omitempty"`
 }
 
 // RunSet updates a frontmatter field or section content on an entity.
@@ -138,11 +141,26 @@ func runSetBatch(entity *store.Entity, opts SetOptions, w io.Writer) error {
 		return fmt.Errorf("updating entity: %w", err)
 	}
 
-	fmt.Fprintf(w, "Updated %s (%d fields, %d sections)\n", opts.ID, len(payload.Fields), len(payload.Sections))
+	if payload.Codemap != nil {
+		if err := opts.Store.SetCodeMap(entity.ID, *payload.Codemap); err != nil {
+			return fmt.Errorf("updating codemap: %w", err)
+		}
+	}
+
+	parts := fmt.Sprintf("%d fields, %d sections", len(payload.Fields), len(payload.Sections))
+	if payload.Codemap != nil {
+		parts += fmt.Sprintf(", %d codemap patterns", len(*payload.Codemap))
+	}
+	fmt.Fprintf(w, "Updated %s (%s)\n", opts.ID, parts)
 	return nil
 }
 
 func runSetField(entity *store.Entity, opts SetOptions, w io.Writer) error {
+	// Codemap is a special field — stored in code_map table, not frontmatter.
+	if opts.Field == "codemap" {
+		return runSetCodemap(entity, opts, w)
+	}
+
 	// Map field name to entity field
 	switch opts.Field {
 	case "goal":
@@ -166,6 +184,70 @@ func runSetField(entity *store.Entity, opts SetOptions, w io.Writer) error {
 	}
 
 	fmt.Fprintf(w, "Updated %s field %q\n", opts.ID, opts.Field)
+	return nil
+}
+
+// runSetCodemap handles codemap pattern updates: replace, append, or remove.
+func runSetCodemap(entity *store.Entity, opts SetOptions, w io.Writer) error {
+	if opts.Append && opts.Remove {
+		return fmt.Errorf("cannot use --append and --remove together")
+	}
+
+	if opts.Remove {
+		existing, err := opts.Store.CodeMapFor(entity.ID)
+		if err != nil {
+			return fmt.Errorf("reading codemap: %w", err)
+		}
+		found := false
+		var filtered []string
+		for _, p := range existing {
+			if p == opts.Value {
+				found = true
+			} else {
+				filtered = append(filtered, p)
+			}
+		}
+		if !found {
+			return fmt.Errorf("pattern %q not found in codemap for %s", opts.Value, entity.ID)
+		}
+		if err := opts.Store.SetCodeMap(entity.ID, filtered); err != nil {
+			return fmt.Errorf("updating codemap: %w", err)
+		}
+		fmt.Fprintf(w, "Removed codemap pattern %q from %s (%d remaining)\n", opts.Value, entity.ID, len(filtered))
+		return nil
+	}
+
+	if opts.Append {
+		existing, err := opts.Store.CodeMapFor(entity.ID)
+		if err != nil {
+			return fmt.Errorf("reading codemap: %w", err)
+		}
+		if slices.Contains(existing, opts.Value) {
+			fmt.Fprintf(w, "Codemap pattern %q already exists on %s\n", opts.Value, entity.ID)
+			return nil
+		}
+		existing = append(existing, opts.Value)
+		if err := opts.Store.SetCodeMap(entity.ID, existing); err != nil {
+			return fmt.Errorf("updating codemap: %w", err)
+		}
+		fmt.Fprintf(w, "Added codemap pattern %q to %s (%d total)\n", opts.Value, entity.ID, len(existing))
+		return nil
+	}
+
+	// Replace all patterns (comma-separated)
+	var patterns []string
+	if opts.Value != "" {
+		for _, p := range strings.Split(opts.Value, ",") {
+			p = strings.TrimSpace(p)
+			if p != "" {
+				patterns = append(patterns, p)
+			}
+		}
+	}
+	if err := opts.Store.SetCodeMap(entity.ID, patterns); err != nil {
+		return fmt.Errorf("updating codemap: %w", err)
+	}
+	fmt.Fprintf(w, "Updated %s codemap (%d patterns)\n", entity.ID, len(patterns))
 	return nil
 }
 

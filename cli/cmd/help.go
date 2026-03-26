@@ -123,27 +123,36 @@ Examples:
 	{
 		Name:     "set",
 		Args:     "<id> <field> <value>",
-		OneLiner: "Update frontmatter field or section",
+		OneLiner: "Update frontmatter field, section, or codemap patterns",
 		Help: `Usage: c3x set <id> <field> <value>
        c3x set <id> --section <name> <value> [--append]
-       echo '{"fields":{...},"sections":{...}}' | c3x set <id> --stdin
+       c3x set <id> codemap "<patterns>" [--append|--remove]
+       echo '{"fields":{...},"sections":{...},"codemap":[...]}' | c3x set <id> --stdin
 
 Frontmatter fields: goal, summary, status, boundary, category, title, date, description
+
+Special field "codemap" updates code-map patterns (comma-separated):
+  Replace:  c3x set c3-101 codemap "src/auth/**,src/auth.go"
+  Append:   c3x set c3-101 codemap "src/utils.go" --append
+  Remove:   c3x set c3-101 codemap "src/old/**" --remove
+  Clear:    c3x set c3-101 codemap ""
 
 Section mode accepts text or JSON (array for replace, object for --append).
 Section updates skip full-document validation — fill sections incrementally.
 
-Batch mode (--stdin) accepts a JSON payload with multiple fields and sections:
-  {"fields": {"goal": "X", "summary": "Y"}, "sections": {"Choice": "content..."}}
+Batch mode (--stdin) accepts a JSON payload with fields, sections, and codemap:
+  {"fields": {"goal": "X"}, "sections": {"Choice": "..."}, "codemap": ["src/**"]}
 
 Note: set does NOT sync relationships. Use wire/unwire for relationship changes,
 or write with full frontmatter for bulk updates including relationship sync.
 
 Examples:
   c3x set c3-101 goal "Handle JWT auth"
+  c3x set c3-101 codemap "src/auth/**,src/auth.go"
+  c3x set c3-101 codemap "src/new/**" --append
   c3x set c3-101 --section "Choice" "Use RS256 signed JWTs"
   c3x set c3-101 --section "Dependencies" --append '{"Direction":"IN","What":"creds","From/To":"c3-102"}'
-  echo '{"fields":{"goal":"X"},"sections":{"Goal":"X"}}' | c3x set c3-101 --stdin`,
+  echo '{"fields":{"goal":"X"},"codemap":["src/**"]}' | c3x set c3-101 --stdin`,
 	},
 	{
 		Name:     "wire",

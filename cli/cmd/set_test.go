@@ -316,6 +316,178 @@ func TestIsJSONArray(t *testing.T) {
 	}
 }
 
+// === CODEMAP TESTS ===
+
+func TestRunSet_CodemapReplace(t *testing.T) {
+	s := createDBFixture(t)
+	// Seed existing patterns
+	s.SetCodeMap("c3-101", []string{"src/old/**"})
+
+	var buf bytes.Buffer
+	opts := SetOptions{Store: s, ID: "c3-101", Field: "codemap", Value: "src/auth/**,src/auth.go"}
+	err := RunSet(opts, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	patterns, _ := s.CodeMapFor("c3-101")
+	if len(patterns) != 2 {
+		t.Fatalf("expected 2 patterns, got %d: %v", len(patterns), patterns)
+	}
+	if !containsStr2(patterns, "src/auth/**") || !containsStr2(patterns, "src/auth.go") {
+		t.Errorf("patterns = %v, want [src/auth/** src/auth.go]", patterns)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "codemap") {
+		t.Errorf("output should mention codemap: %s", output)
+	}
+}
+
+func TestRunSet_CodemapAppend(t *testing.T) {
+	s := createDBFixture(t)
+	s.SetCodeMap("c3-101", []string{"src/auth/**"})
+
+	var buf bytes.Buffer
+	opts := SetOptions{Store: s, ID: "c3-101", Field: "codemap", Value: "src/auth.go", Append: true}
+	err := RunSet(opts, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	patterns, _ := s.CodeMapFor("c3-101")
+	if len(patterns) != 2 {
+		t.Fatalf("expected 2 patterns, got %d: %v", len(patterns), patterns)
+	}
+	if !containsStr2(patterns, "src/auth/**") || !containsStr2(patterns, "src/auth.go") {
+		t.Errorf("patterns = %v", patterns)
+	}
+}
+
+func TestRunSet_CodemapRemove(t *testing.T) {
+	s := createDBFixture(t)
+	s.SetCodeMap("c3-101", []string{"src/auth/**", "src/auth.go", "src/utils.go"})
+
+	var buf bytes.Buffer
+	opts := SetOptions{Store: s, ID: "c3-101", Field: "codemap", Value: "src/auth.go", Remove: true}
+	err := RunSet(opts, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	patterns, _ := s.CodeMapFor("c3-101")
+	if len(patterns) != 2 {
+		t.Fatalf("expected 2 patterns, got %d: %v", len(patterns), patterns)
+	}
+	if containsStr2(patterns, "src/auth.go") {
+		t.Error("src/auth.go should have been removed")
+	}
+}
+
+func TestRunSet_CodemapRemoveNonexistent(t *testing.T) {
+	s := createDBFixture(t)
+	s.SetCodeMap("c3-101", []string{"src/auth/**"})
+
+	var buf bytes.Buffer
+	opts := SetOptions{Store: s, ID: "c3-101", Field: "codemap", Value: "src/nope.go", Remove: true}
+	err := RunSet(opts, &buf)
+	if err == nil {
+		t.Error("expected error when removing nonexistent pattern")
+	}
+}
+
+func TestRunSet_CodemapBatchStdin(t *testing.T) {
+	s := createDBFixture(t)
+
+	var buf bytes.Buffer
+	payload := `{"fields":{"goal":"New goal"},"codemap":["src/auth/**","src/auth.go"]}`
+	opts := SetOptions{Store: s, ID: "c3-101", Value: payload, Stdin: true}
+	err := RunSet(opts, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	entity, _ := s.GetEntity("c3-101")
+	if entity.Goal != "New goal" {
+		t.Errorf("goal = %q", entity.Goal)
+	}
+
+	patterns, _ := s.CodeMapFor("c3-101")
+	if len(patterns) != 2 {
+		t.Fatalf("expected 2 patterns, got %d: %v", len(patterns), patterns)
+	}
+}
+
+func TestRunSet_CodemapEmpty(t *testing.T) {
+	s := createDBFixture(t)
+	s.SetCodeMap("c3-101", []string{"src/auth/**"})
+
+	var buf bytes.Buffer
+	// Empty value clears all patterns
+	opts := SetOptions{Store: s, ID: "c3-101", Field: "codemap", Value: ""}
+	err := RunSet(opts, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	patterns, _ := s.CodeMapFor("c3-101")
+	if len(patterns) != 0 {
+		t.Errorf("expected 0 patterns after clear, got %d: %v", len(patterns), patterns)
+	}
+}
+
+func TestRunSet_CodemapAppendRemoveMutualExclusion(t *testing.T) {
+	s := createDBFixture(t)
+	var buf bytes.Buffer
+
+	opts := SetOptions{Store: s, ID: "c3-101", Field: "codemap", Value: "src/auth/**", Append: true, Remove: true}
+	err := RunSet(opts, &buf)
+	if err == nil {
+		t.Error("expected error for --append and --remove together")
+	}
+	if !strings.Contains(err.Error(), "cannot use --append and --remove") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func TestRunSet_CodemapAppendDuplicate(t *testing.T) {
+	s := createDBFixture(t)
+	s.SetCodeMap("c3-101", []string{"src/auth/**"})
+
+	var buf bytes.Buffer
+	opts := SetOptions{Store: s, ID: "c3-101", Field: "codemap", Value: "src/auth/**", Append: true}
+	err := RunSet(opts, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	patterns, _ := s.CodeMapFor("c3-101")
+	if len(patterns) != 1 {
+		t.Errorf("duplicate should be skipped, got %d patterns: %v", len(patterns), patterns)
+	}
+	if !strings.Contains(buf.String(), "already exists") {
+		t.Errorf("should report duplicate: %s", buf.String())
+	}
+}
+
+func TestRunSet_CodemapBatchClear(t *testing.T) {
+	s := createDBFixture(t)
+	s.SetCodeMap("c3-101", []string{"src/auth/**", "src/utils.go"})
+
+	var buf bytes.Buffer
+	payload := `{"codemap":[]}`
+	opts := SetOptions{Store: s, ID: "c3-101", Value: payload, Stdin: true}
+	err := RunSet(opts, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	patterns, _ := s.CodeMapFor("c3-101")
+	if len(patterns) != 0 {
+		t.Errorf("expected 0 patterns after batch clear, got %d: %v", len(patterns), patterns)
+	}
+}
+
 // === NODE TREE VERIFICATION ===
 
 func TestRunSet_SectionPopulatesNodeTree(t *testing.T) {

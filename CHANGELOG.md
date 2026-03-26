@@ -5,6 +5,14 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.0.7] - 2026-03-26
+
+### Added
+
+- **`c3x set <id> codemap` support** — update code-map patterns via CLI instead of going through the database directly. Replace all (`"a,b"`), append (`--append`), remove (`--remove`), clear (`""`), and batch mode (`"codemap": [...]` in `--stdin` JSON).
+- **Batch mode codemap clearing** — `{"codemap": []}` now correctly clears all patterns (previously ignored empty arrays).
+- **`--append`/`--remove` mutual exclusion** — using both flags together now returns a clear error.
+
 ## [8.0.6] - 2026-03-26
 
 ### Fixed

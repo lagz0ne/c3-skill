@@ -1,20 +1,26 @@
 import * as fs from "fs";
 
-/** Matches c3-0 through c3-999 and ref-xxx-yyy patterns */
-export const C3_ID_PATTERN = /\b(c3-\d{1,3}|ref-[a-z][\w-]*)\b/g;
+/** Matches c3-0 through c3-999, ref-xxx-yyy, and adr-xxx-yyy patterns */
+export const C3_ID_PATTERN = /\b(c3-\d{1,3}|ref-[a-z][\w-]*|adr-[\w-]+)\b/g;
 
 export interface DocEntry {
   path: string;
   title?: string;
   goal?: string;
   summary?: string;
+  type?: "container" | "component" | "ref" | "adr";
+  category?: "foundation" | "feature";
+  parent?: string;
+  uses?: string[];
+  via?: string[];
+  status?: string;
 }
 
 /**
  * Parse YAML frontmatter from a markdown file.
  * Extracts title, goal, and summary fields from the --- delimited block.
  */
-export function parseFrontmatter(filePath: string): Pick<DocEntry, "title" | "goal" | "summary"> {
+export function parseFrontmatter(filePath: string): Omit<DocEntry, "path"> {
   let content: string;
   try {
     content = fs.readFileSync(filePath, "utf-8");
@@ -28,7 +34,7 @@ export function parseFrontmatter(filePath: string): Pick<DocEntry, "title" | "go
   }
 
   const fm = fmMatch[1];
-  const result: Pick<DocEntry, "title" | "goal" | "summary"> = {};
+  const result: Omit<DocEntry, "path"> = {};
 
   const titleMatch = fm.match(/^title:\s*(.+)$/m);
   if (titleMatch) {
@@ -43,6 +49,46 @@ export function parseFrontmatter(filePath: string): Pick<DocEntry, "title" | "go
   const summaryMatch = fm.match(/^summary:\s*(.+)$/m);
   if (summaryMatch) {
     result.summary = stripYamlQuotes(summaryMatch[1].trim());
+  }
+
+  const typeMatch = fm.match(/^type:\s*(.+)$/m);
+  if (typeMatch) {
+    result.type = stripYamlQuotes(typeMatch[1].trim()) as DocEntry["type"];
+  }
+
+  const categoryMatch = fm.match(/^category:\s*(.+)$/m);
+  if (categoryMatch) {
+    result.category = stripYamlQuotes(categoryMatch[1].trim()) as DocEntry["category"];
+  }
+
+  const parentMatch = fm.match(/^parent:\s*(.+)$/m);
+  if (parentMatch) {
+    result.parent = stripYamlQuotes(parentMatch[1].trim());
+  }
+
+  const usesMatch = fm.match(/^uses:\s*\[([^\]]*)\]$/m);
+  if (usesMatch) {
+    result.uses = usesMatch[1].split(",").map((s) => s.trim()).filter(Boolean);
+  }
+
+  const viaMatch = fm.match(/^via:\s*\[([^\]]*)\]$/m);
+  if (viaMatch) {
+    result.via = viaMatch[1].split(",").map((s) => s.trim()).filter(Boolean);
+  }
+
+  const statusMatch = fm.match(/^status:\s*(.+)$/m);
+  result.status = statusMatch ? stripYamlQuotes(statusMatch[1].trim()) : "active";
+
+  // Infer type for root docs that lack an explicit type field
+  // c3-0 style root docs have an id but no type — treat as container
+  if (!result.type) {
+    const idMatch = fm.match(/^id:\s*(.+)$/m);
+    if (idMatch) {
+      const id = stripYamlQuotes(idMatch[1].trim());
+      if (/^c3-\d+$/.test(id)) {
+        result.type = "container";
+      }
+    }
   }
 
   return result;
@@ -72,6 +118,11 @@ export function extractIdFromFilename(filename: string): string | undefined {
     return refMatch[1];
   }
 
+  const adrMatch = filename.match(/^(adr-[\w-]+)\.md$/);
+  if (adrMatch) {
+    return adrMatch[1];
+  }
+
   return undefined;
 }
 
@@ -83,7 +134,7 @@ export function getIdAtPosition(
   lineText: string,
   characterPos: number
 ): { id: string; start: number; end: number } | undefined {
-  const regex = /\b(c3-\d{1,3}|ref-[a-z][\w-]*)\b/g;
+  const regex = /\b(c3-\d{1,3}|ref-[a-z][\w-]*|adr-[\w-]+)\b/g;
   let match: RegExpExecArray | null;
 
   while ((match = regex.exec(lineText)) !== null) {
@@ -98,16 +149,21 @@ export function getIdAtPosition(
 }
 
 /** Matches a quoted glob path in a YAML list item, e.g. - "backend-core/app/sysadmin/**" */
-const QUOTED_PATH_PATTERN = /["']([^"']+)["']/g;
+const QUOTED_PATH_PATTERN = /["']([^"']+)["']/;
+
+/** Matches an unquoted YAML list path, e.g. "  - cli/cmd/check_enhanced.go" */
+const YAML_LIST_PATH_PATTERN = /^\s*-\s+(\S+)/;
 
 /**
- * Get the quoted path string at a given position in a line of text.
+ * Get a path string at a given position in a line of text.
+ * Supports both quoted paths ("path/to/file") and unquoted YAML list paths (- path/to/file).
  * Returns the raw path (with glob), the folder path (glob stripped), and positions.
  */
 export function getPathAtPosition(
   lineText: string,
   characterPos: number
 ): { rawPath: string; folderPath: string; start: number; end: number } | undefined {
+  // Try quoted paths first
   const regex = new RegExp(QUOTED_PATH_PATTERN.source, "g");
   let match: RegExpExecArray | null;
 
@@ -122,6 +178,50 @@ export function getPathAtPosition(
     }
   }
 
+  // Try unquoted YAML list paths (e.g., "  - cli/cmd/check_enhanced.go")
+  const listMatch = lineText.match(YAML_LIST_PATH_PATTERN);
+  if (listMatch) {
+    const rawPath = listMatch[1];
+    const start = lineText.indexOf(rawPath);
+    const end = start + rawPath.length;
+    if (characterPos >= start && characterPos <= end) {
+      const folderPath = stripGlobSuffix(rawPath);
+      return { rawPath, folderPath, start, end };
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * Find the first navigable path on a line (no position required).
+ * Checks quoted paths first, then unquoted YAML list paths.
+ * Used by CodeLens which needs to find any path on a line.
+ */
+export function findFirstPathOnLine(
+  lineText: string
+): { rawPath: string; folderPath: string; start: number; end: number } | undefined {
+  // Try quoted path
+  const quoteMatch = lineText.match(QUOTED_PATH_PATTERN);
+  if (quoteMatch) {
+    const rawPath = quoteMatch[1];
+    const matchIdx = lineText.indexOf(quoteMatch[0]);
+    const start = matchIdx + 1; // after opening quote
+    const end = start + rawPath.length;
+    const folderPath = stripGlobSuffix(rawPath);
+    return { rawPath, folderPath, start, end };
+  }
+
+  // Try unquoted YAML list path
+  const listMatch = lineText.match(YAML_LIST_PATH_PATTERN);
+  if (listMatch) {
+    const rawPath = listMatch[1];
+    const start = lineText.indexOf(rawPath);
+    const end = start + rawPath.length;
+    const folderPath = stripGlobSuffix(rawPath);
+    return { rawPath, folderPath, start, end };
+  }
+
   return undefined;
 }
 
@@ -132,4 +232,63 @@ export function getPathAtPosition(
  */
 export function stripGlobSuffix(globPath: string): string {
   return globPath.replace(/\/\*\*$/, "").replace(/\/\*\.[a-z]+$/, "");
+}
+
+/**
+ * Check if a line index is inside the YAML frontmatter block.
+ * Frontmatter is between the first `---` (line 0) and the next `---`.
+ * Returns true for content lines, false for delimiters and outside.
+ */
+export function isInFrontmatter(lines: string[], lineIndex: number): boolean {
+  if (lines[0] !== "---") {
+    return false;
+  }
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i] === "---") {
+      return lineIndex > 0 && lineIndex < i;
+    }
+  }
+  return false;
+}
+
+/**
+ * Check if a line is a markdown table data row (not a separator row).
+ * Table rows start and end with | and contain non-dash content.
+ */
+export function isMarkdownTableRow(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith("|") || !trimmed.endsWith("|")) {
+    return false;
+  }
+  // Separator rows contain only |, -, :, and spaces
+  return !/^\|[\s|:-]+\|$/.test(trimmed);
+}
+
+/**
+ * Get a backtick-wrapped file path at a given position in a line.
+ * Matches patterns like `cli/internal/frontmatter/parse.go`.
+ * Returns path info with glob suffix stripped for navigation.
+ */
+export function getBacktickPathAtPosition(
+  lineText: string,
+  characterPos: number
+): { rawPath: string; folderPath: string; start: number; end: number } | undefined {
+  const regex = /`([^`]+\.[a-z]+[^`]*)`|`([^`]+\/[^`]+)`/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(lineText)) !== null) {
+    const pathValue = match[1] || match[2];
+    const start = match.index + 1; // after opening backtick
+    const end = start + pathValue.length;
+    if (characterPos >= start && characterPos <= end) {
+      return {
+        rawPath: pathValue,
+        folderPath: stripGlobSuffix(pathValue),
+        start,
+        end,
+      };
+    }
+  }
+
+  return undefined;
 }

@@ -5,6 +5,7 @@ title: C3 Architecture Documentation Adoption
 type: adr
 status: in-progress
 date: 20260227
+goal: Adopt C3 methodology for c3-design
 affects: [c3-0]
 ---
 

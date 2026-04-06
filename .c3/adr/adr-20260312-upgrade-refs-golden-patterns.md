@@ -4,6 +4,7 @@ title: Upgrade Refs — Golden Patterns, Enforcement, Measurement
 type: adr
 status: implemented
 date: 2026-03-12
+goal: Make refs actionable by adding golden patterns with prescriptive How sections
 affects: [c3-113, c3-116, c3-210]
 ---
 

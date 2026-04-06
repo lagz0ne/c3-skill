@@ -21,6 +21,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: cli/go.mod
+          cache-dependency-path: cli/go.sum
 
       - name: Run tests
         working-directory: cli
@@ -53,8 +54,9 @@ jobs:
           # Merge dev into the branch
           git merge origin/dev --no-edit
 
-          # Remove stale binaries, add fresh ones
-          git rm -f skills/c3/bin/c3x-*-*-* 2>/dev/null || true
+          # Remove ALL old binaries (including from prior versions), add only fresh ones
+          git ls-files 'skills/c3/bin/c3x-*' | xargs -r git rm -f 2>/dev/null || true
+          rm -f skills/c3/bin/c3x-*-*-*
           cp /tmp/c3x-bins/* skills/c3/bin/
           git add -f skills/c3/bin/c3x-*
 

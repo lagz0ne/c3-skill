@@ -15,9 +15,11 @@ dist/
 
 # Go CLI compiled binaries (built in CI)
 skills/c3/bin/c3x-*
+cli/skills/
 cli/cli
 
 # Session artifacts
 tasks/
 docs/plans/
 coverage.out
+autoresearch.*

@@ -9,10 +9,9 @@ c3-102:
   - cli/internal/walker/**
 c3-103:
   - cli/internal/templates/**
-  - cli/templates/**
 c3-104:
-  - cli/internal/wiring/**
   - cli/cmd/wire.go
+  - cli/cmd/wire_test.go
 c3-105:
   - cli/internal/codemap/**
 c3-110:
@@ -24,7 +23,6 @@ c3-111:
   - cli/cmd/add_test.go
   - cli/cmd/add_rich_test.go
   - cli/internal/numbering/**
-  - cli/internal/writer/**
 c3-112:
   - cli/cmd/list.go
   - cli/cmd/list_test.go
@@ -41,6 +39,34 @@ c3-115:
 c3-116:
   - cli/cmd/coverage.go
   - cli/cmd/coverage_test.go
+c3-106:
+  - cli/internal/store/**
+c3-107:
+  - cli/internal/content/**
+c3-117:
+  - cli/cmd/delete.go
+  - cli/cmd/delete_test.go
+c3-118:
+  - cli/cmd/query.go
+c3-119:
+  - cli/cmd/graph.go
+  - cli/cmd/graph_test.go
+c3-120:
+  - cli/cmd/impact.go
+c3-121:
+  - cli/cmd/read.go
+  - cli/cmd/write.go
+c3-122:
+  - cli/cmd/diff.go
+c3-123:
+  - cli/cmd/export.go
+c3-124:
+  - cli/cmd/migrate.go
+  - cli/cmd/migrate_dryrun.go
+  - cli/cmd/migrate_v2.go
+c3-125:
+  - cli/cmd/marketplace.go
+  - cli/internal/marketplace/**
 c3-201:
   - skills/c3/SKILL.md
 c3-210:
@@ -54,7 +80,6 @@ ref-cross-compiled-binary:
   - .github/workflows/distribute.yml
 ref-embedded-templates:
   - cli/internal/templates/**
-  - cli/templates/**
 ref-frontmatter-docs:
   - cli/internal/frontmatter/**
   - cli/internal/config/**
@@ -89,3 +114,11 @@ _exclude:
   - "*.json"
   - "*.yaml"
   - "*.sh"
+  - "packages/**"
+  - "vscode-c3-nav/**"
+  - cli/cmd/check_legacy.go
+  - cli/cmd/hash_cmd.go
+  - cli/cmd/nodes_cmd.go
+  - cli/cmd/prune_cmd.go
+  - cli/cmd/version_cmd.go
+  - cli/cmd/versions_cmd.go

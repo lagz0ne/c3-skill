@@ -4,6 +4,7 @@ title: Add rule as first-class entity type
 type: adr
 status: implemented
 date: 2026-03-20
+goal: Add rule as first-class entity type to C3 architecture docs
 affects: [c3-101, c3-102, c3-103, c3-105, c3-110, c3-111, c3-112, c3-113, c3-114, c3-115, c3-116, c3-201, c3-210]
 ---
 

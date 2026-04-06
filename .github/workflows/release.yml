@@ -3,6 +3,7 @@ name: Release
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -10,8 +11,11 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
-    # Only release from distribute PRs or direct version bumps, not manual commits
-    if: contains(github.event.head_commit.message, 'distribute dev') || contains(github.event.head_commit.message, 'Merge pull request')
+    # Only release from distribute PRs, direct version bumps, or manual dispatch
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.head_commit.message, 'distribute dev') ||
+      contains(github.event.head_commit.message, 'Merge pull request')
     steps:
       - name: Checkout main
         uses: actions/checkout@v4

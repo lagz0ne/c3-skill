@@ -18,12 +18,14 @@ type Store struct {
 // Open creates or opens a SQLite database at dbPath, runs schema
 // migrations, and returns a ready-to-use Store.
 func Open(dbPath string) (*Store, error) {
-	// DELETE journal mode avoids -wal/-shm sidecar files.
-	dsn := dbPath + "?_pragma=journal_mode(delete)&_pragma=foreign_keys(on)"
+	// WAL mode allows concurrent readers + single writer across sessions.
+	// busy_timeout(5000) waits up to 5s on lock contention instead of failing.
+	dsn := dbPath + "?_pragma=journal_mode(wal)&_pragma=busy_timeout(5000)&_pragma=foreign_keys(on)"
 	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("open db: %w", err)
 	}
+	db.SetMaxOpenConns(1) // serialize access within a single process
 	s := &Store{db: db, dbPath: dbPath}
 	if err := s.createSchema(); err != nil {
 		db.Close()

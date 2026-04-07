@@ -36,6 +36,8 @@ bash <skill-dir>/bin/c3x.sh list --json
 ```
 Source of truth for all subsequent phases. No manual Glob+Read of `.c3/`.
 
+**Topology Graphs:** For each container in the inventory, run `c3x graph <container-id> --format mermaid` and include as mermaid code blocks. These establish the visual baseline for the audit — subsequent phases reference these graphs.
+
 ## Phase 2: Inventory vs Code
 
 Context: Compare Containers table ↔ actual directories. Flag drift.

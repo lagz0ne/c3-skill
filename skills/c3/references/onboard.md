@@ -98,7 +98,11 @@ Common: naming conventions, forbidden patterns, required lint rules, security co
 
 ### 0.7 Overview Diagram
 
-Mermaid: Actors → Containers → External Systems.
+After discovery, for each container, generate its graph:
+```bash
+bash <skill-dir>/bin/c3x.sh graph <container-id> --format mermaid
+```
+Include each as a mermaid code block to visualize what was discovered. This serves as the overview diagram.
 
 ### Gate 0
 
@@ -267,7 +271,7 @@ Show the user the typical workflow, then point to self-discovery:
 1. Understand what exists: `c3x list` → topology, then `c3x lookup <file>` → which component owns it
 2. Make changes: `c3x add` / `c3x set` / `c3x wire` to create and connect entities
 3. Validate: `c3x check` catches broken links, schema gaps, orphans
-4. Explore impact: `c3x graph <id>` shows what connects to what
+4. Visualize: `c3x graph <container-or-component> --format mermaid` renders architecture as mermaid diagrams
 
 For architecture questions, changes, audits → just say `/c3` + what you want.
 

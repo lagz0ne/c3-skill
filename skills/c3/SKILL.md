@@ -138,6 +138,18 @@ No match = uncharted, proceed with caution.
 
 **Layer Navigation:** Context → Container → Component
 
+**Graph Output — Include mermaid graph in responses when relationships matter:**
+```bash
+bash <skill-dir>/bin/c3x.sh graph <entity-id> --format mermaid
+```
+Include the output as a mermaid code block. Root selection matters more than depth:
+- Graph from a **container** to show its components + cited refs (query, audit, onboard)
+- Graph from a **component** to show its constraints and siblings (query, change, sweep)
+- Graph from a **ref/rule** to show citation graph (ref/rule Usage, sweep)
+- `--depth 1` is default. Use `--depth 2` only for cross-container tracing.
+- `--direction forward` for impact. `--direction reverse` for "what depends on this".
+- Never graph from `c3-0` — it's always exactly one node, adds no signal.
+
 **File Structure:**
 ```
 .c3/

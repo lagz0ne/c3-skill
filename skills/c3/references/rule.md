@@ -130,6 +130,8 @@ bash <skill-dir>/bin/c3x.sh list --json
 
 Find `id: "rule-{slug}"`, read `relationships`. `c3x read <id>` each citing doc.
 
+**Citation Graph:** Run `c3x graph rule-<slug> --format mermaid` and include as a mermaid code block showing which components cite this rule.
+
 ---
 
 ## Migrate

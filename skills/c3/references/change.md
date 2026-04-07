@@ -53,6 +53,8 @@ Clarify with user (ASSUMPTION_MODE: skip). Analyze:
 
 Fill the ADR body: Goal, Work Breakdown, Risks. Update `affects:` in frontmatter.
 
+**Visual Impact:** Run `c3x graph <primary-affected-container-or-component> --format mermaid` and include in the approval presentation as a mermaid code block. If change spans multiple containers, graph each affected container separately.
+
 Present for approval (ASSUMPTION_MODE: mark `[ASSUMED]`).
 
 Complex changes: spawn parallel analyst + reviewer subagents, synthesize.

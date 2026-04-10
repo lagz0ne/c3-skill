@@ -101,15 +101,22 @@ For each ref with `## How` containing golden patterns:
 - No → WARN: `## How` needs rework (too vague for enforcement)
 
 **Rule Compliance:** For each rule with `## Golden Example`:
-1. Find citing components via `c3x list --json`
-2. For each citing component, spot-check 1-2 mapped files from code-map
-3. Compare code against `## Golden Example` pattern
+1. **Load rule content:**
+   ```bash
+   bash <skill-dir>/bin/c3x.sh read <rule-id>
+   ```
+   Extract `## Rule`, `## Golden Example`, and `## Not This` sections.
+2. **Derive compliance questions:** From `## Rule` + `## Golden Example`, write 1-3 YES/NO questions that code must satisfy (e.g., "Does the error return use CmdError struct?" / "Is slog used with component context?").
+   - If questions can't be derived → WARN: rule is too vague for enforcement, needs rework.
+3. Find citing components via `c3x list --json`
+4. For each citing component, spot-check 1-2 mapped files from code-map
+5. Apply the YES/NO questions to the spot-checked code
 
 | Result | Meaning |
 |--------|---------|
-| COMPLIANT | Code matches golden pattern exactly |
-| VIOLATION | Code deviates from required pattern |
-| INCOMPLETE | Rule lacks Golden Example section |
+| COMPLIANT | All compliance questions answered YES |
+| VIOLATION | One or more questions answered NO |
+| INCOMPLETE | Rule lacks Golden Example or questions can't be derived |
 | NOT CHECKED | No code-map mapping or no citing components |
 
 Rules use STRICT enforcement (code must match golden pattern exactly), unlike refs which use directional alignment. A rule VIOLATION is always FAIL severity — rules are non-negotiable constraints.

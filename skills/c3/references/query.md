@@ -60,7 +60,7 @@ Match from JSON. Use `c3x read <id>` when body content is needed beyond what `li
 
 For every file path encountered:
 1. **Run `c3x lookup <file>` before reading any source file** — returns component + governing refs/rules. For directory-level context, use `c3x lookup 'src/auth/**'`.
-2. Check relationships via `c3x read <id>` or `c3x graph <id>`
+2. Check relationships via `c3x read <id>` or `c3x graph <id> --format mermaid`. Always include the mermaid output as a code block in your response — graph the matched entity (container or component, never c3-0).
 3. Find `ref-*` and `rule-*` entities from JSON. Use `c3x read <id>` for body content.
 
 Lookup-returned refs/rules = constraints governing that file's code.
@@ -102,6 +102,9 @@ src/auth/**/*.ts
 **Layer Boundaries:** MAY: [...] MUST NOT: [...]
 ```
 
+**Constraint Chain Graph:**
+(mermaid code block from c3x graph <target-component> --direction reverse --format mermaid)
+
 ## Edge Cases
 
 | Situation | Action |
@@ -116,6 +119,9 @@ src/auth/**/*.ts
 **Layer:** <c3-id> (<name>)
 
 <Architecture from docs>
+
+**Graph:**
+(mermaid code block from c3x graph <matched-entity> --format mermaid)
 
 **Code Map:** `path/file.ts` - <role>
 

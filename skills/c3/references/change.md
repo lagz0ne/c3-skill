@@ -7,7 +7,7 @@ Spawn parallel subagents via Task tool for complex work.
 ## Progress Checklist
 
 ```
-- [ ] Phase 1: ADR created (`c3x add adr <slug>`)
+- [ ] Phase 1: ADR created (`cat body | c3x add adr <slug>`)
 - [ ] Phase 2: topology loaded, impact analyzed, ADR body filled
 - [ ] Phase 2b: provision gate (implement or design-only?)
 - [ ] Phase 3: execute work breakdown
@@ -20,23 +20,13 @@ Spawn parallel subagents via Task tool for complex work.
 ## Phase 1: ADR (FIRST — non-negotiable)
 
 ```bash
-bash <skill-dir>/bin/c3x.sh add adr <slug>
+cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add adr <slug> --json
+## Goal
+<what this change achieves and why>
+EOF
 ```
 
-Create the ADR immediately. The slug should capture the change intent (e.g., `add-rate-limiting`, `migrate-to-postgres`).
-
-Edit the ADR frontmatter:
-```yaml
----
-id: adr-YYYYMMDD-{slug}
-title: [Decision Title]
-status: proposed
-date: YYYY-MM-DD
-affects: []
----
-```
-
-The body will be filled in Phase 2 after understanding impact.
+Create the ADR immediately with at least a Goal. The slug should capture the change intent (e.g., `add-rate-limiting`, `migrate-to-postgres`). The body will be expanded in Phase 2 via `c3x write` after understanding impact.
 
 ## Phase 2: Understand + Fill ADR
 
@@ -69,24 +59,69 @@ To implement provisioned later: invoke change, pick up ADR + docs, resume Phase 
 
 ## Phase 3: Execute
 
-Scaffold / tear down:
+Scaffold / tear down (all `add` commands require body via stdin):
 ```bash
-bash <skill-dir>/bin/c3x.sh add container <slug>
-bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N [--feature]
-bash <skill-dir>/bin/c3x.sh add ref <slug>
-bash <skill-dir>/bin/c3x.sh add rule <slug>
+cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add container <slug> --json
+## Goal
+...
+## Components
+...
+## Responsibilities
+...
+EOF
+
+cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N [--feature] --json
+## Goal
+...
+## Dependencies
+...
+EOF
+
+cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add ref <slug> --json
+## Goal
+...
+## Choice
+...
+## Why
+...
+EOF
+
+cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add rule <slug> --json
+## Goal
+...
+## Rule
+...
+## Golden Example
+...
+EOF
+
 bash <skill-dir>/bin/c3x.sh delete <id> [--dry-run]
 ```
 
-**REQUIRED before touching any file:**
+**REQUIRED before touching any file — the 3-step context gate:**
+
+**1. Lookup:**
 ```bash
 bash <skill-dir>/bin/c3x.sh lookup <file-path>
 ```
-Returned refs = hard constraints. Every one must be honored. No exceptions.
 
-Parallel subagents: decompose tasks, each runs `c3x read` on component docs + refs before touching code.
+**2. Load rules:** For every `rule-*` in the lookup response:
+```bash
+bash <skill-dir>/bin/c3x.sh read <rule-id>
+```
+Extract `## Rule`, `## Golden Example`, and `## Not This`. Hold these in working context while editing. Code MUST match the golden pattern — deviations require the rule's `## Override` process or a new ADR.
 
-Per task: verify code correct, docs updated (code-map entries, Related Refs), no regressions.
+**3. Graph blast radius:** For each matched component:
+```bash
+bash <skill-dir>/bin/c3x.sh graph <component-id> --depth 1
+```
+If changes affect the component's interface, check consumers before proceeding.
+
+Returned refs + loaded rule content + graph = hard constraints. No exceptions.
+
+Parallel subagents: decompose tasks, each runs the 3-step gate on their files before touching code.
+
+Per task: verify code correct, docs updated (code-map entries, Related Refs/Rules), no regressions.
 
 ## Phase 3b: Ref Compliance Gate
 
@@ -106,7 +141,7 @@ For each returned ref, check compliance using comparison mode:
 | `## Choice` only | Negative | Does code contradict the stated choice? |
 | `## Not This` | Anti-pattern | Does code resemble any rejected alternative? |
 
-**Rule Compliance (strict):** For each `rule-*` entity returned by lookup, compare code against `## Golden Example` and `## Not This` for exact compliance. Rules use strict enforcement — code must match the golden pattern. Flag any deviation as a violation.
+**Rule Compliance (strict):** For each `rule-*` entity returned by lookup, compare code against the `## Golden Example` and `## Not This` content loaded in Phase 3 step 2. Do NOT re-read — the constraints are already in context. Rules use strict enforcement — code must match the golden pattern. Flag any deviation as a violation.
 
 **ADVERSARIAL FRAMING: Look for violations — do not confirm compliance.**
 

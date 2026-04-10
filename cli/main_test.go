@@ -155,6 +155,13 @@ func TestFileExists(t *testing.T) {
 func TestRun_Add(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
 	var buf bytes.Buffer
+	body := "## Goal\nRate limiting strategy.\n\n## Choice\nToken bucket.\n\n## Why\nSimple and effective.\n"
+	r, w, _ := os.Pipe()
+	w.WriteString(body)
+	w.Close()
+	old := os.Stdin
+	os.Stdin = r
+	defer func() { os.Stdin = old }()
 	err := run([]string{"--c3-dir", c3Dir, "add", "ref", "rate-limiting"}, &buf)
 	if err != nil {
 		t.Fatal(err)
@@ -164,21 +171,19 @@ func TestRun_Add(t *testing.T) {
 func TestRun_AddJSON(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
 	var buf bytes.Buffer
+	body := "## Goal\nCaching strategy.\n\n## Choice\nRedis.\n\n## Why\nFast.\n"
+	r, w, _ := os.Pipe()
+	w.WriteString(body)
+	w.Close()
+	old := os.Stdin
+	os.Stdin = r
+	defer func() { os.Stdin = old }()
 	err := run([]string{"--c3-dir", c3Dir, "add", "ref", "caching", "--json"}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(buf.String(), "ref-caching") {
 		t.Errorf("JSON add output should contain ref-caching: %s", buf.String())
-	}
-}
-
-func TestRun_AddRich(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	var buf bytes.Buffer
-	err := run([]string{"--c3-dir", c3Dir, "add", "ref", "logging", "--goal", "Structured logging"}, &buf)
-	if err != nil {
-		t.Fatal(err)
 	}
 }
 

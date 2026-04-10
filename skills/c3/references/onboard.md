@@ -124,20 +124,47 @@ Update c3-0 via `c3x set c3-0 --section "Goal" <text>` and `c3x write c3-0 < con
 
 ### 1.2 Container Docs
 
-**Create container:**
+**Create container** (body via stdin — atomic, all-or-none):
 ```bash
-bash <skill-dir>/bin/c3x.sh add container <slug>
-```
-Fill via `c3x write <id>`: Goal, Responsibilities, Complexity, Components table.
+cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add container <slug> --json
+## Goal
+<goal description>
 
-**Create components:**
+## Components
+| ID | Name | Goal |
+|---|---|---|
+| <id> | <name> | <goal> |
+
+## Responsibilities
+- <responsibility>
+EOF
+```
+
+**Create components** (body via stdin):
 ```bash
 # Foundation (01-09):
-bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N
-# Feature (10+):
-bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N --feature
+cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N --json
+## Goal
+<goal>
+
+## Dependencies
+| Target | Why |
+|--------|-----|
+| <target> | <reason> |
+EOF
+
+# Feature (10+): add --feature flag
+cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N --feature --json
+## Goal
+<goal>
+
+## Dependencies
+| Target | Why |
+|--------|-----|
+| <target> | <reason> |
+EOF
 ```
-Fill via `c3x write <id>`: Goal, Container Connection, Related Refs table. Add code-map via `c3x codemap`.
+Add code-map via `c3x codemap`.
 Bracket paths (`[id]`, `[...slug]`) for Next.js/SvelteKit routes work automatically in code-map patterns.
 
 **Extract Refs:** "Would this change if we swapped the underlying tech?" Yes → extract to ref.
@@ -155,16 +182,34 @@ Bracket paths (`[id]`, `[...slug]`) for Next.js/SvelteKit routes work automatica
 ### 1.3 Ref Docs
 
 ```bash
-bash <skill-dir>/bin/c3x.sh add ref <slug>
+cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add ref <slug> --json
+## Goal
+<goal>
+
+## Choice
+<choice>
+
+## Why
+<rationale>
+EOF
 ```
-Fill via `c3x write <id>`: Goal, Choice (required), Why (required), How/Scope/Not This/Override as needed.
+Optional sections: How, Scope, Not This, Override — include as needed.
 
 ### 1.4 Rule Docs
 
 ```bash
-bash <skill-dir>/bin/c3x.sh add rule <slug>
+cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add rule <slug> --json
+## Goal
+<goal>
+
+## Rule
+<rule description>
+
+## Golden Example
+<example code or pattern>
+EOF
 ```
-Fill via `c3x write <id>`: Goal, Constraint (required), Why (required), Scope/Exceptions as needed.
+Optional sections: Not This, Scope, Override — include as needed.
 
 ### Gate 1
 

@@ -107,24 +107,6 @@ func TestParseArgs_Extended(t *testing.T) {
 		check func(t *testing.T, got Options)
 	}{
 		{
-			name: "goal flag",
-			argv: []string{"add", "component", "auth", "--goal", "Handle auth"},
-			check: func(t *testing.T, got Options) {
-				if got.Goal != "Handle auth" {
-					t.Errorf("Goal = %q", got.Goal)
-				}
-			},
-		},
-		{
-			name: "boundary flag",
-			argv: []string{"add", "container", "api", "--boundary", "service"},
-			check: func(t *testing.T, got Options) {
-				if got.Boundary != "service" {
-					t.Errorf("Boundary = %q", got.Boundary)
-				}
-			},
-		},
-		{
 			name: "section and append",
 			argv: []string{"set", "c3-101", "--section", "Goal", "--append"},
 			check: func(t *testing.T, got Options) {

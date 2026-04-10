@@ -18,7 +18,7 @@ CLI: `C3X_MODE=agent bash <skill-dir>/bin/c3x.sh <command> [args]`
 | `init` | Scaffold `.c3/` |
 | `list` | Topology with files (`--json`, `--flat`, `--compact`) |
 | `check` | Structural validation (`--json`, `--fix`) |
-| `add <type> <slug>` | Create entity (`--container`, `--feature`, `--json`) |
+| `add <type> <slug>` | Create entity with body via stdin (`--container`, `--feature`, `--json`) |
 | `set <id> <field> <val>` | Update frontmatter field |
 | `set <id> --section <name>` | Update section content (text or JSON table) |
 | `wire <src> <tgt>` | Link component to ref (`--remove` to unlink) |
@@ -128,13 +128,28 @@ The ADR is an ephemeral work order — it drives what to update, then gets hidde
 - Updating docs without code check
 
 **File Context — MANDATORY before reading or altering any file:**
+
+**Step 1 — Lookup:**
 ```bash
 bash <skill-dir>/bin/c3x.sh lookup <file-path>
 bash <skill-dir>/bin/c3x.sh lookup 'src/auth/**'   # glob for directory-level context
 ```
-Returned refs = hard constraints, every one MUST be honored.
 Run the moment any file path surfaces. Use glob when working across a directory.
 No match = uncharted, proceed with caution.
+
+**Step 2 — Load rules:** For every `rule-*` returned by lookup:
+```bash
+bash <skill-dir>/bin/c3x.sh read <rule-id>
+```
+Extract `## Rule`, `## Golden Example`, and `## Not This`. These are hard constraints — code MUST match the golden pattern. Deviations require an Override section in the rule or a new ADR.
+
+**Step 3 — Graph context:** For the first component returned (or each, if few):
+```bash
+bash <skill-dir>/bin/c3x.sh graph <component-id> --depth 1
+```
+Shows providers (what this component depends on) and consumers (what depends on it). If your change affects the component's interface, check consumers before proceeding.
+
+**Result:** Returned refs + loaded rule content + graph = the full constraint set. All MUST be honored.
 
 **Layer Navigation:** Context → Container → Component
 

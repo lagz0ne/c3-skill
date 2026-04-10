@@ -16,8 +16,6 @@ type Options struct {
 	Append        bool
 	Container     string
 	C3Dir         string
-	Goal          string
-	Boundary      string
 	Field         string
 	Section       string
 	Help          bool
@@ -71,16 +69,6 @@ func ParseArgs(argv []string) Options {
 			if i+1 < len(argv) {
 				i++
 				opts.C3Dir = argv[i]
-			}
-		case "--goal":
-			if i+1 < len(argv) {
-				i++
-				opts.Goal = argv[i]
-			}
-		case "--boundary":
-			if i+1 < len(argv) {
-				i++
-				opts.Boundary = argv[i]
 			}
 		case "--field":
 			if i+1 < len(argv) {

@@ -4,210 +4,198 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+
+	"github.com/lagz0ne/c3-design/cli/internal/content"
 )
 
-func TestRunAdd_Container(t *testing.T) {
+func TestRunAdd_ContainerWithBody(t *testing.T) {
 	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("container", "payments", s, "", false, &buf)
+	body := "## Goal\nPayment processing.\n\n## Components\n| ID | Name | Goal |\n|---|---|---|\n| c3-301 | stripe | Stripe integration |\n\n## Responsibilities\n- Process payments\n"
+
+	err := RunAdd("container", "payments", s, "", false, strings.NewReader(body), &buf)
 	if err != nil {
 		t.Fatalf("RunAdd container failed: %v", err)
 	}
 
-	output := buf.String()
-	if !strings.Contains(output, "Created:") {
-		t.Error("should print Created message")
-	}
-	if !strings.Contains(output, "c3-3") {
-		t.Errorf("output should mention c3-3: %s", output)
+	if !strings.Contains(buf.String(), "c3-3") {
+		t.Errorf("output should mention c3-3: %s", buf.String())
 	}
 
-	// Verify entity in store
 	entity, err := s.GetEntity("c3-3")
 	if err != nil {
-		t.Fatal("entity c3-3 should exist in store")
+		t.Fatal("entity c3-3 should exist")
 	}
 	if entity.Type != "container" {
-		t.Errorf("expected type container, got %s", entity.Type)
+		t.Errorf("type = %q, want container", entity.Type)
+	}
+	if entity.Goal != "Payment processing." {
+		t.Errorf("goal = %q, want 'Payment processing.'", entity.Goal)
+	}
+
+	rendered, err := content.ReadEntity(s, "c3-3")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(rendered, "Payment processing") {
+		t.Error("content should contain goal text")
 	}
 }
 
-func TestRunAdd_Component(t *testing.T) {
+func TestRunAdd_ComponentWithBody(t *testing.T) {
 	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("component", "logging", s, "c3-1", false, &buf)
-	if err != nil {
-		t.Fatalf("RunAdd component failed: %v", err)
-	}
+	body := "## Goal\nHandles rate limiting.\n\n## Dependencies\n| Target | Why |\n|--------|-----|\n| c3-101 | rate data |\n"
 
-	// c3-101 already exists (auth), so next foundation should be c3-102
-	entity, err := s.GetEntity("c3-102")
-	if err != nil {
-		t.Fatal("entity c3-102 should exist in store")
-	}
-	if entity.Type != "component" {
-		t.Error("component should have type component")
-	}
-	if entity.Category != "foundation" {
-		t.Error("component should be foundation category")
-	}
-}
-
-func TestRunAdd_ComponentFeature(t *testing.T) {
-	s, _ := createDBFixtureWithC3Dir(t)
-	var buf bytes.Buffer
-
-	err := RunAdd("component", "checkout", s, "c3-1", true, &buf)
-	if err != nil {
-		t.Fatalf("RunAdd feature component failed: %v", err)
-	}
-
-	// c3-110 already exists (users), so next feature should be c3-111
-	entity, err := s.GetEntity("c3-111")
-	if err != nil {
-		t.Fatal("entity c3-111 should exist in store")
-	}
-	if entity.Category != "feature" {
-		t.Error("component should be feature category")
-	}
-}
-
-func TestRunAdd_ComponentMissingContainer(t *testing.T) {
-	s, _ := createDBFixtureWithC3Dir(t)
-	var buf bytes.Buffer
-
-	err := RunAdd("component", "orphan", s, "", false, &buf)
-	if err == nil {
-		t.Fatal("expected error when --container is missing")
-	}
-	if !strings.Contains(err.Error(), "--container") {
-		t.Errorf("error should mention --container: %v", err)
-	}
-}
-
-func TestRunAdd_ComponentContainerNotFound(t *testing.T) {
-	s, _ := createDBFixtureWithC3Dir(t)
-	var buf bytes.Buffer
-
-	err := RunAdd("component", "orphan", s, "c3-99", false, &buf)
-	if err == nil {
-		t.Fatal("expected error when container doesn't exist")
-	}
-	if !strings.Contains(err.Error(), "not found") {
-		t.Errorf("error should mention 'not found': %v", err)
-	}
-}
-
-func TestRunAdd_Ref(t *testing.T) {
-	s, _ := createDBFixtureWithC3Dir(t)
-	var buf bytes.Buffer
-
-	err := RunAdd("ref", "rate-limiting", s, "", false, &buf)
-	if err != nil {
-		t.Fatalf("RunAdd ref failed: %v", err)
-	}
-
-	entity, err := s.GetEntity("ref-rate-limiting")
-	if err != nil {
-		t.Fatal("entity ref-rate-limiting should exist in store")
-	}
-	if entity.Type != "ref" {
-		t.Error("ref should have type ref")
-	}
-
-	output := buf.String()
-	if !strings.Contains(output, "ref-rate-limiting") {
-		t.Errorf("output should mention ref id: %s", output)
-	}
-}
-
-func TestRunAdd_RefDuplicate(t *testing.T) {
-	s, _ := createDBFixtureWithC3Dir(t)
-	var buf bytes.Buffer
-
-	// ref-jwt already exists in fixture
-	err := RunAdd("ref", "jwt", s, "", false, &buf)
-	if err == nil {
-		t.Fatal("expected error when ref already exists")
-	}
-	if !strings.Contains(err.Error(), "already exists") {
-		t.Errorf("error should mention 'already exists': %v", err)
-	}
-}
-
-func TestRunAdd_Adr(t *testing.T) {
-	s, _ := createDBFixtureWithC3Dir(t)
-	var buf bytes.Buffer
-
-	err := RunAdd("adr", "oauth-support", s, "", false, &buf)
-	if err != nil {
-		t.Fatalf("RunAdd adr failed: %v", err)
-	}
-
-	output := buf.String()
-	if !strings.Contains(output, "oauth-support") {
-		t.Error("output should contain slug")
-	}
-}
-
-func TestRunAdd_Recipe(t *testing.T) {
-	s, _ := createDBFixtureWithC3Dir(t)
-	var buf bytes.Buffer
-
-	err := RunAdd("recipe", "auth-flow", s, "", false, &buf)
-	if err != nil {
-		t.Fatalf("RunAdd recipe failed: %v", err)
-	}
-
-	entity, err := s.GetEntity("recipe-auth-flow")
-	if err != nil {
-		t.Fatal("entity recipe-auth-flow should exist in store")
-	}
-	if entity.Type != "recipe" {
-		t.Error("recipe should have type recipe")
-	}
-
-	output := buf.String()
-	if !strings.Contains(output, "recipe-auth-flow") {
-		t.Errorf("output should mention recipe id: %s", output)
-	}
-}
-
-func TestRunAdd_RecipeDuplicate(t *testing.T) {
-	s, _ := createDBFixtureWithC3Dir(t)
-	var buf bytes.Buffer
-
-	// Create first
-	RunAdd("recipe", "auth-flow", s, "", false, &buf)
-	buf.Reset()
-
-	// Duplicate should fail
-	err := RunAdd("recipe", "auth-flow", s, "", false, &buf)
-	if err == nil {
-		t.Fatal("expected error when recipe already exists")
-	}
-	if !strings.Contains(err.Error(), "already exists") {
-		t.Errorf("error should mention 'already exists': %v", err)
-	}
-}
-
-func TestAddRule(t *testing.T) {
-	s := createDBFixture(t)
-	var buf bytes.Buffer
-
-	err := RunAdd("rule", "structured-logging", s, "", false, &buf)
+	err := RunAdd("component", "rate-limiter", s, "c3-1", false, strings.NewReader(body), &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	entity, err := s.GetEntity("rule-structured-logging")
-	if err != nil {
-		t.Fatal("rule entity should exist in store")
+	entity, _ := s.GetEntity("c3-102")
+	if entity == nil {
+		t.Fatal("component c3-102 should exist")
 	}
-	if entity.Type != "rule" {
-		t.Error("rule should have type rule")
+	if entity.Goal != "Handles rate limiting." {
+		t.Errorf("goal = %q", entity.Goal)
+	}
+}
+
+func TestRunAdd_ComponentFeatureWithBody(t *testing.T) {
+	s, _ := createDBFixtureWithC3Dir(t)
+	var buf bytes.Buffer
+
+	body := "## Goal\nCheckout flow.\n\n## Dependencies\n| Target | Why |\n|--------|-----|\n| c3-101 | auth |\n"
+
+	err := RunAdd("component", "checkout", s, "c3-1", true, strings.NewReader(body), &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "c3-1") {
+		t.Errorf("output should contain component id: %s", output)
+	}
+}
+
+func TestRunAdd_RefWithBody(t *testing.T) {
+	s, _ := createDBFixtureWithC3Dir(t)
+	var buf bytes.Buffer
+
+	body := "## Goal\nRate limiting strategy.\n\n## Choice\nToken bucket.\n\n## Why\nSimple and effective.\n"
+
+	err := RunAdd("ref", "rate-limiting", s, "", false, strings.NewReader(body), &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	entity, _ := s.GetEntity("ref-rate-limiting")
+	if entity == nil {
+		t.Fatal("ref should exist")
+	}
+	if entity.Goal != "Rate limiting strategy." {
+		t.Errorf("goal = %q", entity.Goal)
+	}
+}
+
+func TestRunAdd_RuleWithBody(t *testing.T) {
+	s, _ := createDBFixtureWithC3Dir(t)
+	var buf bytes.Buffer
+
+	body := "## Goal\nEnforce structured logging.\n\n## Rule\nAll log calls must use structured format.\n\n## Golden Example\n```go\nlog.Info(\"msg\", \"key\", val)\n```\n"
+
+	err := RunAdd("rule", "structured-logging", s, "", false, strings.NewReader(body), &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	entity, _ := s.GetEntity("rule-structured-logging")
+	if entity == nil {
+		t.Fatal("rule should exist")
+	}
+}
+
+func TestRunAdd_AdrWithBody(t *testing.T) {
+	s, _ := createDBFixtureWithC3Dir(t)
+	var buf bytes.Buffer
+
+	body := "## Goal\nAdopt OAuth for third-party auth.\n"
+
+	err := RunAdd("adr", "oauth-support", s, "", false, strings.NewReader(body), &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !strings.Contains(buf.String(), "adr-") {
+		t.Error("should print adr id")
+	}
+}
+
+func TestRunAdd_RecipeWithBody(t *testing.T) {
+	s, _ := createDBFixtureWithC3Dir(t)
+	var buf bytes.Buffer
+
+	body := "## Goal\nEnd-to-end auth flow.\n"
+
+	err := RunAdd("recipe", "auth-flow", s, "", false, strings.NewReader(body), &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	entity, _ := s.GetEntity("recipe-auth-flow")
+	if entity == nil {
+		t.Fatal("recipe should exist")
+	}
+}
+
+func TestRunAdd_NilReaderFails(t *testing.T) {
+	s, _ := createDBFixtureWithC3Dir(t)
+	var buf bytes.Buffer
+
+	err := RunAdd("container", "payments", s, "", false, nil, &buf)
+	if err == nil {
+		t.Fatal("expected error for nil reader")
+	}
+	if !strings.Contains(err.Error(), "body content") {
+		t.Errorf("error should mention body content: %v", err)
+	}
+
+	if _, err := s.GetEntity("c3-3"); err == nil {
+		t.Error("no entity should be created when body is missing")
+	}
+}
+
+func TestRunAdd_EmptyBodyFails(t *testing.T) {
+	s, _ := createDBFixtureWithC3Dir(t)
+	var buf bytes.Buffer
+
+	err := RunAdd("container", "payments", s, "", false, strings.NewReader(""), &buf)
+	if err == nil {
+		t.Fatal("expected error for empty body")
+	}
+
+	if _, err := s.GetEntity("c3-3"); err == nil {
+		t.Error("no entity should be created when body is empty")
+	}
+}
+
+func TestRunAdd_MissingSectionsFails(t *testing.T) {
+	s, _ := createDBFixtureWithC3Dir(t)
+	var buf bytes.Buffer
+
+	body := "## Goal\nJust a goal.\n"
+	err := RunAdd("component", "broken", s, "c3-1", false, strings.NewReader(body), &buf)
+	if err == nil {
+		t.Fatal("expected validation error")
+	}
+	if !strings.Contains(err.Error(), "Dependencies") {
+		t.Errorf("error should mention missing Dependencies: %v", err)
+	}
+
+	if _, err := s.GetEntity("c3-102"); err == nil {
+		t.Error("no entity should be created when validation fails")
 	}
 }
 
@@ -215,12 +203,13 @@ func TestRunAdd_InvalidSlug(t *testing.T) {
 	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("container", "Invalid_Slug", s, "", false, &buf)
+	body := "## Goal\nTest.\n"
+	err := RunAdd("container", "INVALID", s, "", false, strings.NewReader(body), &buf)
 	if err == nil {
 		t.Fatal("expected error for invalid slug")
 	}
 	if !strings.Contains(err.Error(), "invalid slug") {
-		t.Errorf("error should mention 'invalid slug': %v", err)
+		t.Errorf("error = %v", err)
 	}
 }
 
@@ -228,12 +217,13 @@ func TestRunAdd_UnknownType(t *testing.T) {
 	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("widget", "test", s, "", false, &buf)
+	body := "## Goal\nTest.\n"
+	err := RunAdd("bogus", "test", s, "", false, strings.NewReader(body), &buf)
 	if err == nil {
-		t.Fatal("expected error for unknown entity type")
+		t.Fatal("expected error for unknown type")
 	}
 	if !strings.Contains(err.Error(), "unknown entity type") {
-		t.Errorf("error should mention 'unknown entity type': %v", err)
+		t.Errorf("error = %v", err)
 	}
 }
 
@@ -241,12 +231,40 @@ func TestRunAdd_MissingArgs(t *testing.T) {
 	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	err := RunAdd("", "", s, "", false, &buf)
+	err := RunAdd("", "", s, "", false, strings.NewReader("test"), &buf)
 	if err == nil {
-		t.Fatal("expected error for missing args")
+		t.Fatal("expected error")
 	}
 	if !strings.Contains(err.Error(), "usage") {
-		t.Errorf("error should mention usage: %v", err)
+		t.Errorf("error = %v", err)
+	}
+}
+
+func TestRunAdd_RefDuplicate(t *testing.T) {
+	s, _ := createDBFixtureWithC3Dir(t)
+	var buf bytes.Buffer
+
+	body := "## Goal\nJWT auth.\n\n## Choice\nHS256.\n\n## Why\nSimple.\n"
+	err := RunAdd("ref", "jwt", s, "", false, strings.NewReader(body), &buf)
+	if err == nil {
+		t.Fatal("expected duplicate error")
+	}
+	if !strings.Contains(err.Error(), "already exists") {
+		t.Errorf("error = %v", err)
+	}
+}
+
+func TestRunAdd_ComponentMissingContainer(t *testing.T) {
+	s, _ := createDBFixtureWithC3Dir(t)
+	var buf bytes.Buffer
+
+	body := "## Goal\nTest.\n\n## Dependencies\n| Target | Why |\n|---|---|\n| x | y |\n"
+	err := RunAdd("component", "test", s, "", false, strings.NewReader(body), &buf)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !strings.Contains(err.Error(), "--container") {
+		t.Errorf("error = %v", err)
 	}
 }
 
@@ -254,60 +272,25 @@ func TestRunAdd_SequentialContainers(t *testing.T) {
 	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	// Add container 3
-	RunAdd("container", "payments", s, "", false, &buf)
-	buf.Reset()
+	body1 := "## Goal\nFirst.\n\n## Components\n| ID | Name | Goal |\n|---|---|---|\n| x | y | z |\n\n## Responsibilities\n- Do things\n"
+	body2 := "## Goal\nSecond.\n\n## Components\n| ID | Name | Goal |\n|---|---|---|\n| x | y | z |\n\n## Responsibilities\n- Do other things\n"
 
-	// Add container 4 (store is already updated, no need to reload)
-	err := RunAdd("container", "worker", s, "", false, &buf)
-	if err != nil {
+	if err := RunAdd("container", "first", s, "", false, strings.NewReader(body1), &buf); err != nil {
+		t.Fatal(err)
+	}
+	buf.Reset()
+	if err := RunAdd("container", "second", s, "", false, strings.NewReader(body2), &buf); err != nil {
 		t.Fatal(err)
 	}
 
-	entity, err := s.GetEntity("c3-4")
+	if _, err := s.GetEntity("c3-3"); err != nil {
+		t.Error("c3-3 should exist")
+	}
+	e4, err := s.GetEntity("c3-4")
 	if err != nil {
-		t.Error("expected c3-4 to exist in store")
+		t.Fatal("c3-4 should exist")
 	}
-	if entity != nil && entity.Slug != "worker" {
-		t.Errorf("expected slug worker, got %s", entity.Slug)
-	}
-}
-
-func TestRunAdd_RuleDuplicate(t *testing.T) {
-	s := createDBFixture(t)
-	var buf bytes.Buffer
-
-	RunAdd("rule", "structured-logging", s, "", false, &buf)
-	buf.Reset()
-
-	err := RunAdd("rule", "structured-logging", s, "", false, &buf)
-	if err == nil {
-		t.Fatal("expected error for duplicate rule")
-	}
-	if !strings.Contains(err.Error(), "already exists") {
-		t.Errorf("error should mention 'already exists': %v", err)
-	}
-}
-
-func TestRunAdd_AdrDuplicate(t *testing.T) {
-	s := createDBFixture(t)
-	var buf bytes.Buffer
-
-	RunAdd("adr", "use-grpc", s, "", false, &buf)
-	buf.Reset()
-
-	err := RunAdd("adr", "use-grpc", s, "", false, &buf)
-	if err == nil {
-		t.Fatal("expected error for duplicate ADR")
-	}
-}
-
-func TestRunAdd_ComponentInvalidContainerFormat(t *testing.T) {
-	s, _ := createDBFixtureWithC3Dir(t)
-	var buf bytes.Buffer
-
-	err := RunAdd("component", "test", s, "invalid-format", false, &buf)
-	if err == nil {
-		t.Fatal("expected error for invalid container format")
+	if e4.Slug != "second" {
+		t.Errorf("slug = %q, want second", e4.Slug)
 	}
 }

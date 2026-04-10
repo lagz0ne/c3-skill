@@ -140,11 +140,16 @@ bash <skill-dir>/bin/c3x.sh list --json
 
 Find `id: "ref-{slug}"`, read `relationships`. `c3x read <id>` each citing doc.
 
+**Citation Graph:** Run `c3x graph ref-<slug> --format mermaid` and include as a mermaid code block showing which components cite this ref.
+
 ```
 **ref-{slug} Usage**
 
 **Cited by:**
 - c3-101 (Auth Middleware) - JWT validation
+
+**Citation Graph:**
+(mermaid code block from c3x graph ref-{slug} --format mermaid)
 
 **Pattern Summary:** {Key rules}
 ```

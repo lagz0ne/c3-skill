@@ -294,23 +294,25 @@ func runAdd(opts cmd.Options, s *store.Store, w io.Writer) error {
 	if len(opts.Args) >= 2 {
 		slug = opts.Args[1]
 	}
+
+	// Read body from stdin
+	stat, _ := os.Stdin.Stat()
+	if (stat.Mode() & os.ModeCharDevice) != 0 {
+		return fmt.Errorf("error: c3x add requires body content via stdin\nhint: cat body.md | c3x add <type> <slug>\nhint: run 'c3x schema <type>' to see required sections")
+	}
+
 	var buf bytes.Buffer
 	var addW io.Writer = w
 	if opts.JSON {
 		addW = &buf
 	}
-	var err error
-	if opts.Goal != "" || opts.Boundary != "" {
-		addOpts := cmd.AddOptions{
-			EntityType: entityType, Slug: slug, Store: s,
-			Container: opts.Container, Feature: opts.Feature,
-			Goal: opts.Goal, Boundary: opts.Boundary,
-		}
-		err = cmd.RunAddRich(addOpts, addW)
-	} else {
-		err = cmd.RunAdd(entityType, slug, s, opts.Container, opts.Feature, addW)
+
+	err := cmd.RunAdd(entityType, slug, s, opts.Container, opts.Feature, os.Stdin, addW)
+	if err != nil {
+		return err
 	}
-	if err == nil && opts.JSON {
+
+	if opts.JSON {
 		m := reAddID.FindStringSubmatch(buf.String())
 		if len(m) >= 2 {
 			result := cmd.AddResult{ID: m[1], Type: entityType}
@@ -327,7 +329,7 @@ func runAdd(opts cmd.Options, s *store.Store, w io.Writer) error {
 		}
 		w.Write(buf.Bytes())
 	}
-	return err
+	return nil
 }
 
 func runSet(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) error {

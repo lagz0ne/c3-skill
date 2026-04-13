@@ -13,7 +13,7 @@ description: >
 
 CLI: `C3X_MODE=agent bash <skill-dir>/bin/c3x.sh <command> [args]`
 
-**Agent output mode:** With `C3X_MODE=agent`, c3x outputs TOON (Token-Optimized Object Notation) by default — ~40% fewer tokens than JSON. Use `--json` to force JSON output. All commands append `help[]` contextual hints suggesting next steps.
+**Agent output mode:** With `C3X_MODE=agent`, c3x outputs TOON (Token-Optimized Object Notation) by default — ~40% fewer tokens than JSON. All commands append `help[]` contextual hints suggesting next steps.
 
 **Content-first:** Running c3x with no arguments outputs a project dashboard (entity counts, coverage, pending ADRs) — not help text. Use `--help` for help.
 
@@ -21,26 +21,26 @@ CLI: `C3X_MODE=agent bash <skill-dir>/bin/c3x.sh <command> [args]`
 |---------|---------|
 | (no args) / `status` | Project dashboard: entity counts, coverage %, pending ADRs, warnings |
 | `init` | Scaffold `.c3/` |
-| `list` | Topology with files (`--json`, `--flat`, `--compact`) |
-| `check` | Structural validation (`--json`, `--fix`) |
-| `add <type> <slug>` | Create entity with body via stdin (`--container`, `--feature`, `--json`) |
+| `list` | Topology with files (`--flat`, `--compact`) |
+| `check` | Structural validation (`--fix`) |
+| `add <type> <slug>` | Create entity with body via stdin (`--container`, `--feature`) |
 | `set <id> <field> <val>` | Update frontmatter field |
 | `set <id> --section <name>` | Update section content (text or JSON table) |
 | `wire <src> <tgt>` | Link component to ref (`--remove` to unlink) |
-| `schema <type>` | Section definitions for entity type (`--json`) |
+| `schema <type>` | Section definitions for entity type |
 | `codemap` | Scaffold code-map entries for all components, refs + rules |
-| `read <id>` | Full entity content; agent mode truncates body to 1500 chars (`--full` to bypass, `--json`) |
-| `lookup <file-or-glob>` | File or glob → component + refs (`--json`) |
-| `coverage` | Code-map coverage stats (JSON default) |
+| `read <id>` | Full entity content; agent mode truncates body to 1500 chars (`--full` to bypass) |
+| `lookup <file-or-glob>` | File or glob → component + refs |
+| `coverage` | Code-map coverage stats |
 | `delete <id>` | Remove entity + clean all references (`--dry-run`) |
-| `query <terms>` | Full-text search across all entities (`--type`, `--limit`, `--json`) |
-| `impact <id>` | Transitive impact analysis — who depends on this? (`--depth`, `--json`) |
-| `diff` | Show uncommitted entity changes (`--mark <hash>`, `--json`) |
+| `query <terms>` | Full-text search across all entities (`--type`, `--limit`) |
+| `impact <id>` | Transitive impact analysis — who depends on this? (`--depth`) |
+| `diff` | Show uncommitted entity changes (`--mark <hash>`) |
 | `export [dir]` | Dump DB to markdown files (escape hatch) |
 | `migrate` | Populate content node tree (v7→v8, requires DB) |
 | `migrate-legacy` | Import .c3/ markdown files into database (v6→v7, no DB needed) |
 | `marketplace add <url>` | Register marketplace rule source (shallow clone) |
-| `marketplace list` | Browse available rules (`--source`, `--tag`, `--json`) |
+| `marketplace list` | Browse available rules (`--source`, `--tag`) |
 | `marketplace show <rule-id>` | Preview marketplace rule content |
 | `marketplace update` | Pull latest from registered sources |
 | `marketplace remove <name>` | Unregister source + delete cache |
@@ -192,15 +192,15 @@ No `.c3/` or re-onboard. `c3x init` → discovery → inject CLAUDE.md → show 
 Details: `references/onboard.md`
 
 ### query
-`c3x query "<terms>"` for search, `c3x list --json` for topology, `c3x impact <id>` for dependencies.
+`c3x query "<terms>"` for search, `c3x list` for topology, `c3x impact <id>` for dependencies.
 Details: `references/query.md`
 
 ### audit
-`c3x check` → `c3x list --json` → semantic phases. Output: PASS/WARN/FAIL table.
+`c3x check` → `c3x list` → semantic phases. Output: PASS/WARN/FAIL table.
 Details: `references/audit.md`
 
 ### change
-ADR first (`c3x add adr --json`) → `c3x list --json` → identify affected entities (refs, affects in frontmatter) → `c3x lookup` each file → fill ADR → approve → execute → `c3x check`.
+ADR first (`c3x add adr`) → `c3x list` → identify affected entities (refs, affects in frontmatter) → `c3x lookup` each file → fill ADR → approve → execute → `c3x check`.
 Provision gate: implement now or `status: provisioned`.
 Details: `references/change.md`
 

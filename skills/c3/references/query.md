@@ -8,9 +8,9 @@ Navigate C3 docs + corresponding code. Full context = docs + code.
 
 ## Progress
 
-- [ ] Topology loaded (`c3x list --json`)
+- [ ] Topology loaded (`c3x list`)
 - [ ] Intent clarified (or skipped if specific)
-- [ ] Entity matched from JSON
+- [ ] Entity matched from topology
 - [ ] `c3x lookup` run on every file path surfaced
 - [ ] Code explored
 - [ ] Response delivered
@@ -21,16 +21,16 @@ Navigate C3 docs + corresponding code. Full context = docs + code.
 
 **First action:**
 ```bash
-bash <skill-dir>/bin/c3x.sh list --json
+bash <skill-dir>/bin/c3x.sh list
 ```
 Returns all entities: id, type, title, path, relationships, frontmatter. Match query to entities by title/type/relationship.
 
-Don't manually Glob/Read `.c3/`. JSON has everything for discovery. Read only after identifying specific entities.
+Don't manually Glob/Read `.c3/`. Topology output has everything for discovery. Read only after identifying specific entities.
 
 ## Step 0a+: Check Recipes
 
 After loading topology, check for recipes that match the query:
-1. Filter entities with type `recipe` from `c3x list --json`
+1. Filter entities with type `recipe` from `c3x list`
 2. Match query against recipe title + description
 3. If match found → read recipe, serve sources as the narrative trace
 4. If no match → proceed with normal query flow
@@ -48,7 +48,7 @@ Skip when: C3 ID given, query is specific, "show me everything about X".
 
 Top-down: Context → Container → Component.
 
-Match from JSON. Use `c3x read <id>` when body content is needed beyond what `list --json` provides.
+Match from topology. Use `c3x read <id>` when body content is needed beyond what `list` provides.
 
 | Source | Use For |
 |--------|---------|
@@ -61,7 +61,7 @@ Match from JSON. Use `c3x read <id>` when body content is needed beyond what `li
 For every file path encountered:
 1. **Run `c3x lookup <file>` before reading any source file** — returns component + governing refs/rules. For directory-level context, use `c3x lookup 'src/auth/**'`.
 2. Check relationships via `c3x read <id>` or `c3x graph <id> --format mermaid`. Always include the mermaid output as a code block in your response — graph the matched entity (container or component, never c3-0).
-3. Find `ref-*` and `rule-*` entities from JSON. Use `c3x read <id>` for body content.
+3. Find `ref-*` and `rule-*` entities from topology. Use `c3x read <id>` for body content.
 
 Lookup-returned refs/rules = constraints governing that file's code.
 
@@ -135,7 +135,7 @@ src/auth/**/*.ts
 All entity content is in the database. Use c3x to read:
 
 ```bash
-c3x read <entity-id>              # full content as markdown
-c3x read <entity-id> --json       # structured JSON
+c3x read <entity-id>              # full content (truncated in agent mode)
+c3x read <entity-id> --full       # full content without truncation
 c3x graph <entity-id> --depth 0   # entity summary with relationships
 ```

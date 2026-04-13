@@ -40,21 +40,34 @@ jobs:
       - name: Generate changelog
         if: steps.version.outputs.should_release == 'true'
         run: |
+          VERSION=${{ steps.version.outputs.version }}
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
 
-          if [ -z "$LAST_TAG" ]; then
-            COMMITS=$(git log --pretty=format:"- %s" --no-merges)
-          else
-            COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s" --no-merges)
+          awk -v version="$VERSION" '
+            $0 ~ "^## \\[" version "\\]" { in_section=1; print; next }
+            in_section && $0 ~ "^## \\[" { exit }
+            in_section { print }
+          ' CHANGELOG.md > changelog.md
+
+          if ! grep -q '[^[:space:]]' changelog.md; then
+            if [ -z "$LAST_TAG" ]; then
+              COMMITS=$(git log --pretty=format:"- %s" --no-merges)
+            else
+              COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s" --no-merges)
+            fi
+
+            {
+              echo "## What's Changed"
+              echo ""
+              echo "$COMMITS"
+              echo ""
+            } > changelog.md
           fi
 
-          echo "## What's Changed" > changelog.md
-          echo "" >> changelog.md
-          echo "$COMMITS" >> changelog.md
           echo "" >> changelog.md
           echo "---" >> changelog.md
           echo "" >> changelog.md
-          echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG:-initial}...v${{ steps.version.outputs.version }}" >> changelog.md
+          echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG:-initial}...v${VERSION}" >> changelog.md
 
       - name: Prepare release assets
         if: steps.version.outputs.should_release == 'true'

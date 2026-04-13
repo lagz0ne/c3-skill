@@ -1,6 +1,6 @@
 # C3: Architecture That Agents Can Read
 
-C3 turns your codebase into something an LLM can navigate. A single `.c3/` directory holds architecture docs in a SQLite database — every component, every cross-cutting pattern, every decision, queryable and enforceable.
+C3 turns your codebase into something an LLM can navigate. A sealed `.c3/` tree is the shared architectural truth for Git review and merges, while `c3.db` stays a local cache the CLI can rebuild at any time.
 
 One Claude Code plugin. One `/c3` command. The agent figures out the rest.
 
@@ -16,7 +16,8 @@ Architecture docs rot because nobody enforces them. C3 fixes this by making the 
 
 - **LLMs read them before touching code** — `c3x lookup src/auth/login.ts` tells the agent which component owns the file, which refs govern it, what rules apply
 - **Writes are validated** — every content update passes through schema enforcement. Missing a required section? Rejected with a hint
-- **One database, not scattered files** — entities, content node trees, relationships, code-map, version history, and changelog in a single `c3.db`. Full-text search. Graph traversal. Impact analysis
+- **Canonical text is reviewable** — Git diffs and merges happen on sealed `.c3/*.md` files and `code-map.yaml`, not on an opaque cache
+- **The cache is disposable** — `c3.db` accelerates queries, search, and writes, but `c3x repair` can rebuild it from canonical text at any time
 - **Every element is trackable** — headings, paragraphs, table rows, list items each have a unique ID and SHA256 hash. Entity-level merkle for O(1) change detection. Full version history with pruning
 
 ## What You Get
@@ -81,6 +82,13 @@ c3x check                               # validate everything
 c3x coverage                            # code-map completeness stats
 ```
 
+**Verify and recover:**
+```bash
+c3x verify                               # verify sealed canonical .c3/ truth
+c3x repair                               # rebuild local cache + reseal after branch/merge issues
+c3x git install                          # install pre-commit guardrails and .c3/.gitignore policy
+```
+
 **Content database:**
 ```bash
 c3x nodes c3-101                         # tree of all nodes with IDs + hashes
@@ -108,17 +116,25 @@ Every entity type has required sections. The CLI enforces them on write:
 
 `c3x write` (full body) validates required sections before accepting. Section-level updates (`write --section`, `set --section`) skip validation to allow incremental filling. `c3x check` validates everything post-hoc.
 
-### The database
+### Canonical `.c3/` tree
 
 ```
 .c3/
-├── c3.db           # everything lives here
-└── config.yaml
+├── README.md       # canonical context doc
+├── adr/            # canonical ADR markdown
+├── refs/           # canonical refs/rules/recipes/containers/components
+├── .gitignore      # ignores local cache and backups inside the C3 tree
+└── c3.db           # local cache only (rebuildable)
 ```
 
-`c3.db` holds entities, a **content node tree** (every heading, paragraph, list item, table row), relationships, code-map globs, version history, and a mutation changelog. No scattered markdown files — but `c3x export` dumps to files any time you need them.
+The sealed markdown tree is the shared truth. `c3.db` holds entities, a **content node tree** (every heading, paragraph, list item, table row), relationships, code-map globs, version history, and a mutation changelog as local cache.
 
-Every content element has an **ID** and a **SHA256 hash** for change tracking. Entity-level merkle hashes detect any content change with a single comparison. Full version history with configurable pruning.
+User rule:
+- review and merge `.c3/` text
+- never merge `c3.db`
+- after branch switches, selective merges, or conflict resolution, run `c3x repair`
+
+Every canonical doc carries a `c3-seal` hash. `c3x verify` checks those seals and confirms the current `.c3/` tree matches canonical output.
 
 Entity types: `container`, `component`, `ref`, `rule`, `adr`, `recipe`.
 
@@ -135,6 +151,32 @@ c3x marketplace show rule-error-wrapping
 ```
 
 ## Migrating
+
+### Upgrading to v9.0.0
+
+v9 is a breaking workflow release. The shared truth moves from “database-first” to “canonical text first”.
+
+Do this once after upgrading:
+
+```bash
+# 1. Install the new guardrails
+c3x git install
+
+# 2. If the repo still tracks the cache, stop tracking it
+git rm --cached .c3/c3.db
+
+# 3. Rebuild and reseal the local tree
+c3x repair
+
+# 4. Verify before commit
+c3x verify
+```
+
+What changes for daily work:
+- review `.c3/` diffs in Git
+- let `c3.db` stay local and disposable
+- use `c3x verify` before commit / in CI
+- use `c3x repair` after branch switches, selective merges, or manual conflict resolution
 
 **From v7 (body-based entities):**
 ```bash
@@ -154,12 +196,12 @@ The plugin ships with pre-built binaries — no Go toolchain, no npm, no PATH co
 
 ```
 skills/c3/bin/
-├── VERSION                    # "8.0.0"
+├── VERSION                    # "9.0.0"
 ├── c3x.sh                    # detects OS/ARCH, runs the right binary
-├── c3x-8.0.0-linux-amd64
-├── c3x-8.0.0-linux-arm64
-├── c3x-8.0.0-darwin-amd64
-└── c3x-8.0.0-darwin-arm64
+├── c3x-9.0.0-linux-amd64
+├── c3x-9.0.0-linux-arm64
+├── c3x-9.0.0-darwin-amd64
+└── c3x-9.0.0-darwin-arm64
 ```
 
 Each plugin version carries its own binary. Different projects can use different versions without conflict.

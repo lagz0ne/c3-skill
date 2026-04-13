@@ -145,11 +145,75 @@ func TestRun_NoDatabaseBlocked(t *testing.T) {
 	}
 }
 
+func TestRun_ImportWithoutDatabase(t *testing.T) {
+	dir := t.TempDir()
+	c3Dir := filepath.Join(dir, ".c3")
+	if err := os.MkdirAll(c3Dir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(c3Dir, "README.md"), []byte(`---
+id: c3-0
+title: Test
+---
+
+# Test
+
+## Goal
+
+Hello.
+`), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "import"}, &buf)
+	if err == nil {
+		t.Fatal("expected unsealed import to fail")
+	}
+	if !strings.Contains(err.Error(), "unsealed C3 file") {
+		t.Fatalf("expected unsealed error, got %v", err)
+	}
+}
+
+func TestRun_ImportRequiresForceWithExistingDatabase(t *testing.T) {
+	c3Dir := setupC3DB(t)
+	var buf bytes.Buffer
+	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", c3Dir}, &buf); err != nil {
+		t.Fatal(err)
+	}
+	err := run([]string{"--c3-dir", c3Dir, "import"}, &bytes.Buffer{})
+	if err == nil {
+		t.Fatal("expected force guard")
+	}
+	if !strings.Contains(err.Error(), "--force") {
+		t.Fatalf("expected --force hint, got %v", err)
+	}
+}
+
 func TestRun_MarketplaceHelp(t *testing.T) {
 	var buf bytes.Buffer
 	err := run([]string{"marketplace"}, &buf)
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestRun_GitInstall(t *testing.T) {
+	c3Dir := setupC3DB(t)
+	projectDir := filepath.Dir(c3Dir)
+	if err := os.MkdirAll(filepath.Join(projectDir, ".git", "hooks"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "git", "install"}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(buf.String(), "Installed C3 Git guardrails") {
+		t.Fatalf("expected git install summary, got %q", buf.String())
+	}
+	if !fileExists(filepath.Join(projectDir, ".git", "hooks", "pre-commit")) {
+		t.Fatal("expected pre-commit hook")
 	}
 }
 
@@ -166,7 +230,6 @@ func TestFileExists(t *testing.T) {
 	}
 }
 
-
 func TestRun_Add(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
 	var buf bytes.Buffer
@@ -180,6 +243,9 @@ func TestRun_Add(t *testing.T) {
 	err := run([]string{"--c3-dir", c3Dir, "add", "ref", "rate-limiting"}, &buf)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if !fileExists(filepath.Join(c3Dir, "README.md")) {
+		t.Fatal("expected canonical export after add")
 	}
 }
 
@@ -208,6 +274,62 @@ func TestRun_Set(t *testing.T) {
 	err := run([]string{"--c3-dir", c3Dir, "set", "c3-0", "goal", "Updated goal"}, &buf)
 	if err != nil {
 		t.Fatal(err)
+	}
+	data, err := os.ReadFile(filepath.Join(c3Dir, "README.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(data), "goal: Updated goal") {
+		t.Fatalf("expected canonical export to include updated goal, got:\n%s", string(data))
+	}
+}
+
+func TestRun_VerifyRebuildsMissingDB(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	var buf bytes.Buffer
+	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", c3Dir}, &buf); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(filepath.Join(c3Dir, "c3.db")); err != nil {
+		t.Fatal(err)
+	}
+	buf.Reset()
+	if err := run([]string{"--c3-dir", c3Dir, "verify"}, &buf); err != nil {
+		t.Fatal(err)
+	}
+	if !fileExists(filepath.Join(c3Dir, "c3.db")) {
+		t.Fatal("expected verify to rebuild local db cache")
+	}
+	if !strings.Contains(buf.String(), "OK: canonical markdown is in sync") {
+		t.Fatalf("expected verify success, got %q", buf.String())
+	}
+}
+
+func TestRun_RepairResealsBrokenCanonicalTree(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	var buf bytes.Buffer
+	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", c3Dir}, &buf); err != nil {
+		t.Fatal(err)
+	}
+	readmePath := filepath.Join(c3Dir, "README.md")
+	data, err := os.ReadFile(readmePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	broken := strings.Replace(string(data), "c3-seal:", "c3-seal: broken-", 1)
+	if err := os.WriteFile(readmePath, []byte(broken), 0644); err != nil {
+		t.Fatal(err)
+	}
+	buf.Reset()
+	if err := run([]string{"--c3-dir", c3Dir, "repair"}, &buf); err != nil {
+		t.Fatal(err)
+	}
+	buf.Reset()
+	if err := run([]string{"--c3-dir", c3Dir, "verify"}, &buf); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(buf.String(), "BROKEN_SEAL") {
+		t.Fatalf("expected repaired seals, got %q", buf.String())
 	}
 }
 
@@ -292,6 +414,124 @@ func TestRun_Export(t *testing.T) {
 	var buf bytes.Buffer
 	err := run([]string{"--c3-dir", c3Dir, "export", outDir}, &buf)
 	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRun_SyncExport(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	outDir := filepath.Join(t.TempDir(), "synced")
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "sync", "export", outDir}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(buf.String(), "Synced canonical markdown") {
+		t.Fatalf("expected sync summary, got %q", buf.String())
+	}
+	if !fileExists(filepath.Join(outDir, "README.md")) {
+		t.Fatal("expected synced README.md")
+	}
+}
+
+func TestRun_SyncCheck(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	outDir := filepath.Join(t.TempDir(), "synced")
+	var buf bytes.Buffer
+	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", outDir}, &buf); err != nil {
+		t.Fatal(err)
+	}
+	buf.Reset()
+	if err := run([]string{"--c3-dir", c3Dir, "sync", "check", outDir}, &buf); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(buf.String(), "OK: canonical markdown is in sync") {
+		t.Fatalf("expected sync check success, got %q", buf.String())
+	}
+}
+
+func TestRun_SyncCheckDetectsDrift(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	outDir := filepath.Join(t.TempDir(), "synced")
+	var buf bytes.Buffer
+	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", outDir}, &buf); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(outDir, "README.md"), []byte("drift\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	buf.Reset()
+	err := run([]string{"--c3-dir", c3Dir, "sync", "check", outDir}, &buf)
+	if err == nil {
+		t.Fatal("expected sync drift error")
+	}
+	if !strings.Contains(buf.String(), "DIFFERS README.md") {
+		t.Fatalf("expected diff report, got %q", buf.String())
+	}
+}
+
+func TestRun_SyncCheckDetectsBrokenSeal(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	outDir := filepath.Join(t.TempDir(), "synced")
+	var buf bytes.Buffer
+	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", outDir}, &buf); err != nil {
+		t.Fatal(err)
+	}
+	readmePath := filepath.Join(outDir, "README.md")
+	data, err := os.ReadFile(readmePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	broken := strings.Replace(string(data), "c3-seal:", "c3-seal: broken-", 1)
+	if err := os.WriteFile(readmePath, []byte(broken), 0644); err != nil {
+		t.Fatal(err)
+	}
+	buf.Reset()
+	err = run([]string{"--c3-dir", c3Dir, "sync", "check", outDir}, &buf)
+	if err == nil {
+		t.Fatal("expected broken seal error")
+	}
+	if !strings.Contains(buf.String(), "BROKEN_SEAL README.md") {
+		t.Fatalf("expected broken seal report, got %q", buf.String())
+	}
+}
+
+func TestRun_SyncExport_RemovesStaleCanonicalFiles(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	staleADRDir := filepath.Join(c3Dir, "adr")
+	if err := os.MkdirAll(staleADRDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	stalePath := filepath.Join(staleADRDir, "adr-00000000-stale.md")
+	if err := os.WriteFile(stalePath, []byte("stale\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", c3Dir}, &buf); err != nil {
+		t.Fatal(err)
+	}
+	if fileExists(stalePath) {
+		t.Fatal("expected stale canonical file to be removed by sync export")
+	}
+}
+
+func TestRun_SyncCheck_IgnoresIndexFiles(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	outDir := filepath.Join(t.TempDir(), "synced")
+	var buf bytes.Buffer
+	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", outDir}, &buf); err != nil {
+		t.Fatal(err)
+	}
+	indexDir := filepath.Join(outDir, "_index")
+	if err := os.MkdirAll(indexDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(indexDir, "structural.md"), []byte("ignored\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	buf.Reset()
+	if err := run([]string{"--c3-dir", c3Dir, "sync", "check", outDir}, &buf); err != nil {
 		t.Fatal(err)
 	}
 }

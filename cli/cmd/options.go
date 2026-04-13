@@ -38,6 +38,7 @@ type Options struct {
 	Keep          int
 	Full          bool
 	JSONExplicit  bool
+	Force         bool
 }
 
 // ParseArgs parses command-line arguments into Options.
@@ -138,6 +139,8 @@ func ParseArgs(argv []string) Options {
 			opts.Full = true
 		case "--recompute":
 			opts.Recompute = true
+		case "--force":
+			opts.Force = true
 		case "--keep":
 			if i+1 < len(argv) {
 				i++

@@ -1,17 +1,18 @@
 ---
 id: c3-105
 c3-version: 4
+c3-seal: c784840bf5156bb2dc2d427788144947ee89053befb77a72db1c6b3acbd83486
 title: codemap-lib
 type: component
 category: foundation
 parent: c3-1
-goal: Parse code-map.yaml, match files to components and rules via glob patterns, validate map completeness
+goal: Parse `code-map.yaml`, match files to components and rules via glob patterns, validate map completeness.
 summary: Core library for all codemap operations — used by lookup, codemap-cmd, and coverage-cmd
-uses: [c3-102]
+uses:
+    - c3-102
 ---
 
 # codemap-lib
-
 ## Goal
 
 Parse `code-map.yaml`, match files to components and rules via glob patterns, validate map completeness.
@@ -23,14 +24,13 @@ lookup-cmd, codemap-cmd, and coverage-cmd all reduce to "what does this file map
 ## Dependencies
 
 | Direction | What | From/To |
-|-----------|------|---------|
+| --- | --- | --- |
 | IN (uses) | Entity discovery | c3-102 |
 | OUT (provides) | File-to-component mapping |  |
-
 ## Code References
 
 | File | Purpose |
-|------|---------|
-| `cli/internal/codemap/codemap.go` | Parse + match logic |
-| `cli/internal/codemap/coverage.go` | Coverage calculation |
-| `cli/internal/codemap/validate.go` | Map validation |
+| --- | --- |
+| cli/internal/codemap/codemap.go | Parse + match logic |
+| cli/internal/codemap/coverage.go | Coverage calculation |
+| cli/internal/codemap/validate.go | Map validation |

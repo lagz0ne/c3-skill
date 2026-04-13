@@ -4,3 +4,9 @@
 
 # Go CLI binaries — treat as binary (no line ending conversion, no text diffs)
 skills/c3/bin/c3x-* binary
+
+# BEGIN C3 MANAGED ATTRIBUTES
+.c3/c3.db binary linguist-generated
+# END C3 MANAGED ATTRIBUTES
+
+

@@ -10,7 +10,7 @@ import (
 type DocType int
 
 const (
-	DocUnknown   DocType = iota
+	DocUnknown DocType = iota
 	DocContext
 	DocContainer
 	DocComponent
@@ -43,16 +43,17 @@ func (d DocType) String() string {
 
 // Frontmatter holds the YAML frontmatter of a C3 document.
 type Frontmatter struct {
-	ID       string   `yaml:"id"`
-	Title    string   `yaml:"title,omitempty"`
-	Type     string   `yaml:"type,omitempty"`
-	Category string   `yaml:"category,omitempty"`
-	Parent   string   `yaml:"parent,omitempty"`
-	Goal     string   `yaml:"goal,omitempty"`
-	Summary  string   `yaml:"summary,omitempty"`
-	Boundary string   `yaml:"boundary,omitempty"`
-	Status   string   `yaml:"status,omitempty"`
-	Date     string   `yaml:"date,omitempty"`
+	ID          string   `yaml:"id"`
+	Seal        string   `yaml:"c3-seal,omitempty"`
+	Title       string   `yaml:"title,omitempty"`
+	Type        string   `yaml:"type,omitempty"`
+	Category    string   `yaml:"category,omitempty"`
+	Parent      string   `yaml:"parent,omitempty"`
+	Goal        string   `yaml:"goal,omitempty"`
+	Summary     string   `yaml:"summary,omitempty"`
+	Boundary    string   `yaml:"boundary,omitempty"`
+	Status      string   `yaml:"status,omitempty"`
+	Date        string   `yaml:"date,omitempty"`
 	Affects     []string `yaml:"affects,omitempty"`
 	Refs        []string `yaml:"uses,omitempty"`
 	Scope       []string `yaml:"scope,omitempty"`

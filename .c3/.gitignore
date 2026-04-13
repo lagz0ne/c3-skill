@@ -1,0 +1,4 @@
+# BEGIN C3 MANAGED IGNORE
+c3.db
+c3.db.bak-*
+# END C3 MANAGED IGNORE

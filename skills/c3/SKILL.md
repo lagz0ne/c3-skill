@@ -107,15 +107,25 @@ First `AskUserQuestion` denial → `ASSUMPTION_MODE = true` for session.
 
 **HARD RULE — .c3/ is CLI-only. NEVER use Read, Glob, Edit, or Write tools on `.c3/` files.**
 
-Architecture data lives in `.c3/c3.db` (SQLite). Raw file access bypasses the database and returns stale or empty content. ALL access goes through c3x:
+Architecture data is shared through sealed canonical `.c3/` markdown. `.c3/c3.db` is local cache only. Raw file access bypasses the CLI contract and returns stale or misleading state. ALL access goes through c3x:
 
 - Create:   `c3x add`, `c3x init`, `c3x codemap`
 - Read:     `c3x read <id>`, `c3x list`, `c3x query`, `c3x lookup`, `c3x graph`, `c3x impact`
 - Update:   `c3x write <id>`, `c3x set`, `c3x wire` (`--remove` to unwire)
 - Delete:   `c3x delete`
-- Validate: `c3x check`, `c3x coverage`, `c3x schema`
+- Validate: `c3x check`, `c3x coverage`, `c3x schema`, `c3x verify`
 
 If c3x lacks a needed operation, STOP and tell the user — do not work around it with file tools.
+
+**HARD RULE — Canonical `.c3/` files are sealed.**
+
+- Trust `.c3/` only after `c3x verify` passes
+- Direct manual edits break the seal and make the tree untrusted
+- Recovery path after conflict/manual intervention:
+  1. resolve text
+  2. `c3x repair`
+
+Never claim `.c3/` state is authoritative if `verify` fails.
 
 **Run `c3x check` frequently** — after any mutation (`add`, `write`, `set`, `wire`, `delete`). It catches missing required sections, bad entity references, and codemap issues. Treat errors as blockers.
 
@@ -219,4 +229,3 @@ Details: `references/sweep.md`
 ### migrate
 Two paths: **v6→v7** (file→DB via `c3x migrate-legacy`) and **v7→v8** (body→nodes via `c3x migrate`). Both are LLM-assisted with evidence gates: dry-run → repair → validate zero issues → migrate → verify content fidelity. Warnings are errors — every warning means silent data loss.
 Details: `references/migrate.md`
-

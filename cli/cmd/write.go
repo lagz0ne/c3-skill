@@ -135,6 +135,7 @@ func applyFrontmatter(e *store.Entity, fm *frontmatter.Frontmatter) {
 	if fm == nil {
 		return
 	}
+	metadata := parseMetadataMap(e.Metadata)
 	if fm.Goal != "" {
 		e.Goal = fm.Goal
 	}
@@ -153,6 +154,16 @@ func applyFrontmatter(e *store.Entity, fm *frontmatter.Frontmatter) {
 	if fm.Date != "" {
 		e.Date = fm.Date
 	}
+	if fm.Summary != "" {
+		metadata["summary"] = fm.Summary
+	}
+	if fm.Description != "" {
+		metadata["description"] = fm.Description
+	}
+	for key, value := range fm.Extra {
+		metadata[key] = value
+	}
+	e.Metadata = marshalMetadataMap(metadata)
 }
 
 // promoteGoalIfEmpty reads the node-tree body and extracts the first line

@@ -509,3 +509,94 @@ Version test.
 		t.Errorf("version should increment: was %d, now %d", v0, entity.Version)
 	}
 }
+
+// === TRUNCATION ===
+
+func TestRunRead_AgentTruncatesBody(t *testing.T) {
+	s := createRichDBFixture(t)
+
+	// Write a body longer than 1500 chars
+	longBody := "# auth\n\n## Goal\n\nHandle authentication.\n\n## Dependencies\n\n" + strings.Repeat("Lorem ipsum dolor sit amet. ", 100)
+	content.WriteEntity(s, "c3-101", longBody)
+
+	t.Setenv("C3X_MODE", "agent")
+	var buf bytes.Buffer
+	err := RunRead(ReadOptions{Store: s, ID: "c3-101", JSON: true}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var result ReadResult
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("JSON parse: %v", err)
+	}
+	if !result.BodyTruncated {
+		t.Error("body should be truncated in agent mode")
+	}
+	if result.BodyTotalChars == 0 {
+		t.Error("body_total_chars should be set")
+	}
+	if len(result.Body) > 1500 {
+		t.Errorf("body length %d exceeds truncation limit", len(result.Body))
+	}
+}
+
+func TestRunRead_AgentFullBypassesTruncation(t *testing.T) {
+	s := createRichDBFixture(t)
+
+	longBody := "# auth\n\n## Goal\n\nHandle authentication.\n\n## Dependencies\n\n" + strings.Repeat("Lorem ipsum dolor sit amet. ", 100)
+	content.WriteEntity(s, "c3-101", longBody)
+
+	t.Setenv("C3X_MODE", "agent")
+	var buf bytes.Buffer
+	err := RunRead(ReadOptions{Store: s, ID: "c3-101", JSON: true, Full: true}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var result ReadResult
+	json.Unmarshal(buf.Bytes(), &result)
+	if result.BodyTruncated {
+		t.Error("body should not be truncated with --full")
+	}
+	if len(result.Body) <= 1500 {
+		t.Errorf("full body should be > 1500 chars, got %d", len(result.Body))
+	}
+}
+
+func TestRunRead_NonAgentNoTruncation(t *testing.T) {
+	s := createRichDBFixture(t)
+
+	longBody := "# auth\n\n## Goal\n\nHandle authentication.\n\n## Dependencies\n\n" + strings.Repeat("Lorem ipsum dolor sit amet. ", 100)
+	content.WriteEntity(s, "c3-101", longBody)
+
+	t.Setenv("C3X_MODE", "")
+	var buf bytes.Buffer
+	err := RunRead(ReadOptions{Store: s, ID: "c3-101", JSON: true}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var result ReadResult
+	json.Unmarshal(buf.Bytes(), &result)
+	if result.BodyTruncated {
+		t.Error("body should not be truncated in non-agent mode")
+	}
+}
+
+func TestRunRead_ShortBodyNotTruncated(t *testing.T) {
+	s := createRichDBFixture(t)
+
+	t.Setenv("C3X_MODE", "agent")
+	var buf bytes.Buffer
+	err := RunRead(ReadOptions{Store: s, ID: "c3-101", JSON: true}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var result ReadResult
+	json.Unmarshal(buf.Bytes(), &result)
+	if result.BodyTruncated {
+		t.Error("short body should not be truncated")
+	}
+}

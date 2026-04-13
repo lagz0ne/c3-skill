@@ -36,9 +36,12 @@ func run(argv []string, w io.Writer) error {
 		return nil
 	}
 
-	if opts.Help || opts.Command == "" {
+	if opts.Help {
 		cmd.ShowHelp(opts.Command, w)
 		return nil
+	}
+	if opts.Command == "" {
+		return runNoArgs(opts, w)
 	}
 
 	// init is special — creates .c3/ with DB, no store needed
@@ -49,7 +52,15 @@ func run(argv []string, w io.Writer) error {
 		}
 		c3Dir := filepath.Join(cwd, ".c3")
 		projectName := filepath.Base(cwd)
-		return cmd.RunInitDB(c3Dir, projectName, w)
+		if err := cmd.RunInitDB(c3Dir, projectName, w); err != nil {
+			return err
+		}
+		s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
+		if err != nil {
+			return fmt.Errorf("error: opening database: %w", err)
+		}
+		defer s.Close()
+		return cmd.AutoExportCanonical(s, c3Dir)
 	}
 
 	// capabilities is special — describes the CLI itself, no .c3/ needed
@@ -77,7 +88,27 @@ func run(argv []string, w io.Writer) error {
 		if opts.DryRun {
 			return cmd.RunMigrateDryRun(c3Dir, opts.JSON, w)
 		}
-		return cmd.RunMigrate(c3Dir, opts.KeepOriginals, w)
+		if err := cmd.RunMigrate(c3Dir, opts.KeepOriginals, w); err != nil {
+			return err
+		}
+		s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
+		if err != nil {
+			return fmt.Errorf("error: opening database: %w", err)
+		}
+		defer s.Close()
+		return cmd.AutoExportCanonical(s, c3Dir)
+	}
+	if opts.Command == "import" {
+		return cmd.RunImport(cmd.ImportOptions{C3Dir: c3Dir, Force: opts.Force}, w)
+	}
+	if opts.Command == "git" {
+		return runGit(opts, config.ProjectDir(c3Dir), c3Dir, w)
+	}
+	if opts.Command == "verify" {
+		return cmd.RunVerify(cmd.VerifyOptions{C3Dir: c3Dir, JSON: opts.JSON}, w)
+	}
+	if opts.Command == "repair" {
+		return cmd.RunRepair(cmd.RepairOptions{C3Dir: c3Dir, JSON: opts.JSON}, w)
 	}
 
 	// Detect format: DB
@@ -95,6 +126,20 @@ func run(argv []string, w io.Writer) error {
 	defer s.Close()
 
 	return runCommand(opts, s, c3Dir, w)
+}
+
+func runGit(opts cmd.Options, projectDir, c3Dir string, w io.Writer) error {
+	subCmd := ""
+	if len(opts.Args) >= 1 {
+		subCmd = opts.Args[0]
+	}
+	switch subCmd {
+	case "install":
+		return cmd.RunGitInstall(projectDir, c3Dir, w)
+	default:
+		cmd.ShowHelp("git", w)
+		return nil
+	}
 }
 
 // runMarketplace handles the marketplace subcommands.
@@ -141,12 +186,19 @@ func runMarketplace(opts cmd.Options, w io.Writer) error {
 // runCommand dispatches to the appropriate command handler.
 func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) error {
 	projectDir := config.ProjectDir(c3Dir)
+	mutating := commandMutatesCanonical(opts)
 
+	var err error
 	switch opts.Command {
+	case "status":
+		return cmd.RunStatus(cmd.StatusOptions{
+			Store: s, C3Dir: c3Dir, ProjectDir: projectDir,
+			JSONExplicit: opts.JSONExplicit,
+		}, w)
 	case "list":
-		return cmd.RunList(cmd.ListOptions{Store: s, JSON: opts.JSON, Flat: opts.Flat, Compact: opts.Compact, C3Dir: c3Dir, IncludeADR: opts.IncludeADR}, w)
+		err = cmd.RunList(cmd.ListOptions{Store: s, JSON: opts.JSON, Flat: opts.Flat, Compact: opts.Compact, C3Dir: c3Dir, IncludeADR: opts.IncludeADR, JSONExplicit: opts.JSONExplicit}, w)
 	case "check":
-		return cmd.RunCheckV2(cmd.CheckOptions{
+		err = cmd.RunCheckV2(cmd.CheckOptions{
 			Store:      s,
 			JSON:       opts.JSON,
 			ProjectDir: projectDir,
@@ -159,7 +211,7 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) err
 		if len(opts.Args) >= 1 {
 			entityID = opts.Args[0]
 		}
-		return cmd.RunRead(cmd.ReadOptions{Store: s, ID: entityID, JSON: opts.JSON, Section: opts.Section}, w)
+		err = cmd.RunRead(cmd.ReadOptions{Store: s, ID: entityID, JSON: opts.JSON, Section: opts.Section, Full: opts.Full}, w)
 	case "write":
 		entityID := ""
 		if len(opts.Args) >= 1 {
@@ -173,18 +225,18 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) err
 		if err != nil {
 			return fmt.Errorf("error: reading stdin: %w", err)
 		}
-		return cmd.RunWrite(cmd.WriteOptions{Store: s, ID: entityID, Section: opts.Section, Content: string(content)}, w)
+		err = cmd.RunWrite(cmd.WriteOptions{Store: s, ID: entityID, Section: opts.Section, Content: string(content)}, w)
 	case "add":
-		return runAdd(opts, s, w)
+		err = runAdd(opts, s, w)
 	case "set":
-		return runSet(opts, s, c3Dir, w)
+		err = runSet(opts, s, c3Dir, w)
 	case "wire", "unwire":
-		return runWire(opts, s, w)
+		err = runWire(opts, s, w)
 	case "lookup":
 		if len(opts.Args) < 1 {
 			return fmt.Errorf("error: lookup requires a <file-path> argument\nhint: run 'c3x lookup --help' for usage")
 		}
-		return cmd.RunLookup(cmd.LookupOptions{
+		err = cmd.RunLookup(cmd.LookupOptions{
 			Store:      s,
 			FilePath:   opts.Args[0],
 			JSON:       opts.JSON,
@@ -192,15 +244,15 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) err
 			C3Dir:      c3Dir,
 		}, w)
 	case "codemap":
-		return cmd.RunCodemap(cmd.CodemapOptions{Store: s, JSON: opts.JSON}, w)
+		err = cmd.RunCodemap(cmd.CodemapOptions{Store: s, JSON: opts.JSON}, w)
 	case "coverage":
-		return cmd.RunCoverage(cmd.CoverageOptions{Store: s, C3Dir: c3Dir, ProjectDir: projectDir, JSON: opts.JSON}, w)
+		err = cmd.RunCoverage(cmd.CoverageOptions{Store: s, C3Dir: c3Dir, ProjectDir: projectDir, JSON: opts.JSON}, w)
 	case "schema":
 		entityType := ""
 		if len(opts.Args) >= 1 {
 			entityType = opts.Args[0]
 		}
-		return cmd.RunSchema(entityType, opts.JSON, w)
+		err = cmd.RunSchema(entityType, opts.JSON, w)
 	case "graph":
 		entityID := ""
 		if len(opts.Args) >= 1 {
@@ -209,7 +261,7 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) err
 		if entityID == "" {
 			return fmt.Errorf("error: graph requires an <entity-id> argument\nhint: run 'c3x graph --help' for usage")
 		}
-		return cmd.RunGraph(cmd.GraphOptions{
+		err = cmd.RunGraph(cmd.GraphOptions{
 			Store: s, EntityID: entityID, Depth: opts.Depth,
 			Direction: opts.Direction, Format: opts.Format,
 			JSON: opts.JSON, C3Dir: c3Dir,
@@ -219,49 +271,71 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) err
 		if len(opts.Args) >= 1 {
 			id = opts.Args[0]
 		}
-		return cmd.RunDelete(cmd.DeleteOptions{C3Dir: c3Dir, ID: id, Store: s, DryRun: opts.DryRun}, w)
+		err = cmd.RunDelete(cmd.DeleteOptions{C3Dir: c3Dir, ID: id, Store: s, DryRun: opts.DryRun}, w)
 	case "query":
 		queryTerm := ""
 		if len(opts.Args) >= 1 {
 			queryTerm = opts.Args[0]
 		}
-		return cmd.RunQuery(cmd.QueryOptions{Store: s, Query: queryTerm, TypeFilter: opts.TypeFilter, Limit: opts.Limit, JSON: opts.JSON}, w)
+		err = cmd.RunQuery(cmd.QueryOptions{Store: s, Query: queryTerm, TypeFilter: opts.TypeFilter, Limit: opts.Limit, JSON: opts.JSON}, w)
 	case "diff":
 		commitHash := ""
 		if len(opts.Args) >= 1 {
 			commitHash = opts.Args[0]
 		}
-		return cmd.RunDiff(s, opts.Mark, commitHash, opts.JSON, w)
+		err = cmd.RunDiff(s, opts.Mark, commitHash, opts.JSON, w)
 	case "impact":
 		entityID := ""
 		if len(opts.Args) >= 1 {
 			entityID = opts.Args[0]
 		}
-		return cmd.RunImpact(cmd.ImpactOptions{Store: s, EntityID: entityID, Depth: opts.Depth, JSON: opts.JSON}, w)
+		err = cmd.RunImpact(cmd.ImpactOptions{Store: s, EntityID: entityID, Depth: opts.Depth, JSON: opts.JSON}, w)
 	case "export":
 		outputDir := c3Dir
 		if len(opts.Args) >= 1 {
 			outputDir = opts.Args[0]
 		}
-		return cmd.RunExport(cmd.ExportOptions{Store: s, OutputDir: outputDir, JSON: opts.JSON}, w)
+		err = cmd.RunExport(cmd.ExportOptions{Store: s, OutputDir: outputDir, JSON: opts.JSON}, w)
+	case "sync":
+		subCmd := ""
+		if len(opts.Args) >= 1 {
+			subCmd = opts.Args[0]
+		}
+		switch subCmd {
+		case "export":
+			outputDir := c3Dir
+			if len(opts.Args) >= 2 {
+				outputDir = opts.Args[1]
+			}
+			err = cmd.RunSyncExport(cmd.ExportOptions{Store: s, OutputDir: outputDir, JSON: opts.JSON}, w)
+		case "check":
+			outputDir := c3Dir
+			if len(opts.Args) >= 2 {
+				outputDir = opts.Args[1]
+			}
+			err = cmd.RunSyncCheck(cmd.ExportOptions{Store: s, OutputDir: outputDir, JSON: opts.JSON}, w)
+		default:
+			cmd.ShowHelp("sync", w)
+			return nil
+		}
 	case "nodes":
 		entityID := ""
 		if len(opts.Args) >= 1 {
 			entityID = opts.Args[0]
 		}
-		return cmd.RunNodes(cmd.NodesOptions{Store: s, EntityID: entityID, JSON: opts.JSON}, w)
+		err = cmd.RunNodes(cmd.NodesOptions{Store: s, EntityID: entityID, JSON: opts.JSON}, w)
 	case "hash":
 		entityID := ""
 		if len(opts.Args) >= 1 {
 			entityID = opts.Args[0]
 		}
-		return cmd.RunHash(cmd.HashOptions{Store: s, EntityID: entityID, Recompute: opts.Recompute}, w)
+		err = cmd.RunHash(cmd.HashOptions{Store: s, EntityID: entityID, Recompute: opts.Recompute}, w)
 	case "versions":
 		entityID := ""
 		if len(opts.Args) >= 1 {
 			entityID = opts.Args[0]
 		}
-		return cmd.RunVersions(cmd.VersionsOptions{Store: s, EntityID: entityID, JSON: opts.JSON}, w)
+		err = cmd.RunVersions(cmd.VersionsOptions{Store: s, EntityID: entityID, JSON: opts.JSON}, w)
 	case "version":
 		entityID := ""
 		versionNum := 0
@@ -271,17 +345,38 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) err
 		if len(opts.Args) >= 2 {
 			versionNum, _ = strconv.Atoi(opts.Args[1])
 		}
-		return cmd.RunVersion(cmd.VersionOptions{Store: s, EntityID: entityID, Version: versionNum}, w)
+		err = cmd.RunVersion(cmd.VersionOptions{Store: s, EntityID: entityID, Version: versionNum}, w)
 	case "prune":
 		entityID := ""
 		if len(opts.Args) >= 1 {
 			entityID = opts.Args[0]
 		}
-		return cmd.RunPrune(cmd.PruneOptions{Store: s, EntityID: entityID, Keep: opts.Keep}, w)
+		err = cmd.RunPrune(cmd.PruneOptions{Store: s, EntityID: entityID, Keep: opts.Keep}, w)
 	case "migrate":
-		return cmd.RunMigrateV2(cmd.MigrateV2Options{Store: s, DryRun: opts.DryRun}, w)
+		err = cmd.RunMigrateV2(cmd.MigrateV2Options{Store: s, DryRun: opts.DryRun}, w)
 	default:
 		return fmt.Errorf("error: unknown command '%s'\nhint: run 'c3x --help' to see available commands", opts.Command)
+	}
+
+	if err != nil {
+		return err
+	}
+	if mutating {
+		return cmd.AutoExportCanonical(s, c3Dir)
+	}
+	return nil
+}
+
+func commandMutatesCanonical(opts cmd.Options) bool {
+	switch opts.Command {
+	case "write", "add", "set", "wire", "unwire", "codemap":
+		return true
+	case "delete":
+		return !opts.DryRun
+	case "migrate":
+		return !opts.DryRun
+	default:
+		return false
 	}
 }
 
@@ -396,8 +491,36 @@ func runWire(opts cmd.Options, s *store.Store, w io.Writer) error {
 	return nil
 }
 
+func runNoArgs(opts cmd.Options, w io.Writer) error {
+	cwd, err := os.Getwd()
+	if err != nil {
+		cmd.ShowHelp("", w)
+		return nil
+	}
+	c3Dir := config.ResolveC3Dir(cwd, opts.C3Dir)
+	if c3Dir == "" {
+		cmd.ShowHelp("", w)
+		return nil
+	}
+	dbPath := filepath.Join(c3Dir, "c3.db")
+	if !fileExists(dbPath) {
+		cmd.ShowHelp("", w)
+		return nil
+	}
+	s, err := store.Open(dbPath)
+	if err != nil {
+		return fmt.Errorf("error: opening database: %w", err)
+	}
+	defer s.Close()
+	return cmd.RunStatus(cmd.StatusOptions{
+		Store:        s,
+		C3Dir:        c3Dir,
+		ProjectDir:   config.ProjectDir(c3Dir),
+		JSONExplicit: opts.JSONExplicit,
+	}, w)
+}
+
 func fileExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
 }
-

@@ -19,7 +19,7 @@ Spawn subagents via Task tool for parallel per-entity assessment.
 ## Step 1: Topology
 
 ```bash
-bash <skill-dir>/bin/c3x.sh list --json
+bash <skill-dir>/bin/c3x.sh list
 ```
 
 ## Step 2: Affected Entities

@@ -104,7 +104,7 @@ Rule adoption ADRs use `status: implemented` directly — rule doc IS the delive
 Flow: `Clarify → Find Citings → Check Compliance → Surface Impact → Execute`
 
 1. **Clarify:** `AskUserQuestion` — add rule / modify rule / remove rule / clarify docs (ASSUMPTION_MODE: skip)
-2. **Find citings:** `c3x list --json` → rule entity → `relationships`. Search via `c3x query rule-{slug}` for depth.
+2. **Find citings:** `c3x list` → rule entity → `relationships`. Search via `c3x query rule-{slug}` for depth.
 3. **Check compliance:** `c3x lookup <file>` per code-map entry. Compare against `## Golden Example` and `## Not This` for strict compliance. Categorize: compliant / needs-update / breaking.
 4. **Surface impact:** `AskUserQuestion` — proceed / narrow / cancel (ASSUMPTION_MODE: skip)
 5. **Execute:** Update rule doc + create ADR. Non-compliant → note as TODO in ADR (don't touch code).
@@ -115,7 +115,7 @@ Flow: `Clarify → Find Citings → Check Compliance → Surface Impact → Exec
 ## List
 
 ```bash
-bash <skill-dir>/bin/c3x.sh list --json
+bash <skill-dir>/bin/c3x.sh list
 ```
 
 Filter `type: "rule"`. Show: id, title, goal, citing components.
@@ -125,7 +125,7 @@ Filter `type: "rule"`. Show: id, title, goal, citing components.
 ## Usage
 
 ```bash
-bash <skill-dir>/bin/c3x.sh list --json
+bash <skill-dir>/bin/c3x.sh list
 ```
 
 Find `id: "rule-{slug}"`, read `relationships`. `c3x read <id>` each citing doc.
@@ -143,7 +143,7 @@ Use when adopting rules in a project that already has refs, or when auditing exi
 ### Step 1: Scan existing refs
 
 ```bash
-bash <skill-dir>/bin/c3x.sh list --json
+bash <skill-dir>/bin/c3x.sh list
 ```
 
 Filter `type: "ref"`. For each ref, `c3x read <ref-id>`.

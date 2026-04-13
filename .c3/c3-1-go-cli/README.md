@@ -1,16 +1,16 @@
 ---
 id: c3-1
 c3-version: 4
+c3-seal: dc19609b2b14a635e7c23646fa059951c8879bcef4b4e51d578019727a274604
 title: Go CLI
 type: container
 boundary: process
 parent: c3-0
-goal: Provide all c3x commands as a single cross-compiled binary that reads and writes .c3/ architecture docs
+goal: Provide all c3x commands as a single cross-compiled binary that reads and writes `.c3/` architecture docs.
 summary: Cross-compiled Go binary exposing init, add, list, check, lookup, codemap, coverage, and wire commands
 ---
 
 # Go CLI
-
 ## Goal
 
 Provide all c3x commands as a single cross-compiled binary that reads and writes `.c3/` architecture docs.
@@ -22,7 +22,6 @@ Provide all c3x commands as a single cross-compiled binary that reads and writes
 - Match source files to architecture components via codemap patterns
 - Validate structural integrity of the doc tree
 - Compile to a self-contained binary for all supported platforms
-
 ## Complexity Assessment
 
 **Level:** moderate
@@ -31,7 +30,7 @@ Provide all c3x commands as a single cross-compiled binary that reads and writes
 ## Components
 
 | ID | Name | Category | Status | Goal Contribution |
-|----|------|----------|--------|-------------------|
+| --- | --- | --- | --- | --- |
 | c3-101 | frontmatter | foundation | active | Parses YAML frontmatter from all .c3/ markdown files |
 | c3-102 | walker | foundation | active | Discovers and traverses the .c3/ entity tree (containers, components, refs, rules, ADRs) |
 | c3-103 | templates | foundation | active | Provides embedded scaffolding templates for new docs (incl. rules) |

@@ -7,7 +7,7 @@ Three tiers: **structural** (CLI) → **inventory** (CLI) → **semantic** (reas
 ## Progress
 
 - [ ] Phase 0: Structural (`c3x check`)
-- [ ] Phase 1: Inventory (`c3x list --json`)
+- [ ] Phase 1: Inventory (`c3x list`)
 - [ ] Phase 2: Inventory vs Code
 - [ ] Phase 3: Component Categorization
 - [ ] Phase 4: Code Map Validation
@@ -25,14 +25,13 @@ Three tiers: **structural** (CLI) → **inventory** (CLI) → **semantic** (reas
 
 ```bash
 bash <skill-dir>/bin/c3x.sh check
-bash <skill-dir>/bin/c3x.sh check --json
 ```
 Detects: broken links, orphans, duplicate IDs, missing parents. Issues here overlap Phases 2, 4, 7 — skip re-checking those.
 
 ## Phase 1: Inventory
 
 ```bash
-bash <skill-dir>/bin/c3x.sh list --json
+bash <skill-dir>/bin/c3x.sh list
 ```
 Source of truth for all subsequent phases. No manual Glob+Read of `.c3/`.
 
@@ -78,15 +77,15 @@ Only audit ADR lifecycle when explicitly requested or when running `c3x check --
 
 - Each ref: requires Choice + Why sections
 - Each ref: cited by at least one component (orphan → WARN)
-- Each citing component: ref entity exists in store (verify via `c3x list --json`)
+- Each citing component: ref entity exists in store (verify via `c3x list`)
 - Each rule: requires Rule + Golden Example sections
 - Each rule: cited by at least one component (orphan → WARN)
-- Each citing component: rule entity exists in store (verify via `c3x list --json`)
+- Each citing component: rule entity exists in store (verify via `c3x list`)
 
 ## Phase 7b: Ref Compliance
 
 For each ref with `## How` containing golden patterns:
-1. Find citing components via `c3x list --json`
+1. Find citing components via `c3x list`
 2. For each citing component, spot-check 1-2 mapped files from code-map
 3. Compare code against `## How` pattern
 
@@ -108,7 +107,7 @@ For each ref with `## How` containing golden patterns:
    Extract `## Rule`, `## Golden Example`, and `## Not This` sections.
 2. **Derive compliance questions:** From `## Rule` + `## Golden Example`, write 1-3 YES/NO questions that code must satisfy (e.g., "Does the error return use CmdError struct?" / "Is slog used with component context?").
    - If questions can't be derived → WARN: rule is too vague for enforcement, needs rework.
-3. Find citing components via `c3x list --json`
+3. Find citing components via `c3x list`
 4. For each citing component, spot-check 1-2 mapped files from code-map
 5. Apply the YES/NO questions to the spot-checked code
 

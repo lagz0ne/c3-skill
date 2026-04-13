@@ -1,28 +1,20 @@
 ---
 id: adr-00000000-c3-adoption
 c3-version: 4
+c3-seal: e20ee5f281e643a5890dba6ff2d4c759b9ce334334d61ba596bac988265ab729
 title: C3 Architecture Documentation Adoption
 type: adr
+goal: Adopt C3 methodology for c3-design.
 status: in-progress
-date: 20260227
-goal: Adopt C3 methodology for c3-design
-affects: [c3-0]
+date: "2026-02-27"
+affects:
+    - c3-0
 ---
 
 # C3 Architecture Documentation Adoption
-
 ## Goal
 
 Adopt C3 methodology for c3-design.
-
-<!--
-EXIT CRITERIA (all must be true to mark implemented):
-- All containers documented with Goal Contribution
-- All components documented with Container Connection
-- Refs extracted for repeated patterns
-- Integrity checks pass
-- Audit passes
--->
 
 ## Workflow
 
@@ -64,63 +56,42 @@ flowchart TD
     G2 -->|Detail| S1_CONTAINER
     G2 -->|None| DONE([Implemented])
 ```
-
----
-
 ## Stage 0: Inventory
-
-<!--
-DISCOVER everything first. Don't document yet.
-- Auto-discover codebase structure
-- Use AskUserQuestion for gaps
-- Identify refs that span across items
-- Exit: All items listed with arguments for templates
--->
-
 ### Context Discovery
 
 | Arg | Value |
-|-----|-------|
-| PROJECT | |
-| GOAL | |
-| SUMMARY | |
-
+| --- | --- |
+| PROJECT |  |
+| GOAL |  |
+| SUMMARY |  |
 ### Abstract Constraints
 
 | Constraint | Rationale | Affected Containers |
-|------------|-----------|---------------------|
-| | | |
-
+| --- | --- | --- |
+|  |  |  |
 ### Container Discovery
 
 | N | CONTAINER_NAME | BOUNDARY | GOAL | SUMMARY |
-|---|----------------|----------|------|---------|
-| 1 | | | | |
-| 2 | | | | |
-
+| --- | --- | --- | --- | --- |
+| 1 |  |  |  |  |
+| 2 |  |  |  |  |
 ### Component Discovery (Brief)
 
 | N | NN | COMPONENT_NAME | CATEGORY | GOAL | SUMMARY |
-|---|----|--------------  |----------|------|---------|
-| | | | foundation (01-09) | | |
-| | | | feature (10+) | | |
-
-<!-- Foundation components (01-09): infrastructure choices that enable features -->
-<!-- Feature components (10+): business capabilities built on foundations -->
-
+| --- | --- | --- | --- | --- | --- |
+|  |  |  | foundation (01-09) |  |  |
+|  |  |  | feature (10+) |  |  |
 ### Ref Discovery
 
 | SLUG | TITLE | GOAL | Scope | Applies To |
-|------|-------|------|-------|------------|
-| | | | | |
-
+| --- | --- | --- | --- | --- |
+|  |  |  |  |  |
 ### Overview Diagram
 
 ```mermaid
 graph TD
     %% Fill after discovery
 ```
-
 ### Gate 0
 
 - [ ] Context args filled
@@ -129,28 +100,15 @@ graph TD
 - [ ] All components identified (brief) with args and category
 - [ ] Cross-cutting refs identified
 - [ ] Overview diagram generated
-
----
-
 ## Stage 1: Details
-
-<!--
-Fill in each container with its components.
-- Internal: components that are self-contained
-- Linkage: components that handle connections to other containers
-- Extract refs when patterns repeat
-- If new item found -> back to Stage 0
--->
-
 ### Container: c3-1
 
 **Created:** [ ] `.c3/c3-1-{slug}/README.md`
 
 | Type | Component ID | Name | Category | Doc Created |
-|------|--------------|------|----------|-------------|
-| Internal | | | | [ ] |
-| Linkage | | | | [ ] |
-
+| --- | --- | --- | --- | --- |
+| Internal |  |  |  | [ ] |
+| Linkage |  |  |  | [ ] |
 ### Container: c3-N
 
 _(repeat per container from Stage 0)_
@@ -158,51 +116,34 @@ _(repeat per container from Stage 0)_
 ### Refs Created
 
 | Ref ID | Pattern | Doc Created |
-|--------|---------|-------------|
-| | | [ ] |
-
+| --- | --- | --- |
+|  |  | [ ] |
 ### Gate 1
 
 - [ ] All container README.md created
 - [ ] All component docs created
 - [ ] All refs documented
 - [ ] No new items discovered (else -> Gate 0)
-
----
-
 ## Stage 2: Finalize
-
-<!--
-Integrity checks - verify everything connects.
-If issues found -> back to appropriate stage.
--->
-
 ### Integrity Checks
 
 | Check | Status |
-|-------|--------|
+| --- | --- |
 | Context <-> Container (all containers listed in c3-0) | [ ] |
 | Container <-> Component (all components listed in container README) | [ ] |
 | Component <-> Component (linkages documented) | [ ] |
 | * <-> Refs (refs cited correctly, Cited By updated) | [ ] |
-
 ### Gate 2
 
 - [ ] All integrity checks pass
 - [ ] Run audit
-
----
-
 ## Conflict Resolution
 
 If later stage reveals earlier errors:
 
 | Conflict | Found In | Affects | Resolution |
-|----------|----------|---------|------------|
-| | | | |
-
----
-
+| --- | --- | --- | --- |
+|  |  |  |  |
 ## Exit
 
 When Gate 2 complete -> change frontmatter status to `implemented`
@@ -210,5 +151,5 @@ When Gate 2 complete -> change frontmatter status to `implemented`
 ## Audit Record
 
 | Phase | Date | Notes |
-|-------|------|-------|
+| --- | --- | --- |
 | Adopted | 20260227 | Initial C3 structure created |

@@ -17,15 +17,41 @@ func TestShowHelp_Global(t *testing.T) {
 	if !strings.Contains(output, "Commands:") {
 		t.Error("global help should list commands")
 	}
-	for _, cmd := range []string{"list", "check", "init", "add", "set", "wire", "schema"} {
+	for _, cmd := range []string{"list", "check", "verify", "repair", "add", "set", "wire", "schema", "git"} {
 		if !strings.Contains(output, cmd) {
 			t.Errorf("global help should mention %s command", cmd)
 		}
 	}
+	for _, cmd := range []string{"sync", "import", "migrate-legacy", "export", "init"} {
+		if strings.Contains(output, "\n  "+cmd) {
+			t.Errorf("global help should hide %s command", cmd)
+		}
+	}
+	if strings.Contains(output, ".c3/recipes/recipe-auth-flow.md") {
+		t.Error("global help should not teach direct .c3 file edits")
+	}
+}
+
+func TestShowHelp_HiddenCommandFallsBackToGlobalHelp(t *testing.T) {
+	var buf bytes.Buffer
+	ShowHelp("sync", &buf)
+	output := buf.String()
+	if !strings.Contains(output, "Commands:") {
+		t.Fatal("hidden command help should fall back to global help")
+	}
+}
+
+func TestShowHelp_VerifyMentionsCacheRefresh(t *testing.T) {
+	var buf bytes.Buffer
+	ShowHelp("verify", &buf)
+	output := buf.String()
+	if !strings.Contains(strings.ToLower(output), "local cache") {
+		t.Fatal("verify help should mention cache refresh")
+	}
 }
 
 func TestShowHelp_Commands(t *testing.T) {
-	commands := []string{"list", "check", "init", "add", "set", "wire", "schema"}
+	commands := []string{"list", "check", "verify", "repair", "add", "set", "wire", "schema", "git"}
 	for _, cmd := range commands {
 		t.Run(cmd, func(t *testing.T) {
 			var buf bytes.Buffer

@@ -114,23 +114,33 @@ jobs:
         run: |
           VERSION=${{ steps.distribute.outputs.version }}
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          awk -v version="$VERSION" '
+            $0 ~ "^## \\[" version "\\]" { in_section=1; print; next }
+            in_section && $0 ~ "^## \\[" { exit }
+            in_section { print }
+          ' CHANGELOG.md > /tmp/changelog.md
 
-          # Generate changelog
-          if [ -z "$LAST_TAG" ]; then
-            COMMITS=$(git log --pretty=format:"- %s" --no-merges)
-          else
-            COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s" --no-merges)
+          if ! grep -q '[^[:space:]]' /tmp/changelog.md; then
+            if [ -z "$LAST_TAG" ]; then
+              COMMITS=$(git log --pretty=format:"- %s" --no-merges)
+            else
+              COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s" --no-merges)
+            fi
+
+            {
+              echo "## What's Changed"
+              echo ""
+              echo "$COMMITS"
+              echo ""
+            } > /tmp/changelog.md
           fi
 
           {
-            echo "## What's Changed"
-            echo ""
-            echo "$COMMITS"
             echo ""
             echo "---"
             echo ""
             echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG:-initial}...v${VERSION}"
-          } > /tmp/changelog.md
+          } >> /tmp/changelog.md
 
           # Package release asset
           zip -r "/tmp/c3-skill-v${VERSION}.zip" \
@@ -143,4 +153,3 @@ jobs:
             --title "C3 v${VERSION}" \
             --notes-file /tmp/changelog.md \
             "/tmp/c3-skill-v${VERSION}.zip"
-

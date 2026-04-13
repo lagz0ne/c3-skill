@@ -5,6 +5,35 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.0.0] - 2026-04-14
+
+### BREAKING
+
+- **Canonical `.c3/` text is now the shared truth** — sealed `.c3/*.md` files and canonical metadata are the Git review and merge surface. `c3.db` is no longer the user-facing source of truth.
+- **`c3.db` is now a local cache** — it is rebuildable, should not be merged, and should be ignored inside `.c3/.gitignore`.
+- **Recovery workflow changed** — users should stop thinking in terms of `sync export`, `sync check`, and `import --force` for normal work. The supported user-facing recovery path is now `c3x repair`.
+
+### Added
+
+- **`c3x verify`** — verifies sealed canonical `.c3/` state, refreshes local cache if needed, and confirms the current tree matches canonical output.
+- **`c3x repair`** — rebuilds `c3.db` from canonical `.c3/`, reseals the tree, and verifies the result after branch switches, selective merges, or conflict resolution.
+- **Canonical seal enforcement** — canonical exports now include deterministic `c3-seal` hashes; broken or missing seals are detected during verification and recovery.
+- **`.c3/.gitignore` management** — Git guardrails now install cache ignores inside the `.c3/` tree so migration and tree portability stay scoped correctly.
+
+### Changed
+
+- **Mutating commands auto-export canonical text** — normal `add`, `set`, `write`, `wire`, and related workflows keep the canonical `.c3/` tree current automatically.
+- **Help surface simplified** — `c3x --help` now teaches `verify` / `repair` and hides internal plumbing from the main command surface.
+- **Git guardrails tightened** — pre-commit now rejects staged `c3.db`, runs `c3x verify`, and expects review on canonical `.c3/` output only.
+
+### Migration
+
+- Run `c3x git install` to install the new guardrails and write `.c3/.gitignore`.
+- If the repo still tracks the cache, run `git rm --cached .c3/c3.db` once.
+- Run `c3x repair` after upgrading to rebuild local cache and reseal canonical files.
+- Run `c3x verify` before commit and in CI.
+- After branch switches, selective merges, or manual conflict resolution, use `c3x repair` instead of trying to merge or reason about `c3.db`.
+
 ## [8.0.7] - 2026-03-26
 
 ### Added

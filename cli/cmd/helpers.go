@@ -26,10 +26,16 @@ func stripHTMLComments(s string) string {
 	return reBlank.ReplaceAllString(result, "\n\n")
 }
 
+const defaultTruncateLen = 1500
+
+func isAgentMode() bool {
+	return os.Getenv("C3X_MODE") == "agent"
+}
+
 func writeJSON(w io.Writer, v any) error {
 	var data []byte
 	var err error
-	if os.Getenv("C3X_MODE") == "agent" {
+	if isAgentMode() {
 		data, err = json.Marshal(v)
 	} else {
 		data, err = json.MarshalIndent(v, "", "  ")

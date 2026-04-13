@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -87,14 +86,6 @@ func RunMigrate(c3Dir string, keepOriginals bool, w io.Writer) error {
 			title = fm.ID
 		}
 
-		// Serialize Extra as JSON metadata
-		metadata := "{}"
-		if len(fm.Extra) > 0 {
-			if data, err := json.Marshal(fm.Extra); err == nil {
-				metadata = string(data)
-			}
-		}
-
 		entity := &store.Entity{
 			ID:       fm.ID,
 			Type:     storeType,
@@ -106,7 +97,7 @@ func RunMigrate(c3Dir string, keepOriginals bool, w io.Writer) error {
 			Status:   fm.Status,
 			Boundary: fm.Boundary,
 			Date:     fm.Date,
-			Metadata: metadata,
+			Metadata: buildMetadataFromFrontmatter(fm.Summary, fm.Description, fm.Extra),
 		}
 		if entity.Status == "" {
 			entity.Status = "active"
@@ -283,4 +274,3 @@ func removeEmptyDirs(root string) {
 		return nil
 	})
 }
-

@@ -1,13 +1,14 @@
 ---
 id: ref-cross-compiled-binary
 c3-version: 4
+c3-seal: 05e20663058aa425e49d17f0dfa04df439be2c423a4ee6ec32b37aea5116c465
 title: Cross-Compiled Binary Distribution
-goal: CLI is distributed as pre-built binaries for 4 targets so users need no Go toolchain
+type: ref
+goal: CLI is distributed as pre-built binaries for 4 targets so users need no Go toolchain to use c3x.
 via: []
 ---
 
 # Cross-Compiled Binary Distribution
-
 ## Goal
 
 CLI is distributed as pre-built binaries for 4 targets so users need no Go toolchain to use c3x.
@@ -21,13 +22,11 @@ Cross-compile for `linux/amd64`, `linux/arm64`, `darwin/amd64`, `darwin/arm64`. 
 - **Zero runtime deps**: Users need only bash + the plugin zip — no Go, no npm, no Python
 - **Fast startup**: Native binary, no interpreter overhead
 - **Plugin distribution**: Claude Code plugins are zip files; bundled binaries make installs self-contained
-
 ## How
 
 ```bash
 bash scripts/build.sh   # cross-compiles all 4 targets → skills/c3/bin/c3x-{ver}-{os}-{arch}
 ```
-
 CI (`distribute.yml`) builds on push to `dev`, force-commits binaries to `main`, then packages the release zip from `main`.
 
 ## Stale Binary Cleanup

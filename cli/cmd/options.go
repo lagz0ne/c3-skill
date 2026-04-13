@@ -36,6 +36,9 @@ type Options struct {
 	Tag           string
 	Recompute     bool
 	Keep          int
+	Full          bool
+	JSONExplicit  bool
+	Force         bool
 }
 
 // ParseArgs parses command-line arguments into Options.
@@ -50,6 +53,7 @@ func ParseArgs(argv []string) Options {
 		switch arg {
 		case "--json":
 			opts.JSON = true
+			opts.JSONExplicit = true
 		case "--flat":
 			opts.Flat = true
 		case "--compact":
@@ -131,8 +135,12 @@ func ParseArgs(argv []string) Options {
 				i++
 				opts.Tag = argv[i]
 			}
+		case "--full":
+			opts.Full = true
 		case "--recompute":
 			opts.Recompute = true
+		case "--force":
+			opts.Force = true
 		case "--keep":
 			if i+1 < len(argv) {
 				i++

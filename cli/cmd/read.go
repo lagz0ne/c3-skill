@@ -16,6 +16,7 @@ type ReadOptions struct {
 	ID      string
 	JSON    bool
 	Section string
+	Full    bool
 }
 
 // ReadResult is the JSON output for read.
@@ -31,8 +32,10 @@ type ReadResult struct {
 	Date     string   `json:"date,omitempty"`
 	Uses     []string `json:"uses,omitempty"`
 	Affects  []string `json:"affects,omitempty"`
-	Scope    []string `json:"scope,omitempty"`
-	Body     string   `json:"body"`
+	Scope          []string `json:"scope,omitempty"`
+	Body           string   `json:"body"`
+	BodyTruncated  bool     `json:"body_truncated,omitempty"`
+	BodyTotalChars int      `json:"body_total_chars,omitempty"`
 }
 
 // ReadSectionResult is the JSON output for read --section.
@@ -97,6 +100,13 @@ func RunRead(opts ReadOptions, w io.Writer) error {
 			case "scope":
 				result.Scope = append(result.Scope, r.ToID)
 			}
+		}
+
+		// Truncate body in agent mode unless --full
+		if isAgentMode() && !opts.Full && len(result.Body) > defaultTruncateLen {
+			result.BodyTotalChars = len(result.Body)
+			result.Body = result.Body[:defaultTruncateLen]
+			result.BodyTruncated = true
 		}
 
 		return writeJSON(w, result)

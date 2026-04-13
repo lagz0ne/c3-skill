@@ -51,10 +51,10 @@ Any `warning:` line in any c3x output = data loss. Stop, fix, re-run. No excepti
 ### A1: Dry-run
 
 ```bash
-C3X_MODE=agent bash <skill-dir>/bin/c3x.sh migrate-legacy --dry-run --json
+C3X_MODE=agent bash <skill-dir>/bin/c3x.sh migrate-legacy --dry-run
 ```
 
-All output (warnings + JSON) goes to **stdout**. With `--json`, parse failure warnings appear as text lines BEFORE the JSON blob — the combined output is not valid JSON if warnings exist. Scan the full output for `warning:` lines first, then parse the JSON portion.
+All output (warnings + JSON) goes to **stdout**. In agent mode, parse failure warnings appear as text lines BEFORE the JSON blob — the combined output is not valid JSON if warnings exist. Scan the full output for `warning:` lines first, then parse the JSON portion.
 
 Record from **JSON**: `total`, `with_gaps`, `clean`, `entities[]` (IDs, types, gaps), `code_map_issues[]`.
 Record `warning:` lines: any `warning: skipping X` — these entities are invisible in the JSON and will be lost.
@@ -77,13 +77,13 @@ Fix in priority order. Parse failures first — they're invisible to everything 
 
 After each priority level, re-run:
 ```bash
-C3X_MODE=agent bash <skill-dir>/bin/c3x.sh migrate-legacy --dry-run --json
+C3X_MODE=agent bash <skill-dir>/bin/c3x.sh migrate-legacy --dry-run
 ```
 
 ### A3: Gate
 
 ```bash
-C3X_MODE=agent bash <skill-dir>/bin/c3x.sh migrate-legacy --dry-run --json
+C3X_MODE=agent bash <skill-dir>/bin/c3x.sh migrate-legacy --dry-run
 ```
 
 Pass requires BOTH:
@@ -106,17 +106,17 @@ Any error → delete `c3.db`, investigate, restart from A1.
 The markdown files are the authority. The database must match them exactly.
 
 ```bash
-C3X_MODE=agent bash <skill-dir>/bin/c3x.sh list --json
-C3X_MODE=agent bash <skill-dir>/bin/c3x.sh check --json
+C3X_MODE=agent bash <skill-dir>/bin/c3x.sh list
+C3X_MODE=agent bash <skill-dir>/bin/c3x.sh check
 C3X_MODE=agent bash <skill-dir>/bin/c3x.sh query "goal"
 ```
 
 | Check | Pass |
 |-------|------|
-| Entity count: before-manifest `total` vs `list --json` | Exact match |
-| Entity IDs: every before-manifest ID in `list --json` | All present |
+| Entity count: before-manifest `total` vs `list` | Exact match |
+| Entity IDs: every before-manifest ID in `list` | All present |
 | `c3x read <id>` for every entity | Content matches original markdown |
-| `c3x check --json` | 0 errors, 0 warnings |
+| `c3x check` | 0 errors, 0 warnings |
 | `c3x query "goal"` | Returns results |
 
 ### A6: Continue to v7→v8
@@ -134,11 +134,11 @@ Entities to migrate → Phase B. All have nodes → Final Report.
 ### B1: Snapshot
 
 ```bash
-C3X_MODE=agent bash <skill-dir>/bin/c3x.sh list --json
+C3X_MODE=agent bash <skill-dir>/bin/c3x.sh list
 C3X_MODE=agent bash <skill-dir>/bin/c3x.sh export /tmp/c3-before-v8
 ```
 
-Record entity count, IDs, and `c3x read <id>` content length per entity. Verify export succeeded: file count in `/tmp/c3-before-v8` should match entity count from `list --json`.
+Record entity count, IDs, and `c3x read <id>` content length per entity. Verify export succeeded: file count in `/tmp/c3-before-v8` should match entity count from `list`.
 
 ### B2: Dry-run
 
@@ -181,8 +181,8 @@ C3X_MODE=agent bash <skill-dir>/bin/c3x.sh migrate
 ### B5: Verify
 
 ```bash
-C3X_MODE=agent bash <skill-dir>/bin/c3x.sh list --json
-C3X_MODE=agent bash <skill-dir>/bin/c3x.sh check --json
+C3X_MODE=agent bash <skill-dir>/bin/c3x.sh list
+C3X_MODE=agent bash <skill-dir>/bin/c3x.sh check
 C3X_MODE=agent bash <skill-dir>/bin/c3x.sh export /tmp/c3-after-v8
 ```
 
@@ -191,7 +191,7 @@ C3X_MODE=agent bash <skill-dir>/bin/c3x.sh export /tmp/c3-after-v8
 | Entity count: B1 vs now | Exact match |
 | `diff -r /tmp/c3-before-v8 /tmp/c3-after-v8` | No content loss (whitespace changes OK) |
 | `c3x read <id>` for flagged entities | Content intact |
-| `c3x check --json` | 0 errors, 0 warnings |
+| `c3x check` | 0 errors, 0 warnings |
 | `c3x query "goal"` | Returns results |
 
 Clean up: `rm -rf /tmp/c3-before-v8 /tmp/c3-after-v8`

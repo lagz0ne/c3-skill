@@ -19,31 +19,71 @@ type CommandMeta struct {
 // Commands is the authoritative registry of all c3x commands.
 var Commands = []CommandMeta{
 	{
+		Name:     "status",
+		OneLiner: "Project dashboard (entity counts, coverage, pending ADRs)",
+		Help: `Usage: c3x status [--json]
+
+Project dashboard showing entity counts, code-map coverage, pending ADRs, and validation warnings.
+This is the default output when c3x is invoked with no arguments.
+
+Options:
+  --json    Structured JSON output`,
+	},
+	{
 		Name:     "init",
 		OneLiner: "Scaffold .c3/ skeleton",
 		Hidden:   true,
 		Help: `Usage: c3x init
 
-Scaffold .c3/ skeleton (config, README, refs/, rules/, adr/).`,
+Create a new C3 project with a local cache and canonical .c3/ markdown.
+Normal users rarely need this after initial setup.`,
+	},
+	{
+		Name:     "verify",
+		OneLiner: "Validate canonical .c3/ truth and refresh local cache if needed",
+		Help: `Usage: c3x verify
+
+Verify that canonical .c3/ markdown is sealed, structurally valid, and in sync
+with the local cache. If c3.db is missing or stale, verify rebuilds it from the
+canonical text automatically.
+
+Use this in CI and pre-commit.
+
+User rule: if you want confidence before commit, run c3x verify.`,
+	},
+	{
+		Name:     "repair",
+		OneLiner: "Rebuild local cache from canonical .c3/, reseal, then verify",
+		Help: `Usage: c3x repair
+
+Recovery path after branch switches, selective merges, or manual conflict edits.
+Rebuilds c3.db from canonical .c3/ markdown, rewrites sealed canonical files,
+then verifies the result.
+
+User rule: if C3 gets weird after Git operations, run c3x repair.`,
 	},
 	{
 		Name:     "read",
 		Args:     "<entity-id>",
 		OneLiner: "Output full entity content (frontmatter + body)",
-		Help: `Usage: c3x read <entity-id> [--section <name>] [--json]
+		Help: `Usage: c3x read <entity-id> [--section <name>] [--json] [--full]
 
 Output the full content of an entity as markdown (default) or structured JSON.
 Markdown output includes YAML frontmatter + body — same format accepted by write.
 
+In agent mode (C3X_MODE=agent), body is truncated to 1500 chars with size hint.
+Use --full to get the complete body.
+
 Options:
   --section <name>   Output only the named section's content
   --json             Structured JSON output
+  --full             Disable body truncation in agent mode
 
 Examples:
   c3x read c3-101                        # full markdown output
   c3x read ref-jwt --json                # structured JSON
   c3x read c3-101 --section Goal         # just the Goal section
-  c3x read c3-101 --section Goal --json  # section as JSON`,
+  c3x read c3-101 --full                 # full body in agent mode`,
 	},
 	{
 		Name:     "write",
@@ -54,7 +94,7 @@ Examples:
 
 Full write: replace entity content from stdin. Parses YAML frontmatter for
 structured fields and validates required sections before accepting.
-Relationships (uses, affects, scope) in frontmatter are synced to the DB.
+Relationships (uses, affects, scope) in frontmatter are updated consistently.
 
 Section write (--section): replace only the named section. Skips full-document
 validation — allows incremental filling of sections.
@@ -67,7 +107,6 @@ When to use set vs write:
   write < stdin                 Full body + frontmatter (validates, syncs rels)
 
 Examples:
-  c3x read c3-101 | edit | c3x write c3-101
   echo "New goal text" | c3x write c3-101 --section Goal
   cat updated-ref.md | c3x write ref-jwt`,
 	},
@@ -316,17 +355,58 @@ Examples:
 	},
 	{
 		Name:     "export",
-		OneLiner: "Dump DB to markdown files (escape hatch)",
+		OneLiner: "Render canonical markdown from the local cache (advanced)",
+		Hidden:   true,
 		Help: `Usage: c3x export [<output-dir>]
 
-Export all entities from the database to markdown files with YAML frontmatter.
-Also exports code-map.yaml. Default output dir is current .c3/ directory.
+Render canonical markdown from the local cache to a target directory.
+This is an advanced debug command. The shared truth is sealed .c3/ text;
+normal workflows should use c3x verify and c3x repair instead.
 
-This is the escape hatch for inspecting or diffing DB content as files.
+Default output dir is the current .c3/ directory.
 
 Examples:
-  c3x export                   # export to .c3/
-  c3x export /tmp/c3-export    # export to custom dir`,
+  c3x export /tmp/c3-export    # inspect a temporary snapshot
+  c3x export                   # rewrite current .c3/ from local cache`,
+	},
+	{
+		Name:     "sync",
+		Args:     "<subcommand>",
+		OneLiner: "Sync canonical markdown from the database",
+		Hidden:   true,
+		Help: `Usage: c3x sync export [<output-dir>]
+       c3x sync check [<output-dir>]
+
+Sync commands write the canonical text representation used for Git review
+and branch merges. Canonical markdown is sealed; sync check verifies both
+the exported bytes and each file's semantic seal.
+
+Subcommands:
+  export [dir]   Export the current DB to canonical markdown (default: .c3/)
+  check [dir]    Verify the current tree matches canonical markdown
+
+Examples:
+  c3x sync export
+  c3x sync export /tmp/c3-export
+  c3x sync check`,
+	},
+	{
+		Name:     "git",
+		Args:     "<subcommand>",
+		OneLiner: "Install thin Git guardrails for C3 workflow",
+		Help: `Usage: c3x git install
+
+Installs a small pre-commit hook and Git file rules around the existing C3
+workflow. The hook rejects staged c3.db, runs c3x verify, and aborts the commit
+if .c3/ still has unstaged changes. No custom merge driver or DB merge logic is installed.
+
+What it installs:
+  - pre-commit hook: c3x verify
+  - .gitattributes: mark legacy tracked .c3/c3.db as binary/generated
+  - .c3/.gitignore: ignore c3.db and backup files within the C3 tree
+
+Example:
+  c3x git install`,
 	},
 	{
 		Name:     "nodes",
@@ -426,11 +506,31 @@ Examples:
 		Hidden:   true,
 		Help: `Usage: c3x migrate-legacy [--keep-originals]
 
-Import .c3/ markdown files and code-map.yaml into .c3/c3.db.
-For pre-v7 file-based projects. After this, run 'c3x migrate' to populate nodes.
+Import legacy .c3/ markdown files into a local cache.
+Advanced migration path for older file-based projects.
 
 Options:
   --keep-originals   Don't delete original .md files after import`,
+	},
+	{
+		Name:     "import",
+		OneLiner: "Rebuild SQLite database from tracked markdown tree",
+		Hidden:   true,
+		Help: `Usage: c3x import [--force]
+
+Rebuild the local c3.db cache from canonical .c3/ markdown.
+Advanced plumbing behind c3x repair. Normal users should prefer c3x repair.
+
+Imports entities, relationships, code-map entries, and content nodes, then
+clears the changelog to establish a clean baseline.
+Sealed files are trusted by default; broken or missing seals require --force.
+
+Safety:
+  --force   Required when c3.db already exists. Creates a timestamped backup
+            before replacing the database.
+
+Example:
+  c3x import --force`,
 	},
 	{
 		Name:     "delete",
@@ -506,6 +606,9 @@ Commands:
 	}
 
 	for _, c := range Commands {
+		if c.Hidden {
+			continue
+		}
 		label := c.Name
 		if c.Args != "" {
 			label += " " + c.Args
@@ -519,44 +622,57 @@ Entity Types: container, component, ref, rule, adr, recipe (context created by i
 Global Options:
   --json                     Machine-readable output
   --c3-dir <path>            Override .c3/ auto-detection
+  --force                    Confirm advanced reset commands like import
   -h, --help                 Show help
   -v, --version              Print version
 
 Workflows:
 
   Understand the architecture before making changes:
-    c3x list              # topology: goals, file coverage, ref usage
-    c3x schema component  # required sections for a given entity type
-    c3x check             # validate refs, orphans, schema gaps
+    c3x list                # topology: goals, file coverage, ref usage
+    c3x schema component    # required sections for a given entity type
+    c3x check               # validate refs, orphans, schema gaps
+    c3x lookup src/auth.ts  # map code to owning component + refs
+
+  Normal change flow:
+    c3x add component auth --container c3-1 --goal "JWT auth for all services"
+    c3x wire c3-101 cite ref-jwt
+    c3x set c3-101 --section "Code References" '[{"File":"src/auth.ts","Purpose":"Auth middleware"}]'
+    c3x verify
+
+  After branch switch, selective merge, or conflict resolution:
+    c3x repair             # rebuild cache, reseal canonical text, verify
 
   Add a component to an existing container:
     c3x add component auth --container c3-1 --goal "JWT auth for all services"
     c3x wire c3-101 cite ref-jwt
     c3x set c3-101 --section "Code References" '[{"File":"src/auth.ts","Purpose":"Auth middleware"}]'
-    c3x check
+    c3x verify
 
   Add a new domain (container + first component):
     c3x add container payments --goal "Process payments" --boundary service
     c3x add component billing --container c3-1 --goal "Invoice generation via Stripe"
-    c3x check
+    c3x verify
 
   Remove an entity cleanly:
     c3x delete c3-101              # removes file + cleans all references
+    c3x verify
     c3x delete ref-jwt --dry-run   # preview cleanup plan without mutations
 
   Document a cross-cutting concern:
     c3x add ref rate-limiting --goal "Consistent rate limiting across services"
     c3x wire c3-101 cite ref-rate-limiting
     c3x set ref-rate-limiting --section "Code References" '[{"File":"src/middleware/rate.ts","Purpose":"Rate limiter"}]'
+    c3x verify
 
   Trace an end-to-end concern:
     c3x add recipe auth-flow
-    # Edit .c3/recipes/recipe-auth-flow.md: add description + sources
+    printf '# Auth Flow\n\n## Goal\n\nTrace auth end to end.\n\n## Sources\n\n- c3-101\n' | c3x write recipe-auth-flow
+    c3x verify
 
   Record an architectural decision:
-    c3x add adr use-grpc --goal "Migrate to gRPC for internal services"
-    c3x set adr-1 status accepted
-    c3x set adr-1 --section "Context" "We need lower latency between services"`)
+    c3x add adr use-grpc --goal "Migrate to gRPC for internal services" --json
+    # use the returned ADR id for follow-up set/write commands`)
 
 	b.WriteString(`
 
@@ -574,6 +690,9 @@ var globalHelp = buildGlobalHelp()
 func ShowHelp(command string, w io.Writer) {
 	for _, c := range Commands {
 		if c.Name == command {
+			if c.Hidden {
+				break
+			}
 			fmt.Fprintln(w, c.Help)
 			return
 		}

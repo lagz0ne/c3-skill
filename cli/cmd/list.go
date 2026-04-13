@@ -11,31 +11,48 @@ import (
 
 // ListOptions holds parameters for the list command.
 type ListOptions struct {
-	Store      *store.Store
-	JSON       bool
-	Flat       bool
-	Compact    bool
-	C3Dir      string
-	IncludeADR bool
+	Store        *store.Store
+	JSON         bool
+	Flat         bool
+	Compact      bool
+	C3Dir        string
+	IncludeADR   bool
+	JSONExplicit bool
+}
+
+// ListResult wraps list output with a totalCount envelope.
+type ListResult struct {
+	TotalCount int         `json:"totalCount"`
+	Entities   interface{} `json:"entities"`
+}
+
+// compactEntity is a minimal entity representation for compact/TOON output.
+type compactEntity struct {
+	ID     string `json:"id"`
+	Type   string `json:"type"`
+	Title  string `json:"title"`
+	Parent string `json:"parent,omitempty"`
+	Status string `json:"status,omitempty"`
 }
 
 // RunList outputs the topology of entities from the store.
 func RunList(opts ListOptions, w io.Writer) error {
-	if opts.JSON {
-		return listJSON(opts.Store, opts.IncludeADR, opts.Compact, w)
-	}
 	if opts.Flat {
 		return listFlat(opts.Store, opts.IncludeADR, w)
+	}
+	format := ResolveFormat(opts.JSONExplicit, isAgentMode())
+	if opts.JSON || format == FormatTOON {
+		return listStructured(opts, format, w)
 	}
 	return listTopology(opts.Store, opts.Compact, opts.IncludeADR, w)
 }
 
-func listJSON(s *store.Store, includeADR, compact bool, w io.Writer) error {
-	entities, err := s.AllEntities()
+func listStructured(opts ListOptions, format OutputFormat, w io.Writer) error {
+	entities, err := opts.Store.AllEntities()
 	if err != nil {
 		return err
 	}
-	if !includeADR {
+	if !opts.IncludeADR {
 		filtered := entities[:0]
 		for _, e := range entities {
 			if e.Type != "adr" {
@@ -48,14 +65,16 @@ func listJSON(s *store.Store, includeADR, compact bool, w io.Writer) error {
 		return entities[i].ID < entities[j].ID
 	})
 
+	// Agent mode defaults to compact (AXI principle: minimal default schema)
+	compact := opts.Compact || (isAgentMode() && !opts.JSONExplicit)
+
+	hints := []HelpHint{
+		{Command: "c3x read <id>", Description: "read entity content"},
+		{Command: "c3x check", Description: "validate consistency"},
+		{Command: "c3x graph <id> --format mermaid", Description: "visualize relationships"},
+	}
+
 	if compact {
-		type compactEntity struct {
-			ID     string `json:"id"`
-			Type   string `json:"type"`
-			Title  string `json:"title"`
-			Parent string `json:"parent,omitempty"`
-			Status string `json:"status,omitempty"`
-		}
 		var result []compactEntity
 		for _, e := range entities {
 			result = append(result, compactEntity{
@@ -63,9 +82,19 @@ func listJSON(s *store.Store, includeADR, compact bool, w io.Writer) error {
 				Parent: e.ParentID, Status: e.Status,
 			})
 		}
+
+		if format == FormatTOON {
+			fmt.Fprintf(w, "totalCount: %d\n", len(result))
+			return WriteTableOutput(w, "entities", result, []string{"id", "type", "title", "parent", "status"}, format, hints)
+		}
+		if opts.JSONExplicit {
+			return writeJSON(w, ListResult{TotalCount: len(result), Entities: result})
+		}
+		// Legacy JSON path (JSON=true but not explicit) — plain array
 		return writeJSON(w, result)
 	}
 
+	// Full JSON (non-compact)
 	type jsonEntity struct {
 		ID            string                 `json:"id"`
 		Type          string                 `json:"type"`
@@ -93,7 +122,7 @@ func listJSON(s *store.Store, includeADR, compact bool, w io.Writer) error {
 		if e.Boundary != "" {
 			fm["boundary"] = e.Boundary
 		}
-		rels, _ := s.RelationshipsFrom(e.ID)
+		rels, _ := opts.Store.RelationshipsFrom(e.ID)
 		var relationships []string
 		relsByType := make(map[string][]string)
 		for _, r := range rels {
@@ -107,7 +136,7 @@ func listJSON(s *store.Store, includeADR, compact bool, w io.Writer) error {
 		}
 
 		var files []string
-		if f, _ := s.CodeMapFor(e.ID); len(f) > 0 {
+		if f, _ := opts.Store.CodeMapFor(e.ID); len(f) > 0 {
 			files = append([]string(nil), f...)
 			sort.Strings(files)
 		}
@@ -122,6 +151,10 @@ func listJSON(s *store.Store, includeADR, compact bool, w io.Writer) error {
 		})
 	}
 
+	if opts.JSONExplicit {
+		return writeJSON(w, ListResult{TotalCount: len(data), Entities: data})
+	}
+	// Legacy JSON path — plain array
 	return writeJSON(w, data)
 }
 

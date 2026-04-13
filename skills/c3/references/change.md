@@ -20,8 +20,7 @@ Spawn parallel subagents via Task tool for complex work.
 ## Phase 1: ADR (FIRST — non-negotiable)
 
 ```bash
-cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add adr <slug> --json
-## Goal
+cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add adr <slug>## Goal
 <what this change achieves and why>
 EOF
 ```
@@ -31,8 +30,7 @@ Create the ADR immediately with at least a Goal. The slug should capture the cha
 ## Phase 2: Understand + Fill ADR
 
 ```bash
-bash <skill-dir>/bin/c3x.sh list --json
-```
+bash <skill-dir>/bin/c3x.sh list```
 
 Clarify with user (ASSUMPTION_MODE: skip). Analyze:
 - Affected containers, components, refs
@@ -61,8 +59,7 @@ To implement provisioned later: invoke change, pick up ADR + docs, resume Phase 
 
 Scaffold / tear down (all `add` commands require body via stdin):
 ```bash
-cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add container <slug> --json
-## Goal
+cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add container <slug>## Goal
 ...
 ## Components
 ...
@@ -70,15 +67,13 @@ cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add container <slug> --json
 ...
 EOF
 
-cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N [--feature] --json
-## Goal
+cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N [--feature]## Goal
 ...
 ## Dependencies
 ...
 EOF
 
-cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add ref <slug> --json
-## Goal
+cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add ref <slug>## Goal
 ...
 ## Choice
 ...
@@ -86,8 +81,7 @@ cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add ref <slug> --json
 ...
 EOF
 
-cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add rule <slug> --json
-## Goal
+cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add rule <slug>## Goal
 ...
 ## Rule
 ...

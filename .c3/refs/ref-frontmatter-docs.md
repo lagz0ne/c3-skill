@@ -1,13 +1,16 @@
 ---
 id: ref-frontmatter-docs
 c3-version: 4
+c3-seal: f309fe23f554686124ffc985660b307c8f7d396556b1db5c3e69aef1a3b24b45
 title: Frontmatter Docs Pattern
-goal: Every .c3/ doc uses YAML frontmatter for machine-readable metadata and Markdown body for human-readable content
-via: [c3-101, c3-103]
+type: ref
+goal: Every `.c3/` doc uses YAML frontmatter for machine-readable metadata and a Markdown body for human-readable content.
+via:
+    - c3-101
+    - c3-103
 ---
 
 # Frontmatter Docs Pattern
-
 ## Goal
 
 Every `.c3/` doc uses YAML frontmatter for machine-readable metadata and a Markdown body for human-readable content.
@@ -21,7 +24,6 @@ All `.c3/` architecture docs use YAML frontmatter (between `---` delimiters) fol
 - **Machine-readable identity**: `id`, `type`, `parent`, `goal` fields enable CLI traversal without parsing prose
 - **Human-readable content**: Markdown body allows rich documentation with tables and diagrams
 - **Separation of concerns**: Metadata (frontmatter) vs content (body) are independent
-
 ## How
 
 ```markdown
@@ -42,7 +44,6 @@ summary: Brief summary
 
 One-line goal statement.
 ```
-
 ## Not This
 
 Do not put structural metadata (id, type, parent) in the markdown body — it won't be parseable by the CLI.

@@ -126,8 +126,7 @@ Update c3-0 via `c3x set c3-0 --section "Goal" <text>` and `c3x write c3-0 < con
 
 **Create container** (body via stdin — atomic, all-or-none):
 ```bash
-cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add container <slug> --json
-## Goal
+cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add container <slug>## Goal
 <goal description>
 
 ## Components
@@ -143,8 +142,7 @@ EOF
 **Create components** (body via stdin):
 ```bash
 # Foundation (01-09):
-cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N --json
-## Goal
+cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N## Goal
 <goal>
 
 ## Dependencies
@@ -154,8 +152,7 @@ cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N 
 EOF
 
 # Feature (10+): add --feature flag
-cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N --feature --json
-## Goal
+cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N --feature## Goal
 <goal>
 
 ## Dependencies
@@ -182,8 +179,7 @@ Bracket paths (`[id]`, `[...slug]`) for Next.js/SvelteKit routes work automatica
 ### 1.3 Ref Docs
 
 ```bash
-cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add ref <slug> --json
-## Goal
+cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add ref <slug>## Goal
 <goal>
 
 ## Choice
@@ -198,8 +194,7 @@ Optional sections: How, Scope, Not This, Override — include as needed.
 ### 1.4 Rule Docs
 
 ```bash
-cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add rule <slug> --json
-## Goal
+cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add rule <slug>## Goal
 <goal>
 
 ## Rule

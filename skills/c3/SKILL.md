@@ -13,8 +13,13 @@ description: >
 
 CLI: `C3X_MODE=agent bash <skill-dir>/bin/c3x.sh <command> [args]`
 
+**Agent output mode:** With `C3X_MODE=agent`, c3x outputs TOON (Token-Optimized Object Notation) by default — ~40% fewer tokens than JSON. Use `--json` to force JSON output. All commands append `help[]` contextual hints suggesting next steps.
+
+**Content-first:** Running c3x with no arguments outputs a project dashboard (entity counts, coverage, pending ADRs) — not help text. Use `--help` for help.
+
 | Command | Purpose |
 |---------|---------|
+| (no args) / `status` | Project dashboard: entity counts, coverage %, pending ADRs, warnings |
 | `init` | Scaffold `.c3/` |
 | `list` | Topology with files (`--json`, `--flat`, `--compact`) |
 | `check` | Structural validation (`--json`, `--fix`) |
@@ -24,6 +29,7 @@ CLI: `C3X_MODE=agent bash <skill-dir>/bin/c3x.sh <command> [args]`
 | `wire <src> <tgt>` | Link component to ref (`--remove` to unlink) |
 | `schema <type>` | Section definitions for entity type (`--json`) |
 | `codemap` | Scaffold code-map entries for all components, refs + rules |
+| `read <id>` | Full entity content; agent mode truncates body to 1500 chars (`--full` to bypass, `--json`) |
 | `lookup <file-or-glob>` | File or glob → component + refs (`--json`) |
 | `coverage` | Code-map coverage stats (JSON default) |
 | `delete <id>` | Remove entity + clean all references (`--dry-run`) |
@@ -72,10 +78,9 @@ Types for `add`: `container`, `component`, `ref`, `rule`, `adr`, `recipe`
 
 Before every op except onboard and migrate:
 ```bash
-bash <skill-dir>/bin/c3x.sh list --json
+bash <skill-dir>/bin/c3x.sh
 ```
-- If output contains "contains markdown files but no database" → route to **migrate**
-- Fails/empty → route to **onboard**
+Returns project dashboard (TOON). If error about missing `.c3/` → route to **onboard**. If mentions "markdown files but no database" → route to **migrate**. Otherwise, dashboard gives immediate orientation: entity counts, coverage, pending ADRs. Follow the `help[]` hints for next steps.
 
 ---
 

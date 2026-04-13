@@ -19,6 +19,17 @@ type CommandMeta struct {
 // Commands is the authoritative registry of all c3x commands.
 var Commands = []CommandMeta{
 	{
+		Name:     "status",
+		OneLiner: "Project dashboard (entity counts, coverage, pending ADRs)",
+		Help: `Usage: c3x status [--json]
+
+Project dashboard showing entity counts, code-map coverage, pending ADRs, and validation warnings.
+This is the default output when c3x is invoked with no arguments.
+
+Options:
+  --json    Structured JSON output`,
+	},
+	{
 		Name:     "init",
 		OneLiner: "Scaffold .c3/ skeleton",
 		Hidden:   true,
@@ -30,20 +41,24 @@ Scaffold .c3/ skeleton (config, README, refs/, rules/, adr/).`,
 		Name:     "read",
 		Args:     "<entity-id>",
 		OneLiner: "Output full entity content (frontmatter + body)",
-		Help: `Usage: c3x read <entity-id> [--section <name>] [--json]
+		Help: `Usage: c3x read <entity-id> [--section <name>] [--json] [--full]
 
 Output the full content of an entity as markdown (default) or structured JSON.
 Markdown output includes YAML frontmatter + body — same format accepted by write.
 
+In agent mode (C3X_MODE=agent), body is truncated to 1500 chars with size hint.
+Use --full to get the complete body.
+
 Options:
   --section <name>   Output only the named section's content
   --json             Structured JSON output
+  --full             Disable body truncation in agent mode
 
 Examples:
   c3x read c3-101                        # full markdown output
   c3x read ref-jwt --json                # structured JSON
   c3x read c3-101 --section Goal         # just the Goal section
-  c3x read c3-101 --section Goal --json  # section as JSON`,
+  c3x read c3-101 --full                 # full body in agent mode`,
 	},
 	{
 		Name:     "write",

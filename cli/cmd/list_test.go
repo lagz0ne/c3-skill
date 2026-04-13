@@ -320,6 +320,80 @@ func TestListTopology_RulesWithCiters(t *testing.T) {
 	}
 }
 
+func TestRunList_JSONIncludesTotalCount(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	if err := RunList(ListOptions{Store: s, JSON: true, JSONExplicit: true}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	var result ListResult
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("failed to parse ListResult JSON: %v\nraw: %s", err, buf.String())
+	}
+
+	// 9 entities minus 1 ADR = 8
+	if result.TotalCount != 8 {
+		t.Errorf("expected totalCount=8, got %d", result.TotalCount)
+	}
+}
+
+func TestRunList_TOONOutput(t *testing.T) {
+	t.Setenv("C3X_MODE", "agent")
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	// Agent mode + JSONExplicit=false -> TOON output
+	if err := RunList(ListOptions{Store: s, JSON: true, JSONExplicit: false}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	out := buf.String()
+	if !strings.Contains(out, "entities[") {
+		t.Errorf("expected TOON table header with 'entities[', got:\n%s", out)
+	}
+	// Should contain tabular rows, not JSON
+	if strings.HasPrefix(strings.TrimSpace(out), "[") || strings.HasPrefix(strings.TrimSpace(out), "{") {
+		t.Errorf("expected TOON output, got JSON:\n%s", out)
+	}
+}
+
+func TestRunList_HelpHintsInAgentMode(t *testing.T) {
+	t.Setenv("C3X_MODE", "agent")
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	if err := RunList(ListOptions{Store: s, JSON: true, JSONExplicit: false}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	out := buf.String()
+	if !strings.Contains(out, "help[") {
+		t.Errorf("expected help hints in agent mode, got:\n%s", out)
+	}
+}
+
+func TestRunList_JSONExplicitOverridesToon(t *testing.T) {
+	t.Setenv("C3X_MODE", "agent")
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	if err := RunList(ListOptions{Store: s, JSON: true, JSONExplicit: true}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	out := strings.TrimSpace(buf.String())
+	// Should be JSON (starts with { for ListResult envelope)
+	if !strings.HasPrefix(out, "{") {
+		t.Errorf("expected JSON output starting with '{', got:\n%s", out)
+	}
+	// Should not have TOON format
+	if strings.Contains(out, "entities[") {
+		t.Errorf("JSONExplicit should produce JSON, not TOON:\n%s", out)
+	}
+}
+
 func TestListTopology_RecipesCompact(t *testing.T) {
 	s := createRichDBFixture(t)
 	s.InsertEntity(&store.Entity{

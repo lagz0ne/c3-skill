@@ -33,14 +33,29 @@ func TestRun_Help(t *testing.T) {
 	}
 }
 
-func TestRun_EmptyArgs(t *testing.T) {
+func TestRun_EmptyArgs_NoC3Dir(t *testing.T) {
+	// When --c3-dir points to nonexistent dir, empty args shows help
 	var buf bytes.Buffer
-	err := run([]string{}, &buf)
+	err := run([]string{"--c3-dir", filepath.Join(t.TempDir(), "no-c3")}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(buf.String(), "Commands:") {
-		t.Error("empty args should show help")
+		t.Errorf("empty args without .c3/ should show help, got:\n%s", buf.String())
+	}
+}
+
+func TestRun_EmptyArgs_WithC3Dir(t *testing.T) {
+	// When .c3/ with DB exists, empty args shows status dashboard
+	c3Dir := setupC3DB(t)
+
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(buf.String(), "TestProject") {
+		t.Errorf("empty args with .c3/ should show status dashboard, got: %s", buf.String())
 	}
 }
 

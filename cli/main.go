@@ -36,9 +36,12 @@ func run(argv []string, w io.Writer) error {
 		return nil
 	}
 
-	if opts.Help || opts.Command == "" {
+	if opts.Help {
 		cmd.ShowHelp(opts.Command, w)
 		return nil
+	}
+	if opts.Command == "" {
+		return runNoArgs(opts, w)
 	}
 
 	// init is special — creates .c3/ with DB, no store needed
@@ -143,8 +146,13 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) err
 	projectDir := config.ProjectDir(c3Dir)
 
 	switch opts.Command {
+	case "status":
+		return cmd.RunStatus(cmd.StatusOptions{
+			Store: s, C3Dir: c3Dir, ProjectDir: projectDir,
+			JSONExplicit: opts.JSONExplicit,
+		}, w)
 	case "list":
-		return cmd.RunList(cmd.ListOptions{Store: s, JSON: opts.JSON, Flat: opts.Flat, Compact: opts.Compact, C3Dir: c3Dir, IncludeADR: opts.IncludeADR}, w)
+		return cmd.RunList(cmd.ListOptions{Store: s, JSON: opts.JSON, Flat: opts.Flat, Compact: opts.Compact, C3Dir: c3Dir, IncludeADR: opts.IncludeADR, JSONExplicit: opts.JSONExplicit}, w)
 	case "check":
 		return cmd.RunCheckV2(cmd.CheckOptions{
 			Store:      s,
@@ -159,7 +167,7 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) err
 		if len(opts.Args) >= 1 {
 			entityID = opts.Args[0]
 		}
-		return cmd.RunRead(cmd.ReadOptions{Store: s, ID: entityID, JSON: opts.JSON, Section: opts.Section}, w)
+		return cmd.RunRead(cmd.ReadOptions{Store: s, ID: entityID, JSON: opts.JSON, Section: opts.Section, Full: opts.Full}, w)
 	case "write":
 		entityID := ""
 		if len(opts.Args) >= 1 {
@@ -394,6 +402,35 @@ func runWire(opts cmd.Options, s *store.Store, w io.Writer) error {
 		}
 	}
 	return nil
+}
+
+func runNoArgs(opts cmd.Options, w io.Writer) error {
+	cwd, err := os.Getwd()
+	if err != nil {
+		cmd.ShowHelp("", w)
+		return nil
+	}
+	c3Dir := config.ResolveC3Dir(cwd, opts.C3Dir)
+	if c3Dir == "" {
+		cmd.ShowHelp("", w)
+		return nil
+	}
+	dbPath := filepath.Join(c3Dir, "c3.db")
+	if !fileExists(dbPath) {
+		cmd.ShowHelp("", w)
+		return nil
+	}
+	s, err := store.Open(dbPath)
+	if err != nil {
+		return fmt.Errorf("error: opening database: %w", err)
+	}
+	defer s.Close()
+	return cmd.RunStatus(cmd.StatusOptions{
+		Store:        s,
+		C3Dir:        c3Dir,
+		ProjectDir:   config.ProjectDir(c3Dir),
+		JSONExplicit: opts.JSONExplicit,
+	}, w)
 }
 
 func fileExists(path string) bool {

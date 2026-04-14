@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import { DocMap } from "./docMap";
-import { getIdAtPosition, getPathAtPosition } from "./utils";
+import { getIdAtPosition, getPathAtPosition, getBacktickPathAtPosition } from "./utils";
 
 export class C3DefinitionProvider implements vscode.DefinitionProvider {
   constructor(private docMap: DocMap) {}
@@ -27,6 +27,16 @@ export class C3DefinitionProvider implements vscode.DefinitionProvider {
       const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
       if (workspaceFolder) {
         const absPath = path.join(workspaceFolder.uri.fsPath, pathMatch.folderPath);
+        return new vscode.Location(vscode.Uri.file(absPath), new vscode.Position(0, 0));
+      }
+    }
+
+    // Try backtick path (markdown files)
+    const backtickMatch = getBacktickPathAtPosition(line, position.character);
+    if (backtickMatch) {
+      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+      if (workspaceFolder) {
+        const absPath = path.join(workspaceFolder.uri.fsPath, backtickMatch.folderPath);
         return new vscode.Location(vscode.Uri.file(absPath), new vscode.Position(0, 0));
       }
     }

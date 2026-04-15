@@ -153,7 +153,7 @@ c3x marketplace show rule-error-wrapping
 
 ## Migrating
 
-### Upgrading to v9.0.1
+### Upgrading to v9.1.0
 
 v9 is a breaking workflow release. The shared truth moves from “database-first” to “canonical text first”.
 
@@ -197,12 +197,12 @@ The plugin ships with pre-built binaries — no Go toolchain, no npm, no PATH co
 
 ```
 skills/c3/bin/
-├── VERSION                    # "9.0.1"
+├── VERSION                    # "9.1.0"
 ├── c3x.sh                    # detects OS/ARCH, runs the right binary
-├── c3x-9.0.1-linux-amd64
-├── c3x-9.0.1-linux-arm64
-├── c3x-9.0.1-darwin-amd64
-└── c3x-9.0.1-darwin-arm64
+├── c3x-9.1.0-linux-amd64
+├── c3x-9.1.0-linux-arm64
+├── c3x-9.1.0-darwin-amd64
+└── c3x-9.1.0-darwin-arm64
 ```
 
 Each plugin version carries its own binary. Different projects can use different versions without conflict.

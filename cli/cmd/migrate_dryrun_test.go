@@ -68,6 +68,24 @@ func TestRunMigrateDryRun_JSON(t *testing.T) {
 	}
 }
 
+func TestRunMigrateDryRun_AgentModeReturnsTOON(t *testing.T) {
+	t.Setenv("C3X_MODE", "agent")
+	c3Dir := createFixture(t)
+
+	var buf bytes.Buffer
+	if err := RunMigrateDryRun(c3Dir, true, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	out := buf.String()
+	if strings.HasPrefix(strings.TrimSpace(out), "{") {
+		t.Fatalf("agent migrate dry-run must not emit JSON:\n%s", out)
+	}
+	if !strings.Contains(out, "total:") {
+		t.Fatalf("agent migrate dry-run should emit TOON fields, got:\n%s", out)
+	}
+}
+
 func TestRunMigrateDryRun_CleanEntity(t *testing.T) {
 	c3Dir := createFixture(t)
 	// Add a ref with all required sections filled

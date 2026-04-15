@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -100,9 +99,7 @@ func RunMigrateDryRun(c3Dir string, jsonOut bool, w io.Writer) error {
 	report.TotalGaps += len(report.CodeMapIssues)
 
 	if jsonOut {
-		enc := json.NewEncoder(w)
-		enc.SetIndent("", "  ")
-		return enc.Encode(report)
+		return writeJSON(w, report)
 	}
 
 	return renderMarkdownReport(report, w)

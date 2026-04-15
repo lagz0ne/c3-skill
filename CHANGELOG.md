@@ -5,6 +5,12 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.1.3] - 2026-04-15
+
+### Fixed
+
+- **Repair mutations bypass broken-canonical preverify** — read-only commands still stop on broken canonical `.c3/`, but mutating commands such as `write --section`, `set --section`, and `add adr` can now reach their own validation and canonical export paths.
+
 ## [9.1.2] - 2026-04-15
 
 ### Fixed

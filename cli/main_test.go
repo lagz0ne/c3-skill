@@ -334,6 +334,73 @@ func TestRun_AddAgentModeReturnsTOON(t *testing.T) {
 	}
 }
 
+func TestRun_MutatingCommandBypassesBrokenCanonicalPreverify(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	var buf bytes.Buffer
+	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", c3Dir}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	readmePath := filepath.Join(c3Dir, "README.md")
+	data, err := os.ReadFile(readmePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	broken := strings.Replace(string(data), "c3-seal:", "c3-seal: broken-", 1)
+	if err := os.WriteFile(readmePath, []byte(broken), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	err = run([]string{"--c3-dir", c3Dir, "list"}, &bytes.Buffer{})
+	if err == nil || !strings.Contains(err.Error(), "canonical .c3/ is not ready") {
+		t.Fatalf("read-only command should still preverify broken canonical docs, got %v", err)
+	}
+
+	body := "Updated through section repair.\n"
+	r, w, _ := os.Pipe()
+	w.WriteString(body)
+	w.Close()
+	old := os.Stdin
+	os.Stdin = r
+	defer func() { os.Stdin = old }()
+
+	buf.Reset()
+	if err := run([]string{"--c3-dir", c3Dir, "write", "c3-0", "--section", "Goal"}, &buf); err != nil {
+		t.Fatalf("section write should reach command validation/export despite broken canonical docs: %v", err)
+	}
+	if !strings.Contains(buf.String(), `Updated c3-0 section "Goal"`) {
+		t.Fatalf("expected section write output, got:\n%s", buf.String())
+	}
+
+	data, err = os.ReadFile(readmePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	broken = strings.Replace(string(data), "c3-seal:", "c3-seal: broken-", 1)
+	if err := os.WriteFile(readmePath, []byte(broken), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	body = "## Goal\n\nDocument the repair work order.\n"
+	r, w, _ = os.Pipe()
+	w.WriteString(body)
+	w.Close()
+	os.Stdin = r
+
+	buf.Reset()
+	if err := run([]string{"--c3-dir", c3Dir, "add", "adr", "repair-workflow"}, &buf); err != nil {
+		t.Fatalf("mutating add should reach command validation/export despite broken canonical docs: %v", err)
+	}
+	if !strings.Contains(buf.String(), "adr-") {
+		t.Fatalf("expected add output, got:\n%s", buf.String())
+	}
+
+	buf.Reset()
+	if err := run([]string{"--c3-dir", c3Dir, "verify"}, &buf); err != nil {
+		t.Fatalf("expected post-mutation canonical export to verify: %v\n%s", err, buf.String())
+	}
+}
+
 func TestRun_Set(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
 	var buf bytes.Buffer

@@ -55,6 +55,11 @@ func TestParseArgs(t *testing.T) {
 			argv: []string{"list", "--include-adr"},
 			want: Options{Command: "list", IncludeADR: true},
 		},
+		{
+			name: "continue flag",
+			argv: []string{"migrate", "--continue"},
+			want: Options{Command: "migrate", Continue: true},
+		},
 	}
 
 	for _, tt := range tests {
@@ -86,6 +91,9 @@ func TestParseArgs(t *testing.T) {
 			}
 			if got.IncludeADR != tt.want.IncludeADR {
 				t.Errorf("IncludeADR = %v, want %v", got.IncludeADR, tt.want.IncludeADR)
+			}
+			if got.Continue != tt.want.Continue {
+				t.Errorf("Continue = %v, want %v", got.Continue, tt.want.Continue)
 			}
 			if len(got.Args) != len(tt.want.Args) {
 				t.Errorf("Args len = %d, want %d", len(got.Args), len(tt.want.Args))

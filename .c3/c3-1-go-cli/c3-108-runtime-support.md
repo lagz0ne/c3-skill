@@ -1,6 +1,6 @@
 ---
 id: c3-108
-c3-seal: 80d6ddc5963a1b35b935224f21f740c950a17e2e9dfe2f6755c011a6ee8a9f8b
+c3-seal: 0fb92d46b9b8adee94f9d6f33d3d99239af5736a58b36d9f0ce8139f58fe6513
 title: runtime-support
 type: component
 category: foundation
@@ -30,7 +30,7 @@ Own CLI runtime behavior shared across commands: argument parsing, environment m
 | Aspect | Detail | Reference |
 | --- | --- | --- |
 | Preconditions | Parent container context is loaded before runtime-support behavior is changed. | c3-1 |
-| Inputs | Accept argv flags such as --json, environment values such as C3X_MODE=agent, and command result structs or slices that need serialization. | c3-1 |
+| Inputs | Accept argv flags such as --json and --continue, environment values such as C3X_MODE=agent, and command result structs or slices that need serialization. | c3-1 |
 | State / data | Preserve mode selection as process-local runtime state; do not persist output-mode decisions into .c3/ docs. | c3-1 |
 | Shared dependencies | Use cli/internal/toon for agent serialization and Go JSON encoding only for non-agent explicit JSON output. | c3-1 |
 ## Business Flow
@@ -56,7 +56,7 @@ Own CLI runtime behavior shared across commands: argument parsing, environment m
 | argv/env parsing | IN | --json marks explicit JSON for non-agent callers; C3X_MODE=agent marks machine output without making JSON the wire format. | c3-1 boundary | go test ./...; cli/cmd/options_test.go. |
 | preverify gate | IN | When canonical .c3/ docs exist, read-only commands must preverify before dispatch, but mutating commands must reach command-local validation and canonical export. | c3-108 boundary | cli/main.go; TestRun_MutatingCommandBypassesBrokenCanonicalPreverify. |
 | output serializer | OUT | Under C3X_MODE=agent, generic structured output must serialize as TOON and must not start with JSON object/array delimiters. | c3-1 boundary | go test ./...; cli/cmd/output_test.go. |
-| command wrappers | OUT | Commands that need wrapper-level structured results, including add, must call shared output format resolution instead of local json.NewEncoder paths. | c3-108 boundary | cli/main.go; cli/cmd/add.go; TestRun_AddAgentModeReturnsTOON. |
+| command wrappers | OUT | Commands that need wrapper-level structured results, including add and migrate blocker reports, must call shared output helpers instead of local json.NewEncoder paths. | c3-108 boundary | cli/main.go; cli/cmd/add.go; cli/cmd/migrate_v2.go; TestRun_AddAgentModeReturnsTOON; TestRunMigrateV2_JSONBlockerReport. |
 | command compatibility | OUT | Existing commands that call writeJSON for machine output inherit TOON in agent mode without per-command rewrites. | c3-1 boundary | go test ./...; agent smoke commands list, lookup, read, check, add. |
 | explicit JSON | OUT | Outside agent mode, explicit --json remains JSON for scripts and tests that parse JSON. | c3-1 boundary | go test ./...; JSON tests in cli/cmd/*_test.go. |
 ## Change Safety
@@ -73,9 +73,10 @@ Own CLI runtime behavior shared across commands: argument parsing, environment m
 | Material | Must derive from | Allowed variance | Evidence |
 | --- | --- | --- | --- |
 | cli/main.go | Contract preverify gate and command wrappers rows. | Dispatch can stay thin; it must not block mutating repair commands behind canonical preverify. | cli/main_test.go TestRun_MutatingCommandBypassesBrokenCanonicalPreverify; cli/main_test.go TestRun_AddAgentModeReturnsTOON. |
+| cli/cmd/options.go and cli/cmd/options_test.go | Foundational Flow input row and Contract argv/env parsing row. | Internal flag names may remain legacy; --continue must keep routing as an explicit migration resume flag. | go test ./cmd -run TestParseArgs. |
 | cli/cmd/add.go | Contract command wrappers and output serializer rows. | Result fields may grow; agent mode must go through WriteObjectOutput or writeJSON-compatible helpers. | cli/main_test.go TestRun_AddAgentModeReturnsTOON. |
 | cli/cmd/migrate_dryrun.go and cli/cmd/check_legacy.go | Contract command compatibility row. | Legacy commands may keep their result structs; JSON branches must call writeJSON. | cli/cmd/migrate_dryrun_test.go TestRunMigrateDryRun_AgentModeReturnsTOON; rg json.NewEncoder cli --glob '!**/*_test.go'. |
 | cli/cmd/helpers.go | Contract output serializer row and Change Safety JSON leak row. | Implementation can evolve; agent mode must choose TOON before JSON. | go test ./.... |
-| cli/cmd/output.go and cli/cmd/options.go | Contract argv/env parsing row. | Internal flag names may remain legacy; behavior must match the contract. | go test ./cmd -run TestResolveFormat. |
+| cli/cmd/output.go | Contract argv/env parsing row. | Internal flag names may remain legacy; behavior must match the contract. | go test ./cmd -run TestResolveFormat. |
 | cli/internal/toon/toon.go | Contract command compatibility row. | TOON formatting can improve; it must support structs, maps, slices, and scalars used by command output. | go test ./cmd -run TestWriteJSON_Agent. |
 | skills/c3/SKILL.md and references | Governance and Contract rows. | Copy can be concise; it must not instruct agents to parse JSON from agent mode. | rg "agent JSON" skills/c3 cli. |

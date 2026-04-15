@@ -5,6 +5,12 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.1.4] - 2026-04-15
+
+### Fixed
+
+- **Migration guidance matches current CLI flow** — project instructions and skill migration docs now describe repair mutations bypassing broken-canonical preverify, grouped migration blockers, no-write strict preflight, write-failure export stops, and the exact import/migrate/check/verify loop.
+
 ## [9.1.3] - 2026-04-15
 
 ### Fixed

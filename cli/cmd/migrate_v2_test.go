@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"errors"
 	"strings"
 	"testing"
 
@@ -27,6 +28,18 @@ func newMigrateV2Store(t *testing.T) *store.Store {
 		}
 	}
 	return s
+}
+
+func TestWriteMigrateWriteFailureGivesFixLoop(t *testing.T) {
+	var buf bytes.Buffer
+	writeMigrateWriteFailure(&buf, "c3-101", 3, errors.New("disk full"))
+
+	requireAll(t, buf.String(),
+		"BLOCKED: migration write failed at c3-101 after 3 successful write(s)",
+		"C3 stopped before canonical export",
+		"c3x import --force",
+		"c3x check --include-adr && c3x verify",
+	)
 }
 
 func TestRunMigrateV2_SkipsAlreadyMigrated(t *testing.T) {
@@ -117,5 +130,50 @@ func TestRunMigrateV2_EmptyStore(t *testing.T) {
 	}
 	if issues := validateStrictComponentDoc(body, "error"); len(issues) > 0 {
 		t.Fatalf("empty component recovery should produce strict body: %#v\n%s", issues, body)
+	}
+}
+
+func TestRunMigrateV2_AggregatesStrictComponentBlockers(t *testing.T) {
+	s := newMigrateV2Store(t)
+	for _, e := range []*store.Entity{
+		{ID: "c3-101", Type: "component", Title: "chat", Slug: "chat", Category: "feature", ParentID: "c3-1", Goal: "Render optional chat workspace behavior.", Status: "active", Metadata: "{}"},
+		{ID: "c3-102", Type: "component", Title: "tasks", Slug: "tasks", Category: "feature", ParentID: "c3-1", Goal: "Track todo coordination behavior.", Status: "active", Metadata: "{}"},
+	} {
+		if err := s.InsertEntity(e); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := content.WriteEntity(s, "c3-101", "# chat\n\n## Goal\n\nRender optional chat workspace behavior.\n"); err != nil {
+		t.Fatal(err)
+	}
+	if err := content.WriteEntity(s, "c3-102", "# tasks\n\n## Goal\n\nTrack todo coordination behavior.\n"); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	err := RunMigrateV2(MigrateV2Options{Store: s}, &buf)
+	if err == nil {
+		t.Fatal("expected migration blocker error")
+	}
+	out := buf.String()
+	requireAll(t, out,
+		"0 migrated, 2 blocked",
+		"BLOCKED: 2 component(s)",
+		"C3 made no migration writes",
+		"c3-101 chat",
+		"c3-102 tasks",
+		"common rewrite: optional->secondary",
+		"c3x import --force",
+		"c3x check --include-adr && c3x verify",
+	)
+	if !strings.Contains(err.Error(), "migrate blocked: 2 component(s)") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	body, readErr := content.ReadEntity(s, "c3-101")
+	if readErr != nil {
+		t.Fatal(readErr)
+	}
+	if strings.Contains(body, "## Parent Fit") {
+		t.Fatalf("blocked migrate must not write partial strict docs, got:\n%s", body)
 	}
 }

@@ -1,24 +1,18 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strconv"
 
 	"github.com/lagz0ne/c3-design/cli/cmd"
 	"github.com/lagz0ne/c3-design/cli/internal/config"
-	"github.com/lagz0ne/c3-design/cli/internal/schema"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
 var version = "dev"
-
-var reAddID = regexp.MustCompile(`\(id: ([^)]+)\)`)
 
 func main() {
 	if err := run(os.Args[1:], os.Stdout); err != nil {
@@ -433,35 +427,11 @@ func runAdd(opts cmd.Options, s *store.Store, w io.Writer) error {
 		return fmt.Errorf("error: c3x add requires body content via stdin\nhint: cat body.md | c3x add <type> <slug>\nhint: run 'c3x schema <type>' to see required sections")
 	}
 
-	var buf bytes.Buffer
-	var addW io.Writer = w
+	format := cmd.FormatHuman
 	if opts.JSON {
-		addW = &buf
+		format = cmd.ResolveFormat(opts.JSONExplicit, os.Getenv("C3X_MODE") == "agent")
 	}
-
-	err := cmd.RunAdd(entityType, slug, s, opts.Container, opts.Feature, os.Stdin, addW)
-	if err != nil {
-		return err
-	}
-
-	if opts.JSON {
-		m := reAddID.FindStringSubmatch(buf.String())
-		if len(m) >= 2 {
-			result := cmd.AddResult{ID: m[1], Type: entityType}
-			if sections := schema.ForType(entityType); sections != nil {
-				for _, sec := range sections {
-					result.Sections = append(result.Sections, sec.Name)
-				}
-			}
-			enc := json.NewEncoder(w)
-			if os.Getenv("C3X_MODE") != "agent" {
-				enc.SetIndent("", "  ")
-			}
-			return enc.Encode(result)
-		}
-		w.Write(buf.Bytes())
-	}
-	return nil
+	return cmd.RunAddFormatted(entityType, slug, s, opts.Container, opts.Feature, os.Stdin, w, format)
 }
 
 func runSet(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) error {

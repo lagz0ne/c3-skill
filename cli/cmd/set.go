@@ -152,6 +152,7 @@ func runSetBatch(entity *store.Entity, opts SetOptions, w io.Writer) error {
 		parts += fmt.Sprintf(", %d codemap patterns", len(*payload.Codemap))
 	}
 	fmt.Fprintf(w, "Updated %s (%s)\n", opts.ID, parts)
+	writeAgentHints(w, cascadeHintsForEntity(entity))
 	return nil
 }
 
@@ -184,6 +185,7 @@ func runSetField(entity *store.Entity, opts SetOptions, w io.Writer) error {
 	}
 
 	fmt.Fprintf(w, "Updated %s field %q\n", opts.ID, opts.Field)
+	writeAgentHints(w, cascadeHintsForEntity(entity))
 	return nil
 }
 
@@ -214,6 +216,7 @@ func runSetCodemap(entity *store.Entity, opts SetOptions, w io.Writer) error {
 			return fmt.Errorf("updating codemap: %w", err)
 		}
 		fmt.Fprintf(w, "Removed codemap pattern %q from %s (%d remaining)\n", opts.Value, entity.ID, len(filtered))
+		writeAgentHints(w, cascadeHintsForEntity(entity))
 		return nil
 	}
 
@@ -224,6 +227,7 @@ func runSetCodemap(entity *store.Entity, opts SetOptions, w io.Writer) error {
 		}
 		if slices.Contains(existing, opts.Value) {
 			fmt.Fprintf(w, "Codemap pattern %q already exists on %s\n", opts.Value, entity.ID)
+			writeAgentHints(w, cascadeHintsForEntity(entity))
 			return nil
 		}
 		existing = append(existing, opts.Value)
@@ -248,6 +252,7 @@ func runSetCodemap(entity *store.Entity, opts SetOptions, w io.Writer) error {
 		return fmt.Errorf("updating codemap: %w", err)
 	}
 	fmt.Fprintf(w, "Updated %s codemap (%d patterns)\n", entity.ID, len(patterns))
+	writeAgentHints(w, cascadeHintsForEntity(entity))
 	return nil
 }
 
@@ -326,5 +331,6 @@ func runSetSection(entity *store.Entity, opts SetOptions, w io.Writer) error {
 	}
 
 	fmt.Fprintf(w, "Updated %s section %q\n", opts.ID, opts.Section)
+	writeAgentHints(w, cascadeHintsForEntity(entity))
 	return nil
 }

@@ -223,6 +223,38 @@ func TestRunCheck_ScopeCrossCheck(t *testing.T) {
 	}
 }
 
+func TestRunCheck_LayerDisconnectMissingComponentInContainer(t *testing.T) {
+	s := createRichDBFixture(t)
+	content.WriteEntity(s, "c3-1", "# api\n\n## Goal\n\nServe API requests.\n\n## Components\n\n| ID | Name | Category | Status | Goal Contribution |\n|----|------|----------|--------|-------------------|\n| c3-101 | auth | foundation | active | Authentication |\n\n## Responsibilities\n\nServe API requests.\n")
+
+	var buf bytes.Buffer
+	if err := RunCheckV2(CheckOptions{Store: s, JSON: false}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	requireAll(t, buf.String(),
+		"layer disconnect",
+		"c3-110",
+		"missing from c3-1 Components table",
+	)
+}
+
+func TestRunCheck_LayerDisconnectStaleComponentInContainer(t *testing.T) {
+	s := createRichDBFixture(t)
+	content.WriteEntity(s, "c3-1", "# api\n\n## Goal\n\nServe API requests.\n\n## Components\n\n| ID | Name | Category | Status | Goal Contribution |\n|----|------|----------|--------|-------------------|\n| c3-101 | auth | foundation | active | Authentication |\n| c3-201 | renderer | feature | active | Wrong parent |\n\n## Responsibilities\n\nServe API requests.\n")
+
+	var buf bytes.Buffer
+	if err := RunCheckV2(CheckOptions{Store: s, JSON: false}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	requireAll(t, buf.String(),
+		"layer disconnect",
+		"c3-201",
+		"listed in c3-1 Components table but parent is c3-2",
+	)
+}
+
 func TestHintFor(t *testing.T) {
 	tests := []struct {
 		message  string
@@ -235,6 +267,7 @@ func TestHintFor(t *testing.T) {
 		{"unknown ref reference: ref-missing", "use a ref-* ID (e.g., ref-jwt); verify with 'c3x list'"},
 		{"file does not exist: src/foo.ts", "create the file or fix the path"},
 		{"code-map parse error: yaml: unmarshal error", "check code-map entries with 'c3x list'"},
+		{"layer disconnect: child component c3-110 has parent c3-1 but is missing from c3-1 Components table", "update parent table or fix the child parent field; rebuild only proves storage, not layer integration"},
 		{"something unknown", ""},
 	}
 	for _, tt := range tests {

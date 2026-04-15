@@ -1,6 +1,7 @@
 package content
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/lagz0ne/c3-design/cli/internal/store"
@@ -181,6 +182,34 @@ func TestReadEntity_RoundTrip(t *testing.T) {
 	merkle2 := store.HashNodes(tree2.Nodes)
 	if merkle1 != merkle2 {
 		t.Errorf("merkle mismatch: input=%s, round-trip=%s", merkle1, merkle2)
+	}
+}
+
+func TestReadEntity_RoundTrip_MixedListFormatting(t *testing.T) {
+	s := testStore(t)
+	seedEntity(t, s, "test-1", "adr")
+
+	md := "## Work Breakdown\n\n**Track A**\n\n- first item\nline after first item\n\n- second item\nline after second item\n"
+	if err := WriteEntity(s, "test-1", md); err != nil {
+		t.Fatalf("WriteEntity: %v", err)
+	}
+
+	got, err := ReadEntity(s, "test-1")
+	if err != nil {
+		t.Fatalf("ReadEntity: %v", err)
+	}
+
+	if strings.Count(got, "line after first item") != 1 {
+		t.Fatalf("expected single retained line after first item, got:\n%s", got)
+	}
+	if strings.Count(got, "line after second item") != 1 {
+		t.Fatalf("expected single retained line after second item, got:\n%s", got)
+	}
+
+	tree1 := ParseMarkdown("test-1", md)
+	tree2 := ParseMarkdown("test-1", got)
+	if store.HashNodes(tree1.Nodes) != store.HashNodes(tree2.Nodes) {
+		t.Fatalf("mixed list round-trip changed structure\ninput:\n%s\noutput:\n%s", md, got)
 	}
 }
 

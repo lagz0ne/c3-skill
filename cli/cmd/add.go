@@ -65,6 +65,11 @@ func RunAdd(entityType, slug string, s *store.Store, container string, feature b
 	}
 
 	fmt.Fprintf(w, "Created: %s %s (id: %s)\n", entityType, slug, entity.ID)
+	if entity.Type == "component" {
+		writeAgentHints(w, newComponentTopDownHints(entity))
+		return nil
+	}
+	writeAgentHints(w, cascadeHintsForEntity(entity))
 	return nil
 }
 

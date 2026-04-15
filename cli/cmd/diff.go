@@ -24,10 +24,20 @@ func RunDiff(s *store.Store, mark bool, commitHash string, jsonOut bool, w io.Wr
 
 	if len(changes) == 0 {
 		fmt.Fprintln(w, "No uncommitted changes.")
+		writeAgentHints(w, cascadeReviewHints())
 		return nil
 	}
 
 	if jsonOut {
+		if isAgentMode() {
+			return writeJSON(w, struct {
+				Changes []*store.ChangeEntry `json:"changes"`
+				Help    []HelpHint           `json:"help,omitempty"`
+			}{
+				Changes: changes,
+				Help:    agentHints(cascadeReviewHints()),
+			})
+		}
 		return writeJSON(w, changes)
 	}
 
@@ -79,5 +89,6 @@ func RunDiff(s *store.Store, mark bool, commitHash string, jsonOut bool, w io.Wr
 		}
 	}
 
+	writeAgentHints(w, cascadeReviewHints())
 	return nil
 }

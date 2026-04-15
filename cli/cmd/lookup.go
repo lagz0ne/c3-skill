@@ -28,17 +28,19 @@ type RefBrief struct {
 
 // LookupMatch is one matched component with its brief and refs.
 type LookupMatch struct {
-	ID    string     `json:"id"`
-	Title string     `json:"title"`
-	Goal  string     `json:"goal"`
-	Refs  []RefBrief `json:"uses"`
-	Rules []RefBrief `json:"rules,omitempty"`
+	ID       string     `json:"id"`
+	Title    string     `json:"title"`
+	Goal     string     `json:"goal"`
+	ParentID string     `json:"parent,omitempty"`
+	Refs     []RefBrief `json:"uses"`
+	Rules    []RefBrief `json:"rules,omitempty"`
 }
 
 // LookupResult is the output for a single-file lookup.
 type LookupResult struct {
 	File    string        `json:"file"`
 	Matches []LookupMatch `json:"matches"`
+	Help    []HelpHint    `json:"help,omitempty"`
 }
 
 // GlobLookupResult is the output for a glob-pattern lookup.
@@ -47,14 +49,16 @@ type GlobLookupResult struct {
 	Files      []string            `json:"files"`
 	FileMap    map[string][]string `json:"file_map"`
 	Components []LookupMatch       `json:"components"`
+	Help       []HelpHint          `json:"help,omitempty"`
 }
 
 func buildMatchFromStore(entity *store.Entity, s *store.Store) LookupMatch {
 	match := LookupMatch{
-		ID:    entity.ID,
-		Title: entity.Title,
-		Goal:  entity.Goal,
-		Refs:  []RefBrief{},
+		ID:       entity.ID,
+		Title:    entity.Title,
+		Goal:     entity.Goal,
+		ParentID: entity.ParentID,
+		Refs:     []RefBrief{},
 	}
 	refs, _ := s.RefsFor(entity.ID)
 	var refIDs []string
@@ -101,6 +105,7 @@ func runSingleLookup(opts LookupOptions, w io.Writer) error {
 		}
 		result.Matches = append(result.Matches, buildMatchFromStore(entity, opts.Store))
 	}
+	result.Help = agentHints(lookupCascadeHints(opts.Store, result.Matches, opts.FilePath))
 
 	if opts.JSON {
 		return writeJSON(w, result)
@@ -109,11 +114,13 @@ func runSingleLookup(opts LookupOptions, w io.Writer) error {
 	fmt.Fprintf(w, "file: %s\n", result.File)
 	if len(result.Matches) == 0 {
 		fmt.Fprintln(w, "\nno component mapping found")
+		writeAgentHints(w, result.Help)
 		return nil
 	}
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "matches:")
 	printMatches(w, result.Matches)
+	writeAgentHints(w, result.Help)
 	return nil
 }
 
@@ -147,6 +154,7 @@ func runGlobLookup(opts LookupOptions, w io.Writer) error {
 			result.Components = append(result.Components, buildMatchFromStore(entity, opts.Store))
 		}
 	}
+	result.Help = agentHints(lookupCascadeHints(opts.Store, result.Components, opts.FilePath))
 
 	if opts.JSON {
 		return writeJSON(w, result)
@@ -172,12 +180,37 @@ func runGlobLookup(opts LookupOptions, w io.Writer) error {
 
 	if len(result.Components) == 0 {
 		fmt.Fprintln(w, "\nno component mappings found")
+		writeAgentHints(w, result.Help)
 		return nil
 	}
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "components:")
 	printMatches(w, result.Components)
+	writeAgentHints(w, result.Help)
 	return nil
+}
+
+func lookupCascadeHints(s *store.Store, matches []LookupMatch, filePath string) []HelpHint {
+	if len(matches) == 0 {
+		return lookupMissHints(filePath)
+	}
+	var hints []HelpHint
+	seen := map[string]bool{}
+	for _, match := range matches {
+		entity, err := s.GetEntity(match.ID)
+		if err != nil {
+			continue
+		}
+		for _, hint := range cascadeHintsForEntity(entity) {
+			key := hint.Command + "\x00" + hint.Description
+			if seen[key] {
+				continue
+			}
+			seen[key] = true
+			hints = append(hints, hint)
+		}
+	}
+	return hints
 }
 
 func printMatches(w io.Writer, matches []LookupMatch) {

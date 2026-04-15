@@ -44,7 +44,7 @@ func run(argv []string, w io.Writer) error {
 		return runNoArgs(opts, w)
 	}
 
-	// init is special — creates .c3/ with DB, no store needed
+	// init is special — creates .c3/ with local cache + canonical files, no store needed
 	if opts.Command == "init" {
 		cwd, err := os.Getwd()
 		if err != nil {
@@ -111,12 +111,22 @@ func run(argv []string, w io.Writer) error {
 		return cmd.RunRepair(cmd.RepairOptions{C3Dir: c3Dir, JSON: opts.JSON}, w)
 	}
 
-	// Detect format: DB
 	dbPath := filepath.Join(c3Dir, "c3.db")
 	hasDB := fileExists(dbPath)
+	hasCanonical := hasCanonicalDocs(c3Dir)
+	skipPreVerify := opts.Command == "sync" && len(opts.Args) >= 1 && opts.Args[0] == "export"
+
+	// v9 workflow treats canonical .c3/ markdown as submitted truth.
+	// When canonical files exist, refresh/rebuild local cache from them before dispatch.
+	if hasCanonical && !skipPreVerify {
+		if err := cmd.RunVerify(cmd.VerifyOptions{C3Dir: c3Dir, JSON: opts.JSON}, io.Discard); err != nil {
+			return fmt.Errorf("error: canonical .c3/ is not ready for %q: %w", opts.Command, err)
+		}
+		hasDB = fileExists(dbPath)
+	}
 
 	if !hasDB {
-		return fmt.Errorf("error: no database found at %s\nhint: run 'c3x init' to create one, or 'c3x migrate-legacy' if you have legacy .c3/ markdown files", dbPath)
+		return fmt.Errorf("error: local C3 cache unavailable at %s\nhint: run 'c3x verify' to rebuild from canonical .c3/, or 'c3x init' if this project is not onboarded", dbPath)
 	}
 
 	s, err := store.Open(dbPath)
@@ -140,6 +150,33 @@ func runGit(opts cmd.Options, projectDir, c3Dir string, w io.Writer) error {
 		cmd.ShowHelp("git", w)
 		return nil
 	}
+}
+
+func hasCanonicalDocs(c3Dir string) bool {
+	if fileExists(filepath.Join(c3Dir, "README.md")) {
+		return true
+	}
+	if fileExists(filepath.Join(c3Dir, "code-map.yaml")) {
+		return true
+	}
+	matches, err := filepath.Glob(filepath.Join(c3Dir, "adr", "*.md"))
+	if err == nil && len(matches) > 0 {
+		return true
+	}
+	matches, err = filepath.Glob(filepath.Join(c3Dir, "refs", "*.md"))
+	if err == nil && len(matches) > 0 {
+		return true
+	}
+	matches, err = filepath.Glob(filepath.Join(c3Dir, "rules", "*.md"))
+	if err == nil && len(matches) > 0 {
+		return true
+	}
+	matches, err = filepath.Glob(filepath.Join(c3Dir, "recipes", "*.md"))
+	if err == nil && len(matches) > 0 {
+		return true
+	}
+	matches, err = filepath.Glob(filepath.Join(c3Dir, "c3-*", "README.md"))
+	return err == nil && len(matches) > 0
 }
 
 // runMarketplace handles the marketplace subcommands.

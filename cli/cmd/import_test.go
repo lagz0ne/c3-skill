@@ -166,6 +166,89 @@ Need fast CLI.
 	}
 }
 
+func TestRunImport_SurfacesLayerDisconnectAfterRebuild(t *testing.T) {
+	dir := t.TempDir()
+	c3Dir := filepath.Join(dir, ".c3")
+	for _, sub := range []string{
+		c3Dir,
+		filepath.Join(c3Dir, "c3-1-api"),
+	} {
+		if err := os.MkdirAll(sub, 0755); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	writeFile(t, filepath.Join(c3Dir, "README.md"), `---
+id: c3-0
+title: TestProject
+---
+
+# TestProject
+
+## Goal
+
+System goal.
+
+## Containers
+
+| ID | Name | Boundary | Status | Responsibilities | Goal Contribution |
+| --- | --- | --- | --- | --- | --- |
+| c3-1 | api | service | active | Serve API | API layer |
+`)
+	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "README.md"), `---
+id: c3-1
+title: api
+type: container
+parent: c3-0
+---
+
+# api
+
+## Goal
+
+Serve API requests.
+
+## Components
+
+| ID | Name | Category | Status | Goal Contribution |
+| --- | --- | --- | --- | --- |
+
+## Responsibilities
+
+Serve API requests.
+`)
+	writeFile(t, filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md"), `---
+id: c3-101
+title: auth
+type: component
+parent: c3-1
+---
+
+# auth
+
+## Goal
+
+Authenticate users.
+
+## Dependencies
+
+| Direction | What | From/To |
+| --- | --- | --- |
+| OUT | session | c3-1 |
+`)
+
+	var buf bytes.Buffer
+	if err := RunImport(ImportOptions{C3Dir: c3Dir, Force: true}, &buf); err != nil {
+		t.Fatal(err)
+	}
+	requireAll(t, buf.String(),
+		"Imported 3 entities",
+		"Layer integration issues after rebuild",
+		"c3-101",
+		"missing from c3-1 Components table",
+	)
+}
+
 func TestRunImport_RejectsBrokenSealWithoutForce(t *testing.T) {
 	dir := t.TempDir()
 	c3Dir := filepath.Join(dir, ".c3")

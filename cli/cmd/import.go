@@ -92,6 +92,30 @@ func RunImport(opts ImportOptions, w io.Writer) error {
 	_ = os.Remove(tmpDB + "-shm")
 
 	fmt.Fprintf(w, "Imported %d entities into %s\n", len(result.Docs), dbPath)
+	if err := reportLayerDisconnectsAfterRebuild(dbPath, w); err != nil {
+		return err
+	}
+	return nil
+}
+
+func reportLayerDisconnectsAfterRebuild(dbPath string, w io.Writer) error {
+	s, err := store.Open(dbPath)
+	if err != nil {
+		return fmt.Errorf("open rebuilt database: %w", err)
+	}
+	defer s.Close()
+
+	issues := checkLayerDisconnectsStore(s)
+	if len(issues) == 0 {
+		return nil
+	}
+	fmt.Fprintln(w, "Layer integration issues after rebuild:")
+	for _, issue := range issues {
+		fmt.Fprintf(w, "  ! %s: %s\n", issue.Entity, issue.Message)
+		if hint := hintFor(issue.Message); hint != "" {
+			fmt.Fprintf(w, "    -> %s\n", hint)
+		}
+	}
 	return nil
 }
 

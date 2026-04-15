@@ -21,21 +21,22 @@ type ReadOptions struct {
 
 // ReadResult is the JSON output for read.
 type ReadResult struct {
-	ID       string   `json:"id"`
-	Type     string   `json:"type"`
-	Title    string   `json:"title"`
-	Goal     string   `json:"goal,omitempty"`
-	Status   string   `json:"status,omitempty"`
-	Category string   `json:"category,omitempty"`
-	ParentID string   `json:"parent,omitempty"`
-	Boundary string   `json:"boundary,omitempty"`
-	Date     string   `json:"date,omitempty"`
-	Uses     []string `json:"uses,omitempty"`
-	Affects  []string `json:"affects,omitempty"`
-	Scope          []string `json:"scope,omitempty"`
-	Body           string   `json:"body"`
-	BodyTruncated  bool     `json:"body_truncated,omitempty"`
-	BodyTotalChars int      `json:"body_total_chars,omitempty"`
+	ID             string     `json:"id"`
+	Type           string     `json:"type"`
+	Title          string     `json:"title"`
+	Goal           string     `json:"goal,omitempty"`
+	Status         string     `json:"status,omitempty"`
+	Category       string     `json:"category,omitempty"`
+	ParentID       string     `json:"parent,omitempty"`
+	Boundary       string     `json:"boundary,omitempty"`
+	Date           string     `json:"date,omitempty"`
+	Uses           []string   `json:"uses,omitempty"`
+	Affects        []string   `json:"affects,omitempty"`
+	Scope          []string   `json:"scope,omitempty"`
+	Body           string     `json:"body"`
+	BodyTruncated  bool       `json:"body_truncated,omitempty"`
+	BodyTotalChars int        `json:"body_total_chars,omitempty"`
+	Help           []HelpHint `json:"help,omitempty"`
 }
 
 // ReadSectionResult is the JSON output for read --section.
@@ -66,9 +67,16 @@ func RunRead(opts ReadOptions, w io.Writer) error {
 		for _, s := range sections {
 			if s.Name == opts.Section {
 				if opts.JSON {
-					return writeJSON(w, ReadSectionResult{Section: s.Name, Content: strings.TrimSpace(s.Content)})
+					return writeJSON(w, struct {
+						ReadSectionResult
+						Help []HelpHint `json:"help,omitempty"`
+					}{
+						ReadSectionResult: ReadSectionResult{Section: s.Name, Content: strings.TrimSpace(s.Content)},
+						Help:              agentHints(cascadeHintsForEntity(entity)),
+					})
 				}
 				fmt.Fprintln(w, strings.TrimSpace(s.Content))
+				writeAgentHints(w, cascadeHintsForEntity(entity))
 				return nil
 			}
 		}
@@ -88,6 +96,7 @@ func RunRead(opts ReadOptions, w io.Writer) error {
 			Boundary: entity.Boundary,
 			Date:     entity.Date,
 			Body:     body,
+			Help:     agentHints(cascadeHintsForEntity(entity)),
 		}
 
 		rels, _ := opts.Store.RelationshipsFrom(entity.ID)
@@ -114,6 +123,7 @@ func RunRead(opts ReadOptions, w io.Writer) error {
 
 	// Default: output as markdown (same format as export)
 	fmt.Fprint(w, buildExportContent(opts.Store, entity))
+	writeAgentHints(w, cascadeHintsForEntity(entity))
 	return nil
 }
 

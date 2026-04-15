@@ -6,8 +6,8 @@ import (
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
-	east "github.com/yuin/goldmark/extension/ast"
 	"github.com/yuin/goldmark/extension"
+	east "github.com/yuin/goldmark/extension/ast"
 	"github.com/yuin/goldmark/text"
 )
 
@@ -71,6 +71,23 @@ func ParseMarkdown(entityID, markdown string) *NodeTree {
 
 			// Recurse into children for container types
 			if isContainer(nodeType) {
+				if nodeType == "list_item" {
+					for gc := c.FirstChild(); gc != nil; gc = gc.NextSibling() {
+						childType, ok := mapNodeType(gc, source)
+						if ok && isContainer(childType) {
+							walk(gc, idx)
+							continue
+						}
+						for nested := gc.FirstChild(); nested != nil; nested = nested.NextSibling() {
+							nestedType, ok := mapNodeType(nested, source)
+							if !ok || !isContainer(nestedType) {
+								continue
+							}
+							walk(nested, idx)
+						}
+					}
+					continue
+				}
 				walk(c, idx)
 			}
 		}

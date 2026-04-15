@@ -46,12 +46,23 @@ func RunGraph(opts GraphOptions, w io.Writer) error {
 	entities := collectSubgraphStore(opts.Store, opts.EntityID, opts.Depth, opts.Direction)
 
 	if opts.JSON {
-		return graphJSONStore(entities, opts.Store, w)
+		if err := graphJSONStore(entities, opts.Store, w); err != nil {
+			return err
+		}
+		return nil
 	}
 	if opts.Format == "mermaid" {
-		return graphMermaidStore(entities, opts.Store, w)
+		if err := graphMermaidStore(entities, opts.Store, w); err != nil {
+			return err
+		}
+		writeAgentHints(w, cascadeHintsForID(opts.Store, opts.EntityID))
+		return nil
 	}
-	return graphTextStore(entities, opts.Store, w)
+	if err := graphTextStore(entities, opts.Store, w); err != nil {
+		return err
+	}
+	writeAgentHints(w, cascadeHintsForID(opts.Store, opts.EntityID))
+	return nil
 }
 
 // collectSubgraphStore returns entities reachable within depth hops from rootID.
@@ -275,6 +286,15 @@ func graphJSONStore(entities []*store.Entity, s *store.Store, w io.Writer) error
 		}
 
 		nodes = append(nodes, node)
+	}
+	if isAgentMode() {
+		return writeJSON(w, struct {
+			Nodes []graphNode `json:"nodes"`
+			Help  []HelpHint  `json:"help,omitempty"`
+		}{
+			Nodes: nodes,
+			Help:  agentHints(cascadeReviewHints()),
+		})
 	}
 	return writeJSON(w, nodes)
 }

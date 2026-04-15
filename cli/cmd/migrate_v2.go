@@ -11,14 +11,36 @@ import (
 )
 
 type MigrateV2Options struct {
-	Store  *store.Store
-	DryRun bool
+	Store    *store.Store
+	DryRun   bool
+	JSON     bool
+	Continue bool
 }
 
 type migrateBlocker struct {
 	ID     string
 	Title  string
 	Issues []Issue
+}
+
+type MigrateBlockerIssue struct {
+	Message string `json:"message"`
+	Hint    string `json:"hint,omitempty"`
+	Matched string `json:"matched,omitempty"`
+}
+
+type MigrateBlockerReport struct {
+	ID     string                `json:"id"`
+	Title  string                `json:"title"`
+	Issues []MigrateBlockerIssue `json:"issues"`
+}
+
+type MigrateReport struct {
+	Status     string                 `json:"status"`
+	WritesMade bool                   `json:"writesMade"`
+	Blocked    int                    `json:"blocked"`
+	Blockers   []MigrateBlockerReport `json:"blockers,omitempty"`
+	Next       []string               `json:"next,omitempty"`
 }
 
 func RunMigrateV2(opts MigrateV2Options, w io.Writer) error {
@@ -32,9 +54,23 @@ func RunMigrateV2(opts MigrateV2Options, w io.Writer) error {
 		return err
 	}
 	if len(blockers) > 0 {
+		if opts.JSON {
+			if err := writeJSON(w, migrateBlockerReport(blockers)); err != nil {
+				return err
+			}
+			return fmt.Errorf("migrate blocked: %d component(s) need repair", len(blockers))
+		}
 		fmt.Fprintf(w, "\n0 migrated, %d blocked\n", len(blockers))
 		writeMigrateBlockerPlan(w, blockers)
 		return fmt.Errorf("migrate blocked: %d component(s) need repair", len(blockers))
+	}
+	if opts.JSON && opts.DryRun {
+		return writeJSON(w, MigrateReport{
+			Status:     "ok",
+			WritesMade: false,
+			Blocked:    0,
+			Next:       []string{"c3x migrate"},
+		})
 	}
 
 	migrated, hasNodes, empty, strictComponents := 0, 0, 0, 0
@@ -167,16 +203,135 @@ func RunMigrateV2(opts MigrateV2Options, w io.Writer) error {
 	return nil
 }
 
+func RunMigrateRepairPlan(s *store.Store, w io.Writer) error {
+	entities, err := s.AllEntities()
+	if err != nil {
+		return fmt.Errorf("listing entities: %w", err)
+	}
+	blockers, err := collectMigrateBlockers(s, entities)
+	if err != nil {
+		return err
+	}
+	if len(blockers) == 0 {
+		fmt.Fprintln(w, "No migration blockers found.")
+		fmt.Fprintln(w, "Next: c3x migrate --continue")
+		return nil
+	}
+	writeMigrateBlockerPlan(w, blockers)
+	return nil
+}
+
+func RunMigrateRepairSection(s *store.Store, id, section, value string, w io.Writer) error {
+	if id == "" {
+		return fmt.Errorf("error: usage: c3x migrate repair <id> --section <name> < content")
+	}
+	if section == "" {
+		return fmt.Errorf("error: c3x migrate repair requires --section <name>")
+	}
+	entities, err := s.AllEntities()
+	if err != nil {
+		return fmt.Errorf("listing entities: %w", err)
+	}
+	blockers, err := collectMigrateBlockers(s, entities)
+	if err != nil {
+		return err
+	}
+	var blocker *migrateBlocker
+	for i := range blockers {
+		if blockers[i].ID == id {
+			blocker = &blockers[i]
+			break
+		}
+	}
+	if blocker == nil {
+		return fmt.Errorf("error: %s is not a current migration blocker\nhint: run 'c3x migrate repair-plan' to list scoped repairs", id)
+	}
+	if !blockerAllowsSection(*blocker, section) {
+		return fmt.Errorf("error: %s section %q is not listed as a migration blocker\nhint: repair only sections named by 'c3x migrate repair-plan'", id, section)
+	}
+	entity, err := s.GetEntity(id)
+	if err != nil {
+		return fmt.Errorf("error: entity %q not found", id)
+	}
+	body, err := content.ReadEntity(s, id)
+	if err != nil {
+		body = s.LegacyBody(id)
+	}
+	strictBody := strictMigrationComponentBody(s, entity, body)
+	repairedBody, err := markdown.ReplaceSection(strictBody, section, value)
+	if err != nil {
+		return fmt.Errorf("error: section %q not found in generated strict migration body for %s", section, id)
+	}
+	if issues := validateBodyContent(repairedBody, entity.Type); len(issues) > 0 {
+		return formatValidationError(id, issues)
+	}
+	if err := content.WriteEntity(s, id, repairedBody); err != nil {
+		return fmt.Errorf("error: writing repaired migration content: %w", err)
+	}
+	if section == "Goal" {
+		if refreshed, err := s.GetEntity(id); err == nil {
+			promoteGoalIfEmpty(refreshed, s)
+			if err := s.UpdateEntity(refreshed); err != nil {
+				return fmt.Errorf("error: updating entity: %w", err)
+			}
+		}
+	}
+	fmt.Fprintf(w, "Updated %s section %q for migration repair\n", id, section)
+	writeAgentHints(w, []HelpHint{
+		{Command: "c3x cache clear", Description: "clear disposable local cache before import"},
+		{Command: "c3x import --force", Description: "rebuild cache from canonical docs"},
+		{Command: "c3x migrate --continue", Description: "resume migration after scoped repair"},
+	})
+	return nil
+}
+
+func blockerAllowsSection(blocker migrateBlocker, section string) bool {
+	for _, issue := range blocker.Issues {
+		if strings.Contains(issue.Message, "in "+section) || strings.Contains(issue.Message, ": "+section) || strings.Contains(issue.Message, section+" ") {
+			return true
+		}
+	}
+	return false
+}
+
 func writeMigrateWriteFailure(w io.Writer, id string, migrated int, err error) {
 	fmt.Fprintf(w, "\nBLOCKED: migration write failed at %s after %d successful write(s).\n", id, migrated)
 	fmt.Fprintf(w, "Reason: %v\n", err)
 	fmt.Fprintln(w, "Why: C3 stopped before canonical export, so submitted .c3/ markdown is not rewritten from a partial cache.")
 	fmt.Fprintln(w, "Fix loop:")
 	fmt.Fprintln(w, "  1. Fix the write/database error above.")
-	fmt.Fprintln(w, "  2. Remove .c3/c3.db* and .c3/.c3.import.tmp.db*.")
+	fmt.Fprintln(w, "  2. Run: c3x cache clear")
 	fmt.Fprintln(w, "  3. Run: c3x import --force")
-	fmt.Fprintln(w, "  4. Run: c3x migrate")
+	fmt.Fprintln(w, "  4. Run: c3x migrate --continue")
 	fmt.Fprintln(w, "  5. Run: c3x check --include-adr && c3x verify")
+}
+
+func migrateBlockerReport(blockers []migrateBlocker) MigrateReport {
+	report := MigrateReport{
+		Status:     "blocked",
+		WritesMade: false,
+		Blocked:    len(blockers),
+		Next: []string{
+			"c3x migrate repair-plan",
+			"c3x migrate repair <id> --section <section>",
+			"c3x cache clear",
+			"c3x import --force",
+			"c3x migrate --continue",
+			"c3x check --include-adr && c3x verify",
+		},
+	}
+	for _, blocker := range blockers {
+		item := MigrateBlockerReport{ID: blocker.ID, Title: blocker.Title}
+		for _, issue := range blocker.Issues {
+			item.Issues = append(item.Issues, MigrateBlockerIssue{
+				Message: issue.Message,
+				Hint:    issue.Hint,
+				Matched: issue.Matched,
+			})
+		}
+		report.Blockers = append(report.Blockers, item)
+	}
+	return report
 }
 
 func collectMigrateBlockers(s *store.Store, entities []*store.Entity) ([]migrateBlocker, error) {
@@ -187,13 +342,13 @@ func collectMigrateBlockers(s *store.Store, entities []*store.Entity) ([]migrate
 		}
 		nodes, err := s.NodesForEntity(e.ID)
 		if err != nil {
-			return nil, fmt.Errorf("preflight failed while checking nodes for %s: %w\nhint: remove .c3/c3.db* and .c3/.c3.import.tmp.db*, then run c3x import --force && c3x migrate", e.ID, err)
+			return nil, fmt.Errorf("preflight failed while checking nodes for %s: %w\nhint: run c3x cache clear, then c3x import --force && c3x migrate --continue", e.ID, err)
 		}
 		var body string
 		if len(nodes) > 0 {
 			body, err = content.ReadEntity(s, e.ID)
 			if err != nil {
-				return nil, fmt.Errorf("preflight failed while reading component body %s: %w\nhint: remove .c3/c3.db* and .c3/.c3.import.tmp.db*, then run c3x import --force && c3x migrate", e.ID, err)
+				return nil, fmt.Errorf("preflight failed while reading component body %s: %w\nhint: run c3x cache clear, then c3x import --force && c3x migrate --continue", e.ID, err)
 			}
 			if len(validateStrictComponentDoc(body, "error")) == 0 {
 				continue
@@ -203,25 +358,41 @@ func collectMigrateBlockers(s *store.Store, entities []*store.Entity) ([]migrate
 		}
 		strictBody := strictMigrationComponentBody(s, e, body)
 		if issues := validateStrictComponentDoc(strictBody, "error"); len(issues) > 0 {
+			issues = annotateMigrateIssues(issues, strictBody)
 			blockers = append(blockers, migrateBlocker{ID: e.ID, Title: e.Title, Issues: issues})
 		}
 	}
 	return blockers, nil
 }
 
+func annotateMigrateIssues(issues []Issue, body string) []Issue {
+	for i := range issues {
+		if issues[i].Matched != "" || !strings.Contains(issues[i].Message, "placeholder language") {
+			continue
+		}
+		issues[i].Matched = placeholderPattern.FindString(body)
+	}
+	return issues
+}
+
 func writeMigrateBlockerPlan(w io.Writer, blockers []migrateBlocker) {
 	fmt.Fprintf(w, "\nBLOCKED: %d component(s) need repair before migration can finish.\n", len(blockers))
 	fmt.Fprintln(w, "Why: strict component docs are all-or-nothing; C3 made no migration writes.")
+	fmt.Fprintln(w, "writesMade: false")
 	fmt.Fprintln(w, "Fix loop:")
-	fmt.Fprintln(w, "  1. Edit the listed component docs in the copied/sandbox tree.")
-	fmt.Fprintln(w, "  2. Remove .c3/c3.db* and .c3/.c3.import.tmp.db*.")
-	fmt.Fprintln(w, "  3. Run: c3x import --force")
-	fmt.Fprintln(w, "  4. Run: c3x migrate")
-	fmt.Fprintln(w, "  5. Run: c3x check --include-adr && c3x verify")
+	fmt.Fprintln(w, "  1. Inspect the blockers below.")
+	fmt.Fprintln(w, "  2. Run scoped repairs: c3x migrate repair <id> --section <section> < content.md")
+	fmt.Fprintln(w, "  3. Run: c3x cache clear")
+	fmt.Fprintln(w, "  4. Run: c3x import --force")
+	fmt.Fprintln(w, "  5. Run: c3x migrate --continue")
+	fmt.Fprintln(w, "  6. Run: c3x check --include-adr && c3x verify")
 	for _, blocker := range blockers {
 		fmt.Fprintf(w, "\n%s %s\n", blocker.ID, blocker.Title)
 		for _, issue := range blocker.Issues {
 			fmt.Fprintf(w, "  - %s\n", issue.Message)
+			if issue.Matched != "" {
+				fmt.Fprintf(w, "    matched: %s\n", issue.Matched)
+			}
 			fmt.Fprintf(w, "    fix: update %s so generated strict sections pass validation.\n", blocker.ID)
 			if strings.Contains(issue.Message, "placeholder language") {
 				fmt.Fprintln(w, "    common rewrite: optional->secondary, todo->task, later->future, TBD->specified decision.")

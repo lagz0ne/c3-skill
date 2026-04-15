@@ -98,6 +98,30 @@ func TestRun_ListWithDB(t *testing.T) {
 	}
 }
 
+func TestRun_CacheClearDoesNotRequireDatabase(t *testing.T) {
+	c3Dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(c3Dir, "c3.db"), []byte("cache"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(c3Dir, "README.md"), []byte("canonical"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	if err := run([]string{"--c3-dir", c3Dir, "cache", "clear"}, &buf); err != nil {
+		t.Fatal(err)
+	}
+	if fileExists(filepath.Join(c3Dir, "c3.db")) {
+		t.Fatal("expected cache clear to remove c3.db")
+	}
+	if !fileExists(filepath.Join(c3Dir, "README.md")) {
+		t.Fatal("cache clear must not remove canonical markdown")
+	}
+	if !strings.Contains(buf.String(), "Cleared 1 local C3 cache file") {
+		t.Fatalf("unexpected output: %s", buf.String())
+	}
+}
+
 func TestRun_CheckWithDB(t *testing.T) {
 	c3Dir := setupC3DB(t)
 	var buf bytes.Buffer

@@ -5,6 +5,12 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.1.5] - 2026-04-15
+
+### Added
+
+- **Tight migration repair commands** — `c3x migrate --dry-run --json` now emits structured blocker reports with `writesMade:false` and matched bad-token examples; `c3x migrate repair-plan` prints the exact safe repair loop; `c3x cache clear` replaces manual cache `rm`; `c3x migrate repair <id> --section <name>` performs scoped blocker repair; `c3x migrate --continue` resumes the same migration intent after repair/import.
+
 ## [9.1.4] - 2026-04-15
 
 ### Fixed

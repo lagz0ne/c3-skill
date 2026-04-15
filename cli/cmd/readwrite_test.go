@@ -435,18 +435,18 @@ func TestRunRead_AgentTruncatesBody(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var result ReadResult
-	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
-		t.Fatalf("JSON parse: %v", err)
+	out := buf.String()
+	if strings.HasPrefix(strings.TrimSpace(out), "{") {
+		t.Fatalf("agent read should not emit JSON:\n%s", out)
 	}
-	if !result.BodyTruncated {
+	if !strings.Contains(out, "body_truncated: true") {
 		t.Error("body should be truncated in agent mode")
 	}
-	if result.BodyTotalChars == 0 {
+	if !strings.Contains(out, "body_total_chars:") {
 		t.Error("body_total_chars should be set")
 	}
-	if len(result.Body) > 1500 {
-		t.Errorf("body length %d exceeds truncation limit", len(result.Body))
+	if strings.Contains(out, strings.Repeat("Lorem ipsum dolor sit amet. ", 80)) {
+		t.Error("agent read body should be truncated")
 	}
 }
 
@@ -463,13 +463,15 @@ func TestRunRead_AgentFullBypassesTruncation(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var result ReadResult
-	json.Unmarshal(buf.Bytes(), &result)
-	if result.BodyTruncated {
+	out := buf.String()
+	if strings.HasPrefix(strings.TrimSpace(out), "{") {
+		t.Fatalf("agent read --full should not emit JSON:\n%s", out)
+	}
+	if strings.Contains(out, "body_truncated: true") {
 		t.Error("body should not be truncated with --full")
 	}
-	if len(result.Body) <= 1500 {
-		t.Errorf("full body should be > 1500 chars, got %d", len(result.Body))
+	if !strings.Contains(out, strings.Repeat("Lorem ipsum dolor sit amet. ", 80)) {
+		t.Error("full body should include long body content")
 	}
 }
 

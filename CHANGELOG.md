@@ -5,6 +5,13 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.1.1] - 2026-04-15
+
+### Fixed
+
+- **Agent mode is TOON-only** — `C3X_MODE=agent` now returns TOON even when `--json` is passed or an older command path routes through structured output.
+- **Agent docs no longer instruct JSON parsing** — migration and runtime guidance now describe TOON manifests for agent-mode workflows.
+
 ## [9.1.0] - 2026-04-15
 
 ### Changed

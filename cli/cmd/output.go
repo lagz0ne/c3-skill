@@ -12,18 +12,18 @@ import (
 type OutputFormat int
 
 const (
-	FormatJSON  OutputFormat = iota // --json explicit or non-agent
-	FormatTOON                      // C3X_MODE=agent default (no --json)
+	FormatJSON  OutputFormat = iota // --json explicit outside agent mode
+	FormatTOON                      // C3X_MODE=agent machine output
 	FormatHuman                     // non-agent, non-json
 )
 
 // ResolveFormat determines output format from options and environment.
 func ResolveFormat(jsonExplicit bool, agent bool) OutputFormat {
-	if jsonExplicit {
-		return FormatJSON
-	}
 	if agent {
 		return FormatTOON
+	}
+	if jsonExplicit {
+		return FormatJSON
 	}
 	return FormatHuman
 }

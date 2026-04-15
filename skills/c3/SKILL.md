@@ -5,7 +5,7 @@ description: >
   about a project with a .c3/ directory. Trigger phrases: "adopt C3", "onboard this
   project", "where is X", "audit the architecture", "check docs", "add a component",
   "implement feature", "what breaks if I change X", "add a ref", "add a coding rule",
-  "coding standard". Handles operations: onboard, query, audit, change, ref, rule, sweep.
+  "coding standard". Handles operations: onboard, query, audit, change, migrate, ref, rule, sweep.
   Classifies intent, loads ref, executes.
 ---
 
@@ -68,7 +68,7 @@ Types for `add`: `container`, `component`, `ref`, `rule`, `adr`, `recipe`
 
 ## Dispatch
 
-1. Classify op (ambiguous → `AskUserQuestion` with 7 options)
+1. Classify op (ambiguous → `AskUserQuestion` with supported operation options)
 2. Load `references/<op>.md`
 3. Execute (use Task tool for parallelism)
 

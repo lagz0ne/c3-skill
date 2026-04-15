@@ -76,7 +76,7 @@ func newComponentTopDownHints(entity *store.Entity) []HelpHint {
 		)
 	}
 	hints = append(hints,
-		HelpHint{Command: fmt.Sprintf("c3x read %s", entity.ID), Description: "then refine component Goal/Dependencies/Container Connection"},
+		HelpHint{Command: fmt.Sprintf("c3x read %s", entity.ID), Description: "then refine strict component Goal, Parent Fit, Governance, Contract, and Change Safety"},
 		HelpHint{Command: "ADR Parent Delta", Description: "new component cannot finish without parent update evidence"},
 	)
 	return hints

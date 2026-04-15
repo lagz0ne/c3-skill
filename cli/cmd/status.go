@@ -133,4 +133,3 @@ func writeHumanStatus(w io.Writer, r StatusResult) error {
 	fmt.Fprintln(w, line)
 	return nil
 }
-

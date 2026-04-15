@@ -20,20 +20,47 @@ type ColumnDef struct {
 var Registry = map[string][]SectionDef{
 	"component": {
 		{Name: "Goal", ContentType: "text", Required: true, Purpose: "What this component exists to do"},
-		{Name: "Dependencies", ContentType: "table", Required: true, Purpose: "Data flowing in and out", Columns: []ColumnDef{
-			{Name: "Direction", Type: "enum", Values: []string{"IN", "OUT"}},
-			{Name: "What", Type: "text"},
-			{Name: "From/To", Type: "entity_id"},
+		{Name: "Parent Fit", ContentType: "table", Required: true, Purpose: "How this component fits top-down into the parent container", Columns: []ColumnDef{
+			{Name: "Field", Type: "text"},
+			{Name: "Value", Type: "text"},
 		}},
-		{Name: "Related Refs", ContentType: "table", Required: false, Purpose: "Cross-cutting concerns applied here", Columns: []ColumnDef{
-			{Name: "Ref", Type: "ref_id"},
-			{Name: "Role", Type: "text"},
+		{Name: "Purpose", ContentType: "text", Required: true, Purpose: "Concrete ownership and non-goals"},
+		{Name: "Foundational Flow", ContentType: "table", Required: true, Purpose: "Preconditions, inputs, state, and shared dependencies", Columns: []ColumnDef{
+			{Name: "Aspect", Type: "text"},
+			{Name: "Detail", Type: "text"},
+			{Name: "Reference", Type: "text"},
 		}},
-		{Name: "Related Rules", ContentType: "table", Required: false, Purpose: "Coding standards enforced here", Columns: []ColumnDef{
-			{Name: "Rule", Type: "ref_id"},
-			{Name: "Role", Type: "text"},
+		{Name: "Business Flow", ContentType: "table", Required: true, Purpose: "Business outcome, primary path, alternates, and failure behavior", Columns: []ColumnDef{
+			{Name: "Aspect", Type: "text"},
+			{Name: "Detail", Type: "text"},
+			{Name: "Reference", Type: "text"},
 		}},
-		{Name: "Container Connection", ContentType: "text", Required: false, Purpose: "How this component fits in the container"},
+		{Name: "Governance", ContentType: "table", Required: true, Purpose: "Refs, rules, ADRs, specs, and precedence governing this component", Columns: []ColumnDef{
+			{Name: "Reference", Type: "text"},
+			{Name: "Type", Type: "enum", Values: []string{"ref", "rule", "adr", "spec", "policy", "example", "N.A - <reason>"}},
+			{Name: "Governs", Type: "text"},
+			{Name: "Precedence", Type: "text"},
+			{Name: "Notes", Type: "text"},
+		}},
+		{Name: "Contract", ContentType: "table", Required: true, Purpose: "Behavior surfaces that downstream code/material must honor", Columns: []ColumnDef{
+			{Name: "Surface", Type: "text"},
+			{Name: "Direction", Type: "enum", Values: []string{"IN", "OUT", "IN/OUT", "N.A - <reason>"}},
+			{Name: "Contract", Type: "text"},
+			{Name: "Boundary", Type: "text"},
+			{Name: "Evidence", Type: "text"},
+		}},
+		{Name: "Change Safety", ContentType: "table", Required: true, Purpose: "Risks, triggers, detection, and verification required before done", Columns: []ColumnDef{
+			{Name: "Risk", Type: "text"},
+			{Name: "Trigger", Type: "text"},
+			{Name: "Detection", Type: "text"},
+			{Name: "Required Verification", Type: "text"},
+		}},
+		{Name: "Derived Materials", ContentType: "table", Required: true, Purpose: "Code, config, tests, docs, prompts, or assets that must derive from this component", Columns: []ColumnDef{
+			{Name: "Material", Type: "text"},
+			{Name: "Must derive from", Type: "text"},
+			{Name: "Allowed variance", Type: "text"},
+			{Name: "Evidence", Type: "text"},
+		}},
 	},
 	"container": {
 		{Name: "Goal", ContentType: "text", Required: true, Purpose: "What this container exists to do"},

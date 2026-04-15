@@ -47,16 +47,16 @@ func TestRuleSchemaExists(t *testing.T) {
 	}
 }
 
-func TestComponentSchemaHasRelatedRules(t *testing.T) {
+func TestComponentSchemaHasGovernance(t *testing.T) {
 	sections := ForType("component")
 	found := false
 	for _, s := range sections {
-		if s.Name == "Related Rules" {
+		if s.Name == "Governance" {
 			found = true
 		}
 	}
 	if !found {
-		t.Error("component schema should have 'Related Rules' section")
+		t.Error("component schema should have 'Governance' section")
 	}
 }
 

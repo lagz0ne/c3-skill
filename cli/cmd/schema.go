@@ -9,7 +9,7 @@ import (
 
 // SchemaOutput is the JSON structure returned by the schema command.
 type SchemaOutput struct {
-	Type     string             `json:"type"`
+	Type     string              `json:"type"`
 	Sections []schema.SectionDef `json:"sections"`
 }
 

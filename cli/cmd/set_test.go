@@ -9,7 +9,7 @@ import (
 )
 
 func TestRunSet_FrontmatterField(t *testing.T) {
-	s := createDBFixture(t)
+	s := createRichDBFixture(t)
 	var buf bytes.Buffer
 
 	opts := SetOptions{Store: s, ID: "c3-101", Field: "goal", Value: "Handle JWT authentication"}
@@ -146,8 +146,8 @@ func TestRunSet_SectionAppend(t *testing.T) {
 	opts := SetOptions{
 		Store:   s,
 		ID:      "c3-101",
-		Section: "Dependencies",
-		Value:   `{"Direction":"OUT","What":"events","From/To":"c3-103"}`,
+		Section: "Contract",
+		Value:   `{"Surface":"events","Direction":"OUT","Contract":"Emit rate limit events after authentication checks.","Boundary":"API request boundary","Evidence":"go test ./..."}`,
 		Append:  true,
 	}
 	err := RunSet(opts, &buf)
@@ -157,7 +157,7 @@ func TestRunSet_SectionAppend(t *testing.T) {
 
 	body, _ := content.ReadEntity(s, "c3-101")
 	// Original row should survive
-	if !strings.Contains(body, "user credentials") {
+	if !strings.Contains(body, "credentials") {
 		t.Error("existing row should be preserved")
 	}
 	// New row should be added
@@ -176,7 +176,7 @@ func TestRunSet_AllFields(t *testing.T) {
 
 	for field, value := range fields {
 		t.Run(field, func(t *testing.T) {
-			s := createDBFixture(t)
+			s := createRichDBFixture(t)
 			var buf bytes.Buffer
 			opts := SetOptions{Store: s, ID: "c3-101", Field: field, Value: value}
 			err := RunSet(opts, &buf)
@@ -209,8 +209,8 @@ func TestRunSet_SectionJSONArray(t *testing.T) {
 	opts := SetOptions{
 		Store:   s,
 		ID:      "c3-101",
-		Section: "Related Refs",
-		Value:   `[{"Ref":"ref-logging","Role":"Structured logging"}]`,
+		Section: "Governance",
+		Value:   `[{"Reference":"ref-logging","Type":"ref","Governs":"Structured logging behavior.","Precedence":"scoped ref beats local prose","Notes":"Added by set test."}]`,
 	}
 	err := RunSet(opts, &buf)
 	if err != nil {
@@ -230,7 +230,7 @@ func TestRunSet_SectionAppendInvalidJSON(t *testing.T) {
 	opts := SetOptions{
 		Store:   s,
 		ID:      "c3-101",
-		Section: "Dependencies",
+		Section: "Governance",
 		Value:   "not json",
 		Append:  true,
 	}
@@ -242,8 +242,8 @@ func TestRunSet_SectionAppendInvalidJSON(t *testing.T) {
 
 func TestRunSet_SectionJSONArray_NoExistingTable(t *testing.T) {
 	s := createRichDBFixture(t)
-	// Set up an entity with required sections + a custom section via node tree
-	newBody := "# users\n\n## Goal\n\nManage users.\n\n## Dependencies\n\n| Direction | What | From/To |\n|-----------|------|----------|\n| IN | data | c3-101 |\n\n## Custom Section\n\nSome text here.\n"
+	// Set up an entity with strict sections + a custom section via node tree
+	newBody := strictComponentBody("users", "Manage user behavior for authenticated API requests.") + "\n## Custom Section\n\nSome text here.\n"
 	content.WriteEntity(s, "c3-110", newBody)
 
 	var buf bytes.Buffer
@@ -319,7 +319,7 @@ func TestIsJSONArray(t *testing.T) {
 // === CODEMAP TESTS ===
 
 func TestRunSet_CodemapReplace(t *testing.T) {
-	s := createDBFixture(t)
+	s := createRichDBFixture(t)
 	// Seed existing patterns
 	s.SetCodeMap("c3-101", []string{"src/old/**"})
 
@@ -345,7 +345,7 @@ func TestRunSet_CodemapReplace(t *testing.T) {
 }
 
 func TestRunSet_CodemapAppend(t *testing.T) {
-	s := createDBFixture(t)
+	s := createRichDBFixture(t)
 	s.SetCodeMap("c3-101", []string{"src/auth/**"})
 
 	var buf bytes.Buffer
@@ -365,7 +365,7 @@ func TestRunSet_CodemapAppend(t *testing.T) {
 }
 
 func TestRunSet_CodemapRemove(t *testing.T) {
-	s := createDBFixture(t)
+	s := createRichDBFixture(t)
 	s.SetCodeMap("c3-101", []string{"src/auth/**", "src/auth.go", "src/utils.go"})
 
 	var buf bytes.Buffer
@@ -385,7 +385,7 @@ func TestRunSet_CodemapRemove(t *testing.T) {
 }
 
 func TestRunSet_CodemapRemoveNonexistent(t *testing.T) {
-	s := createDBFixture(t)
+	s := createRichDBFixture(t)
 	s.SetCodeMap("c3-101", []string{"src/auth/**"})
 
 	var buf bytes.Buffer
@@ -397,7 +397,7 @@ func TestRunSet_CodemapRemoveNonexistent(t *testing.T) {
 }
 
 func TestRunSet_CodemapBatchStdin(t *testing.T) {
-	s := createDBFixture(t)
+	s := createRichDBFixture(t)
 
 	var buf bytes.Buffer
 	payload := `{"fields":{"goal":"New goal"},"codemap":["src/auth/**","src/auth.go"]}`
@@ -419,7 +419,7 @@ func TestRunSet_CodemapBatchStdin(t *testing.T) {
 }
 
 func TestRunSet_CodemapEmpty(t *testing.T) {
-	s := createDBFixture(t)
+	s := createRichDBFixture(t)
 	s.SetCodeMap("c3-101", []string{"src/auth/**"})
 
 	var buf bytes.Buffer
@@ -437,7 +437,7 @@ func TestRunSet_CodemapEmpty(t *testing.T) {
 }
 
 func TestRunSet_CodemapAppendRemoveMutualExclusion(t *testing.T) {
-	s := createDBFixture(t)
+	s := createRichDBFixture(t)
 	var buf bytes.Buffer
 
 	opts := SetOptions{Store: s, ID: "c3-101", Field: "codemap", Value: "src/auth/**", Append: true, Remove: true}
@@ -451,7 +451,7 @@ func TestRunSet_CodemapAppendRemoveMutualExclusion(t *testing.T) {
 }
 
 func TestRunSet_CodemapAppendDuplicate(t *testing.T) {
-	s := createDBFixture(t)
+	s := createRichDBFixture(t)
 	s.SetCodeMap("c3-101", []string{"src/auth/**"})
 
 	var buf bytes.Buffer
@@ -471,7 +471,7 @@ func TestRunSet_CodemapAppendDuplicate(t *testing.T) {
 }
 
 func TestRunSet_CodemapBatchClear(t *testing.T) {
-	s := createDBFixture(t)
+	s := createRichDBFixture(t)
 	s.SetCodeMap("c3-101", []string{"src/auth/**", "src/utils.go"})
 
 	var buf bytes.Buffer
@@ -498,7 +498,7 @@ func TestRunSet_SectionPopulatesNodeTree(t *testing.T) {
 		Store:   s,
 		ID:      "c3-101",
 		Section: "Goal",
-		Value:   "Node-tree set goal.",
+		Value:   "Node-tree set authentication goal.",
 	}
 	err := RunSet(opts, &buf)
 	if err != nil {
@@ -510,7 +510,7 @@ func TestRunSet_SectionPopulatesNodeTree(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(rendered, "Node-tree set goal.") {
+	if !strings.Contains(rendered, "Node-tree set authentication goal.") {
 		t.Errorf("node tree should contain updated section, got: %s", rendered)
 	}
 
@@ -524,7 +524,7 @@ func TestRunSet_BatchSectionsPopulateNodeTree(t *testing.T) {
 	s := createRichDBFixture(t)
 	var buf bytes.Buffer
 
-	payload := `{"fields":{"goal":"batch goal"},"sections":{"Goal":"Batch node-tree goal."}}`
+	payload := `{"fields":{"goal":"batch goal"},"sections":{"Goal":"Batch node-tree authentication goal."}}`
 	opts := SetOptions{
 		Store: s,
 		ID:    "c3-101",
@@ -540,11 +540,39 @@ func TestRunSet_BatchSectionsPopulateNodeTree(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(rendered, "Batch node-tree goal.") {
+	if !strings.Contains(rendered, "Batch node-tree authentication goal.") {
 		t.Errorf("node tree should contain batch-updated section, got: %s", rendered)
 	}
 
 	// Verify batch fields were applied (goal was in the batch payload)
 	entity, _ := s.GetEntity("c3-101")
 	_ = entity // fields verified via node tree
+}
+
+func TestRunSet_BatchFieldOnlyValidatesCurrentComponentBody(t *testing.T) {
+	s := createRichDBFixture(t)
+	content.WriteEntity(s, "c3-101", "# auth\n\n## Goal\n\nThin goal only.\n")
+	var buf bytes.Buffer
+
+	payload := `{"fields":{"goal":"new goal"}}`
+	err := RunSet(SetOptions{
+		Store: s,
+		ID:    "c3-101",
+		Value: payload,
+		Stdin: true,
+	}, &buf)
+	if err == nil {
+		t.Fatal("expected strict validation failure")
+	}
+	if !strings.Contains(err.Error(), "Parent Fit") {
+		t.Fatalf("expected strict component error, got %v", err)
+	}
+
+	entity, getErr := s.GetEntity("c3-101")
+	if getErr != nil {
+		t.Fatal(getErr)
+	}
+	if entity.Goal == "new goal" {
+		t.Fatal("field-only batch must not mutate malformed component")
+	}
 }

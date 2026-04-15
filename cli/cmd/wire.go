@@ -45,12 +45,8 @@ func RunWire(s *store.Store, sourceID, relationType, targetID string, w io.Write
 		return fmt.Errorf("adding relationship: %w", err)
 	}
 
-	// Update body table if source has a "Related Refs" or "Related Rules" section
-	sectionName, colName := citeTarget(targetID)
-	if err := addTableRowIfAbsentStore(s, srcEntity, sectionName, colName, targetID, map[string]string{
-		colName: targetID,
-		"Role":  "",
-	}); err != nil {
+	sectionName, colName, row := citeRow(srcEntity, targetID)
+	if err := addTableRowIfAbsentStore(s, srcEntity, sectionName, colName, targetID, row); err != nil {
 		return fmt.Errorf("body table update: %w", err)
 	}
 
@@ -85,13 +81,31 @@ func RunUnwire(s *store.Store, sourceID, relationType, targetID string, w io.Wri
 	}
 
 	// Update body table
-	sectionName, colName := citeTarget(targetID)
+	sectionName, colName, _ := citeRow(srcEntity, targetID)
 	if err := removeTableRowStore(s, srcEntity, sectionName, colName, targetID); err != nil {
 		return fmt.Errorf("body table update: %w", err)
 	}
 
 	fmt.Fprintf(w, "Unwired %s -[cite]-> %s\n", sourceID, targetID)
 	return nil
+}
+
+func citeRow(source *store.Entity, targetID string) (sectionName, colName string, row map[string]string) {
+	if source != nil && source.Type == "component" {
+		targetType := "ref"
+		if strings.HasPrefix(targetID, "rule-") {
+			targetType = "rule"
+		}
+		return "Governance", "Reference", map[string]string{
+			"Reference":  targetID,
+			"Type":       targetType,
+			"Governs":    "Citation added by c3x wire; refine the governed behavior before review.",
+			"Precedence": "wired citation beats uncited local prose",
+			"Notes":      "Added by c3x wire.",
+		}
+	}
+	sectionName, colName = citeTarget(targetID)
+	return sectionName, colName, map[string]string{colName: targetID, "Role": ""}
 }
 
 // addTableRowIfAbsentStore adds a row to a section's table if no row with matchCol==matchVal exists.

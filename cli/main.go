@@ -114,7 +114,7 @@ func run(argv []string, w io.Writer) error {
 	dbPath := filepath.Join(c3Dir, "c3.db")
 	hasDB := fileExists(dbPath)
 	hasCanonical := hasCanonicalDocs(c3Dir)
-	skipPreVerify := opts.Command == "sync" && len(opts.Args) >= 1 && opts.Args[0] == "export"
+	skipPreVerify := (opts.Command == "sync" && len(opts.Args) >= 1 && opts.Args[0] == "export") || opts.Command == "migrate"
 
 	// v9 workflow treats canonical .c3/ markdown as submitted truth.
 	// When canonical files exist, refresh/rebuild local cache from them before dispatch.

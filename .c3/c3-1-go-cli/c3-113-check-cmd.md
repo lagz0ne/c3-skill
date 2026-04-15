@@ -1,7 +1,7 @@
 ---
 id: c3-113
 c3-version: 4
-c3-seal: 49e35a9778ecc2bbdf32d673da5c6004f4569e768158e2be6fcb93a40eb795ec
+c3-seal: 6b285eb0eab5d3de8488f29766f92a1ff32f77c65ca15dee70f230255da33931
 title: check-cmd
 type: component
 category: feature
@@ -19,17 +19,53 @@ uses:
 
 Validate structural integrity of `.c3/` docs, ref and rule compliance — required fields, numbering, wiring, scope cross-checks, origin validation.
 
-## Dependencies
+## Parent Fit
 
-| Direction | What | From/To |
-| --- | --- | --- |
-| IN (uses) | Entity graph | c3-102 |
-| IN (uses) | Citation validation | c3-104 |
-| OUT (provides) | PASS/WARN/FAIL report |  |
-## Code References
-
-| File | Purpose |
+| Field | Value |
 | --- | --- |
-| cli/cmd/check_enhanced.go | Enhanced check with structured output |
-| cli/internal/schema/schema.go | Section schema definitions |
-| cli/internal/index/index.go | Structural index builder |
+| Parent | c3-1 |
+| Role | Own check-cmd behavior inside the parent container without taking over sibling responsibilities. |
+| Boundary | Keep check-cmd decisions inside this component and escalate container-wide policy to the parent. |
+| Collaboration | Coordinate with cited governance and adjacent components before changing the contract. |
+## Purpose
+
+Provide durable agent-ready documentation for check-cmd so generated code, tests, and follow-up docs preserve ownership, boundaries, governance, and verification evidence.
+
+## Foundational Flow
+
+| Aspect | Detail | Reference |
+| --- | --- | --- |
+| Preconditions | Parent container context is loaded before check-cmd behavior is changed. | c3-1 |
+| Inputs | Accept only the files, commands, data, or calls that belong to check-cmd ownership. | c3-1 |
+| State / data | Preserve explicit state boundaries and avoid hidden cross-component ownership. | c3-1 |
+| Shared dependencies | Use lower-layer helpers and cited references instead of duplicating shared policy. | c3-1 |
+## Business Flow
+
+| Aspect | Detail | Reference |
+| --- | --- | --- |
+| Actor / caller | Agent, command, or workflow asks check-cmd to deliver its documented responsibility. | c3-1 |
+| Primary path | Follow the component goal, honor parent fit, and emit behavior through the documented contract. | c3-1 |
+| Alternate paths | When a request falls outside check-cmd ownership, hand it to the parent or sibling component. | c3-1 |
+| Failure behavior | Surface mismatch through check, tests, lookup, or review evidence before derived work ships. | c3-1 |
+## Governance
+
+| Reference | Type | Governs | Precedence | Notes |
+| --- | --- | --- | --- | --- |
+| c3-1 | policy | Governs check-cmd behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
+## Contract
+
+| Surface | Direction | Contract | Boundary | Evidence |
+| --- | --- | --- | --- | --- |
+| check-cmd input | IN | Callers must provide context that matches the component goal and parent fit. | c3-1 boundary | c3x lookup plus targeted tests or review. |
+| check-cmd output | OUT | Derived code, docs, and tests must preserve the documented behavior and governance. | c3-1 boundary | c3x check and project test suite. |
+## Change Safety
+
+| Risk | Trigger | Detection | Required Verification |
+| --- | --- | --- | --- |
+| Contract drift | Goal, boundary, or derived material changes without matching component docs. | Compare Goal, Parent Fit, Contract, and Derived Materials. | Run c3x check and relevant project tests. |
+| Governance drift | Cited references, rules, or parent responsibilities change. | Re-read Governance rows and parent container docs. | Run c3x verify plus targeted lookup for changed files. |
+## Derived Materials
+
+| Material | Must derive from | Allowed variance | Evidence |
+| --- | --- | --- | --- |
+| Code, docs, tests, prompts | Goal, Governance, Contract, and Change Safety sections. | Names and framework shape may vary; behavior and boundaries may not. | c3x check, c3x verify, and relevant tests. |

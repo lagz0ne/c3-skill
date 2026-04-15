@@ -5,6 +5,13 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.1.0] - 2026-04-15
+
+### Changed
+
+- **Strict component docs promoted to a minor release** — the all-or-nothing component contract has broad authoring impact, so the intended release line is now `9.1.0`.
+- **Npm shim keeps human defaults** — `@c3x/cli` now strips inherited `C3X_MODE` before delegating to `c3x.sh`; agent mode stays owned by skill wrappers.
+
 ## [9.0.1] - 2026-04-15
 
 ### Added

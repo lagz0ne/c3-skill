@@ -157,11 +157,14 @@ if (!best) {
 }
 
 const c3xSh = join(best.binDir, 'c3x.sh')
+const childEnv = { ...process.env }
+delete childEnv.C3X_MODE
 
 try {
   execFileSync('bash', [c3xSh, ...rest], {
     stdio: 'inherit',
     cwd: process.cwd(),
+    env: childEnv,
   })
 } catch (err: any) {
   process.exit(err.status ?? 1)

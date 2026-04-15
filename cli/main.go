@@ -104,6 +104,9 @@ func run(argv []string, w io.Writer) error {
 	if opts.Command == "repair" {
 		return cmd.RunRepair(cmd.RepairOptions{C3Dir: c3Dir, JSON: opts.JSON}, w)
 	}
+	if opts.Command == "cache" {
+		return runCache(opts, c3Dir, w)
+	}
 
 	dbPath := filepath.Join(c3Dir, "c3.db")
 	hasDB := fileExists(dbPath)
@@ -386,7 +389,30 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) err
 		}
 		err = cmd.RunPrune(cmd.PruneOptions{Store: s, EntityID: entityID, Keep: opts.Keep}, w)
 	case "migrate":
-		err = cmd.RunMigrateV2(cmd.MigrateV2Options{Store: s, DryRun: opts.DryRun}, w)
+		subCmd := ""
+		if len(opts.Args) >= 1 {
+			subCmd = opts.Args[0]
+		}
+		switch subCmd {
+		case "repair-plan":
+			err = cmd.RunMigrateRepairPlan(s, w)
+		case "repair":
+			id := ""
+			if len(opts.Args) >= 2 {
+				id = opts.Args[1]
+			}
+			stat, _ := os.Stdin.Stat()
+			if (stat.Mode() & os.ModeCharDevice) != 0 {
+				return fmt.Errorf("error: no input on stdin\nhint: pipe content: cat section.md | c3x migrate repair <id> --section <name>")
+			}
+			content, readErr := io.ReadAll(os.Stdin)
+			if readErr != nil {
+				return fmt.Errorf("error: reading stdin: %w", readErr)
+			}
+			err = cmd.RunMigrateRepairSection(s, id, opts.Section, string(content), w)
+		default:
+			err = cmd.RunMigrateV2(cmd.MigrateV2Options{Store: s, DryRun: opts.DryRun, JSON: opts.JSON, Continue: opts.Continue}, w)
+		}
 	default:
 		return fmt.Errorf("error: unknown command '%s'\nhint: run 'c3x --help' to see available commands", opts.Command)
 	}
@@ -407,9 +433,26 @@ func commandMutatesCanonical(opts cmd.Options) bool {
 	case "delete":
 		return !opts.DryRun
 	case "migrate":
+		if len(opts.Args) >= 1 && opts.Args[0] == "repair-plan" {
+			return false
+		}
 		return !opts.DryRun
 	default:
 		return false
+	}
+}
+
+func runCache(opts cmd.Options, c3Dir string, w io.Writer) error {
+	subCmd := ""
+	if len(opts.Args) >= 1 {
+		subCmd = opts.Args[0]
+	}
+	switch subCmd {
+	case "clear":
+		return cmd.RunCacheClear(c3Dir, w)
+	default:
+		cmd.ShowHelp("cache", w)
+		return nil
 	}
 }
 

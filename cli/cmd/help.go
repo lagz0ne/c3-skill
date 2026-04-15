@@ -488,18 +488,44 @@ Examples:
 	{
 		Name:     "migrate",
 		OneLiner: "Populate content node tree for all entities",
-		Help: `Usage: c3x migrate [--dry-run]
+		Help: `Usage: c3x migrate [--dry-run] [--json]
+       c3x migrate repair-plan
+       c3x migrate repair <id> --section <name> < content.md
+       c3x migrate --continue
 
 Populates the content node tree for entities that don't have one yet.
 Reads legacy body content, parses into element-level nodes with hashing
 and versioning. Warns about entities with stale frontmatter in body.
 
 Options:
-  --dry-run   Show what would be migrated without making changes
+  --dry-run     Show what would be migrated without making changes
+  --json        Emit machine-readable blockers outside agent mode; agent mode stays TOON
+  --continue    Resume the same migration intent after scoped repairs and import
+
+Repair flow:
+  c3x migrate --dry-run --json       # machine-readable blockers, writesMade:false
+  c3x migrate repair-plan            # exact safe steps plus current blockers
+  c3x migrate repair <id> --section Goal < goal.md
+  c3x cache clear
+  c3x import --force
+  c3x migrate --continue
 
 Examples:
-  c3x migrate --dry-run   # preview
-  c3x migrate             # run migration`,
+  c3x migrate --dry-run --json   # preview blockers
+  c3x migrate repair-plan        # safe repair loop
+  c3x migrate --continue         # resume after repair/import`,
+	},
+	{
+		Name:     "cache",
+		Args:     "clear",
+		OneLiner: "Clear disposable local C3 cache files",
+		Help: `Usage: c3x cache clear
+
+Deletes local cache files under .c3/ without touching canonical markdown:
+  .c3/c3.db*
+  .c3/.c3.import.tmp.db*
+
+Use this instead of manual rm commands during migration repair.`,
 	},
 	{
 		Name:     "migrate-legacy",

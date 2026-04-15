@@ -24,6 +24,7 @@ type Options struct {
 	Fix           bool
 	Remove        bool
 	DryRun        bool
+	Continue      bool
 	Depth         int
 	Direction     string
 	Format        string
@@ -94,6 +95,8 @@ func ParseArgs(argv []string) Options {
 			opts.Remove = true
 		case "--dry-run":
 			opts.DryRun = true
+		case "--continue":
+			opts.Continue = true
 		case "--depth":
 			if i+1 < len(argv) {
 				i++

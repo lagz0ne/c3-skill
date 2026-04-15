@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"strings"
 	"testing"
@@ -37,7 +38,9 @@ func TestWriteMigrateWriteFailureGivesFixLoop(t *testing.T) {
 	requireAll(t, buf.String(),
 		"BLOCKED: migration write failed at c3-101 after 3 successful write(s)",
 		"C3 stopped before canonical export",
+		"c3x cache clear",
 		"c3x import --force",
+		"c3x migrate --continue",
 		"c3x check --include-adr && c3x verify",
 	)
 }
@@ -160,10 +163,15 @@ func TestRunMigrateV2_AggregatesStrictComponentBlockers(t *testing.T) {
 		"0 migrated, 2 blocked",
 		"BLOCKED: 2 component(s)",
 		"C3 made no migration writes",
+		"writesMade: false",
 		"c3-101 chat",
+		"matched: optional",
 		"c3-102 tasks",
+		"matched: todo",
 		"common rewrite: optional->secondary",
+		"c3x cache clear",
 		"c3x import --force",
+		"c3x migrate --continue",
 		"c3x check --include-adr && c3x verify",
 	)
 	if !strings.Contains(err.Error(), "migrate blocked: 2 component(s)") {
@@ -175,5 +183,105 @@ func TestRunMigrateV2_AggregatesStrictComponentBlockers(t *testing.T) {
 	}
 	if strings.Contains(body, "## Parent Fit") {
 		t.Fatalf("blocked migrate must not write partial strict docs, got:\n%s", body)
+	}
+}
+
+func TestRunMigrateV2_JSONBlockerReport(t *testing.T) {
+	s := newMigrateV2Store(t)
+	for _, e := range []*store.Entity{
+		{ID: "c3-101", Type: "component", Title: "chat", Slug: "chat", Category: "feature", ParentID: "c3-1", Goal: "Render optional chat workspace behavior.", Status: "active", Metadata: "{}"},
+		{ID: "c3-102", Type: "component", Title: "tasks", Slug: "tasks", Category: "feature", ParentID: "c3-1", Goal: "Track TODO coordination behavior.", Status: "active", Metadata: "{}"},
+	} {
+		if err := s.InsertEntity(e); err != nil {
+			t.Fatal(err)
+		}
+		if err := content.WriteEntity(s, e.ID, "# "+e.Title+"\n\n## Goal\n\n"+e.Goal+"\n"); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	var buf bytes.Buffer
+	err := RunMigrateV2(MigrateV2Options{Store: s, DryRun: true, JSON: true}, &buf)
+	if err == nil {
+		t.Fatal("expected migration blocker error")
+	}
+	var report MigrateReport
+	if unmarshalErr := json.Unmarshal(buf.Bytes(), &report); unmarshalErr != nil {
+		t.Fatalf("unmarshal report: %v\n%s", unmarshalErr, buf.String())
+	}
+	if report.Status != "blocked" || report.WritesMade || report.Blocked != 2 {
+		t.Fatalf("unexpected report: %#v", report)
+	}
+	if len(report.Blockers) != 2 {
+		t.Fatalf("expected two blockers: %#v", report.Blockers)
+	}
+	if report.Blockers[0].Issues[0].Matched != "optional" {
+		t.Fatalf("expected matched optional, got %#v", report.Blockers[0].Issues[0])
+	}
+	if report.Blockers[1].Issues[0].Matched != "TODO" {
+		t.Fatalf("expected matched TODO, got %#v", report.Blockers[1].Issues[0])
+	}
+	requireAll(t, strings.Join(report.Next, "\n"),
+		"c3x migrate repair-plan",
+		"c3x cache clear",
+		"c3x migrate --continue",
+	)
+}
+
+func TestRunMigrateRepairPlanGivesSafeLoop(t *testing.T) {
+	s := newMigrateV2Store(t)
+	e := &store.Entity{ID: "c3-101", Type: "component", Title: "chat", Slug: "chat", Category: "feature", ParentID: "c3-1", Goal: "Render optional chat workspace behavior.", Status: "active", Metadata: "{}"}
+	if err := s.InsertEntity(e); err != nil {
+		t.Fatal(err)
+	}
+	if err := content.WriteEntity(s, e.ID, "# chat\n\n## Goal\n\nRender optional chat workspace behavior.\n"); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	if err := RunMigrateRepairPlan(s, &buf); err != nil {
+		t.Fatal(err)
+	}
+	requireAll(t, buf.String(),
+		"BLOCKED: 1 component(s)",
+		"writesMade: false",
+		"c3x migrate repair <id> --section <section>",
+		"matched: optional",
+		"c3x cache clear",
+		"c3x import --force",
+		"c3x migrate --continue",
+	)
+}
+
+func TestRunMigrateRepairSectionOnlyRepairsCurrentBlockerSection(t *testing.T) {
+	s := newMigrateV2Store(t)
+	e := &store.Entity{ID: "c3-101", Type: "component", Title: "chat", Slug: "chat", Category: "feature", ParentID: "c3-1", Goal: "Render optional chat workspace behavior.", Status: "active", Metadata: "{}"}
+	if err := s.InsertEntity(e); err != nil {
+		t.Fatal(err)
+	}
+	if err := content.WriteEntity(s, e.ID, "# chat\n\n## Goal\n\nRender optional chat workspace behavior.\n"); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	err := RunMigrateRepairSection(s, e.ID, "Purpose", "Own chat behavior under the API container with explicit boundaries and verification.", &buf)
+	if err == nil {
+		t.Fatal("expected non-blocker section repair to fail")
+	}
+	requireAll(t, err.Error(), "not listed as a migration blocker")
+
+	buf.Reset()
+	err = RunMigrateRepairSection(s, e.ID, "Goal", "Render secondary chat workspace behavior under the API container.", &buf)
+	if err != nil {
+		t.Fatalf("repair Goal: %v\n%s", err, buf.String())
+	}
+	requireAll(t, buf.String(), "Updated c3-101 section \"Goal\"")
+
+	blockers, err := collectMigrateBlockers(s, []*store.Entity{e})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(blockers) != 0 {
+		t.Fatalf("expected blocker fixed, got %#v", blockers)
 	}
 }

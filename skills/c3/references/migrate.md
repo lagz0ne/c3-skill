@@ -193,15 +193,24 @@ Expected strict-component blocker shape:
 
 BLOCKED: N component(s) need repair before migration can finish.
 Why: strict component docs are all-or-nothing; C3 made no migration writes.
+writesMade: false
 Fix loop:
-  1. Edit the listed component docs in the copied/sandbox tree.
-  2. Remove .c3/c3.db* and .c3/.c3.import.tmp.db*.
-  3. Run: c3x import --force
-  4. Run: c3x migrate
-  5. Run: c3x check --include-adr && c3x verify
+  1. Inspect the blockers below.
+  2. Run scoped repairs: c3x migrate repair <id> --section <section> < content.md
+  3. Run: c3x cache clear
+  4. Run: c3x import --force
+  5. Run: c3x migrate --continue
+  6. Run: c3x check --include-adr && c3x verify
 ```
 
-When this appears, do not chain speculative commands. Repair the listed component content, clear disposable cache files, import, migrate, then check/verify. A blocked strict migration is all-or-nothing: no migration writes should occur before blockers are repaired.
+Machine-readable inspection:
+
+```bash
+c3x migrate --dry-run --json
+c3x migrate repair-plan
+```
+
+When this appears, do not chain speculative commands. Repair only the listed component sections, clear disposable cache files with `c3x cache clear`, import, continue migration, then check/verify. A blocked strict migration is all-or-nothing: no migration writes should occur before blockers are repaired.
 
 Expected write-failure shape:
 ```text
@@ -209,7 +218,7 @@ BLOCKED: migration write failed at <id> after N successful write(s).
 Why: C3 stopped before canonical export, so submitted .c3/ markdown is not rewritten from a partial cache.
 ```
 
-Fix the write/database error, clear disposable cache files, import, migrate, then check/verify. Do not export canonical markdown from a partial cache.
+Fix the write/database error, run `c3x cache clear`, import, continue migration, then check/verify. Do not export canonical markdown from a partial cache.
 
 ### B5: Verify
 

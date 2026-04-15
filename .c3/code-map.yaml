@@ -85,6 +85,8 @@ c3-118:
   - cli/cmd/query.go
   - cli/cmd/query_test.go
 c3-119:
+  - cli/cmd/cache.go
+  - cli/cmd/cache_test.go
   - cli/cmd/delete.go
   - cli/cmd/delete_test.go
   - cli/cmd/document_format.go

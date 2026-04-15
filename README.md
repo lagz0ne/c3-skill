@@ -153,7 +153,7 @@ c3x marketplace show rule-error-wrapping
 
 ## Migrating
 
-### Upgrading to v9.1.4
+### Upgrading to v9.1.5
 
 v9 is a breaking workflow release. The shared truth moves from “database-first” to “canonical text first”.
 
@@ -184,11 +184,12 @@ What changes for daily work:
 ```bash
 c3x migrate                  # populates node tree for all entities
 c3x migrate --dry-run        # preview without changes
+c3x migrate --dry-run --json # machine-readable blockers; agent mode returns TOON
 ```
 
 Expected migration failure flow:
-- `BLOCKED: N component(s)` means strict component docs failed preflight and no migration writes occurred. Repair listed IDs, remove `.c3/c3.db*` and `.c3/.c3.import.tmp.db*`, run `c3x import --force`, then rerun `c3x migrate`.
-- `BLOCKED: migration write failed at <id>` means C3 stopped before canonical export so submitted markdown is not rewritten from a partial cache. Fix the write/cache issue, rebuild from canonical text, then rerun migration.
+- `BLOCKED: N component(s)` means strict component docs failed preflight and no migration writes occurred. Use `c3x migrate repair-plan`, repair listed sections with `c3x migrate repair <id> --section <name>`, run `c3x cache clear`, run `c3x import --force`, then resume with `c3x migrate --continue`.
+- `BLOCKED: migration write failed at <id>` means C3 stopped before canonical export so submitted markdown is not rewritten from a partial cache. Fix the write/cache issue, run `c3x cache clear`, rebuild from canonical text, then resume migration.
 - Do not use speculative command chains. Follow the printed fix loop and finish with `c3x check --include-adr && c3x verify`.
 
 **From pre-v7 (file-based `.c3/`):**
@@ -203,12 +204,12 @@ The plugin ships with pre-built binaries — no Go toolchain, no npm, no PATH co
 
 ```
 skills/c3/bin/
-├── VERSION                    # "9.1.4"
+├── VERSION                    # "9.1.5"
 ├── c3x.sh                    # detects OS/ARCH, runs the right binary
-├── c3x-9.1.4-linux-amd64
-├── c3x-9.1.4-linux-arm64
-├── c3x-9.1.4-darwin-amd64
-└── c3x-9.1.4-darwin-arm64
+├── c3x-9.1.5-linux-amd64
+├── c3x-9.1.5-linux-arm64
+├── c3x-9.1.5-darwin-amd64
+└── c3x-9.1.5-darwin-arm64
 ```
 
 Each plugin version carries its own binary. Different projects can use different versions without conflict.

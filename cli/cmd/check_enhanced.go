@@ -20,6 +20,7 @@ type Issue struct {
 	Entity   string `json:"entity,omitempty"`
 	Message  string `json:"message"`
 	Hint     string `json:"hint,omitempty"`
+	Matched  string `json:"matched,omitempty"`
 }
 
 // CheckResult holds the validation output.

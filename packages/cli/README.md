@@ -45,7 +45,7 @@ c3x list                   # search all (default)
 | Caller | Output |
 |--------|--------|
 | Human via `@c3x/cli` | Text (default) |
-| Agent via `/c3` skill | JSON (`C3X_MODE=agent` set automatically) |
+| Agent via `/c3` skill | Agent format through the local skill wrapper |
 
 Explicit `--json` or `--compact` flags override either default.
 

@@ -31,6 +31,12 @@ c3-108:
   - cli/internal/toon/**
   - cli/main.go
   - cli/main_test.go
+c3-109:
+  - packages/cli/README.md
+  - packages/cli/package-lock.json
+  - packages/cli/package.json
+  - packages/cli/src/cli.ts
+  - packages/cli/tsdown.config.ts
 c3-110:
   - cli/cmd/init.go
   - cli/cmd/init_test.go

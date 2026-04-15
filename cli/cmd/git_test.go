@@ -35,6 +35,7 @@ func TestRunGitInstall_DirectoryGitDir(t *testing.T) {
 		c3HookStart,
 		".c3/c3.db is local cache only",
 		"c3x verify",
+		`git diff --quiet -- .c3 ':(exclude).c3/c3.db' ':(exclude).c3/c3.db-*'`,
 		"review and stage",
 		c3HookEnd,
 	} {
@@ -118,5 +119,21 @@ func TestRunGitInstall_PreservesExistingContentAndReplacesManagedBlock(t *testin
 	}
 	if strings.Count(hookStr, c3HookStart) != 1 {
 		t.Fatalf("expected one managed block:\n%s", hookStr)
+	}
+}
+
+func TestBuildPreCommitHook_IgnoresDisposableCacheDiff(t *testing.T) {
+	hook := buildPreCommitHook()
+	if strings.Contains(hook, "git diff --quiet -- .c3\n") {
+		t.Fatalf("hook checks all .c3 and will block on c3.db cache diffs:\n%s", hook)
+	}
+	for _, want := range []string{
+		`:(exclude).c3/c3.db`,
+		`:(exclude).c3/c3.db-*`,
+		`:(exclude).c3/*.tmp.db`,
+	} {
+		if !strings.Contains(hook, want) {
+			t.Fatalf("hook missing cache exclude %q:\n%s", want, hook)
+		}
 	}
 }

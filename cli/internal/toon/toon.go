@@ -133,7 +133,67 @@ func MarshalObject(v any) (string, error) {
 	}
 }
 
+// MarshalAny serializes common command output shapes as TOON.
+func MarshalAny(v any) (string, error) {
+	rv := reflect.ValueOf(v)
+	if !rv.IsValid() {
+		return "null\n", nil
+	}
+	if rv.Kind() == reflect.Ptr {
+		if rv.IsNil() {
+			return "null\n", nil
+		}
+		rv = rv.Elem()
+	}
+
+	switch rv.Kind() {
+	case reflect.Struct, reflect.Map:
+		return MarshalObject(v)
+	case reflect.Slice, reflect.Array:
+		var b strings.Builder
+		fmt.Fprintf(&b, "items[%d]:\n", rv.Len())
+		for i := 0; i < rv.Len(); i++ {
+			elem := rv.Index(i)
+			if elem.Kind() == reflect.Interface && !elem.IsNil() {
+				elem = elem.Elem()
+			}
+			if elem.Kind() == reflect.Ptr {
+				if elem.IsNil() {
+					fmt.Fprintf(&b, "  - null\n")
+					continue
+				}
+				elem = elem.Elem()
+			}
+			switch elem.Kind() {
+			case reflect.Struct:
+				b.WriteString("  -\n")
+				out, err := marshalStructWithIndent(elem, "    ")
+				if err != nil {
+					return "", err
+				}
+				b.WriteString(out)
+			case reflect.Map:
+				b.WriteString("  -\n")
+				out, err := marshalMap(elem, "    ")
+				if err != nil {
+					return "", err
+				}
+				b.WriteString(out)
+			default:
+				fmt.Fprintf(&b, "  - %s\n", marshalFieldValue(elem))
+			}
+		}
+		return b.String(), nil
+	default:
+		return MarshalValue(v) + "\n", nil
+	}
+}
+
 func marshalStruct(rv reflect.Value) (string, error) {
+	return marshalStructWithIndent(rv, "")
+}
+
+func marshalStructWithIndent(rv reflect.Value, indent string) (string, error) {
 	var b strings.Builder
 	rt := rv.Type()
 	for i := 0; i < rt.NumField(); i++ {
@@ -159,8 +219,8 @@ func marshalStruct(rv reflect.Value) (string, error) {
 
 		// Handle map fields — render as nested
 		if fv.Kind() == reflect.Map {
-			fmt.Fprintf(&b, "%s:\n", name)
-			nested, err := marshalMap(fv, "  ")
+			fmt.Fprintf(&b, "%s%s:\n", indent, name)
+			nested, err := marshalMap(fv, indent+"  ")
 			if err != nil {
 				return "", err
 			}
@@ -174,13 +234,13 @@ func marshalStruct(rv reflect.Value) (string, error) {
 				if strings.Contains(opts, "omitempty") {
 					continue
 				}
-				fmt.Fprintf(&b, "%s: null\n", name)
+				fmt.Fprintf(&b, "%s%s: null\n", indent, name)
 				continue
 			}
 			fv = fv.Elem()
 		}
 
-		fmt.Fprintf(&b, "%s: %s\n", name, marshalFieldValue(fv))
+		fmt.Fprintf(&b, "%s%s: %s\n", indent, name, marshalFieldValue(fv))
 	}
 	return b.String(), nil
 }

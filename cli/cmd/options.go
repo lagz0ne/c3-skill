@@ -155,8 +155,9 @@ func ParseArgs(argv []string) Options {
 		opts.Command = args[0]
 		opts.Args = args[1:]
 	}
-	// C3X_MODE env var: "agent" implies --json for commands that support it.
-	// Explicit --json flag takes precedence (already set above).
+	// C3X_MODE=agent requests machine output for commands that support it.
+	// Serialization still resolves to TOON in agent mode; this flag only routes
+	// commands away from human prose paths.
 	if !opts.JSON {
 		if mode := os.Getenv("C3X_MODE"); mode == "agent" {
 			opts.JSON = true

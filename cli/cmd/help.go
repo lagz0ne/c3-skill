@@ -68,15 +68,15 @@ User rule: if C3 gets weird after Git operations, run c3x repair.`,
 		OneLiner: "Output full entity content (frontmatter + body)",
 		Help: `Usage: c3x read <entity-id> [--section <name>] [--json] [--full]
 
-Output the full content of an entity as markdown (default) or structured JSON.
+Output the full content of an entity as markdown (default) or structured data.
 Markdown output includes YAML frontmatter + body — same format accepted by write.
 
-In agent mode (C3X_MODE=agent), body is truncated to 1500 chars with size hint.
+In agent mode (C3X_MODE=agent), structured output is TOON and body is truncated to 1500 chars with size hint.
 Use --full to get the complete body.
 
 Options:
   --section <name>   Output only the named section's content
-  --json             Structured JSON output
+  --json             Structured JSON output outside agent mode; agent mode stays TOON
   --full             Disable body truncation in agent mode
 
 Examples:

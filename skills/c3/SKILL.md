@@ -80,7 +80,7 @@ Before every op except onboard and migrate:
 ```bash
 bash <skill-dir>/bin/c3x.sh
 ```
-Returns project dashboard (TOON). If error about missing `.c3/` → route to **onboard**. If verification complains about broken seals or unrecoverable cache rebuild, route to **migrate** or **repair** as appropriate. Otherwise, dashboard gives immediate orientation: entity counts, coverage, pending ADRs. Follow the `help[]` hints for next steps.
+Returns project dashboard (TOON). If error about missing `.c3/` → route to **onboard**. If verification complains about broken seals or unrecoverable cache rebuild, route to **migrate** or **repair** as appropriate. Read-only commands should stay gated on broken canonical state; repair mutations such as `write --section`, `set --section`, and `add adr` are allowed to reach their own validation/export path. Otherwise, dashboard gives immediate orientation: entity counts, coverage, pending ADRs. Follow the `help[]` hints for next steps.
 
 ---
 
@@ -124,6 +124,7 @@ If c3x lacks a needed operation, STOP and tell the user — do not work around i
 - Recovery path after conflict/manual intervention:
   1. resolve text
   2. `c3x repair`
+- If `verify` blocks read-only commands while a focused canonical repair is needed, use the narrow mutation that repairs the content (`write --section`, `set --section`, or `add adr`), then run `c3x check --include-adr` and `c3x verify`.
 
 Never claim `.c3/` state is authoritative if `verify` fails.
 

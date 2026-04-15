@@ -47,8 +47,10 @@ Any `warning:` line in any c3x output = data loss. Stop, fix, re-run. No excepti
 |---------|----------|
 | `migrate-legacy --dry-run` crashes | Fix cause, re-run |
 | `migrate-legacy` errors or warns | Delete `c3.db`, fix, restart Phase A |
-| `migrate` (v7→v8) errors | Fix, re-run (`migrate` is idempotent — skips done entities) |
+| `migrate` reports `BLOCKED: N component(s)` | Follow the printed repair plan exactly: inspect listed IDs, repair canonical content, remove cache files, `c3x import --force`, then rerun `c3x migrate` |
+| `migrate` write failure | Fix the database/write error, remove cache files, `c3x import --force`, rerun `c3x migrate`; canonical export is intentionally stopped before partial cache state is submitted |
 | `migrate` (v7→v8) strips content | Restore from B1 export via `c3x write <id>` |
+| Broken canonical seals block read-only commands | Use repair mutations (`write --section`, `set --section`, `add adr`) or `c3x repair`; read-only commands intentionally stay gated until canonical state verifies |
 
 `migrate-legacy` is NOT idempotent — delete `c3.db` to retry. Always use `--keep-originals`.
 
@@ -76,7 +78,7 @@ Fix in priority order. Parse failures first — they're invisible to everything 
 
 | Priority | Gap | Fix |
 |----------|-----|-----|
-| 1 | Parse failures (text before JSON) | Edit raw `.c3/` file — fix YAML frontmatter. Preserve all content. |
+| 1 | Parse failures (warning text before manifest) | Edit raw `.c3/` file — fix YAML frontmatter. Preserve all content. |
 | 2 | `broken_ref` | Update reference if target was renamed, remove if gone. Log removals. |
 | 3 | `empty_frontmatter_rich_body` | Extract from body, add to frontmatter. |
 | 3 | `missing_section` / `empty_section` | Add stub: `(to be filled)` |
@@ -183,8 +185,31 @@ BODY
 C3X_MODE=agent bash <skill-dir>/bin/c3x.sh migrate
 ```
 
-`FAILED <id>: <error>` → fix via `c3x write <id>`, re-run. `migrate` is idempotent.
-`N failed` must be 0.
+Expected success summary: `N migrated, M already have nodes (ok), K strict component docs`.
+
+Expected strict-component blocker shape:
+```text
+0 migrated, N blocked
+
+BLOCKED: N component(s) need repair before migration can finish.
+Why: strict component docs are all-or-nothing; C3 made no migration writes.
+Fix loop:
+  1. Edit the listed component docs in the copied/sandbox tree.
+  2. Remove .c3/c3.db* and .c3/.c3.import.tmp.db*.
+  3. Run: c3x import --force
+  4. Run: c3x migrate
+  5. Run: c3x check --include-adr && c3x verify
+```
+
+When this appears, do not chain speculative commands. Repair the listed component content, clear disposable cache files, import, migrate, then check/verify. A blocked strict migration is all-or-nothing: no migration writes should occur before blockers are repaired.
+
+Expected write-failure shape:
+```text
+BLOCKED: migration write failed at <id> after N successful write(s).
+Why: C3 stopped before canonical export, so submitted .c3/ markdown is not rewritten from a partial cache.
+```
+
+Fix the write/database error, clear disposable cache files, import, migrate, then check/verify. Do not export canonical markdown from a partial cache.
 
 ### B5: Verify
 

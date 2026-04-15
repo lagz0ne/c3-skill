@@ -41,3 +41,5 @@ If command behavior, output format, or verification result seems inconsistent wi
 - CLI commands should lead within their capabilities: inspect what they can prove, return the smallest useful answer, and include the next repair step when there is a failure.
 - In `C3X_MODE=agent`, structured command output must be TOON, not JSON. Do not add command-local `json.NewEncoder` paths for agent-facing command results; route through the shared output helpers.
 - Failure output is part of the workflow contract. Prefer grouped blockers and direct fix loops over one-error-at-a-time guessing, but keep operations tight enough that the command cannot leave canonical `.c3/` files in an impossible partial state.
+- Broken canonical `.c3/` state should block read-only commands, but repair mutations must still run. Use `write --section`, `set --section`, or `add adr` for focused repair, then finish with `c3local check --include-adr` and `c3local verify`.
+- For migration failures, follow the CLI's printed fix loop exactly. `BLOCKED: N component(s)` means no migration writes occurred; repair listed IDs, clear disposable cache files, import, migrate, then check/verify.

@@ -707,7 +707,7 @@ func setupRichC3DB(t *testing.T) string {
 	bodies := map[string]string{
 		"c3-0":    "# TestProject\n\n## Goal\n\nTest.\n\n## Containers\n\n| ID | Name | Boundary | Goal |\n|----|------|----------|------|\n",
 		"c3-1":    "# api\n\n## Goal\n\nServe API.\n\n## Components\n\n| ID | Name | Category | Status | Goal Contribution |\n|----|------|----------|--------|-------------------|\n",
-		"c3-101":  "# auth\n\n## Goal\n\nHandle auth.\n\n## Related Refs\n\n| Ref | Role |\n|-----|------|\n",
+		"c3-101":  richComponentBody("auth", "Handle API authentication requests."),
 		"ref-jwt": "# JWT\n\n## Goal\n\nJWT tokens.\n",
 	}
 	for id, body := range bodies {
@@ -717,4 +717,39 @@ func setupRichC3DB(t *testing.T) string {
 	}
 
 	return c3Dir
+}
+
+func richComponentBody(title, goal string) string {
+	return "# " + title + "\n\n" +
+		"## Goal\n\n" + goal + "\n\n" +
+		"## Parent Fit\n\n" +
+		"| Field | Value |\n|-------|-------|\n" +
+		"| Parent | c3-1 |\n| Role | Owns authentication behavior for the API container. |\n| Boundary | Keeps identity decisions inside the API boundary. |\n| Collaboration | Coordinates with JWT reference rules and caller-facing API flows. |\n\n" +
+		"## Purpose\n\nProvide agent-ready authentication documentation so generated code can preserve identity flow, boundaries, verification, and governing references.\n\n" +
+		"## Foundational Flow\n\n" +
+		"| Aspect | Detail | Reference |\n|--------|--------|-----------|\n" +
+		"| Input | Accept caller credentials and token material. | ref-jwt |\n" +
+		"| State | Keep auth state explicit at API boundaries. | ref-jwt |\n" +
+		"| Output | Return verified identity context to downstream handlers. | ref-jwt |\n" +
+		"| Failure | Reject invalid or expired token material. | ref-jwt |\n\n" +
+		"## Business Flow\n\n" +
+		"| Aspect | Detail | Reference |\n|--------|--------|-----------|\n" +
+		"| Actor | API caller asks for authenticated access. | ref-jwt |\n" +
+		"| Decision | Authentication gates protected behavior. | ref-jwt |\n" +
+		"| Outcome | Authorized requests continue with identity context. | ref-jwt |\n" +
+		"| Exception | Unauthorized requests receive a clear rejection. | ref-jwt |\n\n" +
+		"## Governance\n\n" +
+		"| Reference | Type | Governs | Precedence | Notes |\n|-----------|------|---------|------------|-------|\n" +
+		"| ref-jwt | ref | Token format and validation expectations. | Required | Applied to all auth decisions. |\n\n" +
+		"## Contract\n\n" +
+		"| Surface | Direction | Contract | Boundary | Evidence |\n|---------|-----------|----------|----------|----------|\n" +
+		"| Credentials | IN | Caller supplies credentials or token material. | API boundary | ref-jwt |\n" +
+		"| Identity | OUT | Component returns verified identity context or rejection. | API boundary | go test ./... |\n\n" +
+		"## Change Safety\n\n" +
+		"| Risk | Trigger | Detection | Required Verification |\n|------|---------|-----------|-----------------------|\n" +
+		"| Token drift | JWT reference changes. | Contract review catches mismatched fields. | go test ./... |\n" +
+		"| Boundary leak | Identity state bypasses auth. | Code review traces caller paths. | c3x check --include-adr |\n\n" +
+		"## Derived Materials\n\n" +
+		"| Material | Must derive from | Allowed variance | Evidence |\n|----------|------------------|------------------|----------|\n" +
+		"| Auth handlers | Goal and Contract sections. | Names may vary by framework. | go test ./cmd |\n"
 }

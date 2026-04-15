@@ -60,11 +60,15 @@ func RunDelete(opts DeleteOptions, w io.Writer) error {
 			if err != nil {
 				continue
 			}
-			// Clean "Related Refs" table rows where Ref=id
-			_ = removeTableRowStore(opts.Store, refEntity, "Related Refs", "Ref", id)
-			// Clean "Related Rules" table rows where Rule=id
-			if strings.HasPrefix(id, "rule-") {
-				_ = removeTableRowStore(opts.Store, refEntity, "Related Rules", "Rule", id)
+			if refEntity.Type == "component" {
+				// Strict component docs record cited refs/rules in Governance.
+				_ = removeTableRowStore(opts.Store, refEntity, "Governance", "Reference", id)
+			} else {
+				// Legacy/non-component docs may still use older citation tables.
+				_ = removeTableRowStore(opts.Store, refEntity, "Related Refs", "Ref", id)
+				if strings.HasPrefix(id, "rule-") {
+					_ = removeTableRowStore(opts.Store, refEntity, "Related Rules", "Rule", id)
+				}
 			}
 			// Clean "Components" table if this is a component being deleted
 			if entity.Type == "component" {

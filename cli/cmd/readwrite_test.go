@@ -150,24 +150,7 @@ func TestRunWrite_ValidContent(t *testing.T) {
 	s := createRichDBFixture(t)
 	var buf bytes.Buffer
 
-	content := `---
-id: c3-101
-title: auth
-goal: Updated authentication goal
----
-
-# auth
-
-## Goal
-
-Updated authentication goal.
-
-## Dependencies
-
-| Direction | What | From/To |
-|-----------|------|---------|
-| IN | credentials | c3-110 |
-`
+	content := strictComponentBody("auth", "Updated authentication goal for API requests.")
 
 	err := RunWrite(WriteOptions{Store: s, ID: "c3-101", Content: content}, &buf)
 	if err != nil {
@@ -175,7 +158,7 @@ Updated authentication goal.
 	}
 
 	entity, _ := s.GetEntity("c3-101")
-	if entity.Goal != "Updated authentication goal" {
+	if entity.Goal != "Updated authentication goal for API requests." {
 		t.Errorf("goal = %q", entity.Goal)
 	}
 }
@@ -193,15 +176,15 @@ title: auth
 
 ## Goal
 
-Has goal but no Dependencies section.
+Has goal but no Parent Fit section.
 `
 
 	err := RunWrite(WriteOptions{Store: s, ID: "c3-101", Content: content}, &buf)
 	if err == nil {
-		t.Error("expected error for missing Dependencies section")
+		t.Error("expected error for missing Parent Fit section")
 	}
-	if !strings.Contains(err.Error(), "Dependencies") {
-		t.Errorf("error should mention Dependencies: %v", err)
+	if !strings.Contains(err.Error(), "Parent Fit") {
+		t.Errorf("error should mention Parent Fit: %v", err)
 	}
 }
 
@@ -209,20 +192,7 @@ func TestRunWrite_RejectsEmptySection(t *testing.T) {
 	s := createRichDBFixture(t)
 	var buf bytes.Buffer
 
-	content := `---
-id: c3-101
----
-
-# auth
-
-## Goal
-
-## Dependencies
-
-| Direction | What | From/To |
-|-----------|------|---------|
-| IN | data | c3-110 |
-`
+	content := strings.Replace(strictComponentBody("auth", "Updated authentication goal for API requests."), "Updated authentication goal for API requests.", "", 1)
 
 	err := RunWrite(WriteOptions{Store: s, ID: "c3-101", Content: content}, &buf)
 	if err == nil {
@@ -235,23 +205,7 @@ func TestRunWrite_AutoPromotesGoal(t *testing.T) {
 	var buf bytes.Buffer
 
 	// No goal in frontmatter, but body has ## Goal
-	content := `---
-id: c3-101
-title: auth
----
-
-# auth
-
-## Goal
-
-Handle JWT-based authentication.
-
-## Dependencies
-
-| Direction | What | From/To |
-|-----------|------|---------|
-| IN | credentials | c3-110 |
-`
+	content := strictComponentBody("auth", "Handle JWT-based authentication for API requests.")
 
 	err := RunWrite(WriteOptions{Store: s, ID: "c3-101", Content: content}, &buf)
 	if err != nil {
@@ -259,7 +213,7 @@ Handle JWT-based authentication.
 	}
 
 	entity, _ := s.GetEntity("c3-101")
-	if entity.Goal != "Handle JWT-based authentication." {
+	if entity.Goal != "Handle JWT-based authentication for API requests." {
 		t.Errorf("goal should be auto-promoted, got %q", entity.Goal)
 	}
 }
@@ -289,18 +243,7 @@ func TestRunWrite_NoFrontmatter(t *testing.T) {
 	var buf bytes.Buffer
 
 	// Plain markdown without frontmatter — treated as body replacement
-	mdContent := `# auth
-
-## Goal
-
-New goal text.
-
-## Dependencies
-
-| Direction | What | From/To |
-|-----------|------|---------|
-| IN | data | c3-110 |
-`
+	mdContent := strictComponentBody("auth", "New goal text for authentication behavior.")
 
 	err := RunWrite(WriteOptions{Store: s, ID: "c3-101", Content: mdContent}, &buf)
 	if err != nil {
@@ -380,19 +323,18 @@ func TestRunWrite_Section_NotFound(t *testing.T) {
 	}
 }
 
-func TestRunWrite_Section_NoValidation(t *testing.T) {
+func TestRunWrite_Section_ValidatesResultingBody(t *testing.T) {
 	s := createRichDBFixture(t)
 	var buf bytes.Buffer
 
-	// Writing an empty Goal section should succeed (no section-level validation)
 	err := RunWrite(WriteOptions{
 		Store:   s,
 		ID:      "c3-101",
 		Section: "Goal",
-		Content: "", // empty goal — allowed in section mode
+		Content: "",
 	}, &buf)
-	if err != nil {
-		t.Errorf("section write should succeed without full validation: %v", err)
+	if err == nil {
+		t.Fatal("expected section write to enforce full component validation")
 	}
 }
 
@@ -402,24 +344,7 @@ func TestRunWrite_FullPopulatesNodeTree(t *testing.T) {
 	s := createRichDBFixture(t)
 	var buf bytes.Buffer
 
-	mdContent := `---
-id: c3-101
-title: auth
-goal: Updated goal
----
-
-# auth
-
-## Goal
-
-Updated goal via full write.
-
-## Dependencies
-
-| Direction | What | From/To |
-|-----------|------|---------|
-| IN | credentials | c3-110 |
-`
+	mdContent := strictComponentBody("auth", "Updated goal via full write for authentication behavior.")
 	err := RunWrite(WriteOptions{Store: s, ID: "c3-101", Content: mdContent}, &buf)
 	if err != nil {
 		t.Fatal(err)
@@ -456,7 +381,7 @@ func TestRunWrite_SectionPopulatesNodeTree(t *testing.T) {
 		Store:   s,
 		ID:      "c3-101",
 		Section: "Goal",
-		Content: "Node-tree-verified goal.",
+		Content: "Node-tree verified authentication goal.",
 	}, &buf)
 	if err != nil {
 		t.Fatal(err)
@@ -467,13 +392,13 @@ func TestRunWrite_SectionPopulatesNodeTree(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(rendered, "Node-tree-verified goal.") {
+	if !strings.Contains(rendered, "Node-tree verified authentication goal.") {
 		t.Errorf("node tree should contain updated section, got: %s", rendered)
 	}
 
 	// Verify node tree body matches
 	bodyFromTree, _ := content.ReadEntity(s, "c3-101")
-	if !strings.Contains(bodyFromTree, "Node-tree-verified goal.") {
+	if !strings.Contains(bodyFromTree, "Node-tree verified authentication goal.") {
 		t.Error("node tree should reflect updated content")
 	}
 }
@@ -485,23 +410,7 @@ func TestRunWrite_VersionIncrementsOnWrite(t *testing.T) {
 	v0 := entity.Version
 
 	var buf bytes.Buffer
-	mdContent := `---
-id: c3-101
-title: auth
----
-
-# auth
-
-## Goal
-
-Version test.
-
-## Dependencies
-
-| Direction | What | From/To |
-|-----------|------|---------|
-| IN | data | c3-110 |
-`
+	mdContent := strictComponentBody("auth", "Version test for authentication behavior.")
 	RunWrite(WriteOptions{Store: s, ID: "c3-101", Content: mdContent}, &buf)
 
 	entity, _ = s.GetEntity("c3-101")
@@ -585,7 +494,8 @@ func TestRunRead_NonAgentNoTruncation(t *testing.T) {
 }
 
 func TestRunRead_ShortBodyNotTruncated(t *testing.T) {
-	s := createRichDBFixture(t)
+	s := createDBFixture(t)
+	content.WriteEntity(s, "c3-101", "# auth\n\n## Goal\n\nShort auth body.\n")
 
 	t.Setenv("C3X_MODE", "agent")
 	var buf bytes.Buffer

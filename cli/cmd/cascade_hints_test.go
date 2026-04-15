@@ -55,7 +55,7 @@ func TestRunAdd_ComponentAgentTextIncludesCascadeHints(t *testing.T) {
 	t.Setenv("C3X_MODE", "agent")
 
 	var buf bytes.Buffer
-	body := "## Goal\nHandles rate limiting.\n\n## Dependencies\n| Target | Why |\n|--------|-----|\n| c3-101 | rate data |\n"
+	body := strictComponentBody("rate-limiter", "Handles rate limiting behavior for API requests.")
 	if err := RunAdd("component", "rate-limiter", s, "c3-1", false, strings.NewReader(body), &buf); err != nil {
 		t.Fatal(err)
 	}
@@ -73,7 +73,7 @@ func TestRunWrite_ComponentAgentTextIncludesCascadeHints(t *testing.T) {
 	t.Setenv("C3X_MODE", "agent")
 
 	var buf bytes.Buffer
-	body := "## Goal\nHandle authentication and sessions.\n\n## Dependencies\n| Direction | What | From/To |\n| --- | --- | --- |\n| IN | data | c3-110 |\n"
+	body := strictComponentBody("auth", "Handle authentication and session behavior for API requests.")
 	if err := RunWrite(WriteOptions{Store: s, ID: "c3-101", Content: body}, &buf); err != nil {
 		t.Fatal(err)
 	}

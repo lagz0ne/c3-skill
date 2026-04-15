@@ -96,6 +96,9 @@ func runWriteSection(existing *store.Entity, opts WriteOptions, w io.Writer) err
 		return fmt.Errorf("error: section %q not found in %s\nhint: available sections: %s",
 			opts.Section, opts.ID, availableSections(currentBody))
 	}
+	if issues := validateBodyContent(newBody, existing.Type); len(issues) > 0 {
+		return formatValidationError(opts.ID, issues)
+	}
 
 	// Write through node tree.
 	if err := content.WriteEntity(opts.Store, opts.ID, newBody); err != nil {
@@ -206,6 +209,9 @@ func validateBodyContent(body, entityType string) []Issue {
 	schemaSections := schema.ForType(entityType)
 	if schemaSections == nil {
 		return nil
+	}
+	if entityType == "component" {
+		return validateStrictComponentDoc(body, "error")
 	}
 
 	sections := markdown.ParseSections(body)

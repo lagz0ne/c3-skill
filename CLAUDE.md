@@ -1,9 +1,29 @@
 # Architecture
 This project uses C3 docs in `.c3/`.
-For architecture questions, changes, audits, file context -> `/c3`.
+For architecture questions, changes, audits, file context -> use the **local source skill** at `skills/c3/`, not the installed/global C3 skill.
 Operations: query, audit, change, ref, sweep.
-File lookup: `c3x lookup <file-or-glob>` maps files/directories to components + refs.
-CLI: `bash skills/c3/bin/c3x.sh <command>` (must build first: `bash scripts/build.sh`)
+
+## Local C3 Source Rule
+
+This repository is the C3 project source. Work here is intentionally outside the installed/global C3 skill scope.
+
+Hard rules:
+- Do not use bare `c3x`; it may resolve to the global installed skill.
+- Do not load C3 from `~/.agents/skills/c3`, `~/.claude/skills/c3`, `~/.codex/skills/c3`, or marketplace installs for this repo.
+- Load C3 skill instructions from `skills/c3/SKILL.md` in this checkout.
+- Run C3 through the local built wrapper: `C3X_MODE=agent bash skills/c3/bin/c3x.sh <command>`.
+- If `skills/c3/bin/c3x.sh` or the matching local binary is missing, run `bash scripts/build.sh`, then use the local wrapper.
+- At session start, create a local alias/function and use it for every C3 command:
+
+```bash
+alias c3local='C3X_MODE=agent bash skills/c3/bin/c3x.sh'
+c3local verify
+```
+
+If C3 output looks wrong, commands fail unexpectedly, or behavior differs from source changes, suspect the wrong C3 version is being used. Prove the path/version before continuing.
+
+File lookup: `c3local lookup <file-or-glob>` maps files/directories to components + refs.
+CLI: `c3local <command>` after the alias above.
 
 ---
 
@@ -19,7 +39,7 @@ This is a repository containing a Claude code skill called c3. c3 is a trimmed d
 # Workflow
 - Starts with brainstorming to understand clearly the intention
 - Once it's all understood, use writing-plan and implement in parallel using subagent
-- Before claiming work is done: run `/noslop` to remove AI-generated slop, then `/c3 audit` to verify docs match code
+- Before claiming work is done: run `/noslop` to remove AI-generated slop, then use the local source C3 flow (`c3local check` / local `skills/c3/SKILL.md` audit guidance) to verify docs match code
 - Delegate to /release command once things is done, confirm with user as needed. Assume to patch by default
 
 ---

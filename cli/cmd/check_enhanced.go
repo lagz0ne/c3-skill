@@ -194,57 +194,65 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 			}
 		}
 
-		for _, schemaDef := range schemaSections {
-			if !schemaDef.Required {
-				continue
+		if entity.Type != "component" {
+			for _, schemaDef := range schemaSections {
+				if !schemaDef.Required {
+					continue
+				}
+
+				bodySection, exists := sectionMap[schemaDef.Name]
+
+				if !exists {
+					issues = append(issues, Issue{
+						Severity: "warning",
+						Entity:   entity.ID,
+						Message:  fmt.Sprintf("missing required section: %s", schemaDef.Name),
+					})
+					continue
+				}
+
+				content := strings.TrimSpace(bodySection.Content)
+
+				if schemaDef.ContentType == "table" {
+					if content == "" {
+						issues = append(issues, Issue{
+							Severity: "warning",
+							Entity:   entity.ID,
+							Message:  fmt.Sprintf("empty required table: %s", schemaDef.Name),
+						})
+						continue
+					}
+					table, err := markdown.ParseTable(content)
+					if err != nil {
+						continue
+					}
+					if len(table.Rows) == 0 {
+						issues = append(issues, Issue{
+							Severity: "warning",
+							Entity:   entity.ID,
+							Message:  fmt.Sprintf("empty required table: %s (headers only, no data rows)", schemaDef.Name),
+						})
+						continue
+					}
+
+					for _, col := range schemaDef.Columns {
+						issues = append(issues, validateColumn(col, table, entity, opts, titleMap)...)
+					}
+				} else {
+					if content == "" {
+						issues = append(issues, Issue{
+							Severity: "warning",
+							Entity:   entity.ID,
+							Message:  fmt.Sprintf("empty required section: %s", schemaDef.Name),
+						})
+					}
+				}
 			}
-
-			bodySection, exists := sectionMap[schemaDef.Name]
-
-			if !exists {
-				issues = append(issues, Issue{
-					Severity: "warning",
-					Entity:   entity.ID,
-					Message:  fmt.Sprintf("missing required section: %s", schemaDef.Name),
-				})
-				continue
-			}
-
-			content := strings.TrimSpace(bodySection.Content)
-
-			if schemaDef.ContentType == "table" {
-				if content == "" {
-					issues = append(issues, Issue{
-						Severity: "warning",
-						Entity:   entity.ID,
-						Message:  fmt.Sprintf("empty required table: %s", schemaDef.Name),
-					})
-					continue
-				}
-				table, err := markdown.ParseTable(content)
-				if err != nil {
-					continue
-				}
-				if len(table.Rows) == 0 {
-					issues = append(issues, Issue{
-						Severity: "warning",
-						Entity:   entity.ID,
-						Message:  fmt.Sprintf("empty required table: %s (headers only, no data rows)", schemaDef.Name),
-					})
-					continue
-				}
-
-				for _, col := range schemaDef.Columns {
-					issues = append(issues, validateColumn(col, table, entity, opts, titleMap)...)
-				}
-			} else {
-				if content == "" {
-					issues = append(issues, Issue{
-						Severity: "warning",
-						Entity:   entity.ID,
-						Message:  fmt.Sprintf("empty required section: %s", schemaDef.Name),
-					})
-				}
+		}
+		if entity.Type == "component" {
+			for _, issue := range validateStrictComponentDoc(body, "error") {
+				issue.Entity = entity.ID
+				issues = append(issues, issue)
 			}
 		}
 
@@ -370,7 +378,13 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 			result.Issues[i].Hint = hintFor(result.Issues[i].Message)
 		}
 		result.Help = agentHints(cascadeReviewHints())
-		return writeJSON(w, result)
+		if err := writeJSON(w, result); err != nil {
+			return err
+		}
+		if errors, _ := countSeverities(result.Issues); errors > 0 {
+			return fmt.Errorf("check failed: %d error(s)", errors)
+		}
+		return nil
 	}
 
 	// Text output
@@ -401,6 +415,9 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 	fmt.Fprintln(w, "Legend: x = error (fix first)  ! = warning (incomplete, should fix)")
 	writeAgentHints(w, cascadeReviewHints())
 
+	if errors > 0 {
+		return fmt.Errorf("check failed: %d error(s)", errors)
+	}
 	return nil
 }
 

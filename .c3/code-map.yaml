@@ -15,6 +15,8 @@ c3-106:
 c3-107:
   - cli/internal/store/**
 c3-108:
+  - cli/cmd/cascade_hints.go
+  - cli/cmd/cascade_hints_test.go
   - cli/cmd/help.go
   - cli/cmd/help_test.go
   - cli/cmd/helpers.go
@@ -44,6 +46,8 @@ c3-113:
   - cli/cmd/check_enhanced_test.go
   - cli/cmd/check_legacy.go
   - cli/cmd/check_legacy_test.go
+  - cli/cmd/strict_component_docs.go
+  - cli/cmd/strict_component_docs_test.go
   - cli/internal/index/**
   - cli/internal/schema/**
 c3-114:
@@ -108,8 +112,22 @@ c3-120:
   - cli/internal/marketplace/**
 c3-201:
   - skills/c3/SKILL.md
-c3-210:
-  - skills/c3/references/**
+c3-211:
+  - skills/c3/references/onboard.md
+c3-212:
+  - skills/c3/references/query.md
+c3-213:
+  - skills/c3/references/audit.md
+c3-214:
+  - skills/c3/references/change.md
+c3-215:
+  - skills/c3/references/migrate.md
+c3-216:
+  - skills/c3/references/ref.md
+c3-217:
+  - skills/c3/references/rule.md
+c3-218:
+  - skills/c3/references/sweep.md
 ref-cross-compiled-binary:
   - .github/workflows/distribute.yml
   - scripts/build.sh

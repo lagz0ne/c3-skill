@@ -40,16 +40,16 @@ func RunAdd(entityType, slug string, s *store.Store, container string, feature b
 		return err
 	}
 
-	// Validate body against schema BEFORE any DB writes
-	issues := validateBodyContent(bodyContent, entityType)
-	if len(issues) > 0 {
-		return formatValidationError(entityType+"-"+slug, issues)
-	}
-
 	// Build entity
 	entity, err := buildEntity(entityType, slug, s, container, feature)
 	if err != nil {
 		return err
+	}
+
+	// Validate body against schema BEFORE any DB writes
+	issues := validateBodyContent(bodyContent, entityType)
+	if len(issues) > 0 {
+		return formatValidationError(entityType+"-"+slug, issues)
 	}
 
 	// Insert entity

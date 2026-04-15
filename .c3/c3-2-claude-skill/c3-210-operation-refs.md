@@ -1,35 +1,69 @@
 ---
 id: c3-210
 c3-version: 4
-c3-seal: 96f760115bee4da52cb963e27c91010e4b8a6e5344c6bd0d874e5287bf5eb476
-title: operation-refs
+c3-seal: f595de686b211c7f16c6d75e84e94d0b712288eca3af815e6aa1734ef3d295b2
+title: operation-workflow-index
 type: component
 category: feature
 parent: c3-2
-goal: Provide step-by-step execution guidance for each of the seven c3 operations.
+goal: Define the shared operation-reference contract that each operation component follows.
 summary: Seven reference docs loaded on demand by skill-router; each defines preconditions, stages, gates, and final checks for its operation
 uses:
     - c3-201
 ---
 
-# operation-refs
+# operation-workflow-index
 ## Goal
 
-Provide step-by-step execution guidance for each of the seven c3 operations.
+Define the shared operation-reference contract that each operation component follows.
 
-## Dependencies
+## Parent Fit
 
-| Direction | What | From/To |
-| --- | --- | --- |
-| IN (uses) | Classified intent | c3-201 |
-| OUT (provides) | Step-by-step operation guidance |  |
-## Code References
-
-| File | Purpose |
+| Field | Value |
 | --- | --- |
-| skills/c3/references/onboard.md | Onboard operation (init + discovery + docs + codemap) |
-| skills/c3/references/query.md | Query operation (topology + doc navigation) |
-| skills/c3/references/audit.md | Audit operation (check + semantic phases) |
-| skills/c3/references/change.md | Change operation (impact + ADR + lookup + edit) |
-| skills/c3/references/ref.md | Ref operation (add/update/list patterns) |
-| skills/c3/references/sweep.md | Sweep operation (impact assessment) |
+| Parent | c3-2 |
+| Role | Own operation-workflow-index behavior inside the parent container without taking over sibling responsibilities. |
+| Boundary | Keep operation-workflow-index decisions inside this component and escalate container-wide policy to the parent. |
+| Collaboration | Coordinate with cited governance and adjacent components before changing the contract. |
+## Purpose
+
+Provide durable agent-ready documentation for operation-workflow-index so generated code, tests, and follow-up docs preserve ownership, boundaries, governance, and verification evidence.
+
+## Foundational Flow
+
+| Aspect | Detail | Reference |
+| --- | --- | --- |
+| Preconditions | Parent container context is loaded before operation-workflow-index behavior is changed. | c3-2 |
+| Inputs | Accept only the files, commands, data, or calls that belong to operation-workflow-index ownership. | c3-2 |
+| State / data | Preserve explicit state boundaries and avoid hidden cross-component ownership. | c3-2 |
+| Shared dependencies | Use lower-layer helpers and cited references instead of duplicating shared policy. | c3-2 |
+## Business Flow
+
+| Aspect | Detail | Reference |
+| --- | --- | --- |
+| Actor / caller | Agent, command, or workflow asks operation-workflow-index to deliver its documented responsibility. | c3-2 |
+| Primary path | Follow the component goal, honor parent fit, and emit behavior through the documented contract. | c3-2 |
+| Alternate paths | When a request falls outside operation-workflow-index ownership, hand it to the parent or sibling component. | c3-2 |
+| Failure behavior | Surface mismatch through check, tests, lookup, or review evidence before derived work ships. | c3-2 |
+## Governance
+
+| Reference | Type | Governs | Precedence | Notes |
+| --- | --- | --- | --- | --- |
+| c3-2 | policy | Governs operation-workflow-index behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
+## Contract
+
+| Surface | Direction | Contract | Boundary | Evidence |
+| --- | --- | --- | --- | --- |
+| operation-workflow-index input | IN | Callers must provide context that matches the component goal and parent fit. | c3-2 boundary | c3x lookup plus targeted tests or review. |
+| operation-workflow-index output | OUT | Derived code, docs, and tests must preserve the documented behavior and governance. | c3-2 boundary | c3x check and project test suite. |
+## Change Safety
+
+| Risk | Trigger | Detection | Required Verification |
+| --- | --- | --- | --- |
+| Contract drift | Goal, boundary, or derived material changes without matching component docs. | Compare Goal, Parent Fit, Contract, and Derived Materials. | Run c3x check and relevant project tests. |
+| Governance drift | Cited references, rules, or parent responsibilities change. | Re-read Governance rows and parent container docs. | Run c3x verify plus targeted lookup for changed files. |
+## Derived Materials
+
+| Material | Must derive from | Allowed variance | Evidence |
+| --- | --- | --- | --- |
+| Code, docs, tests, prompts | Goal, Governance, Contract, and Change Safety sections. | Names and framework shape may vary; behavior and boundaries may not. | c3x check, c3x verify, and relevant tests. |

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+
+	"github.com/lagz0ne/c3-design/cli/internal/content"
 )
 
 func TestRunDelete_Component(t *testing.T) {
@@ -46,6 +48,24 @@ func TestRunDelete_Ref(t *testing.T) {
 		if r.ToID == "ref-jwt" {
 			t.Error("relationship c3-101->ref-jwt should be deleted with cascading FK")
 		}
+	}
+}
+
+func TestRunDelete_RefRemovesComponentGovernanceRow(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	err := RunDelete(DeleteOptions{Store: s, ID: "ref-jwt"}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	body, err := content.ReadEntity(s, "c3-101")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(body, "| ref-jwt | ref |") {
+		t.Fatalf("expected Governance row for ref-jwt to be removed, got:\n%s", body)
 	}
 }
 

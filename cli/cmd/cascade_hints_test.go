@@ -15,7 +15,7 @@ func requireAll(t *testing.T, out string, wants ...string) {
 	}
 }
 
-func TestRunLookup_AgentJSONIncludesCascadeHints(t *testing.T) {
+func TestRunLookup_AgentTOONIncludesCascadeHints(t *testing.T) {
 	s, _ := createLookupFixture(t)
 	s.SetCodeMap("c3-101", []string{"src/auth/login.ts"})
 	t.Setenv("C3X_MODE", "agent")
@@ -26,7 +26,7 @@ func TestRunLookup_AgentJSONIncludesCascadeHints(t *testing.T) {
 	}
 
 	requireAll(t, buf.String(),
-		`"help"`,
+		"help:",
 		"c3x read c3-101",
 		"c3x read c3-1",
 		"c3x graph c3-1 --format mermaid",
@@ -34,7 +34,7 @@ func TestRunLookup_AgentJSONIncludesCascadeHints(t *testing.T) {
 	)
 }
 
-func TestRunRead_ComponentAgentJSONIncludesCascadeHints(t *testing.T) {
+func TestRunRead_ComponentAgentTOONIncludesCascadeHints(t *testing.T) {
 	s := createRichDBFixture(t)
 	t.Setenv("C3X_MODE", "agent")
 
@@ -44,7 +44,7 @@ func TestRunRead_ComponentAgentJSONIncludesCascadeHints(t *testing.T) {
 	}
 
 	requireAll(t, buf.String(),
-		`"help"`,
+		"help:",
 		"c3x read c3-1",
 		"Parent Delta",
 	)
@@ -118,7 +118,7 @@ func TestRunGraph_ComponentAgentMermaidIncludesCascadeHints(t *testing.T) {
 	)
 }
 
-func TestRunCheck_AgentJSONIncludesCascadeReviewHint(t *testing.T) {
+func TestRunCheck_AgentTOONIncludesCascadeReviewHint(t *testing.T) {
 	s := createRichDBFixture(t)
 	t.Setenv("C3X_MODE", "agent")
 
@@ -128,13 +128,13 @@ func TestRunCheck_AgentJSONIncludesCascadeReviewHint(t *testing.T) {
 	}
 
 	requireAll(t, buf.String(),
-		`"help"`,
+		"help:",
 		"cascade review",
 		"Parent Delta",
 	)
 }
 
-func TestRunDiff_AgentJSONIncludesCascadeReviewHint(t *testing.T) {
+func TestRunDiff_AgentTOONIncludesCascadeReviewHint(t *testing.T) {
 	s := createRichDBFixture(t)
 	t.Setenv("C3X_MODE", "agent")
 
@@ -150,7 +150,7 @@ func TestRunDiff_AgentJSONIncludesCascadeReviewHint(t *testing.T) {
 	}
 
 	requireAll(t, buf.String(),
-		`"help"`,
+		"help:",
 		"cascade review",
 		"Parent Delta",
 	)

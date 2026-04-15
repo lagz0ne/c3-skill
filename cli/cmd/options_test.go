@@ -249,6 +249,9 @@ func TestParseArgs_C3XMode(t *testing.T) {
 	t.Setenv("C3X_MODE", "agent")
 	got := ParseArgs([]string{"list"})
 	if !got.JSON {
-		t.Error("C3X_MODE=agent should set JSON=true")
+		t.Error("C3X_MODE=agent should request machine output")
+	}
+	if got.JSONExplicit {
+		t.Error("C3X_MODE=agent should not mark --json explicit")
 	}
 }

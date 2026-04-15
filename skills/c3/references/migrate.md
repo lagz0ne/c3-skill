@@ -62,10 +62,10 @@ Any `warning:` line in any c3x output = data loss. Stop, fix, re-run. No excepti
 C3X_MODE=agent bash <skill-dir>/bin/c3x.sh migrate-legacy --dry-run
 ```
 
-All output (warnings + JSON) goes to **stdout**. In agent mode, parse failure warnings appear as text lines BEFORE the JSON blob — the combined output is not valid JSON if warnings exist. Scan the full output for `warning:` lines first, then parse the JSON portion.
+All output goes to **stdout**. In agent mode, structured command output is TOON; parse failure warnings appear as text lines before the TOON manifest. Scan the full output for `warning:` lines first, then read the manifest fields.
 
-Record from **JSON**: `total`, `with_gaps`, `clean`, `entities[]` (IDs, types, gaps), `code_map_issues[]`.
-Record `warning:` lines: any `warning: skipping X` — these entities are invisible in the JSON and will be lost.
+Record from the manifest: `total`, `with_gaps`, `clean`, `entities[]` (IDs, types, gaps), `code_map_issues[]`.
+Record `warning:` lines: any `warning: skipping X` — these entities are invisible in the manifest and will be lost.
 Record `broken_ref` gap count — these relationships will be dropped.
 
 This is the **before-manifest**.
@@ -95,8 +95,8 @@ C3X_MODE=agent bash <skill-dir>/bin/c3x.sh migrate-legacy --dry-run
 ```
 
 Pass requires BOTH:
-1. Zero `warning:` text lines in the output (these appear before the JSON blob on stdout).
-2. JSON: `with_gaps == 0`, `code_map_issues` empty/absent.
+1. Zero `warning:` text lines in the output (these appear before the TOON manifest on stdout).
+2. Manifest fields: `with_gaps == 0`, `code_map_issues` empty/absent.
 
 Fail → return to A2.
 

@@ -374,7 +374,7 @@ func TestRunList_HelpHintsInAgentMode(t *testing.T) {
 	}
 }
 
-func TestRunList_JSONExplicitOverridesToon(t *testing.T) {
+func TestRunList_AgentModeOverridesJSONExplicit(t *testing.T) {
 	t.Setenv("C3X_MODE", "agent")
 	s := createRichDBFixture(t)
 	var buf bytes.Buffer
@@ -384,13 +384,11 @@ func TestRunList_JSONExplicitOverridesToon(t *testing.T) {
 	}
 
 	out := strings.TrimSpace(buf.String())
-	// Should be JSON (starts with { for ListResult envelope)
-	if !strings.HasPrefix(out, "{") {
-		t.Errorf("expected JSON output starting with '{', got:\n%s", out)
+	if !strings.Contains(out, "totalCount:") || !strings.Contains(out, "entities:") {
+		t.Errorf("expected TOON output in agent mode, got:\n%s", out)
 	}
-	// Should not have TOON format
-	if strings.Contains(out, "entities[") {
-		t.Errorf("JSONExplicit should produce JSON, not TOON:\n%s", out)
+	if strings.HasPrefix(out, "{") || strings.HasPrefix(out, "[") {
+		t.Errorf("agent mode should not return JSON, got:\n%s", out)
 	}
 }
 

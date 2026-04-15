@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/json"
 	"strings"
 	"testing"
 )
@@ -13,10 +14,10 @@ func TestResolveFormat_AgentNoJSON(t *testing.T) {
 	}
 }
 
-func TestResolveFormat_AgentExplicitJSON(t *testing.T) {
+func TestResolveFormat_AgentExplicitJSONStillTOON(t *testing.T) {
 	got := ResolveFormat(true, true)
-	if got != FormatJSON {
-		t.Errorf("agent with --json should be JSON, got %d", got)
+	if got != FormatTOON {
+		t.Errorf("agent with --json should still be TOON, got %d", got)
 	}
 }
 
@@ -64,7 +65,6 @@ func TestWriteTableOutput_TOONMode(t *testing.T) {
 }
 
 func TestWriteTableOutput_JSONMode(t *testing.T) {
-	t.Setenv("C3X_MODE", "agent")
 	type item struct {
 		ID string `json:"id"`
 	}
@@ -75,9 +75,12 @@ func TestWriteTableOutput_JSONMode(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	out := buf.String()
-	if !strings.Contains(out, `"id":"c3-1"`) {
-		t.Errorf("JSON mode should output JSON\ngot:\n%s", out)
+	var got []item
+	if err := json.Unmarshal(buf.Bytes(), &got); err != nil {
+		t.Fatalf("JSON mode should output JSON: %v\ngot:\n%s", err, buf.String())
+	}
+	if len(got) != 1 || got[0].ID != "c3-1" {
+		t.Errorf("wrong JSON payload: %+v", got)
 	}
 }
 
@@ -100,6 +103,45 @@ func TestWriteObjectOutput_TOONMode(t *testing.T) {
 	}
 	if !strings.Contains(out, "count: 5") {
 		t.Errorf("missing TOON key:value\ngot:\n%s", out)
+	}
+}
+
+func TestWriteJSON_AgentModeWritesTOON(t *testing.T) {
+	t.Setenv("C3X_MODE", "agent")
+	type status struct {
+		Project string `json:"project"`
+		Count   int    `json:"count"`
+	}
+
+	var buf bytes.Buffer
+	if err := writeJSON(&buf, status{Project: "Test", Count: 5}); err != nil {
+		t.Fatal(err)
+	}
+	out := strings.TrimSpace(buf.String())
+	if strings.HasPrefix(out, "{") {
+		t.Fatalf("agent writeJSON must not emit JSON:\n%s", out)
+	}
+	if !strings.Contains(out, "project: Test") || !strings.Contains(out, "count: 5") {
+		t.Fatalf("agent writeJSON should emit TOON key:value output:\n%s", out)
+	}
+}
+
+func TestWriteJSON_AgentModeWritesTOONForSlices(t *testing.T) {
+	t.Setenv("C3X_MODE", "agent")
+	type item struct {
+		ID string `json:"id"`
+	}
+
+	var buf bytes.Buffer
+	if err := writeJSON(&buf, []item{{ID: "c3-1"}}); err != nil {
+		t.Fatal(err)
+	}
+	out := strings.TrimSpace(buf.String())
+	if strings.HasPrefix(out, "[") {
+		t.Fatalf("agent writeJSON must not emit JSON array:\n%s", out)
+	}
+	if !strings.Contains(out, "items[1]:") || !strings.Contains(out, "id: c3-1") {
+		t.Fatalf("agent writeJSON should emit TOON list output:\n%s", out)
 	}
 }
 

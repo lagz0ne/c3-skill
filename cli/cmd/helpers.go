@@ -8,6 +8,7 @@ import (
 	"regexp"
 
 	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
+	"github.com/lagz0ne/c3-design/cli/internal/toon"
 )
 
 // stripFrontmatter removes YAML frontmatter (---\n...\n---) from content,
@@ -33,13 +34,17 @@ func isAgentMode() bool {
 }
 
 func writeJSON(w io.Writer, v any) error {
+	if isAgentMode() {
+		out, err := toon.MarshalAny(v)
+		if err != nil {
+			return err
+		}
+		fmt.Fprint(w, out)
+		return nil
+	}
 	var data []byte
 	var err error
-	if isAgentMode() {
-		data, err = json.Marshal(v)
-	} else {
-		data, err = json.MarshalIndent(v, "", "  ")
-	}
+	data, err = json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		return err
 	}

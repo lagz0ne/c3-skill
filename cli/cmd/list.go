@@ -90,11 +90,11 @@ func listStructured(opts ListOptions, format OutputFormat, w io.Writer) error {
 		if opts.JSONExplicit {
 			return writeJSON(w, ListResult{TotalCount: len(result), Entities: result})
 		}
-		// Legacy JSON path (JSON=true but not explicit) — plain array
+		// Legacy machine-output path. Agent mode serializes this as TOON.
 		return writeJSON(w, result)
 	}
 
-	// Full JSON (non-compact)
+	// Full structured output.
 	type jsonEntity struct {
 		ID            string                 `json:"id"`
 		Type          string                 `json:"type"`

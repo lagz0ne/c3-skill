@@ -44,7 +44,7 @@ func RunCoverage(opts CoverageOptions, w io.Writer) error {
 		CoverageResult: result,
 	}
 
-	// Default: JSON (agent-readable). Human-readable only when HUMAN env is set.
+	// Default: structured output. Agent mode serializes this as TOON.
 	if opts.JSON || os.Getenv("HUMAN") == "" {
 		return writeJSON(w, output)
 	}

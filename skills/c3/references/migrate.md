@@ -1,6 +1,14 @@
-# migrate — Database Migration
+# migrate — Cache Rebuild and Legacy Upgrade
 
-Before migration, the `.c3/` markdown files are the source of truth. Everything in the database is derived from them. Migration transfers that content faithfully — if the database doesn't match the markdown, the database is wrong. After migration, the database is authoritative.
+In v9, sealed `.c3/` markdown is source of truth. `c3.db` is disposable local cache. Git review and submission should ignore cache artifacts and submit canonical files only.
+
+Use this reference for two cases:
+1. **Legacy adoption**: old unsealed markdown needs import via `c3x migrate-legacy`
+2. **Version upgrade**: existing cache needs content-node migration via `c3x migrate`
+
+Normal drift or missing-cache cases are not migration work:
+- Missing/stale `c3.db` -> `c3x verify`
+- Broken seals or merge-conflict cleanup -> `c3x repair`
 
 ## Detect Migration Type
 
@@ -11,14 +19,14 @@ find .c3 -name '*.md' -not -path '*/_index/*' 2>/dev/null | head -1 | grep -q . 
 
 | c3.db | .md files | Path |
 |-------|-----------|------|
-| NO | YES | **Phase A** — `c3x migrate-legacy` (markdown → SQLite) |
-| YES | NO | **Phase B** — `c3x migrate` (body → node tree) |
-| YES | YES | Interrupted — delete `c3.db`, then Phase A |
+| NO | YES | If files are sealed/canonical: run `c3x verify`. If files are legacy/unsealed: **Phase A** — `c3x migrate-legacy` |
+| YES | NO | **Phase B** — `c3x migrate` (body → node tree) only for explicit upgrade work |
+| YES | YES | Usually v9 steady state. Ignore cache in Git. Run `c3x verify` unless doing explicit migration |
 | NO | NO | Route to **onboard** |
 
-Zero-byte `c3.db` = corrupted, delete it. `.md` only in `_index/` = no content, treat as NO_MD.
+Zero-byte `c3.db` = corrupted, delete it, then run `c3x verify`. `.md` only in `_index/` = no content, treat as NO_MD.
 
-`c3x check`, `c3x list`, `c3x read` all require a database — unavailable in Phase A until after migration.
+In v9, normal commands can rebuild cache from canonical files. Only legacy/unsealed inputs require explicit migration work before standard commands will succeed.
 
 ## Warnings Are Errors
 
@@ -103,7 +111,7 @@ Any error → delete `c3.db`, investigate, restart from A1.
 
 ### A5: Verify
 
-The markdown files are the authority. The database must match them exactly.
+Canonical markdown files are authority. Cache must match them exactly when rebuilt.
 
 ```bash
 C3X_MODE=agent bash <skill-dir>/bin/c3x.sh list

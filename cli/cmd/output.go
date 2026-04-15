@@ -13,8 +13,8 @@ type OutputFormat int
 
 const (
 	FormatJSON  OutputFormat = iota // --json explicit or non-agent
-	FormatTOON                     // C3X_MODE=agent default (no --json)
-	FormatHuman                    // non-agent, non-json
+	FormatTOON                      // C3X_MODE=agent default (no --json)
+	FormatHuman                     // non-agent, non-json
 )
 
 // ResolveFormat determines output format from options and environment.
@@ -30,8 +30,8 @@ func ResolveFormat(jsonExplicit bool, agent bool) OutputFormat {
 
 // HelpHint is a single next-step suggestion.
 type HelpHint struct {
-	Command     string // e.g. "c3x read <id>"
-	Description string // e.g. "read entity content"
+	Command     string `json:"command"`     // e.g. "c3x read <id>"
+	Description string `json:"description"` // e.g. "read entity content"
 }
 
 // WriteTableOutput writes a tabular dataset with optional help hints.

@@ -1,7 +1,7 @@
 ---
 id: c3-1
 c3-version: 4
-c3-seal: dc19609b2b14a635e7c23646fa059951c8879bcef4b4e51d578019727a274604
+c3-seal: f195197476305d1d246eff32d63ab6eff28b3e76a96206d9fa15314b88db9edd
 title: Go CLI
 type: container
 boundary: process
@@ -32,14 +32,21 @@ Provide all c3x commands as a single cross-compiled binary that reads and writes
 | ID | Name | Category | Status | Goal Contribution |
 | --- | --- | --- | --- | --- |
 | c3-101 | frontmatter | foundation | active | Parses YAML frontmatter from all .c3/ markdown files |
-| c3-102 | walker | foundation | active | Discovers and traverses the .c3/ entity tree (containers, components, refs, rules, ADRs) |
-| c3-103 | templates | foundation | active | Provides embedded scaffolding templates for new docs (incl. rules) |
-| c3-104 | wiring | foundation | active | Tracks uses:/via: citations between entities |
-| c3-105 | codemap-lib | foundation | active | Parses, matches, and validates code-map.yaml patterns for components and rules |
+| c3-102 | walker | foundation | active | Discovers and traverses the .c3/ entity tree |
+| c3-103 | templates | foundation | active | Provides embedded scaffolding templates for new docs |
+| c3-104 | wiring | foundation | active | Tracks citations between entities |
+| c3-105 | codemap-lib | foundation | active | Parses, matches, and validates code-map.yaml patterns |
+| c3-106 | content-lib | foundation | active | Parses, renders, and bridges structured markdown content |
+| c3-107 | store-lib | foundation | active | Persists entities, relationships, changelog, codemap, hashes, nodes, and versions |
+| c3-108 | runtime-support | foundation | active | Provides bootstrap, option parsing, output, config, and agent presentation helpers |
 | c3-110 | init-cmd | feature | active | Scaffolds .c3/ directory from scratch |
 | c3-111 | add-cmd | feature | active | Creates container/component/ref/rule/adr entities with numbering |
 | c3-112 | list-cmd | feature | active | Outputs topology as flat/compact/JSON |
-| c3-113 | check-cmd | feature | active | Validates structural integrity of .c3/ docs, ref and rule compliance |
-| c3-114 | lookup-cmd | feature | active | Maps file paths/globs to components + governing refs and rules |
+| c3-113 | check-cmd | feature | active | Validates structural integrity, layer integration, refs, rules, and schema |
+| c3-114 | lookup-cmd | feature | active | Maps file paths/globs to components plus governing refs and rules |
 | c3-115 | codemap-cmd | feature | active | Scaffolds code-map.yaml stubs for all entities |
-| c3-116 | coverage-cmd | feature | active | Reports code-map coverage and rule governance stats |
+| c3-116 | coverage-cmd | feature | active | Reports code-map coverage and governance stats |
+| c3-117 | docs-state-cmds | feature | active | Reads, writes, sets, validates schema, and reports status for C3 docs |
+| c3-118 | analysis-cmds | feature | active | Queries, graphs, diffs, and impacts architecture state |
+| c3-119 | sync-lifecycle-cmds | feature | active | Handles import, export, sync, repair, migrate, delete, and git guardrails |
+| c3-120 | history-marketplace-cmds | feature | active | Handles versions, hash, nodes, prune, and marketplace commands |

@@ -53,7 +53,7 @@ Match from topology. Use `c3x read <id>` when body content is needed beyond what
 | Source | Use For |
 |--------|---------|
 | Component name | Class/module names |
-| code-map (DB) | Direct file paths, symbols |
+| code-map (cache-backed) | Direct file paths, symbols |
 | Technology | Framework patterns |
 
 ## Step 2: Extract + Lookup
@@ -132,7 +132,7 @@ src/auth/**/*.ts
 
 ## Reading Entities
 
-All entity content is in the database. Use c3x to read:
+Canonical entity content lives in sealed `.c3/` files and is read through the local cache. Use c3x to read:
 
 ```bash
 c3x read <entity-id>              # full content (truncated in agent mode)

@@ -2,11 +2,13 @@ package main
 
 import (
 	"bytes"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/lagz0ne/c3-design/cli/cmd"
 	"github.com/lagz0ne/c3-design/cli/internal/content"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
@@ -130,18 +132,58 @@ func TestRun_LookupMissingArg(t *testing.T) {
 	}
 }
 
-func TestRun_NoDatabaseBlocked(t *testing.T) {
-	// Create .c3/ without a database
-	dir := t.TempDir()
-	c3Dir := filepath.Join(dir, ".c3")
-	os.MkdirAll(c3Dir, 0755)
-
-	err := run([]string{"--c3-dir", c3Dir, "list"}, &bytes.Buffer{})
-	if err == nil {
-		t.Error("expected error when no database exists")
+func TestRun_ListRebuildsMissingDatabaseFromCanonicalFiles(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", c3Dir}, &bytes.Buffer{}); err != nil {
+		t.Fatal(err)
 	}
-	if !strings.Contains(err.Error(), "no database found") {
-		t.Errorf("error should mention 'no database found': %v", err)
+	if err := os.Remove(filepath.Join(c3Dir, "c3.db")); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	if err := run([]string{"--c3-dir", c3Dir, "list", "--json"}, &buf); err != nil {
+		t.Fatalf("expected canonical files to rebuild cache, got %v", err)
+	}
+	if !fileExists(filepath.Join(c3Dir, "c3.db")) {
+		t.Fatal("expected missing c3.db to be rebuilt from canonical files")
+	}
+	if !strings.Contains(buf.String(), "c3-101") {
+		t.Fatalf("expected list output after rebuild, got %q", buf.String())
+	}
+}
+
+func TestRun_VerifyRebuildSurfacesLayerDisconnect(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := content.WriteEntity(s, "c3-1", "# api\n\n## Goal\n\nServe API requests.\n\n## Components\n\n| ID | Name | Category | Status | Goal Contribution |\n|----|------|----------|--------|-------------------|\n| c3-101 | auth | foundation | active | Authentication |\n\n## Responsibilities\n\nServe API requests.\n"); err != nil {
+		t.Fatal(err)
+	}
+	if err := cmd.RunSyncExport(cmd.ExportOptions{Store: s, OutputDir: c3Dir}, io.Discard); err != nil {
+		t.Fatal(err)
+	}
+	s.Close()
+	if err := os.Remove(filepath.Join(c3Dir, "c3.db")); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	if err := run([]string{"--c3-dir", c3Dir, "verify"}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	for _, want := range []string{
+		"Rebuilt local C3 cache from canonical .c3/",
+		"layer disconnect",
+		"missing from c3-0 Containers table",
+	} {
+		if !strings.Contains(output, want) {
+			t.Fatalf("missing %q in output:\n%s", want, output)
+		}
 	}
 }
 

@@ -24,8 +24,9 @@ type Issue struct {
 
 // CheckResult holds the validation output.
 type CheckResult struct {
-	Total  int     `json:"total"`
-	Issues []Issue `json:"issues"`
+	Total  int        `json:"total"`
+	Issues []Issue    `json:"issues"`
+	Help   []HelpHint `json:"help,omitempty"`
 }
 
 // CheckOptions holds parameters for the enhanced check command.
@@ -85,6 +86,7 @@ func hintFor(message string) string {
 		{"unknown entity reference", "verify the ID with 'c3x list'; check for typos"},
 		{"unknown ref reference", "use a ref-* ID (e.g., ref-jwt); verify with 'c3x list'"},
 		{"file does not exist", "create the file or fix the path"},
+		{"layer disconnect", "update parent table or fix the child parent field; rebuild only proves storage, not layer integration"},
 	}
 	for _, p := range patterns {
 		if !strings.Contains(message, p.substr) {
@@ -319,6 +321,7 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 	}
 
 	issues = append(issues, checkRecipeSourcesStore(opts.Store)...)
+	issues = append(issues, checkLayerDisconnectsStore(opts.Store)...)
 
 	// Scope cross-check
 	refs, _ := opts.Store.EntitiesByType("ref")
@@ -366,6 +369,7 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 		for i := range result.Issues {
 			result.Issues[i].Hint = hintFor(result.Issues[i].Message)
 		}
+		result.Help = agentHints(cascadeReviewHints())
 		return writeJSON(w, result)
 	}
 
@@ -395,8 +399,103 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 	}
 
 	fmt.Fprintln(w, "Legend: x = error (fix first)  ! = warning (incomplete, should fix)")
+	writeAgentHints(w, cascadeReviewHints())
 
 	return nil
+}
+
+func checkLayerDisconnectsStore(s *store.Store) []Issue {
+	entities, _ := s.AllEntities()
+	entityByID := make(map[string]*store.Entity, len(entities))
+	for _, entity := range entities {
+		entityByID[entity.ID] = entity
+	}
+
+	var issues []Issue
+	for _, parent := range entities {
+		sectionName, childType := layerSection(parent.Type)
+		if sectionName == "" {
+			continue
+		}
+
+		body, err := content.ReadEntity(s, parent.ID)
+		if err != nil {
+			continue
+		}
+		tableIDs, ok := idsFromSectionTable(body, sectionName)
+		if !ok {
+			continue
+		}
+
+		children, _ := s.Children(parent.ID)
+		for _, child := range children {
+			if child.Type != childType {
+				continue
+			}
+			if !tableIDs[child.ID] {
+				issues = append(issues, Issue{
+					Severity: "warning",
+					Entity:   parent.ID,
+					Message:  fmt.Sprintf("layer disconnect: child %s %s has parent %s but is missing from %s %s table", child.Type, child.ID, parent.ID, parent.ID, sectionName),
+				})
+			}
+		}
+
+		for id := range tableIDs {
+			if id == "" {
+				continue
+			}
+			child := entityByID[id]
+			if child == nil {
+				continue
+			}
+			if child.Type != childType {
+				issues = append(issues, Issue{
+					Severity: "warning",
+					Entity:   parent.ID,
+					Message:  fmt.Sprintf("layer disconnect: %s listed in %s %s table but type is %s, not %s", id, parent.ID, sectionName, child.Type, childType),
+				})
+				continue
+			}
+			if child.ParentID != parent.ID {
+				issues = append(issues, Issue{
+					Severity: "warning",
+					Entity:   parent.ID,
+					Message:  fmt.Sprintf("layer disconnect: %s listed in %s %s table but parent is %s", id, parent.ID, sectionName, child.ParentID),
+				})
+			}
+		}
+	}
+	return issues
+}
+
+func layerSection(entityType string) (sectionName string, childType string) {
+	switch entityType {
+	case "system", "context":
+		return "Containers", "container"
+	case "container":
+		return "Components", "component"
+	default:
+		return "", ""
+	}
+}
+
+func idsFromSectionTable(body, sectionName string) (map[string]bool, bool) {
+	for _, section := range markdown.ParseSections(body) {
+		if section.Name != sectionName {
+			continue
+		}
+		table, err := markdown.ParseTable(section.Content)
+		if err != nil {
+			return nil, false
+		}
+		ids := make(map[string]bool, len(table.Rows))
+		for _, row := range table.Rows {
+			ids[strings.TrimSpace(row["ID"])] = true
+		}
+		return ids, true
+	}
+	return nil, false
 }
 
 // validateColumn checks typed column values in a table.

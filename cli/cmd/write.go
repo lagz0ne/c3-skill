@@ -79,6 +79,7 @@ func runWriteFull(existing *store.Entity, opts WriteOptions, w io.Writer) error 
 	}
 
 	fmt.Fprintf(w, "Updated %s (%s)\n", opts.ID, existing.Type)
+	writeAgentHints(w, cascadeHintsForEntity(existing))
 	return nil
 }
 
@@ -114,6 +115,7 @@ func runWriteSection(existing *store.Entity, opts WriteOptions, w io.Writer) err
 	}
 
 	fmt.Fprintf(w, "Updated %s section %q\n", opts.ID, opts.Section)
+	writeAgentHints(w, cascadeHintsForEntity(existing))
 	return nil
 }
 

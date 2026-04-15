@@ -197,9 +197,9 @@ func TestParse_Blockquote(t *testing.T) {
 func TestParse_NestedList(t *testing.T) {
 	md := "- parent\n  - child 1\n  - child 2\n"
 	tree := ParseMarkdown("comp-1", md)
-	// Expect: list(0), list_item "parent"(1), list(2), list_item "child 1"(3), list_item "child 2"(4)
-	if len(tree.Nodes) < 5 {
-		t.Fatalf("expected at least 5 nodes, got %d", len(tree.Nodes))
+	// Current parser shape: list(0), list_item "parent"(1), nested child items under parent(2,3).
+	if len(tree.Nodes) != 4 {
+		t.Fatalf("expected 4 nodes, got %d", len(tree.Nodes))
 	}
 	// Top-level list
 	if tree.Nodes[0].Type != "list" {
@@ -212,19 +212,32 @@ func TestParse_NestedList(t *testing.T) {
 	if tree.ParentIndex[1] != 0 {
 		t.Errorf("node 1 parent: expected 0, got %d", tree.ParentIndex[1])
 	}
-	// Nested list is child of parent list_item
-	if tree.Nodes[2].Type != "list" {
-		t.Errorf("node 2: expected list, got %s", tree.Nodes[2].Type)
+	// Nested items are direct children of parent list_item.
+	if tree.Nodes[2].Type != "list_item" || tree.ParentIndex[2] != 1 {
+		t.Errorf("node 2: type=%s parent=%d", tree.Nodes[2].Type, tree.ParentIndex[2])
 	}
-	if tree.ParentIndex[2] != 1 {
-		t.Errorf("node 2 parent: expected 1, got %d", tree.ParentIndex[2])
+	if tree.Nodes[2].Content != "child 1" {
+		t.Errorf("node 2 content: %q", tree.Nodes[2].Content)
 	}
-	// Nested items are children of nested list
-	if tree.Nodes[3].Type != "list_item" || tree.ParentIndex[3] != 2 {
+	if tree.Nodes[3].Type != "list_item" || tree.ParentIndex[3] != 1 {
 		t.Errorf("node 3: type=%s parent=%d", tree.Nodes[3].Type, tree.ParentIndex[3])
 	}
-	if tree.Nodes[4].Type != "list_item" || tree.ParentIndex[4] != 2 {
-		t.Errorf("node 4: type=%s parent=%d", tree.Nodes[4].Type, tree.ParentIndex[4])
+	if tree.Nodes[3].Content != "child 2" {
+		t.Errorf("node 3 content: %q", tree.Nodes[3].Content)
+	}
+}
+
+func TestParse_ListItemDoesNotDuplicateParagraphChild(t *testing.T) {
+	md := "- alpha\n- beta\n"
+	tree := ParseMarkdown("comp-1", md)
+
+	if len(tree.Nodes) != 3 {
+		t.Fatalf("expected 3 nodes (list + 2 items), got %d", len(tree.Nodes))
+	}
+	for i, n := range tree.Nodes {
+		if n.Type == "paragraph" {
+			t.Fatalf("unexpected paragraph node at %d: %+v", i, n)
+		}
 	}
 }
 
@@ -255,11 +268,11 @@ Authenticate incoming API requests using JWT tokens.
 	}
 
 	checks := []struct {
-		idx         int
-		typ         string
-		parentIdx   int
-		seq         int
-		contentHas  string
+		idx        int
+		typ        string
+		parentIdx  int
+		seq        int
+		contentHas string
 	}{
 		{0, "heading", -1, 0, "Goal"},
 		{1, "paragraph", 0, 0, "Authenticate"},

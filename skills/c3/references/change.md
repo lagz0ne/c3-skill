@@ -11,6 +11,7 @@ Spawn parallel subagents via Task tool for complex work.
 - [ ] Phase 2: topology loaded, impact analyzed, ADR body filled
 - [ ] Phase 2b: provision gate (implement or design-only?)
 - [ ] Phase 3: execute work breakdown
+- [ ] Phase 3a: contract cascade gate (top-down parent delta)
 - [ ] Phase 3b: ref compliance gate
 - [ ] Phase 4: audit + ADR marked implemented
 ```
@@ -105,17 +106,44 @@ bash <skill-dir>/bin/c3x.sh read <rule-id>
 ```
 Extract `## Rule`, `## Golden Example`, and `## Not This`. Hold these in working context while editing. Code MUST match the golden pattern — deviations require the rule's `## Override` process or a new ADR.
 
-**3. Graph blast radius:** For each matched component:
+**3. Top-down parent context:** For each matched component, read the parent container before component detail:
 ```bash
+bash <skill-dir>/bin/c3x.sh read <parent-container-id>
+bash <skill-dir>/bin/c3x.sh read <component-id>
+```
+For a new component, this order is mandatory: container responsibility and membership first, component detail second.
+
+**4. Graph blast radius:** Graph the parent container first, then each matched component:
+```bash
+bash <skill-dir>/bin/c3x.sh graph <parent-container-id> --depth 1
 bash <skill-dir>/bin/c3x.sh graph <component-id> --depth 1
 ```
 If changes affect the component's interface, check consumers before proceeding.
 
-Returned refs + loaded rule content + graph = hard constraints. No exceptions.
+Returned refs + loaded rule content + parent container + graph = hard constraints. No exceptions.
 
-Parallel subagents: decompose tasks, each runs the 3-step gate on their files before touching code.
+Parallel subagents: decompose tasks, each runs the context gate on their files before touching code.
 
 Per task: verify code correct, docs updated (code-map entries, Related Refs/Rules), no regressions.
+
+## Phase 3a: Contract Cascade Gate
+
+Every component delta must have a parent delta decision.
+
+Mandatory table before audit:
+
+| Layer | Question | Verdict | Evidence |
+|-------|----------|---------|----------|
+| Component | Did Goal, Dependencies, Related Refs/Rules, Code References, or Container Connection change? | YES/NO | changed section/file |
+| Container | Did Components, Responsibilities, Goal Contribution, or boundary change? | YES/NO | updated section or no-delta reason |
+| Context | Did project/container topology change? | YES/NO | updated section or no-delta reason |
+| Refs/Rules | Did shared constraints change? | YES/NO | updated entity or no-delta reason |
+
+Rules:
+- New component → parent container `## Components` MUST update before component detail is considered done.
+- Component goal/dependency/interface/status change → parent `Goal Contribution` and `Responsibilities` MUST be reviewed.
+- `NO` requires evidence. Blank parent delta = STOP.
+- ADR must record `Parent Delta: updated` or `Parent Delta: none` with evidence.
 
 ## Phase 3b: Ref Compliance Gate
 

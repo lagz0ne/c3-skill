@@ -372,7 +372,7 @@ Examples:
 	{
 		Name:     "sync",
 		Args:     "<subcommand>",
-		OneLiner: "Sync canonical markdown from the database",
+		OneLiner: "Sync canonical markdown from the local cache",
 		Hidden:   true,
 		Help: `Usage: c3x sync export [<output-dir>]
        c3x sync check [<output-dir>]

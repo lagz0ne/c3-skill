@@ -36,9 +36,9 @@ CLI: `C3X_MODE=agent bash <skill-dir>/bin/c3x.sh <command> [args]`
 | `query <terms>` | Full-text search across all entities (`--type`, `--limit`) |
 | `impact <id>` | Transitive impact analysis — who depends on this? (`--depth`) |
 | `diff` | Show uncommitted entity changes (`--mark <hash>`) |
-| `export [dir]` | Dump DB to markdown files (escape hatch) |
+| `export [dir]` | Render canonical markdown from local cache (advanced escape hatch) |
 | `migrate` | Populate content node tree (v7→v8, requires DB) |
-| `migrate-legacy` | Import .c3/ markdown files into database (v6→v7, no DB needed) |
+| `migrate-legacy` | Import legacy unsealed `.c3/` markdown into local cache, then reseal |
 | `marketplace add <url>` | Register marketplace rule source (shallow clone) |
 | `marketplace list` | Browse available rules (`--source`, `--tag`) |
 | `marketplace show <rule-id>` | Preview marketplace rule content |
@@ -57,7 +57,7 @@ Types for `add`: `container`, `component`, `ref`, `rule`, `adr`, `recipe`
 | where, explain, how, diagram, trace, "show me", "what is", "list components" | **query** | `references/query.md` |
 | audit, validate, "check docs", drift, "docs up to date", "verify docs" | **audit** | `references/audit.md` |
 | add, change, fix, implement, refactor, remove, provision, design | **change** | `references/change.md` |
-| "migrate to db", "convert to database", "upgrade c3", "migrate .c3" | **migrate** | `references/migrate.md` |
+| "upgrade c3", "repair cache", "rebuild cache", "migrate .c3" | **migrate** | `references/migrate.md` |
 | pattern, convention, "create ref", "update ref", "list refs", standardize | **ref** | `references/ref.md` |
 | "add/create a coding rule", "document a rule", "coding standard", "coding convention", "migrate refs to rules", "split ref into rule" | **rule** | `references/rule.md` |
 | marketplace, "browse rules", "adopt rule", "install rule from", "available rules" | **rule** (Adopt mode) | `references/rule.md` |
@@ -80,7 +80,7 @@ Before every op except onboard and migrate:
 ```bash
 bash <skill-dir>/bin/c3x.sh
 ```
-Returns project dashboard (TOON). If error about missing `.c3/` → route to **onboard**. If mentions "markdown files but no database" → route to **migrate**. Otherwise, dashboard gives immediate orientation: entity counts, coverage, pending ADRs. Follow the `help[]` hints for next steps.
+Returns project dashboard (TOON). If error about missing `.c3/` → route to **onboard**. If verification complains about broken seals or unrecoverable cache rebuild, route to **migrate** or **repair** as appropriate. Otherwise, dashboard gives immediate orientation: entity counts, coverage, pending ADRs. Follow the `help[]` hints for next steps.
 
 ---
 
@@ -107,7 +107,7 @@ First `AskUserQuestion` denial → `ASSUMPTION_MODE = true` for session.
 
 **HARD RULE — .c3/ is CLI-only. NEVER use Read, Glob, Edit, or Write tools on `.c3/` files.**
 
-Architecture data is shared through sealed canonical `.c3/` markdown. `.c3/c3.db` is local cache only. Raw file access bypasses the CLI contract and returns stale or misleading state. ALL access goes through c3x:
+Architecture data is shared through sealed canonical `.c3/` markdown. `.c3/c3.db` is disposable local cache only and must never be treated as submitted state. Raw file access bypasses the CLI contract and returns stale or misleading state. ALL access goes through c3x:
 
 - Create:   `c3x add`, `c3x init`, `c3x codemap`
 - Read:     `c3x read <id>`, `c3x list`, `c3x query`, `c3x lookup`, `c3x graph`, `c3x impact`
@@ -158,13 +158,23 @@ bash <skill-dir>/bin/c3x.sh read <rule-id>
 ```
 Extract `## Rule`, `## Golden Example`, and `## Not This`. These are hard constraints — code MUST match the golden pattern. Deviations require an Override section in the rule or a new ADR.
 
-**Step 3 — Graph context:** For the first component returned (or each, if few):
+**Step 3 — Top-down parent context:** For every matched component, read upward before reasoning about the component detail:
 ```bash
+bash <skill-dir>/bin/c3x.sh read <parent-container-id>
+bash <skill-dir>/bin/c3x.sh read <component-id>
+```
+Parent container responsibilities and component membership are the integration contract.
+
+**Step 4 — Graph context:** For the parent container first, then the component if needed:
+```bash
+bash <skill-dir>/bin/c3x.sh graph <parent-container-id> --depth 1
 bash <skill-dir>/bin/c3x.sh graph <component-id> --depth 1
 ```
 Shows providers (what this component depends on) and consumers (what depends on it). If your change affects the component's interface, check consumers before proceeding.
 
-**Result:** Returned refs + loaded rule content + graph = the full constraint set. All MUST be honored.
+**Result:** Returned refs + loaded rule content + parent container + graph = the full constraint set. All MUST be honored.
+
+**New component rule:** reason top-down. Update/read container `Components` + `Responsibilities` first, then write the component detail. A new component is not done until the parent container has an explicit Parent Delta decision.
 
 **Layer Navigation:** Context → Container → Component
 
@@ -227,5 +237,5 @@ Details: `references/rule.md`
 Details: `references/sweep.md`
 
 ### migrate
-Two paths: **v6→v7** (file→DB via `c3x migrate-legacy`) and **v7→v8** (body→nodes via `c3x migrate`). Both are LLM-assisted with evidence gates: dry-run → repair → validate zero issues → migrate → verify content fidelity. Warnings are errors — every warning means silent data loss.
+Use only for version upgrades or break-glass cache rebuilds. In v9, submitted truth is sealed `.c3/` files; the cache can be discarded and rebuilt. Prefer `c3x verify` or `c3x repair` for normal workflows. Use `migrate-legacy` only when adopting old unsealed markdown, and `migrate` only for node-tree upgrades.
 Details: `references/migrate.md`

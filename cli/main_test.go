@@ -310,6 +310,30 @@ func TestRun_AddJSON(t *testing.T) {
 	}
 }
 
+func TestRun_AddAgentModeReturnsTOON(t *testing.T) {
+	t.Setenv("C3X_MODE", "agent")
+	c3Dir := setupRichC3DB(t)
+	var buf bytes.Buffer
+	body := "## Goal\nAgent cache strategy.\n\n## Choice\nSQLite cache.\n\n## Why\nLocal and deterministic.\n"
+	r, w, _ := os.Pipe()
+	w.WriteString(body)
+	w.Close()
+	old := os.Stdin
+	os.Stdin = r
+	defer func() { os.Stdin = old }()
+	err := run([]string{"--c3-dir", c3Dir, "add", "ref", "agent-cache"}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := buf.String()
+	if strings.HasPrefix(strings.TrimSpace(out), "{") {
+		t.Fatalf("agent add must not emit JSON:\n%s", out)
+	}
+	if !strings.Contains(out, "id: ref-agent-cache") {
+		t.Fatalf("agent add should emit TOON id, got:\n%s", out)
+	}
+}
+
 func TestRun_Set(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
 	var buf bytes.Buffer

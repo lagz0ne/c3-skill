@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
@@ -127,9 +126,7 @@ func RunLegacyCheck(opts LegacyCheckOptions, w io.Writer) error {
 	}
 
 	if opts.JSON {
-		enc := json.NewEncoder(w)
-		enc.SetIndent("", "  ")
-		return enc.Encode(result)
+		return writeJSON(w, result)
 	}
 
 	if len(issues) == 0 {

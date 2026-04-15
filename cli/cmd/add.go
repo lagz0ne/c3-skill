@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/lagz0ne/c3-design/cli/internal/content"
+	"github.com/lagz0ne/c3-design/cli/internal/schema"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
@@ -17,7 +18,7 @@ var (
 	reContainer = regexp.MustCompile(`^c3-(\d+)$`)
 )
 
-// AddResult is the JSON output from add commands.
+// AddResult is the structured output from add commands.
 type AddResult struct {
 	ID       string   `json:"id"`
 	Type     string   `json:"type,omitempty"`
@@ -26,6 +27,11 @@ type AddResult struct {
 
 // RunAdd creates a new C3 entity with body content. Body is required via reader.
 func RunAdd(entityType, slug string, s *store.Store, container string, feature bool, body io.Reader, w io.Writer) error {
+	return RunAddFormatted(entityType, slug, s, container, feature, body, w, FormatHuman)
+}
+
+// RunAddFormatted creates a new C3 entity and writes either human or structured output.
+func RunAddFormatted(entityType, slug string, s *store.Store, container string, feature bool, body io.Reader, w io.Writer, format OutputFormat) error {
 	if entityType == "" || slug == "" {
 		return fmt.Errorf("error: usage: c3x add <type> <slug> < body.md\nhint: types: container, component, ref, rule, adr, recipe")
 	}
@@ -64,12 +70,26 @@ func RunAdd(entityType, slug string, s *store.Store, container string, feature b
 		return fmt.Errorf("error: writing content: %w", err)
 	}
 
+	result := AddResult{ID: entity.ID, Type: entityType}
+	if sections := schema.ForType(entityType); sections != nil {
+		for _, sec := range sections {
+			result.Sections = append(result.Sections, sec.Name)
+		}
+	}
+	hints := cascadeHintsForEntity(entity)
+	if entity.Type == "component" {
+		hints = newComponentTopDownHints(entity)
+	}
+	if format != FormatHuman {
+		return WriteObjectOutput(w, result, format, hints)
+	}
+
 	fmt.Fprintf(w, "Created: %s %s (id: %s)\n", entityType, slug, entity.ID)
 	if entity.Type == "component" {
-		writeAgentHints(w, newComponentTopDownHints(entity))
+		writeAgentHints(w, hints)
 		return nil
 	}
-	writeAgentHints(w, cascadeHintsForEntity(entity))
+	writeAgentHints(w, hints)
 	return nil
 }
 

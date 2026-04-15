@@ -99,7 +99,7 @@ func buildPreCommitHook() string {
 		`  exit 1`,
 		`fi`,
 		`c3x verify --c3-dir "$repo_root/.c3"`,
-		`if ! git diff --quiet -- .c3; then`,
+		`if ! git diff --quiet -- .c3 ':(exclude).c3/c3.db' ':(exclude).c3/c3.db-*' ':(exclude).c3/*.tmp.db' ':(exclude).c3/*.tmp.db-*'; then`,
 		`  echo "c3: canonical .c3/ files changed; review and stage them before committing." >&2`,
 		`  exit 1`,
 		`fi`,

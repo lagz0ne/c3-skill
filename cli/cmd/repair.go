@@ -88,6 +88,11 @@ func runVerificationSuite(c3Dir string, json bool, w io.Writer) error {
 		ProjectDir: config.ProjectDir(c3Dir),
 		C3Dir:      c3Dir,
 	}, &checkOut); err != nil {
+		if checkOut.Len() > 0 {
+			if _, copyErr := io.Copy(w, &checkOut); copyErr != nil {
+				return copyErr
+			}
+		}
 		return err
 	}
 	if _, err := io.Copy(w, &checkOut); err != nil {

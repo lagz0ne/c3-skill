@@ -47,7 +47,7 @@ func TestRunAdd_ComponentWithBody(t *testing.T) {
 	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	body := "## Goal\nHandles rate limiting.\n\n## Dependencies\n| Target | Why |\n|--------|-----|\n| c3-101 | rate data |\n"
+	body := strictComponentBody("rate-limiter", "Handles rate limiting behavior for API requests.")
 
 	err := RunAdd("component", "rate-limiter", s, "c3-1", false, strings.NewReader(body), &buf)
 	if err != nil {
@@ -58,7 +58,7 @@ func TestRunAdd_ComponentWithBody(t *testing.T) {
 	if entity == nil {
 		t.Fatal("component c3-102 should exist")
 	}
-	if entity.Goal != "Handles rate limiting." {
+	if entity.Goal != "Handles rate limiting behavior for API requests." {
 		t.Errorf("goal = %q", entity.Goal)
 	}
 }
@@ -67,7 +67,7 @@ func TestRunAdd_ComponentFeatureWithBody(t *testing.T) {
 	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	body := "## Goal\nCheckout flow.\n\n## Dependencies\n| Target | Why |\n|--------|-----|\n| c3-101 | auth |\n"
+	body := strictComponentBody("checkout", "Coordinates checkout workflow behavior after authentication succeeds.")
 
 	err := RunAdd("component", "checkout", s, "c3-1", true, strings.NewReader(body), &buf)
 	if err != nil {
@@ -190,8 +190,8 @@ func TestRunAdd_MissingSectionsFails(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected validation error")
 	}
-	if !strings.Contains(err.Error(), "Dependencies") {
-		t.Errorf("error should mention missing Dependencies: %v", err)
+	if !strings.Contains(err.Error(), "Parent Fit") {
+		t.Errorf("error should mention missing Parent Fit: %v", err)
 	}
 
 	if _, err := s.GetEntity("c3-102"); err == nil {
@@ -258,7 +258,7 @@ func TestRunAdd_ComponentMissingContainer(t *testing.T) {
 	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	body := "## Goal\nTest.\n\n## Dependencies\n| Target | Why |\n|---|---|\n| x | y |\n"
+	body := strictComponentBody("test", "Documents test component behavior before creation.")
 	err := RunAdd("component", "test", s, "", false, strings.NewReader(body), &buf)
 	if err == nil {
 		t.Fatal("expected error")

@@ -16,12 +16,12 @@ func TestRunCheck_EmptyRequiredSection(t *testing.T) {
 	s := createRichDBFixture(t)
 
 	// Update c3-110 to have empty Goal section
-	content.WriteEntity(s, "c3-110", "# users\n\n## Goal\n\n## Dependencies\n\n| Direction | What | From/To |\n|-----------|------|----------|\n")
+	content.WriteEntity(s, "c3-110", strings.Replace(strictComponentBody("users", "Manage user account behavior for authenticated API requests."), "Manage user account behavior for authenticated API requests.", "", 1))
 
 	var buf bytes.Buffer
 	opts := CheckOptions{Store: s, JSON: false}
-	if err := RunCheckV2(opts, &buf); err != nil {
-		t.Fatal(err)
+	if err := RunCheckV2(opts, &buf); err == nil {
+		t.Fatal("expected check failure")
 	}
 
 	output := buf.String()
@@ -79,21 +79,22 @@ func TestRunCheck_IncludeADRValidatesADR(t *testing.T) {
 
 func TestRunCheck_EmptyRequiredTable(t *testing.T) {
 	s := createRichDBFixture(t)
+	content.WriteEntity(s, "c3-110", strings.Replace(strictComponentBody("users", "Manage user account behavior for authenticated API requests."), "| credentials | IN | Accept credential material for validation only. | API request boundary | ref-jwt |\n| identity result | OUT | Provide accepted identity or explicit rejection. | Downstream user workflow | c3-110 |", "", 1))
 	var buf bytes.Buffer
 
 	opts := CheckOptions{Store: s, JSON: false}
-	if err := RunCheckV2(opts, &buf); err != nil {
-		t.Fatal(err)
+	if err := RunCheckV2(opts, &buf); err == nil {
+		t.Fatal("expected check failure")
 	}
 
 	output := buf.String()
-	if !strings.Contains(output, "empty required table") {
-		t.Errorf("should warn about empty required tables, got: %s", output)
+	if !strings.Contains(output, "not enough rows in Contract") {
+		t.Errorf("should warn about thin Contract table, got: %s", output)
 	}
 }
 
 func TestRunCheck_MissingRequiredSection_Ref(t *testing.T) {
-	s := createDBFixture(t)
+	s := createRichDBFixture(t)
 
 	// Add an incomplete ref missing required sections
 	s.InsertEntity(&store.Entity{
@@ -118,10 +119,10 @@ func TestRunCheck_MissingRequiredSection_Ref(t *testing.T) {
 }
 
 func TestRunCheck_EntityIdNotInStore(t *testing.T) {
-	s := createDBFixture(t)
+	s := createRichDBFixture(t)
 
-	// Update c3-101 to reference c3-999 in body table
-	content.WriteEntity(s, "c3-101", "# auth\n\n## Goal\n\nAuth.\n\n## Dependencies\n\n| Direction | What | From/To |\n|-----------|------|----------|\n| IN | data | c3-999 |\n")
+	// Update c3-1 to reference c3-999 in Components table
+	content.WriteEntity(s, "c3-1", "# api\n\n## Goal\n\nServe API requests.\n\n## Components\n\n| ID | Name | Category | Status | Goal Contribution |\n|----|------|----------|--------|-------------------|\n| c3-999 | ghost | feature | active | Missing component |\n\n## Responsibilities\n\nServe API requests.\n")
 
 	var buf bytes.Buffer
 	opts := CheckOptions{Store: s, JSON: false}
@@ -136,10 +137,10 @@ func TestRunCheck_EntityIdNotInStore(t *testing.T) {
 }
 
 func TestRunCheck_SuggestsByTitle(t *testing.T) {
-	s := createDBFixture(t)
+	s := createRichDBFixture(t)
 
-	// c3-101 body references "api" instead of "c3-1"
-	content.WriteEntity(s, "c3-101", "# auth\n\n## Goal\n\nAuth.\n\n## Dependencies\n\n| Direction | What | From/To |\n|-----------|------|----------|\n| IN | data | api |\n")
+	// c3-1 Components table references "api" instead of "c3-1"
+	content.WriteEntity(s, "c3-1", "# api\n\n## Goal\n\nServe API requests.\n\n## Components\n\n| ID | Name | Category | Status | Goal Contribution |\n|----|------|----------|--------|-------------------|\n| api | ghost | feature | active | Ambiguous title reference |\n\n## Responsibilities\n\nServe API requests.\n")
 
 	var buf bytes.Buffer
 	opts := CheckOptions{Store: s, JSON: false}
@@ -155,11 +156,12 @@ func TestRunCheck_SuggestsByTitle(t *testing.T) {
 
 func TestRunCheck_EnhancedJSON(t *testing.T) {
 	s := createRichDBFixture(t)
+	content.WriteEntity(s, "c3-110", strings.Replace(strictComponentBody("users", "Manage user account behavior for authenticated API requests."), "Manage user account behavior for authenticated API requests.", "", 1))
 	var buf bytes.Buffer
 
 	opts := CheckOptions{Store: s, JSON: true}
-	if err := RunCheckV2(opts, &buf); err != nil {
-		t.Fatal(err)
+	if err := RunCheckV2(opts, &buf); err == nil {
+		t.Fatal("expected check failure")
 	}
 
 	var result CheckResult
@@ -205,8 +207,9 @@ func TestRunCheck_CleanOutputSummary(t *testing.T) {
 }
 
 func TestRunCheck_ScopeCrossCheck(t *testing.T) {
-	s := createDBFixture(t)
+	s := createRichDBFixture(t)
 	// ref-jwt scopes c3-1. c3-101 cites ref-jwt. c3-110 does NOT.
+	s.AddRelationship(&store.Relationship{FromID: "c3-101", ToID: "ref-error-handling", RelType: "uses"})
 
 	var buf bytes.Buffer
 	opts := CheckOptions{Store: s, JSON: false}
@@ -279,7 +282,7 @@ func TestHintFor(t *testing.T) {
 }
 
 func TestRunCheck_RecipeInvalidSources(t *testing.T) {
-	s := createDBFixture(t)
+	s := createRichDBFixture(t)
 	s.InsertEntity(&store.Entity{
 		ID: "recipe-auth", Type: "recipe", Title: "Auth Flow", Slug: "auth",
 		Status: "active", Metadata: "{}",

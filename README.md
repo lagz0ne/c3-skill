@@ -22,7 +22,7 @@ Architecture docs rot because nobody enforces them. C3 fixes this by making the 
 
 ## What You Get
 
-### Seven operations, one entry point
+### Supported operations, one entry point
 
 | Say this | C3 does this |
 |----------|-------------|
@@ -32,6 +32,7 @@ Architecture docs rot because nobody enforces them. C3 fixes this by making the 
 | `/c3` create a ref for error handling | **ref** — cross-cutting pattern with Choice/Why/How sections and cite wiring |
 | `/c3` add a rule for structured logging | **rule** — enforceable standard with golden example and anti-patterns |
 | `/c3` audit the docs | **audit** — 10-phase validation: structural → semantic → drift → compliance |
+| `/c3` repair the cache after a branch switch | **migrate** — repair/rebuild cache and handle C3 version upgrades |
 | `/c3` what breaks if I change payments? | **sweep** — transitive impact across the entity graph |
 
 ### The `c3x` CLI
@@ -60,8 +61,8 @@ c3x graph c3-1 --format mermaid          # visual subgraph
 
 **Manage entities:**
 ```bash
-c3x add component auth --container c3-1 --goal "JWT auth" --json
-# → {"id":"c3-101","type":"component","sections":["Goal","Dependencies",...]}
+cat auth-component.md | c3x add component auth --container c3-1
+# → {"id":"c3-101","type":"component","sections":["Goal","Parent Fit","Purpose",...]}
 
 c3x wire c3-101 ref-jwt ref-error-handling   # batch wire multiple targets
 c3x set c3-101 --section "Goal" "Handle JWT authentication"
@@ -108,13 +109,13 @@ Every entity type has required sections. The CLI enforces them on write:
 
 | Entity | Required sections |
 |--------|------------------|
-| Component | Goal, Dependencies |
+| Component | Goal, Parent Fit, Purpose, Foundational Flow, Business Flow, Governance, Contract, Change Safety, Derived Materials |
 | Container | Goal, Components, Responsibilities |
 | Ref | Goal, Choice, Why |
 | Rule | Goal, Rule, Golden Example |
 | ADR, Recipe | Goal |
 
-`c3x write` (full body) validates required sections before accepting. Section-level updates (`write --section`, `set --section`) skip validation to allow incremental filling. `c3x check` validates everything post-hoc.
+`c3x write` (full body) validates required sections before accepting. Component section updates validate the full resulting document, so component docs stay all-or-nothing. `c3x check` validates everything post-hoc.
 
 ### Canonical `.c3/` tree
 
@@ -152,7 +153,7 @@ c3x marketplace show rule-error-wrapping
 
 ## Migrating
 
-### Upgrading to v9.0.0
+### Upgrading to v9.0.1
 
 v9 is a breaking workflow release. The shared truth moves from “database-first” to “canonical text first”.
 
@@ -196,12 +197,12 @@ The plugin ships with pre-built binaries — no Go toolchain, no npm, no PATH co
 
 ```
 skills/c3/bin/
-├── VERSION                    # "9.0.0"
+├── VERSION                    # "9.0.1"
 ├── c3x.sh                    # detects OS/ARCH, runs the right binary
-├── c3x-9.0.0-linux-amd64
-├── c3x-9.0.0-linux-arm64
-├── c3x-9.0.0-darwin-amd64
-└── c3x-9.0.0-darwin-arm64
+├── c3x-9.0.1-linux-amd64
+├── c3x-9.0.1-linux-arm64
+├── c3x-9.0.1-darwin-amd64
+└── c3x-9.0.1-darwin-arm64
 ```
 
 Each plugin version carries its own binary. Different projects can use different versions without conflict.

@@ -5,6 +5,25 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.0.1] - 2026-04-15
+
+### Added
+
+- **Strict enriched component docs** — components now require top-down, derivation-ready sections: Parent Fit, Purpose, Foundational Flow, Business Flow, Governance, Contract, Change Safety, and Derived Materials.
+- **Semantic component validation** — strict component tables now reject ungrounded references, weak evidence, all-`N.A` rows, duplicate boilerplate, invalid enum values, and derivation claims that do not cite component sections.
+- **Operation-level skill components** — C3 skill operations are represented as one component per workflow, so each skill reference has explicit ownership and demonstration scope.
+
+### Changed
+
+- **Component mutation gates are all-or-nothing** — `add`, `write`, `set`, `check`, and `verify` now block malformed component docs instead of accepting incremental thin placeholders.
+- **Component scaffold and help text now teach strict shape** — generated and documented component examples use Governance/Contract/Change Safety instead of legacy Dependencies/Related Refs.
+- **`c3x migrate` recovers legacy and empty docs into strict form** — cache rebuilds and old component shapes are migrated into verifiable canonical docs.
+
+### Fixed
+
+- **Wire/delete table cleanup follows Governance** — component citations are added to and removed from the strict Governance table.
+- **Verify failure output is actionable** — failed verification now surfaces the underlying check issues instead of only an aggregate count.
+
 ## [9.0.0] - 2026-04-14
 
 ### BREAKING

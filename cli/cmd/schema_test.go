@@ -21,7 +21,7 @@ func TestRunSchema_Component(t *testing.T) {
 	}
 
 	output := buf.String()
-	for _, section := range []string{"Goal", "Dependencies"} {
+	for _, section := range []string{"Goal", "Parent Fit", "Foundational Flow", "Business Flow", "Governance", "Contract", "Change Safety", "Derived Materials"} {
 		if !strings.Contains(output, section) {
 			t.Errorf("component schema should include %q, got: %s", section, output)
 		}
@@ -129,14 +129,14 @@ func TestRunSchema_JSON_TableColumns(t *testing.T) {
 		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
 	}
 
-	// Find Dependencies section — should have typed columns
+	// Find Contract section — should have typed columns
 	for _, s := range schema.Sections {
-		if s.Name == "Dependencies" {
+		if s.Name == "Contract" {
 			if s.ContentType != "table" {
-				t.Errorf("Dependencies content_type = %q, want %q", s.ContentType, "table")
+				t.Errorf("Contract content_type = %q, want %q", s.ContentType, "table")
 			}
-			if len(s.Columns) != 3 {
-				t.Fatalf("Dependencies columns count = %d, want 3", len(s.Columns))
+			if len(s.Columns) != 5 {
+				t.Fatalf("Contract columns count = %d, want 5", len(s.Columns))
 			}
 			// Verify column types (Layer 3)
 			dirCol := findColumn(s.Columns, "Direction")
@@ -164,17 +164,17 @@ func TestRunSchema_JSON_TableColumns(t *testing.T) {
 				t.Errorf("Direction enum values should include IN and OUT, got %v", dirCol.Values)
 			}
 
-			fromCol := findColumn(s.Columns, "From/To")
-			if fromCol == nil {
-				t.Fatal("From/To column not found")
+			evidenceCol := findColumn(s.Columns, "Evidence")
+			if evidenceCol == nil {
+				t.Fatal("Evidence column not found")
 			}
-			if fromCol.Type != "entity_id" {
-				t.Errorf("From/To column type = %q, want %q", fromCol.Type, "entity_id")
+			if evidenceCol.Type != "text" {
+				t.Errorf("Evidence column type = %q, want %q", evidenceCol.Type, "text")
 			}
 			return
 		}
 	}
-	t.Error("Dependencies section not found in schema")
+	t.Error("Contract section not found in schema")
 }
 
 func TestRunSchema_SectionOrder(t *testing.T) {
@@ -200,21 +200,21 @@ func TestRunSchema_SectionOrder(t *testing.T) {
 		}
 	}
 
-	// Goal should come before Dependencies (template order)
-	goalIdx, depsIdx := -1, -1
+	// Goal should come before Parent Fit (template order)
+	goalIdx, parentFitIdx := -1, -1
 	for i, s := range s1.Sections {
 		if s.Name == "Goal" {
 			goalIdx = i
 		}
-		if s.Name == "Dependencies" {
-			depsIdx = i
+		if s.Name == "Parent Fit" {
+			parentFitIdx = i
 		}
 	}
-	if goalIdx == -1 || depsIdx == -1 {
-		t.Fatal("Goal and Dependencies sections must both exist")
+	if goalIdx == -1 || parentFitIdx == -1 {
+		t.Fatal("Goal and Parent Fit sections must both exist")
 	}
-	if goalIdx >= depsIdx {
-		t.Errorf("Goal (index %d) should come before Dependencies (index %d)", goalIdx, depsIdx)
+	if goalIdx >= parentFitIdx {
+		t.Errorf("Goal (index %d) should come before Parent Fit (index %d)", goalIdx, parentFitIdx)
 	}
 }
 

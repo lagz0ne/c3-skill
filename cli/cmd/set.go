@@ -66,6 +66,11 @@ func runSetBatch(entity *store.Entity, opts SetOptions, w io.Writer) error {
 	if err := json.Unmarshal([]byte(opts.Value), &payload); err != nil {
 		return fmt.Errorf("error: invalid JSON payload\nhint: expected {\"fields\": {...}, \"sections\": {...}}")
 	}
+	if entity.Type == "component" && len(payload.Sections) == 0 {
+		if issues := validateCurrentEntityBody(opts.Store, entity); len(issues) > 0 {
+			return formatValidationError(opts.ID, issues)
+		}
+	}
 
 	// Apply fields
 	for field, value := range payload.Fields {
@@ -101,6 +106,9 @@ func runSetBatch(entity *store.Entity, opts SetOptions, w io.Writer) error {
 					section, opts.ID, availableSections(body))
 			}
 			body = newBody
+		}
+		if issues := validateBodyContent(body, entity.Type); len(issues) > 0 {
+			return formatValidationError(opts.ID, issues)
 		}
 
 		if err := content.WriteEntity(opts.Store, opts.ID, body); err != nil {
@@ -161,6 +169,11 @@ func runSetField(entity *store.Entity, opts SetOptions, w io.Writer) error {
 	if opts.Field == "codemap" {
 		return runSetCodemap(entity, opts, w)
 	}
+	if entity.Type == "component" {
+		if issues := validateCurrentEntityBody(opts.Store, entity); len(issues) > 0 {
+			return formatValidationError(opts.ID, issues)
+		}
+	}
 
 	// Map field name to entity field
 	switch opts.Field {
@@ -191,6 +204,11 @@ func runSetField(entity *store.Entity, opts SetOptions, w io.Writer) error {
 
 // runSetCodemap handles codemap pattern updates: replace, append, or remove.
 func runSetCodemap(entity *store.Entity, opts SetOptions, w io.Writer) error {
+	if entity.Type == "component" {
+		if issues := validateCurrentEntityBody(opts.Store, entity); len(issues) > 0 {
+			return formatValidationError(opts.ID, issues)
+		}
+	}
 	if opts.Append && opts.Remove {
 		return fmt.Errorf("cannot use --append and --remove together")
 	}
@@ -313,6 +331,9 @@ func runSetSection(entity *store.Entity, opts SetOptions, w io.Writer) error {
 			return err
 		}
 	}
+	if issues := validateBodyContent(newBody, entity.Type); len(issues) > 0 {
+		return formatValidationError(opts.ID, issues)
+	}
 
 	// Write through node tree.
 	if err := content.WriteEntity(opts.Store, opts.ID, newBody); err != nil {
@@ -333,4 +354,12 @@ func runSetSection(entity *store.Entity, opts SetOptions, w io.Writer) error {
 	fmt.Fprintf(w, "Updated %s section %q\n", opts.ID, opts.Section)
 	writeAgentHints(w, cascadeHintsForEntity(entity))
 	return nil
+}
+
+func validateCurrentEntityBody(s *store.Store, entity *store.Entity) []Issue {
+	body, err := content.ReadEntity(s, entity.ID)
+	if err != nil {
+		return nil
+	}
+	return validateBodyContent(body, entity.Type)
 }

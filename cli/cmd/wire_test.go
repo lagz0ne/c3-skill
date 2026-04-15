@@ -30,10 +30,10 @@ func TestRunWire_CiteRef_UpdatesBothSides(t *testing.T) {
 		t.Error("Side 1 fail: relationship c3-201->ref-error-handling should exist")
 	}
 
-	// Side 2: source's Related Refs table body should include ref-error-handling
+	// Side 2: source's Governance table body should include ref-error-handling
 	body, _ := content.ReadEntity(s, "c3-201")
 	if !strings.Contains(body, "ref-error-handling") {
-		t.Error("Side 2 fail: source's Related Refs table should include ref-error-handling")
+		t.Error("Side 2 fail: source's Governance table should include ref-error-handling")
 	}
 
 	output := buf.String()

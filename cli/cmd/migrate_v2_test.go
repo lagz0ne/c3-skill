@@ -59,6 +59,37 @@ func TestRunMigrateV2_DryRun(t *testing.T) {
 	}
 }
 
+func TestRunMigrateV2_StrictMigratesLegacyComponentNodes(t *testing.T) {
+	s := newMigrateV2Store(t)
+	if err := s.InsertEntity(&store.Entity{
+		ID: "c3-101", Type: "component", Title: "auth", Slug: "auth",
+		Category: "foundation", ParentID: "c3-1", Goal: "Handle authentication behavior for API requests.",
+		Status: "active", Metadata: "{}",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := content.WriteEntity(s, "c3-101", "# auth\n\n## Goal\n\nHandle auth.\n\n## Dependencies\n\n| Direction | What | From/To |\n|---|---|---|\n| IN | credentials | c3-1 |\n"); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	if err := RunMigrateV2(MigrateV2Options{Store: s}, &buf); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(buf.String(), "strict-migrated component: c3-101") {
+		t.Fatalf("expected strict migration output, got:\n%s", buf.String())
+	}
+
+	body, err := content.ReadEntity(s, "c3-101")
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireAll(t, body, "## Parent Fit", "## Governance", "## Derived Materials")
+	if issues := validateStrictComponentDoc(body, "error"); len(issues) > 0 {
+		t.Fatalf("strict migrated body failed validation: %#v\n%s", issues, body)
+	}
+}
+
 func TestRunMigrateV2_EmptyStore(t *testing.T) {
 	s, err := store.Open(":memory:")
 	if err != nil {
@@ -67,21 +98,24 @@ func TestRunMigrateV2_EmptyStore(t *testing.T) {
 	t.Cleanup(func() { s.Close() })
 
 	s.InsertEntity(&store.Entity{
-		ID: "c3-empty", Type: "component", Title: "Empty", Slug: "empty",
+		ID: "c3-101", Type: "component", Title: "Empty", Slug: "empty",
 		Status: "active", Metadata: "{}",
 	})
 
 	var buf bytes.Buffer
-	RunMigrateV2(MigrateV2Options{Store: s}, &buf)
+	if err := RunMigrateV2(MigrateV2Options{Store: s}, &buf); err != nil {
+		t.Fatal(err)
+	}
 
 	out := buf.String()
-	if !strings.Contains(out, "0 migrated") {
-		t.Errorf("expected '0 migrated', got:\n%s", out)
+	if !strings.Contains(out, "strict-migrated empty component: c3-101") {
+		t.Errorf("expected strict empty component recovery, got:\n%s", out)
 	}
-	if !strings.Contains(out, "no content yet") {
-		t.Errorf("expected guidance for empty entities, got:\n%s", out)
+	body, err := content.ReadEntity(s, "c3-101")
+	if err != nil {
+		t.Fatal(err)
 	}
-	if !strings.Contains(out, "c3x write c3-empty") {
-		t.Errorf("expected actionable command, got:\n%s", out)
+	if issues := validateStrictComponentDoc(body, "error"); len(issues) > 0 {
+		t.Fatalf("empty component recovery should produce strict body: %#v\n%s", issues, body)
 	}
 }

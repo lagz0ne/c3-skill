@@ -1,7 +1,7 @@
 ---
 id: c3-104
 c3-version: 4
-c3-seal: bae5a5eb6d998ec150e2e071aaad3004153a9a9fa4791d10a6b87ed3fa239495
+c3-seal: efafbb898288407b8968b7a07e472fd99aede72c7db5cb8b85151e3a209c857a
 title: wiring
 type: component
 category: foundation
@@ -15,20 +15,53 @@ summary: Reads uses/via fields from frontmatter, resolves IDs, reports uncited r
 
 Track and validate entity citations between components and refs (`uses`/`via` frontmatter fields).
 
-## Container Connection
+## Parent Fit
 
-check-cmd's semantic validation and wire-cmd's citation management both depend on this. Without wiring, there's no way to verify that ref usage is correctly documented.
-
-## Dependencies
-
-| Direction | What | From/To |
-| --- | --- | --- |
-| IN (uses) | Frontmatter parsing | c3-101 |
-| IN (uses) | Entity discovery | c3-102 |
-| OUT (provides) | Citation validation results |  |
-## Code References
-
-| File | Purpose |
+| Field | Value |
 | --- | --- |
-| cli/internal/wiring/wiring.go | Citation resolution and validation |
-| cli/cmd/wire.go | Wire command using this library |
+| Parent | c3-1 |
+| Role | Own wiring behavior inside the parent container without taking over sibling responsibilities. |
+| Boundary | Keep wiring decisions inside this component and escalate container-wide policy to the parent. |
+| Collaboration | Coordinate with cited governance and adjacent components before changing the contract. |
+## Purpose
+
+Provide durable agent-ready documentation for wiring so generated code, tests, and follow-up docs preserve ownership, boundaries, governance, and verification evidence.
+
+## Foundational Flow
+
+| Aspect | Detail | Reference |
+| --- | --- | --- |
+| Preconditions | Parent container context is loaded before wiring behavior is changed. | c3-1 |
+| Inputs | Accept only the files, commands, data, or calls that belong to wiring ownership. | c3-1 |
+| State / data | Preserve explicit state boundaries and avoid hidden cross-component ownership. | c3-1 |
+| Shared dependencies | Use lower-layer helpers and cited references instead of duplicating shared policy. | c3-1 |
+## Business Flow
+
+| Aspect | Detail | Reference |
+| --- | --- | --- |
+| Actor / caller | Agent, command, or workflow asks wiring to deliver its documented responsibility. | c3-1 |
+| Primary path | Follow the component goal, honor parent fit, and emit behavior through the documented contract. | c3-1 |
+| Alternate paths | When a request falls outside wiring ownership, hand it to the parent or sibling component. | c3-1 |
+| Failure behavior | Surface mismatch through check, tests, lookup, or review evidence before derived work ships. | c3-1 |
+## Governance
+
+| Reference | Type | Governs | Precedence | Notes |
+| --- | --- | --- | --- | --- |
+| c3-1 | policy | Governs wiring behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
+## Contract
+
+| Surface | Direction | Contract | Boundary | Evidence |
+| --- | --- | --- | --- | --- |
+| wiring input | IN | Callers must provide context that matches the component goal and parent fit. | c3-1 boundary | c3x lookup plus targeted tests or review. |
+| wiring output | OUT | Derived code, docs, and tests must preserve the documented behavior and governance. | c3-1 boundary | c3x check and project test suite. |
+## Change Safety
+
+| Risk | Trigger | Detection | Required Verification |
+| --- | --- | --- | --- |
+| Contract drift | Goal, boundary, or derived material changes without matching component docs. | Compare Goal, Parent Fit, Contract, and Derived Materials. | Run c3x check and relevant project tests. |
+| Governance drift | Cited references, rules, or parent responsibilities change. | Re-read Governance rows and parent container docs. | Run c3x verify plus targeted lookup for changed files. |
+## Derived Materials
+
+| Material | Must derive from | Allowed variance | Evidence |
+| --- | --- | --- | --- |
+| Code, docs, tests, prompts | Goal, Governance, Contract, and Change Safety sections. | Names and framework shape may vary; behavior and boundaries may not. | c3x check, c3x verify, and relevant tests. |

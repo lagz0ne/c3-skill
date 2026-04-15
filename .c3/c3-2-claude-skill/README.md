@@ -1,7 +1,7 @@
 ---
 id: c3-2
 c3-version: 4
-c3-seal: 25786edf45eaf1883914c249f3933522687e4b60c5a93747002bdff17f6c98eb
+c3-seal: dcca17b0c864fe5818f8c3096fe799275ec0221238a3f49af88af54f9dce49b6
 title: Claude Skill
 type: container
 boundary: app
@@ -17,18 +17,26 @@ Expose c3 architecture workflows through natural language by routing user intent
 
 ## Responsibilities
 
-- Classify natural language intent into one of seven operations
-- Load and execute the appropriate operation reference
-- Call c3x commands at each step of an operation
-- Apply ASSUMPTION_MODE when the user declines to answer clarifying questions
+- Classify natural language intent into supported C3 operations.
+- Load and execute the appropriate operation workflow component.
+- Call c3x commands at each step of an operation.
+- Apply ASSUMPTION_MODE when the user declines to answer clarifying questions.
 ## Complexity Assessment
 
 **Level:** moderate
-**Why:** Intent classification must be reliable across varied phrasings; each operation is a multi-step workflow; skill descriptions are hard-constrained to ≤1024 chars.
+**Why:** Intent classification must be reliable across varied phrasings; each operation is a multi-step workflow; skill descriptions are hard-constrained to 1024 chars.
 
 ## Components
 
 | ID | Name | Category | Status | Goal Contribution |
 | --- | --- | --- | --- | --- |
-| c3-201 | skill-router | foundation | active | Classifies intent and dispatches to the correct operation reference |
-| c3-210 | operation-refs | feature | active | Provides step-by-step guidance for each operation (onboard/query/audit/change/ref/rule/sweep) |
+| c3-201 | skill-router | foundation | active | Classifies intent and dispatches to the matching workflow component. |
+| c3-210 | operation-workflow-index | feature | active | Defines the shared operation-reference contract followed by each operation component. |
+| c3-211 | onboard-operation | feature | active | Demonstrates project adoption and initial C3 topology creation. |
+| c3-212 | query-operation | feature | active | Demonstrates architecture question answering through search, lookup, read, graph, and impact commands. |
+| c3-213 | audit-operation | feature | active | Demonstrates structural and semantic C3 documentation quality review. |
+| c3-214 | change-operation | feature | active | Demonstrates ADR-first architecture changes with lookup, parent delta, implementation, and verification. |
+| c3-215 | migrate-operation | feature | active | Demonstrates C3 upgrade and cache recovery flows without treating c3.db as submitted truth. |
+| c3-216 | ref-operation | feature | active | Demonstrates reusable architectural ref creation, update, listing, and explanation. |
+| c3-217 | rule-operation | feature | active | Demonstrates enforceable coding rule creation, update, adoption, and evaluation. |
+| c3-218 | sweep-operation | feature | active | Demonstrates transitive impact assessment before high-risk architecture changes. |

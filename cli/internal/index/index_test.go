@@ -97,11 +97,62 @@ uses: [ref-jwt]
 
 Handle authentication.
 
-## Dependencies
+## Parent Fit
 
-| Direction | What | From/To |
-|-----------|------|---------|
-| IN | user credentials | c3-110 |
+| Field | Value |
+|-------|-------|
+| Parent | c3-1 |
+| Role | Owns authentication behavior for API requests. |
+| Boundary | Stays inside the API service boundary. |
+| Collaboration | Coordinates with user records and JWT policy. |
+
+## Purpose
+
+Provide agent-ready authentication documentation so generated code preserves identity flow, boundaries, governance, and verification.
+
+## Foundational Flow
+
+| Aspect | Detail | Reference |
+|--------|--------|-----------|
+| Input | Accept credentials or token material. | ref-jwt |
+| State | Keep identity context explicit. | ref-jwt |
+| Output | Return verified identity to callers. | ref-jwt |
+| Failure | Reject invalid authentication attempts. | ref-jwt |
+
+## Business Flow
+
+| Aspect | Detail | Reference |
+|--------|--------|-----------|
+| Actor | API caller requests protected access. | ref-jwt |
+| Decision | Authentication gates protected behavior. | ref-jwt |
+| Outcome | Authorized request continues. | ref-jwt |
+| Exception | Unauthorized request receives rejection. | ref-jwt |
+
+## Governance
+
+| Reference | Type | Governs | Precedence | Notes |
+|-----------|------|---------|------------|-------|
+| ref-jwt | ref | Token validation behavior. | Required | Applies to every token path. |
+
+## Contract
+
+| Surface | Direction | Contract | Boundary | Evidence |
+|---------|-----------|----------|----------|----------|
+| Credentials | IN | Caller supplies credentials or token material. | API boundary | Covered by auth tests. |
+| Identity | OUT | Component returns identity or rejection. | API boundary | Covered by auth tests. |
+
+## Change Safety
+
+| Risk | Trigger | Detection | Required Verification |
+|------|---------|-----------|-----------------------|
+| Token drift | JWT policy changes. | Review Governance rows. | Run auth verification. |
+| Boundary leak | Auth can be bypassed. | Trace protected routes. | Run protected-route tests. |
+
+## Derived Materials
+
+| Material | Must derive from | Allowed variance | Evidence |
+|----------|------------------|------------------|----------|
+| Auth code | Goal and Contract sections. | Framework names may vary. | Tests cite this component. |
 `)
 
 	// Component without refs
@@ -206,8 +257,8 @@ func TestBuild_EntityEntries(t *testing.T) {
 	if !e.BlockFill["Goal"] {
 		t.Error("c3-101 Goal block should be filled")
 	}
-	if !e.BlockFill["Dependencies"] {
-		t.Error("c3-101 Dependencies block should be filled")
+	if !e.BlockFill["Contract"] {
+		t.Error("c3-101 Contract block should be filled")
 	}
 }
 

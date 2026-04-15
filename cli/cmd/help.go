@@ -153,7 +153,8 @@ Options:
 
 Examples:
   c3x add container payments --goal "Process payments" --boundary service
-  c3x add component auth --container c3-1 --goal "JWT authentication"
+  c3x schema component
+  cat auth-component.md | c3x add component auth --container c3-1
   c3x add ref rate-limiting --goal "Consistent rate limiting"
   c3x add rule structured-logging --goal "Consistent structured logging"
   c3x add adr use-grpc --goal "Migrate to gRPC" --json
@@ -177,7 +178,7 @@ Special field "codemap" updates code-map patterns (comma-separated):
   Clear:    c3x set c3-101 codemap ""
 
 Section mode accepts text or JSON (array for replace, object for --append).
-Section updates skip full-document validation — fill sections incrementally.
+Component section updates validate the full resulting document.
 
 Batch mode (--stdin) accepts a JSON payload with fields, sections, and codemap:
   {"fields": {"goal": "X"}, "sections": {"Choice": "..."}, "codemap": ["src/**"]}
@@ -190,7 +191,7 @@ Examples:
   c3x set c3-101 codemap "src/auth/**,src/auth.go"
   c3x set c3-101 codemap "src/new/**" --append
   c3x set c3-101 --section "Choice" "Use RS256 signed JWTs"
-  c3x set c3-101 --section "Dependencies" --append '{"Direction":"IN","What":"creds","From/To":"c3-102"}'
+  c3x set c3-101 --section "Governance" --append '{"Reference":"ref-jwt","Type":"ref","Governs":"Token validation","Precedence":"ref beats local prose","Notes":"Required for auth"}'
   echo '{"fields":{"goal":"X"},"codemap":["src/**"]}' | c3x set c3-101 --stdin`,
 	},
 	{
@@ -203,7 +204,7 @@ Examples:
 
 Creates or removes cite relationships (updated atomically per target):
   1. source uses[] += target
-  2. source "Related Refs" table += row
+  2. component source "Governance" table += row
 
 Supports multiple targets in a single call for batch wiring.
 
@@ -546,7 +547,7 @@ Safety:
 
 Cleanup:
   - Removes id from uses[], affects[], scope[], sources[] on referencing entities
-  - Removes Related Refs table rows citing this entity
+  - Removes Governance table rows citing this entity
   - Removes row from parent container's Components table
   - Removes code-map.yaml entry
   - Deletes the entity file

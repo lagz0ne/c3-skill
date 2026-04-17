@@ -44,7 +44,7 @@ for target in "${TARGETS[@]}"; do
   OUTPUT="$BIN_DIR/c3x-${VERSION}-${OS}-${ARCH}"
 
   echo "  Building ${OS}/${ARCH} -> c3x-${VERSION}-${OS}-${ARCH}"
-  GOOS="$OS" GOARCH="$ARCH" go build \
+  CGO_ENABLED=0 GOOS="$OS" GOARCH="$ARCH" go build \
     -C "$CLI_DIR" \
     -ldflags="-s -w -X main.version=${VERSION}" \
     -o "$OUTPUT" \

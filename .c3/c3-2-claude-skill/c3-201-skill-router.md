@@ -1,7 +1,7 @@
 ---
 id: c3-201
 c3-version: 4
-c3-seal: 2ff6abbb4dbfe82c2194754952756bbc60307345286c14ec4bb2e4e8d0dcda3a
+c3-seal: fd8e769295972138c65015394667a61157da4f48493de3ab8e583a46b10aafce
 title: skill-router
 type: component
 category: foundation
@@ -52,8 +52,8 @@ Provide durable agent-ready documentation for skill-router so generated code, te
 
 | Surface | Direction | Contract | Boundary | Evidence |
 | --- | --- | --- | --- | --- |
-| skill-router input | IN | Callers must provide context that matches the component goal and parent fit. | c3-2 boundary | c3x lookup plus targeted tests or review. |
-| skill-router output | OUT | Derived code, docs, and tests must preserve the documented behavior and governance. | c3-2 boundary | c3x check and project test suite. |
+| intent classification | IN | Skill-router maps user intent to an operation reference and then lets c3x commands provide enforcement, hints, schemas, and failure guidance. | c3-201 router boundary; operation detail belongs to c3-210 through c3-218. | skills/c3/SKILL.md Dispatch and Enforcement source sections. |
+| operation dispatch | OUT | Dispatch loads the matching reference workflow, but reference prose must route actionable steps through c3x rather than becoming a second policy engine. | c3-2 skill container boundary. | skills/c3/SKILL.md; skills/c3/references/change.md. |
 ## Change Safety
 
 | Risk | Trigger | Detection | Required Verification |
@@ -64,4 +64,5 @@ Provide durable agent-ready documentation for skill-router so generated code, te
 
 | Material | Must derive from | Allowed variance | Evidence |
 | --- | --- | --- | --- |
-| Code, docs, tests, prompts | Goal, Governance, Contract, and Change Safety sections. | Names and framework shape may vary; behavior and boundaries may not. | c3x check, c3x verify, and relevant tests. |
+| skills/c3/SKILL.md | Contract intent classification row, Contract operation dispatch row, and Governance c3-2 policy. | Instruction copy can stay concise; it must state c3x is the enforcement source and skill is reference routing. | rg "Enforcement source" skills/c3/SKILL.md. |
+| skills/c3/references/*.md | Contract operation dispatch row and Change Safety contract drift risk. | Each operation can have local sequence hints; failures, schemas, and repair steps must come from c3x where available. | rg "c3x" skills/c3/references. |

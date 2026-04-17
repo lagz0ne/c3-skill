@@ -50,6 +50,23 @@ func TestShowHelp_VerifyMentionsCacheRefresh(t *testing.T) {
 	}
 }
 
+func TestShowHelp_AddADRWorkflowPointsAtSchema(t *testing.T) {
+	var buf bytes.Buffer
+	ShowHelp("add", &buf)
+	output := buf.String()
+
+	requireAll(t, output,
+		"ADR workflow:",
+		"c3x schema adr",
+		"CLI-owned ADR creation contract",
+		"cat complete-adr.md | c3x add adr <slug>",
+		"c3x check --include-adr && c3x verify",
+	)
+	if strings.Contains(output, "c3x add adr use-grpc --goal") {
+		t.Fatal("add help should not teach unsupported ADR --goal flow")
+	}
+}
+
 func TestShowHelp_Commands(t *testing.T) {
 	commands := []string{"list", "check", "verify", "repair", "add", "set", "wire", "schema", "git"}
 	for _, cmd := range commands {

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/lagz0ne/c3-design/cli/internal/content"
+	"github.com/lagz0ne/c3-design/cli/internal/markdown"
 	"github.com/lagz0ne/c3-design/cli/internal/schema"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
@@ -54,6 +55,9 @@ func RunAddFormatted(entityType, slug string, s *store.Store, container string, 
 
 	// Validate body against schema BEFORE any DB writes
 	issues := validateBodyContent(bodyContent, entityType)
+	if entityType == "adr" {
+		issues = append(issues, validateADRCreationBody(bodyContent)...)
+	}
 	if len(issues) > 0 {
 		return formatValidationError(entityType+"-"+slug, issues)
 	}
@@ -106,6 +110,75 @@ func readBody(r io.Reader) (string, error) {
 		return "", fmt.Errorf("error: c3x add requires body content via stdin\nhint: cat body.md | c3x add <type> <slug>\nhint: run 'c3x schema <type>' to see required sections")
 	}
 	return body, nil
+}
+
+func validateADRCreationBody(body string) []Issue {
+	sections := markdown.ParseSections(body)
+	sectionMap := make(map[string]string)
+	for _, section := range sections {
+		if section.Name != "" {
+			sectionMap[section.Name] = strings.TrimSpace(section.Content)
+		}
+	}
+
+	var issues []Issue
+	for _, def := range schema.ForType("adr") {
+		content, exists := sectionMap[def.Name]
+		if !exists {
+			issues = append(issues, Issue{
+				Severity: "error",
+				Message:  fmt.Sprintf("missing required section: %s", def.Name),
+				Hint:     fmt.Sprintf("add ## %s before running c3x add adr; ADR creation is all-or-nothing", def.Name),
+			})
+			continue
+		}
+		if content == "" {
+			issues = append(issues, Issue{
+				Severity: "error",
+				Message:  fmt.Sprintf("empty required section: %s", def.Name),
+				Hint:     fmt.Sprintf("fill ## %s before running c3x add adr; use N.A - <reason> when not applicable", def.Name),
+			})
+			continue
+		}
+		if def.ContentType != "table" {
+			continue
+		}
+		table, err := markdown.ParseTable(content)
+		if err != nil {
+			issues = append(issues, Issue{
+				Severity: "error",
+				Message:  fmt.Sprintf("invalid required table: %s", def.Name),
+				Hint:     fmt.Sprintf("use c3x schema adr for the %s table columns", def.Name),
+			})
+			continue
+		}
+		if len(table.Rows) == 0 {
+			issues = append(issues, Issue{
+				Severity: "error",
+				Message:  fmt.Sprintf("empty required table: %s", def.Name),
+				Hint:     fmt.Sprintf("add at least one %s row; use N.A - <reason> when not applicable", def.Name),
+			})
+		}
+		for _, col := range def.Columns {
+			if !containsString(table.Headers, col.Name) {
+				issues = append(issues, Issue{
+					Severity: "error",
+					Message:  fmt.Sprintf("missing required column %q in table: %s", col.Name, def.Name),
+					Hint:     fmt.Sprintf("use c3x schema adr for the %s table columns", def.Name),
+				})
+			}
+		}
+	}
+	return issues
+}
+
+func containsString(values []string, want string) bool {
+	for _, value := range values {
+		if value == want {
+			return true
+		}
+	}
+	return false
 }
 
 func buildEntity(entityType, slug string, s *store.Store, container string, feature bool) (*store.Entity, error) {

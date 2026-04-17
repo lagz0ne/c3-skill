@@ -358,6 +358,62 @@ func TestRun_AddAgentModeReturnsTOON(t *testing.T) {
 	}
 }
 
+func TestRun_AddADRRollsBackWhenCanonicalExportFails(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	var buf bytes.Buffer
+	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", c3Dir}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	adrDir := filepath.Join(c3Dir, "adr")
+	if err := os.MkdirAll(adrDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(adrDir, 0555); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chmod(adrDir, 0755)
+
+	body := completeADRBody("Record rollback behavior.")
+	r, w, _ := os.Pipe()
+	w.WriteString(body)
+	w.Close()
+	old := os.Stdin
+	os.Stdin = r
+	defer func() { os.Stdin = old }()
+
+	buf.Reset()
+	err := run([]string{"--c3-dir", c3Dir, "add", "adr", "rollback-behavior"}, &buf)
+	if err == nil {
+		t.Fatal("expected canonical export failure")
+	}
+	if !strings.Contains(err.Error(), "export: write") {
+		t.Fatalf("expected export write failure, got %v", err)
+	}
+
+	_ = os.Chmod(adrDir, 0755)
+	if matches, globErr := filepath.Glob(filepath.Join(adrDir, "*rollback-behavior.md")); globErr != nil {
+		t.Fatal(globErr)
+	} else if len(matches) != 0 {
+		t.Fatalf("ADR file should be rolled back, got %v", matches)
+	}
+
+	s, openErr := store.Open(filepath.Join(c3Dir, "c3.db"))
+	if openErr != nil {
+		t.Fatal(openErr)
+	}
+	defer s.Close()
+	adrs, listErr := s.EntitiesByType("adr")
+	if listErr != nil {
+		t.Fatal(listErr)
+	}
+	for _, adr := range adrs {
+		if adr.Slug == "rollback-behavior" {
+			t.Fatal("ADR entity should be rolled back from local cache")
+		}
+	}
+}
+
 func TestRun_MutatingCommandBypassesBrokenCanonicalPreverify(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
 	var buf bytes.Buffer
@@ -405,7 +461,7 @@ func TestRun_MutatingCommandBypassesBrokenCanonicalPreverify(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	body = "## Goal\n\nDocument the repair work order.\n"
+	body = completeADRBody("Document the repair work order.")
 	r, w, _ = os.Pipe()
 	w.WriteString(body)
 	w.Close()
@@ -832,6 +888,30 @@ func setupRichC3DB(t *testing.T) string {
 	}
 
 	return c3Dir
+}
+
+func completeADRBody(goal string) string {
+	return "## Goal\n\n" + goal + "\n\n" +
+		"## Context\n\nCurrent behavior and constraints are captured before creation.\n\n" +
+		"## Decision\n\nCreate the complete ADR as one work order.\n\n" +
+		"## Work Breakdown\n\n" +
+		"| Area | Detail | Evidence |\n|------|--------|----------|\n" +
+		"| N.A - test | N.A - no implementation work in fixture. | Test fixture. |\n\n" +
+		"## Underlay C3 Changes\n\n" +
+		"| Underlay area | Exact C3 change | Verification evidence |\n|---------------|-----------------|-----------------------|\n" +
+		"| N.A - test | N.A - no C3 underlay change in fixture. | Test fixture. |\n\n" +
+		"## Enforcement Surfaces\n\n" +
+		"| Surface | Behavior | Evidence |\n|---------|----------|----------|\n" +
+		"| c3x add adr | Creates complete ADR only. | Test fixture. |\n\n" +
+		"## Alternatives Considered\n\n" +
+		"| Alternative | Rejected because |\n|-------------|------------------|\n" +
+		"| N.A - test | N.A - fixture has no real alternative. |\n\n" +
+		"## Risks\n\n" +
+		"| Risk | Mitigation | Verification |\n|------|------------|--------------|\n" +
+		"| N.A - test | N.A - fixture only. | go test. |\n\n" +
+		"## Verification\n\n" +
+		"| Check | Result |\n|-------|--------|\n" +
+		"| go test | Pending fixture execution. |\n"
 }
 
 func richComponentBody(title, goal string) string {

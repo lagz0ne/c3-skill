@@ -36,6 +36,9 @@ func RunSchema(entityType string, jsonOutput bool, w io.Writer) error {
 			req = " (required)"
 		}
 		fmt.Fprintf(w, "  %s [%s]%s\n", s.Name, s.ContentType, req)
+		if s.Purpose != "" {
+			fmt.Fprintf(w, "    purpose: %s\n", s.Purpose)
+		}
 		for _, col := range s.Columns {
 			fmt.Fprintf(w, "    - %s (%s)\n", col.Name, col.Type)
 		}

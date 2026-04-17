@@ -121,7 +121,7 @@ func TestRunAdd_AdrWithBody(t *testing.T) {
 	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	body := "## Goal\nAdopt OAuth for third-party auth.\n"
+	body := fullADRBody("Adopt OAuth for third-party auth.")
 
 	err := RunAdd("adr", "oauth-support", s, "", false, strings.NewReader(body), &buf)
 	if err != nil {
@@ -131,6 +131,77 @@ func TestRunAdd_AdrWithBody(t *testing.T) {
 	if !strings.Contains(buf.String(), "adr-") {
 		t.Error("should print adr id")
 	}
+}
+
+func TestRunAdd_AdrAgentHintsUseCLISchema(t *testing.T) {
+	s, _ := createDBFixtureWithC3Dir(t)
+	t.Setenv("C3X_MODE", "agent")
+	var buf bytes.Buffer
+
+	body := fullADRBody("Adopt OAuth for third-party auth.")
+	err := RunAddFormatted("adr", "oauth-support", s, "", false, strings.NewReader(body), &buf, FormatTOON)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	requireAll(t, buf.String(),
+		"adr-",
+		"help[4]",
+		"c3x schema adr",
+		"authoritative ADR creation contract from the CLI",
+		"c3x read adr-",
+		"c3x write adr-",
+		"c3x check --include-adr && c3x verify",
+	)
+}
+
+func TestRunAdd_AdrRequiresCompleteBody(t *testing.T) {
+	s, _ := createDBFixtureWithC3Dir(t)
+	var buf bytes.Buffer
+
+	err := RunAdd("adr", "oauth-support", s, "", false, strings.NewReader("## Goal\nAdopt OAuth.\n"), &buf)
+	if err == nil {
+		t.Fatal("expected incomplete ADR creation to fail")
+	}
+	requireAll(t, err.Error(),
+		"missing required section: Context",
+		"missing required section: Decision",
+		"missing required section: Underlay C3 Changes",
+		"ADR creation is all-or-nothing",
+	)
+	adrs, listErr := s.EntitiesByType("adr")
+	if listErr != nil {
+		t.Fatal(listErr)
+	}
+	for _, adr := range adrs {
+		if adr.Slug == "oauth-support" {
+			t.Fatal("incomplete ADR should not be inserted")
+		}
+	}
+}
+
+func fullADRBody(goal string) string {
+	return "## Goal\n" + goal + "\n\n" +
+		"## Context\nCurrent behavior and constraints are captured before creation.\n\n" +
+		"## Decision\nCreate the complete ADR as one work order.\n\n" +
+		"## Work Breakdown\n\n" +
+		"| Area | Detail | Evidence |\n|------|--------|----------|\n" +
+		"| N.A - test | N.A - no implementation work in fixture. | Test fixture. |\n\n" +
+		"## Underlay C3 Changes\n\n" +
+		"| Underlay area | Exact C3 change | Verification evidence |\n|---------------|-----------------|-----------------------|\n" +
+		"| N.A - test | N.A - no C3 underlay change in fixture. | Test fixture. |\n\n" +
+		"## Enforcement Surfaces\n\n" +
+		"| Surface | Behavior | Evidence |\n|---------|----------|----------|\n" +
+		"| c3x add adr | Creates complete ADR only. | Test fixture. |\n\n" +
+		"## Alternatives Considered\n\n" +
+		"| Alternative | Rejected because |\n|-------------|------------------|\n" +
+		"| N.A - test | N.A - fixture has no real alternative. |\n\n" +
+		"## Risks\n\n" +
+		"| Risk | Mitigation | Verification |\n|------|------------|--------------|\n" +
+		"| N.A - test | N.A - fixture only. | go test. |\n\n" +
+		"## Verification\n\n" +
+		"| Check | Result |\n|-------|--------|\n" +
+		"| go test | Pending fixture execution. |\n"
 }
 
 func TestRunAdd_RecipeWithBody(t *testing.T) {

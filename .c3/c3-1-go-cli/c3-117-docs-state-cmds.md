@@ -1,6 +1,6 @@
 ---
 id: c3-117
-c3-seal: d4c3c25d4a57166f1001abb2d0c5c0efdcbcde6875a7ffab8dc76319b72c1ebc
+c3-seal: aaa7a52d938f55f4f355e4f485a29bebdb033e32c9483a1053eaeccfe60fb649
 title: docs-state-cmds
 type: component
 category: feature
@@ -50,8 +50,9 @@ Provide durable agent-ready documentation for docs-state-cmds so generated code,
 
 | Surface | Direction | Contract | Boundary | Evidence |
 | --- | --- | --- | --- | --- |
-| docs-state-cmds input | IN | Callers must provide context that matches the component goal and parent fit. | c3-1 boundary | c3x lookup plus targeted tests or review. |
-| docs-state-cmds output | OUT | Derived code, docs, and tests must preserve the documented behavior and governance. | c3-1 boundary | c3x check and project test suite. |
+| schema text output | OUT | c3x schema <type> must print section names, content type, required marker, purpose text, and table columns so the CLI tells agents what durable content belongs in each section. | c3-117 owns schema command presentation; schema definitions remain in c3-113. | cli/cmd/schema.go; cli/cmd/schema_test.go TestRunSchema_ADRIncludesDecisionLedger. |
+| schema JSON output | OUT | Explicit --json keeps machine-readable schema sections, purposes, and columns for non-agent scripts; agent mode output policy remains owned by runtime support. | c3-117 boundary with c3-108 serializer behavior. | cli/cmd/schema_test.go TestRunSchema_JSON_ADRUnderlayColumns. |
+| docs-state repair loop | OUT | Read, write, set, check, and verify remain the CLI path for canonical docs; skill references may point here but must not become a second enforcement checklist. | c3-1 canonical doc ownership. | C3X_MODE=agent bash skills/c3/bin/c3x.sh check --include-adr; c3x verify. |
 ## Change Safety
 
 | Risk | Trigger | Detection | Required Verification |
@@ -62,4 +63,6 @@ Provide durable agent-ready documentation for docs-state-cmds so generated code,
 
 | Material | Must derive from | Allowed variance | Evidence |
 | --- | --- | --- | --- |
-| Code, docs, tests, prompts | Goal, Governance, Contract, and Change Safety sections. | Names and framework shape may vary; behavior and boundaries may not. | c3x check, c3x verify, and relevant tests. |
+| cli/cmd/schema.go | Contract schema text output row and Purpose section. | Formatting can evolve; purpose text must remain present in human schema output. | go test ./cmd -run TestRunSchema_ADRIncludesDecisionLedger. |
+| cli/cmd/schema_test.go | Contract schema text output row, Contract schema JSON output row, and Change Safety contract drift risk. | Assertions may grow with schema sections; tests must preserve ADR underlay purpose and columns. | go test ./cmd -run TestRunSchema_ADR. |
+| skills/c3/SKILL.md and references | Contract docs-state repair loop row and Governance c3-1 policy. | Reference prose may be shorter than CLI help; it must route detail and enforcement back to c3x. | rg "c3x schema adr" skills/c3 cli. |

@@ -151,13 +151,20 @@ Options:
   --boundary <text>      Pre-fill boundary (container only)
   --json                 Output as JSON (id, type, sections list)
 
+ADR workflow:
+  c3x schema adr                         # CLI-owned ADR creation contract
+  cat complete-adr.md | c3x add adr <slug> # create the complete work order
+  c3x read adr-YYYYMMDD-<slug> --full    # inspect before execution
+  c3x check --include-adr && c3x verify  # validate before done
+
 Examples:
   c3x add container payments --goal "Process payments" --boundary service
   c3x schema component
   cat auth-component.md | c3x add component auth --container c3-1
   c3x add ref rate-limiting --goal "Consistent rate limiting"
   c3x add rule structured-logging --goal "Consistent structured logging"
-  c3x add adr use-grpc --goal "Migrate to gRPC" --json
+  c3x schema adr
+  cat complete-decision.md | c3x add adr use-grpc --json
   c3x add recipe auth-flow`,
 	},
 	{

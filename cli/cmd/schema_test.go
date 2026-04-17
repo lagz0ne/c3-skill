@@ -58,6 +58,34 @@ func TestRunSchema_Ref(t *testing.T) {
 	}
 }
 
+func TestRunSchema_ADRIncludesDecisionLedger(t *testing.T) {
+	var buf bytes.Buffer
+	err := RunSchema("adr", false, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	for _, want := range []string{
+		"Goal",
+		"Context",
+		"Decision",
+		"Work Breakdown",
+		"Underlay C3 Changes",
+		"Enforcement Surfaces",
+		"Alternatives Considered",
+		"Risks",
+		"Verification",
+		"Current behavior, user pain, constraints, and affected topology",
+		"C3 CLI files, validators, commands, hints, help, schemas, templates, or tests",
+		"Commands, validators, tests, docs, or runtime paths that enforce the decision",
+	} {
+		if !strings.Contains(output, want) {
+			t.Errorf("ADR schema should include %q, got: %s", want, output)
+		}
+	}
+}
+
 func TestRunSchema_Context(t *testing.T) {
 	var buf bytes.Buffer
 	err := RunSchema("context", false, &buf)
@@ -79,6 +107,40 @@ func TestRunSchema_UnknownType(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for unknown entity type")
 	}
+}
+
+func TestRunSchema_JSON_ADRUnderlayColumns(t *testing.T) {
+	var buf bytes.Buffer
+	if err := RunSchema("adr", true, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	var schema SchemaOutput
+	if err := json.Unmarshal(buf.Bytes(), &schema); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
+	}
+
+	if schema.Type != "adr" {
+		t.Errorf("type = %q, want adr", schema.Type)
+	}
+	for _, s := range schema.Sections {
+		if s.Name != "Underlay C3 Changes" {
+			continue
+		}
+		if s.ContentType != "table" {
+			t.Errorf("Underlay C3 Changes content_type = %q, want table", s.ContentType)
+		}
+		for _, col := range []string{"Underlay area", "Exact C3 change", "Verification evidence"} {
+			if findColumn(s.Columns, col) == nil {
+				t.Fatalf("Underlay C3 Changes should include column %q", col)
+			}
+		}
+		if !strings.Contains(s.Purpose, "validators") {
+			t.Fatalf("Underlay C3 Changes purpose should guide enforceable detail, got %q", s.Purpose)
+		}
+		return
+	}
+	t.Fatal("Underlay C3 Changes section not found in ADR schema")
 }
 
 func TestRunSchema_JSON(t *testing.T) {

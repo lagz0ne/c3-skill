@@ -24,6 +24,29 @@ func TestRead(t *testing.T) {
 	}
 }
 
+func TestRead_ADRTemplateIncludesDecisionLedger(t *testing.T) {
+	content, err := Read("adr.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, want := range []string{
+		"## Context",
+		"## Decision",
+		"## Work Breakdown",
+		"## Underlay C3 Changes",
+		"| Underlay area | Exact C3 change | Verification evidence |",
+		"## Enforcement Surfaces",
+		"## Alternatives Considered",
+		"## Risks",
+		"## Verification",
+	} {
+		if !strings.Contains(content, want) {
+			t.Fatalf("ADR template missing %q:\n%s", want, content)
+		}
+	}
+}
+
 func TestRead_NotFound(t *testing.T) {
 	_, err := Read("nonexistent.md")
 	if err == nil {

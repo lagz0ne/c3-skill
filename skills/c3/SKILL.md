@@ -13,6 +13,8 @@ description: >
 
 CLI: `C3X_MODE=agent bash <skill-dir>/bin/c3x.sh <command> [args]`
 
+**Enforcement source:** `c3x` is the single source for C3 enforcement, repair steps, schemas, help, hints, and failure guidance. This skill is only a reference router: classify intent, run the matching `c3x` commands, and follow the CLI output. Do not duplicate CLI checklists in skill prose.
+
 **Agent output mode:** With `C3X_MODE=agent`, c3x outputs TOON (Token-Optimized Object Notation) by default — ~40% fewer tokens than JSON. All commands append `help[]` contextual hints suggesting next steps.
 
 **Content-first:** Running c3x with no arguments outputs a project dashboard (entity counts, coverage, pending ADRs) — not help text. Use `--help` for help.
@@ -80,7 +82,7 @@ Before every op except onboard and migrate:
 ```bash
 bash <skill-dir>/bin/c3x.sh
 ```
-Returns project dashboard (TOON). If error about missing `.c3/` → route to **onboard**. If verification complains about broken seals or unrecoverable cache rebuild, route to **migrate** or **repair** as appropriate. Read-only commands should stay gated on broken canonical state; repair mutations such as `write --section`, `set --section`, and `add adr` are allowed to reach their own validation/export path. Otherwise, dashboard gives immediate orientation: entity counts, coverage, pending ADRs. Follow the `help[]` hints for next steps.
+Returns project dashboard (TOON). If error about missing `.c3/` → route to **onboard**. If verification complains about broken seals or unrecoverable cache rebuild, follow the CLI's printed repair/migrate path. Otherwise, dashboard gives immediate orientation: entity counts, coverage, pending ADRs. Follow the `help[]` hints for next steps.
 
 ---
 
@@ -130,12 +132,10 @@ Never claim `.c3/` state is authoritative if `verify` fails.
 
 **Run `c3x check` frequently** — after any mutation (`add`, `write`, `set`, `wire`, `delete`). It catches missing required sections, bad entity references, and codemap issues. Treat errors as blockers.
 
-**HARD RULE — ADR is the unit of change:**
-Every **change** operation MUST start with `c3x add adr <slug>` as its FIRST action.
-No code reads, no file edits, no exploration before the ADR exists.
+**ADR reference — change work starts in c3x:**
+Every **change** operation starts with `c3x add adr <slug>` before implementation or source-file reads.
 (Exception: **ref-add** creates its adoption ADR at completion — see `references/ref.md`.)
-The ADR is an ephemeral work order — it drives what to update, then gets hidden.
-`c3x list` and `c3x check` exclude ADRs by default; use `--include-adr` to see them.
+The ADR is the CLI-owned work order. Use `c3x schema adr`, `c3x read <adr> --full`, command `help[]`, and failure hints for required detail. `c3x add adr` rejects thin/incremental ADR creation; create the complete work order up front, using `N.A - <reason>` where a schema row is genuinely not applicable. `c3x list` and `c3x check` exclude ADRs by default, so use `--include-adr` when validating them.
 
 **Stop immediately if:**
 - No ADR exists for current change → `c3x add adr <slug>` NOW

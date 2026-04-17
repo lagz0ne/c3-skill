@@ -1,7 +1,7 @@
 ---
 id: c3-103
 c3-version: 4
-c3-seal: a3c7f01ccb5b95897e5595d5d860149f92506f95f7ce4bd9f20b6a688c20d5c8
+c3-seal: e5d99823565c0d904ca6bb27c88f5965b6e27260ffbfc37059dd38670bfce4f0
 title: templates
 type: component
 category: foundation
@@ -52,8 +52,8 @@ Provide durable agent-ready documentation for templates so generated code, tests
 
 | Surface | Direction | Contract | Boundary | Evidence |
 | --- | --- | --- | --- | --- |
-| templates input | IN | Callers must provide context that matches the component goal and parent fit. | c3-1 boundary | c3x lookup plus targeted tests or review. |
-| templates output | OUT | Derived code, docs, and tests must preserve the documented behavior and governance. | c3-1 boundary | c3x check and project test suite. |
+| embedded ADR template | OUT | ADR scaffold must include Goal, Context, Decision, Work Breakdown, Underlay C3 Changes, Enforcement Surfaces, Alternatives Considered, Risks, and Verification headings with table headers where schema expects tables. | c3-103 template ownership; schema meaning belongs to c3-113. | cli/internal/templates/adr.md; cli/internal/templates/templates_test.go TestRead_ADRTemplateIncludesDecisionLedger. |
+| template loading | OUT | Templates remain embedded in the CLI binary so c3x can create docs without skill-side file templates. | ref-embedded-templates governance. | cli/internal/templates/templates.go; go test ./internal/templates. |
 ## Change Safety
 
 | Risk | Trigger | Detection | Required Verification |
@@ -64,4 +64,5 @@ Provide durable agent-ready documentation for templates so generated code, tests
 
 | Material | Must derive from | Allowed variance | Evidence |
 | --- | --- | --- | --- |
-| Code, docs, tests, prompts | Goal, Governance, Contract, and Change Safety sections. | Names and framework shape may vary; behavior and boundaries may not. | c3x check, c3x verify, and relevant tests. |
+| cli/internal/templates/adr.md | Contract embedded ADR template row and Governance c3-1 policy. | Placeholder text can stay sparse; headings and table headers must match the ADR schema. | go test ./internal/templates -run TestRead_ADRTemplateIncludesDecisionLedger. |
+| cli/internal/templates/templates_test.go | Contract embedded ADR template row and Change Safety contract drift risk. | Test can assert more headings as schema grows. | go test ./internal/templates. |

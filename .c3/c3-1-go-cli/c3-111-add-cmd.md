@@ -1,7 +1,7 @@
 ---
 id: c3-111
 c3-version: 4
-c3-seal: 8b1db196609d2c55d401025c69a80d45b0d7f913d962031eb1dedec865744da1
+c3-seal: 732dc1ebbe71df3a4c2b06c5d9df2f8f5e4ec1ba535b07dfffe20d3f8f959042
 title: add-cmd
 type: component
 category: feature
@@ -57,16 +57,23 @@ Provide durable agent-ready documentation for add-cmd so generated code, tests, 
 
 | Surface | Direction | Contract | Boundary | Evidence |
 | --- | --- | --- | --- | --- |
-| add-cmd input | IN | Callers must provide context that matches the component goal and parent fit. | c3-1 boundary | c3x lookup plus targeted tests or review. |
-| add-cmd output | OUT | Derived code, docs, and tests must preserve the documented behavior and governance. | c3-1 boundary | c3x check and project test suite. |
+| add body input | IN | c3x add requires stdin body content and validates it against the target entity schema before inserting anything into the local cache. | c3-111 command validation boundary. | cli/cmd/add.go; cli/cmd/add_test.go TestRunAdd_NilReaderFails and TestRunAdd_MissingSectionsFails. |
+| ADR creation | OUT | c3x add adr creates the entire ADR entity from the provided body in one operation; it must not create a partial ADR entity or file when validation, content write, or canonical export fails. | c3-111 uses dispatcher rollback in c3-108 for canonical export failures. | cli/cmd/add.go compensation path; cli/main_test.go TestRun_AddADRRollsBackWhenCanonicalExportFails. |
+| agent result | OUT | Agent-mode add output uses TOON and includes c3x-owned next-step hints for ADR schema, read, write, check, and verify. | c3-111 result with c3-108 presentation helpers. | cli/cmd/add_test.go TestRunAdd_AdrAgentHintsUseCLISchema; cli/main_test.go TestRun_AddAgentModeReturnsTOON. |
+| ADR completeness gate | IN | c3x add adr rejects thin ADR bodies and requires all ADR schema sections with table rows before any entity insert. | c3-111 add validation boundary. | cli/cmd/add.go validateADRCreationBody; TestRunAdd_AdrRequiresCompleteBody. |
 ## Change Safety
 
 | Risk | Trigger | Detection | Required Verification |
 | --- | --- | --- | --- |
-| Contract drift | Goal, boundary, or derived material changes without matching component docs. | Compare Goal, Parent Fit, Contract, and Derived Materials. | Run c3x check and relevant project tests. |
-| Governance drift | Cited references, rules, or parent responsibilities change. | Re-read Governance rows and parent container docs. | Run c3x verify plus targeted lookup for changed files. |
+| Partial ADR creation | add adr inserts the entity, then content write or canonical export fails. | Check local cache for the ADR slug and canonical adr/*.md files after forced export failure. | go test -count=1 . -run TestRun_AddADRRollsBackWhenCanonicalExportFails. |
+| Thin ADR creation | ADR body omits required schema sections or agents ignore CLI hints. | Run c3x schema adr and c3x check --include-adr after creation. | go test ./cmd -run TestRunAdd_AdrAgentHintsUseCLISchema; c3x check --include-adr. |
+| Agent output regression | add returns JSON or loses help hints in C3X_MODE=agent. | Smoke add in a temp project and inspect output prefix and help[n]. | go test ./...; C3X_MODE=agent c3x add adr smoke-output. |
+| Incremental ADR creation | Agent creates a Goal-only ADR and depends on a second write command for required decision-ledger sections. | Run add adr with only Goal and expect validation errors for missing Context, Decision, Underlay C3 Changes, and other ledger sections. | go test ./cmd -run TestRunAdd_AdrRequiresCompleteBody. |
 ## Derived Materials
 
 | Material | Must derive from | Allowed variance | Evidence |
 | --- | --- | --- | --- |
-| Code, docs, tests, prompts | Goal, Governance, Contract, and Change Safety sections. | Names and framework shape may vary; behavior and boundaries may not. | c3x check, c3x verify, and relevant tests. |
+| cli/cmd/add.go | Contract add body input row and Contract ADR creation row. | Entity builders may grow; add must validate before insert and compensate if content write fails. | go test ./cmd -run TestRunAdd. |
+| cli/main.go | Contract ADR creation row and c3-108 mutating command rollback contract. | Rollback mechanism may be centralized; add adr must remain all-or-nothing across cache and canonical export. | go test -count=1 . -run TestRun_AddADRRollsBackWhenCanonicalExportFails. |
+| cli/cmd/add_test.go and cli/main_test.go | Contract ADR creation row, Contract agent result row, and Change Safety rows. | Tests may cover more entity types; ADR rollback and TOON hints must remain covered. | go test ./... |
+| cli/cmd/add.go validateADRCreationBody | Contract ADR completeness gate row and Change Safety incremental ADR creation risk. | Validation wording may change; complete ADR creation must reject missing sections, empty sections, empty tables, and missing table columns before insert. | go test ./cmd -run TestRunAdd_AdrRequiresCompleteBody. |

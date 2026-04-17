@@ -110,6 +110,36 @@ var Registry = map[string][]SectionDef{
 	},
 	"adr": {
 		{Name: "Goal", ContentType: "text", Required: true, Purpose: "Decision context and objective"},
+		{Name: "Context", ContentType: "text", Required: false, Purpose: "Current behavior, user pain, constraints, and affected topology"},
+		{Name: "Decision", ContentType: "text", Required: false, Purpose: "Concrete selected approach and why it is the right fit"},
+		{Name: "Work Breakdown", ContentType: "table", Required: false, Purpose: "Files, docs, commands, or entities to change and how each maps to the decision", Columns: []ColumnDef{
+			{Name: "Area", Type: "text"},
+			{Name: "Detail", Type: "text"},
+			{Name: "Evidence", Type: "text"},
+		}},
+		{Name: "Underlay C3 Changes", ContentType: "table", Required: false, Purpose: "C3 CLI files, validators, commands, hints, help, schemas, templates, or tests changed by this decision", Columns: []ColumnDef{
+			{Name: "Underlay area", Type: "text"},
+			{Name: "Exact C3 change", Type: "text"},
+			{Name: "Verification evidence", Type: "text"},
+		}},
+		{Name: "Enforcement Surfaces", ContentType: "table", Required: false, Purpose: "Commands, validators, tests, docs, or runtime paths that enforce the decision", Columns: []ColumnDef{
+			{Name: "Surface", Type: "text"},
+			{Name: "Behavior", Type: "text"},
+			{Name: "Evidence", Type: "text"},
+		}},
+		{Name: "Alternatives Considered", ContentType: "table", Required: false, Purpose: "Real options rejected and why", Columns: []ColumnDef{
+			{Name: "Alternative", Type: "text"},
+			{Name: "Rejected because", Type: "text"},
+		}},
+		{Name: "Risks", ContentType: "table", Required: false, Purpose: "Failure modes, mitigations, and verification", Columns: []ColumnDef{
+			{Name: "Risk", Type: "text"},
+			{Name: "Mitigation", Type: "text"},
+			{Name: "Verification", Type: "text"},
+		}},
+		{Name: "Verification", ContentType: "table", Required: false, Purpose: "Exact commands or evidence required before marking the ADR implemented", Columns: []ColumnDef{
+			{Name: "Check", Type: "text"},
+			{Name: "Result", Type: "text"},
+		}},
 	},
 	"recipe": {
 		{Name: "Goal", ContentType: "text", Required: true, Purpose: "What cross-cutting concern this traces"},

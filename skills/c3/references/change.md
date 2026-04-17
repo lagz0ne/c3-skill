@@ -7,8 +7,8 @@ Spawn parallel subagents via Task tool for complex work.
 ## Progress Checklist
 
 ```
-- [ ] Phase 1: ADR created (`cat body | c3x add adr <slug>`)
-- [ ] Phase 2: topology loaded, impact analyzed, ADR body filled
+- [ ] Phase 1: complete ADR created (`cat complete-adr.md | c3x add adr <slug>`)
+- [ ] Phase 2: topology loaded, impact analyzed, ADR body reviewed or replaced as a complete work order
 - [ ] Phase 2b: provision gate (implement or design-only?)
 - [ ] Phase 3: execute work breakdown
 - [ ] Phase 3a: contract cascade gate (top-down parent delta)
@@ -40,7 +40,16 @@ Clarify with user (ASSUMPTION_MODE: skip). Analyze:
 - `c3x read` upward: component → container → context → cited refs
 - Risks
 
-Fill the ADR body: Goal, Work Breakdown, Risks. Update `affects:` in frontmatter.
+Create the ADR body with enough detail that a later agent can recover the decision without chat history. Update `affects:` in frontmatter before the ADR is added when the affected entities are known; otherwise replace the full ADR once context is loaded.
+
+The CLI is the source of truth for ADR structure and next steps:
+
+```bash
+bash <skill-dir>/bin/c3x.sh schema adr
+bash <skill-dir>/bin/c3x.sh read <adr-id> --full
+```
+
+Follow the `c3x schema adr` sections and `help[]` hints. `c3x add adr` is all-or-nothing: do not create a thin ADR and fill it incrementally. For validator, schema, migration, command workflow, ref, rule, or derived-material changes, the ADR must preserve the underlay C3 changes: exact commands, validators, tests, help/hints, schemas, templates, and verification evidence that enforce the decision.
 
 **Visual Impact:** Run `c3x graph <primary-affected-container-or-component> --format mermaid` and include in the approval presentation as a mermaid code block. If change spans multiple containers, graph each affected container separately.
 

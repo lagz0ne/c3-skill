@@ -1,7 +1,7 @@
 ---
 id: c3-113
 c3-version: 4
-c3-seal: 6b285eb0eab5d3de8488f29766f92a1ff32f77c65ca15dee70f230255da33931
+c3-seal: 1e28473136e3e53788bac7b7a3712f96a1a80734640424f1228f0794bc3dcfb6
 title: check-cmd
 type: component
 category: feature
@@ -56,8 +56,9 @@ Provide durable agent-ready documentation for check-cmd so generated code, tests
 
 | Surface | Direction | Contract | Boundary | Evidence |
 | --- | --- | --- | --- | --- |
-| check-cmd input | IN | Callers must provide context that matches the component goal and parent fit. | c3-1 boundary | c3x lookup plus targeted tests or review. |
-| check-cmd output | OUT | Derived code, docs, and tests must preserve the documented behavior and governance. | c3-1 boundary | c3x check and project test suite. |
+| schema registry | OUT | Entity schemas define ordered sections, required markers, purpose hints, and typed table columns used by add, set, write, check, and schema commands. | c3-113 owns validation/schema definitions; c3-117 owns schema command presentation. | cli/internal/schema/schema.go; cli/cmd/schema_test.go. |
+| ADR schema | OUT | ADR schema must preserve decision-ledger sections for Context, Decision, Work Breakdown, Underlay C3 Changes, Enforcement Surfaces, Alternatives Considered, Risks, and Verification. | c3-113 validation boundary. | cli/internal/schema/schema.go adr registry; TestRunSchema_ADRIncludesDecisionLedger; TestRunSchema_JSON_ADRUnderlayColumns. |
+| validation consumers | OUT | Validation paths must reject missing required sections and expose schema issues through c3x check/add/write/set rather than skill-local enforcement. | c3-113 with command-specific mutation handlers. | cli/cmd/check_enhanced.go; cli/cmd/add.go; cli/cmd/write.go; cli/cmd/set.go; go test ./cmd. |
 ## Change Safety
 
 | Risk | Trigger | Detection | Required Verification |
@@ -68,4 +69,6 @@ Provide durable agent-ready documentation for check-cmd so generated code, tests
 
 | Material | Must derive from | Allowed variance | Evidence |
 | --- | --- | --- | --- |
-| Code, docs, tests, prompts | Goal, Governance, Contract, and Change Safety sections. | Names and framework shape may vary; behavior and boundaries may not. | c3x check, c3x verify, and relevant tests. |
+| cli/internal/schema/schema.go | Contract schema registry row and Contract ADR schema row. | Section purposes and columns may grow; ADR underlay and enforcement sections must remain CLI-owned. | go test ./cmd -run TestRunSchema_ADR. |
+| cli/cmd/check_enhanced.go and mutation validators | Contract validation consumers row and Change Safety contract drift risk. | Command-specific validation can be stricter; required-section enforcement stays schema-driven. | go test ./cmd. |
+| skills/c3/references/change.md | Contract ADR schema row and Governance c3-1 policy. | Reference copy may point to c3x instead of repeating sections. | rg "The CLI is the source of truth" skills/c3/references/change.md. |

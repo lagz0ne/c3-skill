@@ -5,6 +5,18 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.2.0] - 2026-04-17
+
+### Added
+
+- **CLI-owned ADR creation contract** — `c3x schema adr`, ADR templates, add help, and agent hints now define the full decision ledger: Context, Decision, Work Breakdown, Underlay C3 Changes, Enforcement Surfaces, Alternatives Considered, Risks, and Verification.
+- **ADR all-or-nothing creation** — `c3x add adr` now rejects thin/incremental ADR bodies before insert and requires complete sections, table rows, and table columns. Failed mutating commands restore the pre-command `.c3` cache and canonical markdown state before returning an error.
+
+### Changed
+
+- **Skill is reference routing only** — skill guidance now points agents back to `c3x` output for enforcement, schemas, help, hints, repair steps, and verification instead of duplicating the CLI contract.
+- **Local cross-builds are cgo-free** — `scripts/build.sh` sets `CGO_ENABLED=0` for reproducible four-target binary builds.
+
 ## [9.1.5] - 2026-04-15
 
 ### Added

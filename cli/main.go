@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -128,13 +129,118 @@ func run(argv []string, w io.Writer) error {
 		return fmt.Errorf("error: local C3 cache unavailable at %s\nhint: run 'c3x verify' to rebuild from canonical .c3/, or 'c3x init' if this project is not onboarded", dbPath)
 	}
 
+	var rollback *mutationSnapshot
+	if commandMutatesCanonical(opts) {
+		rollback, err = newMutationSnapshot(c3Dir)
+		if err != nil {
+			return fmt.Errorf("error: create mutation rollback snapshot: %w", err)
+		}
+		defer rollback.cleanup()
+	}
+
 	s, err := store.Open(dbPath)
 	if err != nil {
 		return fmt.Errorf("error: opening database: %w", err)
 	}
-	defer s.Close()
 
-	return runCommand(opts, s, c3Dir, w)
+	cmdErr := runCommand(opts, s, c3Dir, w)
+	closeErr := s.Close()
+	if cmdErr != nil {
+		if rollback != nil {
+			if restoreErr := rollback.restore(); restoreErr != nil {
+				return fmt.Errorf("%w\nrollback failed: %v", cmdErr, restoreErr)
+			}
+		}
+		return cmdErr
+	}
+	if closeErr != nil {
+		if rollback != nil {
+			if restoreErr := rollback.restore(); restoreErr != nil {
+				return fmt.Errorf("error: closing database: %w\nrollback failed: %v", closeErr, restoreErr)
+			}
+		}
+		return fmt.Errorf("error: closing database: %w", closeErr)
+	}
+	return nil
+}
+
+type mutationSnapshot struct {
+	c3Dir     string
+	backupDir string
+}
+
+func newMutationSnapshot(c3Dir string) (*mutationSnapshot, error) {
+	tmpDir, err := os.MkdirTemp("", "c3-mutation-rollback-")
+	if err != nil {
+		return nil, err
+	}
+	snap := &mutationSnapshot{c3Dir: c3Dir, backupDir: tmpDir}
+	if err := copyTree(c3Dir, filepath.Join(tmpDir, "c3")); err != nil {
+		os.RemoveAll(tmpDir)
+		return nil, err
+	}
+	return snap, nil
+}
+
+func (s *mutationSnapshot) cleanup() {
+	if s != nil {
+		_ = os.RemoveAll(s.backupDir)
+	}
+}
+
+func (s *mutationSnapshot) restore() error {
+	if s == nil {
+		return nil
+	}
+	backup := filepath.Join(s.backupDir, "c3")
+	if err := os.RemoveAll(s.c3Dir); err != nil {
+		return err
+	}
+	return copyTree(backup, s.c3Dir)
+}
+
+func copyTree(src, dst string) error {
+	return filepath.WalkDir(src, func(path string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		rel, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+		target := filepath.Join(dst, rel)
+		info, err := d.Info()
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return os.MkdirAll(target, info.Mode().Perm())
+		}
+		if !info.Mode().IsRegular() {
+			return nil
+		}
+		return copyFile(path, target, info.Mode().Perm())
+	})
+}
+
+func copyFile(src, dst string, mode fs.FileMode) error {
+	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+		return err
+	}
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	out, err := os.OpenFile(dst, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, mode)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(out, in); err != nil {
+		out.Close()
+		return err
+	}
+	return out.Close()
 }
 
 func runGit(opts cmd.Options, projectDir, c3Dir string, w io.Writer) error {

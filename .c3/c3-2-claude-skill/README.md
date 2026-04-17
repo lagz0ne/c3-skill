@@ -1,7 +1,7 @@
 ---
 id: c3-2
 c3-version: 4
-c3-seal: dcca17b0c864fe5818f8c3096fe799275ec0221238a3f49af88af54f9dce49b6
+c3-seal: a8c47877e79260d8e8c4e53ed1e89d876259232c57b6f89955b41c6872f55016
 title: Claude Skill
 type: container
 boundary: app
@@ -18,8 +18,9 @@ Expose c3 architecture workflows through natural language by routing user intent
 ## Responsibilities
 
 - Classify natural language intent into supported C3 operations.
-- Load and execute the appropriate operation workflow component.
-- Call c3x commands at each step of an operation.
+- Load the appropriate operation workflow reference.
+- Call c3x commands for enforcement, schemas, help, hints, repair steps, and verification.
+- Keep skill prose as reference routing rather than a second enforcement source.
 - Apply ASSUMPTION_MODE when the user declines to answer clarifying questions.
 ## Complexity Assessment
 
@@ -35,7 +36,7 @@ Expose c3 architecture workflows through natural language by routing user intent
 | c3-211 | onboard-operation | feature | active | Demonstrates project adoption and initial C3 topology creation. |
 | c3-212 | query-operation | feature | active | Demonstrates architecture question answering through search, lookup, read, graph, and impact commands. |
 | c3-213 | audit-operation | feature | active | Demonstrates structural and semantic C3 documentation quality review. |
-| c3-214 | change-operation | feature | active | Demonstrates ADR-first architecture changes with lookup, parent delta, implementation, and verification. |
+| c3-214 | change-operation | feature | active | Demonstrates ADR-first architecture changes with decision detail, lookup context, parent delta, implementation, and verification. |
 | c3-215 | migrate-operation | feature | active | Demonstrates C3 upgrade and cache recovery flows without treating c3.db as submitted truth. |
 | c3-216 | ref-operation | feature | active | Demonstrates reusable architectural ref creation, update, listing, and explanation. |
 | c3-217 | rule-operation | feature | active | Demonstrates enforceable coding rule creation, update, adoption, and evaluation. |

@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 	"io"
+	"sort"
+	"strings"
 
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
@@ -28,13 +30,13 @@ func RunQuery(opts QueryOptions, w io.Writer) error {
 		limit = 20
 	}
 
-	// Search entity metadata (title, goal, summary, description, body).
+	// Search entity metadata.
 	metaResults, err := opts.Store.SearchWithLimit(opts.Query, opts.TypeFilter, limit)
 	if err != nil {
 		return fmt.Errorf("search failed: %w", err)
 	}
 
-	// Search node content (content_fts).
+	// Search node content.
 	contentResults, err := opts.Store.SearchContent(opts.Query, limit)
 	if err != nil {
 		return fmt.Errorf("content search failed: %w", err)
@@ -44,12 +46,17 @@ func RunQuery(opts QueryOptions, w io.Writer) error {
 	results := mergeSearchResults(metaResults, contentResults, limit)
 
 	if len(results) == 0 {
-		fmt.Fprintln(w, "No results.")
+		writeNoResults(w, opts.Store, opts.Query, opts.TypeFilter)
 		return nil
 	}
 
 	if opts.JSON {
-		return writeJSON(w, results)
+		if err := writeJSON(w, results); err != nil {
+			return err
+		}
+		// In JSON mode, only emit structured agent hints (no human text).
+		writeHints(w, queryAgentHints(results, limit))
+		return nil
 	}
 
 	for i, r := range results {
@@ -58,7 +65,112 @@ func RunQuery(opts QueryOptions, w io.Writer) error {
 			fmt.Fprintf(w, "   %s\n", r.Snippet)
 		}
 	}
+	writeQueryFooter(w, results, limit)
 	return nil
+}
+
+// writeNoResults writes a helpful no-results message with suggestions.
+func writeNoResults(w io.Writer, s *store.Store, query, typeFilter string) {
+	fmt.Fprintln(w, "No results.")
+
+	var suggestions []string
+	if typeFilter != "" {
+		suggestions = append(suggestions, fmt.Sprintf("remove --type %s filter to search all entity types", typeFilter))
+	}
+
+	words := strings.Fields(query)
+	if len(words) > 1 {
+		suggestions = append(suggestions, "try fewer or different keywords")
+	}
+
+	// Fuzzy "did you mean?" — find entities with similar titles/IDs.
+	if similar, err := s.SuggestEntities(query, 3); err == nil && len(similar) > 0 {
+		suggestions = append(suggestions, "did you mean:")
+		for _, e := range similar {
+			suggestions = append(suggestions, fmt.Sprintf("  c3x query %q  (%s: %s)", e.Title, e.Type, e.ID))
+		}
+	} else if samples, err := s.SampleEntities(3); err == nil && len(samples) > 0 {
+		// No fuzzy matches — show random samples so user learns the vocabulary.
+		suggestions = append(suggestions, "try searching for:")
+		for _, e := range samples {
+			suggestions = append(suggestions, fmt.Sprintf("  c3x query %q  (%s: %s)", e.Title, e.Type, e.ID))
+		}
+	}
+
+	if len(suggestions) > 0 {
+		fmt.Fprintln(w, "hint:")
+		for _, s := range suggestions {
+			fmt.Fprintf(w, "  - %s\n", s)
+		}
+	}
+
+	writeHints(w, []HelpHint{
+		{Command: "c3x list", Description: "browse all entities"},
+		{Command: "c3x list --flat", Description: "flat list of all entity IDs"},
+	})
+}
+
+// writeQueryFooter writes result count and refinement hints after search results.
+func writeQueryFooter(w io.Writer, results []store.SearchResult, limit int) {
+	// Show truncation warning when results hit the limit.
+	if len(results) >= limit {
+		fmt.Fprintf(w, "showing %d results (limit reached — use --limit to see more)\n", len(results))
+	}
+
+	// Collect type distribution for refinement hints.
+	typeCounts := map[string]int{}
+	for _, r := range results {
+		typeCounts[r.Type]++
+	}
+
+	// Suggest --type narrowing if results span multiple types.
+	if len(typeCounts) > 1 {
+		// Sort types for deterministic output.
+		var types []string
+		for t := range typeCounts {
+			types = append(types, t)
+		}
+		sort.Strings(types)
+
+		fmt.Fprintln(w, "hint: narrow with --type:")
+		for _, t := range types {
+			fmt.Fprintf(w, "  --type %s (%d result(s))\n", t, typeCounts[t])
+		}
+	}
+
+	writeHints(w, queryAgentHints(results, limit))
+}
+
+// queryAgentHints builds structured hints for agent mode.
+func queryAgentHints(results []store.SearchResult, limit int) []HelpHint {
+	typeCounts := map[string]int{}
+	for _, r := range results {
+		typeCounts[r.Type]++
+	}
+
+	var hints []HelpHint
+	if len(typeCounts) > 1 {
+		for t, c := range typeCounts {
+			hints = append(hints, HelpHint{
+				Command:     fmt.Sprintf("c3x query <terms> --type %s", t),
+				Description: fmt.Sprintf("narrow to %d %s result(s)", c, t),
+			})
+		}
+	}
+	if len(results) >= limit {
+		hints = append(hints, HelpHint{
+			Command:     fmt.Sprintf("c3x query <terms> --limit %d", limit*2),
+			Description: fmt.Sprintf("showing %d (limit reached) — increase limit", len(results)),
+		})
+	}
+	if len(results) > 0 {
+		first := results[0]
+		hints = append(hints, HelpHint{
+			Command:     fmt.Sprintf("c3x read %s", first.ID),
+			Description: "read top result",
+		})
+	}
+	return hints
 }
 
 // mergeSearchResults combines metadata and content results, deduplicating by ID.

@@ -319,6 +319,15 @@ Examples:
 
 Search entity titles, goals, summaries, and bodies using FTS5 with BM25 ranking.
 
+Operators:
+  auth security     Implicit AND — both terms must match
+  auth OR security  Either term matches
+  auth | security   Same as OR
+  auth AND handler  Explicit AND
+  auth NOT jwt      Exclude matches containing "jwt"
+
+Special characters (commas, periods, brackets, etc.) are stripped automatically.
+
 Options:
   --type <type>   Filter results to entity type (component, ref, adr, etc.)
   --limit N       Max results (default: 20)
@@ -327,6 +336,7 @@ Options:
 Examples:
   c3x query authentication
   c3x query "error handling" --type ref
+  c3x query "store OR walker"
   c3x query frontmatter --limit 5 --json`,
 	},
 	{

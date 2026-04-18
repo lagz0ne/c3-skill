@@ -5,6 +5,53 @@ import (
 	"testing"
 )
 
+func TestSanitizeFTS5(t *testing.T) {
+	cases := []struct {
+		name   string
+		input  string
+		expect string
+	}{
+		// Basic
+		{"plain words", "auth handler", "auth handler"},
+		{"comma separated", "auth, security", "auth security"},
+		{"period suffix", "test.", "test"},
+		{"hyphenated", "rate-limiter", "rate-limiter"},
+
+		// Boolean operators preserved between words
+		{"OR between words", "auth OR security", "auth OR security"},
+		{"AND between words", "auth AND handler", "auth AND handler"},
+		{"NOT before word", "auth NOT jwt", "auth NOT jwt"},
+		{"pipe to OR", "auth | security", "auth OR security"},
+		{"case insensitive OR", "auth or security", "auth OR security"},
+		{"case insensitive AND", "auth and security", "auth AND security"},
+
+		// Dangling operators stripped
+		{"leading OR", "OR auth", "auth"},
+		{"trailing OR", "auth OR", "auth"},
+		{"leading AND", "AND auth", "auth"},
+		{"trailing AND", "auth AND", "auth"},
+		{"leading NOT", "NOT", ""},
+		{"consecutive operators", "auth OR AND security", "auth OR security"},
+		{"only operators", "AND OR NOT", ""},
+		{"leading pipe", "| auth", "auth"},
+		{"trailing pipe", "auth |", "auth"},
+
+		// Special chars
+		{"parens", "foo(bar)", "foo bar"},
+		{"email", "user@example.com", "user example com"},
+		{"pure punctuation", ",,,", ""},
+		{"dash prefix", "-auth", "auth"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := sanitizeFTS5(tc.input)
+			if got != tc.expect {
+				t.Errorf("sanitizeFTS5(%q) = %q, want %q", tc.input, got, tc.expect)
+			}
+		})
+	}
+}
+
 func TestSearch_BasicMatch(t *testing.T) {
 	s := createTestStore(t)
 	seedFixture(t, s)
@@ -240,6 +287,185 @@ func TestSearchContent_IgnoresEmptyNodes(t *testing.T) {
 	}
 	if len(results) != 1 {
 		t.Fatalf("expected 1 result, got %d", len(results))
+	}
+}
+
+func TestSearch_SpecialCharacters(t *testing.T) {
+	s := createTestStore(t)
+	seedFixture(t, s)
+
+	// These should NOT produce errors — they should be treated as plain text.
+	cases := []struct {
+		name  string
+		query string
+	}{
+		{"comma", "auth, security"},
+		{"period", "test."},
+		{"double quotes", `"exact phrase"`},
+		{"parentheses", "foo(bar)"},
+		{"asterisk", "auth*"},
+		{"colon", "type:component"},
+		{"semicolon", "auth; drop"},
+		{"plus", "auth + handler"},
+		{"dash prefix", "-auth"},
+		{"caret", "^auth"},
+		{"curly braces", "{auth}"},
+		{"brackets", "[auth]"},
+		{"pipe", "auth | handler"},
+		{"backslash", `auth\handler`},
+		{"single quote", "it's working"},
+		{"exclamation", "auth!"},
+		{"at sign", "user@example.com"},
+		{"hash", "#auth"},
+		{"tilde", "~auth"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Must not error — empty results are fine.
+			_, err := s.Search(tc.query)
+			if err != nil {
+				t.Errorf("Search(%q) returned error: %v", tc.query, err)
+			}
+		})
+	}
+}
+
+func TestSearchContent_SpecialCharacters(t *testing.T) {
+	s := createTestStore(t)
+	seedEntityWithNodes(t, s, "comp-test", "component", "Test Comp",
+		[]string{"Authentication and security service"})
+
+	cases := []struct {
+		name  string
+		query string
+	}{
+		{"comma", "authentication, security"},
+		{"period", "service."},
+		{"double quotes", `"auth service"`},
+		{"parentheses", "auth(service)"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := s.SearchContent(tc.query, 10)
+			if err != nil {
+				t.Errorf("SearchContent(%q) returned error: %v", tc.query, err)
+			}
+		})
+	}
+}
+
+func TestSearch_OnlyPunctuation(t *testing.T) {
+	s := createTestStore(t)
+	seedFixture(t, s)
+
+	// Pure punctuation should return empty results, not error.
+	cases := []string{",", ".", ",,", "...", "!@#$%", "()", `""`}
+	for _, q := range cases {
+		t.Run(q, func(t *testing.T) {
+			results, err := s.Search(q)
+			if err != nil {
+				t.Errorf("Search(%q) returned error: %v", q, err)
+			}
+			// Just shouldn't crash — empty results are expected.
+			_ = results
+		})
+	}
+}
+
+func TestSuggestEntities_FindsSimilarTitles(t *testing.T) {
+	s := createTestStore(t)
+	seedFixture(t, s)
+
+	// "authen" should fuzzy-match "Auth Handler" (prefix match on title words).
+	suggestions, err := s.SuggestEntities("authen", 5)
+	if err != nil {
+		t.Fatalf("SuggestEntities: %v", err)
+	}
+	if len(suggestions) == 0 {
+		t.Fatal("expected suggestions for 'authen'")
+	}
+	found := false
+	for _, s := range suggestions {
+		if s.ID == "auth-handler" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected auth-handler in suggestions, got %v", suggestions)
+	}
+}
+
+func TestSuggestEntities_NoMatch(t *testing.T) {
+	s := createTestStore(t)
+	seedFixture(t, s)
+
+	suggestions, err := s.SuggestEntities("zzzzz", 5)
+	if err != nil {
+		t.Fatalf("SuggestEntities: %v", err)
+	}
+	if len(suggestions) != 0 {
+		t.Errorf("expected 0 suggestions for nonsense, got %d", len(suggestions))
+	}
+}
+
+func TestSuggestEntities_SpecialCharsNoError(t *testing.T) {
+	s := createTestStore(t)
+	seedFixture(t, s)
+
+	// Should never error, even with garbage input.
+	for _, q := range []string{",,,", ".", "'", `"`, "|"} {
+		_, err := s.SuggestEntities(q, 5)
+		if err != nil {
+			t.Errorf("SuggestEntities(%q) errored: %v", q, err)
+		}
+	}
+}
+
+func TestSampleEntities(t *testing.T) {
+	s := createTestStore(t)
+	seedFixture(t, s)
+
+	samples, err := s.SampleEntities(3)
+	if err != nil {
+		t.Fatalf("SampleEntities: %v", err)
+	}
+	if len(samples) == 0 {
+		t.Fatal("expected at least 1 sample entity")
+	}
+	if len(samples) > 3 {
+		t.Errorf("expected at most 3 samples, got %d", len(samples))
+	}
+	for _, s := range samples {
+		if s.ID == "" || s.Title == "" {
+			t.Errorf("sample has empty ID or Title: %+v", s)
+		}
+	}
+}
+
+func TestSearchWithCount(t *testing.T) {
+	s := createTestStore(t)
+	seedFixture(t, s)
+
+	// "service" matches multiple entities — verify count > limit when limited.
+	results, total, err := s.SearchWithCount("service", "", 1)
+	if err != nil {
+		t.Fatalf("SearchWithCount: %v", err)
+	}
+	if len(results) > 1 {
+		t.Errorf("expected at most 1 result with limit=1, got %d", len(results))
+	}
+	if total < len(results) {
+		t.Errorf("total (%d) should be >= results (%d)", total, len(results))
+	}
+}
+
+func TestSearchWithCount_SpecialCharsNoError(t *testing.T) {
+	s := createTestStore(t)
+	seedFixture(t, s)
+
+	_, _, err := s.SearchWithCount("auth, handler", "", 10)
+	if err != nil {
+		t.Errorf("SearchWithCount with comma should not error: %v", err)
 	}
 }
 

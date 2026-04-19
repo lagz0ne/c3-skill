@@ -1,6 +1,6 @@
 # Query Reference
 
-Navigate C3 docs + corresponding code. Full context = docs + code.
+Navigate C3 docs + code. Full context = docs + code.
 
 ## Flow
 
@@ -25,15 +25,15 @@ bash <skill-dir>/bin/c3x.sh list
 ```
 Returns all entities: id, type, title, path, relationships, frontmatter. Match query to entities by title/type/relationship.
 
-Don't manually Glob/Read `.c3/`. Topology output has everything for discovery. Read only after identifying specific entities.
+Never manually Glob/Read `.c3/`. Topology has everything for discovery. Read only after identifying specific entities.
 
 ## Step 0a+: Check Recipes
 
-After loading topology, check for recipes that match the query:
-1. Filter entities with type `recipe` from `c3x list`
+After topology, check for matching recipes:
+1. Filter `recipe` type from `c3x list`
 2. Match query against recipe title + description
-3. If match found → read recipe, serve sources as the narrative trace
-4. If no match → proceed with normal query flow
+3. Match → read recipe, serve sources as narrative trace
+4. No match → normal query flow
 
 ## Step 0b: Clarify Intent
 
@@ -42,13 +42,13 @@ Ask when (skip if ASSUMPTION_MODE):
 - Multiple interpretations ("authentication" — login? tokens?)
 - Scope unclear
 
-Skip when: C3 ID given, query is specific, "show me everything about X".
+Skip when: C3 ID given, specific query, "show me everything about X".
 
 ## Step 1: Navigate Layers
 
 Top-down: Context → Container → Component.
 
-Match from topology. Use `c3x read <id>` when body content is needed beyond what `list` provides.
+Match from topology. `c3x read <id>` when body content needed beyond `list`.
 
 | Source | Use For |
 |--------|---------|
@@ -58,12 +58,12 @@ Match from topology. Use `c3x read <id>` when body content is needed beyond what
 
 ## Step 2: Extract + Lookup
 
-For every file path encountered:
-1. **Run `c3x lookup <file>` before reading any source file** — returns component + governing refs/rules. For directory-level context, use `c3x lookup 'src/auth/**'`.
-2. Check relationships via `c3x read <id>` or `c3x graph <id> --format mermaid`. Always include the mermaid output as a code block in your response — graph the matched entity (container or component, never c3-0).
-3. Find `ref-*` and `rule-*` entities from topology. Use `c3x read <id>` for body content.
+For every file path:
+1. **Run `c3x lookup <file>` before reading source** — returns component + governing refs/rules. Directory-level: `c3x lookup 'src/auth/**'`.
+2. Check relationships via `c3x read <id>` or `c3x graph <id> --format mermaid`. Always include mermaid output as code block — graph matched entity (container or component, never c3-0).
+3. Find `ref-*` and `rule-*` from topology. `c3x read <id>` for body.
 
-Lookup-returned refs/rules = constraints governing that file's code.
+Lookup-returned refs/rules = constraints governing that file.
 
 ## Step 3: Explore Code
 
@@ -90,7 +90,7 @@ src/auth/**/*.ts
 1. Identify target (c3-NNN, c3-N, or c3-0)
 2. Read upward: component → container → context
 3. Extract: explicit constraints (MUST/MUST NOT), boundaries, layer rules
-4. Collect cited refs and rules from Related Refs / Related Rules, read key constraints
+4. Collect cited refs/rules from Related Refs/Rules, read key constraints
 
 ```
 **Constraint Chain for c3-NNN (Name)**
@@ -103,23 +103,23 @@ src/auth/**/*.ts
 ```
 
 **Constraint Chain Graph:**
-(mermaid code block from c3x graph <target-component> --direction reverse --format mermaid)
+(mermaid from `c3x graph <target-component> --direction reverse --format mermaid`)
 
 ## ADR Handling
 
-ADRs are **ephemeral work orders**, not architectural truth. `c3x query` excludes them by default.
+ADRs = ephemeral work orders, not architectural truth. `c3x query` excludes by default.
 
 **Use `--include-adr` ONLY when:**
-- Working on a specific ADR (implementing the change it tracks)
-- Pre-staging a new feature (reviewing past decisions for context)
-- Explicitly asked to find historical decisions
+- Working on specific ADR (implementing tracked change)
+- Pre-staging feature (reviewing past decisions)
+- Explicitly asked for historical decisions
 
-**Do NOT use `--include-adr` for:**
-- General architecture questions ("how does auth work?")
-- Code navigation ("where is the store?")
-- Understanding current system state
+**Never `--include-adr` for:**
+- General architecture questions
+- Code navigation
+- Understanding current state
 
-When ADRs appear in results, treat them as historical context — verify against current entity docs before acting on ADR content.
+ADRs in results → historical context only. Verify against current entity docs before acting.
 
 ## Edge Cases
 
@@ -137,7 +137,7 @@ When ADRs appear in results, treat them as historical context — verify against
 <Architecture from docs>
 
 **Graph:**
-(mermaid code block from c3x graph <matched-entity> --format mermaid)
+(mermaid from c3x graph <matched-entity> --format mermaid)
 
 **Code Map:** `path/file.ts` - <role>
 
@@ -146,12 +146,3 @@ When ADRs appear in results, treat them as historical context — verify against
 **Related:** <navigation hints>
 ```
 
-## Reading Entities
-
-Canonical entity content lives in sealed `.c3/` files and is read through the local cache. Use c3x to read:
-
-```bash
-c3x read <entity-id>              # full content (truncated in agent mode)
-c3x read <entity-id> --full       # full content without truncation
-c3x graph <entity-id> --depth 0   # entity summary with relationships
-```

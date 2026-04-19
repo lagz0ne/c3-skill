@@ -16,6 +16,7 @@ type QueryOptions struct {
 	TypeFilter string
 	Limit      int
 	JSON       bool
+	IncludeADR bool
 }
 
 // RunQuery performs a full-text search over the store, combining entity
@@ -45,17 +46,36 @@ func RunQuery(opts QueryOptions, w io.Writer) error {
 	// Merge: meta results first (better signal), then content-only hits.
 	results := mergeSearchResults(metaResults, contentResults, limit)
 
+	// Exclude ADRs unless opted in or explicitly requested via --type.
+	if !opts.IncludeADR && opts.TypeFilter != "adr" {
+		filtered := results[:0]
+		for _, r := range results {
+			if r.Type != "adr" {
+				filtered = append(filtered, r)
+			}
+		}
+		results = filtered
+	}
+
 	if len(results) == 0 {
-		writeNoResults(w, opts.Store, opts.Query, opts.TypeFilter)
+		writeNoResults(w, opts.Store, opts.Query, opts.TypeFilter, opts.IncludeADR)
 		return nil
+	}
+
+	// Check if ADRs are present (only when user opted in).
+	hasADR := false
+	for _, r := range results {
+		if r.Type == "adr" {
+			hasADR = true
+			break
+		}
 	}
 
 	if opts.JSON {
 		if err := writeJSON(w, results); err != nil {
 			return err
 		}
-		// In JSON mode, only emit structured agent hints (no human text).
-		writeHints(w, queryAgentHints(results, limit))
+		writeHints(w, queryAgentHints(results, limit, hasADR))
 		return nil
 	}
 
@@ -65,12 +85,15 @@ func RunQuery(opts QueryOptions, w io.Writer) error {
 			fmt.Fprintf(w, "   %s\n", r.Snippet)
 		}
 	}
+	if hasADR {
+		fmt.Fprintln(w, "note: ADRs are historical records — verify against the current entity docs")
+	}
 	writeQueryFooter(w, results, limit)
 	return nil
 }
 
 // writeNoResults writes a helpful no-results message with suggestions.
-func writeNoResults(w io.Writer, s *store.Store, query, typeFilter string) {
+func writeNoResults(w io.Writer, s *store.Store, query, typeFilter string, includeADR bool) {
 	fmt.Fprintln(w, "No results.")
 
 	var suggestions []string
@@ -84,7 +107,11 @@ func writeNoResults(w io.Writer, s *store.Store, query, typeFilter string) {
 	}
 
 	// Fuzzy "did you mean?" — find entities with similar titles/IDs.
-	if similar, err := s.SuggestEntities(query, 3); err == nil && len(similar) > 0 {
+	var excl []string
+	if !includeADR && typeFilter != "adr" {
+		excl = []string{"adr"}
+	}
+	if similar, err := s.SuggestEntities(query, 3, excl...); err == nil && len(similar) > 0 {
 		suggestions = append(suggestions, "did you mean:")
 		for _, e := range similar {
 			suggestions = append(suggestions, fmt.Sprintf("  c3x query %q  (%s: %s)", e.Title, e.Type, e.ID))
@@ -138,11 +165,11 @@ func writeQueryFooter(w io.Writer, results []store.SearchResult, limit int) {
 		}
 	}
 
-	writeHints(w, queryAgentHints(results, limit))
+	writeHints(w, queryAgentHints(results, limit, false))
 }
 
 // queryAgentHints builds structured hints for agent mode.
-func queryAgentHints(results []store.SearchResult, limit int) []HelpHint {
+func queryAgentHints(results []store.SearchResult, limit int, hasADR bool) []HelpHint {
 	typeCounts := map[string]int{}
 	for _, r := range results {
 		typeCounts[r.Type]++
@@ -168,6 +195,12 @@ func queryAgentHints(results []store.SearchResult, limit int) []HelpHint {
 		hints = append(hints, HelpHint{
 			Command:     fmt.Sprintf("c3x read %s", first.ID),
 			Description: "read top result",
+		})
+	}
+	if hasADR {
+		hints = append(hints, HelpHint{
+			Command:     "note",
+			Description: "ADRs are historical records — verify against the current entity docs",
 		})
 	}
 	return hints

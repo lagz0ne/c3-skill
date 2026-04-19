@@ -105,6 +105,22 @@ src/auth/**/*.ts
 **Constraint Chain Graph:**
 (mermaid code block from c3x graph <target-component> --direction reverse --format mermaid)
 
+## ADR Handling
+
+ADRs are **ephemeral work orders**, not architectural truth. `c3x query` excludes them by default.
+
+**Use `--include-adr` ONLY when:**
+- Working on a specific ADR (implementing the change it tracks)
+- Pre-staging a new feature (reviewing past decisions for context)
+- Explicitly asked to find historical decisions
+
+**Do NOT use `--include-adr` for:**
+- General architecture questions ("how does auth work?")
+- Code navigation ("where is the store?")
+- Understanding current system state
+
+When ADRs appear in results, treat them as historical context — verify against current entity docs before acting on ADR content.
+
 ## Edge Cases
 
 | Situation | Action |

@@ -222,6 +222,51 @@ func TestRunQuery_ShowsRefinementHints(t *testing.T) {
 	}
 }
 
+func TestRunQuery_DefaultExcludesADR(t *testing.T) {
+	s := createDBFixture(t)
+	var buf bytes.Buffer
+	// "Go" matches adr-20260226-use-go title "Use Go for CLI".
+	// Default should exclude ADRs.
+	err := RunQuery(QueryOptions{Store: s, Query: "Go"}, &buf)
+	if err != nil {
+		t.Fatalf("RunQuery: %v", err)
+	}
+	out := buf.String()
+	if strings.Contains(out, "adr-") {
+		t.Errorf("default query should exclude ADRs, got:\n%s", out)
+	}
+}
+
+func TestRunQuery_IncludeADRShowsADR(t *testing.T) {
+	s := createDBFixture(t)
+	var buf bytes.Buffer
+	err := RunQuery(QueryOptions{Store: s, Query: "Go", IncludeADR: true}, &buf)
+	if err != nil {
+		t.Fatalf("RunQuery: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "adr-20260226-use-go") {
+		t.Errorf("expected ADR in results with IncludeADR, got:\n%s", out)
+	}
+	if !strings.Contains(out, "historical") {
+		t.Errorf("expected historical-record hint when ADRs shown, got:\n%s", out)
+	}
+}
+
+func TestRunQuery_TypeADRImplicitInclude(t *testing.T) {
+	s := createDBFixture(t)
+	var buf bytes.Buffer
+	// Explicit --type adr should return ADRs even without IncludeADR.
+	err := RunQuery(QueryOptions{Store: s, Query: "Go", TypeFilter: "adr"}, &buf)
+	if err != nil {
+		t.Fatalf("RunQuery: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "adr-20260226-use-go") {
+		t.Errorf("expected ADR with --type adr, got:\n%s", out)
+	}
+}
+
 func TestRunQuery_DedupsResults(t *testing.T) {
 	s := createDBFixture(t)
 	// "auth" matches c3-101 entity metadata (title). Also add a node with "auth".

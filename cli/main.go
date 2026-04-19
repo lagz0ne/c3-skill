@@ -419,7 +419,7 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) err
 		if len(opts.Args) >= 1 {
 			queryTerm = opts.Args[0]
 		}
-		err = cmd.RunQuery(cmd.QueryOptions{Store: s, Query: queryTerm, TypeFilter: opts.TypeFilter, Limit: opts.Limit, JSON: opts.JSON}, w)
+		err = cmd.RunQuery(cmd.QueryOptions{Store: s, Query: queryTerm, TypeFilter: opts.TypeFilter, Limit: opts.Limit, JSON: opts.JSON, IncludeADR: opts.IncludeADR}, w)
 	case "diff":
 		commitHash := ""
 		if len(opts.Args) >= 1 {

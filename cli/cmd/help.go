@@ -314,10 +314,11 @@ Examples:
 	{
 		Name:     "query",
 		Args:     "<search-terms>",
-		OneLiner: "Full-text search across all entities",
-		Help: `Usage: c3x query <search-terms> [--type <type>] [--limit N] [--json]
+		OneLiner: "Full-text search across entities (ADRs excluded by default)",
+		Help: `Usage: c3x query <search-terms> [--type <type>] [--limit N] [--include-adr] [--json]
 
 Search entity titles, goals, summaries, and bodies using FTS5 with BM25 ranking.
+ADRs are excluded by default — they are historical records, not source of truth.
 
 Operators:
   auth security     Implicit AND — both terms must match
@@ -329,15 +330,17 @@ Operators:
 Special characters (commas, periods, brackets, etc.) are stripped automatically.
 
 Options:
-  --type <type>   Filter results to entity type (component, ref, adr, etc.)
-  --limit N       Max results (default: 20)
-  --json          Machine-readable output
+  --type <type>     Filter results to entity type (component, ref, adr, etc.)
+  --include-adr     Include ADR entities in results (excluded by default)
+  --limit N         Max results (default: 20)
+  --json            Machine-readable output
 
 Examples:
   c3x query authentication
   c3x query "error handling" --type ref
   c3x query "store OR walker"
-  c3x query frontmatter --limit 5 --json`,
+  c3x query frontmatter --limit 5 --json
+  c3x query migration --include-adr`,
 	},
 	{
 		Name:     "diff",

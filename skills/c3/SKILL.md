@@ -135,7 +135,7 @@ Never claim `.c3/` state is authoritative if `verify` fails.
 **ADR reference — change work starts in c3x:**
 Every **change** operation starts with `c3x add adr <slug>` before implementation or source-file reads.
 (Exception: **ref-add** creates its adoption ADR at completion — see `references/ref.md`.)
-The ADR is the CLI-owned work order. Use `c3x schema adr`, `c3x read <adr> --full`, command `help[]`, and failure hints for required detail. `c3x add adr` rejects thin/incremental ADR creation; create the complete work order up front, using `N.A - <reason>` where a schema row is genuinely not applicable. `c3x list` and `c3x check` exclude ADRs by default, so use `--include-adr` when validating them.
+The ADR is the CLI-owned work order. Use `c3x schema adr`, `c3x read <adr> --full`, command `help[]`, and failure hints for required detail. `c3x add adr` rejects thin/incremental ADR creation; create the complete work order up front, using `N.A - <reason>` where a schema row is genuinely not applicable. `c3x list`, `c3x check`, and `c3x query` exclude ADRs by default. Only use `--include-adr` when working on a specific ADR or pre-staging new feature work. ADR content is historical — always verify against current entity docs before acting on it.
 
 **Stop immediately if:**
 - No ADR exists for current change → `c3x add adr <slug>` NOW

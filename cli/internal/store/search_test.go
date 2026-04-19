@@ -408,6 +408,48 @@ func TestSuggestEntities_NoMatch(t *testing.T) {
 	}
 }
 
+func TestSuggestEntities_ExcludesType(t *testing.T) {
+	s := createTestStore(t)
+	seedFixture(t, s)
+	// Add an ADR that matches "service".
+	adr := &Entity{
+		ID: "adr-use-service", Type: "adr", Title: "Use Service Mesh",
+		Slug: "use-service", Goal: "Adopt service mesh", Status: "proposed", Metadata: "{}",
+	}
+	if err := s.InsertEntity(adr); err != nil {
+		t.Fatalf("insert: %v", err)
+	}
+
+	// Without exclusion, ADR should appear.
+	all, err := s.SuggestEntities("service", 10)
+	if err != nil {
+		t.Fatalf("SuggestEntities: %v", err)
+	}
+	foundADR := false
+	for _, e := range all {
+		if e.ID == "adr-use-service" {
+			foundADR = true
+		}
+	}
+	if !foundADR {
+		t.Error("expected ADR in unfiltered suggestions")
+	}
+
+	// With exclusion, ADR should NOT appear.
+	filtered, err := s.SuggestEntities("service", 10, "adr")
+	if err != nil {
+		t.Fatalf("SuggestEntities with exclude: %v", err)
+	}
+	for _, e := range filtered {
+		if e.Type == "adr" {
+			t.Errorf("ADR should be excluded, got %+v", e)
+		}
+	}
+	if len(filtered) == 0 {
+		t.Error("expected non-ADR results for 'service'")
+	}
+}
+
 func TestSuggestEntities_SpecialCharsNoError(t *testing.T) {
 	s := createTestStore(t)
 	seedFixture(t, s)

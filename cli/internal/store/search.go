@@ -110,7 +110,7 @@ type EntitySummary struct {
 
 // SuggestEntities finds entities whose title or ID partially matches the query.
 // Uses LIKE for fuzzy matching — safe with any input. Returns up to limit results.
-func (s *Store) SuggestEntities(query string, limit int) ([]EntitySummary, error) {
+func (s *Store) SuggestEntities(query string, limit int, excludeTypes ...string) ([]EntitySummary, error) {
 	if limit <= 0 {
 		limit = 5
 	}
@@ -141,9 +141,18 @@ func (s *Store) SuggestEntities(query string, limit int) ([]EntitySummary, error
 		conditions = append(conditions, col)
 		args = append(args, argSet...)
 	}
+	where := strings.Join(conditions, " AND ")
+	if len(excludeTypes) > 0 {
+		placeholders := make([]string, len(excludeTypes))
+		for i, t := range excludeTypes {
+			placeholders[i] = "?"
+			args = append(args, t)
+		}
+		where += " AND type NOT IN (" + strings.Join(placeholders, ",") + ")"
+	}
 	q := fmt.Sprintf(
 		`SELECT id, type, title FROM entities WHERE %s ORDER BY LENGTH(title) LIMIT %d`,
-		strings.Join(conditions, " AND "), limit,
+		where, limit,
 	)
 
 	rows, err := s.db.Query(q, args...)

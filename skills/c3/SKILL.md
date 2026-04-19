@@ -1,11 +1,10 @@
 ---
 name: c3
 description: >
-  This skill should be used when the user invokes /c3 or asks architecture questions
-  about a project with a .c3/ directory. Trigger phrases: "adopt C3", "onboard this
-  project", "where is X", "audit the architecture", "check docs", "add a component",
-  "implement feature", "what breaks if I change X", "add a ref", "add a coding rule",
-  "coding standard". Handles operations: onboard, query, audit, change, migrate, ref, rule, sweep.
+  Triggers on /c3 or architecture questions in projects with .c3/ directory.
+  Phrases: "adopt C3", "onboard", "where is X", "audit architecture", "check docs",
+  "add component", "implement feature", "what breaks if I change X", "add ref",
+  "coding standard". Ops: onboard, query, audit, change, migrate, ref, rule, sweep.
   Classifies intent, loads ref, executes.
 ---
 
@@ -13,39 +12,37 @@ description: >
 
 CLI: `C3X_MODE=agent bash <skill-dir>/bin/c3x.sh <command> [args]`
 
-**Enforcement source:** `c3x` is the single source for C3 enforcement, repair steps, schemas, help, hints, and failure guidance. This skill is only a reference router: classify intent, run the matching `c3x` commands, and follow the CLI output. Do not duplicate CLI checklists in skill prose.
-
-**Agent output mode:** With `C3X_MODE=agent`, c3x outputs TOON (Token-Optimized Object Notation) by default — ~40% fewer tokens than JSON. All commands append `help[]` contextual hints suggesting next steps.
-
-**Content-first:** Running c3x with no arguments outputs a project dashboard (entity counts, coverage, pending ADRs) — not help text. Use `--help` for help.
+- **Enforce:** `c3x` = single source. Skill = router: classify -> run c3x -> follow output. No duplicate CLI checklists.
+- **Agent mode:** `C3X_MODE=agent` -> TOON output (~40% fewer tokens). Commands append `help[]` hints.
+- **Content-first:** No-arg c3x = dashboard (counts, coverage, ADRs). `--help` for help.
 
 | Command | Purpose |
 |---------|---------|
-| (no args) / `status` | Project dashboard: entity counts, coverage %, pending ADRs, warnings |
+| (no args) / `status` | Dashboard: counts, coverage %, ADRs, warnings |
 | `init` | Scaffold `.c3/` |
 | `list` | Topology with files (`--flat`, `--compact`) |
 | `check` | Structural validation (`--fix`) |
-| `add <type> <slug>` | Create entity with body via stdin (`--container`, `--feature`) |
-| `set <id> <field> <val>` | Update frontmatter field |
-| `set <id> --section <name>` | Update section content (text or JSON table) |
-| `wire <src> <tgt>` | Link component to ref (`--remove` to unlink) |
-| `schema <type>` | Section definitions for entity type |
-| `codemap` | Scaffold code-map entries for all components, refs + rules |
-| `read <id>` | Full entity content; agent mode truncates body to 1500 chars (`--full` to bypass) |
-| `lookup <file-or-glob>` | File or glob → component + refs |
-| `coverage` | Code-map coverage stats |
-| `delete <id>` | Remove entity + clean all references (`--dry-run`) |
-| `query <terms>` | Full-text search across all entities (`--type`, `--limit`) |
-| `impact <id>` | Transitive impact analysis — who depends on this? (`--depth`) |
-| `diff` | Show uncommitted entity changes (`--mark <hash>`) |
-| `export [dir]` | Render canonical markdown from local cache (advanced escape hatch) |
-| `migrate` | Populate content node tree (v7→v8, requires DB) |
-| `migrate-legacy` | Import legacy unsealed `.c3/` markdown into local cache, then reseal |
-| `marketplace add <url>` | Register marketplace rule source (shallow clone) |
-| `marketplace list` | Browse available rules (`--source`, `--tag`) |
-| `marketplace show <rule-id>` | Preview marketplace rule content |
-| `marketplace update` | Pull latest from registered sources |
-| `marketplace remove <name>` | Unregister source + delete cache |
+| `add <type> <slug>` | Create entity via stdin (`--container`, `--feature`) |
+| `set <id> <field> <val>` | Update frontmatter |
+| `set <id> --section <name>` | Update section (text or JSON table) |
+| `wire <src> <tgt>` | Link to ref (`--remove` unlinks) |
+| `schema <type>` | Section defs for entity type |
+| `codemap` | Scaffold code-map entries |
+| `read <id>` | Entity content; agent truncates 1500 chars (`--full` bypasses) |
+| `lookup <file-or-glob>` | File/glob -> component + refs |
+| `coverage` | Code-map coverage |
+| `delete <id>` | Remove entity + clean refs (`--dry-run`) |
+| `query <terms>` | Full-text search (`--type`, `--limit`) |
+| `impact <id>` | Transitive impact (`--depth`) |
+| `diff` | Uncommitted changes (`--mark <hash>`) |
+| `export [dir]` | Render canonical markdown (escape hatch) |
+| `migrate` | Content node tree (v7->v8) |
+| `migrate-legacy` | Import unsealed `.c3/` markdown, reseal |
+| `marketplace add <url>` | Register rule source |
+| `marketplace list` | Browse rules (`--source`, `--tag`) |
+| `marketplace show <rule-id>` | Preview rule |
+| `marketplace update` | Pull latest |
+| `marketplace remove <name>` | Unregister + delete cache |
 
 Types for `add`: `container`, `component`, `ref`, `rule`, `adr`, `recipe`
 
@@ -53,52 +50,44 @@ Types for `add`: `container`, `component`, `ref`, `rule`, `adr`, `recipe`
 
 ## Intent Classification
 
-| Keywords | Op | Reference |
-|----------|----|-----------|
-| adopt, init, scaffold, bootstrap, onboard, "create .c3", "set up architecture" | **onboard** | `references/onboard.md` |
-| where, explain, how, diagram, trace, "show me", "what is", "list components" | **query** | `references/query.md` |
-| audit, validate, "check docs", drift, "docs up to date", "verify docs" | **audit** | `references/audit.md` |
+| Keywords | Op | Ref |
+|----------|----|-----|
+| adopt, init, scaffold, bootstrap, onboard, "create .c3" | **onboard** | `references/onboard.md` |
+| where, explain, how, diagram, trace, "show me", "what is" | **query** | `references/query.md` |
+| audit, validate, "check docs", drift, "verify docs" | **audit** | `references/audit.md` |
 | add, change, fix, implement, refactor, remove, provision, design | **change** | `references/change.md` |
 | "upgrade c3", "repair cache", "rebuild cache", "migrate .c3" | **migrate** | `references/migrate.md` |
-| pattern, convention, "create ref", "update ref", "list refs", standardize | **ref** | `references/ref.md` |
-| "add/create a coding rule", "document a rule", "coding standard", "coding convention", "migrate refs to rules", "split ref into rule" | **rule** | `references/rule.md` |
-| marketplace, "browse rules", "adopt rule", "install rule from", "available rules" | **rule** (Adopt mode) | `references/rule.md` |
+| pattern, convention, "create ref", "update ref", standardize | **ref** | `references/ref.md` |
+| "coding rule", "coding standard", "coding convention", "split ref into rule" | **rule** | `references/rule.md` |
+| marketplace, "browse rules", "adopt rule", "install rule from" | **rule** (Adopt) | `references/rule.md` |
 | impact, "what breaks", assess, sweep, "is this safe" | **sweep** | `references/sweep.md` |
-| recipe, "trace end-to-end", "cross-cutting flow", "how does X flow" | **query** (read) / **change** (create) | `references/query.md` / `references/change.md` |
-
----
+| recipe, "trace end-to-end", "cross-cutting flow" | **query**(read) / **change**(create) | `references/query.md` / `references/change.md` |
 
 ## Dispatch
 
-1. Classify op (ambiguous → `AskUserQuestion` with supported operation options)
+1. Classify op (ambiguous -> `AskUserQuestion` with options)
 2. Load `references/<op>.md`
-3. Execute (use Task tool for parallelism)
-
----
+3. Execute (Task tool for parallelism)
 
 ## Precondition
 
-Before every op except onboard and migrate:
+Before every op except onboard/migrate:
 ```bash
 bash <skill-dir>/bin/c3x.sh
 ```
-Returns project dashboard (TOON). If error about missing `.c3/` → route to **onboard**. If verification complains about broken seals or unrecoverable cache rebuild, follow the CLI's printed repair/migrate path. Otherwise, dashboard gives immediate orientation: entity counts, coverage, pending ADRs. Follow the `help[]` hints for next steps.
-
----
+Returns TOON dashboard. Missing `.c3/` -> **onboard**. Broken seals -> follow CLI repair/migrate. Follow `help[]` hints.
 
 ## CoT Harness
 
-C3 context is already loaded. Every file, every directory has a place in the topology. Before touching anything, let C3 tell you what it knows — then follow its lead.
+C3 context loaded. Before touching anything, ask C3 first:
 
-`c3x lookup <file-or-glob>` → component docs, refs, constraints. Read them. They supersede assumptions.
+`c3x lookup <file-or-glob>` -> component docs, refs, constraints. They supersede assumptions.
 
-When context shifts to a new component mid-task, look it up again. The topology is the source of truth — just follow it.
-
----
+Context shifts mid-task -> look up again. Topology = source of truth.
 
 ## ASSUMPTION_MODE
 
-First `AskUserQuestion` denial → `ASSUMPTION_MODE = true` for session.
+First `AskUserQuestion` denial -> `ASSUMPTION_MODE = true` for session.
 - Never call `AskUserQuestion` again
 - High-impact: state assumption, mark `[ASSUMED]`
 - Low-impact: auto-proceed
@@ -107,91 +96,91 @@ First `AskUserQuestion` denial → `ASSUMPTION_MODE = true` for session.
 
 ## Shared Rules
 
-**HARD RULE — .c3/ is CLI-only. NEVER use Read, Glob, Edit, or Write tools on `.c3/` files.**
+**HARD RULE -- .c3/ is CLI-only. NEVER Read/Glob/Edit/Write `.c3/` files.**
 
-Architecture data is shared through sealed canonical `.c3/` markdown. `.c3/c3.db` is disposable local cache only and must never be treated as submitted state. Raw file access bypasses the CLI contract and returns stale or misleading state. ALL access goes through c3x:
+`.c3/c3.db` = disposable cache, not submitted state. Raw file access bypasses CLI contract -> stale/misleading. ALL access via c3x:
 
-- Create:   `c3x add`, `c3x init`, `c3x codemap`
-- Read:     `c3x read <id>`, `c3x list`, `c3x query`, `c3x lookup`, `c3x graph`, `c3x impact`
-- Update:   `c3x write <id>`, `c3x set`, `c3x wire` (`--remove` to unwire)
-- Delete:   `c3x delete`
-- Validate: `c3x check`, `c3x coverage`, `c3x schema`, `c3x verify`
+| Op | Commands |
+|----|----------|
+| Create | `add`, `init`, `codemap` |
+| Read | `read <id>`, `list`, `query`, `lookup`, `graph`, `impact` |
+| Update | `write <id>`, `set`, `wire` (`--remove` unwires) |
+| Delete | `delete` |
+| Validate | `check`, `coverage`, `schema`, `verify` |
 
-If c3x lacks a needed operation, STOP and tell the user — do not work around it with file tools.
+Missing c3x operation -> STOP, tell user. No file-tool workarounds.
 
-**HARD RULE — Canonical `.c3/` files are sealed.**
+**HARD RULE -- `.c3/` files are sealed.**
 
-- Trust `.c3/` only after `c3x verify` passes
-- Direct manual edits break the seal and make the tree untrusted
-- Recovery path after conflict/manual intervention:
-  1. resolve text
-  2. `c3x repair`
-- If `verify` blocks read-only commands while a focused canonical repair is needed, use the narrow mutation that repairs the content (`write --section`, `set --section`, or `add adr`), then run `c3x check --include-adr` and `c3x verify`.
+- Trust only after `c3x verify` passes
+- Direct edits break seal -> untrusted
+- Recovery: resolve text -> `c3x repair`
+- `verify` blocks during repair -> use narrow mutation (`write --section`, `set --section`, `add adr`) -> `c3x check --include-adr` -> `c3x verify`
+- Never claim `.c3/` authoritative if `verify` fails
 
-Never claim `.c3/` state is authoritative if `verify` fails.
+**`c3x check` after every mutation** (`add`, `write`, `set`, `wire`, `delete`). Errors = blockers.
 
-**Run `c3x check` frequently** — after any mutation (`add`, `write`, `set`, `wire`, `delete`). It catches missing required sections, bad entity references, and codemap issues. Treat errors as blockers.
+**ADR-first for changes:**
+Every **change** starts `c3x add adr <slug>` before implementation.
+(Exception: **ref-add** creates ADR at completion -- `references/ref.md`.)
+ADR = work order. Use `c3x schema adr`, `c3x read <adr> --full`, `help[]` for required detail. Rejects thin creation; complete up front, `N.A - <reason>` for inapplicable rows. `list`/`check`/`query` exclude ADRs by default; `--include-adr` only when working on specific ADR. ADR content historical -- verify against current docs.
 
-**ADR reference — change work starts in c3x:**
-Every **change** operation starts with `c3x add adr <slug>` before implementation or source-file reads.
-(Exception: **ref-add** creates its adoption ADR at completion — see `references/ref.md`.)
-The ADR is the CLI-owned work order. Use `c3x schema adr`, `c3x read <adr> --full`, command `help[]`, and failure hints for required detail. `c3x add adr` rejects thin/incremental ADR creation; create the complete work order up front, using `N.A - <reason>` where a schema row is genuinely not applicable. `c3x list`, `c3x check`, and `c3x query` exclude ADRs by default. Only use `--include-adr` when working on a specific ADR or pre-staging new feature work. ADR content is historical — always verify against current entity docs before acting on it.
-
-**Stop immediately if:**
-- No ADR exists for current change → `c3x add adr <slug>` NOW
-- Guessing intent → `AskUserQuestion` (skip if ASSUMPTION_MODE)
-- Jumping to component → start Context down
+**Stop if:**
+- No ADR for change -> `c3x add adr <slug>` NOW
+- Guessing intent -> `AskUserQuestion` (skip if ASSUMPTION_MODE)
+- Jumping to component -> start Context down
 - Updating docs without code check
 
-**File Context — MANDATORY before reading or altering any file:**
+## File Context -- MANDATORY before reading/altering any file
 
-**Step 1 — Lookup:**
+**1. Lookup:**
 ```bash
 bash <skill-dir>/bin/c3x.sh lookup <file-path>
-bash <skill-dir>/bin/c3x.sh lookup 'src/auth/**'   # glob for directory-level context
+bash <skill-dir>/bin/c3x.sh lookup 'src/auth/**'
 ```
-Run the moment any file path surfaces. Use glob when working across a directory.
-No match = uncharted, proceed with caution.
+Run when any file path surfaces. No match = uncharted.
 
-**Step 2 — Load rules:** For every `rule-*` returned by lookup:
+**2. Load rules:** For every `rule-*` from lookup:
 ```bash
 bash <skill-dir>/bin/c3x.sh read <rule-id>
 ```
-Extract `## Rule`, `## Golden Example`, and `## Not This`. These are hard constraints — code MUST match the golden pattern. Deviations require an Override section in the rule or a new ADR.
+Extract `## Rule`, `## Golden Example`, `## Not This`. Code MUST match golden pattern. Deviations need Override or new ADR.
 
-**Step 3 — Top-down parent context:** For every matched component, read upward before reasoning about the component detail:
+**3. Parent context:** Read upward first:
 ```bash
 bash <skill-dir>/bin/c3x.sh read <parent-container-id>
 bash <skill-dir>/bin/c3x.sh read <component-id>
 ```
-Parent container responsibilities and component membership are the integration contract.
+Parent responsibilities + membership = integration contract.
 
-**Step 4 — Graph context:** For the parent container first, then the component if needed:
+**4. Graph context:**
 ```bash
 bash <skill-dir>/bin/c3x.sh graph <parent-container-id> --depth 1
 bash <skill-dir>/bin/c3x.sh graph <component-id> --depth 1
 ```
-Shows providers (what this component depends on) and consumers (what depends on it). If your change affects the component's interface, check consumers before proceeding.
+Change affects interface -> check consumers first.
 
-**Result:** Returned refs + loaded rule content + parent container + graph = the full constraint set. All MUST be honored.
+**Result:** Refs + rules + parent + graph = full constraint set. All honored.
 
-**New component rule:** reason top-down. Update/read container `Components` + `Responsibilities` first, then write the component detail. A new component is not done until the parent container has an explicit Parent Delta decision.
+**New component:** Top-down. Container `Components` + `Responsibilities` first, then component. Not done until parent has Parent Delta decision.
 
-**Layer Navigation:** Context → Container → Component
+**Navigation:** Context -> Container -> Component
 
-**Graph Output — Include mermaid graph in responses when relationships matter:**
+## Graph Output
+
+Include mermaid when relationships matter:
 ```bash
 bash <skill-dir>/bin/c3x.sh graph <entity-id> --format mermaid
 ```
-Include the output as a mermaid code block. Root selection matters more than depth:
-- Graph from a **container** to show its components + cited refs (query, audit, onboard)
-- Graph from a **component** to show its constraints and siblings (query, change, sweep)
-- Graph from a **ref/rule** to show citation graph (ref/rule Usage, sweep)
-- `--depth 1` is default. Use `--depth 2` only for cross-container tracing.
-- `--direction forward` for impact. `--direction reverse` for "what depends on this".
-- Never graph from `c3-0` — it's always exactly one node, adds no signal.
+Root selection > depth:
+- **container**: components + refs (query, audit, onboard)
+- **component**: constraints + siblings (query, change, sweep)
+- **ref/rule**: citation graph (Usage, sweep)
+- `--depth 1` default. `--depth 2` for cross-container only
+- `--direction forward` = impact. `--direction reverse` = dependents
+- Never graph `c3-0` -- one node, no signal
 
-**File Structure:**
+## File Structure
 ```
 .c3/
 ├── README.md                    # Context (c3-0)
@@ -209,34 +198,33 @@ Include the output as a mermaid code block. Root selection matters more than dep
 ## Operations
 
 ### onboard
-No `.c3/` or re-onboard. `c3x init` → discovery → inject CLAUDE.md → show capabilities.
-Details: `references/onboard.md`
+No `.c3/` or re-onboard. `c3x init` -> discovery -> inject CLAUDE.md -> show capabilities.
+`references/onboard.md`
 
 ### query
-`c3x query "<terms>"` for search, `c3x list` for topology, `c3x impact <id>` for dependencies.
-Details: `references/query.md`
+`c3x query "<terms>"`, `c3x list` for topology, `c3x impact <id>` for deps.
+`references/query.md`
 
 ### audit
-`c3x check` → `c3x list` → semantic phases. Output: PASS/WARN/FAIL table.
-Details: `references/audit.md`
+`c3x check` -> `c3x list` -> semantic phases -> PASS/WARN/FAIL table.
+`references/audit.md`
 
 ### change
-ADR first (`c3x add adr`) → `c3x list` → identify affected entities (refs, affects in frontmatter) → `c3x lookup` each file → fill ADR → approve → execute → `c3x check`.
-Provision gate: implement now or `status: provisioned`.
-Details: `references/change.md`
+ADR first -> `c3x list` -> affected entities -> `c3x lookup` files -> fill ADR -> approve -> execute -> `c3x check`. Provision gate: implement or `status: provisioned`.
+`references/change.md`
 
 ### ref
 Modes: Add / Update / List / Usage.
-Details: `references/ref.md`
+`references/ref.md`
 
 ### rule
 Modes: Add / Update / List / Usage.
-Details: `references/rule.md`
+`references/rule.md`
 
 ### sweep
-`c3x impact <id>` → transitive dependency analysis → parallel assessment → synthesize. Advisory only.
-Details: `references/sweep.md`
+`c3x impact <id>` -> transitive deps -> parallel assessment -> synthesize. Advisory only.
+`references/sweep.md`
 
 ### migrate
-Use only for version upgrades or break-glass cache rebuilds. In v9, submitted truth is sealed `.c3/` files; the cache can be discarded and rebuilt. Prefer `c3x verify` or `c3x repair` for normal workflows. Use `migrate-legacy` only when adopting old unsealed markdown, and `migrate` only for node-tree upgrades.
-Details: `references/migrate.md`
+Version upgrades or break-glass cache rebuilds only. v9 truth = sealed `.c3/` files; cache disposable. Prefer `verify`/`repair` normally. `migrate-legacy` for unsealed adoption, `migrate` for node-tree upgrades.
+`references/migrate.md`

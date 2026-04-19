@@ -1,8 +1,8 @@
 # Rule Reference
 
-Manage coding standards as first-class architecture artifacts.
+Manage coding standards as arch artifacts.
 
-Hard rule: if it's enforceable at code level and has a golden example → create rule, not ref.
+Hard rule: enforceable at code level + has golden example → create rule, not ref.
 
 ## Mode Selection
 
@@ -14,7 +14,7 @@ Hard rule: if it's enforceable at code level and has a golden example → create
 | "who uses rule-X" | **Usage** |
 | "migrate refs to rules", "split ref into rule" | **Migrate** |
 | "remove/deprecate rule-X" | **change** (needs ADR) |
-| "adopt rule-X", "install from marketplace", "marketplace adopt" | **Adopt** |
+| "adopt rule-X", "marketplace adopt" | **Adopt** |
 
 ---
 
@@ -32,14 +32,14 @@ bash <skill-dir>/bin/c3x.sh add rule <slug>
 
 ### Step 2: Discover (2-5 Grep calls)
 
-Search for existing implementations of the pattern in the codebase.
+Search codebase for existing implementations.
 
 | Findings | Mode | Action |
 |----------|------|--------|
-| 0 files | **Describe** | User describes the standard |
-| 1 file | **Extract** (low confidence) | Extract, flag to user for confirmation |
+| 0 files | **Describe** | User describes standard |
+| 1 file | **Extract** (low confidence) | Extract, flag for confirmation |
 | 2+ files | **Extract** (compare top 3) | Structural intersection = golden pattern |
-| User provides | **Accept** | Use user's description directly |
+| User provides | **Accept** | Use directly |
 
 ### Step 3: Extract Golden Pattern
 
@@ -50,28 +50,27 @@ From discovered code:
 
 ### Step 4: Confirm
 
-`AskUserQuestion` — present extracted pattern for approval (ASSUMPTION_MODE: skip).
+`AskUserQuestion` — approve pattern (ASSUMPTION_MODE: skip).
 
 ### Step 5: Quality Gate
 
-Write 1-3 YES/NO compliance questions derivable from `## Rule` + `## Golden Example`. If you can't write them, the standard is too vague — rework before proceeding.
+Write 1-3 YES/NO compliance questions from `## Rule` + `## Golden Example`. Can't write them → standard too vague, rework.
 
 ### Step 6: Fill Content
 
-From discovery + user input:
 - `## Rule` — one-line statement of what must be true
-- `## Golden Example` — canonical code (format-flexible: code blocks, do/don't pairs)
-- `## Not This` — anti-patterns with why they're wrong here
+- `## Golden Example` — canonical code (code blocks, do/don't pairs)
+- `## Not This` — anti-patterns with why wrong
 - `## Scope`, `## Override` — as needed
 
 ### Step 7: Discover Usage (2-3 Grep calls)
 
-Find components using this pattern.
+Find components using pattern.
 
 ### Step 8: Update Citing Components
 
-For each component using pattern:
-1. Run `c3x lookup <file>` per code-map entry
+Per component using pattern:
+1. `c3x lookup <file>` per code-map entry
 2. `c3x read <component-id>`
 3. Add to `## Related Rules`:
 
@@ -95,7 +94,7 @@ status: implemented
 ---
 ```
 
-Rule adoption ADRs use `status: implemented` directly — rule doc IS the deliverable.
+Rule adoption ADRs use `status: implemented` — rule doc IS deliverable.
 
 ---
 
@@ -103,11 +102,11 @@ Rule adoption ADRs use `status: implemented` directly — rule doc IS the delive
 
 Flow: `Clarify → Find Citings → Check Compliance → Surface Impact → Execute`
 
-1. **Clarify:** `AskUserQuestion` — add rule / modify rule / remove rule / clarify docs (ASSUMPTION_MODE: skip)
-2. **Find citings:** `c3x list` → rule entity → `relationships`. Search via `c3x query rule-{slug}` for depth.
-3. **Check compliance:** `c3x lookup <file>` per code-map entry. Compare against `## Golden Example` and `## Not This` for strict compliance. Categorize: compliant / needs-update / breaking.
-4. **Surface impact:** `AskUserQuestion` — proceed / narrow / cancel (ASSUMPTION_MODE: skip)
-5. **Execute:** Update rule doc + create ADR. Non-compliant → note as TODO in ADR (don't touch code).
+1. **Clarify:** `AskUserQuestion` — add/modify/remove rule or clarify docs (ASSUMPTION_MODE: skip)
+2. **Find citings:** `c3x list` → rule entity → `relationships`. Depth: `c3x query rule-{slug}`.
+3. **Check compliance:** `c3x lookup <file>` per code-map entry. Compare against `## Golden Example` + `## Not This`. Categorize: compliant / needs-update / breaking.
+4. **Surface impact:** `AskUserQuestion` — proceed/narrow/cancel (ASSUMPTION_MODE: skip)
+5. **Execute:** Update rule doc + create ADR. Non-compliant → TODO in ADR (no code changes).
 6. Code changes → route to change.
 
 ---
@@ -130,7 +129,7 @@ bash <skill-dir>/bin/c3x.sh list
 
 Find `id: "rule-{slug}"`, read `relationships`. `c3x read <id>` each citing doc.
 
-**Citation Graph:** Run `c3x graph rule-<slug> --format mermaid` and include as a mermaid code block showing which components cite this rule.
+**Citation Graph:** `c3x graph rule-<slug> --format mermaid` → include as mermaid block.
 
 ---
 
@@ -138,7 +137,7 @@ Find `id: "rule-{slug}"`, read `relationships`. `c3x read <id>` each citing doc.
 
 Flow: `Scan → Classify → Split/Convert → Rewire → ADR`
 
-Use when adopting rules in a project that already has refs, or when auditing existing refs for rule candidates.
+Use when adopting rules in project with existing refs, or auditing refs for rule candidates.
 
 ### Step 1: Scan existing refs
 
@@ -146,61 +145,61 @@ Use when adopting rules in a project that already has refs, or when auditing exi
 bash <skill-dir>/bin/c3x.sh list
 ```
 
-Filter `type: "ref"`. For each ref, `c3x read <ref-id>`.
+Filter `type: "ref"`. `c3x read <ref-id>` each.
 
 ### Step 2: Apply Separation Test
 
-For each ref, ask: **"Remove the Why section. Does the doc become useless?"**
+Per ref: **"Remove Why section. Doc becomes useless?"**
 
 | Answer | Classification | Action |
 |--------|---------------|--------|
-| Yes — doc is useless without Why | **Pure ref** | Keep as-is |
-| No — doc still tells you what to do | **Pure rule** | Convert |
-| Partially — has both rationale AND enforceable standard | **Dual-nature** | Split |
+| Yes — useless without Why | **Pure ref** | Keep as-is |
+| No — still tells what to do | **Pure rule** | Convert |
+| Partially — rationale AND enforceable | **Dual-nature** | Split |
 
-Present classification table to user for approval (ASSUMPTION_MODE: mark `[ASSUMED]`).
+Present classification to user (ASSUMPTION_MODE: mark `[ASSUMED]`).
 
 ### Step 3a: Convert (pure rule)
 
-The ref is entirely about enforcement, not rationale.
+Ref entirely about enforcement, not rationale.
 
-1. `c3x add rule <slug>` — scaffold the rule doc
-2. Copy content from ref, adapting sections:
+1. `c3x add rule <slug>` — scaffold
+2. Copy content, adapting sections:
    - `## Goal` → keep
-   - `## How` → becomes `## Golden Example`
-   - `## Choice` → becomes `## Rule` (one-line statement)
+   - `## How` → `## Golden Example`
+   - `## Choice` → `## Rule` (one-line)
    - `## Not This` → keep
-   - `## Why` → move to `origin:` if there's a parent ref, otherwise drop
-3. Set `origin: [ref-{old-slug}]` if the old ref is being kept for rationale
-4. Update all citing components: `c3x wire <component> rule-{slug}` for each
-5. If ref is being deleted: `c3x wire --remove <component> ref-{slug}` for each citer, then delete ref
-6. Update code-map: move ref's file patterns to rule
+   - `## Why` → `origin:` if parent ref exists, else drop
+3. Set `origin: [ref-{old-slug}]` if old ref kept for rationale
+4. `c3x wire <component> rule-{slug}` per citer
+5. If deleting ref: `c3x wire --remove <component> ref-{slug}` per citer, then delete
+6. Move ref's file patterns to rule in code-map
 
 ### Step 3b: Split (dual-nature)
 
-The ref has both rationale (why we chose this) AND enforcement (what code must look like).
+Ref has both rationale AND enforcement.
 
-1. **Narrow the ref** — keep only rationale sections:
-   - `## Choice` — the decision
-   - `## Why` — the reasoning
-   - Remove or thin `## How` to high-level guidance only
-   - Keep `## Not This` if it's about rejected alternatives (not code anti-patterns)
+1. **Narrow ref** — keep only rationale:
+   - `## Choice` — decision
+   - `## Why` — reasoning
+   - Remove/thin `## How` to high-level only
+   - Keep `## Not This` if about rejected alternatives (not code anti-patterns)
 
-2. **Create the rule** — extract enforcement content:
+2. **Create rule** — extract enforcement:
    - `c3x add rule <slug>`
-   - `## Rule` — one-line standard extracted from `## How`
-   - `## Golden Example` — code patterns from ref's `## How`
+   - `## Rule` — one-line from `## How`
+   - `## Golden Example` — code patterns from `## How`
    - `## Not This` — code anti-patterns (not rejected alternatives)
    - Set `origin: [ref-{original-slug}]`
 
 3. **Rewire citations:**
-   - Components that need the rationale → keep `ref-{slug}` in `uses:`
-   - Components that need enforcement → add `rule-{slug}` via `c3x wire`
-   - Most components need both → keep ref, add rule
+   - Need rationale → keep `ref-{slug}` in `uses:`
+   - Need enforcement → add `rule-{slug}` via `c3x wire`
+   - Most need both → keep ref, add rule
 
 4. **Update code-map:**
-   - Ref keeps its patterns (or narrows them)
-   - Rule gets the file patterns where enforcement applies
+   - Ref keeps/narrows patterns
+   - Rule gets enforcement file patterns
 
 ### Step 4: Adoption ADR
 
@@ -215,7 +214,7 @@ affects: [ref-X, ref-Y, rule-A, rule-B]
 ---
 ```
 
-Body should list what was converted, split, or kept.
+Body: list what was converted, split, or kept.
 
 ### Step 5: Verify
 
@@ -228,13 +227,11 @@ Confirm: no orphan refs, all rules have golden examples, all citations intact.
 
 ---
 
----
-
 ## Adopt
 
 Flow: `Preview → Discover Overlap → Guided Merge → Write → Wire → ADR`
 
-Adopt a rule from a registered marketplace source into the project's `.c3/rules/`.
+Adopt marketplace rule into project `.c3/rules/`.
 
 ### Step 1: Preview
 
@@ -242,25 +239,25 @@ Adopt a rule from a registered marketplace source into the project's `.c3/rules/
 bash <skill-dir>/bin/c3x.sh marketplace show <rule-id>
 ```
 
-Display full rule content. If `--source` needed to disambiguate, prompt with `AskUserQuestion` (ASSUMPTION_MODE: pick first match).
+Display full rule content. If `--source` needed, `AskUserQuestion` (ASSUMPTION_MODE: pick first match).
 
 ### Step 2: Discover Overlap (2-5 Grep calls)
 
-Search the project codebase for existing patterns that overlap with the marketplace rule:
-- Existing rules/refs covering similar ground (check via `c3x query`)
-- Code matching the rule's `## Golden Example`
+Search project for patterns overlapping marketplace rule:
+- Existing rules/refs covering similar ground (`c3x query`)
+- Code matching `## Golden Example`
 - Anti-patterns matching `## Not This`
 
-If significant overlap found, present to user before merge.
+Significant overlap found → present to user before merge.
 
 ### Step 3: Section-by-Section Guided Merge
 
-For each rule section (Goal, Rule, Golden Example, Not This, Scope):
+Per section (Goal, Rule, Golden Example, Not This, Scope):
 
 `AskUserQuestion` with options (ASSUMPTION_MODE: adopt as-is):
-- **Adopt as-is** — take marketplace version verbatim
-- **Adapt** — LLM rewrites section for project conventions, tech stack, naming
-- **Skip** — omit section (only optional sections: Scope, Override)
+- **Adopt as-is** — marketplace version verbatim
+- **Adapt** — rewrite for project conventions, tech stack, naming
+- **Skip** — omit (only optional sections: Scope, Override)
 
 Required sections (Rule, Golden Example) cannot be skipped.
 
@@ -268,10 +265,6 @@ Required sections (Rule, Golden Example) cannot be skipped.
 
 ```bash
 bash <skill-dir>/bin/c3x.sh add rule <slug>
-```
-
-Then fill content:
-```bash
 bash <skill-dir>/bin/c3x.sh set rule-<slug> goal "<adapted goal>"
 bash <skill-dir>/bin/c3x.sh set rule-<slug> --section "Rule" "<adapted rule statement>"
 bash <skill-dir>/bin/c3x.sh set rule-<slug> --section "Golden Example" "<adapted example>"
@@ -280,7 +273,7 @@ bash <skill-dir>/bin/c3x.sh set rule-<slug> --section "Not This" "<adapted anti-
 
 ### Step 5: Wire
 
-For each component the overlap search identified:
+Per component from overlap search:
 ```bash
 bash <skill-dir>/bin/c3x.sh wire <component-id> rule-<slug>
 ```
@@ -292,7 +285,7 @@ bash <skill-dir>/bin/c3x.sh add adr adopt-rule-<slug>
 bash <skill-dir>/bin/c3x.sh set adr-YYYYMMDD-adopt-rule-<slug> status implemented
 ```
 
-Body: note the source marketplace and any adaptations made.
+Body: note source marketplace and adaptations.
 
 ---
 
@@ -300,10 +293,10 @@ Body: note the source marketplace and any adaptations made.
 
 | Anti-Pattern | Correct |
 |--------------|---------|
-| Create rule without golden example | Extract or describe concrete pattern |
+| Rule without golden example | Extract or describe concrete pattern |
 | Update rule without compliance check | Always check citings against golden example |
 | Duplicate rule content in components | Cite, don't duplicate |
-| Create rule for one-off pattern | Rules for repeated standards only |
-| Confuse rule with ref | Rule = enforcement, Ref = rationale (use Separation Test) |
-| Adopt rule without checking overlap | Always discover existing patterns first |
-| Adopt rule and keep marketplace default verbatim | Adapt to project conventions |
+| Rule for one-off pattern | Rules for repeated standards only |
+| Confuse rule with ref | Rule = enforcement, Ref = rationale (Separation Test) |
+| Adopt without checking overlap | Always discover existing patterns first |
+| Adopt and keep marketplace default verbatim | Adapt to project conventions |

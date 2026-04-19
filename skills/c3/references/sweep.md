@@ -26,35 +26,35 @@ bash <skill-dir>/bin/c3x.sh list
 
 From proposed change, identify:
 - Containers, components, refs, ADRs
-- Match by: entity title, relationships, code-map entries, ref scopes
+- Match by: title, relationships, code-map entries, ref scopes
 
 ## Step 3: Per-Entity Assessment
 
-Use subagents for parallelism when multiple containers affected.
+Subagents for parallelism when multiple containers affected.
 
-**Container:** `c3x read <container-id>` → does change affect responsibilities? → identify affected components.
+**Container:** `c3x read <container-id>` → change affect responsibilities? → identify affected components.
 
 **Component:**
 1. `c3x read <component-id>`
-2. For each file in code-map: `c3x lookup <file>` — loads constraint chain before inspecting code
+2. Per code-map file: `c3x lookup <file>` — loads constraint chain before inspecting code
 3. Check code against constraints
-4. Does change modify behavior, API, dependencies?
+4. Change modify behavior, API, dependencies?
 5. Check applicable refs. Identify downstream dependents.
 
-**Ref:** `c3x read <ref-id>` → does proposed change comply or violate? → note severity + override requirements.
+**Ref:** `c3x read <ref-id>` → proposed change comply or violate? → note severity + override requirements.
 
-**Rule:** `c3x read <rule-id>` → does proposed change violate the golden pattern? Note severity + remediation.
+**Rule:** `c3x read <rule-id>` → proposed change violate golden pattern? Note severity + remediation.
 
 ## Step 4: Constraint Chain
 
-For each affected component, trace upward:
+Per affected component, trace upward:
 - Component constraints → container → context → cited refs + rules
 
 Flag any proposed violation.
 
 ## Step 5: Synthesize
 
-**Impact Graph:** Include `c3x graph <target-entity> --direction forward --format mermaid` output as a mermaid code block at the top of the report. Graph from the most specific affected entity (component > container). For ref/rule impact, graph the ref/rule itself to show all citers.
+**Impact Graph:** Include `c3x graph <target-entity> --direction forward --format mermaid` as mermaid code block atop report. Graph from most specific affected entity (component > container). For ref/rule impact, graph ref/rule itself to show all citers.
 
 ```
 **C3 Impact Assessment**
@@ -83,11 +83,3 @@ Flag any proposed violation.
 1. [Step respecting constraints]
 ```
 
----
-
-## Routing
-
-- Implement after assessment → change
-- Architecture questions → query
-- Pattern management → ref
-- Standalone audit → audit

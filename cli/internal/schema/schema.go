@@ -7,6 +7,8 @@ type SectionDef struct {
 	Required    bool        `json:"required"`
 	Purpose     string      `json:"purpose,omitempty"`
 	Columns     []ColumnDef `json:"columns,omitempty"`
+	MinWords    int         `json:"min_words,omitempty"`
+	MinRows     int         `json:"min_rows,omitempty"`
 }
 
 // ColumnDef defines a typed column within a table section.
@@ -19,43 +21,43 @@ type ColumnDef struct {
 // Registry maps entity types to their ordered section definitions.
 var Registry = map[string][]SectionDef{
 	"component": {
-		{Name: "Goal", ContentType: "text", Required: true, Purpose: "What this component exists to do"},
-		{Name: "Parent Fit", ContentType: "table", Required: true, Purpose: "How this component fits top-down into the parent container", Columns: []ColumnDef{
+		{Name: "Goal", ContentType: "text", Required: true, Purpose: "What this component exists to do", MinWords: 4},
+		{Name: "Parent Fit", ContentType: "table", Required: true, Purpose: "How this component fits top-down into the parent container", MinRows: 4, Columns: []ColumnDef{
 			{Name: "Field", Type: "text"},
 			{Name: "Value", Type: "text"},
 		}},
-		{Name: "Purpose", ContentType: "text", Required: true, Purpose: "Concrete ownership and non-goals"},
-		{Name: "Foundational Flow", ContentType: "table", Required: true, Purpose: "Preconditions, inputs, state, and shared dependencies", Columns: []ColumnDef{
+		{Name: "Purpose", ContentType: "text", Required: true, Purpose: "Concrete ownership and non-goals", MinWords: 12},
+		{Name: "Foundational Flow", ContentType: "table", Required: true, Purpose: "Preconditions, inputs, state, and shared dependencies", MinRows: 4, Columns: []ColumnDef{
 			{Name: "Aspect", Type: "text"},
 			{Name: "Detail", Type: "text"},
 			{Name: "Reference", Type: "text"},
 		}},
-		{Name: "Business Flow", ContentType: "table", Required: true, Purpose: "Business outcome, primary path, alternates, and failure behavior", Columns: []ColumnDef{
+		{Name: "Business Flow", ContentType: "table", Required: true, Purpose: "Business outcome, primary path, alternates, and failure behavior", MinRows: 4, Columns: []ColumnDef{
 			{Name: "Aspect", Type: "text"},
 			{Name: "Detail", Type: "text"},
 			{Name: "Reference", Type: "text"},
 		}},
-		{Name: "Governance", ContentType: "table", Required: true, Purpose: "Refs, rules, ADRs, specs, and precedence governing this component", Columns: []ColumnDef{
+		{Name: "Governance", ContentType: "table", Required: true, Purpose: "Refs, rules, ADRs, specs, and precedence governing this component", MinRows: 1, Columns: []ColumnDef{
 			{Name: "Reference", Type: "text"},
 			{Name: "Type", Type: "enum", Values: []string{"ref", "rule", "adr", "spec", "policy", "example", "N.A - <reason>"}},
 			{Name: "Governs", Type: "text"},
 			{Name: "Precedence", Type: "text"},
 			{Name: "Notes", Type: "text"},
 		}},
-		{Name: "Contract", ContentType: "table", Required: true, Purpose: "Behavior surfaces that downstream code/material must honor", Columns: []ColumnDef{
+		{Name: "Contract", ContentType: "table", Required: true, Purpose: "Behavior surfaces that downstream code/material must honor", MinRows: 2, Columns: []ColumnDef{
 			{Name: "Surface", Type: "text"},
 			{Name: "Direction", Type: "enum", Values: []string{"IN", "OUT", "IN/OUT", "N.A - <reason>"}},
 			{Name: "Contract", Type: "text"},
 			{Name: "Boundary", Type: "text"},
 			{Name: "Evidence", Type: "text"},
 		}},
-		{Name: "Change Safety", ContentType: "table", Required: true, Purpose: "Risks, triggers, detection, and verification required before done", Columns: []ColumnDef{
+		{Name: "Change Safety", ContentType: "table", Required: true, Purpose: "Risks, triggers, detection, and verification required before done", MinRows: 2, Columns: []ColumnDef{
 			{Name: "Risk", Type: "text"},
 			{Name: "Trigger", Type: "text"},
 			{Name: "Detection", Type: "text"},
 			{Name: "Required Verification", Type: "text"},
 		}},
-		{Name: "Derived Materials", ContentType: "table", Required: true, Purpose: "Code, config, tests, docs, prompts, or assets that must derive from this component", Columns: []ColumnDef{
+		{Name: "Derived Materials", ContentType: "table", Required: true, Purpose: "Code, config, tests, docs, prompts, or assets that must derive from this component", MinRows: 1, Columns: []ColumnDef{
 			{Name: "Material", Type: "text"},
 			{Name: "Must derive from", Type: "text"},
 			{Name: "Allowed variance", Type: "text"},
@@ -110,33 +112,33 @@ var Registry = map[string][]SectionDef{
 	},
 	"adr": {
 		{Name: "Goal", ContentType: "text", Required: true, Purpose: "Decision context and objective"},
-		{Name: "Context", ContentType: "text", Required: false, Purpose: "Current behavior, user pain, constraints, and affected topology"},
-		{Name: "Decision", ContentType: "text", Required: false, Purpose: "Concrete selected approach and why it is the right fit"},
-		{Name: "Work Breakdown", ContentType: "table", Required: false, Purpose: "Files, docs, commands, or entities to change and how each maps to the decision", Columns: []ColumnDef{
+		{Name: "Context", ContentType: "text", Required: true, Purpose: "Current behavior, user pain, constraints, and affected topology"},
+		{Name: "Decision", ContentType: "text", Required: true, Purpose: "Concrete selected approach and why it is the right fit"},
+		{Name: "Work Breakdown", ContentType: "table", Required: true, Purpose: "Files, docs, commands, or entities to change and how each maps to the decision", Columns: []ColumnDef{
 			{Name: "Area", Type: "text"},
 			{Name: "Detail", Type: "text"},
 			{Name: "Evidence", Type: "text"},
 		}},
-		{Name: "Underlay C3 Changes", ContentType: "table", Required: false, Purpose: "C3 CLI files, validators, commands, hints, help, schemas, templates, or tests changed by this decision", Columns: []ColumnDef{
+		{Name: "Underlay C3 Changes", ContentType: "table", Required: true, Purpose: "C3 CLI files, validators, commands, hints, help, schemas, templates, or tests changed by this decision", Columns: []ColumnDef{
 			{Name: "Underlay area", Type: "text"},
 			{Name: "Exact C3 change", Type: "text"},
 			{Name: "Verification evidence", Type: "text"},
 		}},
-		{Name: "Enforcement Surfaces", ContentType: "table", Required: false, Purpose: "Commands, validators, tests, docs, or runtime paths that enforce the decision", Columns: []ColumnDef{
+		{Name: "Enforcement Surfaces", ContentType: "table", Required: true, Purpose: "Commands, validators, tests, docs, or runtime paths that enforce the decision", Columns: []ColumnDef{
 			{Name: "Surface", Type: "text"},
 			{Name: "Behavior", Type: "text"},
 			{Name: "Evidence", Type: "text"},
 		}},
-		{Name: "Alternatives Considered", ContentType: "table", Required: false, Purpose: "Real options rejected and why", Columns: []ColumnDef{
+		{Name: "Alternatives Considered", ContentType: "table", Required: true, Purpose: "Real options rejected and why", Columns: []ColumnDef{
 			{Name: "Alternative", Type: "text"},
 			{Name: "Rejected because", Type: "text"},
 		}},
-		{Name: "Risks", ContentType: "table", Required: false, Purpose: "Failure modes, mitigations, and verification", Columns: []ColumnDef{
+		{Name: "Risks", ContentType: "table", Required: true, Purpose: "Failure modes, mitigations, and verification", Columns: []ColumnDef{
 			{Name: "Risk", Type: "text"},
 			{Name: "Mitigation", Type: "text"},
 			{Name: "Verification", Type: "text"},
 		}},
-		{Name: "Verification", ContentType: "table", Required: false, Purpose: "Exact commands or evidence required before marking the ADR implemented", Columns: []ColumnDef{
+		{Name: "Verification", ContentType: "table", Required: true, Purpose: "Exact commands or evidence required before marking the ADR implemented", Columns: []ColumnDef{
 			{Name: "Check", Type: "text"},
 			{Name: "Result", Type: "text"},
 		}},

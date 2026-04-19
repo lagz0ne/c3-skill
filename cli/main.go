@@ -64,6 +64,15 @@ func run(argv []string, w io.Writer) error {
 		return nil
 	}
 
+	// template is special — outputs fillable scaffolds, no .c3/ needed
+	if opts.Command == "template" {
+		entityType := ""
+		if len(opts.Args) >= 1 {
+			entityType = opts.Args[0]
+		}
+		return cmd.RunTemplate(entityType, w)
+	}
+
 	// marketplace is special — uses ~/.c3/marketplace/, no .c3/ needed
 	if opts.Command == "marketplace" {
 		return runMarketplace(opts, w)
@@ -363,7 +372,8 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) err
 		if (stat.Mode() & os.ModeCharDevice) != 0 {
 			return fmt.Errorf("error: no input on stdin\nhint: pipe content: echo '...' | c3x write <id>, or: c3x read <id> | c3x write <id>")
 		}
-		content, err := io.ReadAll(os.Stdin)
+		var content []byte
+		content, err = io.ReadAll(os.Stdin)
 		if err != nil {
 			return fmt.Errorf("error: reading stdin: %w", err)
 		}
@@ -576,6 +586,10 @@ func runAdd(opts cmd.Options, s *store.Store, w io.Writer) error {
 	stat, _ := os.Stdin.Stat()
 	if (stat.Mode() & os.ModeCharDevice) != 0 {
 		return fmt.Errorf("error: c3x add requires body content via stdin\nhint: cat body.md | c3x add <type> <slug>\nhint: run 'c3x schema <type>' to see required sections")
+	}
+
+	if opts.DryRun {
+		return cmd.RunAddDryRun(entityType, slug, s, opts.Container, opts.Feature, os.Stdin, w)
 	}
 
 	format := cmd.FormatHuman

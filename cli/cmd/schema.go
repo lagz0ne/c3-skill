@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/lagz0ne/c3-design/cli/internal/schema"
 )
@@ -35,13 +36,41 @@ func RunSchema(entityType string, jsonOutput bool, w io.Writer) error {
 		if s.Required {
 			req = " (required)"
 		}
-		fmt.Fprintf(w, "  %s [%s]%s\n", s.Name, s.ContentType, req)
+		constraints := ""
+		if s.MinWords > 0 {
+			constraints += fmt.Sprintf(" (min %d words)", s.MinWords)
+		}
+		if s.MinRows > 0 {
+			constraints += fmt.Sprintf(" (min %d rows)", s.MinRows)
+		}
+		fmt.Fprintf(w, "  %s [%s]%s%s\n", s.Name, s.ContentType, req, constraints)
 		if s.Purpose != "" {
 			fmt.Fprintf(w, "    purpose: %s\n", s.Purpose)
 		}
 		for _, col := range s.Columns {
-			fmt.Fprintf(w, "    - %s (%s)\n", col.Name, col.Type)
+			if len(col.Values) > 0 {
+				fmt.Fprintf(w, "    - %s (%s) values: %s\n", col.Name, col.Type, strings.Join(col.Values, ", "))
+			} else {
+				fmt.Fprintf(w, "    - %s (%s)\n", col.Name, col.Type)
+			}
 		}
 	}
+
+	// Type-specific rules
+	switch entityType {
+	case "component":
+		fmt.Fprintln(w)
+		fmt.Fprintln(w, "Component rules:")
+		fmt.Fprintln(w, "  - Sections must appear in the order shown above")
+		fmt.Fprintln(w, "  - No placeholder words: TBD, TODO, maybe, optional, later, \"if applicable\"")
+		fmt.Fprintln(w, "  - Empty cells: use N.A - <reason> (not N/A, n/a, or bare N.A)")
+		fmt.Fprintln(w, "  - Evidence columns: must be grounded — name a command, file path, or entity id")
+		fmt.Fprintln(w, "  - Reference columns: must cite an entity id (c3-*, ref-*, rule-*) or N.A - <reason>")
+	case "adr":
+		fmt.Fprintln(w)
+		fmt.Fprintln(w, "ADR rules:")
+		fmt.Fprintln(w, "  - All sections required at creation (all-or-nothing)")
+	}
+
 	return nil
 }

@@ -1,8 +1,8 @@
 # Ref Reference
 
-Manage patterns as first-class architecture artifacts.
+Manage patterns as arch artifacts.
 
-Hard rule: can't name a concrete file → create ref, not component.
+Hard rule: can't name concrete file → create ref, not component.
 
 ## Mode Selection
 
@@ -30,14 +30,14 @@ bash <skill-dir>/bin/c3x.sh add ref <slug>
 
 ### Step 2: Discover (2-5 Grep calls)
 
-Search for existing implementations of the pattern in the codebase.
+Search codebase for existing implementations.
 
 | Findings | Mode | Action |
 |----------|------|--------|
-| 0 files | **Describe** | User describes pattern (original behavior) |
-| 1 file | **Extract** (low confidence) | Extract, flag to user for confirmation |
+| 0 files | **Describe** | User describes pattern |
+| 1 file | **Extract** (low confidence) | Extract, flag for confirmation |
 | 2+ files | **Extract** (compare top 3) | Structural intersection = pattern |
-| User provides | **Accept** | Use user's description directly |
+| User provides | **Accept** | Use directly |
 
 ### Step 2c: Extract Pattern
 
@@ -46,34 +46,33 @@ From discovered code:
 - **Varies by context** → `## Choice` (decision point)
 - **Clearly wrong** → `## Not This` (anti-pattern)
 
-Annotate examples: `// REQUIRED` vs `// OPTIONAL` for structural elements.
+Annotate: `// REQUIRED` vs `// OPTIONAL` for structural elements.
 
 ### Step 2d: Confirm
 
-`AskUserQuestion` — present extracted pattern for approval (ASSUMPTION_MODE: skip).
+`AskUserQuestion` — approve pattern (ASSUMPTION_MODE: skip).
 
 ### Step 2e: Quality Gate
 
-Write 1-3 YES/NO compliance questions derivable from `## How`. If you can't write them, the pattern is too vague — rework before proceeding.
+Write 1-3 YES/NO compliance questions from `## How`. Can't write them → pattern too vague, rework.
 
 ### Step 3: Fill Content
 
-From discovery + user input:
 - `## Goal` — what it standardizes
 - `## Choice` — option chosen (REQUIRED)
 - `## Why` — rationale (REQUIRED)
-- `## How` — golden pattern (format-flexible: code blocks, do/don't pairs, checklists)
+- `## How` — golden pattern (code blocks, do/don't pairs, checklists)
 - `## Not This` — rejected alternatives + anti-examples
 - `## Scope`, `## Override` — as needed
 
 ### Step 4: Discover Usage (2-3 Grep calls)
 
-Find components using this pattern.
+Find components using pattern.
 
 ### Step 5: Update Citing Components
 
-For each component using pattern:
-1. Run `c3x lookup <file>` per code-map entry — loads constraint chain
+Per component using pattern:
+1. `c3x lookup <file>` per code-map entry — loads constraint chain
 2. `c3x read <component-id>`
 3. Add to `## Related Refs`:
 
@@ -97,7 +96,7 @@ status: implemented
 ---
 ```
 
-Ref adoption ADRs use `status: implemented` directly — ref doc IS the deliverable.
+Ref adoption ADRs use `status: implemented` — ref doc IS deliverable.
 
 ---
 
@@ -105,11 +104,11 @@ Ref adoption ADRs use `status: implemented` directly — ref doc IS the delivera
 
 Flow: `Clarify → Find Citings → Check Compliance → Surface Impact → Execute`
 
-1. **Clarify:** `AskUserQuestion` — add rule / modify rule / remove rule / clarify docs (ASSUMPTION_MODE: skip)
-2. **Find citings:** `c3x list` → ref entity → `relationships`. Search via `c3x query ref-{slug}` for depth.
+1. **Clarify:** `AskUserQuestion` — add/modify/remove rule or clarify docs (ASSUMPTION_MODE: skip)
+2. **Find citings:** `c3x list` → ref entity → `relationships`. Depth: `c3x query ref-{slug}`.
 3. **Check compliance:** `c3x lookup <file>` per code-map entry. Categorize: compliant / needs-update / breaking.
-4. **Surface impact:** `AskUserQuestion` — proceed / narrow / cancel (ASSUMPTION_MODE: skip)
-5. **Execute:** Update ref doc + create ADR. Non-compliant → note as TODO in ADR (don't touch code).
+4. **Surface impact:** `AskUserQuestion` — proceed/narrow/cancel (ASSUMPTION_MODE: skip)
+5. **Execute:** Update ref doc + create ADR. Non-compliant → TODO in ADR (no code changes).
 6. Code changes → route to change.
 
 ---
@@ -140,7 +139,7 @@ bash <skill-dir>/bin/c3x.sh list
 
 Find `id: "ref-{slug}"`, read `relationships`. `c3x read <id>` each citing doc.
 
-**Citation Graph:** Run `c3x graph ref-<slug> --format mermaid` and include as a mermaid code block showing which components cite this ref.
+**Citation Graph:** `c3x graph ref-<slug> --format mermaid` → include as mermaid block.
 
 ```
 **ref-{slug} Usage**
@@ -149,7 +148,7 @@ Find `id: "ref-{slug}"`, read `relationships`. `c3x read <id>` each citing doc.
 - c3-101 (Auth Middleware) - JWT validation
 
 **Citation Graph:**
-(mermaid code block from c3x graph ref-{slug} --format mermaid)
+(mermaid block from c3x graph)
 
 **Pattern Summary:** {Key rules}
 ```
@@ -158,15 +157,15 @@ Find `id: "ref-{slug}"`, read `relationships`. `c3x read <id>` each citing doc.
 
 ## Separation Test: Ref vs Rule
 
-Before creating a ref, ask: **"Remove the Why section. Does the doc become useless?"**
+Ask: **"Remove Why section. Doc becomes useless?"**
 
 | Answer | Type | Action |
 |--------|------|--------|
 | Yes — useless without Why | **Ref** | Create ref (this flow) |
-| No — still tells you what to do | **Rule** | Route to `references/rule.md` Add flow |
-| Both — has rationale AND enforcement | **Dual** | Create ref for rationale + rule for enforcement (see `references/rule.md` Migrate flow) |
+| No — still tells what to do | **Rule** | Route to `references/rule.md` Add |
+| Both — rationale AND enforcement | **Dual** | Ref for rationale + rule for enforcement (see `references/rule.md` Migrate) |
 
-If the pattern is primarily about enforcement (golden examples, coding standards), it belongs as a rule, not a ref.
+Primarily about enforcement (golden examples, coding standards) → rule, not ref.
 
 ---
 
@@ -177,5 +176,5 @@ If the pattern is primarily about enforcement (golden examples, coding standards
 | Create ref without user input | Extract specifics from prompt |
 | Update ref without impact check | Always check citings |
 | Duplicate ref content in components | Cite, don't duplicate |
-| Create ref for one-off pattern | Refs for repeated patterns only |
-| Create ref for enforceable coding standard | Use rule instead (Separation Test) |
+| Ref for one-off pattern | Refs for repeated patterns only |
+| Ref for enforceable coding standard | Use rule (Separation Test) |

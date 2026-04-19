@@ -4,21 +4,6 @@
 
 `c3x list` returns entities → already onboarded. `AskUserQuestion`: re-onboard or cancel (skip if ASSUMPTION_MODE). Cancel → suggest audit/query.
 
-## File Structure
-
-```
-.c3/
-├── README.md                    # Context (c3-0)
-├── adr/adr-00000000-c3-adoption.md
-├── refs/ref-<pattern>.md
-├── rules/rule-<pattern>.md
-└── c3-N-<container>/
-    ├── README.md
-    └── c3-NNN-<component>.md
-```
-
-Each component = separate file. Each container = separate directory.
-
 ## Component Categories
 
 | Can name concrete file? | Category |
@@ -26,7 +11,7 @@ Each component = separate file. Each container = separate directory.
 | Yes | Foundation (01-09) or Feature (10+) |
 | No (rules only) | **Ref** — code-map entry optional |
 
-Foundation: infrastructure others depend on. Feature: business logic. Ref: conventions or shared utilities. Rule: coding standards and constraints that must be followed. Refs with concrete implementation files (shared middleware, utility libraries) should have code-map entries; pure-convention refs and rules may leave them empty.
+Foundation: infra others depend on. Feature: biz logic. Ref: conventions/shared utils. Rule: coding standards/constraints. Refs with concrete files (shared middleware, util libs) → code-map entries; pure-convention refs and rules → empty.
 
 ## Progress Checklist
 
@@ -48,7 +33,7 @@ Foundation: infrastructure others depend on. Feature: business logic. Ref: conve
 ```bash
 bash <skill-dir>/bin/c3x.sh init
 ```
-Creates `.c3/` with config, README, refs/, rules/, adr/. Update ADR-000 via `c3x write` to fill discovery tables.
+Creates `.c3/` with config, README, refs/, rules/, adr/. Update ADR-000 via `c3x write`.
 
 ### 0.2 Context Discovery
 
@@ -60,13 +45,13 @@ Capture in ADR-000:
 | GOAL | Why it exists |
 | SUMMARY | One sentence |
 
-Also find **Abstract Constraints** — system-level non-negotiables.
+Find **Abstract Constraints** — system-level non-negotiables.
 
-Use `AskUserQuestion` for gaps (ASSUMPTION_MODE: assume, mark `[ASSUMED]`).
+`AskUserQuestion` for gaps (ASSUMPTION_MODE: assume, mark `[ASSUMED]`).
 
 ### 0.3 Container Discovery
 
-Container = deployment/runtime boundary. Capture:
+Container = deployment/runtime boundary.
 
 | N | CONTAINER_NAME | BOUNDARY | GOAL | SUMMARY |
 |---|----------------|----------|------|---------|
@@ -76,7 +61,7 @@ Container = deployment/runtime boundary. Capture:
 | N | NN | COMPONENT_NAME | CATEGORY | GOAL | SUMMARY |
 |---|----|----|----------|------|---------|
 
-Foundation (01-09): others depend on it. Feature (10+): business logic.
+Foundation (01-09): others depend on. Feature (10+): biz logic.
 
 ### 0.5 Ref Discovery
 
@@ -89,20 +74,20 @@ Common: error handling, form patterns, data fetching, design system. Each ref re
 
 ### 0.6 Rule Discovery
 
-Coding standards and constraints that must be followed project-wide:
+Project-wide coding standards/constraints:
 
 | SLUG | TITLE | GOAL | Scope | Applies To |
 |------|-------|------|-------|------------|
 
-Common: naming conventions, forbidden patterns, required lint rules, security constraints. Look for repeated code-review feedback, linter configs, and "we always/never do X" statements.
+Common: naming conventions, forbidden patterns, lint rules, security constraints. Look for repeated review feedback, linter configs, "always/never" statements.
 
 ### 0.7 Overview Diagram
 
-After discovery, for each container, generate its graph:
+Per container:
 ```bash
 bash <skill-dir>/bin/c3x.sh graph <container-id> --format mermaid
 ```
-Include each as a mermaid code block to visualize what was discovered. This serves as the overview diagram.
+Include each as mermaid code block.
 
 ### Gate 0
 
@@ -120,11 +105,11 @@ Include each as a mermaid code block to visualize what was discovered. This serv
 
 ### 1.1 Context Doc
 
-Update c3-0 via `c3x set c3-0 --section "Goal" <text>` and `c3x write c3-0 < content.md` for full body.
+Update c3-0 via `c3x set c3-0 --section "Goal" <text>` and `c3x write c3-0 < content.md`.
 
 ### 1.2 Container Docs
 
-**Create container** (body via stdin — atomic, all-or-none):
+**Create container** (body via stdin — atomic):
 ```bash
 cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add container <slug>## Goal
 <goal description>
@@ -161,12 +146,11 @@ cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N 
 | <target> | <reason> |
 EOF
 ```
-Add code-map via `c3x codemap`.
-Bracket paths (`[id]`, `[...slug]`) for Next.js/SvelteKit routes work automatically in code-map patterns.
+Code-map via `c3x codemap`. Bracket paths (`[id]`, `[...slug]`) work automatically.
 
-**Extract Refs:** "Would this change if we swapped the underlying tech?" Yes → extract to ref.
+**Extract Refs:** "Would this change if we swapped underlying tech?" Yes → ref.
 
-**Extract Rules:** "Is this a coding standard or constraint rather than a pattern choice?" Yes → extract to rule.
+**Extract Rules:** "Coding standard or constraint, not pattern choice?" Yes → rule.
 
 | Signal | Action |
 |--------|--------|
@@ -174,7 +158,7 @@ Bracket paths (`[id]`, `[...slug]`) for Next.js/SvelteKit routes work automatica
 | "Our convention is..." | new/existing ref |
 | Same pattern in 2+ components | create ref, cite both |
 | "We always/never do X" | rule |
-| Lint rule, naming convention, security constraint | rule |
+| Lint rule, naming, security | rule |
 
 ### 1.3 Ref Docs
 
@@ -189,7 +173,7 @@ cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add ref <slug>## Goal
 <rationale>
 EOF
 ```
-Optional sections: How, Scope, Not This, Override — include as needed.
+Optional: How, Scope, Not This, Override.
 
 ### 1.4 Rule Docs
 
@@ -204,7 +188,7 @@ cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add rule <slug>## Goal
 <example code or pattern>
 EOF
 ```
-Optional sections: Not This, Scope, Override — include as needed.
+Optional: Not This, Scope, Override.
 
 ### Gate 1
 
@@ -212,7 +196,7 @@ Optional sections: Not This, Scope, Override — include as needed.
 - [ ] All component docs created
 - [ ] All refs documented
 - [ ] All rules documented
-- [ ] No new items (else update ADR-000, return to Stage 0)
+- [ ] No new items (else update ADR-000, return Stage 0)
 
 ---
 
@@ -224,13 +208,12 @@ Optional sections: Not This, Scope, Override — include as needed.
 bash <skill-dir>/bin/c3x.sh codemap
 ```
 
-Scaffolds code-map entries in the store for every component, ref, and rule.
-Idempotent — safe to re-run; existing patterns are preserved.
+Scaffolds code-map entries for every component, ref, rule. Idempotent — existing patterns preserved.
 
-After scaffolding, fill in glob patterns for each entry, then verify:
+Fill glob patterns, then verify:
 ```bash
-bash <skill-dir>/bin/c3x.sh coverage          # how many files are mapped
-bash <skill-dir>/bin/c3x.sh lookup 'src/**'   # spot-check the mapping
+bash <skill-dir>/bin/c3x.sh coverage          # file coverage
+bash <skill-dir>/bin/c3x.sh lookup 'src/**'   # spot-check mapping
 ```
 
 ### 2.2 Structural
@@ -249,11 +232,11 @@ bash <skill-dir>/bin/c3x.sh check
 
 ### 2.4 Audit
 
-Run audit operation. Pass → mark ADR-000 `implemented`.
+Run audit. Pass → mark ADR-000 `implemented`.
 
 ### Gate 2
 
-- [ ] Code-map scaffolded and patterns filled
+- [ ] Code-map scaffolded + patterns filled
 - [ ] Coverage % acceptable (or exclusions documented)
 - [ ] Integrity checks pass
 - [ ] Audit passes
@@ -265,12 +248,12 @@ Issues → Inventory (Gate 0) or Detail (Gate 1).
 ## Final Checks
 
 ```bash
-bash <skill-dir>/bin/c3x.sh codemap                    # scaffold/update code-map entries
+bash <skill-dir>/bin/c3x.sh codemap
 bash <skill-dir>/bin/c3x.sh list
 bash <skill-dir>/bin/c3x.sh check
-bash <skill-dir>/bin/c3x.sh lookup <any-mapped-file>   # spot-check single file
-bash <skill-dir>/bin/c3x.sh lookup 'src/**'            # check entire source tree
-bash <skill-dir>/bin/c3x.sh coverage                   # code-map coverage gaps
+bash <skill-dir>/bin/c3x.sh lookup <any-mapped-file>
+bash <skill-dir>/bin/c3x.sh lookup 'src/**'
+bash <skill-dir>/bin/c3x.sh coverage
 ```
 
 **Fix before completing:**
@@ -278,12 +261,12 @@ bash <skill-dir>/bin/c3x.sh coverage                   # code-map coverage gaps
 | Signal | Problem | Fix |
 |--------|---------|-----|
 | No system goal | Missing `goal:` in README.md | `c3x set <id> <field> <value>` |
-| No `files:` | Missing code-map stubs | Run `c3x codemap`, then fill in patterns |
+| No `files:` | Missing code-map stubs | `c3x codemap`, fill patterns |
 | No `uses:` | Ref not wired | `c3x wire <component> <ref>` |
 | Ref has no `via:` | Uncited ref | Wire or delete |
 | `[provisioning]` | Design-only | Expected or implement |
-| `lookup <file>` returns nothing | No codemap or bad glob | Run `c3x codemap`; fix patterns; try `lookup 'src/**'` to see what IS mapped |
-| Low coverage % | Many unmapped files | Add `_exclude` for tests/configs, map remaining to components |
+| `lookup` returns nothing | Bad/missing codemap | `c3x codemap`; fix patterns; `lookup 'src/**'` |
+| Low coverage % | Many unmapped files | `_exclude` for tests/configs, map rest |
 
 ---
 
@@ -300,8 +283,6 @@ File lookup: `c3x lookup <file-or-glob>` maps files/directories to components + 
 ```
 
 ### Capabilities Reveal
-
-Show the user the typical workflow, then point to self-discovery:
 
 ```
 ## Your C3 toolkit is ready
@@ -328,4 +309,4 @@ Run `c3x <command> --help` for detailed usage.
 | complex | Orchestration | Full discovery + code-map |
 | critical | Distributed/compliance | + rationale each |
 
-Discover aspects from code, don't assume from templates.
+Discover aspects from code, never assume from templates.

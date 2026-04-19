@@ -1,14 +1,14 @@
 # migrate — Cache Rebuild and Legacy Upgrade
 
-In v9, sealed `.c3/` markdown is source of truth. `c3.db` is disposable local cache. Git review and submission should ignore cache artifacts and submit canonical files only.
+v9: sealed `.c3/` markdown = source of truth. `c3.db` = disposable cache. Git should ignore cache artifacts, submit canonical files only.
 
-Use this reference for two cases:
-1. **Legacy adoption**: old unsealed markdown needs import via `c3x migrate-legacy`
-2. **Version upgrade**: existing cache needs content-node migration via `c3x migrate`
+Two cases:
+1. **Legacy adoption**: unsealed markdown needs import via `c3x migrate-legacy`
+2. **Version upgrade**: cache needs content-node migration via `c3x migrate`
 
-Normal drift or missing-cache cases are not migration work:
-- Missing/stale `c3.db` -> `c3x verify`
-- Broken seals or merge-conflict cleanup -> `c3x repair`
+Not migration work:
+- Missing/stale `c3.db` → `c3x verify`
+- Broken seals / merge-conflict cleanup → `c3x repair`
 
 ## Detect Migration Type
 
@@ -19,14 +19,14 @@ find .c3 -name '*.md' -not -path '*/_index/*' 2>/dev/null | head -1 | grep -q . 
 
 | c3.db | .md files | Path |
 |-------|-----------|------|
-| NO | YES | If files are sealed/canonical: run `c3x verify`. If files are legacy/unsealed: **Phase A** — `c3x migrate-legacy` |
-| YES | NO | **Phase B** — `c3x migrate` (body → node tree) only for explicit upgrade work |
-| YES | YES | Usually v9 steady state. Ignore cache in Git. Run `c3x verify` unless doing explicit migration |
+| NO | YES | Sealed/canonical: `c3x verify`. Legacy/unsealed: **Phase A** — `c3x migrate-legacy` |
+| YES | NO | **Phase B** — `c3x migrate` (body → node tree), explicit upgrade only |
+| YES | YES | v9 steady state. Ignore cache in Git. `c3x verify` unless explicit migration |
 | NO | NO | Route to **onboard** |
 
-Zero-byte `c3.db` = corrupted, delete it, then run `c3x verify`. `.md` only in `_index/` = no content, treat as NO_MD.
+Zero-byte `c3.db` = corrupted → delete, run `c3x verify`. `.md` only in `_index/` = no content, treat as NO_MD.
 
-In v9, normal commands can rebuild cache from canonical files. Only legacy/unsealed inputs require explicit migration work before standard commands will succeed.
+Normal commands rebuild cache from canonical files. Only legacy/unsealed inputs need explicit migration.
 
 ## Warnings Are Errors
 
@@ -46,13 +46,13 @@ Any `warning:` line in any c3x output = data loss. Stop, fix, re-run. No excepti
 | Failure | Recovery |
 |---------|----------|
 | `migrate-legacy --dry-run` crashes | Fix cause, re-run |
-| `migrate-legacy` errors or warns | Delete `c3.db`, fix, restart Phase A |
-| `migrate` reports `BLOCKED: N component(s)` | Follow the printed repair plan exactly: inspect listed IDs, repair canonical content, remove cache files, `c3x import --force`, then rerun `c3x migrate` |
-| `migrate` write failure | Fix the database/write error, remove cache files, `c3x import --force`, rerun `c3x migrate`; canonical export is intentionally stopped before partial cache state is submitted |
+| `migrate-legacy` errors/warns | Delete `c3.db`, fix, restart Phase A |
+| `migrate` reports `BLOCKED: N component(s)` | Follow printed repair plan: inspect listed IDs, repair canonical content, remove cache, `c3x import --force`, rerun `c3x migrate` |
+| `migrate` write failure | Fix database/write error, remove cache, `c3x import --force`, rerun `c3x migrate`; canonical export stopped before partial cache submitted |
 | `migrate` (v7→v8) strips content | Restore from B1 export via `c3x write <id>` |
-| Broken canonical seals block read-only commands | Use repair mutations (`write --section`, `set --section`, `add adr`) or `c3x repair`; read-only commands intentionally stay gated until canonical state verifies |
+| Broken canonical seals block read-only commands | Use repair mutations (`write --section`, `set --section`, `add adr`) or `c3x repair`; read-only commands stay gated until canonical state verifies |
 
-`migrate-legacy` is NOT idempotent — delete `c3.db` to retry. Always use `--keep-originals`.
+`migrate-legacy` NOT idempotent — delete `c3.db` to retry. Always use `--keep-originals`.
 
 ---
 
@@ -64,22 +64,22 @@ Any `warning:` line in any c3x output = data loss. Stop, fix, re-run. No excepti
 C3X_MODE=agent bash <skill-dir>/bin/c3x.sh migrate-legacy --dry-run
 ```
 
-All output goes to **stdout**. In agent mode, structured command output is TOON; parse failure warnings appear as text lines before the TOON manifest. Scan the full output for `warning:` lines first, then read the manifest fields.
+All output → stdout. Agent mode: structured output is TOON; parse failure warnings appear as text lines before TOON manifest. Scan full output for `warning:` lines first, then read manifest fields.
 
-Record from the manifest: `total`, `with_gaps`, `clean`, `entities[]` (IDs, types, gaps), `code_map_issues[]`.
-Record `warning:` lines: any `warning: skipping X` — these entities are invisible in the manifest and will be lost.
-Record `broken_ref` gap count — these relationships will be dropped.
+Record from manifest: `total`, `with_gaps`, `clean`, `entities[]` (IDs, types, gaps), `code_map_issues[]`.
+Record `warning:` lines: any `warning: skipping X` — entities invisible in manifest, will be lost.
+Record `broken_ref` gap count — relationships will be dropped.
 
-This is the **before-manifest**.
+= **before-manifest**.
 
 ### A2: Repair
 
-Fix in priority order. Parse failures first — they're invisible to everything else.
+Fix in priority order. Parse failures first — invisible to everything else.
 
 | Priority | Gap | Fix |
 |----------|-----|-----|
 | 1 | Parse failures (warning text before manifest) | Edit raw `.c3/` file — fix YAML frontmatter. Preserve all content. |
-| 2 | `broken_ref` | Update reference if target was renamed, remove if gone. Log removals. |
+| 2 | `broken_ref` | Update reference if target renamed, remove if gone. Log removals. |
 | 3 | `empty_frontmatter_rich_body` | Extract from body, add to frontmatter. |
 | 3 | `missing_section` / `empty_section` | Add stub: `(to be filled)` |
 | 3 | `empty_table` | Add row or mark intentionally empty. |
@@ -97,8 +97,8 @@ C3X_MODE=agent bash <skill-dir>/bin/c3x.sh migrate-legacy --dry-run
 ```
 
 Pass requires BOTH:
-1. Zero `warning:` text lines in the output (these appear before the TOON manifest on stdout).
-2. Manifest fields: `with_gaps == 0`, `code_map_issues` empty/absent.
+1. Zero `warning:` text lines in output (before TOON manifest on stdout).
+2. Manifest: `with_gaps == 0`, `code_map_issues` empty/absent.
 
 Fail → return to A2.
 
@@ -108,12 +108,12 @@ Fail → return to A2.
 C3X_MODE=agent bash <skill-dir>/bin/c3x.sh migrate-legacy --keep-originals
 ```
 
-Any `warning:` line → delete `c3.db`, fix, restart from A1.
+Any `warning:` → delete `c3.db`, fix, restart from A1.
 Any error → delete `c3.db`, investigate, restart from A1.
 
 ### A5: Verify
 
-Canonical markdown files are authority. Cache must match them exactly when rebuilt.
+Canonical markdown = authority. Cache must match exactly when rebuilt.
 
 ```bash
 C3X_MODE=agent bash <skill-dir>/bin/c3x.sh list
@@ -148,7 +148,7 @@ C3X_MODE=agent bash <skill-dir>/bin/c3x.sh list
 C3X_MODE=agent bash <skill-dir>/bin/c3x.sh export /tmp/c3-before-v8
 ```
 
-Record entity count, IDs, and `c3x read <id>` content length per entity. Verify export succeeded: file count in `/tmp/c3-before-v8` should match entity count from `list`.
+Record entity count, IDs, `c3x read <id>` content length per entity. Verify export: file count in `/tmp/c3-before-v8` should match entity count from `list`.
 
 ### B2: Dry-run
 
@@ -156,9 +156,9 @@ Record entity count, IDs, and `c3x read <id>` content length per entity. Verify 
 C3X_MODE=agent bash <skill-dir>/bin/c3x.sh migrate --dry-run
 ```
 
-Output format: `  will migrate: <id> (<title>)`, summary `dry-run: N to migrate, N already have nodes (ok)`, then `N entities have no content yet:` with IDs.
+Output: `  will migrate: <id> (<title>)`, summary `dry-run: N to migrate, N already have nodes (ok)`, then `N entities have no content yet:` with IDs.
 
-If `WARNING: N entities had stale frontmatter` appears — review each flagged entity before proceeding.
+If `WARNING: N entities had stale frontmatter` → review each flagged entity before proceeding.
 
 ### B3: Review flagged entities
 
@@ -166,9 +166,9 @@ If `WARNING: N entities had stale frontmatter` appears — review each flagged e
 C3X_MODE=agent bash <skill-dir>/bin/c3x.sh read <id>
 ```
 
-`hasStaleFrontmatter()` flags bodies starting with `---\n` or having `key: value` (no spaces in key) in the first 5 lines before a `#` heading or blank line. Flagged content is stripped during migration.
+`hasStaleFrontmatter()` flags bodies starting with `---\n` or having `key: value` (no spaces in key) in first 5 lines before `#` heading or blank line. Flagged content stripped during migration.
 
-If the content is real (not stale YAML), move it under a heading before migrating:
+If content is real (not stale YAML), move under heading before migrating:
 ```bash
 C3X_MODE=agent bash <skill-dir>/bin/c3x.sh write <id> <<'BODY'
 ## Context
@@ -185,9 +185,9 @@ BODY
 C3X_MODE=agent bash <skill-dir>/bin/c3x.sh migrate
 ```
 
-Expected success summary: `N migrated, M already have nodes (ok), K strict component docs`.
+Expected success: `N migrated, M already have nodes (ok), K strict component docs`.
 
-Expected strict-component blocker shape:
+Expected strict-component blocker:
 ```text
 0 migrated, N blocked
 
@@ -210,15 +210,15 @@ c3x migrate --dry-run --json
 c3x migrate repair-plan
 ```
 
-When this appears, do not chain speculative commands. Repair only the listed component sections, clear disposable cache files with `c3x cache clear`, import, continue migration, then check/verify. A blocked strict migration is all-or-nothing: no migration writes should occur before blockers are repaired.
+On blocker: no speculative commands. Repair listed component sections, `c3x cache clear`, import, continue, check/verify. Blocked strict migration = all-or-nothing: no writes before blockers repaired.
 
-Expected write-failure shape:
+Expected write-failure:
 ```text
 BLOCKED: migration write failed at <id> after N successful write(s).
 Why: C3 stopped before canonical export, so submitted .c3/ markdown is not rewritten from a partial cache.
 ```
 
-Fix the write/database error, run `c3x cache clear`, import, continue migration, then check/verify. Do not export canonical markdown from a partial cache.
+Fix write/database error, `c3x cache clear`, import, continue, check/verify. Never export canonical markdown from partial cache.
 
 ### B5: Verify
 
@@ -231,7 +231,7 @@ C3X_MODE=agent bash <skill-dir>/bin/c3x.sh export /tmp/c3-after-v8
 | Check | Pass |
 |-------|------|
 | Entity count: B1 vs now | Exact match |
-| `diff -r /tmp/c3-before-v8 /tmp/c3-after-v8` | No content loss (whitespace changes OK) |
+| `diff -r /tmp/c3-before-v8 /tmp/c3-after-v8` | No content loss (whitespace OK) |
 | `c3x read <id>` for flagged entities | Content intact |
 | `c3x check` | 0 errors, 0 warnings |
 | `c3x query "goal"` | Returns results |

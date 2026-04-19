@@ -150,6 +150,7 @@ Options:
   --summary <text>       Pre-fill summary
   --boundary <text>      Pre-fill boundary (container only)
   --json                 Output as JSON (id, type, sections list)
+  --dry-run              Validate content without creating the entity
 
 ADR workflow:
   c3x schema adr                         # CLI-owned ADR creation contract
@@ -159,12 +160,11 @@ ADR workflow:
 
 Examples:
   c3x add container payments --goal "Process payments" --boundary service
-  c3x schema component
-  cat auth-component.md | c3x add component auth --container c3-1
+  c3x template component | c3x add component auth --container c3-1
   c3x add ref rate-limiting --goal "Consistent rate limiting"
   c3x add rule structured-logging --goal "Consistent structured logging"
-  c3x schema adr
-  cat complete-decision.md | c3x add adr use-grpc --json
+  c3x template adr | c3x add adr use-grpc --json
+  c3x add component auth --container c3-1 --dry-run < auth.md   # validate only
   c3x add recipe auth-flow`,
 	},
 	{
@@ -235,6 +235,23 @@ Types: context, container, component, ref, rule, adr, recipe
 JSON output includes column types (filepath, entity_id, enum, ref_id).
 
 Example: c3x schema component --json`,
+	},
+	{
+		Name:     "template",
+		Args:     "<type>",
+		OneLiner: "Output a fillable entity template that passes validation",
+		Help: `Usage: c3x template <type>
+
+Output a validation-ready markdown template for the given entity type.
+The template passes c3x's own strict validation, so LLMs can use it
+as a one-shot scaffold — fill in real content and pipe to c3x add.
+
+Types: component, container, ref, rule, adr, recipe
+
+Examples:
+  c3x template component                    # see the scaffold
+  c3x template component | c3x add component auth --container c3-1
+  c3x template adr | c3x add adr use-grpc`,
 	},
 	{
 		Name:     "codemap",

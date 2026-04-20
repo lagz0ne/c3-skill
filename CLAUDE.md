@@ -12,7 +12,7 @@ Hard rules:
 - Do not load C3 from `~/.agents/skills/c3`, `~/.claude/skills/c3`, `~/.codex/skills/c3`, or marketplace installs for this repo.
 - Load C3 skill instructions from `skills/c3/SKILL.md` in this checkout.
 - Run C3 through the local built wrapper: `C3X_MODE=agent bash skills/c3/bin/c3x.sh <command>`.
-- If `skills/c3/bin/c3x.sh` or the matching local binary is missing, run `bash scripts/build.sh`, then use the local wrapper.
+- If `skills/c3/bin/c3x.sh` or the matching local binary is missing, tell the user — CI builds binaries, not you. Only run `bash scripts/build.sh` when explicitly debugging the build.
 - At session start, create a local alias/function and use it for every C3 command:
 
 ```bash
@@ -131,16 +131,24 @@ c3-design/
 
 ## Build System
 
+**Do NOT run `bash scripts/build.sh` during releases.** CI owns the build — push to dev triggers `distribute.yml` which tests, cross-compiles, merges to main, and creates the GitHub Release automatically. Only run `build.sh` locally when debugging build issues.
+
 ```bash
-bash scripts/build.sh         # Cross-compile Go CLI for 4 targets
-cd cli && go test ./...       # Run Go tests
+cd cli && go test ./...       # Run Go tests locally
 ```
 
 ## CI/CD
 
-- **Push to dev** -> `distribute.yml` builds, merges to main via PR, creates release
+- **Push to dev** -> `distribute.yml` runs tests, builds binaries, creates PR to main, auto-merges, creates GitHub Release with tag
 - **Push to main** -> `release.yml` (fallback) checks `skills/c3/bin/VERSION`
 - New version -> GitHub Release with plugin zip
+
+## Release Process
+
+1. Commit code changes to dev
+2. Bump version in 3 files: `VERSION`, `plugin.json`, `marketplace.json` (use `/release`)
+3. `git push origin dev` — CI handles everything from here
+4. Verify with `gh run watch` and `gh release view v{VERSION}`
 
 ## Versioning
 

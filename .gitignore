@@ -26,6 +26,7 @@ autoresearch.*
 
 # BEGIN C3 MANAGED IGNORE
 .c3/c3.db
+.c3/c3.db-shm
+.c3/c3.db-wal
 .c3/c3.db.bak-*
 # END C3 MANAGED IGNORE
-

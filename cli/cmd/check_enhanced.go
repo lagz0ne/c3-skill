@@ -38,6 +38,7 @@ type CheckOptions struct {
 	C3Dir      string
 	IncludeADR bool
 	Fix        bool
+	Only       []string
 }
 
 // buildTitleMapStore creates a case-insensitive title/slug -> entity ID lookup.
@@ -168,9 +169,13 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 	sort.Slice(entities, func(i, j int) bool {
 		return entities[i].ID < entities[j].ID
 	})
+	targetMatcher := newCheckTargetMatcher(entities, opts.Only)
 
 	for _, entity := range entities {
 		if entity.Type == "adr" && !opts.IncludeADR {
+			continue
+		}
+		if !targetMatcher.matches(entity) {
 			continue
 		}
 
@@ -303,11 +308,17 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 		for entityID, patterns := range allCodeMap {
 			entity, err := opts.Store.GetEntity(entityID)
 			if err != nil {
+				if len(opts.Only) > 0 {
+					continue
+				}
 				issues = append(issues, Issue{
 					Severity: "warning",
 					Entity:   entityID,
 					Message:  fmt.Sprintf("code-map entity %s not found in store", entityID),
 				})
+				continue
+			}
+			if !targetMatcher.matches(entity) {
 				continue
 			}
 			if entity.Type != "component" && entity.Type != "ref" && entity.Type != "rule" {
@@ -329,8 +340,13 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 		}
 	}
 
-	issues = append(issues, checkRecipeSourcesStore(opts.Store)...)
-	issues = append(issues, checkLayerDisconnectsStore(opts.Store)...)
+	if len(opts.Only) == 0 {
+		issues = append(issues, checkRecipeSourcesStore(opts.Store)...)
+		issues = append(issues, checkLayerDisconnectsStore(opts.Store)...)
+	} else {
+		issues = append(issues, filterIssuesByTargets(opts.Store, targetMatcher, checkRecipeSourcesStore(opts.Store))...)
+		issues = append(issues, filterIssuesByTargets(opts.Store, targetMatcher, checkLayerDisconnectsStore(opts.Store))...)
+	}
 
 	// Scope cross-check
 	refs, _ := opts.Store.EntitiesByType("ref")
@@ -343,6 +359,9 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 			children, _ := opts.Store.Children(r.ToID)
 			for _, child := range children {
 				if child.Type != "component" {
+					continue
+				}
+				if !targetMatcher.matches(child) {
 					continue
 				}
 				// Check if child cites this ref
@@ -420,6 +439,48 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 		return fmt.Errorf("check failed: %d error(s)", errors)
 	}
 	return nil
+}
+
+type checkTargetMatcher struct {
+	targets    []string
+	parentSlug map[string]string
+}
+
+func newCheckTargetMatcher(entities []*store.Entity, targets []string) checkTargetMatcher {
+	m := checkTargetMatcher{targets: targets, parentSlug: map[string]string{}}
+	for _, e := range entities {
+		if e.Type == "container" {
+			m.parentSlug[e.ID] = fmt.Sprintf("%s-%s", e.ID, e.Slug)
+		}
+	}
+	return m
+}
+
+func (m checkTargetMatcher) matches(entity *store.Entity) bool {
+	if len(m.targets) == 0 {
+		return true
+	}
+	if entity == nil {
+		return false
+	}
+	return verifyTargetMatchesDoc(m.targets, entity.ID, entityRelativePath(entity, m.parentSlug))
+}
+
+func filterIssuesByTargets(s *store.Store, matcher checkTargetMatcher, issues []Issue) []Issue {
+	filtered := issues[:0]
+	for _, issue := range issues {
+		if issue.Entity == "" {
+			continue
+		}
+		entity, err := s.GetEntity(issue.Entity)
+		if err != nil {
+			continue
+		}
+		if matcher.matches(entity) {
+			filtered = append(filtered, issue)
+		}
+	}
+	return filtered
 }
 
 func checkLayerDisconnectsStore(s *store.Store) []Issue {

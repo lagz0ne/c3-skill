@@ -40,6 +40,7 @@ type Options struct {
 	Full          bool
 	JSONExplicit  bool
 	Force         bool
+	Only          []string
 }
 
 // ParseArgs parses command-line arguments into Options.
@@ -144,6 +145,11 @@ func ParseArgs(argv []string) Options {
 			opts.Recompute = true
 		case "--force":
 			opts.Force = true
+		case "--only":
+			if i+1 < len(argv) {
+				i++
+				opts.Only = append(opts.Only, argv[i])
+			}
 		case "--keep":
 			if i+1 < len(argv) {
 				i++

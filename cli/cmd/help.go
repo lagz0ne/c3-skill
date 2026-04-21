@@ -41,15 +41,21 @@ Normal users rarely need this after initial setup.`,
 	{
 		Name:     "verify",
 		OneLiner: "Validate canonical .c3/ truth and refresh local cache if needed",
-		Help: `Usage: c3x verify
+		Help: `Usage: c3x verify [--include-adr] [--only <id-or-path-or-glob>]
 
 Verify that canonical .c3/ markdown is sealed, structurally valid, and in sync
 with the local cache. If c3.db is missing or stale, verify rebuilds it from the
 canonical text automatically.
 
+ADRs are excluded by default so in-progress work orders do not block same-branch
+work. Use --include-adr when finishing ADR work or before release/commit.
+
+Use --only to verify a focused set of canonical docs by entity ID or path. Repeat
+--only for multiple docs.
+
 Use this in CI and pre-commit.
 
-User rule: if you want confidence before commit, run c3x verify.`,
+User rule: if you want confidence before commit, run c3x verify --include-adr.`,
 	},
 	{
 		Name:     "repair",
@@ -156,7 +162,8 @@ ADR workflow:
   c3x schema adr                         # CLI-owned ADR creation contract
   cat complete-adr.md | c3x add adr <slug> # create the complete work order
   c3x read adr-YYYYMMDD-<slug> --full    # inspect before execution
-  c3x check --include-adr && c3x verify  # validate before done
+  c3x verify --only adr-YYYYMMDD-<slug> --include-adr # prove focused ADR work
+  c3x check --include-adr && c3x verify --include-adr # full validation before done
 
 Examples:
   c3x add container payments --goal "Process payments" --boundary service

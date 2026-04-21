@@ -1,6 +1,6 @@
 ---
 id: c3-119
-c3-seal: 1129920a02578271abbc4fb8de2b125f18017ce9cf60182d3a7f370b8a059cea
+c3-seal: 5e3a7f29009fb74f918f4b8c64fcfd56375dda19afff553491f8f746f5b1538d
 title: sync-lifecycle-cmds
 type: component
 category: feature
@@ -58,6 +58,7 @@ Provide the lifecycle commands that keep canonical `.c3/` state repairable. Thes
 | cache clear | OUT | c3x cache clear deletes only disposable .c3/c3.db* and .c3/.c3.import.tmp.db* files so repair loops do not require manual rm commands. | c3-119 boundary | cli/cmd/cache_test.go TestRunCacheClearRemovesOnlyDisposableCacheFiles. |
 | lifecycle output | OUT | Derived docs and cache changes must preserve canonical sync and never require users to infer the next lifecycle command after a failure. | c3-1 boundary | c3x check --include-adr; c3x verify; go test -count=1 ./.... |
 | shared repair preflight | OUT | RunRepair remains an explicit lifecycle command and is also reusable by runtime preflight to rebuild cache, reseal canonical docs, and verify before normal command dispatch. | c3-119 repair mechanics; c3-108 chooses when to invoke it. | cli/cmd/repair.go RunRepair; cli/main.go self-healing preflight; go test ./.... |
+| scoped verify | OUT | c3x verify excludes adr/*.md by default and accepts repeatable --only selectors for entity IDs, canonical paths, or globs so agents can verify a focused doc set while unrelated docs are in progress. --include-adr restores ADR participation for the selected or full set. | c3-119 lifecycle verification boundary; c3-108 parses and passes the selector; c3-113 scopes schema checks. | cli/cmd/repair.go; cli/cmd/sync.go; cli/cmd/import.go; cli/main_test.go TestRun_VerifyOnlySkipsUnselectedComponentDrift and TestRun_VerifyOnlyReportsSelectedComponentDrift. |
 ## Change Safety
 
 | Risk | Trigger | Detection | Required Verification |
@@ -65,6 +66,8 @@ Provide the lifecycle commands that keep canonical `.c3/` state repairable. Thes
 | Partial repair state | migrate writes some docs before discovering strict blockers. | Compare canonical content hash before/after a blocked migrate smoke. | Run copied .c3 blocked migrate smoke and confirm unchanged SHA256 content hash. |
 | Weak failure guidance | A lifecycle command exits with only an error string, a one-entity blocker, or a manual rm instruction. | Inspect command output for grouped entity IDs, reason, writesMade proof, matched token, fix loop, and verification command. | go test -count=1 ./cmd -run TestRunMigrateV2_JSONBlockerReport; go test -count=1 ./cmd -run TestRunMigrateRepairPlanGivesSafeLoop. |
 | Contract drift | Import, repair, or migrate changes command order or cache behavior without updating component docs. | Compare changed files against c3-119 Contract and Business Flow. | Run go test -count=1 ./..., c3x check --include-adr, and c3x verify. |
+| ADR drift masks release readiness | Default verify skips in-progress ADR canonical drift while branch work continues. | Explicit verify --include-adr reports ADR broken seals, sync drift, and schema issues before completion. | go test . -run TestRun_VerifyIncludeADRReportsADRDrift -count=1; c3x verify --include-adr before final handoff. |
+| Scoped verify misses intended doc | An --only selector does not match the entity ID or canonical path shape the user expected. | Selected-drift tests mutate c3-101-auth.md and prove --only c3-101 fails while --only c3-1 ignores it. | go test . -run TestRun_VerifyOnly -count=1; use exact entity IDs or canonical relative paths in automation. |
 ## Derived Materials
 
 | Material | Must derive from | Allowed variance | Evidence |

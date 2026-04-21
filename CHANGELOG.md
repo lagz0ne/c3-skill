@@ -5,6 +5,12 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.4.4] - 2026-04-21
+
+### Changed
+
+- **C3 operations self-heal preflight drift** — normal store-backed commands now verify canonical state, automatically run repair for recoverable cache or seal drift, and only stop when repair cannot prove the tree safe.
+
 ## [9.4.3] - 2026-04-20
 
 ### Changed

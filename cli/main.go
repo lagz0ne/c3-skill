@@ -121,15 +121,17 @@ func run(argv []string, w io.Writer) error {
 	dbPath := filepath.Join(c3Dir, "c3.db")
 	hasDB := fileExists(dbPath)
 	hasCanonical := hasCanonicalDocs(c3Dir)
-	skipPreVerify := commandMutatesCanonical(opts) ||
-		(opts.Command == "sync" && len(opts.Args) >= 1 && opts.Args[0] == "export") ||
+	skipPreHeal := (opts.Command == "sync" && len(opts.Args) >= 1 && opts.Args[0] == "export") ||
 		opts.Command == "migrate"
 
 	// v9 workflow treats canonical .c3/ markdown as submitted truth.
-	// When canonical files exist, refresh/rebuild local cache from them before dispatch.
-	if hasCanonical && !skipPreVerify {
+	// When canonical files exist, verify first, then repair recoverable drift
+	// automatically before dispatching the requested command.
+	if hasCanonical && !skipPreHeal {
 		if err := cmd.RunVerify(cmd.VerifyOptions{C3Dir: c3Dir, JSON: opts.JSON}, io.Discard); err != nil {
-			return fmt.Errorf("error: canonical .c3/ is not ready for %q: %w", opts.Command, err)
+			if repairErr := cmd.RunRepair(cmd.RepairOptions{C3Dir: c3Dir, JSON: opts.JSON}, io.Discard); repairErr != nil {
+				return fmt.Errorf("error: auto-repair failed before %q: %w\noriginal verification error: %v", opts.Command, repairErr, err)
+			}
 		}
 		hasDB = fileExists(dbPath)
 	}

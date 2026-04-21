@@ -60,6 +60,11 @@ func TestParseArgs(t *testing.T) {
 			argv: []string{"migrate", "--continue"},
 			want: Options{Command: "migrate", Continue: true},
 		},
+		{
+			name: "verify only repeatable",
+			argv: []string{"verify", "--only", "c3-101", "--only", "refs/ref-jwt.md"},
+			want: Options{Command: "verify", Only: []string{"c3-101", "refs/ref-jwt.md"}},
+		},
 	}
 
 	for _, tt := range tests {
@@ -94,6 +99,15 @@ func TestParseArgs(t *testing.T) {
 			}
 			if got.Continue != tt.want.Continue {
 				t.Errorf("Continue = %v, want %v", got.Continue, tt.want.Continue)
+			}
+			if len(got.Only) != len(tt.want.Only) {
+				t.Errorf("Only len = %d, want %d", len(got.Only), len(tt.want.Only))
+			} else {
+				for i, only := range tt.want.Only {
+					if got.Only[i] != only {
+						t.Errorf("Only[%d] = %q, want %q", i, got.Only[i], only)
+					}
+				}
 			}
 			if len(got.Args) != len(tt.want.Args) {
 				t.Errorf("Args len = %d, want %d", len(got.Args), len(tt.want.Args))

@@ -109,10 +109,10 @@ func run(argv []string, w io.Writer) error {
 		return runGit(opts, config.ProjectDir(c3Dir), c3Dir, w)
 	}
 	if opts.Command == "verify" {
-		return cmd.RunVerify(cmd.VerifyOptions{C3Dir: c3Dir, JSON: opts.JSON}, w)
+		return cmd.RunVerify(cmd.VerifyOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: opts.Only}, w)
 	}
 	if opts.Command == "repair" {
-		return cmd.RunRepair(cmd.RepairOptions{C3Dir: c3Dir, JSON: opts.JSON}, w)
+		return cmd.RunRepair(cmd.RepairOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: opts.Only}, w)
 	}
 	if opts.Command == "cache" {
 		return runCache(opts, c3Dir, w)
@@ -128,8 +128,8 @@ func run(argv []string, w io.Writer) error {
 	// When canonical files exist, verify first, then repair recoverable drift
 	// automatically before dispatching the requested command.
 	if hasCanonical && !skipPreHeal {
-		if err := cmd.RunVerify(cmd.VerifyOptions{C3Dir: c3Dir, JSON: opts.JSON}, io.Discard); err != nil {
-			if repairErr := cmd.RunRepair(cmd.RepairOptions{C3Dir: c3Dir, JSON: opts.JSON}, io.Discard); repairErr != nil {
+		if err := cmd.RunVerify(cmd.VerifyOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: opts.Only}, io.Discard); err != nil {
+			if repairErr := cmd.RunRepair(cmd.RepairOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: opts.Only}, io.Discard); repairErr != nil {
 				return fmt.Errorf("error: auto-repair failed before %q: %w\noriginal verification error: %v", opts.Command, repairErr, err)
 			}
 		}

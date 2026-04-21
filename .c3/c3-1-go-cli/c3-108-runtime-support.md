@@ -1,6 +1,6 @@
 ---
 id: c3-108
-c3-seal: c55406951c98011f78e582259e80d8d5dbba1adaf5f2d7a0ba944349e9f36667
+c3-seal: 2f66220b9b010ff10467e68f9d98ce076920a34c610ca9cd6093c6a6b373b209
 title: runtime-support
 type: component
 category: foundation
@@ -55,11 +55,14 @@ Own CLI runtime behavior shared across commands: argument parsing, environment m
 | Surface | Direction | Contract | Boundary | Evidence |
 | --- | --- | --- | --- | --- |
 | agent output serializer | OUT | Under C3X_MODE=agent, structured command output must be TOON and contextual hints render as help[n] rows, not JSON-only prose. | c3-108 runtime presentation boundary. | cli/cmd/output.go; cli/cmd/add_test.go TestRunAdd_AdrAgentHintsUseCLISchema. |
-| ADR creation hints | OUT | Adding or reading an ADR must route agents to c3x schema adr, c3x read <adr> --full, c3x write <adr> < adr.md, and c3x check --include-adr && c3x verify. | c3-108 owns hint rendering; ADR schema content belongs to c3-113 and c3-117. | cli/cmd/cascade_hints.go; TestRunAdd_AdrAgentHintsUseCLISchema. |
+| ADR creation hints | OUT | Adding or reading an ADR must route agents to c3x schema adr, c3x read <adr> --full, c3x write <adr> < adr.md, focused c3x verify --only <adr> --include-adr, and full c3x check --include-adr plus c3x verify --include-adr before final handoff. | c3-108 owns hint rendering; ADR schema content belongs to c3-113 and c3-117. | cli/cmd/cascade_hints.go; TestRunAdd_AdrAgentHintsUseCLISchema. |
 | add help | OUT | c3x add help must teach the ADR workflow through CLI commands and must not advertise unsupported ADR --goal shortcuts. | c3-108 help surface. | cli/cmd/help.go; cli/cmd/help_test.go TestShowHelp_AddADRWorkflowPointsAtSchema. |
+| cascade review hints | OUT | Check, diff, graph, and other agent hints must show scoped verify --only <id> as the branch-safe proof path while unrelated docs are still in progress. | c3-108 hint surface; c3-119 owns verify behavior. | cli/cmd/cascade_hints.go; TestRunCheck_AgentTOONIncludesCascadeReviewHint. |
 | explicit JSON | OUT | Outside agent mode, explicit --json remains available where commands support it; agent-facing defaults remain TOON. | c3-108 compatibility boundary. | go test ./cmd. |
 | mutating command rollback | OUT | For mutating commands, dispatcher snapshots the .c3 cache and canonical tree before command execution; if command handling or canonical export returns an error, it restores the pre-command state before returning the failure. | c3-108 dispatcher boundary; command-specific validation still belongs to each command component. | cli/main.go mutationSnapshot; cli/main_test.go TestRun_AddADRRollsBackWhenCanonicalExportFails. |
 | self-healing preflight | IN/OUT | Normal store-backed commands verify canonical .c3 state and automatically run repair for recoverable cache or seal drift before dispatch; only unrecoverable repair failure stops the command. | c3-108 owns dispatch timing; c3-119 owns repair mechanics. | cli/main.go preflight branch; cli/main_test.go TestRun_ListSelfHealsBrokenSeal and TestRun_CommandsSelfHealBrokenCanonicalPreverify. |
+| verify include-adr dispatch | IN/OUT | The existing --include-adr parser flag is passed into verify, repair, and preflight verify without adding a second mode or command-specific parser path. | c3-108 runtime dispatch boundary; c3-119 owns lifecycle verification behavior. | cli/main.go VerifyOptions and RepairOptions construction; go test . -run TestRun_Verify. |
+| verify only dispatch | IN/OUT | The repeatable --only parser flag is passed into verify, repair, and preflight verify so command dispatch can select a focused canonical doc set without a separate command. | c3-108 runtime parsing and dispatch boundary; c3-119 owns lifecycle sync behavior and c3-113 owns scoped schema validation. | cli/cmd/options.go; cli/main.go; cli/cmd/options_test.go TestParseArgs. |
 ## Change Safety
 
 | Risk | Trigger | Detection | Required Verification |

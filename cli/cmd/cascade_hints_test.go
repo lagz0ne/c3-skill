@@ -130,6 +130,7 @@ func TestRunCheck_AgentTOONIncludesCascadeReviewHint(t *testing.T) {
 	requireAll(t, buf.String(),
 		"help:",
 		"cascade review",
+		"c3x verify --only <id>",
 		"Parent Delta",
 	)
 }

@@ -86,6 +86,16 @@ func RunSyncCheck(opts ExportOptions, w io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("sync check: read expected tree: %w", err)
 	}
+	if !opts.IncludeADR {
+		actual = filterADRSnapshot(actual)
+		expected = filterADRSnapshot(expected)
+		broken = filterADRPaths(broken)
+	}
+	if len(opts.Only) > 0 {
+		actual = filterSnapshotByTargets(actual, opts.Only)
+		expected = filterSnapshotByTargets(expected, opts.Only)
+		broken = filterPathsByTargets(broken, opts.Only)
+	}
 
 	result := diffSnapshots(actual, expected)
 	result.BrokenSeal = broken
@@ -157,6 +167,98 @@ func snapshotCanonicalTree(root string, verifySeals bool) (map[string]string, []
 	})
 	sort.Strings(broken)
 	return files, broken, err
+}
+
+func filterADRSnapshot(files map[string]string) map[string]string {
+	filtered := make(map[string]string, len(files))
+	for path, content := range files {
+		if isADRCanonicalPath(path) {
+			continue
+		}
+		filtered[path] = content
+	}
+	return filtered
+}
+
+func filterADRPaths(paths []string) []string {
+	filtered := paths[:0]
+	for _, path := range paths {
+		if isADRCanonicalPath(path) {
+			continue
+		}
+		filtered = append(filtered, path)
+	}
+	return filtered
+}
+
+func isADRCanonicalPath(path string) bool {
+	return strings.HasPrefix(filepath.ToSlash(path), "adr/") && strings.HasSuffix(path, ".md")
+}
+
+func filterSnapshotByTargets(files map[string]string, targets []string) map[string]string {
+	filtered := make(map[string]string, len(files))
+	for path, content := range files {
+		if verifyTargetMatchesPath(targets, path) {
+			filtered[path] = content
+		}
+	}
+	return filtered
+}
+
+func filterPathsByTargets(paths []string, targets []string) []string {
+	filtered := paths[:0]
+	for _, path := range paths {
+		if verifyTargetMatchesPath(targets, path) {
+			filtered = append(filtered, path)
+		}
+	}
+	return filtered
+}
+
+func verifyTargetMatchesDoc(targets []string, entityID, docPath string) bool {
+	for _, target := range targets {
+		target = strings.TrimSpace(target)
+		if target == "" {
+			continue
+		}
+		if target == entityID {
+			return true
+		}
+		if verifyTargetMatchesPath([]string{target}, docPath) {
+			return true
+		}
+	}
+	return false
+}
+
+func verifyTargetMatchesPath(targets []string, docPath string) bool {
+	docPath = filepath.ToSlash(strings.TrimPrefix(docPath, "./"))
+	base := filepath.Base(docPath)
+	for _, target := range targets {
+		target = filepath.ToSlash(strings.TrimPrefix(strings.TrimSpace(target), "./"))
+		if target == "" {
+			continue
+		}
+		if target == docPath || target == base {
+			return true
+		}
+		if strings.HasPrefix(base, target+"-") || strings.HasPrefix(base, target+".") {
+			return true
+		}
+		if strings.ContainsAny(target, "*?[") {
+			if matched, _ := filepath.Match(target, docPath); matched {
+				return true
+			}
+			if matched, _ := filepath.Match(target, base); matched {
+				return true
+			}
+			continue
+		}
+		if strings.HasSuffix(target, "/") && strings.HasPrefix(docPath, target) {
+			return true
+		}
+	}
+	return false
 }
 
 func diffSnapshots(actual, expected map[string]string) SyncCheckResult {

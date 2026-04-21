@@ -443,7 +443,10 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) err
 		if len(opts.Args) >= 1 {
 			entityID = opts.Args[0]
 		}
-		err = cmd.RunImpact(cmd.ImpactOptions{Store: s, EntityID: entityID, Depth: opts.Depth, JSON: opts.JSON}, w)
+		err = cmd.RunImpact(cmd.ImpactOptions{
+			Store: s, EntityID: entityID, Depth: opts.Depth, JSON: opts.JSON,
+			IncludeCode: opts.IncludeCode, ProjectDir: projectDir,
+		}, w)
 	case "export":
 		outputDir := c3Dir
 		if len(opts.Args) >= 1 {

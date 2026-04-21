@@ -41,6 +41,7 @@ type Options struct {
 	JSONExplicit  bool
 	Force         bool
 	Only          []string
+	IncludeCode   bool
 }
 
 // ParseArgs parses command-line arguments into Options.
@@ -90,6 +91,8 @@ func ParseArgs(argv []string) Options {
 			opts.Append = true
 		case "--include-adr":
 			opts.IncludeADR = true
+		case "--include-code":
+			opts.IncludeCode = true
 		case "--fix":
 			opts.Fix = true
 		case "--remove":

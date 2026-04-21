@@ -385,18 +385,25 @@ Examples:
 		Name:     "impact",
 		Args:     "<entity-id>",
 		OneLiner: "Transitive impact analysis (who depends on this?)",
-		Help: `Usage: c3x impact <entity-id> [--depth N] [--json]
+		Help: `Usage: c3x impact <entity-id> [--depth N] [--include-code] [--json]
 
 Find all entities affected by changes to the given entity.
 Traverses reverse 'uses' + forward 'affects' relationships.
 
+With --include-code, merges the documented citation graph with a grep-derived
+import graph over the target's code-map sources. Components that call into
+the target but are not documented in .c3/ are flagged [uncited]. Caller files
+with no owning component are listed separately as codemap coverage gaps.
+
 Options:
-  --depth N   Max traversal depth (default: 3)
-  --json      Machine-readable output
+  --depth N         Max traversal depth (default: 3)
+  --include-code    Merge documented citations with grep-derived callers (off by default)
+  --json            Machine-readable output
 
 Examples:
-  c3x impact c3-101            # what breaks if auth changes?
-  c3x impact ref-jwt --depth 5 # deep impact of JWT ref`,
+  c3x impact c3-101                  # what breaks if auth changes?
+  c3x impact ref-jwt --depth 5       # deep impact of JWT ref
+  c3x impact c3-201 --include-code   # include undocumented callers as [uncited]`,
 	},
 	{
 		Name:     "export",

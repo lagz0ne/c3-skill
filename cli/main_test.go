@@ -240,6 +240,73 @@ func TestRun_VerifyRebuildSurfacesLayerDisconnect(t *testing.T) {
 	}
 }
 
+func TestRun_VerifySkipsADRDriftByDefault(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	adrPath := addExportedADRFixture(t, c3Dir)
+	mutateFile(t, adrPath, "Create the complete ADR as one work order.", "Edit ADR while branch work continues.")
+	if err := os.Remove(filepath.Join(c3Dir, "c3.db")); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	if err := run([]string{"--c3-dir", c3Dir, "verify"}, &buf); err != nil {
+		t.Fatalf("expected default verify to ignore ADR drift, got %v\n%s", err, buf.String())
+	}
+	if strings.Contains(buf.String(), "BROKEN_SEAL") || strings.Contains(buf.String(), "DIFFERS") {
+		t.Fatalf("default verify should not report ADR drift, got:\n%s", buf.String())
+	}
+}
+
+func TestRun_VerifyIncludeADRReportsADRDrift(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	adrPath := addExportedADRFixture(t, c3Dir)
+	mutateFile(t, adrPath, "Create the complete ADR as one work order.", "Edit ADR while branch work continues.")
+
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "verify", "--include-adr"}, &buf)
+	if err == nil {
+		t.Fatalf("expected verify --include-adr to fail on ADR drift, got output:\n%s", buf.String())
+	}
+	if !strings.Contains(buf.String(), "BROKEN_SEAL adr/adr-20260421-verify-fixture.md") {
+		t.Fatalf("expected ADR broken seal in output, got:\n%s", buf.String())
+	}
+}
+
+func TestRun_VerifyOnlySkipsUnselectedComponentDrift(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", c3Dir}, &bytes.Buffer{}); err != nil {
+		t.Fatal(err)
+	}
+	componentPath := filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md")
+	mutateFile(t, componentPath, "Handle API authentication requests.", "Edit auth while verifying api container.")
+
+	var buf bytes.Buffer
+	if err := run([]string{"--c3-dir", c3Dir, "verify", "--only", "c3-1"}, &buf); err != nil {
+		t.Fatalf("expected scoped verify to ignore unselected component drift, got %v\n%s", err, buf.String())
+	}
+	if strings.Contains(buf.String(), "BROKEN_SEAL") || strings.Contains(buf.String(), "DIFFERS") {
+		t.Fatalf("scoped verify should not report unselected drift, got:\n%s", buf.String())
+	}
+}
+
+func TestRun_VerifyOnlyReportsSelectedComponentDrift(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", c3Dir}, &bytes.Buffer{}); err != nil {
+		t.Fatal(err)
+	}
+	componentPath := filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md")
+	mutateFile(t, componentPath, "Handle API authentication requests.", "Edit auth while verifying auth component.")
+
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "verify", "--only", "c3-101"}, &buf)
+	if err == nil {
+		t.Fatalf("expected scoped verify to fail on selected drift, got output:\n%s", buf.String())
+	}
+	if !strings.Contains(buf.String(), "BROKEN_SEAL c3-1-api/c3-101-auth.md") {
+		t.Fatalf("expected selected component broken seal in output, got:\n%s", buf.String())
+	}
+}
+
 func TestRun_ImportWithoutDatabase(t *testing.T) {
 	dir := t.TempDir()
 	c3Dir := filepath.Join(dir, ".c3")
@@ -949,6 +1016,51 @@ func completeADRBody(goal string) string {
 		"## Verification\n\n" +
 		"| Check | Result |\n|-------|--------|\n" +
 		"| go test | Pending fixture execution. |\n"
+}
+
+func addExportedADRFixture(t *testing.T, c3Dir string) string {
+	t.Helper()
+	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	adr := &store.Entity{
+		ID:       "adr-20260421-verify-fixture",
+		Type:     "adr",
+		Title:    "verify-fixture",
+		Slug:     "verify-fixture",
+		Goal:     "Test verify ADR filtering.",
+		Status:   "accepted",
+		Date:     "2026-04-21",
+		Metadata: "{}",
+	}
+	if err := s.InsertEntity(adr); err != nil {
+		t.Fatal(err)
+	}
+	if err := content.WriteEntity(s, adr.ID, "# verify-fixture\n\n"+completeADRBody("Test verify ADR filtering.")); err != nil {
+		t.Fatal(err)
+	}
+	if err := cmd.RunSyncExport(cmd.ExportOptions{Store: s, OutputDir: c3Dir}, io.Discard); err != nil {
+		t.Fatal(err)
+	}
+	return filepath.Join(c3Dir, "adr", "adr-20260421-verify-fixture.md")
+}
+
+func mutateFile(t *testing.T, path, old, new string) {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Contains(data, []byte(old)) {
+		t.Fatalf("fixture did not contain %q", old)
+	}
+	data = bytes.Replace(data, []byte(old), []byte(new), 1)
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func richComponentBody(title, goal string) string {

@@ -16,9 +16,11 @@ import (
 )
 
 type ImportOptions struct {
-	C3Dir      string
-	Force      bool
-	SkipBackup bool
+	C3Dir         string
+	Force         bool
+	SkipBackup    bool
+	AllowADRDrift bool
+	Only          []string
 }
 
 // RunImport rebuilds c3.db from the markdown tree in c3Dir.
@@ -37,6 +39,12 @@ func RunImport(opts ImportOptions, w io.Writer) error {
 	for _, doc := range result.Docs {
 		actual, expected := verifyParsedDocSeal(doc)
 		if actual == expected && actual != "" {
+			continue
+		}
+		if opts.AllowADRDrift && isADRCanonicalPath(doc.Path) {
+			continue
+		}
+		if len(opts.Only) > 0 && !verifyTargetMatchesDoc(opts.Only, doc.Frontmatter.ID, doc.Path) {
 			continue
 		}
 		if opts.Force {

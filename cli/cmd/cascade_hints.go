@@ -22,6 +22,7 @@ func cascadeReviewHints() []HelpHint {
 	return []HelpHint{
 		{Command: "cascade review", Description: "for each changed component, record ADR Parent Delta: updated or no-delta with evidence"},
 		{Command: "c3x diff", Description: "find component-only deltas before declaring docs synced"},
+		{Command: "c3x verify --only <id>", Description: "prove focused docs while unrelated branch docs or ADRs are still in progress"},
 		{Command: "c3x check", Description: "structural pass; still verify Parent Delta evidence"},
 	}
 }
@@ -37,7 +38,8 @@ func cascadeHintsForEntity(entity *store.Entity) []HelpHint {
 			{Command: "c3x schema adr", Description: "authoritative ADR creation contract from the CLI"},
 			{Command: fmt.Sprintf("c3x read %s --full", entity.ID), Description: "inspect the complete ADR work order before execution"},
 			{Command: fmt.Sprintf("c3x write %s < adr.md", entity.ID), Description: "replace the full ADR only if the complete work order must change"},
-			{Command: "c3x check --include-adr && c3x verify", Description: "validate ADR detail and canonical sync before done"},
+			{Command: fmt.Sprintf("c3x verify --only %s --include-adr", entity.ID), Description: "prove this ADR while other branch docs are still in progress"},
+			{Command: "c3x check --include-adr && c3x verify --include-adr", Description: "full ADR detail and canonical sync before final handoff"},
 		}
 	case "component":
 		var hints []HelpHint

@@ -1,7 +1,7 @@
 ---
 id: c3-113
 c3-version: 4
-c3-seal: 1e28473136e3e53788bac7b7a3712f96a1a80734640424f1228f0794bc3dcfb6
+c3-seal: a428749a15a9a2b032c70e9d1c288e589f8d3ebc07390142233eea87a5fe60a5
 title: check-cmd
 type: component
 category: feature
@@ -59,6 +59,7 @@ Provide durable agent-ready documentation for check-cmd so generated code, tests
 | schema registry | OUT | Entity schemas define ordered sections, required markers, purpose hints, and typed table columns used by add, set, write, check, and schema commands. | c3-113 owns validation/schema definitions; c3-117 owns schema command presentation. | cli/internal/schema/schema.go; cli/cmd/schema_test.go. |
 | ADR schema | OUT | ADR schema must preserve decision-ledger sections for Context, Decision, Work Breakdown, Underlay C3 Changes, Enforcement Surfaces, Alternatives Considered, Risks, and Verification. | c3-113 validation boundary. | cli/internal/schema/schema.go adr registry; TestRunSchema_ADRIncludesDecisionLedger; TestRunSchema_JSON_ADRUnderlayColumns. |
 | validation consumers | OUT | Validation paths must reject missing required sections and expose schema issues through c3x check/add/write/set rather than skill-local enforcement. | c3-113 with command-specific mutation handlers. | cli/cmd/check_enhanced.go; cli/cmd/add.go; cli/cmd/write.go; cli/cmd/set.go; go test ./cmd. |
+| scoped verify check | IN | When verify supplies --only selectors, check validation runs only on selected entities and filters global relationship/layer warnings to the selected docs so unrelated docs do not block focused verification. | c3-113 check validation boundary; c3-119 owns seal and sync path filtering. | cli/cmd/check_enhanced.go; cli/main_test.go TestRun_VerifyOnlySkipsUnselectedComponentDrift. |
 ## Change Safety
 
 | Risk | Trigger | Detection | Required Verification |

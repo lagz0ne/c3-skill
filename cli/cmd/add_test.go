@@ -146,11 +146,12 @@ func TestRunAdd_AdrAgentHintsUseCLISchema(t *testing.T) {
 
 	requireAll(t, buf.String(),
 		"adr-",
-		"help[4]",
+		"help[5]",
 		"c3x schema adr",
 		"authoritative ADR creation contract from the CLI",
 		"c3x read adr-",
 		"c3x write adr-",
+		"c3x verify --only adr-",
 		"c3x check --include-adr && c3x verify",
 	)
 }

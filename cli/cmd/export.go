@@ -14,9 +14,11 @@ import (
 
 // ExportOptions holds parameters for the export command.
 type ExportOptions struct {
-	Store     *store.Store
-	OutputDir string
-	JSON      bool
+	Store      *store.Store
+	OutputDir  string
+	JSON       bool
+	IncludeADR bool
+	Only       []string
 }
 
 // RunExport writes all entities from the store back to markdown files.

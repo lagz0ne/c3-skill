@@ -5,6 +5,16 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.4.5] - 2026-04-21
+
+### Added
+
+- **Scoped partial verification** — `c3x verify --only <id-or-path-or-glob>` now validates focused doc sets so agents can keep working on the same branch while unrelated canonical docs or ADRs are still in progress.
+
+### Changed
+
+- **Verification hints teach focused proof** — agent help now recommends `c3x verify --only <id>` for branch-safe checks and reserves `c3x check --include-adr && c3x verify --include-adr` for final ADR handoff.
+
 ## [9.4.4] - 2026-04-21
 
 ### Changed

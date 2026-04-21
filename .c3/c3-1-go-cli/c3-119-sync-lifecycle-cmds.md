@@ -1,6 +1,6 @@
 ---
 id: c3-119
-c3-seal: aa8e29dd86e9a95495892006be2944126a72b456e3180284efd18a7070bb42d2
+c3-seal: 1129920a02578271abbc4fb8de2b125f18017ce9cf60182d3a7f370b8a059cea
 title: sync-lifecycle-cmds
 type: component
 category: feature
@@ -37,10 +37,10 @@ Provide the lifecycle commands that keep canonical `.c3/` state repairable. Thes
 
 | Aspect | Detail | Reference |
 | --- | --- | --- |
-| Actor / caller | Human or LLM agent runs import, migrate, repair, export, delete, sync, or git guardrail commands while maintaining canonical .c3/ docs. | c3-1 |
+| Actor / caller | Human or LLM agent runs import, migrate, repair, export, delete, sync, git guardrail commands, or reaches shared repair through normal command preflight while maintaining canonical .c3/ docs. | c3-1 |
 | Primary path | Command inspects current architecture state, performs the smallest deterministic lifecycle operation it can prove, and returns result hints that name follow-up commands only when they are needed. | c3-1 |
-| Alternate paths | When strict component migration would fail, preflight every component, group all blockers, make no migration writes, and return a repair plan with scoped repair, cache clear, import, continue, and verify steps. | adr-20260415-migrate-repair-command-flow |
-| Failure behavior | Failures must include the failed entity, reason, matched bad token where available, writesMade proof, and next command loop so users and LLM agents do not guess whether to repair, clear cache, import, continue, check, or verify next. | adr-20260415-migrate-repair-command-flow |
+| Alternate paths | Normal store-backed commands may call repair automatically before dispatch; explicit migrate and sync export keep their command-owned sequencing. Migration blockers still preflight every component, group all blockers, make no migration writes, and return a scoped repair plan. | adr-20260421-self-healing-preflight; adr-20260415-migrate-repair-command-flow |
+| Failure behavior | Failures must include the failed entity, reason, matched bad token where available, writesMade proof, auto-repair context where applicable, and next command loop only when the CLI cannot safely repair on its own. | adr-20260421-self-healing-preflight |
 ## Governance
 
 | Reference | Type | Governs | Precedence | Notes |
@@ -57,6 +57,7 @@ Provide the lifecycle commands that keep canonical `.c3/` state repairable. Thes
 | scoped migration repair | IN/OUT | c3x migrate repair <id> --section <name> only repairs sections named by current migration blockers and validates the generated strict result before writing. | c3-119 boundary | cli/cmd/migrate_v2_test.go TestRunMigrateRepairSectionOnlyRepairsCurrentBlockerSection. |
 | cache clear | OUT | c3x cache clear deletes only disposable .c3/c3.db* and .c3/.c3.import.tmp.db* files so repair loops do not require manual rm commands. | c3-119 boundary | cli/cmd/cache_test.go TestRunCacheClearRemovesOnlyDisposableCacheFiles. |
 | lifecycle output | OUT | Derived docs and cache changes must preserve canonical sync and never require users to infer the next lifecycle command after a failure. | c3-1 boundary | c3x check --include-adr; c3x verify; go test -count=1 ./.... |
+| shared repair preflight | OUT | RunRepair remains an explicit lifecycle command and is also reusable by runtime preflight to rebuild cache, reseal canonical docs, and verify before normal command dispatch. | c3-119 repair mechanics; c3-108 chooses when to invoke it. | cli/cmd/repair.go RunRepair; cli/main.go self-healing preflight; go test ./.... |
 ## Change Safety
 
 | Risk | Trigger | Detection | Required Verification |

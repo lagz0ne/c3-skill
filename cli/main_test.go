@@ -177,6 +177,35 @@ func TestRun_ListRebuildsMissingDatabaseFromCanonicalFiles(t *testing.T) {
 	}
 }
 
+func TestRun_ListSelfHealsBrokenSeal(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", c3Dir}, &bytes.Buffer{}); err != nil {
+		t.Fatal(err)
+	}
+
+	readme := filepath.Join(c3Dir, "README.md")
+	data, err := os.ReadFile(readme)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data = bytes.Replace(data, []byte("## Goal\n\nTest."), []byte("## Goal\n\nSelf healed."), 1)
+	if err := os.WriteFile(readme, data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	if err := run([]string{"--c3-dir", c3Dir, "list", "--json"}, &buf); err != nil {
+		t.Fatalf("expected list to self-heal broken seal, got %v", err)
+	}
+	if !strings.Contains(buf.String(), "c3-0") {
+		t.Fatalf("expected list output after self-heal, got %q", buf.String())
+	}
+	var verify bytes.Buffer
+	if err := run([]string{"--c3-dir", c3Dir, "verify"}, &verify); err != nil {
+		t.Fatalf("expected repaired canonical tree to verify, got %v\n%s", err, verify.String())
+	}
+}
+
 func TestRun_VerifyRebuildSurfacesLayerDisconnect(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
 	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
@@ -414,7 +443,7 @@ func TestRun_AddADRRollsBackWhenCanonicalExportFails(t *testing.T) {
 	}
 }
 
-func TestRun_MutatingCommandBypassesBrokenCanonicalPreverify(t *testing.T) {
+func TestRun_CommandsSelfHealBrokenCanonicalPreverify(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
 	var buf bytes.Buffer
 	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", c3Dir}, &buf); err != nil {
@@ -431,9 +460,17 @@ func TestRun_MutatingCommandBypassesBrokenCanonicalPreverify(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = run([]string{"--c3-dir", c3Dir, "list"}, &bytes.Buffer{})
-	if err == nil || !strings.Contains(err.Error(), "canonical .c3/ is not ready") {
-		t.Fatalf("read-only command should still preverify broken canonical docs, got %v", err)
+	if err := run([]string{"--c3-dir", c3Dir, "list"}, &bytes.Buffer{}); err != nil {
+		t.Fatalf("read-only command should self-heal broken canonical docs, got %v", err)
+	}
+
+	data, err = os.ReadFile(readmePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	broken = strings.Replace(string(data), "c3-seal:", "c3-seal: broken-", 1)
+	if err := os.WriteFile(readmePath, []byte(broken), 0644); err != nil {
+		t.Fatal(err)
 	}
 
 	body := "Updated through section repair.\n"

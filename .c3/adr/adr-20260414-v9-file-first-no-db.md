@@ -1,6 +1,6 @@
 ---
 id: adr-20260414-v9-file-first-no-db
-c3-seal: 2c0dccaf3b6430501b42ed68ce32b5835a5ce2bf2441f635b18b3c66b610a727
+c3-seal: 40a69ef1c9d65125a6422f97e5751a2e1eeee9e1c95e71f30b7c1529cd6e46ea
 title: v9-file-first-no-db
 type: adr
 goal: Align C3 docs and UX with v9 canonical-file workflow where DB is cache only and submitted state is .c3 files.
@@ -9,6 +9,7 @@ date: "2026-04-14"
 ---
 
 # V9 File-First Workflow
+
 ## Goal
 
 Align C3 docs and UX with v9 canonical-file workflow where DB is cache only and submitted state is .c3 files.

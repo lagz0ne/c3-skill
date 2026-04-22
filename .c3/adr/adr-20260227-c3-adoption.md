@@ -1,7 +1,7 @@
 ---
 id: adr-00000000-c3-adoption
 c3-version: 4
-c3-seal: e20ee5f281e643a5890dba6ff2d4c759b9ce334334d61ba596bac988265ab729
+c3-seal: 457f10e23da156596a230ff3347d509d62bb789ad38ee13304c5ef288b44cd9e
 title: C3 Architecture Documentation Adoption
 type: adr
 goal: Adopt C3 methodology for c3-design.
@@ -12,6 +12,7 @@ affects:
 ---
 
 # C3 Architecture Documentation Adoption
+
 ## Goal
 
 Adopt C3 methodology for c3-design.
@@ -56,7 +57,9 @@ flowchart TD
     G2 -->|Detail| S1_CONTAINER
     G2 -->|None| DONE([Implemented])
 ```
+
 ## Stage 0: Inventory
+
 ### Context Discovery
 
 | Arg | Value |
@@ -64,34 +67,40 @@ flowchart TD
 | PROJECT |  |
 | GOAL |  |
 | SUMMARY |  |
+
 ### Abstract Constraints
 
 | Constraint | Rationale | Affected Containers |
 | --- | --- | --- |
 |  |  |  |
+
 ### Container Discovery
 
 | N | CONTAINER_NAME | BOUNDARY | GOAL | SUMMARY |
 | --- | --- | --- | --- | --- |
 | 1 |  |  |  |  |
 | 2 |  |  |  |  |
+
 ### Component Discovery (Brief)
 
 | N | NN | COMPONENT_NAME | CATEGORY | GOAL | SUMMARY |
 | --- | --- | --- | --- | --- | --- |
 |  |  |  | foundation (01-09) |  |  |
 |  |  |  | feature (10+) |  |  |
+
 ### Ref Discovery
 
 | SLUG | TITLE | GOAL | Scope | Applies To |
 | --- | --- | --- | --- | --- |
 |  |  |  |  |  |
+
 ### Overview Diagram
 
 ```mermaid
 graph TD
     %% Fill after discovery
 ```
+
 ### Gate 0
 
 - [ ] Context args filled
@@ -100,7 +109,9 @@ graph TD
 - [ ] All components identified (brief) with args and category
 - [ ] Cross-cutting refs identified
 - [ ] Overview diagram generated
+
 ## Stage 1: Details
+
 ### Container: c3-1
 
 **Created:** [ ] `.c3/c3-1-{slug}/README.md`
@@ -109,6 +120,7 @@ graph TD
 | --- | --- | --- | --- | --- |
 | Internal |  |  |  | [ ] |
 | Linkage |  |  |  | [ ] |
+
 ### Container: c3-N
 
 _(repeat per container from Stage 0)_
@@ -118,13 +130,16 @@ _(repeat per container from Stage 0)_
 | Ref ID | Pattern | Doc Created |
 | --- | --- | --- |
 |  |  | [ ] |
+
 ### Gate 1
 
 - [ ] All container README.md created
 - [ ] All component docs created
 - [ ] All refs documented
 - [ ] No new items discovered (else -> Gate 0)
+
 ## Stage 2: Finalize
+
 ### Integrity Checks
 
 | Check | Status |
@@ -133,10 +148,12 @@ _(repeat per container from Stage 0)_
 | Container <-> Component (all components listed in container README) | [ ] |
 | Component <-> Component (linkages documented) | [ ] |
 | * <-> Refs (refs cited correctly, Cited By updated) | [ ] |
+
 ### Gate 2
 
 - [ ] All integrity checks pass
 - [ ] Run audit
+
 ## Conflict Resolution
 
 If later stage reveals earlier errors:
@@ -144,6 +161,7 @@ If later stage reveals earlier errors:
 | Conflict | Found In | Affects | Resolution |
 | --- | --- | --- | --- |
 |  |  |  |  |
+
 ## Exit
 
 When Gate 2 complete -> change frontmatter status to `implemented`

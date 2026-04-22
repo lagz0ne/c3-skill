@@ -1,15 +1,18 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/lagz0ne/c3-design/cli/cmd"
 	"github.com/lagz0ne/c3-design/cli/internal/config"
+	"github.com/lagz0ne/c3-design/cli/internal/coord"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
@@ -24,6 +27,14 @@ func main() {
 
 // run contains all CLI logic, returning errors instead of calling os.Exit.
 func run(argv []string, w io.Writer) error {
+	stdinTerminal := true
+	if stat, err := os.Stdin.Stat(); err == nil {
+		stdinTerminal = (stat.Mode() & os.ModeCharDevice) != 0
+	}
+	return runWithIO(argv, os.Stdin, stdinTerminal, w, os.Stderr, true)
+}
+
+func runWithIO(argv []string, stdin io.Reader, stdinTerminal bool, w io.Writer, stderr io.Writer, coordinate bool) error {
 	opts := cmd.ParseArgs(argv)
 
 	if opts.Version {
@@ -89,6 +100,9 @@ func run(argv []string, w io.Writer) error {
 	}
 
 	if opts.Command == "migrate-legacy" {
+		if coordinate && commandMutatesCanonical(opts) {
+			return runThroughCoordinator(argv, stdin, stdinTerminal, c3Dir, w, stderr)
+		}
 		if opts.DryRun {
 			return cmd.RunMigrateDryRun(c3Dir, opts.JSON, w)
 		}
@@ -103,6 +117,9 @@ func run(argv []string, w io.Writer) error {
 		return cmd.AutoExportCanonical(s, c3Dir)
 	}
 	if opts.Command == "import" {
+		if coordinate {
+			return runThroughCoordinator(argv, stdin, stdinTerminal, c3Dir, w, stderr)
+		}
 		return cmd.RunImport(cmd.ImportOptions{C3Dir: c3Dir, Force: opts.Force}, w)
 	}
 	if opts.Command == "git" {
@@ -125,6 +142,9 @@ func run(argv []string, w io.Writer) error {
 		return cmd.RunVerify(cmd.VerifyOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: only}, w)
 	}
 	if opts.Command == "repair" {
+		if coordinate {
+			return runThroughCoordinator(argv, stdin, stdinTerminal, c3Dir, w, stderr)
+		}
 		return cmd.RunRepair(cmd.RepairOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: opts.Only}, w)
 	}
 	if opts.Command == "cache" {
@@ -137,6 +157,9 @@ func run(argv []string, w io.Writer) error {
 	skipPreHeal := (opts.Command == "sync" && len(opts.Args) >= 1 && opts.Args[0] == "export") ||
 		opts.Command == "migrate"
 	mutates := commandMutatesCanonical(opts)
+	if coordinate && mutates {
+		return runThroughCoordinator(argv, stdin, stdinTerminal, c3Dir, w, stderr)
+	}
 
 	// Read-only commands must not mutate canonical: the user may be
 	// mid-edit and silent auto-repair overwrites their work.
@@ -147,7 +170,7 @@ func run(argv []string, w io.Writer) error {
 					return fmt.Errorf("error: auto-repair failed before %q: %w\noriginal verification error: %v", opts.Command, repairErr, err)
 				}
 			} else {
-				fmt.Fprintln(os.Stderr, "warning: .c3/ drift detected; run 'c3x repair' to reconcile")
+				fmt.Fprintln(stderr, "warning: .c3/ drift detected; run 'c3x repair' to reconcile")
 			}
 		}
 		hasDB = fileExists(dbPath)
@@ -171,7 +194,7 @@ func run(argv []string, w io.Writer) error {
 		return fmt.Errorf("error: opening database: %w", err)
 	}
 
-	cmdErr := runCommand(opts, s, c3Dir, w)
+	cmdErr := runCommand(opts, s, c3Dir, stdin, stdinTerminal, w)
 	closeErr := s.Close()
 	if cmdErr != nil {
 		if rollback != nil {
@@ -353,8 +376,101 @@ func runMarketplace(opts cmd.Options, w io.Writer) error {
 	}
 }
 
+func runThroughCoordinator(argv []string, stdin io.Reader, stdinTerminal bool, c3Dir string, w io.Writer, stderr io.Writer) error {
+	if os.Getenv("C3X_COORDINATOR") == "0" {
+		return runWithIO(argv, stdin, stdinTerminal, w, stderr, false)
+	}
+	data, err := readCoordinatorStdin(stdin, stdinTerminal)
+	if err != nil {
+		return fmt.Errorf("error: reading stdin: %w", err)
+	}
+	cwd, _ := os.Getwd()
+	req := coord.Request{
+		Argv:          append([]string(nil), argv...),
+		Stdin:         data,
+		StdinTerminal: stdinTerminal,
+		CWD:           cwd,
+		C3XMode:       os.Getenv("C3X_MODE"),
+	}
+	if resp, handled, err := coord.TryForward(c3Dir, req); handled {
+		writeCoordinatorResponse(resp, w, stderr)
+		if resp.Error != "" {
+			return fmt.Errorf("%s", resp.Error)
+		}
+		return err
+	}
+
+	leader, err := coord.NewLeader(c3Dir)
+	if err != nil {
+		if resp, handled, retryErr := coord.ForwardWithRetry(c3Dir, req, 2*time.Second); handled {
+			writeCoordinatorResponse(resp, w, stderr)
+			if resp.Error != "" {
+				return fmt.Errorf("%s", resp.Error)
+			}
+			return retryErr
+		}
+		if err == coord.ErrBusy {
+			return fmt.Errorf("error: write coordinator busy for %s", c3Dir)
+		}
+		return runWithIO(argv, bytes.NewReader(data), stdinTerminal, w, stderr, false)
+	}
+	defer leader.Close()
+	resp := leader.Serve(req, func(queued coord.Request) coord.Response {
+		return runQueuedRequest(queued)
+	})
+	writeCoordinatorResponse(resp, w, stderr)
+	if resp.Error != "" {
+		return fmt.Errorf("%s", resp.Error)
+	}
+	return nil
+}
+
+func runQueuedRequest(req coord.Request) coord.Response {
+	var stdout, stderr bytes.Buffer
+	oldMode, hadMode := os.LookupEnv("C3X_MODE")
+	if req.C3XMode != "" {
+		_ = os.Setenv("C3X_MODE", req.C3XMode)
+	} else {
+		_ = os.Unsetenv("C3X_MODE")
+	}
+	oldWD, wdErr := os.Getwd()
+	if req.CWD != "" {
+		_ = os.Chdir(req.CWD)
+	}
+	err := runWithIO(req.Argv, bytes.NewReader(req.Stdin), req.StdinTerminal, &stdout, &stderr, false)
+	if req.CWD != "" && wdErr == nil {
+		_ = os.Chdir(oldWD)
+	}
+	if hadMode {
+		_ = os.Setenv("C3X_MODE", oldMode)
+	} else {
+		_ = os.Unsetenv("C3X_MODE")
+	}
+	resp := coord.Response{Stdout: stdout.String(), Stderr: stderr.String()}
+	if err != nil {
+		resp.Error = err.Error()
+	}
+	return resp
+}
+
+func writeCoordinatorResponse(resp coord.Response, w io.Writer, stderr io.Writer) {
+	if resp.Stdout != "" {
+		_, _ = io.WriteString(w, resp.Stdout)
+	}
+	if resp.Stderr != "" {
+		_, _ = io.WriteString(stderr, resp.Stderr)
+	}
+}
+
+func readCoordinatorStdin(stdin io.Reader, stdinTerminal bool) ([]byte, error) {
+	if stdinTerminal || stdin == nil {
+		return nil, nil
+	}
+	return io.ReadAll(stdin)
+}
+
 // runCommand dispatches to the appropriate command handler.
-func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) error {
+func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader, stdinTerminal bool, w io.Writer) error {
 	projectDir := config.ProjectDir(c3Dir)
 	mutating := commandMutatesCanonical(opts)
 
@@ -389,20 +505,19 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) err
 		if len(opts.Args) >= 1 {
 			entityID = opts.Args[0]
 		}
-		stat, _ := os.Stdin.Stat()
-		if (stat.Mode() & os.ModeCharDevice) != 0 {
+		if stdinTerminal {
 			return fmt.Errorf("error: no input on stdin\nhint: pipe content: echo '...' | c3x write <id>, or: c3x read <id> | c3x write <id>")
 		}
 		var content []byte
-		content, err = io.ReadAll(os.Stdin)
+		content, err = io.ReadAll(stdin)
 		if err != nil {
 			return fmt.Errorf("error: reading stdin: %w", err)
 		}
 		err = cmd.RunWrite(cmd.WriteOptions{Store: s, ID: entityID, Section: opts.Section, Content: string(content)}, w)
 	case "add":
-		err = runAdd(opts, s, w)
+		err = runAdd(opts, s, stdin, stdinTerminal, w)
 	case "set":
-		err = runSet(opts, s, c3Dir, w)
+		err = runSet(opts, s, c3Dir, stdin, stdinTerminal, w)
 	case "wire", "unwire":
 		err = runWire(opts, s, w)
 	case "lookup":
@@ -553,11 +668,10 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) err
 			if len(opts.Args) >= 2 {
 				id = opts.Args[1]
 			}
-			stat, _ := os.Stdin.Stat()
-			if (stat.Mode() & os.ModeCharDevice) != 0 {
+			if stdinTerminal {
 				return fmt.Errorf("error: no input on stdin\nhint: pipe content: cat section.md | c3x migrate repair <id> --section <name>")
 			}
-			content, readErr := io.ReadAll(os.Stdin)
+			content, readErr := io.ReadAll(stdin)
 			if readErr != nil {
 				return fmt.Errorf("error: reading stdin: %w", readErr)
 			}
@@ -582,6 +696,8 @@ func commandMutatesCanonical(opts cmd.Options) bool {
 	switch opts.Command {
 	case "write", "add", "set", "wire", "unwire":
 		return true
+	case "import", "repair", "migrate-legacy":
+		return !opts.DryRun
 	case "delete":
 		return !opts.DryRun
 	case "migrate":
@@ -589,6 +705,10 @@ func commandMutatesCanonical(opts cmd.Options) bool {
 			return false
 		}
 		return !opts.DryRun
+	case "sync":
+		return len(opts.Args) >= 1 && opts.Args[0] == "export"
+	case "check":
+		return opts.Fix
 	default:
 		return false
 	}
@@ -608,7 +728,7 @@ func runCache(opts cmd.Options, c3Dir string, w io.Writer) error {
 	}
 }
 
-func runAdd(opts cmd.Options, s *store.Store, w io.Writer) error {
+func runAdd(opts cmd.Options, s *store.Store, stdin io.Reader, stdinTerminal bool, w io.Writer) error {
 	entityType := ""
 	slug := ""
 	if len(opts.Args) >= 1 {
@@ -619,23 +739,22 @@ func runAdd(opts cmd.Options, s *store.Store, w io.Writer) error {
 	}
 
 	// Read body from stdin
-	stat, _ := os.Stdin.Stat()
-	if (stat.Mode() & os.ModeCharDevice) != 0 {
+	if stdinTerminal {
 		return fmt.Errorf("error: c3x add requires body content via stdin\nhint: cat body.md | c3x add <type> <slug>\nhint: run 'c3x schema <type>' to see required sections")
 	}
 
 	if opts.DryRun {
-		return cmd.RunAddDryRun(entityType, slug, s, opts.Container, opts.Feature, os.Stdin, w)
+		return cmd.RunAddDryRun(entityType, slug, s, opts.Container, opts.Feature, stdin, w)
 	}
 
 	format := cmd.FormatHuman
 	if opts.JSON {
 		format = cmd.ResolveFormat(opts.JSONExplicit, os.Getenv("C3X_MODE") == "agent")
 	}
-	return cmd.RunAddFormatted(entityType, slug, s, opts.Container, opts.Feature, os.Stdin, w, format)
+	return cmd.RunAddFormatted(entityType, slug, s, opts.Container, opts.Feature, stdin, w, format)
 }
 
-func runSet(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) error {
+func runSet(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader, stdinTerminal bool, w io.Writer) error {
 	id := ""
 	value := ""
 	if len(opts.Args) >= 1 {
@@ -651,11 +770,10 @@ func runSet(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) error {
 		}
 	}
 	if opts.Stdin {
-		stat, _ := os.Stdin.Stat()
-		if (stat.Mode() & os.ModeCharDevice) != 0 {
+		if stdinTerminal {
 			return fmt.Errorf("error: --stdin requires piped input\nhint: echo '{\"fields\":{...}}' | c3x set <id> --stdin")
 		}
-		data, err := io.ReadAll(os.Stdin)
+		data, err := io.ReadAll(stdin)
 		if err != nil {
 			return fmt.Errorf("error: reading stdin: %w", err)
 		}

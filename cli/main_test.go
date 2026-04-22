@@ -6,10 +6,12 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/lagz0ne/c3-design/cli/cmd"
 	"github.com/lagz0ne/c3-design/cli/internal/content"
+	"github.com/lagz0ne/c3-design/cli/internal/coord"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
@@ -95,6 +97,82 @@ func TestRun_ListWithDB(t *testing.T) {
 	}
 	if !strings.Contains(buf.String(), "c3-0") {
 		t.Error("list should include c3-0")
+	}
+}
+
+func TestRun_ConcurrentMutationsUseShortLivedCoordinator(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	if err := coord.Cleanup(c3Dir); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("C3X_COORDINATOR_IDLE_MS", "75")
+
+	var wg sync.WaitGroup
+	errs := make(chan error, 2)
+	runSet := func(value string) {
+		defer wg.Done()
+		var buf bytes.Buffer
+		errs <- run([]string{"--c3-dir", c3Dir, "set", "c3-101", "goal", value}, &buf)
+	}
+
+	wg.Add(2)
+	go runSet("Handle API authentication requests plus sessions.")
+	go runSet("Handle API authentication requests plus tokens.")
+	wg.Wait()
+	close(errs)
+
+	for err := range errs {
+		if err != nil {
+			t.Fatalf("concurrent set failed: %v", err)
+		}
+	}
+
+	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	entity, err := s.GetEntity("c3-101")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(entity.Goal, "sessions") && !strings.Contains(entity.Goal, "tokens") {
+		t.Fatalf("goal was not updated by either concurrent mutation: %q", entity.Goal)
+	}
+}
+
+func TestRun_CoordinatorForwardsPipedInput(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	if err := coord.Cleanup(c3Dir); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("C3X_COORDINATOR_IDLE_MS", "10")
+
+	body := richComponentBody("auth", "Handle auth with forwarded stdin.")
+	var buf bytes.Buffer
+	err := runWithIO(
+		[]string{"--c3-dir", c3Dir, "write", "c3-101"},
+		strings.NewReader(body),
+		false,
+		&buf,
+		io.Discard,
+		true,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	entity, err := s.GetEntity("c3-101")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if entity.Goal != "Handle auth with forwarded stdin." {
+		t.Fatalf("stdin write did not update goal: %q", entity.Goal)
 	}
 }
 

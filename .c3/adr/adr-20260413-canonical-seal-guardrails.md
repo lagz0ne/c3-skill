@@ -1,6 +1,6 @@
 ---
 id: adr-20260413-canonical-seal-guardrails
-c3-seal: 90cef08e51d46b3e48d255092450ce10638bdee6f239af5a4a1c91c2b68cfa54
+c3-seal: 9f2dc8d7db4207419f6e996500d52f4a63fc9ee6dd64c870fda256deb0292b44
 title: canonical-seal-guardrails
 type: adr
 goal: Make canonical .c3 markdown safe to diff and merge by detecting manual edits and enforcing a verified reseal flow.
@@ -9,6 +9,7 @@ date: "2026-04-13"
 ---
 
 # Canonical Seal Guardrails
+
 ## Goal
 
 Make canonical .c3 markdown safe to diff and merge by detecting manual edits and enforcing a verified reseal flow.

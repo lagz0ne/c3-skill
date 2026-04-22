@@ -1,6 +1,6 @@
 ---
 id: adr-20260416-uplevel-strict-adrs
-c3-seal: 2238dcfda57bfb7136f933f74c5da2be8e5d7560c0d84a942cdaf2edaed962e2
+c3-seal: e629eeffc55ca995371334da9e109870253fc6c7b20c04b29c0989a86ec8229c
 title: uplevel-strict-adrs
 type: adr
 goal: Up-level strict documentation ADRs so they preserve design intent, enforcement details, migration behavior, risks, and verification evidence instead of acting as thin change markers.
@@ -19,6 +19,7 @@ affects:
 ---
 
 # uplevel-strict-adrs
+
 ## Goal
 
 Up-level strict documentation ADRs so they preserve design intent, enforcement details, migration behavior, risks, and verification evidence instead of acting as thin change markers.
@@ -47,6 +48,7 @@ Strict-related ADRs should record the decision matrix, enforcement surfaces, und
 | Skill boundary | Marked the skill as reference routing and moved enforcement authority to c3x output. | skills/c3/SKILL.md; skills/c3/references/change.md |
 | C3 component contracts | Updated CLI and skill components touched by the underlay change. | c3-103; c3-108; c3-113; c3-117; c3-201; c3-214; c3-2 |
 | Build reproducibility | Made scripts/build.sh force CGO_ENABLED=0 for all targets after local rebuild exposed a cgo -m64 failure. | scripts/build.sh; ref-cross-compiled-binary |
+
 ## Underlay C3 Changes
 
 | Underlay area | Exact C3 change | Verification evidence |
@@ -61,6 +63,7 @@ Strict-related ADRs should record the decision matrix, enforcement surfaces, und
 | Build wrapper | scripts/build.sh now sets CGO_ENABLED=0 for each cross-compile target so local rebuilds do not depend on host cgo compiler flags. | bash scripts/build.sh passed after the script change; ref-cross-compiled-binary How section updated. |
 | Mutation rollback | Dispatcher now snapshots .c3 before mutating commands and restores it when command handling, database close, or canonical export fails, making add adr all-or-nothing across cache and canonical markdown. | cli/main.go mutationSnapshot; cli/main_test.go TestRun_AddADRRollsBackWhenCanonicalExportFails. |
 | ADR creation completeness | c3x add adr now rejects thin ADR bodies and requires all ADR schema sections, table rows, and table columns before inserting the ADR entity. | cli/cmd/add.go validateADRCreationBody; cli/cmd/add_test.go TestRunAdd_AdrRequiresCompleteBody. |
+
 ## Enforcement Surfaces
 
 | Surface | Behavior | Evidence |
@@ -73,6 +76,7 @@ Strict-related ADRs should record the decision matrix, enforcement surfaces, und
 | Skill references | Route agents to c3x commands and CLI output instead of duplicating checklists. | skills/c3/SKILL.md; skills/c3/references/change.md |
 | mutating dispatcher rollback | Failed mutating commands restore the pre-command .c3 tree, including c3.db and canonical markdown, before returning the error. | cli/main.go; TestRun_AddADRRollsBackWhenCanonicalExportFails. |
 | c3x add adr completeness gate | Creation fails before insert when any ADR ledger section, required table row, or required table column is missing. | TestRunAdd_AdrRequiresCompleteBody. |
+
 ## Alternatives Considered
 
 | Alternative | Rejected because |
@@ -81,6 +85,7 @@ Strict-related ADRs should record the decision matrix, enforcement surfaces, und
 | Make ADR sections mandatory for every ADR | Too blunt for tiny decisions; strictness should come from workflow hints, review, and --include-adr validation until concrete semantic ADR validation is introduced. |
 | Only improve ADR template | Better starting file but weak repair loop; agents need schema/help/hints/failure guidance from the CLI after creation too. |
 | Put detailed prose in command help only | Help is discoverable, but schema output is the durable content contract used by add/set/write/check flows. |
+
 ## Risks
 
 | Risk | Mitigation | Verification |
@@ -92,6 +97,7 @@ Strict-related ADRs should record the decision matrix, enforcement surfaces, und
 | Agent mode leaks JSON again | New tests assert TOON-style ADR hints use help[n]; shared output tests still cover agent mode serialization. | go test ./cmd; rg json.NewEncoder cli --glob '!**/*_test.go' |
 | add adr partially creates work order | Mutating dispatcher rollback restores cache and canonical files when export fails after add succeeds internally. | go test -count=1 . -run TestRun_AddADRRollsBackWhenCanonicalExportFails. |
 | Thin ADR exists before decision detail | c3x add adr validates complete decision-ledger sections before insert instead of relying on later incremental fill. | go test ./cmd -run TestRunAdd_AdrRequiresCompleteBody. |
+
 ## Verification
 
 | Check | Result |

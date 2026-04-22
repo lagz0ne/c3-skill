@@ -5,6 +5,20 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.5.1] - 2026-04-22
+
+### Added
+
+- **Short-lived socket write coordinator** — mutating commands now route bursty concurrent writes through a per-`.c3` Unix socket leader that serializes requests for a short idle window, forwards argv/stdin/cwd/C3X mode, then exits. This reduces parallel agent write failures without requiring a long-running daemon.
+
+### Changed
+
+- **Runtime mutation dispatch now has coordinator bypass safety** — internal queued requests execute through the existing command path with coordinator forwarding disabled, preserving rollback/export behavior while avoiding recursive socket forwarding.
+
+### Fixed
+
+- **New coordinator files are mapped to runtime-support** — `cli/internal/coord/**` is now owned by `c3-108` so lookup, focused verify, and future change gates resolve correctly.
+
 ## [9.5.0] - 2026-04-22
 
 ### Added

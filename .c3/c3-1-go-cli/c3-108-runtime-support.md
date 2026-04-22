@@ -1,6 +1,6 @@
 ---
 id: c3-108
-c3-seal: 2f66220b9b010ff10467e68f9d98ce076920a34c610ca9cd6093c6a6b373b209
+c3-seal: ab80f21c52a4138da854eff84e6adae35554c5f7b269eda903c461d004762ae2
 title: runtime-support
 type: component
 category: foundation
@@ -9,6 +9,7 @@ goal: Provide CLI bootstrap, option parsing, output shaping, config resolution, 
 ---
 
 # runtime-support
+
 ## Goal
 
 Provide CLI bootstrap, option parsing, output shaping, config resolution, and human/agent presentation helpers.
@@ -21,6 +22,7 @@ Provide CLI bootstrap, option parsing, output shaping, config resolution, and hu
 | Role | Own runtime-support behavior inside the parent container without taking over sibling responsibilities. |
 | Boundary | Keep runtime-support decisions inside this component and escalate container-wide policy to the parent. |
 | Collaboration | Coordinate with cited governance and adjacent components before changing the contract. |
+
 ## Purpose
 
 Own CLI runtime behavior shared across commands: argument parsing, environment mode detection, serialization selection, help-hint rendering, and human versus agent presentation. It does not own command-specific business logic or C3 document mutation semantics.
@@ -33,6 +35,7 @@ Own CLI runtime behavior shared across commands: argument parsing, environment m
 | Inputs | Accept argv flags such as --json and --continue, environment values such as C3X_MODE=agent, and command result structs or slices that need serialization. | c3-1 |
 | State / data | Preserve mode selection as process-local runtime state; do not persist output-mode decisions into .c3/ docs. | c3-1 |
 | Shared dependencies | Use cli/internal/toon for agent serialization and Go JSON encoding only for non-agent explicit JSON output. | c3-1 |
+
 ## Business Flow
 
 | Aspect | Detail | Reference |
@@ -41,6 +44,7 @@ Own CLI runtime behavior shared across commands: argument parsing, environment m
 | Primary path | Parse flags, detect C3X_MODE=agent, verify canonical state, auto-repair recoverable cache/seal drift, route agent machine output through TOON, and keep human output readable by default. | adr-20260421-self-healing-preflight |
 | Alternate paths | Explicit lifecycle commands such as migrate and sync export keep command-owned control of repair/export sequencing; normal read and mutation commands no longer require a separate repair handoff for recoverable drift. | adr-20260421-self-healing-preflight |
 | Failure behavior | If automatic repair cannot prove canonical truth, stop before dispatch with the auto-repair failure and original verification error so the user sees the real blocker instead of a generic repair instruction. | adr-20260421-self-healing-preflight |
+
 ## Governance
 
 | Reference | Type | Governs | Precedence | Notes |
@@ -50,6 +54,7 @@ Own CLI runtime behavior shared across commands: argument parsing, environment m
 | adr-20260415-force-agent-toon-output | adr | Systematic sweep of command wrappers and direct encoders that bypassed writeJSON. | Shared output helpers beat command-local JSON encoding. | add, migrate dry-run, and legacy check now use TOON-aware structured output in agent mode. |
 | adr-20260415-mutation-preverify-repair-bypass | adr | Dispatcher preverify gate for broken canonical docs. | Mutating commands need command-local validation and export path access; read-only commands stay gated. | Prevents repair catch-22 for add, write, set, wire, delete, codemap, and migrate. |
 | adr-20260421-self-healing-preflight | adr | Dispatcher preflight self-heals recoverable canonical/cache drift before normal command dispatch. | New self-healing policy supersedes older read-only broken-canonical blocking wording. | repair remains explicit, but normal operations attempt it automatically before failing. |
+
 ## Contract
 
 | Surface | Direction | Contract | Boundary | Evidence |
@@ -63,6 +68,8 @@ Own CLI runtime behavior shared across commands: argument parsing, environment m
 | self-healing preflight | IN/OUT | Normal store-backed commands verify canonical .c3 state and automatically run repair for recoverable cache or seal drift before dispatch; only unrecoverable repair failure stops the command. | c3-108 owns dispatch timing; c3-119 owns repair mechanics. | cli/main.go preflight branch; cli/main_test.go TestRun_ListSelfHealsBrokenSeal and TestRun_CommandsSelfHealBrokenCanonicalPreverify. |
 | verify include-adr dispatch | IN/OUT | The existing --include-adr parser flag is passed into verify, repair, and preflight verify without adding a second mode or command-specific parser path. | c3-108 runtime dispatch boundary; c3-119 owns lifecycle verification behavior. | cli/main.go VerifyOptions and RepairOptions construction; go test . -run TestRun_Verify. |
 | verify only dispatch | IN/OUT | The repeatable --only parser flag is passed into verify, repair, and preflight verify so command dispatch can select a focused canonical doc set without a separate command. | c3-108 runtime parsing and dispatch boundary; c3-119 owns lifecycle sync behavior and c3-113 owns scoped schema validation. | cli/cmd/options.go; cli/main.go; cli/cmd/options_test.go TestParseArgs. |
+| short-lived write coordinator | IN/OUT | Mutating commands may forward argv, stdin, cwd, and C3X_MODE to a short-lived per-.c3 Unix socket leader; the leader serializes requests through the internal command path with coordinator forwarding disabled. | c3-108 owns runtime dispatch and request forwarding; command-specific mutation semantics remain with sibling command components. | cli/main.go runThroughCoordinator and runQueuedRequest; cli/internal/coord/**; cli/main_test.go TestRun_ConcurrentMutationsUseShortLivedCoordinator and TestRun_CoordinatorForwardsPipedInput. |
+
 ## Change Safety
 
 | Risk | Trigger | Detection | Required Verification |
@@ -74,6 +81,7 @@ Own CLI runtime behavior shared across commands: argument parsing, environment m
 | TOON shape regression | Generic slice or object output becomes unreadable for agents. | cli/cmd/output_test.go checks object and slice TOON output. | Run go test ./cmd -run TestWriteJSON_Agent. |
 | Partial mutation | A mutating command updates local cache but canonical export fails afterward. | Simulate export failure during add adr and inspect both canonical files and c3.db for rollback. | go test -count=1 . -run TestRun_AddADRRollsBackWhenCanonicalExportFails. |
 | Auto-repair hides real corruption | A normal command sees broken canonical seals or stale cache and repair cannot prove the tree safe. | Command returns auto-repair failed with the original verification error instead of continuing. | go test -count=1 . -run TestRun_ListSelfHealsBrokenSeal; go test ./.... |
+
 ## Derived Materials
 
 | Material | Must derive from | Allowed variance | Evidence |

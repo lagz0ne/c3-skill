@@ -1,7 +1,7 @@
 ---
 id: c3-104
 c3-version: 4
-c3-seal: efafbb898288407b8968b7a07e472fd99aede72c7db5cb8b85151e3a209c857a
+c3-seal: 3a6b8813a713136a534c4e5eae10e13634c9fee4f1f249775eb78f86b9d80202
 title: wiring
 type: component
 category: foundation
@@ -11,6 +11,7 @@ summary: Reads uses/via fields from frontmatter, resolves IDs, reports uncited r
 ---
 
 # wiring
+
 ## Goal
 
 Track and validate entity citations between components and refs (`uses`/`via` frontmatter fields).
@@ -23,6 +24,7 @@ Track and validate entity citations between components and refs (`uses`/`via` fr
 | Role | Own wiring behavior inside the parent container without taking over sibling responsibilities. |
 | Boundary | Keep wiring decisions inside this component and escalate container-wide policy to the parent. |
 | Collaboration | Coordinate with cited governance and adjacent components before changing the contract. |
+
 ## Purpose
 
 Provide durable agent-ready documentation for wiring so generated code, tests, and follow-up docs preserve ownership, boundaries, governance, and verification evidence.
@@ -35,6 +37,7 @@ Provide durable agent-ready documentation for wiring so generated code, tests, a
 | Inputs | Accept only the files, commands, data, or calls that belong to wiring ownership. | c3-1 |
 | State / data | Preserve explicit state boundaries and avoid hidden cross-component ownership. | c3-1 |
 | Shared dependencies | Use lower-layer helpers and cited references instead of duplicating shared policy. | c3-1 |
+
 ## Business Flow
 
 | Aspect | Detail | Reference |
@@ -43,23 +46,27 @@ Provide durable agent-ready documentation for wiring so generated code, tests, a
 | Primary path | Follow the component goal, honor parent fit, and emit behavior through the documented contract. | c3-1 |
 | Alternate paths | When a request falls outside wiring ownership, hand it to the parent or sibling component. | c3-1 |
 | Failure behavior | Surface mismatch through check, tests, lookup, or review evidence before derived work ships. | c3-1 |
+
 ## Governance
 
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-1 | policy | Governs wiring behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
+
 ## Contract
 
 | Surface | Direction | Contract | Boundary | Evidence |
 | --- | --- | --- | --- | --- |
 | wiring input | IN | Callers must provide context that matches the component goal and parent fit. | c3-1 boundary | c3x lookup plus targeted tests or review. |
 | wiring output | OUT | Derived code, docs, and tests must preserve the documented behavior and governance. | c3-1 boundary | c3x check and project test suite. |
+
 ## Change Safety
 
 | Risk | Trigger | Detection | Required Verification |
 | --- | --- | --- | --- |
 | Contract drift | Goal, boundary, or derived material changes without matching component docs. | Compare Goal, Parent Fit, Contract, and Derived Materials. | Run c3x check and relevant project tests. |
 | Governance drift | Cited references, rules, or parent responsibilities change. | Re-read Governance rows and parent container docs. | Run c3x verify plus targeted lookup for changed files. |
+
 ## Derived Materials
 
 | Material | Must derive from | Allowed variance | Evidence |

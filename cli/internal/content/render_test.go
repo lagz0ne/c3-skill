@@ -159,6 +159,36 @@ func TestRender_Blockquote(t *testing.T) {
 	}
 }
 
+// TestRender_SiblingHeadingsHaveBlankLine guards against the regression
+// where two top-level headings emitted without a blank line between them
+// (e.g. an H1 with no body followed by H2 sections).
+func TestRender_SiblingHeadingsHaveBlankLine(t *testing.T) {
+	nodes := []*store.Node{
+		rootNode(1, "heading", 1, 0, "Title"),
+		rootNode(2, "heading", 2, 1, "Goal"),
+		childNode(3, 2, "paragraph", 0, 0, "Body."),
+	}
+	want := "# Title\n\n## Goal\n\nBody.\n"
+	if got := RenderMarkdown(nodes); got != want {
+		t.Errorf("got:\n%q\nwant:\n%q", got, want)
+	}
+}
+
+// TestRender_BlockToHeading guards against a list/table/code_block being
+// directly abutted to a following heading.
+func TestRender_BlockToHeading(t *testing.T) {
+	nodes := []*store.Node{
+		rootNode(1, "heading", 2, 0, "A"),
+		childNode(2, 1, "list", 0, 0, ""),
+		childNode(3, 2, "list_item", 0, 0, "x"),
+		rootNode(4, "heading", 2, 1, "B"),
+	}
+	want := "## A\n\n- x\n\n## B\n"
+	if got := RenderMarkdown(nodes); got != want {
+		t.Errorf("got:\n%q\nwant:\n%q", got, want)
+	}
+}
+
 func TestRender_NestedList(t *testing.T) {
 	nodes := []*store.Node{
 		rootNode(1, "list", 0, 0, ""),

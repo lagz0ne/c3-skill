@@ -177,32 +177,35 @@ func TestRun_ListRebuildsMissingDatabaseFromCanonicalFiles(t *testing.T) {
 	}
 }
 
-func TestRun_ListSelfHealsBrokenSeal(t *testing.T) {
+func TestRun_ListDoesNotOverwriteCanonicalEdit(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
 	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", c3Dir}, &bytes.Buffer{}); err != nil {
 		t.Fatal(err)
 	}
 
 	readme := filepath.Join(c3Dir, "README.md")
-	data, err := os.ReadFile(readme)
+	orig, err := os.ReadFile(readme)
 	if err != nil {
 		t.Fatal(err)
 	}
-	data = bytes.Replace(data, []byte("## Goal\n\nTest."), []byte("## Goal\n\nSelf healed."), 1)
-	if err := os.WriteFile(readme, data, 0o644); err != nil {
+	edited := bytes.Replace(orig, []byte("## Goal\n\nTest."), []byte("## Goal\n\nUser edit."), 1)
+	if err := os.WriteFile(readme, edited, 0o644); err != nil {
 		t.Fatal(err)
 	}
 
 	var buf bytes.Buffer
 	if err := run([]string{"--c3-dir", c3Dir, "list", "--json"}, &buf); err != nil {
-		t.Fatalf("expected list to self-heal broken seal, got %v", err)
+		t.Fatalf("list should succeed even with drifted canonical, got %v", err)
+	}
+	after, err := os.ReadFile(readme)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(after, edited) {
+		t.Fatalf("list must not overwrite user edit:\nwant:\n%s\ngot:\n%s", edited, after)
 	}
 	if !strings.Contains(buf.String(), "c3-0") {
-		t.Fatalf("expected list output after self-heal, got %q", buf.String())
-	}
-	var verify bytes.Buffer
-	if err := run([]string{"--c3-dir", c3Dir, "verify"}, &verify); err != nil {
-		t.Fatalf("expected repaired canonical tree to verify, got %v\n%s", err, verify.String())
+		t.Fatalf("expected list output, got %q", buf.String())
 	}
 }
 
@@ -527,17 +530,16 @@ func TestRun_CommandsSelfHealBrokenCanonicalPreverify(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// Read-only commands must NOT mutate canonical. They warn and proceed.
 	if err := run([]string{"--c3-dir", c3Dir, "list"}, &bytes.Buffer{}); err != nil {
-		t.Fatalf("read-only command should self-heal broken canonical docs, got %v", err)
+		t.Fatalf("read-only command should proceed despite broken canonical, got %v", err)
 	}
-
-	data, err = os.ReadFile(readmePath)
+	postRead, err := os.ReadFile(readmePath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	broken = strings.Replace(string(data), "c3-seal:", "c3-seal: broken-", 1)
-	if err := os.WriteFile(readmePath, []byte(broken), 0644); err != nil {
-		t.Fatal(err)
+	if string(postRead) != broken {
+		t.Fatalf("read-only command must not mutate canonical; got diff:\nbefore:\n%s\nafter:\n%s", broken, string(postRead))
 	}
 
 	body := "Updated through section repair.\n"
@@ -925,6 +927,88 @@ func TestRun_WireRemoveFlag(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+// TestRun_ReadOnlyCommandsAreIdempotent asserts read/lookup/impact/query/list
+// do not mutate any canonical .c3/ file, even when drift exists.
+func TestRun_ReadOnlyCommandsAreIdempotent(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", c3Dir}, &bytes.Buffer{}); err != nil {
+		t.Fatal(err)
+	}
+
+	// Introduce drift by breaking a seal.
+	readmePath := filepath.Join(c3Dir, "README.md")
+	orig, err := os.ReadFile(readmePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	broken := strings.Replace(string(orig), "c3-seal:", "c3-seal: broken-", 1)
+	if err := os.WriteFile(readmePath, []byte(broken), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Snapshot the whole .c3/ tree.
+	before := snapshotDir(t, c3Dir)
+
+	readOnly := [][]string{
+		{"list"},
+		{"read", "c3-0"},
+		{"query", "api"},
+		{"impact", "ref-jwt"},
+		{"lookup", "nonexistent/path.ts"},
+		{"graph", "c3-0"},
+		{"status"},
+		{"codemap"},
+		{"schema", "component"},
+	}
+	for _, args := range readOnly {
+		full := append([]string{"--c3-dir", c3Dir}, args...)
+		if err := run(full, &bytes.Buffer{}); err != nil {
+			// Some may legitimately error (e.g. nonexistent lookup) — that's fine.
+			// What matters is they don't mutate canonical.
+			_ = err
+		}
+	}
+
+	after := snapshotDir(t, c3Dir)
+	for path, beforeHash := range before {
+		if path == filepath.Join(c3Dir, "c3.db") {
+			continue // DB is the local cache, allowed to change
+		}
+		if afterHash, ok := after[path]; !ok {
+			t.Errorf("canonical file disappeared: %s", path)
+		} else if afterHash != beforeHash {
+			t.Errorf("canonical file mutated by read-only command: %s", path)
+		}
+	}
+	for path := range after {
+		if _, ok := before[path]; !ok && path != filepath.Join(c3Dir, "c3.db") {
+			t.Errorf("read-only commands created canonical file: %s", path)
+		}
+	}
+}
+
+func snapshotDir(t *testing.T, dir string) map[string]string {
+	t.Helper()
+	out := map[string]string{}
+	if err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		data, readErr := os.ReadFile(path)
+		if readErr != nil {
+			return readErr
+		}
+		out[path] = string(data)
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	return out
 }
 
 // setupC3DB creates a temp .c3/ dir with a SQLite DB containing a minimal fixture.

@@ -40,22 +40,23 @@ Normal users rarely need this after initial setup.`,
 	},
 	{
 		Name:     "verify",
-		OneLiner: "Validate canonical .c3/ truth and refresh local cache if needed",
-		Help: `Usage: c3x verify [--include-adr] [--only <id-or-path-or-glob>]
+		OneLiner: "Validate canonical .c3/ truth; rebuild cache if needed",
+		Help: `Usage: c3x verify [--include-adr] [--only <id>] [--only-touched [--since <ref>]]
 
-Verify that canonical .c3/ markdown is sealed, structurally valid, and in sync
-with the local cache. If c3.db is missing or stale, verify rebuilds it from the
-canonical text automatically.
+Verifies canonical markdown is sealed, structurally valid, and in sync with
+the local cache. Rebuilds c3.db from canonical if missing/stale.
 
-ADRs are excluded by default so in-progress work orders do not block same-branch
-work. Use --include-adr when finishing ADR work or before release/commit.
+ADRs skipped by default (in-progress work orders shouldn't block same-branch
+reads). Add --include-adr before release/commit.
 
-Use --only to verify a focused set of canonical docs by entity ID or path. Repeat
---only for multiple docs.
+  --only <id>        Scope to specific entities/paths (repeatable)
+  --only-touched     Scope to entities affected by uncommitted changes.
+                     Source edits → components via codemap; canonical edits
+                     → entity id via frontmatter.
+  --since <ref>      Widen --only-touched window (e.g. --since main)
+  --include-adr      Include ADR entities
 
-Use this in CI and pre-commit.
-
-User rule: if you want confidence before commit, run c3x verify --include-adr.`,
+Use in CI + pre-commit. Before commit: c3x verify --include-adr.`,
 	},
 	{
 		Name:     "repair",
@@ -130,7 +131,7 @@ Topology view with system goal, entity goals, file coverage, and ref usage.
 	{
 		Name:     "check",
 		OneLiner: "Validate docs, schema, code refs, consistency",
-		Help: `Usage: c3x check [--json] [--include-adr] [--fix]
+		Help: `Usage: c3x check [--json] [--include-adr] [--fix] [--only <id>] [--rule <rule-id>]
 
 Three-layer validation (ADRs excluded by default; use --include-adr to validate them):
   Layer 1: Broken links, orphans, duplicates, missing parents
@@ -138,8 +139,11 @@ Three-layer validation (ADRs excluded by default; use --include-adr to validate 
   Layer 3: Code refs exist on disk, entity IDs in graph, cite consistency
 
 Options:
-  --fix            Auto-fix entity/ref references that match by title (e.g., "API" → c3-1)
-  --include-adr    Include ADR entities in validation`,
+  --fix              Auto-fix entity/ref references that match by title (e.g., "API" → c3-1)
+  --include-adr      Include ADR entities in validation
+  --only <id>        Scope check to specific entity IDs (repeatable)
+  --rule <rule-id>   Scope check to the set of entities that cite a rule (repeatable).
+                     Errors if the rule has no citers. Composes with --only as union.`,
 	},
 	{
 		Name:     "add",
@@ -382,21 +386,41 @@ Examples:
   c3x diff --mark abc123      # mark changes as committed`,
 	},
 	{
-		Name:     "impact",
-		Args:     "<entity-id>",
-		OneLiner: "Transitive impact analysis (who depends on this?)",
-		Help: `Usage: c3x impact <entity-id> [--depth N] [--json]
+		Name:     "adr",
+		Args:     "[<slug>]",
+		OneLiner: "Scaffold an ADR from a git diff",
+		Help: `Usage: c3x adr --from-diff [<slug>] [--since <ref>]
 
-Find all entities affected by changes to the given entity.
-Traverses reverse 'uses' + forward 'affects' relationships.
+Emits an ADR scaffold to stdout. Touched files → components via codemap.
+affects: seeded from those components' parents. Parent Delta defaults to
+no-delta; override if responsibility changed.
 
-Options:
-  --depth N   Max traversal depth (default: 3)
-  --json      Machine-readable output
+  --from-diff      Required. Source from git diff.
+  --since <ref>    Diff window (default: uncommitted = HEAD + staged + untracked).
 
 Examples:
-  c3x impact c3-101            # what breaks if auth changes?
-  c3x impact ref-jwt --depth 5 # deep impact of JWT ref`,
+  c3x adr --from-diff refactor-auth | c3x add adr refactor-auth
+  c3x adr --from-diff refactor-auth --since main > /tmp/adr.md`,
+	},
+	{
+		Name:     "impact",
+		Args:     "<entity-id>",
+		OneLiner: "Who depends on this? (docs + optional grep)",
+		Help: `Usage: c3x impact <entity-id> [--depth N] [--include-code] [--json]
+
+Traverses 'uses' (reverse) + 'affects' (forward) relationships.
+
+--include-code: merge grep-derived callers. Undocumented ones flagged [uncited].
+Caller files with no component owner surface as codemap gaps.
+
+  --depth N         Max depth (default 3)
+  --include-code    Add grep-derived callers
+  --json            Machine-readable
+
+Examples:
+  c3x impact c3-101
+  c3x impact ref-jwt --depth 5
+  c3x impact c3-201 --include-code`,
 	},
 	{
 		Name:     "export",

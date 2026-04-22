@@ -28,6 +28,7 @@ c3-108:
   - cli/go.mod
   - cli/go.sum
   - cli/internal/config/**
+  - cli/internal/coord/**
   - cli/internal/toon/**
   - cli/main.go
   - cli/main_test.go

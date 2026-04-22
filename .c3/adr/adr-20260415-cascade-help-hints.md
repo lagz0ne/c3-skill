@@ -1,6 +1,6 @@
 ---
 id: adr-20260415-cascade-help-hints
-c3-seal: 9f6b7ab567a3edf7717eee8fd3ab7f42b61dc886dac29db0ff1518a7399db8af
+c3-seal: 5a0a8c450434f86bec5d4b86bb5c94bf9437aa6001a5a34d0326ce10f4e00270
 title: cascade-help-hints
 type: adr
 goal: Inject result-aware cascade steering into c3x agent-mode help hints so component-level changes force parent/container delta decisions before completion.
@@ -19,6 +19,7 @@ affects:
 ---
 
 # Cascade Help Hints
+
 ## Goal
 
 Inject result-aware cascade steering into c3x agent-mode help hints so component-level changes force parent/container delta decisions before completion.
@@ -30,6 +31,7 @@ Inject result-aware cascade steering into c3x agent-mode help hints so component
 - Make component hints parent-first: read/graph container before component detail.
 - Make new component hints explicitly top-down: update container Components/Responsibilities before component detail is considered done.
 - Tighten skill change flow with a Contract Cascade Gate and mandatory Parent Delta evidence.
+
 ## Parent Delta
 
 updated: c3-1 Go CLI responsibility remains valid; command outputs now steer architecture integration. c3-2 Claude Skill operation guidance now requires top-down parent context and Parent Delta evidence. No new component added.

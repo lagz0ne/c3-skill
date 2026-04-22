@@ -1,7 +1,7 @@
 ---
 id: c3-101
 c3-version: 4
-c3-seal: 45fdb9e24f29e1fe6b32266360e261d56ab50104b72a1157ddbebffe85eba449
+c3-seal: 0657d2e64fc951a9bb3f6640bccd2caf869f547676c2b020cb9681d2d191c831
 title: frontmatter
 type: component
 category: foundation
@@ -11,6 +11,7 @@ summary: Provides Get/Set access to frontmatter fields; used by every command th
 ---
 
 # frontmatter
+
 ## Goal
 
 Parse and write YAML frontmatter embedded in `.c3/` markdown files.
@@ -23,6 +24,7 @@ Parse and write YAML frontmatter embedded in `.c3/` markdown files.
 | Role | Own frontmatter behavior inside the parent container without taking over sibling responsibilities. |
 | Boundary | Keep frontmatter decisions inside this component and escalate container-wide policy to the parent. |
 | Collaboration | Coordinate with cited governance and adjacent components before changing the contract. |
+
 ## Purpose
 
 Provide durable agent-ready documentation for frontmatter so generated code, tests, and follow-up docs preserve ownership, boundaries, governance, and verification evidence.
@@ -35,6 +37,7 @@ Provide durable agent-ready documentation for frontmatter so generated code, tes
 | Inputs | Accept only the files, commands, data, or calls that belong to frontmatter ownership. | c3-1 |
 | State / data | Preserve explicit state boundaries and avoid hidden cross-component ownership. | c3-1 |
 | Shared dependencies | Use lower-layer helpers and cited references instead of duplicating shared policy. | c3-1 |
+
 ## Business Flow
 
 | Aspect | Detail | Reference |
@@ -43,23 +46,27 @@ Provide durable agent-ready documentation for frontmatter so generated code, tes
 | Primary path | Follow the component goal, honor parent fit, and emit behavior through the documented contract. | c3-1 |
 | Alternate paths | When a request falls outside frontmatter ownership, hand it to the parent or sibling component. | c3-1 |
 | Failure behavior | Surface mismatch through check, tests, lookup, or review evidence before derived work ships. | c3-1 |
+
 ## Governance
 
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-1 | policy | Governs frontmatter behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
+
 ## Contract
 
 | Surface | Direction | Contract | Boundary | Evidence |
 | --- | --- | --- | --- | --- |
 | frontmatter input | IN | Callers must provide context that matches the component goal and parent fit. | c3-1 boundary | c3x lookup plus targeted tests or review. |
 | frontmatter output | OUT | Derived code, docs, and tests must preserve the documented behavior and governance. | c3-1 boundary | c3x check and project test suite. |
+
 ## Change Safety
 
 | Risk | Trigger | Detection | Required Verification |
 | --- | --- | --- | --- |
 | Contract drift | Goal, boundary, or derived material changes without matching component docs. | Compare Goal, Parent Fit, Contract, and Derived Materials. | Run c3x check and relevant project tests. |
 | Governance drift | Cited references, rules, or parent responsibilities change. | Re-read Governance rows and parent container docs. | Run c3x verify plus targeted lookup for changed files. |
+
 ## Derived Materials
 
 | Material | Must derive from | Allowed variance | Evidence |

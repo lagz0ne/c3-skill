@@ -1,6 +1,6 @@
 ---
 id: adr-20260415-strict-component-docs-semantic-tightening
-c3-seal: 51d02c04f41dde4b7ddd6e1fef054976bda0fb5fb31bb55e98079e870618a6b5
+c3-seal: 0cd65ec6c06c64a0eb62d33ae05b5f4291d5dfce6da6372de1aeac8f5626f6a5
 title: strict-component-docs-semantic-tightening
 type: adr
 goal: Tighten strict component documentation so valid-looking tables cannot pass with ungrounded references, weak evidence, overused N.A values, or repeated boilerplate.
@@ -9,6 +9,7 @@ date: "2026-04-15"
 ---
 
 # strict-component-docs-semantic-tightening
+
 ## Goal
 
 Tighten strict component documentation so valid-looking tables cannot pass with ungrounded references, weak evidence, overused N.A values, or repeated boilerplate.
@@ -29,6 +30,7 @@ Add semantic validation on top of section-shape validation:
 | No all-N.A rows | A row with every cell non-applicable carries no contract. | Every column says N.A - none. |
 | No repeated boilerplate | Duplicate filler across table cells should fail. | Same generic verification copied into unrelated rows. |
 | Derived materials must cite governing sections | Future code/docs/tests/prompts must derive from concrete component sections. | Derivation names component docs with no section. |
+
 ## Underlay C3 Changes
 
 | Underlay area | Exact C3 change | Verification evidence |
@@ -43,6 +45,7 @@ Add semantic validation on top of section-shape validation:
 | Duplicate boilerplate rejection | Repeated semantic table content is tracked and rejected across cells where it hides missing detail. | cli/cmd/strict_component_docs.go; cli/cmd/strict_component_docs_test.go |
 | Derived-material grounding | Derived Materials rows must cite strict sections such as Goal, Governance, Contract, or Change Safety. | TestStrictComponentDoc_RejectsUngroundedDerivation |
 | Migration compatibility | strictMigrationComponentBody must emit docs that satisfy the semantic checks or become grouped blockers. | cli/cmd/migrate_v2.go; cli/cmd/migrate_v2_test.go |
+
 ## Enforcement Surfaces
 
 | Surface | Behavior | Evidence |
@@ -51,6 +54,7 @@ Add semantic validation on top of section-shape validation:
 | Check/verify | Reports semantic errors as component validation failures. | cli/cmd/check_enhanced.go |
 | Add/write/set | Prevents storing valid-looking but weak component docs. | cli/cmd/add.go; cli/cmd/write.go; cli/cmd/set.go |
 | Migration | Converts empty and legacy docs to strict form; blocks unrecoverable weak content before writing. | cli/cmd/migrate_v2.go |
+
 ## Alternatives Considered
 
 | Alternative | Rejected because |
@@ -59,6 +63,7 @@ Add semantic validation on top of section-shape validation:
 | Only lint weak tokens | Weak tokens are not the only low-content pattern. |
 | Allow plain N.A | Agents cannot tell whether the author considered the field or skipped it. |
 | Keep migration permissive | Weak migrated docs would become the new source for generated code and prompts. |
+
 ## Migration Impact
 
 Migration must produce semantically valid strict docs for empty or legacy components. If generated content cannot pass these checks, migration should report grouped blockers and avoid partial writes. Existing docs that were shape-valid but semantically weak need targeted edits rather than validator bypasses.
@@ -71,6 +76,7 @@ Migration must produce semantically valid strict docs for empty or legacy compon
 | Migration creates repetitive valid-looking rows | Semantic checks run against generated migration output before writes. | cli/cmd/migrate_v2_test.go |
 | Future agents forget why strictness exists | This ADR records the quality failure modes and enforcement surfaces directly. | c3x read adr-20260415-strict-component-docs-semantic-tightening --full |
 | Underlay predicates drift | Keep this ADR synchronized when strict regexes, enums, row counts, or semantic validators change. | c3x lookup cli/cmd/strict_component_docs.go; go test ./... |
+
 ## Verification
 
 | Check | Command or file |

@@ -1,7 +1,7 @@
 ---
 id: c3-1
 c3-version: 4
-c3-seal: de0a6bcfd0f72b635fd9387ef12c2baf29763d42ac4d3e51f1ded987bd33607a
+c3-seal: 6a910182877336db67681b7103c62a6a75438d6a0629f4cbbae58d239de28ca0
 title: Go CLI
 type: container
 boundary: process
@@ -22,6 +22,7 @@ Provide all c3x commands as a single cross-compiled binary that reads and writes
 - Validate structural integrity of the doc tree
 - Compile to a self-contained binary for all supported platforms
 - Provide npm wrapper delegation for human/default CLI access without taking over skill-owned agent mode
+
 ## Complexity Assessment
 
 **Level:** moderate

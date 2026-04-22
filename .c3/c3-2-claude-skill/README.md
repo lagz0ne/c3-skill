@@ -1,7 +1,7 @@
 ---
 id: c3-2
 c3-version: 4
-c3-seal: a8c47877e79260d8e8c4e53ed1e89d876259232c57b6f89955b41c6872f55016
+c3-seal: ea9ed3ff1834471ccc663512ef15827c1907660de939ef68685ea6396f062f59
 title: Claude Skill
 type: container
 boundary: app
@@ -11,6 +11,7 @@ summary: SKILL.md intent router + per-operation reference docs that orchestrate 
 ---
 
 # Claude Skill
+
 ## Goal
 
 Expose c3 architecture workflows through natural language by routing user intent to the right operation and executing it via c3x.
@@ -22,6 +23,7 @@ Expose c3 architecture workflows through natural language by routing user intent
 - Call c3x commands for enforcement, schemas, help, hints, repair steps, and verification.
 - Keep skill prose as reference routing rather than a second enforcement source.
 - Apply ASSUMPTION_MODE when the user declines to answer clarifying questions.
+
 ## Complexity Assessment
 
 **Level:** moderate

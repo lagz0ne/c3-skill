@@ -1,6 +1,6 @@
 ---
 id: adr-20260415-strict-enriched-component-docs
-c3-seal: e279b5f825f39b13b9182efabb92eafede951b73b5181683a84fe21b0e145b5b
+c3-seal: 0d3c8bc479a016d3d3c9b40fb33bcc93c847f69738f05eda67e0cb62a345250c
 title: strict-enriched-component-docs
 type: adr
 goal: 'Apply strict enriched component documentation: replace thin component stubs with top-down, evidence-backed, derivation-ready sections and enforce them through add/write/set/check/verify gates.'
@@ -9,6 +9,7 @@ date: "2026-04-15"
 ---
 
 # strict-enriched-component-docs
+
 ## Goal
 
 Apply strict enriched component documentation: replace thin component stubs with top-down, evidence-backed, derivation-ready sections and enforce them through add/write/set/check/verify gates.
@@ -32,6 +33,7 @@ Require component docs to use a strict, reviewer-ready section set:
 | Contract | IN/OUT/IN-OUT surfaces, boundaries, and evidence. | Lets future code and derived materials know what must remain stable. |
 | Change Safety | Risks, triggers, detection, required verification. | Turns docs into a review checklist. |
 | Derived Materials | What code/docs/tests/prompts must derive from. | Keeps subsequent generated work tied to the component contract. |
+
 ## Underlay C3 Changes
 
 | Underlay area | Exact C3 change | Verification evidence |
@@ -46,6 +48,7 @@ Require component docs to use a strict, reviewer-ready section set:
 | Migration generator | strictMigrationComponentBody creates strict docs for legacy or empty components before writing content nodes. | cli/cmd/migrate_v2.go; cli/cmd/migrate_v2_test.go |
 | Migration all-or-nothing | collectMigrateBlockers preflights strict component output and blocks grouped failures before migration writes. | TestRunMigrateV2_AggregatesStrictComponentBlockers; TestRunMigrateV2_JSONBlockerReport |
 | Scaffold/template impact | Embedded component templates and help text must teach the strict sections so new docs do not start invalid. | cli/internal/templates/component.md; cli/cmd/help.go |
+
 ## Enforcement Surfaces
 
 | Surface | Behavior | Evidence |
@@ -55,6 +58,7 @@ Require component docs to use a strict, reviewer-ready section set:
 | Write or set section | Section updates validate the resulting full component document. | cli/cmd/write.go; cli/cmd/set.go |
 | Check and verify | Structural validation reports missing or weak strict sections. | cli/cmd/check_enhanced.go |
 | Migrate | Legacy component docs are converted into strict form or blocked with repair guidance. | cli/cmd/migrate_v2.go |
+
 ## Alternatives Considered
 
 | Alternative | Rejected because |
@@ -63,6 +67,7 @@ Require component docs to use a strict, reviewer-ready section set:
 | Make sections advisory | Agents would continue accepting superficial stubs. |
 | Require prose only | Harder to skim, validate, migrate, and repair in batches. |
 | Make every section bespoke | Too flexible; tool could not provide a reliable harness. |
+
 ## Migration Impact
 
 Legacy component docs must be upgraded into strict form. Migration should preserve all-or-nothing behavior: if generated strict docs contain weak language or invalid tables, C3 reports blockers and avoids partial writes. Repair should be scoped to listed sections, then followed by cache clear, import, continue migration, check, and verify.
@@ -75,6 +80,7 @@ Legacy component docs must be upgraded into strict form. Migration should preser
 | Strict docs slow small changes | Section writes remain focused, but they validate the resulting document. | go test ./... |
 | Migration produces unsafe partial state | Preflight blockers before writing and stop before canonical export on write failure. | cli/cmd/migrate_v2_test.go |
 | Underlay drift from ADR | Keep the Underlay C3 Changes table aligned with validator, mutation, and migration files whenever strict docs change. | c3x lookup cli/cmd/strict_component_docs.go; c3x check --include-adr |
+
 ## Verification
 
 | Check | Command or file |

@@ -1,6 +1,6 @@
 ---
 id: c3-214
-c3-seal: ea9ec3aab87dcc1570b108cc365c819c49a0f4f1829719dc1c5b15a3d0d60346
+c3-seal: 1ffd795a6e8eaea2c594525f84d2bbbeda1f69fbd04dc61bca3ba2dbc25c6467
 title: change-operation
 type: component
 category: feature
@@ -12,6 +12,7 @@ uses:
 ---
 
 # change-operation
+
 ## Goal
 
 Demonstrate how the skill makes architecture-affecting changes ADR-first, with lookup context, parent-delta evidence, implementation, and verification.
@@ -24,6 +25,7 @@ Demonstrate how the skill makes architecture-affecting changes ADR-first, with l
 | Role | Own change-operation behavior inside the parent container without taking over sibling responsibilities. |
 | Boundary | Keep change-operation decisions inside this component and escalate container-wide policy to the parent. |
 | Collaboration | Coordinate with cited governance and adjacent components before changing the contract. |
+
 ## Purpose
 
 Ensure architecture-affecting work starts with an ADR that carries enough detail to survive beyond the chat: context, decision, enforcement surfaces, alternatives, risks, verification, and parent-delta evidence. The ADR is the work order and audit trail that prevents strict workflow details from being lost after implementation.
@@ -36,6 +38,7 @@ Ensure architecture-affecting work starts with an ADR that carries enough detail
 | Inputs | Accept only the files, commands, data, or calls that belong to change-operation ownership. | c3-2 |
 | State / data | Preserve explicit state boundaries and avoid hidden cross-component ownership. | c3-2 |
 | Shared dependencies | Use lower-layer helpers and cited references instead of duplicating shared policy. | c3-2 |
+
 ## Business Flow
 
 | Aspect | Detail | Reference |
@@ -44,11 +47,13 @@ Ensure architecture-affecting work starts with an ADR that carries enough detail
 | Primary path | Follow the component goal, honor parent fit, and emit behavior through the documented contract. | c3-2 |
 | Alternate paths | When a request falls outside change-operation ownership, hand it to the parent or sibling component. | c3-2 |
 | Failure behavior | Surface mismatch through check, tests, lookup, or review evidence before derived work ships. | c3-2 |
+
 ## Governance
 
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-2 | policy | Governs change-operation behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
+
 ## Contract
 
 | Surface | Direction | Contract | Boundary | Evidence |
@@ -59,6 +64,7 @@ Ensure architecture-affecting work starts with an ADR that carries enough detail
 | Parent delta | OUT | Component changes record whether parent container/context changed or why no parent delta was needed, following CLI lookup/read/graph hints. | c3-214 boundary. | c3x help[] from lookup/read/set/write; c3x check --include-adr. |
 | Verification close | OUT | Change is not done until relevant tests, c3x check --include-adr, and c3x verify pass or the blocker is reported. | c3-214 boundary. | skills/c3/references/change.md Phase 4. |
 | Complete ADR creation | OUT | Change workflow must create a complete ADR work order through c3x add adr; thin ADR creation followed by incremental fill is not allowed. | c3-214 workflow boundary; c3-111 enforces add-time completeness. | skills/c3/references/change.md Phase 1; cli/cmd/add.go validateADRCreationBody; TestRunAdd_AdrRequiresCompleteBody. |
+
 ## Change Safety
 
 | Risk | Trigger | Detection | Required Verification |
@@ -68,6 +74,7 @@ Ensure architecture-affecting work starts with an ADR that carries enough detail
 | Parent drift | Component doc or ownership changes without parent decision. | Contract Cascade Gate has blank parent row or no-delta reason. | Record Parent Delta in ADR and run c3x check --include-adr. |
 | Verification gap | Task list is done but tests or C3 validation are missing. | Final report lacks concrete command evidence. | Run relevant tests plus c3x verify. |
 | Incremental ADR workflow | Workflow creates an ADR before the decision ledger is complete and expects follow-up writes to supply core context. | Compare change reference Phase 1 with c3x add adr validation behavior. | go test ./cmd -run TestRunAdd_AdrRequiresCompleteBody; c3x check --include-adr. |
+
 ## Derived Materials
 
 | Material | Must derive from | Allowed variance | Evidence |

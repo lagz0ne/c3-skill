@@ -1,7 +1,7 @@
 ---
 id: c3-113
 c3-version: 4
-c3-seal: a428749a15a9a2b032c70e9d1c288e589f8d3ebc07390142233eea87a5fe60a5
+c3-seal: 539a2ac1b7138a3896cb718923306534f35bf5b8b69cf5e3db3c37eb9ccb9b3e
 title: check-cmd
 type: component
 category: feature
@@ -15,6 +15,7 @@ uses:
 ---
 
 # check-cmd
+
 ## Goal
 
 Validate structural integrity of `.c3/` docs, ref and rule compliance — required fields, numbering, wiring, scope cross-checks, origin validation.
@@ -27,6 +28,7 @@ Validate structural integrity of `.c3/` docs, ref and rule compliance — requir
 | Role | Own check-cmd behavior inside the parent container without taking over sibling responsibilities. |
 | Boundary | Keep check-cmd decisions inside this component and escalate container-wide policy to the parent. |
 | Collaboration | Coordinate with cited governance and adjacent components before changing the contract. |
+
 ## Purpose
 
 Provide durable agent-ready documentation for check-cmd so generated code, tests, and follow-up docs preserve ownership, boundaries, governance, and verification evidence.
@@ -39,6 +41,7 @@ Provide durable agent-ready documentation for check-cmd so generated code, tests
 | Inputs | Accept only the files, commands, data, or calls that belong to check-cmd ownership. | c3-1 |
 | State / data | Preserve explicit state boundaries and avoid hidden cross-component ownership. | c3-1 |
 | Shared dependencies | Use lower-layer helpers and cited references instead of duplicating shared policy. | c3-1 |
+
 ## Business Flow
 
 | Aspect | Detail | Reference |
@@ -47,11 +50,13 @@ Provide durable agent-ready documentation for check-cmd so generated code, tests
 | Primary path | Follow the component goal, honor parent fit, and emit behavior through the documented contract. | c3-1 |
 | Alternate paths | When a request falls outside check-cmd ownership, hand it to the parent or sibling component. | c3-1 |
 | Failure behavior | Surface mismatch through check, tests, lookup, or review evidence before derived work ships. | c3-1 |
+
 ## Governance
 
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-1 | policy | Governs check-cmd behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
+
 ## Contract
 
 | Surface | Direction | Contract | Boundary | Evidence |
@@ -60,12 +65,14 @@ Provide durable agent-ready documentation for check-cmd so generated code, tests
 | ADR schema | OUT | ADR schema must preserve decision-ledger sections for Context, Decision, Work Breakdown, Underlay C3 Changes, Enforcement Surfaces, Alternatives Considered, Risks, and Verification. | c3-113 validation boundary. | cli/internal/schema/schema.go adr registry; TestRunSchema_ADRIncludesDecisionLedger; TestRunSchema_JSON_ADRUnderlayColumns. |
 | validation consumers | OUT | Validation paths must reject missing required sections and expose schema issues through c3x check/add/write/set rather than skill-local enforcement. | c3-113 with command-specific mutation handlers. | cli/cmd/check_enhanced.go; cli/cmd/add.go; cli/cmd/write.go; cli/cmd/set.go; go test ./cmd. |
 | scoped verify check | IN | When verify supplies --only selectors, check validation runs only on selected entities and filters global relationship/layer warnings to the selected docs so unrelated docs do not block focused verification. | c3-113 check validation boundary; c3-119 owns seal and sync path filtering. | cli/cmd/check_enhanced.go; cli/main_test.go TestRun_VerifyOnlySkipsUnselectedComponentDrift. |
+
 ## Change Safety
 
 | Risk | Trigger | Detection | Required Verification |
 | --- | --- | --- | --- |
 | Contract drift | Goal, boundary, or derived material changes without matching component docs. | Compare Goal, Parent Fit, Contract, and Derived Materials. | Run c3x check and relevant project tests. |
 | Governance drift | Cited references, rules, or parent responsibilities change. | Re-read Governance rows and parent container docs. | Run c3x verify plus targeted lookup for changed files. |
+
 ## Derived Materials
 
 | Material | Must derive from | Allowed variance | Evidence |

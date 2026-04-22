@@ -7,14 +7,11 @@ import (
 	"strings"
 )
 
-// DeriveCallers returns project-relative file paths that appear to reference
-// any of the given targetSources (grep-derived, heuristic). targetSources are
-// themselves excluded from the result. Paths are forward-slash normalized.
-//
-// Heuristic: a file is a caller if it contains the target's relative path
-// or its extensionless form as a substring. This is coarse enough to catch
-// import statements across common languages (Go, TS/JS, Python, Rust, Java)
-// without parsing each dialect.
+// DeriveCallers returns project-relative paths that appear to import or
+// reference any of targetSources. Heuristic substring match on the path
+// and its extensionless form — coarse enough to span Go/TS/JS/Py/Rust
+// without parsing each dialect, false positives surface as [uncited]
+// for review rather than as ground truth.
 func DeriveCallers(projectDir string, targetSources []string) ([]string, error) {
 	if len(targetSources) == 0 {
 		return nil, nil

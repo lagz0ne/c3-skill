@@ -13,9 +13,7 @@ import (
 )
 
 // ResolveTouchedTargets returns entity IDs affected by files changed since
-// `since` (empty = uncommitted: staged + unstaged + untracked). Direct
-// canonical edits are parsed for their frontmatter id; source file edits
-// map to components via the store's code-map.
+// `since` (empty = uncommitted: staged + unstaged + untracked).
 func ResolveTouchedTargets(projectDir, c3Dir, since string) ([]string, error) {
 	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
 	if err != nil {
@@ -25,8 +23,6 @@ func ResolveTouchedTargets(projectDir, c3Dir, since string) ([]string, error) {
 	return resolveTouchedTargetsWithStore(projectDir, c3Dir, since, s)
 }
 
-// resolveTouchedTargetsWithStore is the test-friendly variant that accepts
-// an already-open store.
 func resolveTouchedTargetsWithStore(projectDir, c3Dir, since string, s *store.Store) ([]string, error) {
 	files, err := gitTouchedFiles(projectDir, since)
 	if err != nil {
@@ -51,7 +47,6 @@ func resolveTouchedTargetsWithStore(projectDir, c3Dir, since string, s *store.St
 
 	for _, f := range files {
 		f = filepath.ToSlash(f)
-		// Direct canonical .md edit → parse frontmatter for id
 		if strings.HasPrefix(f, c3Rel+"/") && strings.HasSuffix(f, ".md") {
 			abs := filepath.Join(projectDir, f)
 			if data, rerr := os.ReadFile(abs); rerr == nil {
@@ -61,7 +56,6 @@ func resolveTouchedTargetsWithStore(projectDir, c3Dir, since string, s *store.St
 				}
 			}
 		}
-		// Source file edit → map to component(s) via codemap
 		ids, _ := s.LookupByFile(f)
 		for _, id := range ids {
 			addID(id)
@@ -71,12 +65,11 @@ func resolveTouchedTargetsWithStore(projectDir, c3Dir, since string, s *store.St
 	return targets, nil
 }
 
-// gitTouchedFiles returns the set of files changed since `since`. Empty
-// since means uncommitted work (staged + unstaged + untracked).
+// gitTouchedFiles returns files changed since `since`; empty since means
+// uncommitted (staged + unstaged + untracked).
 func gitTouchedFiles(projectDir, since string) ([]string, error) {
 	cmds := [][]string{}
 	if since == "" {
-		// Uncommitted work: staged + unstaged + untracked (exclude ignored)
 		cmds = append(cmds,
 			[]string{"diff", "--name-only", "HEAD"},
 			[]string{"ls-files", "--others", "--exclude-standard"},
@@ -94,7 +87,6 @@ func gitTouchedFiles(projectDir, since string) ([]string, error) {
 		full := append([]string{"-C", projectDir}, args...)
 		out, err := exec.Command("git", full...).Output()
 		if err != nil {
-			// If HEAD doesn't exist (fresh repo) skip that cmd
 			continue
 		}
 		for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {

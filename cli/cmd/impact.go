@@ -19,8 +19,9 @@ type ImpactOptions struct {
 	ProjectDir  string
 }
 
-// ImpactEntry is a single row in the impact output. Uncited=true means the
-// entry came from the grep-derived import graph but is not documented in .c3/.
+// ImpactEntry is one row of impact output. Uncited=true marks entries
+// discovered only by grep, not by docs — the user should treat them as
+// "needs review" rather than ground truth.
 type ImpactEntry struct {
 	ID      string `json:"id"`
 	Title   string `json:"title"`
@@ -29,9 +30,6 @@ type ImpactEntry struct {
 	Uncited bool   `json:"uncited,omitempty"`
 }
 
-// ImpactOutput wraps entries plus unmapped grep-derived files (files that
-// reference the target but have no component mapping — these surface
-// codemap coverage gaps alongside the impact list).
 type ImpactOutput struct {
 	Entries       []ImpactEntry `json:"entries"`
 	UnmappedFiles []string      `json:"unmapped_files,omitempty"`
@@ -118,9 +116,6 @@ func RunImpact(opts ImpactOptions, w io.Writer) error {
 	return nil
 }
 
-// mergeCodeCallers derives callers via grep over the target's code-map
-// sources, maps them to component IDs, and merges into entries. Components
-// that are not in the documented results are flagged Uncited=true at depth 1.
 func mergeCodeCallers(opts ImpactOptions, byID map[string]*ImpactEntry, entries *[]*ImpactEntry) ([]string, error) {
 	if opts.ProjectDir == "" {
 		return nil, fmt.Errorf("project dir unresolved; run from inside the project or pass --c3-dir")

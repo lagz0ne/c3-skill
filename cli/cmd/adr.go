@@ -10,7 +10,6 @@ import (
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
-// AdrFromDiffOptions holds parameters for `c3x adr --from-diff`.
 type AdrFromDiffOptions struct {
 	Store      *store.Store
 	C3Dir      string
@@ -19,10 +18,7 @@ type AdrFromDiffOptions struct {
 	Since      string
 }
 
-// RunAdrFromDiff prints an ADR scaffold to w, pre-populating affects: and a
-// Context section listing touched files grouped by owning component.
-// Output is markdown (frontmatter + body) — user pipes to `c3x add adr`
-// or edits and saves. Never writes to .c3/ directly.
+// RunAdrFromDiff prints an ADR scaffold to w. Never writes to .c3/.
 func RunAdrFromDiff(opts AdrFromDiffOptions, w io.Writer) error {
 	slug := opts.Slug
 	if slug == "" {
@@ -34,8 +30,6 @@ func RunAdrFromDiff(opts AdrFromDiffOptions, w io.Writer) error {
 		return fmt.Errorf("git: %w", err)
 	}
 
-	// Group touched source files by owning component. Canonical .c3/ edits
-	// contribute their entity directly.
 	componentFiles := map[string][]string{}
 	affectedParents := map[string]bool{}
 	for _, f := range files {
@@ -99,8 +93,6 @@ func RunAdrFromDiff(opts AdrFromDiffOptions, w io.Writer) error {
 	fmt.Fprintln(w, "\n## Decision")
 	fmt.Fprintln(w, "\n<fill in>")
 
-	// #9 — default Parent Delta to no-delta. User overrides when the change
-	// adds/removes/splits/merges a component's responsibility.
 	fmt.Fprintln(w, "\n## Parent Delta")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "no-delta: no responsibility change (override if the change adds/removes/splits/merges a component's responsibility)")

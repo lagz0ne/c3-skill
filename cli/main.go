@@ -138,11 +138,8 @@ func run(argv []string, w io.Writer) error {
 		opts.Command == "migrate"
 	mutates := commandMutatesCanonical(opts)
 
-	// v9 workflow treats canonical .c3/ markdown as submitted truth.
-	// Verify checks sync; for mutating commands we auto-repair recoverable
-	// drift. Read-only commands MUST NOT mutate canonical — the user edited
-	// those files and silent "repair" overwrites in-flight work. If verify
-	// trips on a read-only command, warn once and proceed with best-effort.
+	// Read-only commands must not mutate canonical: the user may be
+	// mid-edit and silent auto-repair overwrites their work.
 	if hasCanonical && !skipPreHeal {
 		if err := cmd.RunVerify(cmd.VerifyOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: opts.Only}, io.Discard); err != nil {
 			if mutates {

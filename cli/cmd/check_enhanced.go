@@ -77,9 +77,8 @@ func suggestByTitle(val string, titleMap map[string]string) string {
 	return ""
 }
 
-// resolveRuleCiters returns the entity IDs that cite any of the given rules
-// via a 'uses' relationship. Errors if a rule has no citers — the filter
-// would otherwise silently check nothing.
+// resolveRuleCiters errors if a rule has no citers — silently checking
+// nothing would mask the misuse.
 func resolveRuleCiters(s *store.Store, ruleIDs []string) ([]string, error) {
 	seen := map[string]bool{}
 	var ids []string
@@ -205,9 +204,6 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 		return entities[i].ID < entities[j].ID
 	})
 
-	// --rule expands each rule ID into the set of citer entity IDs and
-	// merges them with --only. Empty citer set is an error — the user
-	// asked for a rule that nothing cites.
 	if len(opts.Rules) > 0 {
 		ruleCiters, err := resolveRuleCiters(opts.Store, opts.Rules)
 		if err != nil {

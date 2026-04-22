@@ -39,6 +39,7 @@ type CheckOptions struct {
 	IncludeADR bool
 	Fix        bool
 	Only       []string
+	Rules      []string
 }
 
 // buildTitleMapStore creates a case-insensitive title/slug -> entity ID lookup.
@@ -74,6 +75,39 @@ func suggestByTitle(val string, titleMap map[string]string) string {
 		return id
 	}
 	return ""
+}
+
+// resolveRuleCiters errors if a rule has no citers — silently checking
+// nothing would mask the misuse.
+func resolveRuleCiters(s *store.Store, ruleIDs []string) ([]string, error) {
+	seen := map[string]bool{}
+	var ids []string
+	for _, ruleID := range ruleIDs {
+		if _, err := s.GetEntity(ruleID); err != nil {
+			return nil, fmt.Errorf("--rule %s: %w", ruleID, err)
+		}
+		rels, err := s.RelationshipsTo(ruleID)
+		if err != nil {
+			return nil, fmt.Errorf("--rule %s citers: %w", ruleID, err)
+		}
+		found := false
+		for _, r := range rels {
+			if r.RelType != "uses" {
+				continue
+			}
+			found = true
+			if seen[r.FromID] {
+				continue
+			}
+			seen[r.FromID] = true
+			ids = append(ids, r.FromID)
+		}
+		if !found {
+			return nil, fmt.Errorf("rule %s has no citers. Wire one with: c3x wire <component> %s\nOr check a different rule.", ruleID, ruleID)
+		}
+	}
+	sort.Strings(ids)
+	return ids, nil
 }
 
 func hintFor(message string) string {
@@ -169,6 +203,15 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 	sort.Slice(entities, func(i, j int) bool {
 		return entities[i].ID < entities[j].ID
 	})
+
+	if len(opts.Rules) > 0 {
+		ruleCiters, err := resolveRuleCiters(opts.Store, opts.Rules)
+		if err != nil {
+			return err
+		}
+		opts.Only = append(opts.Only, ruleCiters...)
+	}
+
 	targetMatcher := newCheckTargetMatcher(entities, opts.Only)
 
 	for _, entity := range entities {

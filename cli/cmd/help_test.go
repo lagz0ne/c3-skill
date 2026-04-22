@@ -48,7 +48,7 @@ func TestShowHelp_VerifyMentionsCacheRefresh(t *testing.T) {
 	if !strings.Contains(strings.ToLower(output), "local cache") {
 		t.Fatal("verify help should mention cache refresh")
 	}
-	requireAll(t, output, "--only <id-or-path-or-glob>", "--include-adr")
+	requireAll(t, output, "--only <id>", "--include-adr")
 }
 
 func TestShowHelp_AddADRWorkflowPointsAtSchema(t *testing.T) {

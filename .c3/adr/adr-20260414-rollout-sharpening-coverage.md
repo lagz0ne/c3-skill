@@ -1,6 +1,6 @@
 ---
 id: adr-20260414-rollout-sharpening-coverage
-c3-seal: 3fba1a09c61a97cd85f143e203a1fb85109ae50c70db26b2608fb609a816c75c
+c3-seal: 869d7d71a947a8a896304a8daf8fbf05b1f54c298095b45d7f48a35fa835ebd6
 title: rollout-sharpening-coverage
 type: adr
 goal: Expand C3 ownership coverage so lookup and context-gate flow cover most active CLI paths during rollout verification.
@@ -9,6 +9,7 @@ date: "2026-04-14"
 ---
 
 # Rollout Sharpening Coverage
+
 ## Goal
 
 Expand C3 ownership coverage so lookup and context-gate flow cover most active CLI paths during rollout verification.

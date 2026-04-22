@@ -1,6 +1,6 @@
 ---
 id: adr-20260415-rebuild-layer-disconnect-diagnostics
-c3-seal: caef40a991d2479bde3e5449ae576ddafed242d1e373a514991e1d5df1ffb600
+c3-seal: fb830f099d6ba5432356c58c1e3d1a0e646d4b7a18fee12b07c19222095da0f5
 title: rebuild-layer-disconnect-diagnostics
 type: adr
 goal: When c3 rebuilds the local database from canonical markdown, surface layer-disconnect issues between context, containers, and components so agents fix integration drift instead of trusting a clean cache rebuild.
@@ -13,6 +13,7 @@ affects:
 ---
 
 # Rebuild Layer Disconnect Diagnostics
+
 ## Goal
 
 When c3 rebuilds the local database from canonical markdown, surface layer-disconnect issues between context, containers, and components so agents fix integration drift instead of trusting a clean cache rebuild.
@@ -25,6 +26,7 @@ When c3 rebuilds the local database from canonical markdown, surface layer-disco
 - Verify/repair already surface the same issues because rebuild is followed by the verification suite.
 - Add tests for missing child rows, stale child rows, direct import surfacing, and verify rebuild output surfacing layer disconnects.
 - Fix current repo drift by updating `c3-1` Components table to include `c3-106`, `c3-107`, `c3-108`, `c3-117`, `c3-118`, `c3-119`, and `c3-120`.
+
 ## Parent Delta
 
 updated: `c3-1` Components now matches all Go CLI child components. `c3-113` owns the new layer-disconnect check. `c3-119` owns direct import plus verify/rebuild surfacing.

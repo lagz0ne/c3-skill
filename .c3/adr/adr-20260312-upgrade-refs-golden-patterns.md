@@ -1,6 +1,6 @@
 ---
 id: adr-20260312-upgrade-refs-golden-patterns
-c3-seal: f03ad928092937f83900d717dd75298c7b6b2ecab22a7b8296e935290d20aa5e
+c3-seal: 1d82f66d15e2857e53a487cc98c98e5f9dd834d32e9d4b7864df986f5db01c10
 title: Upgrade Refs — Golden Patterns, Enforcement, Measurement
 type: adr
 goal: Make refs actionable by adding golden patterns (prescriptive `## How` sections), enforcement (ref compliance gates in change and audit flows), and measurement (ref governance metric in coverage output).
@@ -13,6 +13,7 @@ affects:
 ---
 
 # Upgrade Refs — Golden Patterns, Enforcement, Measurement
+
 ## Goal
 
 Make refs actionable by adding golden patterns (prescriptive `## How` sections), enforcement (ref compliance gates in change and audit flows), and measurement (ref governance metric in coverage output).
@@ -35,6 +36,7 @@ Make refs actionable by adding golden patterns (prescriptive `## How` sections),
 **Pre-flight:**
 - `code-map.yaml`: Mapped `cli/internal/schema/**` and `cli/internal/index/**` to c3-113
 - Updated c3-113 and c3-116 component docs
+
 ## Risks
 
 - Ref governance starts at 0% for existing components — creates adoption backlog

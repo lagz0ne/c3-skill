@@ -1,6 +1,6 @@
 ---
 id: adr-20260415-clean-hook-cache-diff
-c3-seal: 282de214067f2b83b56daabcf6d5d58e1ed394ee3dbdf0d316297d4f508add7f
+c3-seal: 5540c659c83ae043248f3550749ad30da746e25326e3f4da34827132f0304e82
 title: clean-hook-cache-diff
 type: adr
 goal: Fix the C3 pre-commit hook so successful verification does not block commits just because `.c3/c3.db` local cache changed.
@@ -11,6 +11,7 @@ affects:
 ---
 
 # Clean Hook Cache Diff
+
 ## Goal
 
 Fix the C3 pre-commit hook so successful verification does not block commits just because `.c3/c3.db` local cache changed.
@@ -21,6 +22,7 @@ Fix the C3 pre-commit hook so successful verification does not block commits jus
 - Change post-verify dirty check to exclude disposable cache files: `.c3/c3.db`, `.c3/c3.db-*`, `.c3/*.tmp.db`, `.c3/*.tmp.db-*`.
 - Update installed local pre-commit hook through `c3x git install`.
 - Add regression test proving generated hook does not diff all `.c3` blindly.
+
 ## Parent Delta
 
 none: `c3-119` already owns git guardrail and sync lifecycle flows; no parent responsibility change needed.

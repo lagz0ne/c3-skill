@@ -1,7 +1,7 @@
 ---
 id: c3-111
 c3-version: 4
-c3-seal: 732dc1ebbe71df3a4c2b06c5d9df2f8f5e4ec1ba535b07dfffe20d3f8f959042
+c3-seal: 0dfea1e6263344d87672463270ce0b2eb5474001b2dde6b408419ceacb543c06
 title: add-cmd
 type: component
 category: feature
@@ -16,6 +16,7 @@ uses:
 ---
 
 # add-cmd
+
 ## Goal
 
 Create new containers, components, refs, rules, or ADRs with correct numbering and wired into the parent doc.
@@ -28,6 +29,7 @@ Create new containers, components, refs, rules, or ADRs with correct numbering a
 | Role | Own add-cmd behavior inside the parent container without taking over sibling responsibilities. |
 | Boundary | Keep add-cmd decisions inside this component and escalate container-wide policy to the parent. |
 | Collaboration | Coordinate with cited governance and adjacent components before changing the contract. |
+
 ## Purpose
 
 Provide durable agent-ready documentation for add-cmd so generated code, tests, and follow-up docs preserve ownership, boundaries, governance, and verification evidence.
@@ -40,6 +42,7 @@ Provide durable agent-ready documentation for add-cmd so generated code, tests, 
 | Inputs | Accept only the files, commands, data, or calls that belong to add-cmd ownership. | c3-1 |
 | State / data | Preserve explicit state boundaries and avoid hidden cross-component ownership. | c3-1 |
 | Shared dependencies | Use lower-layer helpers and cited references instead of duplicating shared policy. | c3-1 |
+
 ## Business Flow
 
 | Aspect | Detail | Reference |
@@ -48,11 +51,13 @@ Provide durable agent-ready documentation for add-cmd so generated code, tests, 
 | Primary path | Follow the component goal, honor parent fit, and emit behavior through the documented contract. | c3-1 |
 | Alternate paths | When a request falls outside add-cmd ownership, hand it to the parent or sibling component. | c3-1 |
 | Failure behavior | Surface mismatch through check, tests, lookup, or review evidence before derived work ships. | c3-1 |
+
 ## Governance
 
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-1 | policy | Governs add-cmd behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
+
 ## Contract
 
 | Surface | Direction | Contract | Boundary | Evidence |
@@ -61,6 +66,7 @@ Provide durable agent-ready documentation for add-cmd so generated code, tests, 
 | ADR creation | OUT | c3x add adr creates the entire ADR entity from the provided body in one operation; it must not create a partial ADR entity or file when validation, content write, or canonical export fails. | c3-111 uses dispatcher rollback in c3-108 for canonical export failures. | cli/cmd/add.go compensation path; cli/main_test.go TestRun_AddADRRollsBackWhenCanonicalExportFails. |
 | agent result | OUT | Agent-mode add output uses TOON and includes c3x-owned next-step hints for ADR schema, read, write, check, and verify. | c3-111 result with c3-108 presentation helpers. | cli/cmd/add_test.go TestRunAdd_AdrAgentHintsUseCLISchema; cli/main_test.go TestRun_AddAgentModeReturnsTOON. |
 | ADR completeness gate | IN | c3x add adr rejects thin ADR bodies and requires all ADR schema sections with table rows before any entity insert. | c3-111 add validation boundary. | cli/cmd/add.go validateADRCreationBody; TestRunAdd_AdrRequiresCompleteBody. |
+
 ## Change Safety
 
 | Risk | Trigger | Detection | Required Verification |
@@ -69,6 +75,7 @@ Provide durable agent-ready documentation for add-cmd so generated code, tests, 
 | Thin ADR creation | ADR body omits required schema sections or agents ignore CLI hints. | Run c3x schema adr and c3x check --include-adr after creation. | go test ./cmd -run TestRunAdd_AdrAgentHintsUseCLISchema; c3x check --include-adr. |
 | Agent output regression | add returns JSON or loses help hints in C3X_MODE=agent. | Smoke add in a temp project and inspect output prefix and help[n]. | go test ./...; C3X_MODE=agent c3x add adr smoke-output. |
 | Incremental ADR creation | Agent creates a Goal-only ADR and depends on a second write command for required decision-ledger sections. | Run add adr with only Goal and expect validation errors for missing Context, Decision, Underlay C3 Changes, and other ledger sections. | go test ./cmd -run TestRunAdd_AdrRequiresCompleteBody. |
+
 ## Derived Materials
 
 | Material | Must derive from | Allowed variance | Evidence |

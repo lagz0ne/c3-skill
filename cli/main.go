@@ -109,7 +109,19 @@ func run(argv []string, w io.Writer) error {
 		return runGit(opts, config.ProjectDir(c3Dir), c3Dir, w)
 	}
 	if opts.Command == "verify" {
-		return cmd.RunVerify(cmd.VerifyOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: opts.Only}, w)
+		only := opts.Only
+		if opts.OnlyTouched {
+			touched, err := cmd.ResolveTouchedTargets(config.ProjectDir(c3Dir), c3Dir, opts.Since)
+			if err != nil {
+				return fmt.Errorf("--only-touched: %w", err)
+			}
+			if len(touched) == 0 {
+				fmt.Fprintln(w, "No touched entities since reference; nothing to verify.")
+				return nil
+			}
+			only = append(only, touched...)
+		}
+		return cmd.RunVerify(cmd.VerifyOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: only}, w)
 	}
 	if opts.Command == "repair" {
 		return cmd.RunRepair(cmd.RepairOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: opts.Only}, w)
@@ -123,14 +135,21 @@ func run(argv []string, w io.Writer) error {
 	hasCanonical := hasCanonicalDocs(c3Dir)
 	skipPreHeal := (opts.Command == "sync" && len(opts.Args) >= 1 && opts.Args[0] == "export") ||
 		opts.Command == "migrate"
+	mutates := commandMutatesCanonical(opts)
 
 	// v9 workflow treats canonical .c3/ markdown as submitted truth.
-	// When canonical files exist, verify first, then repair recoverable drift
-	// automatically before dispatching the requested command.
+	// Verify checks sync; for mutating commands we auto-repair recoverable
+	// drift. Read-only commands MUST NOT mutate canonical — the user edited
+	// those files and silent "repair" overwrites in-flight work. If verify
+	// trips on a read-only command, warn once and proceed with best-effort.
 	if hasCanonical && !skipPreHeal {
 		if err := cmd.RunVerify(cmd.VerifyOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: opts.Only}, io.Discard); err != nil {
-			if repairErr := cmd.RunRepair(cmd.RepairOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: opts.Only}, io.Discard); repairErr != nil {
-				return fmt.Errorf("error: auto-repair failed before %q: %w\noriginal verification error: %v", opts.Command, repairErr, err)
+			if mutates {
+				if repairErr := cmd.RunRepair(cmd.RepairOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: opts.Only}, io.Discard); repairErr != nil {
+					return fmt.Errorf("error: auto-repair failed before %q: %w\noriginal verification error: %v", opts.Command, repairErr, err)
+				}
+			} else {
+				fmt.Fprintln(os.Stderr, "warning: .c3/ drift detected; run 'c3x repair' to reconcile")
 			}
 		}
 		hasDB = fileExists(dbPath)
@@ -141,7 +160,7 @@ func run(argv []string, w io.Writer) error {
 	}
 
 	var rollback *mutationSnapshot
-	if commandMutatesCanonical(opts) {
+	if mutates {
 		rollback, err = newMutationSnapshot(c3Dir)
 		if err != nil {
 			return fmt.Errorf("error: create mutation rollback snapshot: %w", err)
@@ -358,6 +377,8 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) err
 			C3Dir:      c3Dir,
 			IncludeADR: opts.IncludeADR,
 			Fix:        opts.Fix,
+			Only:       opts.Only,
+			Rules:      opts.Rules,
 		}, w)
 	case "read":
 		entityID := ""
@@ -446,6 +467,18 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) err
 		err = cmd.RunImpact(cmd.ImpactOptions{
 			Store: s, EntityID: entityID, Depth: opts.Depth, JSON: opts.JSON,
 			IncludeCode: opts.IncludeCode, ProjectDir: projectDir,
+		}, w)
+	case "adr":
+		if !opts.FromDiff {
+			return fmt.Errorf("error: c3x adr requires --from-diff\nhint: c3x adr --from-diff [<slug>] [--since <ref>]")
+		}
+		slug := ""
+		if len(opts.Args) >= 1 {
+			slug = opts.Args[0]
+		}
+		err = cmd.RunAdrFromDiff(cmd.AdrFromDiffOptions{
+			Store: s, C3Dir: c3Dir, ProjectDir: projectDir,
+			Slug: slug, Since: opts.Since,
 		}, w)
 	case "export":
 		outputDir := c3Dir
@@ -549,7 +582,7 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, w io.Writer) err
 
 func commandMutatesCanonical(opts cmd.Options) bool {
 	switch opts.Command {
-	case "write", "add", "set", "wire", "unwire", "codemap":
+	case "write", "add", "set", "wire", "unwire":
 		return true
 	case "delete":
 		return !opts.DryRun

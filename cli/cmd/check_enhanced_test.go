@@ -503,3 +503,52 @@ func TestSuggestByTitle(t *testing.T) {
 		t.Errorf("suggestByTitle(nonexistent) = %q, want empty", id)
 	}
 }
+
+
+// TestRunCheck_RuleFilter verifies --rule expands to citer entities.
+func TestRunCheck_RuleFilter(t *testing.T) {
+	s := createRichDBFixture(t)
+	// Add a rule cited by c3-101.
+	if err := s.InsertEntity(&store.Entity{
+		ID: "rule-logging", Type: "rule", Title: "Structured Logging",
+		Slug: "logging", Status: "active", Metadata: "{}",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	content.WriteEntity(s, "rule-logging", "# Structured Logging\n\n## Goal\n\nConsistent logs.\n\n## Choice\n\nJSON.\n\n## Why\n\nMachine-parseable.\n")
+	if err := s.AddRelationship(&store.Relationship{FromID: "c3-101", ToID: "rule-logging", RelType: "uses"}); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	err := RunCheckV2(CheckOptions{Store: s, JSON: true, Rules: []string{"rule-logging"}}, &buf)
+	// Errors are possible but every issue in the output must target c3-101.
+	_ = err
+	var result CheckResult
+	if jerr := json.Unmarshal(buf.Bytes(), &result); jerr != nil {
+		t.Fatalf("invalid JSON: %v\n%s", jerr, buf.String())
+	}
+	for _, issue := range result.Issues {
+		if issue.Entity != "" && issue.Entity != "c3-101" {
+			t.Errorf("--rule filter leaked to non-citer %s: %+v", issue.Entity, issue)
+		}
+	}
+}
+
+// TestRunCheck_RuleFilterNoCiters errors loudly when the rule has no citers.
+func TestRunCheck_RuleFilterNoCiters(t *testing.T) {
+	s := createRichDBFixture(t)
+	s.InsertEntity(&store.Entity{
+		ID: "rule-unused", Type: "rule", Title: "Unused",
+		Slug: "unused", Status: "active", Metadata: "{}",
+	})
+	var buf bytes.Buffer
+	err := RunCheckV2(CheckOptions{Store: s, JSON: true, Rules: []string{"rule-unused"}}, &buf)
+	if err == nil {
+		t.Fatal("expected error for rule with no citers")
+	}
+	if !strings.Contains(err.Error(), "no citers") {
+		t.Errorf("expected 'no citers' in error, got: %v", err)
+	}
+}
+

@@ -41,7 +41,7 @@ Normal users rarely need this after initial setup.`,
 	{
 		Name:     "verify",
 		OneLiner: "Validate canonical .c3/ truth and refresh local cache if needed",
-		Help: `Usage: c3x verify [--include-adr] [--only <id-or-path-or-glob>]
+		Help: `Usage: c3x verify [--include-adr] [--only <id-or-path-or-glob>] [--only-touched [--since <ref>]]
 
 Verify that canonical .c3/ markdown is sealed, structurally valid, and in sync
 with the local cache. If c3.db is missing or stale, verify rebuilds it from the
@@ -52,6 +52,11 @@ work. Use --include-adr when finishing ADR work or before release/commit.
 
 Use --only to verify a focused set of canonical docs by entity ID or path. Repeat
 --only for multiple docs.
+
+Use --only-touched to scope verify to entities affected by uncommitted changes
+(staged + unstaged + untracked). Source file edits resolve to owning components
+via the code-map; direct canonical edits resolve via frontmatter id. Combine
+with --since <ref> to widen the window (e.g. --since main).
 
 Use this in CI and pre-commit.
 
@@ -130,7 +135,7 @@ Topology view with system goal, entity goals, file coverage, and ref usage.
 	{
 		Name:     "check",
 		OneLiner: "Validate docs, schema, code refs, consistency",
-		Help: `Usage: c3x check [--json] [--include-adr] [--fix]
+		Help: `Usage: c3x check [--json] [--include-adr] [--fix] [--only <id>] [--rule <rule-id>]
 
 Three-layer validation (ADRs excluded by default; use --include-adr to validate them):
   Layer 1: Broken links, orphans, duplicates, missing parents
@@ -138,8 +143,11 @@ Three-layer validation (ADRs excluded by default; use --include-adr to validate 
   Layer 3: Code refs exist on disk, entity IDs in graph, cite consistency
 
 Options:
-  --fix            Auto-fix entity/ref references that match by title (e.g., "API" → c3-1)
-  --include-adr    Include ADR entities in validation`,
+  --fix              Auto-fix entity/ref references that match by title (e.g., "API" → c3-1)
+  --include-adr      Include ADR entities in validation
+  --only <id>        Scope check to specific entity IDs (repeatable)
+  --rule <rule-id>   Scope check to the set of entities that cite a rule (repeatable).
+                     Errors if the rule has no citers. Composes with --only as union.`,
 	},
 	{
 		Name:     "add",
@@ -380,6 +388,27 @@ Options:
 Examples:
   c3x diff                    # show pending changes
   c3x diff --mark abc123      # mark changes as committed`,
+	},
+	{
+		Name:     "adr",
+		Args:     "[<slug>]",
+		OneLiner: "Scaffold ADRs (currently: --from-diff)",
+		Help: `Usage: c3x adr --from-diff [<slug>] [--since <ref>]
+
+Generate a pre-filled ADR scaffold from uncommitted changes. Maps touched
+files to owning components via the code-map, groups them in Context, and
+seeds affects: with the union of those components' parents. Parent Delta
+defaults to "no-delta" — override if the change adds/removes/splits/merges
+a component's responsibility.
+
+Output is markdown on stdout. Pipe to c3x add adr or save and edit:
+
+  c3x adr --from-diff refactor-auth | c3x add adr refactor-auth
+  c3x adr --from-diff refactor-auth --since main > /tmp/adr.md
+
+Options:
+  --from-diff      Required. Source scaffold from git diff.
+  --since <ref>    Diff window (default: uncommitted = HEAD + staged + untracked).`,
 	},
 	{
 		Name:     "impact",

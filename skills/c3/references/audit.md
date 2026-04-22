@@ -56,11 +56,7 @@ Per Component: `c3x lookup <file>` per mapped path — verify resolution, load c
 - Path: check exists, flag if missing
 - Report: valid / stale / broken
 
-Coverage:
-```bash
-bash <skill-dir>/bin/c3x.sh coverage
-```
-Low coverage → WARN. Formula: `mapped / (total - excluded)` — `_exclude` patterns don't penalize score. Suggest `_exclude` for test/config files, map remaining.
+Coverage signal is emitted by `c3x check`. Low coverage → WARN. Formula: `mapped / (total - excluded)` — `_exclude` patterns don't penalize score. Suggest `_exclude` for test/config files, map remaining.
 
 ## Phase 5: Diagram Accuracy
 

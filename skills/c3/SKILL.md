@@ -4,7 +4,7 @@ description: >
   Triggers on /c3 or architecture questions in projects with .c3/ directory.
   Phrases: "adopt C3", "onboard", "where is X", "audit architecture", "check docs",
   "add component", "implement feature", "what breaks if I change X", "add ref",
-  "coding standard". Ops: onboard, query, audit, change, migrate, ref, rule, sweep.
+  "coding standard". Ops: onboard, query, audit, change, ref, rule, sweep.
   Classifies intent, loads ref, executes.
 ---
 
@@ -14,37 +14,25 @@ CLI: `C3X_MODE=agent bash <skill-dir>/bin/c3x.sh <command> [args]`
 
 - **Enforce:** `c3x` = single source. Skill = router: classify -> run c3x -> follow output. No duplicate CLI checklists.
 - **Agent mode:** `C3X_MODE=agent` -> TOON output (~40% fewer tokens). Commands append `help[]` hints.
-- **Content-first:** No-arg c3x = dashboard (counts, coverage, ADRs). `--help` for help.
+- **Entry point:** `c3x list` for topology + coverage, `c3x check` for validation. `--help` for help.
 
 | Command | Purpose |
 |---------|---------|
-| (no args) / `status` | Dashboard: counts, coverage %, ADRs, warnings |
-| `init` | Scaffold `.c3/` |
-| `list` | Topology with files (`--flat`, `--compact`) |
-| `check` | Structural validation (`--fix`) |
-| `add <type> <slug>` | Create entity via stdin (`--container`, `--feature`) |
-| `set <id> <field> <val>` | Update frontmatter |
-| `set <id> --section <name>` | Update section (text or JSON table) |
-| `wire <src> <tgt>` | Link to ref (`--remove` unlinks) |
+| `list` | Topology with counts + coverage (`--flat`, `--compact`) |
+| `check` | Validate docs match code (`--fix`, `--only`, `--include-adr`, `--only-touched`) |
+| `add <type> <slug>` | Create entity; body via stdin or `--file <path>` (`--container`, `--feature`) |
+| `write <id>` | Rewrite body or a section (`--section <name>`, `--file <path>`, stdin) |
+| `set <id> <field> <val>` | Update frontmatter field (goal, status, boundary, category, title, date, codemap patterns) |
+| `wire <src> <tgt>` | Link entities (`--remove` unlinks) |
 | `schema <type>` | Section defs for entity type |
-| `codemap` | Scaffold code-map entries |
 | `read <id>` | Entity content; agent truncates 1500 chars (`--full` bypasses) |
 | `lookup <file-or-glob>` | File/glob -> component + refs |
-| `coverage` | Code-map coverage |
 | `delete <id>` | Remove entity + clean refs (`--dry-run`) |
-| `query <terms>` | Full-text search (`--type`, `--limit`) |
-| `impact <id>` | Transitive impact (`--depth`) |
-| `diff` | Uncommitted changes (`--mark <hash>`) |
-| `export [dir]` | Render canonical markdown (escape hatch) |
-| `migrate` | Content node tree (v7->v8) |
-| `migrate-legacy` | Import unsealed `.c3/` markdown, reseal |
-| `marketplace add <url>` | Register rule source |
-| `marketplace list` | Browse rules (`--source`, `--tag`) |
-| `marketplace show <rule-id>` | Preview rule |
-| `marketplace update` | Pull latest |
-| `marketplace remove <name>` | Unregister + delete cache |
+| `graph <id>` | Relationship graph (`--depth`, `--direction forward|reverse`, `--format mermaid`) |
 
 Types for `add`: `container`, `component`, `ref`, `rule`, `adr`, `recipe`
+
+**Authoring:** body with mermaid, code fences, or tables -> use `--file <path>`, not inline strings. Single-sentence text edits -> `echo "..." | c3x write <id> --section <name>`. Whole-body rewrite -> `c3x write <id> --file body.md`. Frontmatter fields -> `c3x set <id> <field> <value>`.
 
 ---
 
@@ -54,9 +42,8 @@ Types for `add`: `container`, `component`, `ref`, `rule`, `adr`, `recipe`
 |----------|----|-----|
 | adopt, init, scaffold, bootstrap, onboard, "create .c3" | **onboard** | `references/onboard.md` |
 | where, explain, how, diagram, trace, "show me", "what is" | **query** | `references/query.md` |
-| audit, validate, "check docs", drift, "verify docs" | **audit** | `references/audit.md` |
+| audit, validate, "check docs", drift | **audit** | `references/audit.md` |
 | add, change, fix, implement, refactor, remove, provision, design | **change** | `references/change.md` |
-| "upgrade c3", "repair cache", "rebuild cache", "migrate .c3" | **migrate** | `references/migrate.md` |
 | pattern, convention, "create ref", "update ref", standardize | **ref** | `references/ref.md` |
 | "coding rule", "coding standard", "coding convention", "split ref into rule" | **rule** | `references/rule.md` |
 | marketplace, "browse rules", "adopt rule", "install rule from" | **rule** (Adopt) | `references/rule.md` |
@@ -71,11 +58,12 @@ Types for `add`: `container`, `component`, `ref`, `rule`, `adr`, `recipe`
 
 ## Precondition
 
-Before every op except onboard/migrate:
+Before every op except onboard:
 ```bash
-bash <skill-dir>/bin/c3x.sh
+bash <skill-dir>/bin/c3x.sh list
+bash <skill-dir>/bin/c3x.sh check
 ```
-Returns TOON dashboard. Missing `.c3/` -> **onboard**. Broken seals -> follow CLI repair/migrate. Follow `help[]` hints.
+Missing `.c3/` -> **onboard**. Follow `help[]` hints in output.
 
 ## CoT Harness
 
@@ -102,28 +90,22 @@ First `AskUserQuestion` denial -> `ASSUMPTION_MODE = true` for session.
 
 | Op | Commands |
 |----|----------|
-| Create | `add`, `init`, `codemap` |
-| Read | `read <id>`, `list`, `query`, `lookup`, `graph`, `impact` |
+| Create | `add` |
+| Read | `read <id>`, `list`, `lookup`, `graph` |
 | Update | `write <id>`, `set`, `wire` (`--remove` unwires) |
 | Delete | `delete` |
-| Validate | `check`, `coverage`, `schema`, `verify` |
+| Validate | `check`, `schema` |
 
 Missing c3x operation -> STOP, tell user. No file-tool workarounds.
 
-**HARD RULE -- `.c3/` files are sealed.**
-
-- Trust only after `c3x verify` passes
-- Direct edits break seal -> untrusted
-- Recovery: resolve text -> `c3x repair`
-- `verify` blocks during repair -> use narrow mutation (`write --section`, `set --section`, `add adr`) -> `c3x check --include-adr` -> `c3x verify`
-- Never claim `.c3/` authoritative if `verify` fails
+**Search strategy:** code->entity via `c3x lookup <file-or-glob>`; topology via `c3x list`; full-text over doc bodies -> grep over `.c3/`.
 
 **`c3x check` after every mutation** (`add`, `write`, `set`, `wire`, `delete`). Errors = blockers.
 
 **ADR-first for changes:**
 Every **change** starts `c3x add adr <slug>` before implementation.
 (Exception: **ref-add** creates ADR at completion -- `references/ref.md`.)
-ADR = work order. Use `c3x schema adr`, `c3x read <adr> --full`, `help[]` for required detail. Rejects thin creation; complete up front, `N.A - <reason>` for inapplicable rows. `list`/`check`/`query` exclude ADRs by default; `--include-adr` only when working on specific ADR. ADR content historical -- verify against current docs.
+ADR = work order. Use `c3x schema adr`, `c3x read <adr> --full`, `help[]` for required detail. Rejects thin creation; complete up front, `N.A - <reason>` for inapplicable rows. `list`/`check` exclude ADRs by default; `--include-adr` only when working on specific ADR. ADR content historical -- verify against current docs.
 
 **Stop if:**
 - No ADR for change -> `c3x add adr <slug>` NOW
@@ -198,11 +180,11 @@ Root selection > depth:
 ## Operations
 
 ### onboard
-No `.c3/` or re-onboard. `c3x init` -> discovery -> inject CLAUDE.md -> show capabilities.
+No `.c3/` or re-onboard. Scaffold -> discovery -> inject CLAUDE.md -> show capabilities.
 `references/onboard.md`
 
 ### query
-`c3x query "<terms>"`, `c3x list` for topology, `c3x impact <id>` for deps.
+`c3x list` for topology, `c3x lookup <file-or-glob>` for code->entity, `c3x graph <id> --direction reverse` for dependents. Full-text over bodies -> grep over `.c3/`.
 `references/query.md`
 
 ### audit
@@ -222,9 +204,5 @@ Modes: Add / Update / List / Usage.
 `references/rule.md`
 
 ### sweep
-`c3x impact <id>` -> transitive deps -> parallel assessment -> synthesize. Advisory only.
+`c3x graph <id> --direction reverse` -> transitive deps -> parallel assessment -> synthesize. Advisory only.
 `references/sweep.md`
-
-### migrate
-Version upgrades or break-glass cache rebuilds only. v9 truth = sealed `.c3/` files; cache disposable. Prefer `verify`/`repair` normally. `migrate-legacy` for unsealed adoption, `migrate` for node-tree upgrades.
-`references/migrate.md`

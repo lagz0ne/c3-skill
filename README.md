@@ -17,8 +17,8 @@ Architecture docs rot because nobody enforces them. C3 fixes this by making the 
 - **LLMs read them before touching code** — `c3x lookup src/auth/login.ts` tells the agent which component owns the file, which refs govern it, what rules apply
 - **Writes are validated** — every content update passes through schema enforcement. Missing a required section? Rejected with a hint
 - **Canonical text is reviewable** — Git diffs and merges happen on sealed `.c3/*.md` files and `code-map.yaml`, not on an opaque cache
-- **The cache is disposable** — `c3.db` accelerates queries, search, and writes, but `c3x repair` can rebuild it from canonical text at any time
-- **Every element is trackable** — headings, paragraphs, table rows, list items each have a unique ID and SHA256 hash. Entity-level merkle for O(1) change detection. Full version history with pruning
+- **The cache is disposable** — `c3.db` accelerates queries and writes; `c3x check` rebuilds it from canonical text when needed
+- **Every element is trackable** — headings, paragraphs, table rows, list items each have a unique ID and SHA256 hash; entity-level merkle for O(1) change detection
 
 ## What You Get
 
@@ -27,12 +27,11 @@ Architecture docs rot because nobody enforces them. C3 fixes this by making the 
 | Say this | C3 does this |
 |----------|-------------|
 | `/c3` adopt this project | **onboard** — discovers your architecture through conversation, scaffolds `.c3/` |
-| `/c3` where is auth? | **query** — full-text search, graph traversal, traces relationships |
+| `/c3` where is auth? | **query** — topology traversal via `list`, `lookup`, `read`, `graph` |
 | `/c3` add rate limiting | **change** — ADR-first: impact analysis → decision record → execute → validate |
 | `/c3` create a ref for error handling | **ref** — cross-cutting pattern with Choice/Why/How sections and cite wiring |
 | `/c3` add a rule for structured logging | **rule** — enforceable standard with golden example and anti-patterns |
-| `/c3` audit the docs | **audit** — 10-phase validation: structural → semantic → drift → compliance |
-| `/c3` repair the cache after a branch switch | **migrate** — repair/rebuild cache and handle C3 version upgrades |
+| `/c3` audit the docs | **audit** — structural → semantic → drift → compliance validation |
 | `/c3` what breaks if I change payments? | **sweep** — transitive impact across the entity graph |
 
 ### The `c3x` CLI
@@ -41,72 +40,60 @@ A Go binary bundled inside the plugin. No separate install — the skill carries
 
 > **For agents:** The `/c3` skill handles invocation automatically via `bash <skill-dir>/bin/c3x.sh`. Never run bare `c3x` — always go through `/c3`. The examples below use `c3x` as shorthand for readability.
 
-**Read/Write cycle:**
+**Read:**
 ```bash
-c3x read c3-101                          # entity content rendered from node tree
+c3x read c3-101                          # entity content
 c3x read c3-101 --section Goal           # just one section
 c3x read c3-101 --json                   # structured JSON
-
-echo "New goal." | c3x write c3-101 --section "Goal"   # section update
-cat updated.md | c3x write c3-101                       # full replace (validates + versions)
 ```
 
-**Search and navigate:**
+**Write — two shapes, one rule: complex content goes through a file:**
 ```bash
-c3x query "authentication"               # full-text search with ranking
+# Plain-text section edit
+echo "Handle JWT authentication" | c3x write c3-101 --section Goal
+
+# Rich content (mermaid, code fences, tables, mixed quotes) — use --file
+c3x write c3-101 --section "Foundational Flow" --file flow.md
+c3x write c3-101 --file full-body.md
+
+# New entity
+c3x add component auth --container c3-1 --file auth-component.md
+```
+
+**Frontmatter fields (no body touched):**
+```bash
+c3x set c3-101 goal "Handle JWT auth"
+c3x set c3-101 codemap "src/auth/**,src/auth.go"
+c3x set c3-101 codemap "src/new/**" --append
+```
+
+**Navigate the architecture:**
+```bash
+c3x list                                 # topology: goals, file coverage, ref usage
 c3x lookup src/auth/login.ts             # file → component + refs + rules
-c3x impact ref-jwt                       # what breaks if this changes?
-c3x impact ref-jwt --include-code        # + grep-derived uncited callers
-c3x graph c3-1 --format mermaid          # visual subgraph
+c3x graph c3-1 --format mermaid          # forward subgraph as mermaid
+c3x graph ref-jwt --direction reverse    # what breaks if this changes?
+c3x schema adr                           # required sections for an entity type
 ```
 
-**Manage entities:**
+**Relationships and removal:**
 ```bash
-cat auth-component.md | c3x add component auth --container c3-1
-# → {"id":"c3-101","type":"component","sections":["Goal","Parent Fit","Purpose",...]}
-
-c3x wire c3-101 ref-jwt ref-error-handling   # batch wire multiple targets
-c3x set c3-101 --section "Goal" "Handle JWT authentication"
-c3x set c3-101 codemap "src/auth/**,src/auth.go"   # set code-map patterns
-c3x set c3-101 codemap "src/new/**" --append        # add a pattern
-
-# Batch update (fields + sections + codemap in one call):
-echo '{"fields":{"goal":"X"},"codemap":["src/**"]}' | c3x set ref-jwt --stdin
-
+c3x wire c3-101 ref-jwt ref-error-handling   # cite one or more refs/rules
+c3x wire c3-101 ref-jwt --remove             # unlink
 c3x delete ref-obsolete --dry-run
 ```
 
-**Track changes:**
+**Validate:**
 ```bash
-c3x diff                                 # what changed since last commit
-c3x diff --mark abc123                   # stamp changelog with commit hash
-c3x check                               # validate everything
-c3x check --rule rule-xyz               # validate just the citers of a rule
-c3x coverage                            # code-map completeness stats
-c3x adr --from-diff my-slug             # scaffold ADR from touched files
+c3x check                                # canonical seal + schema + refs + coverage
+c3x check --only-touched                 # scope to branch-touched entities
+c3x check --only c3-101                  # scope to one entity
+c3x check --include-adr                  # include ADR validation (skip by default)
+c3x check --rule rule-xyz                # scope to citers of a rule
+c3x check --fix                          # auto-fix title-matched references
 ```
 
-**Verify and recover:**
-```bash
-c3x verify                               # verify sealed canonical .c3/ truth
-c3x verify --only-touched                # verify only entities touched on this branch
-c3x verify --only c3-101                 # verify a focused id/path/glob
-c3x repair                               # rebuild local cache + reseal after branch/merge issues
-c3x git install                          # install pre-commit guardrails and .c3/.gitignore policy
-```
-
-**Content database:**
-```bash
-c3x nodes c3-101                         # tree of all nodes with IDs + hashes
-c3x nodes c3-101 --json                  # JSON output
-c3x hash c3-101                          # root merkle hash
-c3x hash c3-101 --recompute             # verify hash integrity
-c3x versions c3-101                      # version history
-c3x version c3-101 3                     # content at version 3
-c3x prune c3-101 --keep 10             # prune old versions
-```
-
-**Full command list:** `c3x --help`
+**Full command list:** `c3x --help` (11 user-facing commands)
 
 ### Schema enforcement
 
@@ -120,7 +107,7 @@ Every entity type has required sections. The CLI enforces them on write:
 | Rule | Goal, Rule, Golden Example |
 | ADR, Recipe | Goal |
 
-`c3x write` (full body) validates required sections before accepting. Component section updates validate the full resulting document, so component docs stay all-or-nothing. `c3x check` validates everything post-hoc.
+`c3x write` (full body) validates required sections before accepting. `c3x write --section` on a component validates the full resulting document, so component docs stay all-or-nothing. `c3x check` validates everything post-hoc.
 
 ### Canonical `.c3/` tree
 
@@ -138,13 +125,13 @@ The sealed markdown tree is the shared truth. `c3.db` holds entities, a **conten
 User rule:
 - review and merge `.c3/` text
 - never merge `c3.db`
-- after branch switches, selective merges, or conflict resolution, run `c3x repair`
+- after branch switches, selective merges, or conflict resolution, run `c3x check` (it auto-rebuilds cache, verifies seals, then validates)
 
-Every canonical doc carries a `c3-seal` hash. `c3x verify` checks those seals and confirms the current `.c3/` tree matches canonical output.
+Every canonical doc carries a `c3-seal` hash. `c3x check` verifies those seals and confirms the current `.c3/` tree matches canonical output.
 
 Entity types: `container`, `component`, `ref`, `rule`, `adr`, `recipe`.
 
-Code-map entries link entities to source files via glob patterns. `c3x lookup` resolves any file to its architecture context. `c3x coverage` shows what's mapped and what isn't.
+Code-map entries link entities to source files via glob patterns. `c3x lookup` resolves any file to its architecture context. `c3x check` reports coverage as part of validation.
 
 ### Marketplace
 
@@ -156,52 +143,13 @@ c3x marketplace list --tag errors
 c3x marketplace show rule-error-wrapping
 ```
 
-## Migrating
+## Daily workflow
 
-### Upgrading to v9.2.0
-
-v9 is a breaking workflow release. The shared truth moves from “database-first” to “canonical text first”.
-
-Do this once after upgrading:
-
-```bash
-# 1. Install the new guardrails
-c3x git install
-
-# 2. If the repo still tracks the cache, stop tracking it
-git rm --cached .c3/c3.db
-
-# 3. Rebuild and reseal the local tree
-c3x repair
-
-# 4. Verify before commit
-c3x verify
-```
-
-What changes for daily work:
 - review `.c3/` diffs in Git
 - let `c3.db` stay local and disposable
-- use `c3x verify` before commit / in CI
-- use `c3x repair` after branch switches, selective merges, or manual conflict resolution
-- if broken canonical state blocks read-only commands, repair with the narrow mutating command (`write --section`, `set --section`, or `add adr`) and then run `c3x check --include-adr && c3x verify`
-
-**From v7 (body-based entities):**
-```bash
-c3x migrate                  # populates node tree for all entities
-c3x migrate --dry-run        # preview without changes
-c3x migrate --dry-run --json # machine-readable blockers; agent mode returns TOON
-```
-
-Expected migration failure flow:
-- `BLOCKED: N component(s)` means strict component docs failed preflight and no migration writes occurred. Use `c3x migrate repair-plan`, repair listed sections with `c3x migrate repair <id> --section <name>`, run `c3x cache clear`, run `c3x import --force`, then resume with `c3x migrate --continue`.
-- `BLOCKED: migration write failed at <id>` means C3 stopped before canonical export so submitted markdown is not rewritten from a partial cache. Fix the write/cache issue, run `c3x cache clear`, rebuild from canonical text, then resume migration.
-- Do not use speculative command chains. Follow the printed fix loop and finish with `c3x check --include-adr && c3x verify`.
-
-**From pre-v7 (file-based `.c3/`):**
-```bash
-c3x migrate-legacy           # markdown files → SQLite
-c3x migrate                  # then populate node tree
-```
+- run `c3x check` before commit (in CI too)
+- after branch switches, selective merges, or conflict resolution, `c3x check` rebuilds cache and verifies seals as part of validation
+- install once: `c3x git install` (pre-commit guardrails + `.c3/.gitignore` policy)
 
 ## Self-contained distribution
 
@@ -209,12 +157,12 @@ The plugin ships with pre-built binaries — no Go toolchain, no npm, no PATH co
 
 ```
 skills/c3/bin/
-├── VERSION                    # "9.2.0"
-├── c3x.sh                    # detects OS/ARCH, runs the right binary
-├── c3x-9.2.0-linux-amd64
-├── c3x-9.2.0-linux-arm64
-├── c3x-9.2.0-darwin-amd64
-└── c3x-9.2.0-darwin-arm64
+├── VERSION                    # current plugin version (read by c3x.sh)
+├── c3x.sh                     # detects OS/ARCH, runs the right binary
+├── c3x-<version>-linux-amd64
+├── c3x-<version>-linux-arm64
+├── c3x-<version>-darwin-amd64
+└── c3x-<version>-darwin-arm64
 ```
 
 Each plugin version carries its own binary. Different projects can use different versions without conflict.
@@ -231,7 +179,7 @@ code --install-extension c3-nav.vsix --force
 ## Development
 
 ```bash
-cd cli && go test ./...       # 14 packages
+cd cli && go test ./...       # 16 packages
 bash scripts/build.sh         # cross-compile for 4 targets
 ```
 

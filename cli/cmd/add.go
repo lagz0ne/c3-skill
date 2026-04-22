@@ -31,6 +31,32 @@ func RunAdd(entityType, slug string, s *store.Store, container string, feature b
 	return RunAddFormatted(entityType, slug, s, container, feature, body, w, FormatHuman)
 }
 
+// RunAddDryRun validates entity content without creating the entity.
+func RunAddDryRun(entityType, slug string, s *store.Store, container string, feature bool, body io.Reader, w io.Writer) error {
+	if entityType == "" || slug == "" {
+		return fmt.Errorf("error: usage: c3x add <type> <slug> < body.md\nhint: types: container, component, ref, rule, adr, recipe")
+	}
+	if !validSlug.MatchString(slug) {
+		return fmt.Errorf("error: invalid slug '%s'\nhint: use kebab-case (e.g. auth-provider, rate-limiting)", slug)
+	}
+	bodyContent, err := readBody(body)
+	if err != nil {
+		return err
+	}
+	if _, err := buildEntity(entityType, slug, s, container, feature); err != nil {
+		return err
+	}
+	issues := validateBodyContent(bodyContent, entityType)
+	if entityType == "adr" {
+		issues = append(issues, validateADRCreationBody(bodyContent)...)
+	}
+	if len(issues) > 0 {
+		return formatValidationError(entityType+"-"+slug, issues)
+	}
+	fmt.Fprintf(w, "dry-run: %s %s content is valid\n", entityType, slug)
+	return nil
+}
+
 // RunAddFormatted creates a new C3 entity and writes either human or structured output.
 func RunAddFormatted(entityType, slug string, s *store.Store, container string, feature bool, body io.Reader, w io.Writer, format OutputFormat) error {
 	if entityType == "" || slug == "" {

@@ -285,6 +285,34 @@ func TestRunAdd_InvalidSlug(t *testing.T) {
 	}
 }
 
+func TestRunAdd_AdrRejectsUnknownSection(t *testing.T) {
+	s, _ := createDBFixtureWithC3Dir(t)
+	var buf bytes.Buffer
+
+	body := fullADRBody("Adopt OAuth.") + "\n## Consequences\nUsers must re-auth.\n"
+	err := RunAdd("adr", "oauth-support", s, "", false, strings.NewReader(body), &buf)
+	if err == nil {
+		t.Fatal("expected error for unknown section")
+	}
+	if !strings.Contains(err.Error(), "unknown section: Consequences") {
+		t.Errorf("error should name unknown section: %v", err)
+	}
+}
+
+func TestRunAdd_RefRejectsUnknownSection(t *testing.T) {
+	s, _ := createDBFixtureWithC3Dir(t)
+	var buf bytes.Buffer
+
+	body := "## Goal\nX.\n\n## Choice\nY.\n\n## Why\nZ.\n\n## Bogus\nnope.\n"
+	err := RunAdd("ref", "test-ref", s, "", false, strings.NewReader(body), &buf)
+	if err == nil {
+		t.Fatal("expected error for unknown section")
+	}
+	if !strings.Contains(err.Error(), "unknown section: Bogus") {
+		t.Errorf("error should name unknown section: %v", err)
+	}
+}
+
 func TestRunAdd_UnknownType(t *testing.T) {
 	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer

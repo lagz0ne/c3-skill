@@ -17,7 +17,7 @@ func TestShowHelp_Global(t *testing.T) {
 	if !strings.Contains(output, "Commands:") {
 		t.Error("global help should list commands")
 	}
-	for _, cmd := range []string{"list", "check", "verify", "repair", "add", "set", "wire", "schema", "git"} {
+	for _, cmd := range []string{"list", "check", "add", "set", "wire", "schema"} {
 		if !strings.Contains(output, cmd) {
 			t.Errorf("global help should mention %s command", cmd)
 		}
@@ -32,44 +32,8 @@ func TestShowHelp_Global(t *testing.T) {
 	}
 }
 
-func TestShowHelp_HiddenCommandFallsBackToGlobalHelp(t *testing.T) {
-	var buf bytes.Buffer
-	ShowHelp("sync", &buf)
-	output := buf.String()
-	if !strings.Contains(output, "Commands:") {
-		t.Fatal("hidden command help should fall back to global help")
-	}
-}
-
-func TestShowHelp_VerifyMentionsCacheRefresh(t *testing.T) {
-	var buf bytes.Buffer
-	ShowHelp("verify", &buf)
-	output := buf.String()
-	if !strings.Contains(strings.ToLower(output), "local cache") {
-		t.Fatal("verify help should mention cache refresh")
-	}
-	requireAll(t, output, "--only <id>", "--include-adr")
-}
-
-func TestShowHelp_AddADRWorkflowPointsAtSchema(t *testing.T) {
-	var buf bytes.Buffer
-	ShowHelp("add", &buf)
-	output := buf.String()
-
-	requireAll(t, output,
-		"ADR workflow:",
-		"c3x schema adr",
-		"CLI-owned ADR creation contract",
-		"cat complete-adr.md | c3x add adr <slug>",
-		"c3x check --include-adr && c3x verify",
-	)
-	if strings.Contains(output, "c3x add adr use-grpc --goal") {
-		t.Fatal("add help should not teach unsupported ADR --goal flow")
-	}
-}
-
 func TestShowHelp_Commands(t *testing.T) {
-	commands := []string{"list", "check", "verify", "repair", "add", "set", "wire", "schema", "git"}
+	commands := []string{"list", "check", "add", "set", "wire", "schema"}
 	for _, cmd := range commands {
 		t.Run(cmd, func(t *testing.T) {
 			var buf bytes.Buffer
@@ -104,7 +68,7 @@ func TestShowCapabilities(t *testing.T) {
 	if !strings.Contains(output, "c3x list") {
 		t.Error("capabilities should list the list command")
 	}
-	// Hidden commands (init, migrate) should be excluded
+	// Hidden commands (init, marketplace, git, codemap) should be excluded
 	if strings.Contains(output, "c3x init") {
 		t.Error("capabilities should not include hidden commands")
 	}

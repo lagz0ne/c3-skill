@@ -148,6 +148,16 @@ func TestRender_CodeBlockNoLang(t *testing.T) {
 	}
 }
 
+func TestRender_CodeBlockEmptyLangMarker(t *testing.T) {
+	nodes := []*store.Node{
+		rootNode(1, "code_block", 0, 0, "\nSHORTLINE\nsecond line"),
+	}
+	want := "```\nSHORTLINE\nsecond line\n```\n"
+	if got := RenderMarkdown(nodes); got != want {
+		t.Errorf("got:\n%q\nwant:\n%q", got, want)
+	}
+}
+
 func TestRender_Blockquote(t *testing.T) {
 	nodes := []*store.Node{
 		rootNode(1, "blockquote", 0, 0, ""),

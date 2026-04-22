@@ -149,14 +149,6 @@ Need fast CLI.
 		t.Fatalf("expected repaired description in ref export:\n%s", string(refDoc))
 	}
 
-	diffOut := &bytes.Buffer{}
-	if err := RunDiff(s, false, "", false, diffOut); err != nil {
-		t.Fatalf("RunDiff: %v", err)
-	}
-	if !strings.Contains(diffOut.String(), "No uncommitted changes.") {
-		t.Fatalf("expected clean changelog after import, got:\n%s", diffOut.String())
-	}
-
 	backups, err := filepath.Glob(filepath.Join(c3Dir, "c3.db.bak-*"))
 	if err != nil {
 		t.Fatalf("glob backups: %v", err)

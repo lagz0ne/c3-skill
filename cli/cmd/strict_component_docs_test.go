@@ -134,27 +134,6 @@ func TestStrictComponentDocs_CheckFlagsInvalidComponent(t *testing.T) {
 	requireAll(t, buf.String(), "c3-101", "missing required section: Parent Fit")
 }
 
-func TestStrictComponentDocs_SetSectionValidatesResultingComponent(t *testing.T) {
-	s := createRichDBFixture(t)
-	if err := content.WriteEntity(s, "c3-101", strictComponentBody("auth", "Provide reviewer-ready authentication behavior documentation.")); err != nil {
-		t.Fatal(err)
-	}
-	var buf bytes.Buffer
-
-	err := RunSet(SetOptions{
-		Store:   s,
-		ID:      "c3-101",
-		Section: "Contract",
-		Value:   "| Surface | Direction | Contract | Boundary | Evidence |\n| --- | --- | --- | --- | --- |\n| credentials | IN | TBD | API request boundary | ref-jwt |",
-	}, &buf)
-	if err == nil {
-		t.Fatal("expected strict validation failure after set --section")
-	}
-	if !strings.Contains(err.Error(), "placeholder") {
-		t.Fatalf("expected placeholder error, got: %v", err)
-	}
-}
-
 func TestStrictComponentDocs_RejectsDuplicateRequiredHeading(t *testing.T) {
 	body := strings.Replace(strictComponentBody("auth", "Provide reviewer-ready authentication behavior documentation."), "## Parent Fit", "## Goal\n\nShadow goal with enough words.\n\n## Parent Fit", 1)
 

@@ -54,7 +54,7 @@ Flag any proposed violation.
 
 ## Step 5: Synthesize
 
-**Impact Graph:** Include `c3x graph <target-entity> --direction forward --format mermaid` as mermaid code block atop report. Graph from most specific affected entity (component > container). For ref/rule impact, graph ref/rule itself to show all citers.
+**Impact Graph:** Include `c3x graph <target-entity> --direction reverse --format mermaid` as mermaid code block atop report (reverse direction = who depends on the changed entity). Graph from most specific affected entity (component > container). For ref/rule impact, graph ref/rule itself to show all citers.
 
 ```
 **C3 Impact Assessment**

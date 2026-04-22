@@ -135,24 +135,3 @@ func TestRunCheck_AgentTOONIncludesCascadeReviewHint(t *testing.T) {
 	)
 }
 
-func TestRunDiff_AgentTOONIncludesCascadeReviewHint(t *testing.T) {
-	s := createRichDBFixture(t)
-	t.Setenv("C3X_MODE", "agent")
-
-	entity, _ := s.GetEntity("c3-101")
-	entity.Goal = "Changed auth goal"
-	if err := s.UpdateEntity(entity); err != nil {
-		t.Fatal(err)
-	}
-
-	var buf bytes.Buffer
-	if err := RunDiff(s, false, "", true, &buf); err != nil {
-		t.Fatal(err)
-	}
-
-	requireAll(t, buf.String(),
-		"help:",
-		"cascade review",
-		"Parent Delta",
-	)
-}

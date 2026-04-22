@@ -5,6 +5,32 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.6.0] - 2026-04-22
+
+### Added
+
+- **`--file <path>` flag on `write`, `add`, and `set --section`** — substitutes for stdin so complex bodies (mermaid diagrams, code fences, tables, mixed quotes) can be authored without shell heredoc ceremony. Heavily LLM-optimised: generate the file with the Write tool, then pipe it in.
+- **Unknown-section validation** — `c3x write` / `c3x add` now error loudly when the body contains a `## X` that isn't in the entity type's schema, with a hint pointing at `c3x schema <type>`. Previously such sections were silently accepted and ignored.
+
+### Changed
+
+- **Brutally reduced CLI surface: 30 → 11 user-facing commands.** Rationale: fewer choices, more deterministic LLM behavior. Kept: `add, write, read, set, wire, delete, lookup, list, check, graph, schema`. Hidden (dispatchable but not in help): `init, codemap, marketplace, git`.
+- **`check` absorbs `verify` and `coverage`** — single validator. Cache-integrity + canonical seal check runs first, then schema/refs/consistency. Inherits `--include-adr`, `--only`, `--only-touched`, `--since`, `--rule`, `--fix` flags.
+- **`wire --remove` replaces `unwire`** — one verb, one shape.
+- **`graph --direction reverse` replaces `impact`** — same output, fewer verbs.
+- **`set` narrowed to frontmatter fields and codemap patterns only.** `--section`, `--stdin` batch, and JSON table modes removed. Section edits now live exclusively on `c3x write --section` (supports `--file` for rich content).
+- **Skill references rewritten** — all 7 skill reference docs updated to the new command surface. `migrate.md` removed (260 lines of dead prose).
+
+### Removed
+
+- **CLI commands removed entirely:** `status, verify, repair, coverage, diff, impact, template, adr --from-diff, query, export, sync, nodes, hash, versions, version, prune, migrate, migrate-legacy, cache, import, unwire`.
+- **`c3x template`** — was promoting placeholder content that passed validation (boilerplate "Provide the core behavioral responsibility…") but was worthless. Removed rather than promoted.
+- Roughly 7,300 lines of dead command code pruned from `cli/cmd/`.
+
+### Fixed
+
+- **Code-block round-trip corruption.** `parseCodeContent` used a "first line is lang if ≤20 chars, no space" heuristic that silently mangled untagged fences whose first line happened to look like a lang tag (`SHORTLINE`, `const`, `x=1`, nested `EOF`, etc.). Storage format is now unambiguous: always `lang\ncode` with empty lang encoded as a leading newline.
+
 ## [9.5.1] - 2026-04-22
 
 ### Added

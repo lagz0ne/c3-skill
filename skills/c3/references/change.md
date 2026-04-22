@@ -7,7 +7,7 @@ Spawn parallel subagents via Task tool for complex work.
 ## Progress Checklist
 
 ```
-- [ ] Phase 1: complete ADR created (`cat complete-adr.md | c3x add adr <slug>`)
+- [ ] Phase 1: complete ADR created (`c3x add adr <slug> --file adr-body.md`)
 - [ ] Phase 2: topology loaded, impact analyzed, ADR body complete work order
 - [ ] Phase 2b: provision gate (implement or design-only?)
 - [ ] Phase 3: execute work breakdown
@@ -21,12 +21,15 @@ Spawn parallel subagents via Task tool for complex work.
 ## Phase 1: ADR (FIRST — non-negotiable)
 
 ```bash
-cat <<'EOF' | bash <skill-dir>/bin/c3x.sh add adr <slug>## Goal
-<what + why>
-EOF
+echo "<what + why>" | bash <skill-dir>/bin/c3x.sh add adr <slug>
 ```
 
-Create ADR immediately with at least Goal. Slug = change intent (e.g., `add-rate-limiting`, `migrate-to-postgres`). Body expanded in Phase 2 via `c3x write` after understanding impact.
+Create ADR immediately with at least Goal. Slug = change intent (e.g., `add-rate-limiting`, `migrate-to-postgres`). Body expanded in Phase 2 — any section with tables, mermaid, or code fences MUST be authored via a file: `c3x write <adr-id> --section <name> --file <path>`.
+
+From a diff, capture rationale via stdin:
+```bash
+git diff <ref> | bash <skill-dir>/bin/c3x.sh add adr <slug>
+```
 
 ## Phase 2: Understand + Fill ADR
 
@@ -41,7 +44,7 @@ Clarify with user (ASSUMPTION_MODE: skip). Analyze:
 - `c3x read` upward: component → container → context → cited refs
 - Risks
 
-ADR body must have enough detail for later agent to recover decision without chat history. Update `affects:` in frontmatter when entities known; otherwise replace full ADR once context loaded.
+ADR body must have enough detail for later agent to recover decision without chat history. Update `affects:` in frontmatter when entities known; otherwise rewrite full body via `c3x write <adr-id> --file adr-body.md` once context loaded.
 
 CLI = source of truth for ADR structure:
 
@@ -50,7 +53,7 @@ bash <skill-dir>/bin/c3x.sh schema adr
 bash <skill-dir>/bin/c3x.sh read <adr-id> --full
 ```
 
-Follow `c3x schema adr` sections and `help[]` hints. `c3x add adr` = all-or-nothing: no thin ADR + incremental fill. For validator/schema/migration/command/ref/rule/derived-material changes, ADR must preserve underlay C3 changes: exact commands, validators, tests, help/hints, schemas, templates, verification evidence.
+Follow `c3x schema adr` sections and `help[]` hints. `c3x add adr` = all-or-nothing: no thin ADR + incremental fill. For validator/schema/command/ref/rule/derived-material changes, ADR must preserve underlay C3 changes: exact commands, validators, tests, help/hints, schemas, verification evidence. Rich sections (command tables, code fences, mermaid) go through `c3x write <adr-id> --section <name> --file <path>`.
 
 **Visual Impact:** Run `c3x graph <primary-affected-container-or-component> --format mermaid` — include in approval presentation. Multiple containers → graph each separately.
 
@@ -68,7 +71,7 @@ To implement provisioned later: invoke change, pick up ADR + docs, resume Phase 
 
 ## Phase 3: Execute
 
-Scaffold: `add` templates in onboard.md §1.2-1.4 (body via stdin). Delete: `c3x delete <id> [--dry-run]`.
+Scaffold: `add` patterns in onboard.md §1.2-1.4 (body via `--file <path>` for tables/mermaid/code; stdin for plain prose). Edit existing: `c3x write <id> --section <name> --file body.md` for rich content, `echo "..." | c3x write <id> --section <name>` for short text, `c3x set <id> <field> <value>` for frontmatter. Delete: `c3x delete <id> [--dry-run]`.
 
 **File context gate (SKILL.md §File Context) — MANDATORY before touching any file.**
 

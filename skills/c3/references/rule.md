@@ -103,7 +103,7 @@ Rule adoption ADRs use `status: implemented` — rule doc IS deliverable.
 Flow: `Clarify → Find Citings → Check Compliance → Surface Impact → Execute`
 
 1. **Clarify:** `AskUserQuestion` — add/modify/remove rule or clarify docs (ASSUMPTION_MODE: skip)
-2. **Find citings:** `c3x list` → rule entity → `relationships`. Depth: `c3x query rule-{slug}`.
+2. **Find citings:** `c3x list` → rule entity → `relationships`. Depth: `c3x graph rule-{slug} --direction reverse`.
 3. **Check compliance:** `c3x lookup <file>` per code-map entry. Compare against `## Golden Example` + `## Not This`. Categorize: compliant / needs-update / breaking.
 4. **Surface impact:** `AskUserQuestion` — proceed/narrow/cancel (ASSUMPTION_MODE: skip)
 5. **Execute:** Update rule doc + create ADR. Non-compliant → TODO in ADR (no code changes).
@@ -172,7 +172,7 @@ Ref entirely about enforcement, not rationale.
    - `## Why` → `origin:` if parent ref exists, else drop
 3. Set `origin: [ref-{old-slug}]` if old ref kept for rationale
 4. `c3x wire <component> rule-{slug}` per citer
-5. If deleting ref: `c3x wire --remove <component> ref-{slug}` per citer, then delete
+5. If deleting ref: `c3x wire <component> ref-{slug} --remove` per citer, then delete
 6. Move ref's file patterns to rule in code-map
 
 ### Step 3b: Split (dual-nature)
@@ -231,7 +231,7 @@ Confirm: no orphan refs, all rules have golden examples, all citations intact.
 
 Flow: `Preview → Discover Overlap → Guided Merge → Write → Wire → ADR`
 
-Adopt marketplace rule into project `.c3/rules/`.
+Adopt marketplace rule into project `.c3/rules/` (if using marketplace plugin packs).
 
 ### Step 1: Preview
 
@@ -244,7 +244,7 @@ Display full rule content. If `--source` needed, `AskUserQuestion` (ASSUMPTION_M
 ### Step 2: Discover Overlap (2-5 Grep calls)
 
 Search project for patterns overlapping marketplace rule:
-- Existing rules/refs covering similar ground (`c3x query`)
+- Existing rules/refs covering similar ground (`c3x list`; for body text use grep over `.c3/`)
 - Code matching `## Golden Example`
 - Anti-patterns matching `## Not This`
 
@@ -263,12 +263,14 @@ Required sections (Rule, Golden Example) cannot be skipped.
 
 ### Step 4: Write
 
+Write the adapted body sections to files first (Golden Example and Not This contain code fences → use `--file`), then apply:
+
 ```bash
 bash <skill-dir>/bin/c3x.sh add rule <slug>
 bash <skill-dir>/bin/c3x.sh set rule-<slug> goal "<adapted goal>"
-bash <skill-dir>/bin/c3x.sh set rule-<slug> --section "Rule" "<adapted rule statement>"
-bash <skill-dir>/bin/c3x.sh set rule-<slug> --section "Golden Example" "<adapted example>"
-bash <skill-dir>/bin/c3x.sh set rule-<slug> --section "Not This" "<adapted anti-patterns>"
+echo "<adapted rule statement>" | bash <skill-dir>/bin/c3x.sh write rule-<slug> --section "Rule"
+bash <skill-dir>/bin/c3x.sh write rule-<slug> --section "Golden Example" --file golden.md
+bash <skill-dir>/bin/c3x.sh write rule-<slug> --section "Not This" --file not-this.md
 ```
 
 ### Step 5: Wire
@@ -284,6 +286,8 @@ bash <skill-dir>/bin/c3x.sh wire <component-id> rule-<slug>
 bash <skill-dir>/bin/c3x.sh add adr adopt-rule-<slug>
 bash <skill-dir>/bin/c3x.sh set adr-YYYYMMDD-adopt-rule-<slug> status implemented
 ```
+
+Body with rationale + adaptation notes → `c3x write adr-YYYYMMDD-adopt-rule-<slug> --file body.md`.
 
 Body: note source marketplace and adaptations.
 

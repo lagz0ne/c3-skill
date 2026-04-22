@@ -175,6 +175,28 @@ func TestParse_CodeBlock(t *testing.T) {
 	}
 }
 
+// Regression: untagged fence with a short first line used to lose
+// that line to the "first line is lang" heuristic.
+func TestParse_CodeBlockNoLangShortFirstLine(t *testing.T) {
+	md := "```\nSHORTLINE\nsecond line\n```\n"
+	tree := ParseMarkdown("comp-1", md)
+	if len(tree.Nodes) != 1 {
+		t.Fatalf("expected 1 node, got %d", len(tree.Nodes))
+	}
+	n := tree.Nodes[0]
+	if n.Type != "code_block" {
+		t.Fatalf("expected code_block, got %s", n.Type)
+	}
+	want := "\nSHORTLINE\nsecond line"
+	if n.Content != want {
+		t.Errorf("content: got %q, want %q", n.Content, want)
+	}
+	got := RenderMarkdown(tree.Nodes)
+	if got != md {
+		t.Errorf("round-trip mismatch:\ngot:  %q\nwant: %q", got, md)
+	}
+}
+
 func TestParse_Blockquote(t *testing.T) {
 	tree := ParseMarkdown("comp-1", "> quoted text\n")
 	if len(tree.Nodes) != 2 {

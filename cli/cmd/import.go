@@ -15,6 +15,43 @@ import (
 	"github.com/lagz0ne/c3-design/cli/internal/walker"
 )
 
+// docTypeToStoreType maps frontmatter.DocType to the store entity type string.
+func docTypeToStoreType(dt frontmatter.DocType) string {
+	switch dt {
+	case frontmatter.DocContext:
+		return "system"
+	case frontmatter.DocContainer:
+		return "container"
+	case frontmatter.DocComponent:
+		return "component"
+	case frontmatter.DocRef:
+		return "ref"
+	case frontmatter.DocADR:
+		return "adr"
+	case frontmatter.DocRule:
+		return "rule"
+	case frontmatter.DocRecipe:
+		return "recipe"
+	default:
+		return ""
+	}
+}
+
+func addRelSafe(s *store.Store, fromID, toID, relType string) error {
+	if toID == "" {
+		return nil
+	}
+	err := s.AddRelationship(&store.Relationship{
+		FromID:  fromID,
+		ToID:    toID,
+		RelType: relType,
+	})
+	if err != nil {
+		return fmt.Errorf("relationship %s->%s (%s): %v", fromID, toID, relType, err)
+	}
+	return nil
+}
+
 type ImportOptions struct {
 	C3Dir         string
 	Force         bool

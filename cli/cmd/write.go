@@ -210,11 +210,14 @@ func validateBodyContent(body, entityType string) []Issue {
 	if schemaSections == nil {
 		return nil
 	}
-	if entityType == "component" {
-		return validateStrictComponentDoc(body, "error")
-	}
 
 	sections := markdown.ParseSections(body)
+	allowed := allowedSectionNames(entityType, schemaSections)
+
+	if entityType == "component" {
+		return append(validateStrictComponentDoc(body, "error"), unknownSectionIssues(sections, allowed, entityType)...)
+	}
+
 	sectionMap := make(map[string]string)
 	for _, s := range sections {
 		if s.Name != "" {
@@ -247,6 +250,37 @@ func validateBodyContent(body, entityType string) []Issue {
 		}
 	}
 
+	return append(issues, unknownSectionIssues(sections, allowed, entityType)...)
+}
+
+func allowedSectionNames(entityType string, schemaSections []schema.SectionDef) map[string]bool {
+	allowed := make(map[string]bool)
+	if entityType == "component" {
+		for _, name := range componentSectionOrder {
+			allowed[name] = true
+		}
+		return allowed
+	}
+	for _, sec := range schemaSections {
+		allowed[sec.Name] = true
+	}
+	return allowed
+}
+
+func unknownSectionIssues(sections []markdown.Section, allowed map[string]bool, entityType string) []Issue {
+	var issues []Issue
+	seen := make(map[string]bool)
+	for _, s := range sections {
+		if s.Name == "" || allowed[s.Name] || seen[s.Name] {
+			continue
+		}
+		seen[s.Name] = true
+		issues = append(issues, Issue{
+			Severity: "error",
+			Message:  fmt.Sprintf("unknown section: %s", s.Name),
+			Hint:     fmt.Sprintf("remove ## %s or run 'c3x schema %s' for allowed sections", s.Name, entityType),
+		})
+	}
 	return issues
 }
 

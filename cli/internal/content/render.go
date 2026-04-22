@@ -135,18 +135,12 @@ func renderNode(b *strings.Builder, n *store.Node, children map[int64][]*store.N
 	}
 }
 
-// parseCodeContent splits code_block content into language and code body.
-// Convention: if content contains a newline and the first line looks like a
-// language identifier (single word, no spaces), it's treated as the language.
+// parseCodeContent splits `lang\ncode` (lang may be empty). Legacy rows
+// without a newline are treated as no-lang code.
 func parseCodeContent(content string) (lang, code string) {
 	idx := strings.IndexByte(content, '\n')
 	if idx == -1 {
-		// No newline — entire content is code, no language
 		return "", content
 	}
-	first := content[:idx]
-	if !strings.Contains(first, " ") && len(first) <= 20 {
-		return first, content[idx+1:]
-	}
-	return "", content
+	return content[:idx], content[idx+1:]
 }

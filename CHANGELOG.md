@@ -5,6 +5,29 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.5.0] - 2026-04-22
+
+### Added
+
+- **`c3x impact --include-code`** — merges documented `uses` citations with a grep-derived import graph over the target's code-map sources. Callers that hit the code but aren't documented in `.c3/` are surfaced as `[uncited]`; caller files with no owning component are reported separately as codemap coverage gaps. JSON output becomes `{entries, unmapped_files}` so agents can distinguish cited vs uncited.
+- **`c3x check --rule <rule-id>`** — strict subset of `check` that expands each rule into its citer entities via the `uses` relationship. Errors loudly when a rule has no citers instead of silently passing.
+- **`c3x verify --only-touched [--since <ref>]`** — resolves staged/unstaged/untracked files (or diff since `<ref>`) to entity IDs via direct frontmatter or codemap, then feeds them through the existing `--only` path.
+- **`c3x adr --from-diff [<slug>] [--since <ref>]`** — emits an ADR scaffold to stdout. Groups touched files by owning component in Context, pre-fills `affects:` with those components' parents, and defaults Parent Delta to `no-delta`.
+
+### Changed
+
+- **Read-only commands are now idempotent** — `read`, `lookup`, `impact`, `query`, `list`, `graph`, `status`, `codemap`, etc. no longer trigger auto-repair on drift. They print a single stderr warning and return best-effort output, so in-flight canonical edits are preserved. Only mutating commands still run `RunRepair`.
+- **Terse, actionable hints** — `impact`, `adr --from-diff`, `verify --only-touched`, and `check --rule` dead-end messages now point at the next concrete command (`--include-code`, `--since main`, `c3x wire`, `c3x codemap`) instead of restating failure.
+- **Help text trimmed** — `verify`, `impact`, and `adr` collapse marketing paragraphs into scan-friendly one-liners.
+
+### Fixed
+
+- **Render blank line between sibling top-level blocks** — `c3x read` no longer abuts sibling headings (or table/list/code blocks followed by headings) onto a single newline. Every block-level emitter now ends with `\n\n`; document-end trim collapses trailing newlines back to one.
+
+### Documentation
+
+- Internal comment cleanup (`/noslop`): dropped WHAT-comments, task refs, and restate-the-name docs. No behavior change.
+
 ## [9.4.5] - 2026-04-21
 
 ### Added

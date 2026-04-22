@@ -42,8 +42,10 @@ func renderNode(b *strings.Builder, n *store.Node, children map[int64][]*store.N
 		b.WriteString(strings.Repeat("#", n.Level))
 		b.WriteString(" ")
 		b.WriteString(n.Content)
-		b.WriteString("\n")
-		renderChildren(b, n.ID, children, depth)
+		b.WriteString("\n\n")
+		for _, c := range children[n.ID] {
+			renderNode(b, c, children, depth)
+		}
 
 	case "paragraph":
 		b.WriteString(n.Content)
@@ -57,12 +59,12 @@ func renderNode(b *strings.Builder, n *store.Node, children map[int64][]*store.N
 				b.WriteString("- ")
 				b.WriteString(c.Content)
 				b.WriteString("\n")
-				// nested lists are children of the list_item
 				for _, sub := range children[c.ID] {
 					renderNode(b, sub, children, depth+1)
 				}
 			}
 		}
+		b.WriteString("\n")
 
 	case "ordered_list":
 		for i, c := range children[n.ID] {
@@ -74,6 +76,7 @@ func renderNode(b *strings.Builder, n *store.Node, children map[int64][]*store.N
 				}
 			}
 		}
+		b.WriteString("\n")
 
 	case "checklist":
 		for _, c := range children[n.ID] {
@@ -83,6 +86,7 @@ func renderNode(b *strings.Builder, n *store.Node, children map[int64][]*store.N
 				b.WriteString("\n")
 			}
 		}
+		b.WriteString("\n")
 
 	case "table":
 		kids := children[n.ID]
@@ -101,6 +105,7 @@ func renderNode(b *strings.Builder, n *store.Node, children map[int64][]*store.N
 				b.WriteString(" |\n")
 			}
 		}
+		b.WriteString("\n")
 
 	case "code_block":
 		lang, code := parseCodeContent(n.Content)
@@ -108,7 +113,7 @@ func renderNode(b *strings.Builder, n *store.Node, children map[int64][]*store.N
 		b.WriteString(lang)
 		b.WriteString("\n")
 		b.WriteString(code)
-		b.WriteString("\n```\n")
+		b.WriteString("\n```\n\n")
 
 	case "blockquote":
 		var inner strings.Builder
@@ -120,25 +125,13 @@ func renderNode(b *strings.Builder, n *store.Node, children map[int64][]*store.N
 			b.WriteString(line)
 			b.WriteString("\n")
 		}
+		b.WriteString("\n")
 
 	default:
 		if n.Content != "" {
 			b.WriteString(n.Content)
 			b.WriteString("\n\n")
 		}
-	}
-}
-
-// renderChildren renders children of a container node, adding a blank line
-// before the first child if there are any (used for headings).
-func renderChildren(b *strings.Builder, parentID int64, children map[int64][]*store.Node, depth int) {
-	kids := children[parentID]
-	if len(kids) == 0 {
-		return
-	}
-	b.WriteString("\n")
-	for _, c := range kids {
-		renderNode(b, c, children, depth)
 	}
 }
 

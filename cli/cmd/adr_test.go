@@ -113,8 +113,11 @@ func TestRunAdrFromDiff_NoFiles(t *testing.T) {
 	}, &buf); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(buf.String(), "No touched files detected.") {
+	if !strings.Contains(buf.String(), "No touched files") {
 		t.Errorf("expected no-files message, got:\n%s", buf.String())
+	}
+	if !strings.Contains(buf.String(), "--since") {
+		t.Errorf("expected actionable hint referencing --since, got:\n%s", buf.String())
 	}
 	if !strings.Contains(buf.String(), "affects: []") {
 		t.Errorf("expected empty affects, got:\n%s", buf.String())

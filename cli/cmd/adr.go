@@ -78,7 +78,7 @@ func RunAdrFromDiff(opts AdrFromDiffOptions, w io.Writer) error {
 	fmt.Fprintln(w, "## Context")
 	fmt.Fprintln(w)
 	if len(files) == 0 {
-		fmt.Fprintln(w, "No touched files detected.")
+		fmt.Fprintln(w, "No touched files. Stage/edit changes, or widen scope: --since main.")
 	} else {
 		fmt.Fprintf(w, "Touches %d file(s) across %d component(s):\n\n", len(files), len(componentIDs))
 		for _, id := range componentIDs {

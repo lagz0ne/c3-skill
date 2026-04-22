@@ -104,7 +104,7 @@ func resolveRuleCiters(s *store.Store, ruleIDs []string) ([]string, error) {
 			ids = append(ids, r.FromID)
 		}
 		if !found {
-			return nil, fmt.Errorf("--rule %s has no citers; nothing to check", ruleID)
+			return nil, fmt.Errorf("rule %s has no citers. Wire one with: c3x wire <component> %s\nOr check a different rule.", ruleID, ruleID)
 		}
 	}
 	sort.Strings(ids)

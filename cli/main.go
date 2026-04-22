@@ -116,7 +116,8 @@ func run(argv []string, w io.Writer) error {
 				return fmt.Errorf("--only-touched: %w", err)
 			}
 			if len(touched) == 0 {
-				fmt.Fprintln(w, "No touched entities since reference; nothing to verify.")
+				fmt.Fprintln(w, "No touched entities. Widen scope: c3x verify --only-touched --since main")
+				fmt.Fprintln(w, "Or drop --only-touched for a full verify.")
 				return nil
 			}
 			only = append(only, touched...)

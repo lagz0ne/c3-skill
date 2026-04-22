@@ -40,27 +40,23 @@ Normal users rarely need this after initial setup.`,
 	},
 	{
 		Name:     "verify",
-		OneLiner: "Validate canonical .c3/ truth and refresh local cache if needed",
-		Help: `Usage: c3x verify [--include-adr] [--only <id-or-path-or-glob>] [--only-touched [--since <ref>]]
+		OneLiner: "Validate canonical .c3/ truth; rebuild cache if needed",
+		Help: `Usage: c3x verify [--include-adr] [--only <id>] [--only-touched [--since <ref>]]
 
-Verify that canonical .c3/ markdown is sealed, structurally valid, and in sync
-with the local cache. If c3.db is missing or stale, verify rebuilds it from the
-canonical text automatically.
+Verifies canonical markdown is sealed, structurally valid, and in sync with
+the local cache. Rebuilds c3.db from canonical if missing/stale.
 
-ADRs are excluded by default so in-progress work orders do not block same-branch
-work. Use --include-adr when finishing ADR work or before release/commit.
+ADRs skipped by default (in-progress work orders shouldn't block same-branch
+reads). Add --include-adr before release/commit.
 
-Use --only to verify a focused set of canonical docs by entity ID or path. Repeat
---only for multiple docs.
+  --only <id>        Scope to specific entities/paths (repeatable)
+  --only-touched     Scope to entities affected by uncommitted changes.
+                     Source edits → components via codemap; canonical edits
+                     → entity id via frontmatter.
+  --since <ref>      Widen --only-touched window (e.g. --since main)
+  --include-adr      Include ADR entities
 
-Use --only-touched to scope verify to entities affected by uncommitted changes
-(staged + unstaged + untracked). Source file edits resolve to owning components
-via the code-map; direct canonical edits resolve via frontmatter id. Combine
-with --since <ref> to widen the window (e.g. --since main).
-
-Use this in CI and pre-commit.
-
-User rule: if you want confidence before commit, run c3x verify --include-adr.`,
+Use in CI + pre-commit. Before commit: c3x verify --include-adr.`,
 	},
 	{
 		Name:     "repair",
@@ -392,47 +388,39 @@ Examples:
 	{
 		Name:     "adr",
 		Args:     "[<slug>]",
-		OneLiner: "Scaffold ADRs (currently: --from-diff)",
+		OneLiner: "Scaffold an ADR from a git diff",
 		Help: `Usage: c3x adr --from-diff [<slug>] [--since <ref>]
 
-Generate a pre-filled ADR scaffold from uncommitted changes. Maps touched
-files to owning components via the code-map, groups them in Context, and
-seeds affects: with the union of those components' parents. Parent Delta
-defaults to "no-delta" — override if the change adds/removes/splits/merges
-a component's responsibility.
+Emits an ADR scaffold to stdout. Touched files → components via codemap.
+affects: seeded from those components' parents. Parent Delta defaults to
+no-delta; override if responsibility changed.
 
-Output is markdown on stdout. Pipe to c3x add adr or save and edit:
+  --from-diff      Required. Source from git diff.
+  --since <ref>    Diff window (default: uncommitted = HEAD + staged + untracked).
 
+Examples:
   c3x adr --from-diff refactor-auth | c3x add adr refactor-auth
-  c3x adr --from-diff refactor-auth --since main > /tmp/adr.md
-
-Options:
-  --from-diff      Required. Source scaffold from git diff.
-  --since <ref>    Diff window (default: uncommitted = HEAD + staged + untracked).`,
+  c3x adr --from-diff refactor-auth --since main > /tmp/adr.md`,
 	},
 	{
 		Name:     "impact",
 		Args:     "<entity-id>",
-		OneLiner: "Transitive impact analysis (who depends on this?)",
+		OneLiner: "Who depends on this? (docs + optional grep)",
 		Help: `Usage: c3x impact <entity-id> [--depth N] [--include-code] [--json]
 
-Find all entities affected by changes to the given entity.
-Traverses reverse 'uses' + forward 'affects' relationships.
+Traverses 'uses' (reverse) + 'affects' (forward) relationships.
 
-With --include-code, merges the documented citation graph with a grep-derived
-import graph over the target's code-map sources. Components that call into
-the target but are not documented in .c3/ are flagged [uncited]. Caller files
-with no owning component are listed separately as codemap coverage gaps.
+--include-code: merge grep-derived callers. Undocumented ones flagged [uncited].
+Caller files with no component owner surface as codemap gaps.
 
-Options:
-  --depth N         Max traversal depth (default: 3)
-  --include-code    Merge documented citations with grep-derived callers (off by default)
-  --json            Machine-readable output
+  --depth N         Max depth (default 3)
+  --include-code    Add grep-derived callers
+  --json            Machine-readable
 
 Examples:
-  c3x impact c3-101                  # what breaks if auth changes?
-  c3x impact ref-jwt --depth 5       # deep impact of JWT ref
-  c3x impact c3-201 --include-code   # include undocumented callers as [uncited]`,
+  c3x impact c3-101
+  c3x impact ref-jwt --depth 5
+  c3x impact c3-201 --include-code`,
 	},
 	{
 		Name:     "export",

@@ -550,5 +550,8 @@ func TestRunCheck_RuleFilterNoCiters(t *testing.T) {
 	if !strings.Contains(err.Error(), "no citers") {
 		t.Errorf("expected 'no citers' in error, got: %v", err)
 	}
+	if !strings.Contains(err.Error(), "c3x wire") {
+		t.Errorf("expected actionable hint referencing 'c3x wire', got: %v", err)
+	}
 }
 

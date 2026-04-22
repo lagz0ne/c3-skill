@@ -40,7 +40,7 @@ type ImpactOutput struct {
 // RunImpact performs transitive impact analysis on an entity.
 func RunImpact(opts ImpactOptions, w io.Writer) error {
 	if opts.EntityID == "" {
-		return fmt.Errorf("error: impact requires an <entity-id> argument\nhint: run 'c3x impact <entity-id>' to analyze")
+		return fmt.Errorf("usage: c3x impact <entity-id>\n       c3x impact c3-101\n       c3x impact ref-jwt --include-code")
 	}
 
 	depth := opts.Depth
@@ -74,7 +74,13 @@ func RunImpact(opts ImpactOptions, w io.Writer) error {
 		if opts.JSON {
 			return writeJSON(w, ImpactOutput{Entries: []ImpactEntry{}})
 		}
-		fmt.Fprintln(w, "No affected entities found.")
+		if opts.IncludeCode {
+			fmt.Fprintf(w, "No affected entities for %s (docs + grep).\n", opts.EntityID)
+			fmt.Fprintln(w, "hint: verify codemap covers this entity: c3x codemap")
+		} else {
+			fmt.Fprintf(w, "No cited callers for %s.\n", opts.EntityID)
+			fmt.Fprintln(w, "hint: re-run with --include-code to surface undocumented callers via grep")
+		}
 		return nil
 	}
 
@@ -102,10 +108,11 @@ func RunImpact(opts ImpactOptions, w io.Writer) error {
 		fmt.Fprintf(w, "  depth %d: %s [%s] %s%s\n", e.Depth, e.ID, e.Type, e.Title, suffix)
 	}
 	if len(unmapped) > 0 {
-		fmt.Fprintln(w, "\nUnmapped callers (no owning component):")
+		fmt.Fprintln(w, "\nCaller files with no component owner (codemap gap):")
 		for _, f := range unmapped {
 			fmt.Fprintf(w, "  %s\n", f)
 		}
+		fmt.Fprintln(w, "hint: wire these into a component's codemap via c3x codemap")
 	}
 
 	return nil
@@ -116,7 +123,7 @@ func RunImpact(opts ImpactOptions, w io.Writer) error {
 // that are not in the documented results are flagged Uncited=true at depth 1.
 func mergeCodeCallers(opts ImpactOptions, byID map[string]*ImpactEntry, entries *[]*ImpactEntry) ([]string, error) {
 	if opts.ProjectDir == "" {
-		return nil, fmt.Errorf("project directory unavailable")
+		return nil, fmt.Errorf("project dir unresolved; run from inside the project or pass --c3-dir")
 	}
 
 	patterns, err := opts.Store.CodeMapFor(opts.EntityID)

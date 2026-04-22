@@ -36,8 +36,11 @@ func TestRunImpact_NoAffected(t *testing.T) {
 	if err != nil {
 		t.Fatalf("RunImpact: %v", err)
 	}
-	if !strings.Contains(buf.String(), "No affected entities found.") {
-		t.Errorf("expected 'No affected entities found.', got:\n%s", buf.String())
+	if !strings.Contains(buf.String(), "No cited callers") {
+		t.Errorf("expected no-callers message, got:\n%s", buf.String())
+	}
+	if !strings.Contains(buf.String(), "--include-code") {
+		t.Errorf("expected actionable hint referencing --include-code, got:\n%s", buf.String())
 	}
 }
 

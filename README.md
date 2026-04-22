@@ -56,6 +56,7 @@ cat updated.md | c3x write c3-101                       # full replace (validate
 c3x query "authentication"               # full-text search with ranking
 c3x lookup src/auth/login.ts             # file → component + refs + rules
 c3x impact ref-jwt                       # what breaks if this changes?
+c3x impact ref-jwt --include-code        # + grep-derived uncited callers
 c3x graph c3-1 --format mermaid          # visual subgraph
 ```
 
@@ -80,12 +81,16 @@ c3x delete ref-obsolete --dry-run
 c3x diff                                 # what changed since last commit
 c3x diff --mark abc123                   # stamp changelog with commit hash
 c3x check                               # validate everything
+c3x check --rule rule-xyz               # validate just the citers of a rule
 c3x coverage                            # code-map completeness stats
+c3x adr --from-diff my-slug             # scaffold ADR from touched files
 ```
 
 **Verify and recover:**
 ```bash
 c3x verify                               # verify sealed canonical .c3/ truth
+c3x verify --only-touched                # verify only entities touched on this branch
+c3x verify --only c3-101                 # verify a focused id/path/glob
 c3x repair                               # rebuild local cache + reseal after branch/merge issues
 c3x git install                          # install pre-commit guardrails and .c3/.gitignore policy
 ```

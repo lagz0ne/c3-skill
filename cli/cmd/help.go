@@ -19,17 +19,6 @@ type CommandMeta struct {
 // Commands is the authoritative registry of all c3x commands.
 var Commands = []CommandMeta{
 	{
-		Name:     "status",
-		OneLiner: "Project dashboard (entity counts, coverage, pending ADRs)",
-		Help: `Usage: c3x status [--json]
-
-Project dashboard showing entity counts, code-map coverage, pending ADRs, and validation warnings.
-This is the default output when c3x is invoked with no arguments.
-
-Options:
-  --json    Structured JSON output`,
-	},
-	{
 		Name:     "init",
 		OneLiner: "Scaffold .c3/ skeleton",
 		Hidden:   true,
@@ -37,37 +26,6 @@ Options:
 
 Create a new C3 project with a local cache and canonical .c3/ markdown.
 Normal users rarely need this after initial setup.`,
-	},
-	{
-		Name:     "verify",
-		OneLiner: "Validate canonical .c3/ truth; rebuild cache if needed",
-		Help: `Usage: c3x verify [--include-adr] [--only <id>] [--only-touched [--since <ref>]]
-
-Verifies canonical markdown is sealed, structurally valid, and in sync with
-the local cache. Rebuilds c3.db from canonical if missing/stale.
-
-ADRs skipped by default (in-progress work orders shouldn't block same-branch
-reads). Add --include-adr before release/commit.
-
-  --only <id>        Scope to specific entities/paths (repeatable)
-  --only-touched     Scope to entities affected by uncommitted changes.
-                     Source edits → components via codemap; canonical edits
-                     → entity id via frontmatter.
-  --since <ref>      Widen --only-touched window (e.g. --since main)
-  --include-adr      Include ADR entities
-
-Use in CI + pre-commit. Before commit: c3x verify --include-adr.`,
-	},
-	{
-		Name:     "repair",
-		OneLiner: "Rebuild local cache from canonical .c3/, reseal, then verify",
-		Help: `Usage: c3x repair
-
-Recovery path after branch switches, selective merges, or manual conflict edits.
-Rebuilds c3.db from canonical .c3/ markdown, rewrites sealed canonical files,
-then verifies the result.
-
-User rule: if C3 gets weird after Git operations, run c3x repair.`,
 	},
 	{
 		Name:     "read",
@@ -107,9 +65,7 @@ Section write (--section): replace only the named section. Skips full-document
 validation — allows incremental filling of sections.
 
 When to use set vs write:
-  set --field <f> <v>           Single frontmatter field
-  set --section <s> <v>         Single section (supports JSON tables, --append)
-  set --stdin                   Batch fields + sections from JSON
+  set <id> <field> <value>      Single frontmatter field
   write --section <s> < stdin   Single section from stdin (plain text)
   write < stdin                 Full body + frontmatter (validates, syncs rels)
 
@@ -131,17 +87,20 @@ Topology view with system goal, entity goals, file coverage, and ref usage.
 	{
 		Name:     "check",
 		OneLiner: "Validate docs, schema, code refs, consistency",
-		Help: `Usage: c3x check [--json] [--include-adr] [--fix] [--only <id>] [--rule <rule-id>]
+		Help: `Usage: c3x check [--json] [--include-adr] [--fix] [--only <id>] [--only-touched [--since <ref>]] [--rule <rule-id>]
 
-Three-layer validation (ADRs excluded by default; use --include-adr to validate them):
-  Layer 1: Broken links, orphans, duplicates, missing parents
-  Layer 2: Required sections empty/missing per schema
-  Layer 3: Code refs exist on disk, entity IDs in graph, cite consistency
+Layered validation (ADRs excluded by default; use --include-adr to validate them):
+  Canonical seal + cache integrity
+  Broken links, orphans, duplicates, missing parents
+  Required sections empty/missing per schema
+  Code refs exist on disk, entity IDs in graph, cite consistency
 
 Options:
   --fix              Auto-fix entity/ref references that match by title (e.g., "API" → c3-1)
   --include-adr      Include ADR entities in validation
   --only <id>        Scope check to specific entity IDs (repeatable)
+  --only-touched     Scope to entities affected by uncommitted changes.
+  --since <ref>      Widen --only-touched window (e.g. --since main)
   --rule <rule-id>   Scope check to the set of entities that cite a rule (repeatable).
                      Errors if the rule has no citers. Composes with --only as union.`,
 	},
@@ -162,30 +121,19 @@ Options:
   --json                 Output as JSON (id, type, sections list)
   --dry-run              Validate content without creating the entity
 
-ADR workflow:
-  c3x schema adr                         # CLI-owned ADR creation contract
-  cat complete-adr.md | c3x add adr <slug> # create the complete work order
-  c3x read adr-YYYYMMDD-<slug> --full    # inspect before execution
-  c3x verify --only adr-YYYYMMDD-<slug> --include-adr # prove focused ADR work
-  c3x check --include-adr && c3x verify --include-adr # full validation before done
-
 Examples:
   c3x add container payments --goal "Process payments" --boundary service
-  c3x template component | c3x add component auth --container c3-1
   c3x add ref rate-limiting --goal "Consistent rate limiting"
   c3x add rule structured-logging --goal "Consistent structured logging"
-  c3x template adr | c3x add adr use-grpc --json
   c3x add component auth --container c3-1 --dry-run < auth.md   # validate only
   c3x add recipe auth-flow`,
 	},
 	{
 		Name:     "set",
 		Args:     "<id> <field> <value>",
-		OneLiner: "Update frontmatter field, section, or codemap patterns",
+		OneLiner: "Update frontmatter field or codemap patterns",
 		Help: `Usage: c3x set <id> <field> <value>
-       c3x set <id> --section <name> <value> [--append]
        c3x set <id> codemap "<patterns>" [--append|--remove]
-       echo '{"fields":{...},"sections":{...},"codemap":[...]}' | c3x set <id> --stdin
 
 Frontmatter fields: goal, summary, status, boundary, category, title, date, description
 
@@ -195,22 +143,14 @@ Special field "codemap" updates code-map patterns (comma-separated):
   Remove:   c3x set c3-101 codemap "src/old/**" --remove
   Clear:    c3x set c3-101 codemap ""
 
-Section mode accepts text or JSON (array for replace, object for --append).
-Component section updates validate the full resulting document.
-
-Batch mode (--stdin) accepts a JSON payload with fields, sections, and codemap:
-  {"fields": {"goal": "X"}, "sections": {"Choice": "..."}, "codemap": ["src/**"]}
-
-Note: set does NOT sync relationships. Use wire/unwire for relationship changes,
+Note: set does NOT sync relationships. Use wire for relationship changes,
 or write with full frontmatter for bulk updates including relationship sync.
+Use 'c3x write <id> --section <name>' for section body updates.
 
 Examples:
   c3x set c3-101 goal "Handle JWT auth"
   c3x set c3-101 codemap "src/auth/**,src/auth.go"
-  c3x set c3-101 codemap "src/new/**" --append
-  c3x set c3-101 --section "Choice" "Use RS256 signed JWTs"
-  c3x set c3-101 --section "Governance" --append '{"Reference":"ref-jwt","Type":"ref","Governs":"Token validation","Precedence":"ref beats local prose","Notes":"Required for auth"}'
-  echo '{"fields":{"goal":"X"},"codemap":["src/**"]}' | c3x set c3-101 --stdin`,
+  c3x set c3-101 codemap "src/new/**" --append`,
 	},
 	{
 		Name:     "wire",
@@ -218,7 +158,7 @@ Examples:
 		OneLiner: "Link component to ref(s) (--remove to unlink)",
 		Help: `Usage: c3x wire <source> <target> [target2 ...]
        c3x wire <source> cite <target> [target2 ...]
-       c3x unwire <source> <target> [target2 ...]
+       c3x wire --remove <source> <target> [target2 ...]
 
 Creates or removes cite relationships (updated atomically per target):
   1. source uses[] += target
@@ -232,7 +172,7 @@ Examples:
   c3x wire c3-101 ref-jwt                            # single target
   c3x wire c3-101 ref-jwt ref-error-handling          # multiple targets
   c3x wire c3-101 cite ref-jwt ref-error-handling     # explicit cite
-  c3x unwire c3-101 ref-jwt                           # remove link`,
+  c3x wire --remove c3-101 ref-jwt                    # remove link`,
 	},
 	{
 		Name:     "schema",
@@ -248,33 +188,14 @@ JSON output includes column types (filepath, entity_id, enum, ref_id).
 Example: c3x schema component --json`,
 	},
 	{
-		Name:     "template",
-		Args:     "<type>",
-		OneLiner: "Output a fillable entity template that passes validation",
-		Help: `Usage: c3x template <type>
-
-Output a validation-ready markdown template for the given entity type.
-The template passes c3x's own strict validation, so LLMs can use it
-as a one-shot scaffold — fill in real content and pipe to c3x add.
-
-Types: component, container, ref, rule, adr, recipe
-
-Examples:
-  c3x template component                    # see the scaffold
-  c3x template component | c3x add component auth --container c3-1
-  c3x template adr | c3x add adr use-grpc`,
-	},
-	{
 		Name:     "codemap",
 		OneLiner: "Scaffold code-map entries for all components, refs + rules",
+		Hidden:   true,
 		Help: `Usage: c3x codemap [--json]
 
 Scaffold or update code-map entries in the store for every component, ref,
 and rule in the C3 graph. Existing entries (patterns already set) are preserved.
 New entries are added with empty pattern lists for you to fill in.
-
-After scaffolding, edit patterns manually or with your LLM, then check:
-  c3x coverage   # see how many files are mapped vs. unmapped
 
 JSON output lists added and existing IDs. Default output is JSON;
 set HUMAN=1 for human-readable text.
@@ -295,24 +216,6 @@ Bracket paths ([id], [...slug]) for Next.js/SvelteKit routes work automatically.
 Examples:
   c3x lookup src/auth/login.ts
   c3x lookup 'src/auth/**/*.ts'`,
-	},
-	{
-		Name:     "coverage",
-		OneLiner: "Code-map coverage stats",
-		Help: `Usage: c3x coverage [--json]
-
-Show code-map coverage: how many project files are mapped, excluded, or unmapped.
-Coverage % = mapped / (total - excluded), so _exclude patterns don't penalize your score.
-Uses git ls-files for file discovery (falls back to filesystem walk).
-Default output is JSON; set HUMAN=1 for human-readable text.
-
-Add _exclude patterns to mark intentional exclusions:
-  _exclude:
-    - "**/*.test.ts"
-    - "**/*.spec.ts"
-    - dist/**
-
-Example: c3x coverage --json`,
 	},
 	{
 		Name:     "graph",
@@ -340,292 +243,23 @@ Examples:
   c3x graph c3-101 --direction reverse   # what points to this component`,
 	},
 	{
-		Name:     "query",
-		Args:     "<search-terms>",
-		OneLiner: "Full-text search across entities (ADRs excluded by default)",
-		Help: `Usage: c3x query <search-terms> [--type <type>] [--limit N] [--include-adr] [--json]
-
-Search entity titles, goals, summaries, and bodies using FTS5 with BM25 ranking.
-ADRs are excluded by default — they are historical records, not source of truth.
-
-Operators:
-  auth security     Implicit AND — both terms must match
-  auth OR security  Either term matches
-  auth | security   Same as OR
-  auth AND handler  Explicit AND
-  auth NOT jwt      Exclude matches containing "jwt"
-
-Special characters (commas, periods, brackets, etc.) are stripped automatically.
-
-Options:
-  --type <type>     Filter results to entity type (component, ref, adr, etc.)
-  --include-adr     Include ADR entities in results (excluded by default)
-  --limit N         Max results (default: 20)
-  --json            Machine-readable output
-
-Examples:
-  c3x query authentication
-  c3x query "error handling" --type ref
-  c3x query "store OR walker"
-  c3x query frontmatter --limit 5 --json
-  c3x query migration --include-adr`,
-	},
-	{
-		Name:     "diff",
-		OneLiner: "Show uncommitted changes (human-readable changelog)",
-		Help: `Usage: c3x diff [--mark <commit-hash>] [--json]
-
-Render all entity mutations since the last commit mark.
-
-Options:
-  --mark <hash>   Stamp current changes with commit hash (use in post-commit hook)
-  --json          Output raw changelog entries as JSON
-
-Examples:
-  c3x diff                    # show pending changes
-  c3x diff --mark abc123      # mark changes as committed`,
-	},
-	{
-		Name:     "adr",
-		Args:     "[<slug>]",
-		OneLiner: "Scaffold an ADR from a git diff",
-		Help: `Usage: c3x adr --from-diff [<slug>] [--since <ref>]
-
-Emits an ADR scaffold to stdout. Touched files → components via codemap.
-affects: seeded from those components' parents. Parent Delta defaults to
-no-delta; override if responsibility changed.
-
-  --from-diff      Required. Source from git diff.
-  --since <ref>    Diff window (default: uncommitted = HEAD + staged + untracked).
-
-Examples:
-  c3x adr --from-diff refactor-auth | c3x add adr refactor-auth
-  c3x adr --from-diff refactor-auth --since main > /tmp/adr.md`,
-	},
-	{
-		Name:     "impact",
-		Args:     "<entity-id>",
-		OneLiner: "Who depends on this? (docs + optional grep)",
-		Help: `Usage: c3x impact <entity-id> [--depth N] [--include-code] [--json]
-
-Traverses 'uses' (reverse) + 'affects' (forward) relationships.
-
---include-code: merge grep-derived callers. Undocumented ones flagged [uncited].
-Caller files with no component owner surface as codemap gaps.
-
-  --depth N         Max depth (default 3)
-  --include-code    Add grep-derived callers
-  --json            Machine-readable
-
-Examples:
-  c3x impact c3-101
-  c3x impact ref-jwt --depth 5
-  c3x impact c3-201 --include-code`,
-	},
-	{
-		Name:     "export",
-		OneLiner: "Render canonical markdown from the local cache (advanced)",
-		Hidden:   true,
-		Help: `Usage: c3x export [<output-dir>]
-
-Render canonical markdown from the local cache to a target directory.
-This is an advanced debug command. The shared truth is sealed .c3/ text;
-normal workflows should use c3x verify and c3x repair instead.
-
-Default output dir is the current .c3/ directory.
-
-Examples:
-  c3x export /tmp/c3-export    # inspect a temporary snapshot
-  c3x export                   # rewrite current .c3/ from local cache`,
-	},
-	{
-		Name:     "sync",
-		Args:     "<subcommand>",
-		OneLiner: "Sync canonical markdown from the local cache",
-		Hidden:   true,
-		Help: `Usage: c3x sync export [<output-dir>]
-       c3x sync check [<output-dir>]
-
-Sync commands write the canonical text representation used for Git review
-and branch merges. Canonical markdown is sealed; sync check verifies both
-the exported bytes and each file's semantic seal.
-
-Subcommands:
-  export [dir]   Export the current DB to canonical markdown (default: .c3/)
-  check [dir]    Verify the current tree matches canonical markdown
-
-Examples:
-  c3x sync export
-  c3x sync export /tmp/c3-export
-  c3x sync check`,
-	},
-	{
 		Name:     "git",
 		Args:     "<subcommand>",
 		OneLiner: "Install thin Git guardrails for C3 workflow",
+		Hidden:   true,
 		Help: `Usage: c3x git install
 
 Installs a small pre-commit hook and Git file rules around the existing C3
-workflow. The hook rejects staged c3.db, runs c3x verify, and aborts the commit
+workflow. The hook rejects staged c3.db, runs c3x check, and aborts the commit
 if .c3/ still has unstaged changes. No custom merge driver or DB merge logic is installed.
 
 What it installs:
-  - pre-commit hook: c3x verify
+  - pre-commit hook: c3x check
   - .gitattributes: mark legacy tracked .c3/c3.db as binary/generated
   - .c3/.gitignore: ignore c3.db and backup files within the C3 tree
 
 Example:
   c3x git install`,
-	},
-	{
-		Name:     "nodes",
-		Args:     "<entity-id>",
-		OneLiner: "List content nodes with IDs, types, and hashes",
-		Help: `Usage: c3x nodes <entity-id> [--json]
-
-Display the content node tree for an entity. Every heading, paragraph, list item,
-table row, and code block has a unique ID and SHA256 content hash.
-
-Options:
-  --json   Machine-readable JSON array
-
-Examples:
-  c3x nodes c3-101           # text table with indentation
-  c3x nodes c3-101 --json    # full node data as JSON`,
-	},
-	{
-		Name:     "hash",
-		Args:     "<entity-id>",
-		OneLiner: "Show entity content hash (root merkle)",
-		Help: `Usage: c3x hash <entity-id> [--recompute]
-
-Output the root merkle hash for an entity's content. This is a single SHA256 that
-changes whenever any content in the entity changes — useful for change detection.
-
-Options:
-  --recompute   Recompute from node content and compare with stored hash.
-                Shows OK if they match, DRIFT if they differ.
-
-Examples:
-  c3x hash c3-101              # stored root hash
-  c3x hash c3-101 --recompute  # verify integrity`,
-	},
-	{
-		Name:     "versions",
-		Args:     "<entity-id>",
-		OneLiner: "List content version history",
-		Help: `Usage: c3x versions <entity-id> [--json]
-
-Show all content versions for an entity, newest first. Each write creates a new
-version with a full content snapshot and root merkle hash.
-
-Options:
-  --json   Machine-readable JSON array
-
-Examples:
-  c3x versions c3-101
-  c3x versions ref-jwt --json`,
-	},
-	{
-		Name:     "version",
-		Args:     "<entity-id> <n>",
-		OneLiner: "Show content at a specific version",
-		Help: `Usage: c3x version <entity-id> <version-number>
-
-Output the full content of an entity as it was at a specific version.
-
-Examples:
-  c3x version c3-101 1    # content at version 1
-  c3x version c3-101 3    # content at version 3`,
-	},
-	{
-		Name:     "prune",
-		Args:     "<entity-id>",
-		OneLiner: "Delete old content versions",
-		Help: `Usage: c3x prune <entity-id> --keep <n>
-
-Delete old content versions, keeping the most recent N. Versions marked with a
-git commit hash (via c3x diff --mark) are always preserved.
-
-Options:
-  --keep <n>   Number of recent versions to keep (required, minimum 1)
-
-Examples:
-  c3x prune c3-101 --keep 10   # keep last 10, delete the rest`,
-	},
-	{
-		Name:     "migrate",
-		OneLiner: "Populate content node tree for all entities",
-		Help: `Usage: c3x migrate [--dry-run] [--json]
-       c3x migrate repair-plan
-       c3x migrate repair <id> --section <name> < content.md
-       c3x migrate --continue
-
-Populates the content node tree for entities that don't have one yet.
-Reads legacy body content, parses into element-level nodes with hashing
-and versioning. Warns about entities with stale frontmatter in body.
-
-Options:
-  --dry-run     Show what would be migrated without making changes
-  --json        Emit machine-readable blockers outside agent mode; agent mode stays TOON
-  --continue    Resume the same migration intent after scoped repairs and import
-
-Repair flow:
-  c3x migrate --dry-run --json       # machine-readable blockers, writesMade:false
-  c3x migrate repair-plan            # exact safe steps plus current blockers
-  c3x migrate repair <id> --section Goal < goal.md
-  c3x cache clear
-  c3x import --force
-  c3x migrate --continue
-
-Examples:
-  c3x migrate --dry-run --json   # preview blockers
-  c3x migrate repair-plan        # safe repair loop
-  c3x migrate --continue         # resume after repair/import`,
-	},
-	{
-		Name:     "cache",
-		Args:     "clear",
-		OneLiner: "Clear disposable local C3 cache files",
-		Help: `Usage: c3x cache clear
-
-Deletes local cache files under .c3/ without touching canonical markdown:
-  .c3/c3.db*
-  .c3/.c3.import.tmp.db*
-
-Use this instead of manual rm commands during migration repair.`,
-	},
-	{
-		Name:     "migrate-legacy",
-		OneLiner: "Import .c3/ markdown files into SQLite database",
-		Hidden:   true,
-		Help: `Usage: c3x migrate-legacy [--keep-originals]
-
-Import legacy .c3/ markdown files into a local cache.
-Advanced migration path for older file-based projects.
-
-Options:
-  --keep-originals   Don't delete original .md files after import`,
-	},
-	{
-		Name:     "import",
-		OneLiner: "Rebuild SQLite database from tracked markdown tree",
-		Hidden:   true,
-		Help: `Usage: c3x import [--force]
-
-Rebuild the local c3.db cache from canonical .c3/ markdown.
-Advanced plumbing behind c3x repair. Normal users should prefer c3x repair.
-
-Imports entities, relationships, code-map entries, and content nodes, then
-clears the changelog to establish a clean baseline.
-Sealed files are trusted by default; broken or missing seals require --force.
-
-Safety:
-  --force   Required when c3.db already exists. Creates a timestamped backup
-            before replacing the database.
-
-Example:
-  c3x import --force`,
 	},
 	{
 		Name:     "delete",
@@ -657,6 +291,7 @@ Examples:
 		Name:     "marketplace",
 		Args:     "<subcommand>",
 		OneLiner: "Manage marketplace rule sources",
+		Hidden:   true,
 		Help: `Usage: c3x marketplace <subcommand> [options]
 
 Subcommands:
@@ -691,6 +326,9 @@ Commands:
 `)
 	maxWidth := 0
 	for _, c := range Commands {
+		if c.Hidden {
+			continue
+		}
 		w := len(c.Name)
 		if c.Args != "" {
 			w += 1 + len(c.Args)
@@ -717,7 +355,7 @@ Entity Types: container, component, ref, rule, adr, recipe (context created by i
 Global Options:
   --json                     Machine-readable output
   --c3-dir <path>            Override .c3/ auto-detection
-  --force                    Confirm advanced reset commands like import
+  --force                    Confirm advanced reset commands
   -h, --help                 Show help
   -v, --version              Print version
 
@@ -732,49 +370,34 @@ Workflows:
   Normal change flow:
     c3x add component auth --container c3-1 --goal "JWT auth for all services"
     c3x wire c3-101 cite ref-jwt
-    c3x set c3-101 --section "Code References" '[{"File":"src/auth.ts","Purpose":"Auth middleware"}]'
-    c3x verify
+    c3x check
 
   After branch switch, selective merge, or conflict resolution:
-    c3x repair             # rebuild cache, reseal canonical text, verify
+    c3x check              # rebuild cache, reseal canonical text, verify
 
   Add a component to an existing container:
     c3x add component auth --container c3-1 --goal "JWT auth for all services"
     c3x wire c3-101 cite ref-jwt
-    c3x set c3-101 --section "Code References" '[{"File":"src/auth.ts","Purpose":"Auth middleware"}]'
-    c3x verify
+    c3x check
 
   Add a new domain (container + first component):
     c3x add container payments --goal "Process payments" --boundary service
     c3x add component billing --container c3-1 --goal "Invoice generation via Stripe"
-    c3x verify
+    c3x check
 
   Remove an entity cleanly:
     c3x delete c3-101              # removes file + cleans all references
-    c3x verify
+    c3x check
     c3x delete ref-jwt --dry-run   # preview cleanup plan without mutations
 
   Document a cross-cutting concern:
     c3x add ref rate-limiting --goal "Consistent rate limiting across services"
     c3x wire c3-101 cite ref-rate-limiting
-    c3x set ref-rate-limiting --section "Code References" '[{"File":"src/middleware/rate.ts","Purpose":"Rate limiter"}]'
-    c3x verify
-
-  Trace an end-to-end concern:
-    c3x add recipe auth-flow
-    printf '# Auth Flow\n\n## Goal\n\nTrace auth end to end.\n\n## Sources\n\n- c3-101\n' | c3x write recipe-auth-flow
-    c3x verify
+    c3x check
 
   Record an architectural decision:
     c3x add adr use-grpc --goal "Migrate to gRPC for internal services" --json
     # use the returned ADR id for follow-up set/write commands`)
-
-	b.WriteString(`
-
-  Browse and adopt marketplace rules:
-    c3x marketplace add https://github.com/org/go-patterns
-    c3x marketplace list --tag reliability
-    c3x marketplace show rule-error-handling`)
 
 	return b.String()
 }
@@ -785,9 +408,6 @@ var globalHelp = buildGlobalHelp()
 func ShowHelp(command string, w io.Writer) {
 	for _, c := range Commands {
 		if c.Name == command {
-			if c.Hidden {
-				break
-			}
 			fmt.Fprintln(w, c.Help)
 			return
 		}

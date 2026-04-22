@@ -105,7 +105,7 @@ Ref adoption ADRs use `status: implemented` — ref doc IS deliverable.
 Flow: `Clarify → Find Citings → Check Compliance → Surface Impact → Execute`
 
 1. **Clarify:** `AskUserQuestion` — add/modify/remove rule or clarify docs (ASSUMPTION_MODE: skip)
-2. **Find citings:** `c3x list` → ref entity → `relationships`. Depth: `c3x query ref-{slug}`.
+2. **Find citings:** `c3x list` → ref entity → `relationships`. Depth: `c3x graph ref-{slug} --direction reverse`.
 3. **Check compliance:** `c3x lookup <file>` per code-map entry. Categorize: compliant / needs-update / breaking.
 4. **Surface impact:** `AskUserQuestion` — proceed/narrow/cancel (ASSUMPTION_MODE: skip)
 5. **Execute:** Update ref doc + create ADR. Non-compliant → TODO in ADR (no code changes).

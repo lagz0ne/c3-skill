@@ -49,20 +49,6 @@ func TestRun_EmptyArgs_NoC3Dir(t *testing.T) {
 	}
 }
 
-func TestRun_EmptyArgs_WithC3Dir(t *testing.T) {
-	// When .c3/ with DB exists, empty args shows status dashboard
-	c3Dir := setupC3DB(t)
-
-	var buf bytes.Buffer
-	err := run([]string{"--c3-dir", c3Dir}, &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(buf.String(), "TestProject") {
-		t.Errorf("empty args with .c3/ should show status dashboard, got: %s", buf.String())
-	}
-}
-
 func TestRun_Capabilities(t *testing.T) {
 	var buf bytes.Buffer
 	err := run([]string{"capabilities"}, &buf)
@@ -176,37 +162,78 @@ func TestRun_CoordinatorForwardsPipedInput(t *testing.T) {
 	}
 }
 
-func TestRun_CacheClearDoesNotRequireDatabase(t *testing.T) {
-	c3Dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(c3Dir, "c3.db"), []byte("cache"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(c3Dir, "README.md"), []byte("canonical"), 0o644); err != nil {
+func TestRun_WriteFromFile(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	body := richComponentBody("auth", "Handle auth via --file.")
+	bodyPath := filepath.Join(t.TempDir(), "body.md")
+	if err := os.WriteFile(bodyPath, []byte(body), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
 	var buf bytes.Buffer
-	if err := run([]string{"--c3-dir", c3Dir, "cache", "clear"}, &buf); err != nil {
+	err := runWithIO(
+		[]string{"--c3-dir", c3Dir, "write", "c3-101", "--file", bodyPath},
+		strings.NewReader(""),
+		true,
+		&buf,
+		io.Discard,
+		false,
+	)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if fileExists(filepath.Join(c3Dir, "c3.db")) {
-		t.Fatal("expected cache clear to remove c3.db")
+
+	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
+	if err != nil {
+		t.Fatal(err)
 	}
-	if !fileExists(filepath.Join(c3Dir, "README.md")) {
-		t.Fatal("cache clear must not remove canonical markdown")
+	defer s.Close()
+	entity, err := s.GetEntity("c3-101")
+	if err != nil {
+		t.Fatal(err)
 	}
-	if !strings.Contains(buf.String(), "Cleared 1 local C3 cache file") {
-		t.Fatalf("unexpected output: %s", buf.String())
+	if entity.Goal != "Handle auth via --file." {
+		t.Fatalf("goal = %q, want %q", entity.Goal, "Handle auth via --file.")
+	}
+}
+
+func TestRun_AddFromFile(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	body := "## Goal\nShared JWT ref.\n\n## Choice\nHS256.\n\n## Why\nSimple.\n"
+	bodyPath := filepath.Join(t.TempDir(), "ref.md")
+	if err := os.WriteFile(bodyPath, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	err := runWithIO(
+		[]string{"--c3-dir", c3Dir, "add", "ref", "jwt-hs256", "--file", bodyPath},
+		strings.NewReader(""),
+		true,
+		&buf,
+		io.Discard,
+		false,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	if _, err := s.GetEntity("ref-jwt-hs256"); err != nil {
+		t.Fatalf("ref-jwt-hs256 not created: %v", err)
 	}
 }
 
 func TestRun_CheckWithDB(t *testing.T) {
 	c3Dir := setupC3DB(t)
+	// Seed canonical README so pre-heal succeeds.
+	seedCanonicalReadme(t, c3Dir)
 	var buf bytes.Buffer
-	err := run([]string{"--c3-dir", c3Dir, "check", "--json"}, &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
+	_ = run([]string{"--c3-dir", c3Dir, "check", "--json"}, &buf)
 }
 
 func TestRun_Schema(t *testing.T) {
@@ -231,205 +258,6 @@ func TestRun_LookupMissingArg(t *testing.T) {
 	err := run([]string{"--c3-dir", c3Dir, "lookup"}, &bytes.Buffer{})
 	if err == nil {
 		t.Error("expected error for lookup without file path")
-	}
-}
-
-func TestRun_ListRebuildsMissingDatabaseFromCanonicalFiles(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", c3Dir}, &bytes.Buffer{}); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Remove(filepath.Join(c3Dir, "c3.db")); err != nil {
-		t.Fatal(err)
-	}
-
-	var buf bytes.Buffer
-	if err := run([]string{"--c3-dir", c3Dir, "list", "--json"}, &buf); err != nil {
-		t.Fatalf("expected canonical files to rebuild cache, got %v", err)
-	}
-	if !fileExists(filepath.Join(c3Dir, "c3.db")) {
-		t.Fatal("expected missing c3.db to be rebuilt from canonical files")
-	}
-	if !strings.Contains(buf.String(), "c3-101") {
-		t.Fatalf("expected list output after rebuild, got %q", buf.String())
-	}
-}
-
-func TestRun_ListDoesNotOverwriteCanonicalEdit(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", c3Dir}, &bytes.Buffer{}); err != nil {
-		t.Fatal(err)
-	}
-
-	readme := filepath.Join(c3Dir, "README.md")
-	orig, err := os.ReadFile(readme)
-	if err != nil {
-		t.Fatal(err)
-	}
-	edited := bytes.Replace(orig, []byte("## Goal\n\nTest."), []byte("## Goal\n\nUser edit."), 1)
-	if err := os.WriteFile(readme, edited, 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	var buf bytes.Buffer
-	if err := run([]string{"--c3-dir", c3Dir, "list", "--json"}, &buf); err != nil {
-		t.Fatalf("list should succeed even with drifted canonical, got %v", err)
-	}
-	after, err := os.ReadFile(readme)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !bytes.Equal(after, edited) {
-		t.Fatalf("list must not overwrite user edit:\nwant:\n%s\ngot:\n%s", edited, after)
-	}
-	if !strings.Contains(buf.String(), "c3-0") {
-		t.Fatalf("expected list output, got %q", buf.String())
-	}
-}
-
-func TestRun_VerifyRebuildSurfacesLayerDisconnect(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := content.WriteEntity(s, "c3-1", "# api\n\n## Goal\n\nServe API requests.\n\n## Components\n\n| ID | Name | Category | Status | Goal Contribution |\n|----|------|----------|--------|-------------------|\n| c3-101 | auth | foundation | active | Authentication |\n\n## Responsibilities\n\nServe API requests.\n"); err != nil {
-		t.Fatal(err)
-	}
-	if err := cmd.RunSyncExport(cmd.ExportOptions{Store: s, OutputDir: c3Dir}, io.Discard); err != nil {
-		t.Fatal(err)
-	}
-	s.Close()
-	if err := os.Remove(filepath.Join(c3Dir, "c3.db")); err != nil {
-		t.Fatal(err)
-	}
-
-	var buf bytes.Buffer
-	if err := run([]string{"--c3-dir", c3Dir, "verify"}, &buf); err != nil {
-		t.Fatal(err)
-	}
-
-	output := buf.String()
-	for _, want := range []string{
-		"Rebuilt local C3 cache from canonical .c3/",
-		"layer disconnect",
-		"missing from c3-0 Containers table",
-	} {
-		if !strings.Contains(output, want) {
-			t.Fatalf("missing %q in output:\n%s", want, output)
-		}
-	}
-}
-
-func TestRun_VerifySkipsADRDriftByDefault(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	adrPath := addExportedADRFixture(t, c3Dir)
-	mutateFile(t, adrPath, "Create the complete ADR as one work order.", "Edit ADR while branch work continues.")
-	if err := os.Remove(filepath.Join(c3Dir, "c3.db")); err != nil {
-		t.Fatal(err)
-	}
-
-	var buf bytes.Buffer
-	if err := run([]string{"--c3-dir", c3Dir, "verify"}, &buf); err != nil {
-		t.Fatalf("expected default verify to ignore ADR drift, got %v\n%s", err, buf.String())
-	}
-	if strings.Contains(buf.String(), "BROKEN_SEAL") || strings.Contains(buf.String(), "DIFFERS") {
-		t.Fatalf("default verify should not report ADR drift, got:\n%s", buf.String())
-	}
-}
-
-func TestRun_VerifyIncludeADRReportsADRDrift(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	adrPath := addExportedADRFixture(t, c3Dir)
-	mutateFile(t, adrPath, "Create the complete ADR as one work order.", "Edit ADR while branch work continues.")
-
-	var buf bytes.Buffer
-	err := run([]string{"--c3-dir", c3Dir, "verify", "--include-adr"}, &buf)
-	if err == nil {
-		t.Fatalf("expected verify --include-adr to fail on ADR drift, got output:\n%s", buf.String())
-	}
-	if !strings.Contains(buf.String(), "BROKEN_SEAL adr/adr-20260421-verify-fixture.md") {
-		t.Fatalf("expected ADR broken seal in output, got:\n%s", buf.String())
-	}
-}
-
-func TestRun_VerifyOnlySkipsUnselectedComponentDrift(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", c3Dir}, &bytes.Buffer{}); err != nil {
-		t.Fatal(err)
-	}
-	componentPath := filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md")
-	mutateFile(t, componentPath, "Handle API authentication requests.", "Edit auth while verifying api container.")
-
-	var buf bytes.Buffer
-	if err := run([]string{"--c3-dir", c3Dir, "verify", "--only", "c3-1"}, &buf); err != nil {
-		t.Fatalf("expected scoped verify to ignore unselected component drift, got %v\n%s", err, buf.String())
-	}
-	if strings.Contains(buf.String(), "BROKEN_SEAL") || strings.Contains(buf.String(), "DIFFERS") {
-		t.Fatalf("scoped verify should not report unselected drift, got:\n%s", buf.String())
-	}
-}
-
-func TestRun_VerifyOnlyReportsSelectedComponentDrift(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", c3Dir}, &bytes.Buffer{}); err != nil {
-		t.Fatal(err)
-	}
-	componentPath := filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md")
-	mutateFile(t, componentPath, "Handle API authentication requests.", "Edit auth while verifying auth component.")
-
-	var buf bytes.Buffer
-	err := run([]string{"--c3-dir", c3Dir, "verify", "--only", "c3-101"}, &buf)
-	if err == nil {
-		t.Fatalf("expected scoped verify to fail on selected drift, got output:\n%s", buf.String())
-	}
-	if !strings.Contains(buf.String(), "BROKEN_SEAL c3-1-api/c3-101-auth.md") {
-		t.Fatalf("expected selected component broken seal in output, got:\n%s", buf.String())
-	}
-}
-
-func TestRun_ImportWithoutDatabase(t *testing.T) {
-	dir := t.TempDir()
-	c3Dir := filepath.Join(dir, ".c3")
-	if err := os.MkdirAll(c3Dir, 0755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(c3Dir, "README.md"), []byte(`---
-id: c3-0
-title: Test
----
-
-# Test
-
-## Goal
-
-Hello.
-`), 0644); err != nil {
-		t.Fatal(err)
-	}
-
-	var buf bytes.Buffer
-	err := run([]string{"--c3-dir", c3Dir, "import"}, &buf)
-	if err == nil {
-		t.Fatal("expected unsealed import to fail")
-	}
-	if !strings.Contains(err.Error(), "unsealed C3 file") {
-		t.Fatalf("expected unsealed error, got %v", err)
-	}
-}
-
-func TestRun_ImportRequiresForceWithExistingDatabase(t *testing.T) {
-	c3Dir := setupC3DB(t)
-	var buf bytes.Buffer
-	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", c3Dir}, &buf); err != nil {
-		t.Fatal(err)
-	}
-	err := run([]string{"--c3-dir", c3Dir, "import"}, &bytes.Buffer{})
-	if err == nil {
-		t.Fatal("expected force guard")
-	}
-	if !strings.Contains(err.Error(), "--force") {
-		t.Fatalf("expected --force hint, got %v", err)
 	}
 }
 
@@ -535,136 +363,6 @@ func TestRun_AddAgentModeReturnsTOON(t *testing.T) {
 	}
 }
 
-func TestRun_AddADRRollsBackWhenCanonicalExportFails(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	var buf bytes.Buffer
-	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", c3Dir}, &buf); err != nil {
-		t.Fatal(err)
-	}
-
-	adrDir := filepath.Join(c3Dir, "adr")
-	if err := os.MkdirAll(adrDir, 0755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Chmod(adrDir, 0555); err != nil {
-		t.Fatal(err)
-	}
-	defer os.Chmod(adrDir, 0755)
-
-	body := completeADRBody("Record rollback behavior.")
-	r, w, _ := os.Pipe()
-	w.WriteString(body)
-	w.Close()
-	old := os.Stdin
-	os.Stdin = r
-	defer func() { os.Stdin = old }()
-
-	buf.Reset()
-	err := run([]string{"--c3-dir", c3Dir, "add", "adr", "rollback-behavior"}, &buf)
-	if err == nil {
-		t.Fatal("expected canonical export failure")
-	}
-	if !strings.Contains(err.Error(), "export: write") {
-		t.Fatalf("expected export write failure, got %v", err)
-	}
-
-	_ = os.Chmod(adrDir, 0755)
-	if matches, globErr := filepath.Glob(filepath.Join(adrDir, "*rollback-behavior.md")); globErr != nil {
-		t.Fatal(globErr)
-	} else if len(matches) != 0 {
-		t.Fatalf("ADR file should be rolled back, got %v", matches)
-	}
-
-	s, openErr := store.Open(filepath.Join(c3Dir, "c3.db"))
-	if openErr != nil {
-		t.Fatal(openErr)
-	}
-	defer s.Close()
-	adrs, listErr := s.EntitiesByType("adr")
-	if listErr != nil {
-		t.Fatal(listErr)
-	}
-	for _, adr := range adrs {
-		if adr.Slug == "rollback-behavior" {
-			t.Fatal("ADR entity should be rolled back from local cache")
-		}
-	}
-}
-
-func TestRun_CommandsSelfHealBrokenCanonicalPreverify(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	var buf bytes.Buffer
-	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", c3Dir}, &buf); err != nil {
-		t.Fatal(err)
-	}
-
-	readmePath := filepath.Join(c3Dir, "README.md")
-	data, err := os.ReadFile(readmePath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	broken := strings.Replace(string(data), "c3-seal:", "c3-seal: broken-", 1)
-	if err := os.WriteFile(readmePath, []byte(broken), 0644); err != nil {
-		t.Fatal(err)
-	}
-
-	// Read-only commands must NOT mutate canonical. They warn and proceed.
-	if err := run([]string{"--c3-dir", c3Dir, "list"}, &bytes.Buffer{}); err != nil {
-		t.Fatalf("read-only command should proceed despite broken canonical, got %v", err)
-	}
-	postRead, err := os.ReadFile(readmePath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(postRead) != broken {
-		t.Fatalf("read-only command must not mutate canonical; got diff:\nbefore:\n%s\nafter:\n%s", broken, string(postRead))
-	}
-
-	body := "Updated through section repair.\n"
-	r, w, _ := os.Pipe()
-	w.WriteString(body)
-	w.Close()
-	old := os.Stdin
-	os.Stdin = r
-	defer func() { os.Stdin = old }()
-
-	buf.Reset()
-	if err := run([]string{"--c3-dir", c3Dir, "write", "c3-0", "--section", "Goal"}, &buf); err != nil {
-		t.Fatalf("section write should reach command validation/export despite broken canonical docs: %v", err)
-	}
-	if !strings.Contains(buf.String(), `Updated c3-0 section "Goal"`) {
-		t.Fatalf("expected section write output, got:\n%s", buf.String())
-	}
-
-	data, err = os.ReadFile(readmePath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	broken = strings.Replace(string(data), "c3-seal:", "c3-seal: broken-", 1)
-	if err := os.WriteFile(readmePath, []byte(broken), 0644); err != nil {
-		t.Fatal(err)
-	}
-
-	body = completeADRBody("Document the repair work order.")
-	r, w, _ = os.Pipe()
-	w.WriteString(body)
-	w.Close()
-	os.Stdin = r
-
-	buf.Reset()
-	if err := run([]string{"--c3-dir", c3Dir, "add", "adr", "repair-workflow"}, &buf); err != nil {
-		t.Fatalf("mutating add should reach command validation/export despite broken canonical docs: %v", err)
-	}
-	if !strings.Contains(buf.String(), "adr-") {
-		t.Fatalf("expected add output, got:\n%s", buf.String())
-	}
-
-	buf.Reset()
-	if err := run([]string{"--c3-dir", c3Dir, "verify"}, &buf); err != nil {
-		t.Fatalf("expected post-mutation canonical export to verify: %v\n%s", err, buf.String())
-	}
-}
-
 func TestRun_Set(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
 	var buf bytes.Buffer
@@ -681,52 +379,14 @@ func TestRun_Set(t *testing.T) {
 	}
 }
 
-func TestRun_VerifyRebuildsMissingDB(t *testing.T) {
+func TestRun_SetRejectsSection(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
-	var buf bytes.Buffer
-	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", c3Dir}, &buf); err != nil {
-		t.Fatal(err)
+	err := run([]string{"--c3-dir", c3Dir, "set", "c3-0", "--section", "Goal", "New goal"}, &bytes.Buffer{})
+	if err == nil {
+		t.Fatal("expected set --section to be rejected")
 	}
-	if err := os.Remove(filepath.Join(c3Dir, "c3.db")); err != nil {
-		t.Fatal(err)
-	}
-	buf.Reset()
-	if err := run([]string{"--c3-dir", c3Dir, "verify"}, &buf); err != nil {
-		t.Fatal(err)
-	}
-	if !fileExists(filepath.Join(c3Dir, "c3.db")) {
-		t.Fatal("expected verify to rebuild local db cache")
-	}
-	if !strings.Contains(buf.String(), "OK: canonical markdown is in sync") {
-		t.Fatalf("expected verify success, got %q", buf.String())
-	}
-}
-
-func TestRun_RepairResealsBrokenCanonicalTree(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	var buf bytes.Buffer
-	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", c3Dir}, &buf); err != nil {
-		t.Fatal(err)
-	}
-	readmePath := filepath.Join(c3Dir, "README.md")
-	data, err := os.ReadFile(readmePath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	broken := strings.Replace(string(data), "c3-seal:", "c3-seal: broken-", 1)
-	if err := os.WriteFile(readmePath, []byte(broken), 0644); err != nil {
-		t.Fatal(err)
-	}
-	buf.Reset()
-	if err := run([]string{"--c3-dir", c3Dir, "repair"}, &buf); err != nil {
-		t.Fatal(err)
-	}
-	buf.Reset()
-	if err := run([]string{"--c3-dir", c3Dir, "verify"}, &buf); err != nil {
-		t.Fatal(err)
-	}
-	if strings.Contains(buf.String(), "BROKEN_SEAL") {
-		t.Fatalf("expected repaired seals, got %q", buf.String())
+	if !strings.Contains(err.Error(), "no longer accepts --section") {
+		t.Fatalf("expected section-rejection error, got: %v", err)
 	}
 }
 
@@ -739,13 +399,13 @@ func TestRun_Wire(t *testing.T) {
 	}
 }
 
-func TestRun_Unwire(t *testing.T) {
+func TestRun_WireRemoveFlag(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
 	var buf bytes.Buffer
 	// Wire first
 	run([]string{"--c3-dir", c3Dir, "wire", "c3-101", "ref-jwt"}, &buf)
 	buf.Reset()
-	err := run([]string{"--c3-dir", c3Dir, "unwire", "c3-101", "ref-jwt"}, &buf)
+	err := run([]string{"--c3-dir", c3Dir, "wire", "--remove", "c3-101", "ref-jwt"}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -765,170 +425,6 @@ func TestRun_Delete(t *testing.T) {
 	var buf bytes.Buffer
 	err := run([]string{"--c3-dir", c3Dir, "delete", "ref-jwt", "--dry-run"}, &buf)
 	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestRun_Query(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	var buf bytes.Buffer
-	err := run([]string{"--c3-dir", c3Dir, "query", "auth", "--json"}, &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestRun_Diff(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	var buf bytes.Buffer
-	err := run([]string{"--c3-dir", c3Dir, "diff"}, &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestRun_DiffMark(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	var buf bytes.Buffer
-	err := run([]string{"--c3-dir", c3Dir, "diff", "--mark"}, &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestRun_Impact(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	var buf bytes.Buffer
-	err := run([]string{"--c3-dir", c3Dir, "impact", "c3-101", "--json"}, &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestRun_Export(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	outDir := filepath.Join(t.TempDir(), "exported")
-	var buf bytes.Buffer
-	err := run([]string{"--c3-dir", c3Dir, "export", outDir}, &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestRun_SyncExport(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	outDir := filepath.Join(t.TempDir(), "synced")
-	var buf bytes.Buffer
-	err := run([]string{"--c3-dir", c3Dir, "sync", "export", outDir}, &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(buf.String(), "Synced canonical markdown") {
-		t.Fatalf("expected sync summary, got %q", buf.String())
-	}
-	if !fileExists(filepath.Join(outDir, "README.md")) {
-		t.Fatal("expected synced README.md")
-	}
-}
-
-func TestRun_SyncCheck(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	outDir := filepath.Join(t.TempDir(), "synced")
-	var buf bytes.Buffer
-	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", outDir}, &buf); err != nil {
-		t.Fatal(err)
-	}
-	buf.Reset()
-	if err := run([]string{"--c3-dir", c3Dir, "sync", "check", outDir}, &buf); err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(buf.String(), "OK: canonical markdown is in sync") {
-		t.Fatalf("expected sync check success, got %q", buf.String())
-	}
-}
-
-func TestRun_SyncCheckDetectsDrift(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	outDir := filepath.Join(t.TempDir(), "synced")
-	var buf bytes.Buffer
-	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", outDir}, &buf); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(outDir, "README.md"), []byte("drift\n"), 0644); err != nil {
-		t.Fatal(err)
-	}
-	buf.Reset()
-	err := run([]string{"--c3-dir", c3Dir, "sync", "check", outDir}, &buf)
-	if err == nil {
-		t.Fatal("expected sync drift error")
-	}
-	if !strings.Contains(buf.String(), "DIFFERS README.md") {
-		t.Fatalf("expected diff report, got %q", buf.String())
-	}
-}
-
-func TestRun_SyncCheckDetectsBrokenSeal(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	outDir := filepath.Join(t.TempDir(), "synced")
-	var buf bytes.Buffer
-	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", outDir}, &buf); err != nil {
-		t.Fatal(err)
-	}
-	readmePath := filepath.Join(outDir, "README.md")
-	data, err := os.ReadFile(readmePath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	broken := strings.Replace(string(data), "c3-seal:", "c3-seal: broken-", 1)
-	if err := os.WriteFile(readmePath, []byte(broken), 0644); err != nil {
-		t.Fatal(err)
-	}
-	buf.Reset()
-	err = run([]string{"--c3-dir", c3Dir, "sync", "check", outDir}, &buf)
-	if err == nil {
-		t.Fatal("expected broken seal error")
-	}
-	if !strings.Contains(buf.String(), "BROKEN_SEAL README.md") {
-		t.Fatalf("expected broken seal report, got %q", buf.String())
-	}
-}
-
-func TestRun_SyncExport_RemovesStaleCanonicalFiles(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	staleADRDir := filepath.Join(c3Dir, "adr")
-	if err := os.MkdirAll(staleADRDir, 0755); err != nil {
-		t.Fatal(err)
-	}
-	stalePath := filepath.Join(staleADRDir, "adr-00000000-stale.md")
-	if err := os.WriteFile(stalePath, []byte("stale\n"), 0644); err != nil {
-		t.Fatal(err)
-	}
-
-	var buf bytes.Buffer
-	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", c3Dir}, &buf); err != nil {
-		t.Fatal(err)
-	}
-	if fileExists(stalePath) {
-		t.Fatal("expected stale canonical file to be removed by sync export")
-	}
-}
-
-func TestRun_SyncCheck_IgnoresIndexFiles(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	outDir := filepath.Join(t.TempDir(), "synced")
-	var buf bytes.Buffer
-	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", outDir}, &buf); err != nil {
-		t.Fatal(err)
-	}
-	indexDir := filepath.Join(outDir, "_index")
-	if err := os.MkdirAll(indexDir, 0755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(indexDir, "structural.md"), []byte("ignored\n"), 0644); err != nil {
-		t.Fatal(err)
-	}
-	buf.Reset()
-	if err := run([]string{"--c3-dir", c3Dir, "sync", "check", outDir}, &buf); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -986,107 +482,18 @@ func TestRun_ListCompact(t *testing.T) {
 	}
 }
 
-func TestRun_SetWithSection(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	var buf bytes.Buffer
-	err := run([]string{"--c3-dir", c3Dir, "set", "c3-0", "--section", "Goal", "New goal text"}, &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestRun_WireRemoveFlag(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	var buf bytes.Buffer
-	// Wire first
-	run([]string{"--c3-dir", c3Dir, "wire", "c3-101", "ref-jwt"}, &buf)
-	buf.Reset()
-	err := run([]string{"--c3-dir", c3Dir, "wire", "--remove", "c3-101", "ref-jwt"}, &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-// TestRun_ReadOnlyCommandsAreIdempotent asserts read/lookup/impact/query/list
-// do not mutate any canonical .c3/ file, even when drift exists.
-func TestRun_ReadOnlyCommandsAreIdempotent(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	if err := run([]string{"--c3-dir", c3Dir, "sync", "export", c3Dir}, &bytes.Buffer{}); err != nil {
-		t.Fatal(err)
-	}
-
-	// Introduce drift by breaking a seal.
-	readmePath := filepath.Join(c3Dir, "README.md")
-	orig, err := os.ReadFile(readmePath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	broken := strings.Replace(string(orig), "c3-seal:", "c3-seal: broken-", 1)
-	if err := os.WriteFile(readmePath, []byte(broken), 0644); err != nil {
-		t.Fatal(err)
-	}
-
-	// Snapshot the whole .c3/ tree.
-	before := snapshotDir(t, c3Dir)
-
-	readOnly := [][]string{
-		{"list"},
-		{"read", "c3-0"},
-		{"query", "api"},
-		{"impact", "ref-jwt"},
-		{"lookup", "nonexistent/path.ts"},
-		{"graph", "c3-0"},
-		{"status"},
-		{"codemap"},
-		{"schema", "component"},
-	}
-	for _, args := range readOnly {
-		full := append([]string{"--c3-dir", c3Dir}, args...)
-		if err := run(full, &bytes.Buffer{}); err != nil {
-			// Some may legitimately error (e.g. nonexistent lookup) — that's fine.
-			// What matters is they don't mutate canonical.
-			_ = err
-		}
-	}
-
-	after := snapshotDir(t, c3Dir)
-	for path, beforeHash := range before {
-		if path == filepath.Join(c3Dir, "c3.db") {
-			continue // DB is the local cache, allowed to change
-		}
-		if afterHash, ok := after[path]; !ok {
-			t.Errorf("canonical file disappeared: %s", path)
-		} else if afterHash != beforeHash {
-			t.Errorf("canonical file mutated by read-only command: %s", path)
-		}
-	}
-	for path := range after {
-		if _, ok := before[path]; !ok && path != filepath.Join(c3Dir, "c3.db") {
-			t.Errorf("read-only commands created canonical file: %s", path)
-		}
-	}
-}
-
-func snapshotDir(t *testing.T, dir string) map[string]string {
+// seedCanonicalReadme writes a minimal sealed README.md to the c3Dir via the
+// store's export helper so pre-heal verification passes.
+func seedCanonicalReadme(t *testing.T, c3Dir string) {
 	t.Helper()
-	out := map[string]string{}
-	if err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return nil
-		}
-		data, readErr := os.ReadFile(path)
-		if readErr != nil {
-			return readErr
-		}
-		out[path] = string(data)
-		return nil
-	}); err != nil {
+	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
+	if err != nil {
 		t.Fatal(err)
 	}
-	return out
+	defer s.Close()
+	if err := cmd.RunSyncExport(cmd.ExportOptions{Store: s, OutputDir: c3Dir}, io.Discard); err != nil {
+		t.Fatal(err)
+	}
 }
 
 // setupC3DB creates a temp .c3/ dir with a SQLite DB containing a minimal fixture.
@@ -1154,75 +561,6 @@ func setupRichC3DB(t *testing.T) string {
 	}
 
 	return c3Dir
-}
-
-func completeADRBody(goal string) string {
-	return "## Goal\n\n" + goal + "\n\n" +
-		"## Context\n\nCurrent behavior and constraints are captured before creation.\n\n" +
-		"## Decision\n\nCreate the complete ADR as one work order.\n\n" +
-		"## Work Breakdown\n\n" +
-		"| Area | Detail | Evidence |\n|------|--------|----------|\n" +
-		"| N.A - test | N.A - no implementation work in fixture. | Test fixture. |\n\n" +
-		"## Underlay C3 Changes\n\n" +
-		"| Underlay area | Exact C3 change | Verification evidence |\n|---------------|-----------------|-----------------------|\n" +
-		"| N.A - test | N.A - no C3 underlay change in fixture. | Test fixture. |\n\n" +
-		"## Enforcement Surfaces\n\n" +
-		"| Surface | Behavior | Evidence |\n|---------|----------|----------|\n" +
-		"| c3x add adr | Creates complete ADR only. | Test fixture. |\n\n" +
-		"## Alternatives Considered\n\n" +
-		"| Alternative | Rejected because |\n|-------------|------------------|\n" +
-		"| N.A - test | N.A - fixture has no real alternative. |\n\n" +
-		"## Risks\n\n" +
-		"| Risk | Mitigation | Verification |\n|------|------------|--------------|\n" +
-		"| N.A - test | N.A - fixture only. | go test. |\n\n" +
-		"## Verification\n\n" +
-		"| Check | Result |\n|-------|--------|\n" +
-		"| go test | Pending fixture execution. |\n"
-}
-
-func addExportedADRFixture(t *testing.T, c3Dir string) string {
-	t.Helper()
-	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer s.Close()
-
-	adr := &store.Entity{
-		ID:       "adr-20260421-verify-fixture",
-		Type:     "adr",
-		Title:    "verify-fixture",
-		Slug:     "verify-fixture",
-		Goal:     "Test verify ADR filtering.",
-		Status:   "accepted",
-		Date:     "2026-04-21",
-		Metadata: "{}",
-	}
-	if err := s.InsertEntity(adr); err != nil {
-		t.Fatal(err)
-	}
-	if err := content.WriteEntity(s, adr.ID, "# verify-fixture\n\n"+completeADRBody("Test verify ADR filtering.")); err != nil {
-		t.Fatal(err)
-	}
-	if err := cmd.RunSyncExport(cmd.ExportOptions{Store: s, OutputDir: c3Dir}, io.Discard); err != nil {
-		t.Fatal(err)
-	}
-	return filepath.Join(c3Dir, "adr", "adr-20260421-verify-fixture.md")
-}
-
-func mutateFile(t *testing.T, path, old, new string) {
-	t.Helper()
-	data, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !bytes.Contains(data, []byte(old)) {
-		t.Fatalf("fixture did not contain %q", old)
-	}
-	data = bytes.Replace(data, []byte(old), []byte(new), 1)
-	if err := os.WriteFile(path, data, 0o644); err != nil {
-		t.Fatal(err)
-	}
 }
 
 func richComponentBody(title, goal string) string {

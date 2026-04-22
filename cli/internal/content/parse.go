@@ -183,22 +183,22 @@ func extractContent(n ast.Node, source []byte, nodeType string) string {
 	}
 }
 
-// extractCodeBlock gets language + code lines.
+// extractCodeBlock stores code blocks as `lang\ncode`; empty lang (leading
+// newline) disambiguates from untagged code whose first line looks like a lang tag.
 func extractCodeBlock(n ast.Node, source []byte) string {
-	var sb strings.Builder
+	var lang string
 	if fcb, ok := n.(*ast.FencedCodeBlock); ok {
-		lang := fcb.Language(source)
-		if len(lang) > 0 {
-			sb.Write(lang)
-			sb.WriteByte('\n')
+		if l := fcb.Language(source); len(l) > 0 {
+			lang = string(l)
 		}
 	}
+	var code strings.Builder
 	lines := n.Lines()
 	for i := range lines.Len() {
 		line := lines.At(i)
-		sb.Write(line.Value(source))
+		code.Write(line.Value(source))
 	}
-	return strings.TrimRight(sb.String(), "\n")
+	return lang + "\n" + strings.TrimRight(code.String(), "\n")
 }
 
 // extractTableRow gets pipe-separated cell text.

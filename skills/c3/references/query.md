@@ -1,10 +1,10 @@
 # Query Reference
 
-Navigate C3 docs + code. Full context = docs + code.
+Answer where/how/why about architecture. Full context = docs + code.
 
 ## Flow
 
-`Query → Topology → Clarify → Navigate → Lookup → Explore Code`
+`Topology → Clarify → Navigate → Lookup → Explore Code`
 
 ## Progress
 
@@ -26,6 +26,8 @@ bash <skill-dir>/bin/c3x.sh list
 Returns all entities: id, type, title, path, relationships, frontmatter. Match query to entities by title/type/relationship.
 
 Never manually Glob/Read `.c3/`. Topology has everything for discovery. Read only after identifying specific entities.
+
+For code→entity mapping use `c3x lookup <file-or-glob>`. For full-text search over doc bodies, use `grep` over `.c3/` directly.
 
 ## Step 0a+: Check Recipes
 
@@ -107,7 +109,7 @@ src/auth/**/*.ts
 
 ## ADR Handling
 
-ADRs = ephemeral work orders, not architectural truth. `c3x query` excludes by default.
+ADRs = ephemeral work orders, not architectural truth. Default listings exclude them.
 
 **Use `--include-adr` ONLY when:**
 - Working on specific ADR (implementing tracked change)
@@ -145,4 +147,3 @@ ADRs in results → historical context only. Verify against current entity docs 
 
 **Related:** <navigation hints>
 ```
-

@@ -298,6 +298,12 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 				}
 			}
 		}
+		if entity.Type == "adr" {
+			for _, issue := range validateADRCoverage(opts.Store, body, "warning") {
+				issue.Entity = entity.ID
+				issues = append(issues, issue)
+			}
+		}
 		if entity.Type == "component" {
 			for _, issue := range validateStrictComponentDoc(body, "error") {
 				issue.Entity = entity.ID

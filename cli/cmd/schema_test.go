@@ -70,6 +70,9 @@ func TestRunSchema_ADRIncludesDecisionLedger(t *testing.T) {
 		"Goal",
 		"Context",
 		"Decision",
+		"Affected Topology",
+		"Compliance Refs",
+		"Compliance Rules",
 		"Work Breakdown",
 		"Underlay C3 Changes",
 		"Enforcement Surfaces",
@@ -79,11 +82,41 @@ func TestRunSchema_ADRIncludesDecisionLedger(t *testing.T) {
 		"Current behavior, user pain, constraints, and affected topology",
 		"C3 CLI files, validators, commands, hints, help, schemas, templates, or tests",
 		"Commands, validators, tests, docs, or runtime paths that enforce the decision",
+		"fill:",
+		"if weak/missing:",
+		"Run c3x schema adr before drafting",
+		"Compliance rows must say why the ref/rule applies",
 	} {
 		if !strings.Contains(output, want) {
 			t.Errorf("ADR schema should include %q, got: %s", want, output)
 		}
 	}
+}
+
+func TestRunSchema_JSON_ADRGuidanceFields(t *testing.T) {
+	var buf bytes.Buffer
+	if err := RunSchema("adr", true, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	var out SchemaOutput
+	if err := json.Unmarshal(buf.Bytes(), &out); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
+	}
+
+	for _, s := range out.Sections {
+		if s.Name != "Compliance Refs" {
+			continue
+		}
+		if !strings.Contains(s.Fill, "why") {
+			t.Fatalf("Compliance Refs fill guidance should explain what to write, got %q", s.Fill)
+		}
+		if !strings.Contains(strings.ToLower(s.Failure), "governing references") {
+			t.Fatalf("Compliance Refs failure guidance should explain what goes wrong, got %q", s.Failure)
+		}
+		return
+	}
+	t.Fatal("Compliance Refs section not found in ADR schema")
 }
 
 func TestRunSchema_Context(t *testing.T) {

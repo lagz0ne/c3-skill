@@ -13,9 +13,9 @@ import (
 // citeTarget returns the section name and column name for a citation target.
 func citeTarget(targetID string) (sectionName, colName string) {
 	if strings.HasPrefix(targetID, "rule-") {
-		return "Related Rules", "Rule"
+		return "Compliance Rules", "Rule"
 	}
-	return "Related Refs", "Ref"
+	return "Compliance Refs", "Ref"
 }
 
 // RunWire creates a cite relationship between source and target.
@@ -99,13 +99,17 @@ func citeRow(source *store.Entity, targetID string) (sectionName, colName string
 		return "Governance", "Reference", map[string]string{
 			"Reference":  targetID,
 			"Type":       targetType,
-			"Governs":    "Citation added by c3x wire; refine the governed behavior before review.",
-			"Precedence": "wired citation beats uncited local prose",
-			"Notes":      "Added by c3x wire.",
+			"Governs":    "Compliance target added by c3x wire; refine what must be reviewed or complied with before handoff.",
+			"Precedence": "wired compliance target beats uncited local prose",
+			"Notes":      "Added by c3x wire for explicit compliance review.",
 		}
 	}
 	sectionName, colName = citeTarget(targetID)
-	return sectionName, colName, map[string]string{colName: targetID, "Role": ""}
+	return sectionName, colName, map[string]string{
+		colName:        targetID,
+		"Why required": "Added by c3x wire; fill why this target must be reviewed or complied with.",
+		"Action":       "review-and-refine",
+	}
 }
 
 // addTableRowIfAbsentStore adds a row to a section's table if no row with matchCol==matchVal exists.

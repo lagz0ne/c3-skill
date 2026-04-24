@@ -47,6 +47,26 @@ func TestShowHelp_Commands(t *testing.T) {
 	}
 }
 
+func TestShowHelp_WireMentionsComplianceTables(t *testing.T) {
+	var buf bytes.Buffer
+	ShowHelp("wire", &buf)
+
+	out := buf.String()
+	if !strings.Contains(out, "Compliance Refs") || !strings.Contains(out, "Compliance Rules") {
+		t.Fatalf("wire help should mention compliance tables, got:\n%s", out)
+	}
+}
+
+func TestShowHelp_DeleteMentionsComplianceCleanup(t *testing.T) {
+	var buf bytes.Buffer
+	ShowHelp("delete", &buf)
+
+	out := buf.String()
+	if !strings.Contains(out, "Compliance Refs / Compliance Rules") {
+		t.Fatalf("delete help should mention compliance cleanup, got:\n%s", out)
+	}
+}
+
 func TestShowHelp_UnknownCommand(t *testing.T) {
 	var buf bytes.Buffer
 	ShowHelp("nonexistent", &buf)

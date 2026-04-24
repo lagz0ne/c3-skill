@@ -7,7 +7,8 @@ Spawn parallel subagents via Task tool for complex work.
 ## Progress Checklist
 
 ```
-- [ ] Phase 1: complete ADR created (`c3x add adr <slug> --file adr-body.md`)
+- [ ] Phase 1: `c3x schema adr` read and complete ADR body drafted to schema
+- [ ] Phase 1b: complete ADR created (`c3x add adr <slug> --file adr-body.md`)
 - [ ] Phase 2: topology loaded, impact analyzed, ADR body complete work order
 - [ ] Phase 2b: provision gate (implement or design-only?)
 - [ ] Phase 3: execute work breakdown
@@ -18,17 +19,38 @@ Spawn parallel subagents via Task tool for complex work.
 
 ---
 
-## Phase 1: ADR (FIRST — non-negotiable)
+## Phase 1: ADR Schema First (FIRST — non-negotiable)
 
 ```bash
-echo "<what + why>" | bash <skill-dir>/bin/c3x.sh add adr <slug>
+bash <skill-dir>/bin/c3x.sh schema adr
 ```
 
-Create ADR immediately with at least Goal. Slug = change intent (e.g., `add-rate-limiting`, `migrate-to-postgres`). Body expanded in Phase 2 — any section with tables, mermaid, or code fences MUST be authored via a file: `c3x write <adr-id> --section <name> --file <path>`.
+Read the schema BEFORE writing the ADR. Do not draft freehand first. The schema output is not just field names:
+- It tells you what each ADR section must contain
+- It tells you what breaks if the section stays vague, thin, or unsupported
+- It is the earliest enforcement surface, not a late cleanup step
 
-From a diff, capture rationale via stdin:
+Draft `adr-body.md` to the schema before running `add adr`. Any section with tables, mermaid, or code fences MUST be authored via a file.
+
+Minimum bar:
+- Every required section present in the schema
+- Every compliance row says why it must be reviewed/complied with, unless the whole row is `N.A - <reason>`
+- Every affected-topology row says why the entity is affected, unless the whole row is `N.A - <reason>`
+- Underlay / enforcement / verification sections name exact commands, tests, files, validators, or entities
+
+## Phase 1b: Create Complete ADR
+
+Create ADR immediately once the full body exists:
+
 ```bash
-git diff <ref> | bash <skill-dir>/bin/c3x.sh add adr <slug>
+bash <skill-dir>/bin/c3x.sh add adr <slug> --file adr-body.md
+```
+
+Slug = change intent (e.g., `add-rate-limiting`, `migrate-to-postgres`).
+
+From a diff, capture rationale into the draft file first, then reshape it to the schema:
+```bash
+git diff <ref> > adr-notes.diff
 ```
 
 ## Phase 2: Understand + Fill ADR
@@ -46,14 +68,14 @@ Clarify with user (ASSUMPTION_MODE: skip). Analyze:
 
 ADR body must have enough detail for later agent to recover decision without chat history. Update `affects:` in frontmatter when entities known; otherwise rewrite full body via `c3x write <adr-id> --file adr-body.md` once context loaded.
 
-CLI = source of truth for ADR structure:
+CLI = source of truth for ADR structure and fill quality:
 
 ```bash
 bash <skill-dir>/bin/c3x.sh schema adr
 bash <skill-dir>/bin/c3x.sh read <adr-id> --full
 ```
 
-Follow `c3x schema adr` sections and `help[]` hints. `c3x add adr` = all-or-nothing: no thin ADR + incremental fill. For validator/schema/command/ref/rule/derived-material changes, ADR must preserve underlay C3 changes: exact commands, validators, tests, help/hints, schemas, verification evidence. Rich sections (command tables, code fences, mermaid) go through `c3x write <adr-id> --section <name> --file <path>`.
+Follow `c3x schema adr` sections and `help[]` hints literally. `c3x add adr` = all-or-nothing: no thin ADR + incremental fill later. If `c3x schema adr` says a section prevents a specific failure, fill that section to prevent exactly that failure. For validator/schema/command/ref/rule/derived-material changes, ADR must preserve underlay C3 changes: exact commands, validators, tests, help/hints, schemas, verification evidence. Rich sections (command tables, code fences, mermaid) go through `c3x write <adr-id> --section <name> --file <path>`.
 
 **Visual Impact:** Run `c3x graph <primary-affected-container-or-component> --format mermaid` — include in approval presentation. Multiple containers → graph each separately.
 

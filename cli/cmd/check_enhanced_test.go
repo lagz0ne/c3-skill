@@ -504,7 +504,6 @@ func TestSuggestByTitle(t *testing.T) {
 	}
 }
 
-
 // TestRunCheck_RuleFilter verifies --rule expands to citer entities.
 func TestRunCheck_RuleFilter(t *testing.T) {
 	s := createRichDBFixture(t)
@@ -555,3 +554,69 @@ func TestRunCheck_RuleFilterNoCiters(t *testing.T) {
 	}
 }
 
+func TestRunCheck_AdrWarnsWhenAffectedTopologyOmitsRelatedRefsAndRules(t *testing.T) {
+	s := createRichDBFixture(t)
+	if err := s.InsertEntity(&store.Entity{
+		ID: "rule-logging", Type: "rule", Title: "Structured Logging", Slug: "logging",
+		Status: "active", Metadata: "{}",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := content.WriteEntity(s, "rule-logging", "# Structured Logging\n\n## Goal\n\nConsistent logs.\n\n## Rule\n\nUse structured logs.\n\n## Golden Example\n\n```go\nlog.Info(\"msg\", \"key\", value)\n```\n"); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.AddRelationship(&store.Relationship{FromID: "c3-101", ToID: "rule-logging", RelType: "uses"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.InsertEntity(&store.Entity{
+		ID: "adr-20260424-adr-link-review", Type: "adr", Title: "ADR Link Review", Slug: "adr-link-review",
+		Status: "proposed", Date: "20260424", Metadata: "{}",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	body := "# ADR Link Review\n\n" +
+		"## Goal\n\nReview ADR related linkage.\n\n" +
+		"## Context\n\nAffected topology should surface compliance refs and rules.\n\n" +
+		"## Decision\n\nRequire explicit ADR linkage rows.\n\n" +
+		"## Affected Topology\n\n" +
+		"| Entity | Type | Why affected | Governance review |\n|--------|------|--------------|-------------------|\n" +
+		"| c3-1 | container | API changes are in scope. | Review inherited and cited governance. |\n\n" +
+		"## Compliance Refs\n\n" +
+		"| Ref | Why required | Action |\n|-----|--------------|--------|\n" +
+		"| ref-jwt | cited by c3-101 so auth must still comply. | keep linked |\n\n" +
+		"## Compliance Rules\n\n" +
+		"| Rule | Why required | Action |\n|------|--------------|--------|\n" +
+		"| N.A - missing | N.A - omitted on purpose. | N.A - test. |\n\n" +
+		"## Work Breakdown\n\n" +
+		"| Area | Detail | Evidence |\n|------|--------|----------|\n" +
+		"| cli | Add ADR linkage validation. | go test. |\n\n" +
+		"## Underlay C3 Changes\n\n" +
+		"| Underlay area | Exact C3 change | Verification evidence |\n|---------------|-----------------|-----------------------|\n" +
+		"| cli/cmd/check_enhanced.go | Warn on missing compliance refs/rules. | go test. |\n\n" +
+		"## Enforcement Surfaces\n\n" +
+		"| Surface | Behavior | Evidence |\n|---------|----------|----------|\n" +
+		"| c3x check | Warns on missing ADR linkage coverage. | go test. |\n\n" +
+		"## Alternatives Considered\n\n" +
+		"| Alternative | Rejected because |\n|-------------|------------------|\n" +
+		"| Skip linkage review. | ADRs would hide relevant governance. |\n\n" +
+		"## Risks\n\n" +
+		"| Risk | Mitigation | Verification |\n|------|------------|--------------|\n" +
+		"| Missing refs or rules | Check derives expected links from affected topology. | go test. |\n\n" +
+		"## Verification\n\n" +
+		"| Check | Result |\n|-------|--------|\n" +
+		"| go test | Pending. |\n"
+	if err := content.WriteEntity(s, "adr-20260424-adr-link-review", body); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	err := RunCheckV2(CheckOptions{Store: s, IncludeADR: true}, &buf)
+	if err != nil {
+		t.Fatalf("RunCheckV2 should warn, not fail: %v", err)
+	}
+	out := buf.String()
+	requireAll(t, out,
+		"adr-20260424-adr-link-review: ADR missing compliance ref ref-error-handling",
+		"adr-20260424-adr-link-review: ADR missing compliance rule rule-logging",
+	)
+}

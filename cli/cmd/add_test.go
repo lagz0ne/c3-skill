@@ -151,8 +151,8 @@ func TestRunAdd_AdrAgentHintsUseCLISchema(t *testing.T) {
 		"authoritative ADR contract for affected topology plus compliance refs/rules",
 		"c3x read adr-",
 		"c3x write adr-",
-		"c3x verify --only adr-",
-		"c3x check --include-adr && c3x verify",
+		"c3x check --include-adr --only adr-",
+		"c3x check --include-adr",
 	)
 }
 

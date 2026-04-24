@@ -22,8 +22,8 @@ func cascadeReviewHints() []HelpHint {
 	return []HelpHint{
 		{Command: "cascade review", Description: "for each changed component, record ADR Parent Delta: updated or no-delta with evidence"},
 		{Command: "c3x diff", Description: "find component-only deltas before declaring docs synced"},
-		{Command: "c3x verify --only <id>", Description: "prove focused docs while unrelated branch docs or ADRs are still in progress"},
-		{Command: "c3x check", Description: "structural pass; still verify Parent Delta evidence"},
+		{Command: "c3x check --only <id>", Description: "prove focused docs while unrelated branch docs or ADRs are still in progress"},
+		{Command: "c3x check", Description: "structural pass; still prove Parent Delta evidence"},
 	}
 }
 
@@ -38,8 +38,8 @@ func cascadeHintsForEntity(entity *store.Entity) []HelpHint {
 			{Command: "c3x schema adr", Description: "authoritative ADR contract for affected topology plus compliance refs/rules"},
 			{Command: fmt.Sprintf("c3x read %s --full", entity.ID), Description: "inspect the complete ADR work order, including why each compliance row is required"},
 			{Command: fmt.Sprintf("c3x write %s < adr.md", entity.ID), Description: "replace the full ADR only if the complete work order must change"},
-			{Command: fmt.Sprintf("c3x verify --only %s --include-adr", entity.ID), Description: "prove this ADR while other branch docs are still in progress"},
-			{Command: "c3x check --include-adr && c3x verify --include-adr", Description: "prove ADR compliance rows, structural coverage, and canonical sync before final handoff"},
+			{Command: fmt.Sprintf("c3x check --include-adr --only %s", entity.ID), Description: "prove this ADR while other branch docs are still in progress"},
+			{Command: "c3x check --include-adr", Description: "prove ADR compliance rows, structural coverage, and canonical sync before final handoff"},
 		}
 	case "component":
 		var hints []HelpHint

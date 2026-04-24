@@ -34,7 +34,7 @@ func TestRunGitInstall_DirectoryGitDir(t *testing.T) {
 		"#!/bin/sh",
 		c3HookStart,
 		".c3/c3.db is local cache only",
-		"c3x verify",
+		"c3x check",
 		`git diff --quiet -- .c3 ':(exclude).c3/c3.db' ':(exclude).c3/c3.db-*'`,
 		"review and stage",
 		c3HookEnd,

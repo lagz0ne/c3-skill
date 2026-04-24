@@ -5,6 +5,12 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.6.2] - 2026-04-24
+
+### Fixed
+
+- **Removed stale `c3x verify` guidance from active surfaces** — cleaned current agent docs, skill references, CLI hints, hook installer text, import guidance, and command tests so the live product no longer teaches the removed `verify` command. Historical changelog entries remain as release history only.
+
 ## [9.6.1] - 2026-04-24
 
 ### Changed

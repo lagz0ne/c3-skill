@@ -380,7 +380,8 @@ Workflows:
     c3x check
 
   After branch switch, selective merge, or conflict resolution:
-    c3x check              # rebuild cache, reseal canonical text, verify
+    c3x check              # inspect canonical drift and consistency
+    c3x repair             # rebuild cache and reseal if check reports seal drift
 
   Add a component to an existing container:
     c3x add component auth --container c3-1 --goal "JWT auth for all services"

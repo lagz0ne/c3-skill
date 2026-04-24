@@ -61,9 +61,9 @@ func TestParseArgs(t *testing.T) {
 			want: Options{Command: "migrate", Continue: true},
 		},
 		{
-			name: "verify only repeatable",
-			argv: []string{"verify", "--only", "c3-101", "--only", "refs/ref-jwt.md"},
-			want: Options{Command: "verify", Only: []string{"c3-101", "refs/ref-jwt.md"}},
+			name: "check only repeatable",
+			argv: []string{"check", "--only", "c3-101", "--only", "refs/ref-jwt.md"},
+			want: Options{Command: "check", Only: []string{"c3-101", "refs/ref-jwt.md"}},
 		},
 	}
 

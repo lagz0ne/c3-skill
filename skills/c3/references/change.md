@@ -99,7 +99,7 @@ Scaffold: `add` patterns in onboard.md §1.2-1.4 (body via `--file <path>` for t
 
 Change-specific additions:
 - Parallel subagents: each runs gate on their files before code changes
-- Per task: verify code + docs updated (code-map, Related Refs/Rules), no regressions
+- Per task: prove code + docs updated (code-map, Compliance Refs/Rules), no regressions
 
 ## Phase 3a: Contract Cascade Gate
 

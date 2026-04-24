@@ -6,6 +6,8 @@ type SectionDef struct {
 	ContentType string      `json:"content_type"`
 	Required    bool        `json:"required"`
 	Purpose     string      `json:"purpose,omitempty"`
+	Fill        string      `json:"fill,omitempty"`
+	Failure     string      `json:"failure,omitempty"`
 	Columns     []ColumnDef `json:"columns,omitempty"`
 	MinWords    int         `json:"min_words,omitempty"`
 	MinRows     int         `json:"min_rows,omitempty"`
@@ -111,34 +113,50 @@ var Registry = map[string][]SectionDef{
 		{Name: "Override", ContentType: "text", Required: false, Purpose: "How to deviate from this rule when justified"},
 	},
 	"adr": {
-		{Name: "Goal", ContentType: "text", Required: true, Purpose: "Decision context and objective"},
-		{Name: "Context", ContentType: "text", Required: true, Purpose: "Current behavior, user pain, constraints, and affected topology"},
-		{Name: "Decision", ContentType: "text", Required: true, Purpose: "Concrete selected approach and why it is the right fit"},
-		{Name: "Work Breakdown", ContentType: "table", Required: true, Purpose: "Files, docs, commands, or entities to change and how each maps to the decision", Columns: []ColumnDef{
+		{Name: "Goal", ContentType: "text", Required: true, Purpose: "Decision context and objective", Fill: "State the exact change objective in one concrete paragraph. Name the system behavior or architecture decision being changed, not just the ticket title.", Failure: "If this is vague, the ADR can pass mechanically but nobody can tell what decision it is actually authorizing."},
+		{Name: "Context", ContentType: "text", Required: true, Purpose: "Current behavior, user pain, constraints, and affected topology", Fill: "Describe the current state, the problem or pressure forcing the change, the constraints, and the part of the topology involved.", Failure: "If this is thin, later readers cannot tell whether the ADR solved the real problem or introduced drift against current architecture."},
+		{Name: "Decision", ContentType: "text", Required: true, Purpose: "Concrete selected approach and why it is the right fit", Fill: "Write the chosen approach and why it wins over the realistic alternatives for this repo, branch, or architecture shape.", Failure: "If this is hand-wavy, implementation can branch into multiple interpretations and the ADR stops being a work order."},
+		{Name: "Affected Topology", ContentType: "table", Required: true, Purpose: "Components or containers this ADR changes, plus the governance review expected for each", Fill: "List every system/container/component touched by the decision, why it is affected, and what governance review must happen there.", Failure: "If this is incomplete, c3x cannot derive the refs/rules that must be reviewed or complied with, so ADR coverage drifts silently.", Columns: []ColumnDef{
+			{Name: "Entity", Type: "text"},
+			{Name: "Type", Type: "enum", Values: []string{"system", "container", "component", "N.A - <reason>"}},
+			{Name: "Why affected", Type: "text"},
+			{Name: "Governance review", Type: "text"},
+		}},
+		{Name: "Compliance Refs", ContentType: "table", Required: true, Purpose: "Existing or to-be-created refs that the affected topology must review or comply with", Fill: "For each governing ref, name the ref, explain why it applies to this ADR, and record the action: comply, review, create-ref, update-ref, or N.A with reason.", Failure: "If this is vague or missing, the model will under-mention governing references and the ADR will miss architecture constraints it was supposed to respect.", Columns: []ColumnDef{
+			{Name: "Ref", Type: "text"},
+			{Name: "Why required", Type: "text"},
+			{Name: "Action", Type: "text"},
+		}},
+		{Name: "Compliance Rules", ContentType: "table", Required: true, Purpose: "Existing or to-be-created rules that the affected topology must review or comply with", Fill: "For each governing rule, name the rule, explain why it applies, and say whether the work must comply, needs review, or must create/update the rule.", Failure: "If this is vague or missing, rule enforcement becomes implicit again and downstream code can violate golden patterns without being called out in the ADR.", Columns: []ColumnDef{
+			{Name: "Rule", Type: "text"},
+			{Name: "Why required", Type: "text"},
+			{Name: "Action", Type: "text"},
+		}},
+		{Name: "Work Breakdown", ContentType: "table", Required: true, Purpose: "Files, docs, commands, or entities to change and how each maps to the decision", Fill: "Name the concrete implementation/doc work items and tie each one back to the decision. Prefer files, commands, entities, or scopes over vague task labels.", Failure: "If this is generic, another agent cannot recover execution steps from the ADR alone and work will depend on chat history.", Columns: []ColumnDef{
 			{Name: "Area", Type: "text"},
 			{Name: "Detail", Type: "text"},
 			{Name: "Evidence", Type: "text"},
 		}},
-		{Name: "Underlay C3 Changes", ContentType: "table", Required: true, Purpose: "C3 CLI files, validators, commands, hints, help, schemas, templates, or tests changed by this decision", Columns: []ColumnDef{
+		{Name: "Underlay C3 Changes", ContentType: "table", Required: true, Purpose: "C3 CLI files, validators, commands, hints, help, schemas, templates, or tests changed by this decision", Fill: "List exact C3 underlay surfaces changed by this ADR: commands, validators, tests, schema rows, hints, templates, docs, and the proof that each was updated.", Failure: "If this is weak, C3-facing changes ship without their enforcing validator/help/test surface and the documented contract drifts from the actual CLI.", Columns: []ColumnDef{
 			{Name: "Underlay area", Type: "text"},
 			{Name: "Exact C3 change", Type: "text"},
 			{Name: "Verification evidence", Type: "text"},
 		}},
-		{Name: "Enforcement Surfaces", ContentType: "table", Required: true, Purpose: "Commands, validators, tests, docs, or runtime paths that enforce the decision", Columns: []ColumnDef{
+		{Name: "Enforcement Surfaces", ContentType: "table", Required: true, Purpose: "Commands, validators, tests, docs, or runtime paths that enforce the decision", Fill: "Name every place that will catch drift: commands, runtime checks, tests, docs, guardrails, or validators.", Failure: "If this is missing, the ADR describes intent but gives no proof path, so regressions become opinion-driven instead of mechanically catchable.", Columns: []ColumnDef{
 			{Name: "Surface", Type: "text"},
 			{Name: "Behavior", Type: "text"},
 			{Name: "Evidence", Type: "text"},
 		}},
-		{Name: "Alternatives Considered", ContentType: "table", Required: true, Purpose: "Real options rejected and why", Columns: []ColumnDef{
+		{Name: "Alternatives Considered", ContentType: "table", Required: true, Purpose: "Real options rejected and why", Fill: "List the real competing approaches and the repo-specific reason each was rejected.", Failure: "If this is fake or generic, the ADR gives no decision pressure and future readers will reopen already-rejected paths.", Columns: []ColumnDef{
 			{Name: "Alternative", Type: "text"},
 			{Name: "Rejected because", Type: "text"},
 		}},
-		{Name: "Risks", ContentType: "table", Required: true, Purpose: "Failure modes, mitigations, and verification", Columns: []ColumnDef{
+		{Name: "Risks", ContentType: "table", Required: true, Purpose: "Failure modes, mitigations, and verification", Fill: "Name concrete failure modes introduced by the decision, how they are mitigated, and how the mitigation will be verified.", Failure: "If this stays soft, the ADR will approve risky work without naming how failure would show up or be contained.", Columns: []ColumnDef{
 			{Name: "Risk", Type: "text"},
 			{Name: "Mitigation", Type: "text"},
 			{Name: "Verification", Type: "text"},
 		}},
-		{Name: "Verification", ContentType: "table", Required: true, Purpose: "Exact commands or evidence required before marking the ADR implemented", Columns: []ColumnDef{
+		{Name: "Verification", ContentType: "table", Required: true, Purpose: "Exact commands or evidence required before marking the ADR implemented", Fill: "Write exact commands, smoke checks, or artifacts required before calling the ADR implemented. Prefer executable proof over prose promises.", Failure: "If this is vague, the work can be marked done without proof and the ADR stops enforcing the project's verify-before-done rule.", Columns: []ColumnDef{
 			{Name: "Check", Type: "text"},
 			{Name: "Result", Type: "text"},
 		}},

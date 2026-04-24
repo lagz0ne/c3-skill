@@ -105,7 +105,7 @@ Missing c3x operation -> STOP, tell user. No file-tool workarounds.
 **ADR-first for changes:**
 Every **change** starts `c3x add adr <slug>` before implementation.
 (Exception: **ref-add** creates ADR at completion -- `references/ref.md`.)
-ADR = work order. Use `c3x schema adr`, `c3x read <adr> --full`, `help[]` for required detail. Rejects thin creation; complete up front, `N.A - <reason>` for inapplicable rows. `list`/`check` exclude ADRs by default; `--include-adr` only when working on specific ADR. ADR content historical -- verify against current docs.
+ADR = work order. Start with `c3x schema adr` BEFORE drafting any ADR body. Treat schema output as an authoring contract: it tells you what to fill and what breaks if the section stays vague. Then draft the full ADR body to that schema and create it complete. Use `c3x read <adr> --full` and `help[]` to verify the body still matches the contract. Rejects thin creation; complete up front, `N.A - <reason>` for inapplicable rows. `list`/`check` exclude ADRs by default; `--include-adr` only when working on specific ADR. ADR content historical -- verify against current docs.
 
 **Stop if:**
 - No ADR for change -> `c3x add adr <slug>` NOW

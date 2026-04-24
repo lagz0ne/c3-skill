@@ -65,9 +65,9 @@ func RunDelete(opts DeleteOptions, w io.Writer) error {
 				_ = removeTableRowStore(opts.Store, refEntity, "Governance", "Reference", id)
 			} else {
 				// Legacy/non-component docs may still use older citation tables.
-				_ = removeTableRowStore(opts.Store, refEntity, "Related Refs", "Ref", id)
+				_ = removeTableRowStore(opts.Store, refEntity, "Compliance Refs", "Ref", id)
 				if strings.HasPrefix(id, "rule-") {
-					_ = removeTableRowStore(opts.Store, refEntity, "Related Rules", "Rule", id)
+					_ = removeTableRowStore(opts.Store, refEntity, "Compliance Rules", "Rule", id)
 				}
 			}
 			// Clean "Components" table if this is a component being deleted

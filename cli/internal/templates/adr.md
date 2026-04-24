@@ -15,6 +15,21 @@ affects: []
 
 ## Decision
 
+## Affected Topology
+
+| Entity | Type | Why affected | Governance review |
+|--------|------|--------------|-------------------|
+
+## Compliance Refs
+
+| Ref | Why required | Action |
+|-----|--------------|--------|
+
+## Compliance Rules
+
+| Rule | Why required | Action |
+|------|--------------|--------|
+
 ## Work Breakdown
 
 | Area | Detail | Evidence |

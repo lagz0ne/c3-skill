@@ -5,6 +5,15 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.6.1] - 2026-04-24
+
+### Changed
+
+- **ADR compliance wording tightened** — ADR governance moved from vague `Related Refs` / `Related Rules` to explicit `Compliance Refs` / `Compliance Rules`, and affected-topology/compliance rows now require concrete why-fields unless the whole row is `N.A - <reason>`.
+- **Skill flow enforces ADR schema earlier** — change workflow now requires `c3x schema adr` before drafting the ADR body, instead of treating schema as a late cleanup step after a thin draft exists.
+- **`c3x schema adr` now teaches fill intent and failure mode** — schema output now includes `fill:` and `if weak/missing:` guidance for ADR sections so users and agents see what to write and what breakage each section prevents.
+- **Help/hint text matches the stricter ADR contract** — ADR-facing hints, `schema` help, `wire` help, and `delete` help now teach compliance/review wording and the stricter authoring contract consistently.
+
 ## [9.6.0] - 2026-04-22
 
 ### Added

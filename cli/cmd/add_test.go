@@ -148,7 +148,7 @@ func TestRunAdd_AdrAgentHintsUseCLISchema(t *testing.T) {
 		"adr-",
 		"help[5]",
 		"c3x schema adr",
-		"authoritative ADR creation contract from the CLI",
+		"authoritative ADR contract for affected topology plus compliance refs/rules",
 		"c3x read adr-",
 		"c3x write adr-",
 		"c3x verify --only adr-",
@@ -167,6 +167,9 @@ func TestRunAdd_AdrRequiresCompleteBody(t *testing.T) {
 	requireAll(t, err.Error(),
 		"missing required section: Context",
 		"missing required section: Decision",
+		"missing required section: Affected Topology",
+		"missing required section: Compliance Refs",
+		"missing required section: Compliance Rules",
 		"missing required section: Underlay C3 Changes",
 		"ADR creation is all-or-nothing",
 	)
@@ -185,6 +188,15 @@ func fullADRBody(goal string) string {
 	return "## Goal\n" + goal + "\n\n" +
 		"## Context\nCurrent behavior and constraints are captured before creation.\n\n" +
 		"## Decision\nCreate the complete ADR as one work order.\n\n" +
+		"## Affected Topology\n\n" +
+		"| Entity | Type | Why affected | Governance review |\n|--------|------|--------------|-------------------|\n" +
+		"| N.A - test | N.A - fixture only. | N.A - fixture only. | N.A - fixture only. |\n\n" +
+		"## Compliance Refs\n\n" +
+		"| Ref | Why required | Action |\n|-----|--------------|--------|\n" +
+		"| N.A - test | N.A - fixture only. | N.A - fixture only. |\n\n" +
+		"## Compliance Rules\n\n" +
+		"| Rule | Why required | Action |\n|------|--------------|--------|\n" +
+		"| N.A - test | N.A - fixture only. | N.A - fixture only. |\n\n" +
 		"## Work Breakdown\n\n" +
 		"| Area | Detail | Evidence |\n|------|--------|----------|\n" +
 		"| N.A - test | N.A - no implementation work in fixture. | Test fixture. |\n\n" +
@@ -203,6 +215,95 @@ func fullADRBody(goal string) string {
 		"## Verification\n\n" +
 		"| Check | Result |\n|-------|--------|\n" +
 		"| go test | Pending fixture execution. |\n"
+}
+
+func TestRunAdd_AdrRequiresImplicitRelatedRefs(t *testing.T) {
+	s, _ := createDBFixtureWithC3Dir(t)
+	var buf bytes.Buffer
+
+	body := "## Goal\nDocument auth changes.\n\n" +
+		"## Context\nAuth component is changing.\n\n" +
+		"## Decision\nTrack compliance references explicitly.\n\n" +
+		"## Affected Topology\n\n" +
+		"| Entity | Type | Why affected | Governance review |\n|--------|------|--------------|-------------------|\n" +
+		"| c3-1 | container | Auth changes touch the API container. | Review inherited refs. |\n\n" +
+		"## Compliance Refs\n\n" +
+		"| Ref | Why required | Action |\n|-----|--------------|--------|\n" +
+		"| N.A - missing | N.A - omitted on purpose. | N.A - test. |\n\n" +
+		"## Compliance Rules\n\n" +
+		"| Rule | Why required | Action |\n|------|--------------|--------|\n" +
+		"| N.A - test | N.A - no rules in base fixture. | N.A - test. |\n\n" +
+		"## Work Breakdown\n\n" +
+		"| Area | Detail | Evidence |\n|------|--------|----------|\n" +
+		"| cli | Update ADR validation. | go test. |\n\n" +
+		"## Underlay C3 Changes\n\n" +
+		"| Underlay area | Exact C3 change | Verification evidence |\n|---------------|-----------------|-----------------------|\n" +
+		"| cli/cmd/add.go | Reject missing implicit refs. | go test. |\n\n" +
+		"## Enforcement Surfaces\n\n" +
+		"| Surface | Behavior | Evidence |\n|---------|----------|----------|\n" +
+		"| c3x add adr | Fails when affected topology omits inherited refs. | go test. |\n\n" +
+		"## Alternatives Considered\n\n" +
+		"| Alternative | Rejected because |\n|-------------|------------------|\n" +
+		"| Trust the model to infer refs. | The CLI would stop proving linkage coverage. |\n\n" +
+		"## Risks\n\n" +
+		"| Risk | Mitigation | Verification |\n|------|------------|--------------|\n" +
+		"| Missing inherited refs | Structural validation checks scoped refs. | go test. |\n\n" +
+		"## Verification\n\n" +
+		"| Check | Result |\n|-------|--------|\n" +
+		"| go test | Pending. |\n"
+
+	err := RunAdd("adr", "auth-ref-gap", s, "", false, strings.NewReader(body), &buf)
+	if err == nil {
+		t.Fatal("expected ADR add to fail when implicit refs are omitted")
+	}
+	requireAll(t, err.Error(),
+		"ADR missing compliance ref ref-jwt",
+	)
+}
+
+func TestRunAdd_AdrRequiresWhyColumnsUnlessNATopology(t *testing.T) {
+	s, _ := createDBFixtureWithC3Dir(t)
+	var buf bytes.Buffer
+
+	body := "## Goal\nDocument auth changes.\n\n" +
+		"## Context\nAuth component is changing.\n\n" +
+		"## Decision\nTrack compliance references explicitly.\n\n" +
+		"## Affected Topology\n\n" +
+		"| Entity | Type | Why affected | Governance review |\n|--------|------|--------------|-------------------|\n" +
+		"| c3-1 | container |  | Review inherited refs. |\n\n" +
+		"## Compliance Refs\n\n" +
+		"| Ref | Why required | Action |\n|-----|--------------|--------|\n" +
+		"| ref-jwt |  | review |\n\n" +
+		"## Compliance Rules\n\n" +
+		"| Rule | Why required | Action |\n|------|--------------|--------|\n" +
+		"| N.A - test | N.A - no rules in base fixture. | N.A - test. |\n\n" +
+		"## Work Breakdown\n\n" +
+		"| Area | Detail | Evidence |\n|------|--------|----------|\n" +
+		"| cli | Update ADR validation. | go test. |\n\n" +
+		"## Underlay C3 Changes\n\n" +
+		"| Underlay area | Exact C3 change | Verification evidence |\n|---------------|-----------------|-----------------------|\n" +
+		"| cli/cmd/add.go | Reject missing why fields. | go test. |\n\n" +
+		"## Enforcement Surfaces\n\n" +
+		"| Surface | Behavior | Evidence |\n|---------|----------|----------|\n" +
+		"| c3x add adr | Fails when why fields are blank. | go test. |\n\n" +
+		"## Alternatives Considered\n\n" +
+		"| Alternative | Rejected because |\n|-------------|------------------|\n" +
+		"| Allow blank why columns. | Review intent becomes too vague. |\n\n" +
+		"## Risks\n\n" +
+		"| Risk | Mitigation | Verification |\n|------|------------|--------------|\n" +
+		"| Blank rationale | Require why columns structurally. | go test. |\n\n" +
+		"## Verification\n\n" +
+		"| Check | Result |\n|-------|--------|\n" +
+		"| go test | Pending. |\n"
+
+	err := RunAdd("adr", "auth-why-gap", s, "", false, strings.NewReader(body), &buf)
+	if err == nil {
+		t.Fatal("expected ADR add to fail when why columns are blank")
+	}
+	requireAll(t, err.Error(),
+		"Affected Topology row for c3-1 must explain why it is affected",
+		"Compliance Refs row for ref-jwt must explain why compliance/review is required",
+	)
 }
 
 func TestRunAdd_RecipeWithBody(t *testing.T) {

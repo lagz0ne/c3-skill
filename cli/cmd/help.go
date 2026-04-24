@@ -163,6 +163,7 @@ Examples:
 Creates or removes cite relationships (updated atomically per target):
   1. source uses[] += target
   2. component source "Governance" table += row
+  3. non-component docs use "Compliance Refs" / "Compliance Rules" tables when present
 
 Supports multiple targets in a single call for batch wiring.
 
@@ -177,13 +178,18 @@ Examples:
 	{
 		Name:     "schema",
 		Args:     "<type>",
-		OneLiner: "Show known sections for entity type",
+		OneLiner: "Show required sections plus how to fill them",
 		Help: `Usage: c3x schema <type> [--json]
 
 Show known sections for an entity type.
 Types: context, container, component, ref, rule, adr, recipe
 
-JSON output includes column types (filepath, entity_id, enum, ref_id).
+Output includes:
+  - purpose: what the section is for
+  - fill: what the author must put there
+  - if weak/missing: what failure this section prevents
+
+JSON output includes section guidance plus column types (filepath, entity_id, enum, ref_id).
 
 Example: c3x schema component --json`,
 	},
@@ -276,6 +282,7 @@ Safety:
 Cleanup:
   - Removes id from uses[], affects[], scope[], sources[] on referencing entities
   - Removes Governance table rows citing this entity
+  - Removes Compliance Refs / Compliance Rules rows citing this entity
   - Removes row from parent container's Components table
   - Removes code-map.yaml entry
   - Deletes the entity file

@@ -47,6 +47,12 @@ func RunSchema(entityType string, jsonOutput bool, w io.Writer) error {
 		if s.Purpose != "" {
 			fmt.Fprintf(w, "    purpose: %s\n", s.Purpose)
 		}
+		if s.Fill != "" {
+			fmt.Fprintf(w, "    fill: %s\n", s.Fill)
+		}
+		if s.Failure != "" {
+			fmt.Fprintf(w, "    if weak/missing: %s\n", s.Failure)
+		}
 		for _, col := range s.Columns {
 			if len(col.Values) > 0 {
 				fmt.Fprintf(w, "    - %s (%s) values: %s\n", col.Name, col.Type, strings.Join(col.Values, ", "))
@@ -70,6 +76,11 @@ func RunSchema(entityType string, jsonOutput bool, w io.Writer) error {
 		fmt.Fprintln(w)
 		fmt.Fprintln(w, "ADR rules:")
 		fmt.Fprintln(w, "  - All sections required at creation (all-or-nothing)")
+		fmt.Fprintln(w, "  - Run c3x schema adr before drafting; do not draft ADR prose first and reconcile later")
+		fmt.Fprintln(w, "  - Treat each 'fill' line as required authoring guidance, not optional commentary")
+		fmt.Fprintln(w, "  - Treat each 'if weak/missing' line as the failure the section is preventing")
+		fmt.Fprintln(w, "  - Compliance rows must say why the ref/rule applies, unless the whole row is N.A - <reason>")
+		fmt.Fprintln(w, "  - Affected Topology rows must say why the entity is affected, unless the whole row is N.A - <reason>")
 	}
 
 	return nil

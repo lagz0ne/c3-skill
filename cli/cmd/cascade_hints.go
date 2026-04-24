@@ -35,11 +35,11 @@ func cascadeHintsForEntity(entity *store.Entity) []HelpHint {
 	switch entity.Type {
 	case "adr":
 		return []HelpHint{
-			{Command: "c3x schema adr", Description: "authoritative ADR creation contract from the CLI"},
-			{Command: fmt.Sprintf("c3x read %s --full", entity.ID), Description: "inspect the complete ADR work order before execution"},
+			{Command: "c3x schema adr", Description: "authoritative ADR contract for affected topology plus compliance refs/rules"},
+			{Command: fmt.Sprintf("c3x read %s --full", entity.ID), Description: "inspect the complete ADR work order, including why each compliance row is required"},
 			{Command: fmt.Sprintf("c3x write %s < adr.md", entity.ID), Description: "replace the full ADR only if the complete work order must change"},
 			{Command: fmt.Sprintf("c3x verify --only %s --include-adr", entity.ID), Description: "prove this ADR while other branch docs are still in progress"},
-			{Command: "c3x check --include-adr && c3x verify --include-adr", Description: "full ADR detail and canonical sync before final handoff"},
+			{Command: "c3x check --include-adr && c3x verify --include-adr", Description: "prove ADR compliance rows, structural coverage, and canonical sync before final handoff"},
 		}
 	case "component":
 		var hints []HelpHint

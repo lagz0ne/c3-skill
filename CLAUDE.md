@@ -17,7 +17,7 @@ Hard rules:
 
 ```bash
 alias c3local='C3X_MODE=agent bash skills/c3/bin/c3x.sh'
-c3local verify
+c3local check
 ```
 
 If C3 output looks wrong, commands fail unexpectedly, or behavior differs from source changes, suspect the wrong C3 version is being used. Prove the path/version before continuing.

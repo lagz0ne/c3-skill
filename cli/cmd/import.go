@@ -91,7 +91,7 @@ func RunImport(opts ImportOptions, w io.Writer) error {
 		if actual == "" {
 			return fmt.Errorf("error: unsealed C3 file %s\nhint: run 'c3x repair' to reseal canonical files, or use 'c3x import --force' for advanced recovery", doc.Path)
 		}
-		return fmt.Errorf("error: broken C3 seal in %s\nhint: run 'c3x verify' to inspect drift, then 'c3x repair' to reseal canonical files", doc.Path)
+		return fmt.Errorf("error: broken C3 seal in %s\nhint: run 'c3x check' to inspect drift, then 'c3x repair' to reseal canonical files", doc.Path)
 	}
 
 	dbPath := filepath.Join(c3Dir, "c3.db")

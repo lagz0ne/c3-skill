@@ -279,3 +279,32 @@ func TestRunUnwire_UpdatesNodeTree(t *testing.T) {
 		t.Errorf("node tree should not contain unwired ref, got: %s", rendered)
 	}
 }
+
+// Wiring an ADR onto a component must be rejected so ADR ids never land in
+// component frontmatter uses[]. Components govern by refs+rules; ADRs sit
+// elsewhere in the topology and are tracked via Affected Topology.
+func TestRunWire_RejectsADROnComponent(t *testing.T) {
+	s := createRichDBFixture(t)
+	if err := s.InsertEntity(&store.Entity{
+		ID: "adr-20260501-test", Type: "adr", Title: "test",
+		Slug: "test", Status: "implemented", Metadata: "{}",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	err := RunWire(s, "c3-101", "cite", "adr-20260501-test", &buf)
+	if err == nil {
+		t.Fatal("expected wire of component->adr to be rejected")
+	}
+	if !strings.Contains(err.Error(), "adr") {
+		t.Errorf("error must explain ADR rejection, got: %v", err)
+	}
+
+	rels, _ := s.RelationshipsFrom("c3-101")
+	for _, r := range rels {
+		if r.ToID == "adr-20260501-test" {
+			t.Errorf("relationship must not be created on rejection, got: %+v", r)
+		}
+	}
+}

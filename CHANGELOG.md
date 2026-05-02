@@ -5,6 +5,16 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Fixed
+
+- **Issue #79: `c3x` lockout when canonical drifts** — four wedge points unblocked:
+  - `c3x check` now surfaces the failing path/entity/message/hint instead of opaque `1 error(s)` (the validator output was being discarded by the dispatcher).
+  - Mutating commands (`add`, `set`, `wire`, `delete`, `write`) bypass canonical preverification per ADR `mutation-preverify-repair-bypass` — they refresh the cache without validating, so fix-path mutations can run against a wedged repo.
+  - `c3x repair` is now a real command that rebuilds the cache and reseals canonical. `RunRepair` already existed and `--help` documented it; only the dispatcher case was missing.
+  - `c3x wire <component> <adr-...>` is rejected with a clear message; ADR coverage belongs in the ADR's Affected Topology table, not in component `uses[]` frontmatter.
+
 ## [9.6.2] - 2026-04-24
 
 ### Fixed

@@ -236,6 +236,104 @@ func TestRun_CheckWithDB(t *testing.T) {
 	_ = run([]string{"--c3-dir", c3Dir, "check", "--json"}, &buf)
 }
 
+// check must surface the failing entity + message, not just "1 error(s)".
+func TestRun_CheckSurfacesValidatorIssues(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	seedCanonicalReadme(t, c3Dir)
+
+	// Break c3-101 by stripping its strict body so check returns errors with details.
+	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := content.WriteEntity(s, "c3-101", "# auth\n\n## Goal\n\nThin.\n"); err != nil {
+		s.Close()
+		t.Fatal(err)
+	}
+	if err := cmd.RunSyncExport(cmd.ExportOptions{Store: s, OutputDir: c3Dir}, io.Discard); err != nil {
+		s.Close()
+		t.Fatal(err)
+	}
+	s.Close()
+
+	var buf bytes.Buffer
+	err = run([]string{"--c3-dir", c3Dir, "check"}, &buf)
+	if err == nil {
+		t.Fatal("expected check to fail on broken c3-101 body")
+	}
+	out := buf.String()
+	if !strings.Contains(out, "c3-101") {
+		t.Errorf("check output must name the failing entity, got:\n%s", out)
+	}
+	if !strings.Contains(out, "missing required section") && !strings.Contains(out, "empty required section") {
+		t.Errorf("check output must describe what failed, got:\n%s", out)
+	}
+}
+
+// check --json must include the issue list with entity + message.
+func TestRun_CheckJSONIncludesIssues(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	seedCanonicalReadme(t, c3Dir)
+
+	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := content.WriteEntity(s, "c3-101", "# auth\n\n## Goal\n\nThin.\n"); err != nil {
+		s.Close()
+		t.Fatal(err)
+	}
+	if err := cmd.RunSyncExport(cmd.ExportOptions{Store: s, OutputDir: c3Dir}, io.Discard); err != nil {
+		s.Close()
+		t.Fatal(err)
+	}
+	s.Close()
+
+	var buf bytes.Buffer
+	err = run([]string{"--c3-dir", c3Dir, "check", "--json"}, &buf)
+	if err == nil {
+		t.Fatal("expected check --json to fail")
+	}
+	out := buf.String()
+	if !strings.Contains(out, "c3-101") {
+		t.Errorf("check --json must include entity id, got:\n%s", out)
+	}
+	if !strings.Contains(out, "\"issues\"") && !strings.Contains(out, "issues:") {
+		t.Errorf("check --json must include issues list, got:\n%s", out)
+	}
+}
+
+// Mutations must not be gated by canonical preverify failures, per ADR
+// mutation-preverify-repair-bypass — the mutation itself may be the fix.
+func TestRun_MutationBypassesPreverify(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	seedCanonicalReadme(t, c3Dir)
+
+	c101Path := filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md")
+	broken := "---\nid: c3-101\nc3-seal: deadbeef\ntitle: auth\ntype: component\ncategory: foundation\nparent: c3-1\n---\n\n# auth\n\n## Goal\n\nThin.\n"
+	if err := os.WriteFile(c101Path, []byte(broken), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "set", "c3-0", "goal", "Updated despite drift"}, &buf)
+	if err != nil {
+		t.Fatalf("mutation must bypass preverify, got: %v", err)
+	}
+}
+
+// c3x repair must be a real command, not "unknown command".
+func TestRun_RepairCommandExists(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	seedCanonicalReadme(t, c3Dir)
+
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "repair"}, &buf)
+	if err != nil && strings.Contains(err.Error(), "unknown command") {
+		t.Fatalf("c3x repair must be wired up, got: %v", err)
+	}
+}
+
 func TestRun_Schema(t *testing.T) {
 	c3Dir := setupC3DB(t)
 	var buf bytes.Buffer

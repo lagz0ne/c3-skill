@@ -203,9 +203,10 @@ Show known sections for an entity type.
 Types: context, container, component, ref, rule, adr, recipe
 
 Output includes:
+  - REJECT IF: leading rejection contract for adr, ref, rule (read these BEFORE drafting)
   - purpose: what the section is for
   - fill: what the author must put there
-  - if weak/missing: what failure this section prevents
+  - rejected when: the failure that triggers rejection of that section
 
 JSON output includes section guidance plus column types (filepath, entity_id, enum, ref_id).
 

@@ -83,13 +83,107 @@ func TestRunSchema_ADRIncludesDecisionLedger(t *testing.T) {
 		"C3 CLI files, validators, commands, hints, help, schemas, templates, or tests",
 		"Commands, validators, tests, docs, or runtime paths that enforce the decision",
 		"fill:",
-		"if weak/missing:",
+		"rejected when:",
+		"REJECT IF:",
 		"Run c3x schema adr before drafting",
 		"Compliance rows must say why the ref/rule applies",
 	} {
 		if !strings.Contains(output, want) {
 			t.Errorf("ADR schema should include %q, got: %s", want, output)
 		}
+	}
+
+	if strings.Contains(output, "if weak/missing:") {
+		t.Errorf("ADR schema should NOT contain renamed label %q", "if weak/missing:")
+	}
+	if strings.Contains(output, "ADR rules:") {
+		t.Errorf("ADR schema should NOT contain old %q header (merged into REJECT IF)", "ADR rules:")
+	}
+}
+
+func TestRunSchema_ADR_RejectIfFiresOnVagueRows(t *testing.T) {
+	var buf bytes.Buffer
+	if err := RunSchema("adr", false, &buf); err != nil {
+		t.Fatal(err)
+	}
+	output := buf.String()
+
+	rejectIdx := strings.Index(output, "REJECT IF:")
+	if rejectIdx < 0 {
+		t.Fatal("REJECT IF: block not found")
+	}
+	sectionsIdx := strings.Index(output, "Goal [text]")
+	if sectionsIdx < 0 {
+		t.Fatal("section listing not found")
+	}
+	if rejectIdx >= sectionsIdx {
+		t.Errorf("REJECT IF: block must precede section listing (rejectIdx=%d sectionsIdx=%d)", rejectIdx, sectionsIdx)
+	}
+}
+
+func TestRunSchema_Ref_HasRejectIfBlock(t *testing.T) {
+	var buf bytes.Buffer
+	if err := RunSchema("ref", false, &buf); err != nil {
+		t.Fatal(err)
+	}
+	output := buf.String()
+
+	for _, want := range []string{
+		"REJECT IF:",
+		"rationale",
+		"fill:",
+		"rejected when:",
+	} {
+		if !strings.Contains(output, want) {
+			t.Errorf("ref schema should include %q, got: %s", want, output)
+		}
+	}
+}
+
+func TestRunSchema_Rule_HasRejectIfBlock(t *testing.T) {
+	var buf bytes.Buffer
+	if err := RunSchema("rule", false, &buf); err != nil {
+		t.Fatal(err)
+	}
+	output := buf.String()
+
+	for _, want := range []string{
+		"REJECT IF:",
+		"Golden Example",
+		"literal code",
+		"fill:",
+		"rejected when:",
+	} {
+		if !strings.Contains(output, want) {
+			t.Errorf("rule schema should include %q, got: %s", want, output)
+		}
+	}
+}
+
+func TestRunSchema_Component_NoRejectIfBlock(t *testing.T) {
+	var buf bytes.Buffer
+	if err := RunSchema("component", false, &buf); err != nil {
+		t.Fatal(err)
+	}
+	output := buf.String()
+
+	if strings.Contains(output, "REJECT IF:") {
+		t.Errorf("component schema should NOT include REJECT IF: block (out of scope)")
+	}
+	if !strings.Contains(output, "Component rules:") {
+		t.Errorf("component schema should still contain %q block", "Component rules:")
+	}
+}
+
+func TestRunSchema_Container_NoRejectIfBlock(t *testing.T) {
+	var buf bytes.Buffer
+	if err := RunSchema("container", false, &buf); err != nil {
+		t.Fatal(err)
+	}
+	output := buf.String()
+
+	if strings.Contains(output, "REJECT IF:") {
+		t.Errorf("container schema should NOT include REJECT IF: block (out of scope)")
 	}
 }
 

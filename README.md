@@ -93,7 +93,7 @@ c3x check --rule rule-xyz                # scope to citers of a rule
 c3x check --fix                          # auto-fix title-matched references
 ```
 
-**Full command list:** `c3x --help` (11 user-facing commands)
+**Full command list:** `c3x --help` (12 user-facing commands)
 
 ### Schema enforcement
 

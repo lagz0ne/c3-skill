@@ -111,17 +111,15 @@ func runWithIO(argv []string, stdin io.Reader, stdinTerminal bool, w io.Writer, 
 		return runThroughCoordinator(argv, stdin, stdinTerminal, c3Dir, w, stderr)
 	}
 
-	// Read-only commands must not mutate canonical: the user may be
-	// mid-edit and silent auto-repair overwrites their work.
+	// Mutations bypass preverify (ADR mutation-preverify-repair-bypass): the
+	// mutation itself may be the fix.
 	if hasCanonical {
-		if err := cmd.RunVerify(cmd.VerifyOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: opts.Only}, io.Discard); err != nil {
-			if mutates {
-				if repairErr := cmd.RunRepair(cmd.RepairOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: opts.Only}, io.Discard); repairErr != nil {
-					return fmt.Errorf("error: auto-repair failed before %q: %w\noriginal verification error: %v", opts.Command, repairErr, err)
-				}
-			} else {
-				fmt.Fprintln(stderr, "warning: .c3/ drift detected; run 'c3x check' to reconcile")
+		if mutates {
+			if err := cmd.EnsureLocalCache(c3Dir, opts.IncludeADR, opts.Only, io.Discard); err != nil {
+				return fmt.Errorf("error: refresh cache before %q: %w", opts.Command, err)
 			}
+		} else if err := cmd.RunVerify(cmd.VerifyOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: opts.Only}, io.Discard); err != nil {
+			fmt.Fprintln(stderr, "warning: .c3/ drift detected; run 'c3x check' to reconcile")
 		}
 		hasDB = fileExists(dbPath)
 	}
@@ -429,7 +427,9 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 	case "list":
 		err = cmd.RunList(cmd.ListOptions{Store: s, JSON: opts.JSON, Flat: opts.Flat, Compact: opts.Compact, C3Dir: c3Dir, IncludeADR: opts.IncludeADR, JSONExplicit: opts.JSONExplicit}, w)
 	case "check":
-		if err = cmd.RunVerify(cmd.VerifyOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: opts.Only}, io.Discard); err != nil {
+		var verifyOut bytes.Buffer
+		if err = cmd.RunVerify(cmd.VerifyOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: opts.Only}, &verifyOut); err != nil {
+			_, _ = io.Copy(w, &verifyOut)
 			return fmt.Errorf("%w\nhint: run c3x check again after resolving", err)
 		}
 		err = cmd.RunCheckV2(cmd.CheckOptions{
@@ -506,6 +506,8 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 			id = opts.Args[0]
 		}
 		err = cmd.RunDelete(cmd.DeleteOptions{C3Dir: c3Dir, ID: id, Store: s, DryRun: opts.DryRun}, w)
+	case "repair":
+		err = cmd.RunRepair(cmd.RepairOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: opts.Only}, w)
 	default:
 		return fmt.Errorf("error: unknown command '%s'\nhint: run 'c3x --help' to see available commands", opts.Command)
 	}
@@ -521,7 +523,7 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 
 func commandMutatesCanonical(opts cmd.Options) bool {
 	switch opts.Command {
-	case "write", "add", "set", "wire", "delete":
+	case "write", "add", "set", "wire", "delete", "repair":
 		if opts.Command == "delete" {
 			return !opts.DryRun
 		}

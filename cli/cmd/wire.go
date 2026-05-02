@@ -32,8 +32,12 @@ func RunWire(s *store.Store, sourceID, relationType, targetID string, w io.Write
 	if err != nil {
 		return fmt.Errorf("entity %q not found", sourceID)
 	}
-	if _, err := s.GetEntity(targetID); err != nil {
+	tgtEntity, err := s.GetEntity(targetID)
+	if err != nil {
 		return fmt.Errorf("entity %q not found", targetID)
+	}
+	if srcEntity.Type == "component" && tgtEntity.Type == "adr" {
+		return fmt.Errorf("cannot cite adr from component %s: components cite refs and rules; track ADR coverage in the ADR's Affected Topology table", sourceID)
 	}
 
 	// Add relationship in the store

@@ -163,6 +163,56 @@ func TestRunWrite_ValidContent(t *testing.T) {
 	}
 }
 
+// A bad uses[] target must fail the whole write — syncRelationships removes
+// existing edges before re-adding, so a typo silently drops relationships
+// when the error is downgraded to a warning.
+func TestRunWrite_FailsOnRelationshipSyncError(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	body := strictComponentBody("auth", "Updated authentication goal for API requests.")
+	content := "---\nid: c3-101\ntitle: auth\nuses:\n  - ref-does-not-exist\n---\n\n" + body
+
+	err := RunWrite(WriteOptions{Store: s, ID: "c3-101", Content: content}, &buf)
+	if err == nil {
+		t.Fatal("expected write to fail when uses[] references unknown entity")
+	}
+	if !strings.Contains(err.Error(), "ref-does-not-exist") {
+		t.Errorf("error must name the bad target, got: %v", err)
+	}
+}
+
+// A read|write round-trip must clear fields the user removed from frontmatter.
+// Otherwise old DB values resurface on the next read/export.
+func TestRunWrite_ClearsRemovedFrontmatterFields(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	// Seed c3-101 with status + boundary set
+	e, _ := s.GetEntity("c3-101")
+	e.Status = "provisioned"
+	e.Boundary = "API edge"
+	if err := s.UpdateEntity(e); err != nil {
+		t.Fatal(err)
+	}
+
+	// Write back a body with no status / boundary in frontmatter
+	body := strictComponentBody("auth", "Updated authentication goal for API requests.")
+	content := "---\nid: c3-101\ntitle: auth\n---\n\n" + body
+
+	if err := RunWrite(WriteOptions{Store: s, ID: "c3-101", Content: content}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	e, _ = s.GetEntity("c3-101")
+	if e.Status != "" {
+		t.Errorf("status must be cleared when removed from frontmatter, got %q", e.Status)
+	}
+	if e.Boundary != "" {
+		t.Errorf("boundary must be cleared when removed from frontmatter, got %q", e.Boundary)
+	}
+}
+
 func TestRunWrite_RejectsMissingSections(t *testing.T) {
 	s := createRichDBFixture(t)
 	var buf bytes.Buffer

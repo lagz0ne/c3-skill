@@ -74,7 +74,7 @@ func runWriteFull(existing *store.Entity, opts WriteOptions, w io.Writer) error 
 
 	if fm != nil {
 		if err := syncRelationships(opts.Store, opts.ID, fm); err != nil {
-			fmt.Fprintf(w, "warning: relationship sync: %v\n", err)
+			return fmt.Errorf("error: relationship sync for %s: %w", opts.ID, err)
 		}
 	}
 
@@ -141,29 +141,27 @@ func applyFrontmatter(e *store.Entity, fm *frontmatter.Frontmatter) {
 		return
 	}
 	metadata := parseMetadataMap(e.Metadata)
-	if fm.Goal != "" {
-		e.Goal = fm.Goal
-	}
-	if fm.Status != "" {
-		e.Status = fm.Status
-	}
-	if fm.Boundary != "" {
-		e.Boundary = fm.Boundary
-	}
-	if fm.Category != "" {
-		e.Category = fm.Category
-	}
+	// Authoritative on full write: removing a field from FM clears it.
+	// Goal stays restorable from the body via promoteGoalIfEmpty.
+	e.Goal = fm.Goal
+	e.Status = fm.Status
+	e.Boundary = fm.Boundary
+	e.Category = fm.Category
+	e.Date = fm.Date
+	// Title has no body-derived fallback — leave it alone when blank
+	// to avoid orphaning the entity from a truncated round-trip.
 	if fm.Title != "" {
 		e.Title = fm.Title
 	}
-	if fm.Date != "" {
-		e.Date = fm.Date
-	}
 	if fm.Summary != "" {
 		metadata["summary"] = fm.Summary
+	} else {
+		delete(metadata, "summary")
 	}
 	if fm.Description != "" {
 		metadata["description"] = fm.Description
+	} else {
+		delete(metadata, "description")
 	}
 	for key, value := range fm.Extra {
 		metadata[key] = value
@@ -323,7 +321,7 @@ func syncRelationships(s *store.Store, entityID string, fm *frontmatter.Frontmat
 		if err := s.AddRelationship(&store.Relationship{
 			FromID: entityID, ToID: key.toID, RelType: key.relType,
 		}); err != nil {
-			errs = append(errs, err.Error())
+			errs = append(errs, fmt.Sprintf("%s -> %s (%s): %v", entityID, key.toID, key.relType, err))
 		}
 	}
 	if len(errs) > 0 {

@@ -58,6 +58,8 @@ Types for `add`: `container`, `component`, `ref`, `rule`, `adr`, `recipe`
 
 ## Precondition
 
+**Read-only fast path:** for file-owner, "where is", summarize constraints, or smallest-next-action queries that do not mutate docs/code, start with the narrowest `c3x lookup <file>` or `c3x read <id> --section <name>`. Skip `list` and `check` unless lookup misses, drift is suspected, topology-wide inventory is required, or the user explicitly asks for validation/audit. Prefer section reads. Skip graph unless relationship/dependent impact is part of the answer.
+
 Before every op except onboard:
 ```bash
 bash <skill-dir>/bin/c3x.sh list

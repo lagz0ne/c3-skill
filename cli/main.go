@@ -523,7 +523,7 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 
 func commandMutatesCanonical(opts cmd.Options) bool {
 	switch opts.Command {
-	case "write", "add", "set", "wire", "delete":
+	case "write", "add", "set", "wire", "delete", "repair":
 		if opts.Command == "delete" {
 			return !opts.DryRun
 		}

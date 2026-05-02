@@ -37,12 +37,12 @@ type compactEntity struct {
 
 // RunList outputs the topology of entities from the store.
 func RunList(opts ListOptions, w io.Writer) error {
-	if opts.Flat {
-		return listFlat(opts.Store, opts.IncludeADR, w)
-	}
 	format := ResolveFormat(opts.JSONExplicit, isAgentMode())
 	if opts.JSON || format == FormatTOON {
 		return listStructured(opts, format, w)
+	}
+	if opts.Flat {
+		return listFlat(opts.Store, opts.IncludeADR, w)
 	}
 	return listTopology(opts.Store, opts.Compact, opts.IncludeADR, w)
 }
@@ -172,12 +172,18 @@ func listFlat(s *store.Store, includeADR bool, w io.Writer) error {
 		}
 		entities = filtered
 	}
+	parentSlug := map[string]string{}
+	for _, e := range entities {
+		if e.Type == "container" {
+			parentSlug[e.ID] = fmt.Sprintf("%s-%s", e.ID, e.Slug)
+		}
+	}
 	sort.Slice(entities, func(i, j int) bool {
 		return entities[i].ID < entities[j].ID
 	})
 
 	for _, e := range entities {
-		fmt.Fprintf(w, "%s\t%s\t%s\n", e.ID, e.Type, e.ID)
+		fmt.Fprintf(w, "%s\t%s\t%s\n", e.ID, e.Type, entityRelativePath(e, parentSlug))
 	}
 	return nil
 }

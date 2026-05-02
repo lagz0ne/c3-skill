@@ -334,6 +334,15 @@ func TestRun_RepairCommandExists(t *testing.T) {
 	}
 }
 
+// repair rewrites canonical files and the cache, so it must classify as mutating
+// (gives it the rollback snapshot + coordinator gate). Otherwise a failed
+// repair can leave .c3/ partially rewritten with no way back.
+func TestCommandMutatesCanonical_RepairIsMutating(t *testing.T) {
+	if !commandMutatesCanonical(cmd.Options{Command: "repair"}) {
+		t.Fatal("repair must be classified as mutating: it rewrites canonical files")
+	}
+}
+
 func TestRun_Schema(t *testing.T) {
 	c3Dir := setupC3DB(t)
 	var buf bytes.Buffer

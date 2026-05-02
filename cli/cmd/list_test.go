@@ -147,6 +147,46 @@ func TestRunList_FlatIncludesADR(t *testing.T) {
 	}
 }
 
+// flat output must give id<TAB>type<TAB>canonical-path so scripts can jump
+// from an entity to its file. Printing the id twice loses the path column.
+func TestRunList_FlatThirdColumnIsCanonicalPath(t *testing.T) {
+	s := createDBFixture(t)
+	var buf bytes.Buffer
+
+	if err := RunList(ListOptions{Store: s, Flat: true}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, line := range strings.Split(strings.TrimSpace(buf.String()), "\n") {
+		parts := strings.Split(line, "\t")
+		if len(parts) != 3 {
+			continue
+		}
+		id, third := parts[0], parts[2]
+		if third == id {
+			t.Errorf("third column must be the canonical path, got duplicated id %q in line %q", id, line)
+		}
+		if !strings.HasSuffix(third, ".md") {
+			t.Errorf("third column must point to a markdown file, got %q in line %q", third, line)
+		}
+	}
+}
+
+// --json must win over --flat: legacy JSON consumers depend on it.
+func TestRunList_FlatWithJSONReturnsJSON(t *testing.T) {
+	s := createDBFixture(t)
+	var buf bytes.Buffer
+
+	if err := RunList(ListOptions{Store: s, Flat: true, JSON: true}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	out := strings.TrimSpace(buf.String())
+	if !strings.HasPrefix(out, "[") && !strings.HasPrefix(out, "{") {
+		t.Errorf("--flat --json must emit JSON, got:\n%s", out)
+	}
+}
+
 func TestRunList_JSONExcludesADR(t *testing.T) {
 	s := createDBFixture(t)
 	var buf bytes.Buffer

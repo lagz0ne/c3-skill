@@ -68,3 +68,39 @@ func TestRegistry_ComponentHasPurpose(t *testing.T) {
 		}
 	}
 }
+
+func TestRefRequiredSectionsHaveFillAndFailure(t *testing.T) {
+	sections := ForType("ref")
+	if sections == nil {
+		t.Fatal("no schema for 'ref'")
+	}
+	for _, s := range sections {
+		if !s.Required {
+			continue
+		}
+		if s.Fill == "" {
+			t.Errorf("ref required section %q has empty Fill (rejection contract is incomplete)", s.Name)
+		}
+		if s.Failure == "" {
+			t.Errorf("ref required section %q has empty Failure (cannot reject thin drafts)", s.Name)
+		}
+	}
+}
+
+func TestRuleRequiredSectionsHaveFillAndFailure(t *testing.T) {
+	sections := ForType("rule")
+	if sections == nil {
+		t.Fatal("no schema for 'rule'")
+	}
+	for _, s := range sections {
+		if !s.Required {
+			continue
+		}
+		if s.Fill == "" {
+			t.Errorf("rule required section %q has empty Fill (rejection contract is incomplete)", s.Name)
+		}
+		if s.Failure == "" {
+			t.Errorf("rule required section %q has empty Failure (cannot reject thin drafts)", s.Name)
+		}
+	}
+}

@@ -10,8 +10,10 @@ import (
 
 // SchemaOutput is the JSON structure returned by the schema command.
 type SchemaOutput struct {
-	Type     string              `json:"type"`
-	Sections []schema.SectionDef `json:"sections"`
+	Type      string              `json:"type"`
+	Sections  []schema.SectionDef `json:"sections"`
+	RejectIf  []string            `json:"reject_if,omitempty"`
+	Workorder string              `json:"workorder,omitempty"`
 }
 
 // RunSchema outputs the section schema for a given entity type.
@@ -22,9 +24,12 @@ func RunSchema(entityType string, jsonOutput bool, w io.Writer) error {
 	}
 
 	if jsonOutput {
+		rules := schema.RejectFor(entityType)
 		out := SchemaOutput{
-			Type:     entityType,
-			Sections: sections,
+			Type:      entityType,
+			Sections:  sections,
+			RejectIf:  rules.Bullets,
+			Workorder: rules.Workorder,
 		}
 		return writeJSON(w, out)
 	}
@@ -80,46 +85,21 @@ func RunSchema(entityType string, jsonOutput bool, w io.Writer) error {
 	return nil
 }
 
-// writeRejectIfBlock prints the REJECT IF rejection contract for adr, ref, and rule.
+// writeRejectIfBlock prints the REJECT IF rejection contract sourced from
+// schema.RejectRegistry. Empty contract (component, container, context, recipe) prints nothing.
 func writeRejectIfBlock(w io.Writer, entityType string) {
-	switch entityType {
-	case "adr":
-		fmt.Fprintln(w)
-		fmt.Fprintln(w, "REJECT IF:")
-		fmt.Fprintln(w, "  - Any required section absent or filled with TBD/TODO/\"see above\"/\"as needed\"")
-		fmt.Fprintln(w, "  - Compliance rows must say why the ref/rule applies, unless the whole row is N.A - <reason>")
-		fmt.Fprintln(w, "  - Affected Topology rows must say why the entity is affected, unless the whole row is N.A - <reason>")
-		fmt.Fprintln(w, "  - Verification has no executable command, smoke check, or named artifact")
-		fmt.Fprintln(w, "  - Alternatives Considered rows have no repo-specific rejection reason")
-		fmt.Fprintln(w, "  - Underlay C3 Changes lacks the exact validators/tests/help that enforce the decision")
-		fmt.Fprintln(w)
-		fmt.Fprintln(w, "Run c3x schema adr before drafting; do not draft ADR prose first and reconcile later.")
-		fmt.Fprintln(w, "Treat each 'fill' line as required authoring guidance, not optional commentary.")
-		fmt.Fprintln(w, "ADR creation is all-or-nothing: thin sections fail at creation, no incremental fill later.")
-		fmt.Fprintln(w)
-	case "ref":
-		fmt.Fprintln(w)
-		fmt.Fprintln(w, "REJECT IF:")
-		fmt.Fprintln(w, "  - 'Why' restates 'Choice' instead of giving rationale (the ref becomes a rule)")
-		fmt.Fprintln(w, "  - 'Goal' describes what code does instead of what problem the pattern standardizes")
-		fmt.Fprintln(w, "  - 'Choice' is generic ('use best practices') instead of naming a concrete option")
-		fmt.Fprintln(w, "  - No file path or grep evidence backs the 'How' pattern (one-off, not a ref)")
-		fmt.Fprintln(w, "  - Pattern is primarily about enforcement (golden code, anti-patterns) — that's a rule, not a ref")
-		fmt.Fprintln(w)
-		fmt.Fprintln(w, "Refs are rationale documents. If you cannot answer 'why this pattern over alternatives'")
-		fmt.Fprintln(w, "you do not have a ref yet — discover first, then draft.")
-		fmt.Fprintln(w)
-	case "rule":
-		fmt.Fprintln(w)
-		fmt.Fprintln(w, "REJECT IF:")
-		fmt.Fprintln(w, "  - 'Golden Example' is paraphrased instead of literal code copied from a real file")
-		fmt.Fprintln(w, "  - 'Rule' is multi-clause or aspirational ('should generally') instead of one-line enforceable")
-		fmt.Fprintln(w, "  - No 1-3 YES/NO compliance question can be derived from 'Rule' + 'Golden Example'")
-		fmt.Fprintln(w, "  - Rule is primarily about rationale (why this approach) — that's a ref, not a rule")
-		fmt.Fprintln(w, "  - 'Goal' describes a single component instead of a project-wide standard")
-		fmt.Fprintln(w)
-		fmt.Fprintln(w, "Rules are enforceable standards. Find the canonical code in the codebase FIRST.")
-		fmt.Fprintln(w, "If no real example exists, the rule is premature — author the first instance, then extract the rule.")
-		fmt.Fprintln(w)
+	rules := schema.RejectFor(entityType)
+	if len(rules.Bullets) == 0 {
+		return
 	}
+	fmt.Fprintln(w)
+	fmt.Fprintln(w, "REJECT IF:")
+	for _, bullet := range rules.Bullets {
+		fmt.Fprintf(w, "  - %s\n", bullet)
+	}
+	if rules.Workorder != "" {
+		fmt.Fprintln(w)
+		fmt.Fprintln(w, rules.Workorder)
+	}
+	fmt.Fprintln(w)
 }

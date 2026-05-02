@@ -29,7 +29,7 @@ func RunVerify(opts VerifyOptions, w io.Writer) error {
 	if err := reportBrokenSeals(opts.C3Dir, opts.IncludeADR, opts.Only, w); err != nil {
 		return err
 	}
-	if err := ensureLocalCache(opts.C3Dir, opts.IncludeADR, opts.Only, w); err != nil {
+	if err := EnsureLocalCache(opts.C3Dir, opts.IncludeADR, opts.Only, w); err != nil {
 		return err
 	}
 	return runVerificationSuite(opts.C3Dir, opts.JSON, opts.IncludeADR, opts.Only, w)
@@ -52,7 +52,8 @@ func RunRepair(opts RepairOptions, w io.Writer) error {
 	return runVerificationSuite(opts.C3Dir, opts.JSON, opts.IncludeADR, opts.Only, w)
 }
 
-func ensureLocalCache(c3Dir string, includeADR bool, only []string, w io.Writer) error {
+// EnsureLocalCache refreshes .c3/c3.db from canonical without running validators.
+func EnsureLocalCache(c3Dir string, includeADR bool, only []string, w io.Writer) error {
 	dbPath := filepath.Join(c3Dir, "c3.db")
 	if !pathExists(dbPath) {
 		if err := RunImport(ImportOptions{C3Dir: c3Dir, SkipBackup: true, AllowADRDrift: !includeADR, Only: only}, io.Discard); err != nil {

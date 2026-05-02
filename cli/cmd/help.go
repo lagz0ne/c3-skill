@@ -105,6 +105,24 @@ Options:
                      Errors if the rule has no citers. Composes with --only as union.`,
 	},
 	{
+		Name:     "repair",
+		OneLiner: "Rebuild local cache from canonical .c3/ and reseal",
+		Help: `Usage: c3x repair [--json] [--include-adr] [--only <id>]
+
+Rebuild the local C3 cache (.c3/c3.db) from canonical markdown, then re-export
+canonical files so seals match. Use after a branch switch, selective merge, or
+conflict resolution when 'c3x check' reports seal drift or cache divergence.
+
+Repair does not invent fixes for content errors — it only realigns the cache
+and seals to the current canonical text. If validation still fails afterwards,
+the canonical files themselves need editing.
+
+Options:
+  --json             Structured output
+  --include-adr      Include ADR entities in post-repair verification
+  --only <id>        Scope verification to specific entity IDs (repeatable)`,
+	},
+	{
 		Name:     "add",
 		Args:     "<type> <slug>",
 		OneLiner: "Create entity (auto-numbering + wiring)",

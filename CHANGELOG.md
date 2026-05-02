@@ -5,6 +5,16 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.6.6] - 2026-05-02
+
+### Added
+
+- **Agent-efficiency eval harness** — adds controlled Claude/Codex eval cases for C3 task startup, debug startup, ADR creation, and design-change sessions. The harness defaults to dry-run, captures raw artifacts, extracts token/turn/trace metrics, and scores deterministic `eval_result.json` outputs.
+
+### Changed
+
+- **C3 skill read-only fast path** — file-owner, "where is", constraints-summary, and smallest-next-action queries now start with narrow `lookup` or section `read` calls and skip broad `list`/`check`/`graph` unless the task actually needs topology, validation, or impact analysis.
+
 ## [9.6.5] - 2026-05-02
 
 ### Fixed

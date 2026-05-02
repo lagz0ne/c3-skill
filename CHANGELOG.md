@@ -5,6 +5,12 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.6.5] - 2026-05-02
+
+### Fixed
+
+- **`reject_if` and `workorder` now surface in JSON / TOON output of `c3x schema`** — v9.6.4 added the REJECT IF block to text output only; LLMs in `C3X_MODE=agent` (which forces JSON path) never saw it. Rejection contract is now data-shaped (`internal/schema.RejectRegistry`) so it appears in agent-mode TOON as `reject_if:` and `workorder:` fields, matching the audience the gate was designed for.
+
 ## [9.6.4] - 2026-05-02
 
 ### Added

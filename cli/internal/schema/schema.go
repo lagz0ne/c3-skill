@@ -20,6 +20,56 @@ type ColumnDef struct {
 	Values []string `json:"values,omitempty"`
 }
 
+// RejectRules is the rejection contract surfaced before drafting an entity body.
+// Bullets are individual reject conditions; Workorder is the prose framing that
+// follows the bullets in text output.
+type RejectRules struct {
+	Bullets   []string `json:"bullets"`
+	Workorder string   `json:"workorder"`
+}
+
+// RejectRegistry maps entity types to their rejection contract. Only entity
+// types where draft-time rejection is the primary failure mode (adr, ref, rule)
+// have entries; other types are absent (zero value) and emit no contract.
+var RejectRegistry = map[string]RejectRules{
+	"adr": {
+		Bullets: []string{
+			"Any required section absent or filled with TBD/TODO/\"see above\"/\"as needed\"",
+			"Compliance rows must say why the ref/rule applies, unless the whole row is N.A - <reason>",
+			"Affected Topology rows must say why the entity is affected, unless the whole row is N.A - <reason>",
+			"Verification has no executable command, smoke check, or named artifact",
+			"Alternatives Considered rows have no repo-specific rejection reason",
+			"Underlay C3 Changes lacks the exact validators/tests/help that enforce the decision",
+		},
+		Workorder: "Run c3x schema adr before drafting; do not draft ADR prose first and reconcile later.\nTreat each 'fill' line as required authoring guidance, not optional commentary.\nADR creation is all-or-nothing: thin sections fail at creation, no incremental fill later.",
+	},
+	"ref": {
+		Bullets: []string{
+			"'Why' restates 'Choice' instead of giving rationale (the ref becomes a rule)",
+			"'Goal' describes what code does instead of what problem the pattern standardizes",
+			"'Choice' is generic ('use best practices') instead of naming a concrete option",
+			"No file path or grep evidence backs the 'How' pattern (one-off, not a ref)",
+			"Pattern is primarily about enforcement (golden code, anti-patterns) — that's a rule, not a ref",
+		},
+		Workorder: "Refs are rationale documents. If you cannot answer 'why this pattern over alternatives'\nyou do not have a ref yet — discover first, then draft.",
+	},
+	"rule": {
+		Bullets: []string{
+			"'Golden Example' is paraphrased instead of literal code copied from a real file",
+			"'Rule' is multi-clause or aspirational ('should generally') instead of one-line enforceable",
+			"No 1-3 YES/NO compliance question can be derived from 'Rule' + 'Golden Example'",
+			"Rule is primarily about rationale (why this approach) — that's a ref, not a rule",
+			"'Goal' describes a single component instead of a project-wide standard",
+		},
+		Workorder: "Rules are enforceable standards. Find the canonical code in the codebase FIRST.\nIf no real example exists, the rule is premature — author the first instance, then extract the rule.",
+	},
+}
+
+// RejectFor returns the rejection contract for an entity type, or zero value if none.
+func RejectFor(entityType string) RejectRules {
+	return RejectRegistry[entityType]
+}
+
 // Registry maps entity types to their ordered section definitions.
 var Registry = map[string][]SectionDef{
 	"component": {

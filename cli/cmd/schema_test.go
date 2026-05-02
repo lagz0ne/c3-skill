@@ -187,6 +187,65 @@ func TestRunSchema_Container_NoRejectIfBlock(t *testing.T) {
 	}
 }
 
+func TestRunSchema_JSON_ADRRejectIf(t *testing.T) {
+	var buf bytes.Buffer
+	if err := RunSchema("adr", true, &buf); err != nil {
+		t.Fatal(err)
+	}
+	var out SchemaOutput
+	if err := json.Unmarshal(buf.Bytes(), &out); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if len(out.RejectIf) == 0 {
+		t.Fatal("ADR JSON output should include reject_if bullets so LLMs in agent mode see the rejection contract")
+	}
+	if out.Workorder == "" {
+		t.Error("ADR JSON output should include workorder prose")
+	}
+}
+
+func TestRunSchema_JSON_RefRejectIf(t *testing.T) {
+	var buf bytes.Buffer
+	if err := RunSchema("ref", true, &buf); err != nil {
+		t.Fatal(err)
+	}
+	var out SchemaOutput
+	if err := json.Unmarshal(buf.Bytes(), &out); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if len(out.RejectIf) == 0 {
+		t.Fatal("ref JSON output should include reject_if bullets")
+	}
+}
+
+func TestRunSchema_JSON_RuleRejectIf(t *testing.T) {
+	var buf bytes.Buffer
+	if err := RunSchema("rule", true, &buf); err != nil {
+		t.Fatal(err)
+	}
+	var out SchemaOutput
+	if err := json.Unmarshal(buf.Bytes(), &out); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if len(out.RejectIf) == 0 {
+		t.Fatal("rule JSON output should include reject_if bullets")
+	}
+}
+
+func TestRunSchema_JSON_ComponentNoRejectIf(t *testing.T) {
+	var buf bytes.Buffer
+	if err := RunSchema("component", true, &buf); err != nil {
+		t.Fatal(err)
+	}
+	var out SchemaOutput
+	if err := json.Unmarshal(buf.Bytes(), &out); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if len(out.RejectIf) != 0 {
+		t.Errorf("component JSON output should not include reject_if (out of scope), got %v", out.RejectIf)
+	}
+}
+
 func TestRunSchema_JSON_ADRGuidanceFields(t *testing.T) {
 	var buf bytes.Buffer
 	if err := RunSchema("adr", true, &buf); err != nil {

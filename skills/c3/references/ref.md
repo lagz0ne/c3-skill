@@ -58,6 +58,8 @@ Write 1-3 YES/NO compliance questions from `## How`. Can't write them → patter
 
 ### Step 3: Fill Content
 
+**First:** `c3x schema ref` — the output leads with `REJECT IF:` bullets that ARE the rejection contract. Per-section `fill:` and `rejected when:` lines apply the same gate at section level. Draft to the contract, do not freehand.
+
 - `## Goal` — what it standardizes
 - `## Choice` — option chosen (REQUIRED)
 - `## Why` — rationale (REQUIRED)
@@ -88,6 +90,16 @@ Only modify `## Related Refs`. Other changes → route to change.
 
 ### Step 6: Adoption ADR
 
+ADRs cannot be created as `implemented` and cannot transition `proposed → implemented` directly. Two-step:
+
+```bash
+bash <skill-dir>/bin/c3x.sh add adr ref-{slug}-adoption < adr-body.md
+bash <skill-dir>/bin/c3x.sh set adr-YYYYMMDD-ref-{slug}-adoption status accepted
+# ref doc is wired and the deliverable is in place
+bash <skill-dir>/bin/c3x.sh set adr-YYYYMMDD-ref-{slug}-adoption status implemented
+```
+
+Final state:
 ```yaml
 ---
 id: adr-YYYYMMDD-ref-{slug}-adoption
@@ -96,7 +108,7 @@ status: implemented
 ---
 ```
 
-Ref adoption ADRs use `status: implemented` — ref doc IS deliverable.
+Ref adoption ADRs end in `status: implemented` — ref doc IS deliverable. After implemented, the ADR becomes historical and is exempt from `c3x check` validation.
 
 ---
 

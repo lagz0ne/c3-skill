@@ -45,6 +45,9 @@ func runSetField(entity *store.Entity, opts SetOptions, w io.Writer) error {
 	case "goal":
 		entity.Goal = opts.Value
 	case "status":
+		if entity.Type == "adr" && entity.Status == "proposed" && opts.Value == "implemented" {
+			return fmt.Errorf("error: cannot transition adr from \"proposed\" directly to \"implemented\"\nhint: ADRs must be accepted first; run: c3x set %s status accepted", opts.ID)
+		}
 		entity.Status = opts.Value
 	case "boundary":
 		entity.Boundary = opts.Value

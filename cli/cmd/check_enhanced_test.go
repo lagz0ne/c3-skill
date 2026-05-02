@@ -77,6 +77,89 @@ func TestRunCheck_IncludeADRValidatesADR(t *testing.T) {
 	}
 }
 
+func TestRunCheck_IncludeADRSkipsImplemented(t *testing.T) {
+	s := createRichDBFixture(t)
+	adr, _ := s.GetEntity("adr-20260226-use-go")
+	adr.Status = "implemented"
+	if err := s.UpdateEntity(adr); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	opts := CheckOptions{Store: s, JSON: true, IncludeADR: true}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	var result CheckResult
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
+	}
+
+	for _, issue := range result.Issues {
+		if strings.Contains(issue.Entity, "adr-") {
+			t.Errorf("--include-adr should skip implemented ADRs (historical), but found issue for: %s", issue.Entity)
+		}
+	}
+}
+
+func TestRunCheck_IncludeADRSkipsProvisioned(t *testing.T) {
+	s := createRichDBFixture(t)
+	adr, _ := s.GetEntity("adr-20260226-use-go")
+	adr.Status = "provisioned"
+	if err := s.UpdateEntity(adr); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	opts := CheckOptions{Store: s, JSON: true, IncludeADR: true}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	var result CheckResult
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
+	}
+
+	for _, issue := range result.Issues {
+		if strings.Contains(issue.Entity, "adr-") {
+			t.Errorf("--include-adr should skip provisioned ADRs (terminal), but found issue for: %s", issue.Entity)
+		}
+	}
+}
+
+func TestRunCheck_OnlyOverridesTerminalSkip(t *testing.T) {
+	s := createRichDBFixture(t)
+	adr, _ := s.GetEntity("adr-20260226-use-go")
+	adr.Status = "implemented"
+	if err := s.UpdateEntity(adr); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	opts := CheckOptions{Store: s, JSON: true, IncludeADR: true, Only: []string{"adr-20260226-use-go"}}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	var result CheckResult
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
+	}
+
+	hasADRIssue := false
+	for _, issue := range result.Issues {
+		if issue.Entity == "adr-20260226-use-go" {
+			hasADRIssue = true
+			break
+		}
+	}
+	if !hasADRIssue {
+		t.Error("--only naming a terminal-state ADR explicitly should validate it")
+	}
+}
+
 func TestRunCheck_EmptyRequiredTable(t *testing.T) {
 	s := createRichDBFixture(t)
 	content.WriteEntity(s, "c3-110", strings.Replace(strictComponentBody("users", "Manage user account behavior for authenticated API requests."), "| credentials | IN | Accept credential material for validation only. | API request boundary | ref-jwt |\n| identity result | OUT | Provide accepted identity or explicit rejection. | Downstream user workflow | c3-110 |", "", 1))

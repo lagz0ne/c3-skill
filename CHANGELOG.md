@@ -5,6 +5,18 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.6.4] - 2026-05-02
+
+### Added
+
+- **`c3x schema adr|ref|rule` leads with a REJECT IF block** — explicit rejection contract printed before section listing so LLMs see the gate criteria before drafting, not after `c3x add` bounces a thin body. ref + rule schemas gain `Fill` + `Failure` for every required section, so the rejection contract works at section level too.
+
+### Changed
+
+- **Schema per-section advisory label renamed `if weak/missing:` → `rejected when:`** — sharpens framing from advisory consequence to draft-time gate.
+- **`c3x check --include-adr` skips terminal-state ADRs (`status: implemented`, `status: provisioned`)** — historical ADRs are content-frozen and exempt from validation. `c3x check --only <adr-id>` still forces validation when an ADR is explicitly named.
+- **`c3x set <adr> status implemented` blocked from `proposed`** — ADRs cannot transition `proposed → implemented` directly; must go through `accepted` first. Direct `proposed → provisioned` is still allowed (design-only). Adoption flows in `references/ref.md` and `references/rule.md` updated to show the explicit two-step transition instead of implying `implemented` from creation.
+
 ## [9.6.3] - 2026-05-02
 
 ### Fixed

@@ -58,6 +58,8 @@ Write 1-3 YES/NO compliance questions from `## Rule` + `## Golden Example`. Can'
 
 ### Step 6: Fill Content
 
+**First:** `c3x schema rule` — the output leads with `REJECT IF:` bullets that ARE the rejection contract. Per-section `fill:` and `rejected when:` lines apply the same gate at section level. Draft to the contract, do not freehand.
+
 - `## Rule` — one-line statement of what must be true
 - `## Golden Example` — canonical code (code blocks, do/don't pairs)
 - `## Not This` — anti-patterns with why wrong
@@ -86,6 +88,16 @@ Only modify `## Related Rules`. Other changes → route to change.
 
 ### Step 9: Adoption ADR
 
+ADRs cannot be created as `implemented` and cannot transition `proposed → implemented` directly. Two-step:
+
+```bash
+bash <skill-dir>/bin/c3x.sh add adr rule-{slug}-adoption < adr-body.md
+bash <skill-dir>/bin/c3x.sh set adr-YYYYMMDD-rule-{slug}-adoption status accepted
+# rule doc is wired and the deliverable is in place
+bash <skill-dir>/bin/c3x.sh set adr-YYYYMMDD-rule-{slug}-adoption status implemented
+```
+
+Final state:
 ```yaml
 ---
 id: adr-YYYYMMDD-rule-{slug}-adoption
@@ -94,7 +106,7 @@ status: implemented
 ---
 ```
 
-Rule adoption ADRs use `status: implemented` — rule doc IS deliverable.
+Rule adoption ADRs end in `status: implemented` — rule doc IS deliverable. After implemented, the ADR becomes historical and is exempt from `c3x check` validation.
 
 ---
 
@@ -282,8 +294,12 @@ bash <skill-dir>/bin/c3x.sh wire <component-id> rule-<slug>
 
 ### Step 6: Adoption ADR
 
+ADRs cannot be created as `implemented` and cannot transition `proposed → implemented` directly. Two-step:
+
 ```bash
-bash <skill-dir>/bin/c3x.sh add adr adopt-rule-<slug>
+bash <skill-dir>/bin/c3x.sh add adr adopt-rule-<slug> < adr-body.md
+bash <skill-dir>/bin/c3x.sh set adr-YYYYMMDD-adopt-rule-<slug> status accepted
+# rule wired and adapted from marketplace
 bash <skill-dir>/bin/c3x.sh set adr-YYYYMMDD-adopt-rule-<slug> status implemented
 ```
 

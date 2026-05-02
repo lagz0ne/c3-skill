@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
@@ -215,8 +216,13 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 	targetMatcher := newCheckTargetMatcher(entities, opts.Only)
 
 	for _, entity := range entities {
-		if entity.Type == "adr" && !opts.IncludeADR {
-			continue
+		if entity.Type == "adr" {
+			if !opts.IncludeADR {
+				continue
+			}
+			if isADRTerminal(entity.Status) && !slices.Contains(opts.Only, entity.ID) {
+				continue
+			}
 		}
 		if !targetMatcher.matches(entity) {
 			continue

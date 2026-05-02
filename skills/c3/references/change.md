@@ -26,8 +26,9 @@ bash <skill-dir>/bin/c3x.sh schema adr
 ```
 
 Read the schema BEFORE writing the ADR. Do not draft freehand first. The schema output is not just field names:
-- It tells you what each ADR section must contain
-- It tells you what breaks if the section stays vague, thin, or unsupported
+- It LEADS with a `REJECT IF:` block — those bullets are the rejection contract; if your draft trips any of them, creation will fail
+- Per-section `fill:` says what to write
+- Per-section `rejected when:` says what makes that section get bounced
 - It is the earliest enforcement surface, not a late cleanup step
 
 Draft `adr-body.md` to the schema before running `add adr`. Any section with tables, mermaid, or code fences MUST be authored via a file.
@@ -184,3 +185,8 @@ bash <skill-dir>/bin/c3x.sh check
 ## ADR Lifecycle
 
 Status: `proposed → accepted → (provisioned | implemented)`. ADRs hidden by default; `--include-adr` to inspect.
+
+**Enforcement:**
+- `c3x add adr` always creates with `status: proposed`. Cannot create as `implemented`.
+- `c3x set <adr-id> status implemented` is BLOCKED if current status is `proposed`. Transition `proposed → accepted → implemented` (or via `provisioned`).
+- `c3x check --include-adr` skips terminal-state ADRs (`implemented`, `provisioned`) — they are historical, content frozen. Use `c3x check --only <adr-id>` to force re-validation of a specific terminal ADR.

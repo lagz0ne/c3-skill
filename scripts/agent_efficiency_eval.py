@@ -123,7 +123,8 @@ def default_cases() -> list[EvalCase]:
             prompt=(
                 "Token-budgeted C3 ADR task. Use local c3x only. Do not run broad searches. "
                 "Create one valid ADR for reducing c3x token cost. Run at most: c3x schema adr; "
-                "c3x add adr <slug> --file <body>; c3x check --include-adr --only <adr-id>. "
+                "c3x read c3-108 --section Up Cap; c3x add adr <slug> --file <body>; "
+                "c3x check --include-adr --only <adr-id>. Do not use rg/find/sed/cat or raw .c3 file reads. "
                 + pressure_marker
                 + marker
             ),

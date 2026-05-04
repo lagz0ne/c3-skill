@@ -73,7 +73,7 @@ c3x list                                 # topology: goals, file coverage, ref u
 c3x lookup src/auth/login.ts             # file → component + refs + rules
 c3x graph c3-1 --format mermaid          # forward subgraph as mermaid
 c3x graph ref-jwt --direction reverse    # what breaks if this changes?
-c3x schema adr                           # required sections for an entity type
+c3x schema adr                           # required sections + pre-draft workorder
 ```
 
 **Relationships and removal:**
@@ -101,13 +101,16 @@ Every entity type has required sections. The CLI enforces them on write:
 
 | Entity | Required sections |
 |--------|------------------|
-| Component | Goal, Parent Fit, Purpose, Foundational Flow, Business Flow, Governance, Contract, Change Safety, Derived Materials |
+| Component | Goal, Parent Fit, Purpose, Foundational Flow, Business Flow, Governance, Up Cap, Contract, Change Safety, Derived Materials |
 | Container | Goal, Components, Responsibilities |
 | Ref | Goal, Choice, Why |
 | Rule | Goal, Rule, Golden Example |
-| ADR, Recipe | Goal |
+| ADR | Goal, Context, Decision, Affected Topology, Compliance Refs, Compliance Rules, Work Breakdown, Underlay C3 Changes, Enforcement Surfaces, Alternatives Considered, Risks, Verification |
+| Recipe | Goal |
 
 `c3x write` (full body) validates required sections before accepting. `c3x write --section` on a component validates the full resulting document, so component docs stay all-or-nothing. `c3x check` validates everything post-hoc.
+
+ADR schema output also carries a pre-draft workorder: create a volatile Discovery Brief from the task goal and targeted `c3x` reads before writing the ADR body. The brief names owner, governing material, and stop condition so agents read relevant references without turning candidate coverage into add-time error floods.
 
 ### Canonical `.c3/` tree
 

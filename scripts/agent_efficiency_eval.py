@@ -122,7 +122,9 @@ def default_cases() -> list[EvalCase]:
             title="Create ADR Successfully",
             prompt=(
                 "Token-budgeted C3 ADR task. Use local c3x only. Do not run broad searches. "
-                "Create one valid ADR for reducing c3x token cost. Run at most: c3x schema adr; "
+                "Create one valid ADR for reducing c3x token cost. Before drafting, write a terse Discovery Brief "
+                "from the task goal and Up Cap read: owner, governing material, and stop condition. "
+                "This is ADR-only; stop before implementing source-code changes. Run at most: c3x schema adr; "
                 "c3x read c3-108 --section Up Cap; c3x add adr <slug> --file <body>; "
                 "c3x check --include-adr --only <adr-id>. Do not use rg/find/sed/cat or raw .c3 file reads. "
                 + pressure_marker

@@ -32,6 +32,8 @@ class AgentEfficiencyEvalTests(unittest.TestCase):
         self.assertIn("mentions_component_delta", cases["adr_create"].accuracy_checks)
         self.assertIn("mentions_component_delta", cases["skill_content_limit_adr"].accuracy_checks)
         self.assertIn("Up Cap", cases["adr_create"].prompt)
+        self.assertIn("Discovery Brief", cases["adr_create"].prompt)
+        self.assertIn("stop before implementing source-code changes", cases["adr_create"].prompt)
         self.assertIn("c3x read c3-108 --section Up Cap", cases["adr_create"].prompt)
         self.assertIn("Do not use rg/find/sed/cat", cases["adr_create"].prompt)
         self.assertIn("decompose", cases["skill_content_limit_adr"].prompt)

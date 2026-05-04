@@ -1,6 +1,6 @@
 ---
 id: c3-215
-c3-seal: da5fe8a75b42c5dda33254749bcc4aa9a4d4f4b6480c4078293dba0cbc0ad070
+c3-seal: 05d60d7d7c66cd839e4c42bc79e56ec322bccbed0c627c4f491effc6c31685f0
 title: migrate-operation
 type: component
 category: feature
@@ -53,6 +53,12 @@ Provide durable agent-ready documentation for migrate-operation so generated cod
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-2 | policy | Governs migrate-operation behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
+
+## Up Cap
+
+| Unit | Soft Cap | Current Load | Escalation | Evidence |
+| --- | --- | --- | --- | --- |
+| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-215. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-215 --depth 1 |
 
 ## Contract
 

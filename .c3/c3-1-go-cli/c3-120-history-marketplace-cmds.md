@@ -1,6 +1,6 @@
 ---
 id: c3-120
-c3-seal: cdadbef01abb2601b29073c25a09d70e785da66b0704a1150d1257a32cd1bacf
+c3-seal: bfd817e85cbecf0a4a433e31deeeec74e6eb1952944a39a8acc184a24803e5e3
 title: history-marketplace-cmds
 type: component
 category: feature
@@ -50,6 +50,12 @@ Provide durable agent-ready documentation for history-marketplace-cmds so genera
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-1 | policy | Governs history-marketplace-cmds behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
+
+## Up Cap
+
+| Unit | Soft Cap | Current Load | Escalation | Evidence |
+| --- | --- | --- | --- | --- |
+| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-120. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-120 --depth 1 |
 
 ## Contract
 

@@ -5,6 +5,19 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.7.0] - 2026-05-04
+
+### Added
+
+- **Component Up Cap governance** — component schema, templates, strict validation, and canonical C3 component docs now include an `Up Cap` section for naming governance load, current pressure, escalation path, and evidence before components absorb too many refs/rules/ADRs.
+- **ADR discovery workorder in schema output** — `c3x schema adr` now tells agents to make a volatile Discovery Brief before drafting the ADR body, using the task goal and targeted `c3x` reads to identify owner, governing material, and stop condition.
+- **Agent-efficiency ADR prompt improvements** — the eval harness now measures ADR quality, effective uncached token pressure, actual command output bytes, and keeps the best measured Discovery Brief behavior for ADR creation prompts.
+
+### Changed
+
+- **Bounded ADR authoring** — `c3x add adr` still rejects malformed authored compliance rows, but no longer blocks creation solely because inferred affected-topology refs/rules are omitted; `c3x check --include-adr` remains the review surface for missing inferred coverage.
+- **ADR eval metrics are more accurate** — command-output pressure now comes from Codex `command_execution.aggregated_output`, while transcript and command-string byte counts stay separate.
+
 ## [9.6.6] - 2026-05-02
 
 ### Added

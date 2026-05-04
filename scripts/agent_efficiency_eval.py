@@ -22,6 +22,22 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 METRIC_BASIS = "tokens_total, turn_count, accuracy_score, elapsed_ms"
+TOKEN_THRESHOLDS = {"soft": 120000, "upper": 180000, "no_go": 250000}
+ADR_QUALITY_FLOOR = 0.8
+ADR_QUALITY_CHECKS = (
+    "owner_correct",
+    "root_cause_specific",
+    "decision_concrete",
+    "pressure_response_specific",
+    "component_delta_specific",
+    "scope_bounded",
+    "verification_executable",
+    "implementation_recoverable",
+    "alternatives_real",
+    "risk_testable",
+    "no_boilerplate_na",
+    "stop_condition_met",
+)
 
 
 @dataclass(frozen=True)
@@ -68,8 +84,13 @@ class RunResult:
 def default_cases() -> list[EvalCase]:
     marker = (
         "When done, write eval_result.json in repo root with keys "
-        "summary, verified, artifacts, root_cause, design_change, adr_id as applicable. "
+        "summary, verified, artifacts, root_cause, design_change, pressure_response, adr_id as applicable. "
         "Keep output concise."
+    )
+    pressure_marker = (
+        "Before creating an ADR, inspect Up Cap pressure and decide whether to decompose/split a component, "
+        "move the concern upward, or explicitly justify staying additive; record this as pressure_response. "
+        "Also record component_delta naming the new/split/extracted component or a no-delta justification. "
     )
     return [
         EvalCase(
@@ -91,10 +112,10 @@ def default_cases() -> list[EvalCase]:
                 "Handle this user request: make c3x list show limited content instead of showing all content. "
                 "Trace the affected C3 entities and code ownership, create a valid ADR/design work order for the change, "
                 "and stop before implementing source-code changes. Use the local built c3x only. "
-                "When done, write eval_result.json in repo root with keys summary, verified, artifacts, root_cause, design_change, adr_id as applicable. "
-                "Keep output concise."
+                + pressure_marker
+                + marker
             ),
-            accuracy_checks=("has_eval_result", "verified", "has_adr_id", "mentions_design_change"),
+            accuracy_checks=("has_eval_result", "verified", "has_adr_id", "mentions_design_change", "mentions_pressure_response", "mentions_component_delta"),
         ),
         EvalCase(
             id="adr_create",
@@ -103,9 +124,10 @@ def default_cases() -> list[EvalCase]:
                 "Token-budgeted C3 ADR task. Use local c3x only. Do not run broad searches. "
                 "Create one valid ADR for reducing c3x token cost. Run at most: c3x schema adr; "
                 "c3x add adr <slug> --file <body>; c3x check --include-adr --only <adr-id>. "
+                + pressure_marker
                 + marker
             ),
-            accuracy_checks=("has_eval_result", "verified", "has_adr_id"),
+            accuracy_checks=("has_eval_result", "verified", "has_adr_id", "mentions_pressure_response", "mentions_component_delta"),
         ),
         EvalCase(
             id="task_session",
@@ -401,22 +423,209 @@ def evaluate_accuracy(workspace: Path | None, case: EvalCase, stdout: str, stder
             checks[check] = bool(result.get("root_cause")) or "root cause" in text
         elif check == "mentions_design_change":
             checks[check] = bool(result.get("design_change")) or "design change" in text
+        elif check == "mentions_pressure_response":
+            pressure_response = result.get("pressure_response")
+            checks[check] = _specific_pressure_response(pressure_response) or _has_any(
+                text,
+                ("pressure_response", "up cap", "decompose", "split", "staying additive", "stay additive"),
+            )
+        elif check == "mentions_component_delta":
+            component_delta = result.get("component_delta")
+            checks[check] = _specific_component_delta(component_delta) or _has_any(
+                text,
+                ("component_delta", "new component", "split component", "extract component", "no-delta"),
+            )
         else:
             checks[check] = False
     return checks
+
+
+def evaluate_adr_quality(workspace: Path | None, transcript_text: str) -> dict[str, Any]:
+    result = _read_eval_result(workspace)
+    adr_text = _read_declared_adr_text(workspace, result)
+    if not result and not adr_text:
+        return {"score": 0.0, "checks": {check: False for check in ADR_QUALITY_CHECKS}}
+    text = "\n".join(
+        str(part)
+        for part in (
+            transcript_text,
+            json.dumps(result, sort_keys=True),
+            adr_text,
+        )
+    ).lower()
+
+    checks = {
+        "owner_correct": _has_any(text, ("cli/cmd/", "scripts/", "skills/", "c3-", "ref-", "rule-")),
+        "root_cause_specific": _specific_text(result.get("root_cause")) or _has_any(text, ("root cause", "runlist", "liststructured", "agent-mode", "token", "output")),
+        "decision_concrete": _specific_text(result.get("design_change")) and not _has_any(str(result.get("design_change", "")).lower(), ("best practices", "improve quality")),
+        "pressure_response_specific": _specific_pressure_response(result.get("pressure_response")) or _has_any(text, ("up cap", "decompose", "split component", "split ownership", "stay additive", "staying additive")),
+        "component_delta_specific": _specific_component_delta(result.get("component_delta")) or _has_any(text, ("new component", "split component", "extract component", "no-delta")),
+        "scope_bounded": _has_any(text, ("stop before", "before implementation", "do not edit", "no source", "not change", "preserve")),
+        "verification_executable": _has_any(text, ("c3x check", "go test", "python ", "pytest", "npm test", "bunx", "smoke")),
+        "implementation_recoverable": _has_any(text, ("cli/cmd/", "scripts/", "skills/", "test", "update ", "add ", "change ")),
+        "alternatives_real": _has_any(text, ("alternative", "rejected because", "instead of", "preserve")),
+        "risk_testable": _has_any(text, ("risk", "failure", "regression", "detection", "mitigation")),
+        "no_boilerplate_na": text.count("n.a -") <= 3 and not _has_any(text, ("best practices", "improve quality", "optimize performance")),
+        "stop_condition_met": _has_any(text, ("stopped before", "stop before", "before source-code", "do not edit source")),
+    }
+    score = sum(1 for value in checks.values() if value) / len(checks)
+    return {"score": round(score, 4), "checks": checks}
+
+
+def _read_eval_result(workspace: Path | None) -> dict[str, Any]:
+    if not workspace:
+        return {}
+    result_path = workspace / "eval_result.json"
+    if not result_path.exists():
+        return {}
+    try:
+        data = json.loads(result_path.read_text())
+    except json.JSONDecodeError:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _read_declared_adr_text(workspace: Path | None, result: dict[str, Any]) -> str:
+    if not workspace:
+        return ""
+    candidates: list[Path] = []
+    for artifact in result.get("artifacts") or []:
+        if isinstance(artifact, str):
+            candidates.append(workspace / artifact)
+            if artifact.startswith("adr-"):
+                adr_name = artifact if artifact.endswith(".md") else f"{artifact}.md"
+                candidates.extend(workspace.glob(f"**/{adr_name}"))
+    adr_id = result.get("adr_id")
+    if isinstance(adr_id, str) and adr_id:
+        candidates.extend(workspace.glob(f"**/{adr_id}.md"))
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate.read_text(errors="replace")
+    return ""
+
+
+def _has_any(text: str, needles: tuple[str, ...]) -> bool:
+    return any(needle in text for needle in needles)
+
+
+def _specific_text(value: Any) -> bool:
+    if not isinstance(value, str):
+        return False
+    words = re.findall(r"[A-Za-z0-9_./:-]+", value)
+    if len(words) < 6:
+        return False
+    generic = {"improve", "quality", "best", "practices", "optimize", "better"}
+    return len({word.lower() for word in words} - generic) >= 4
+
+
+def _specific_pressure_response(value: Any) -> bool:
+    if not _specific_text(value):
+        return False
+    text = str(value).lower()
+    has_pressure = _has_any(text, ("up cap", "pressure", "cap", "current load", "token"))
+    has_decision = _has_any(text, ("decompose", "split", "extract", "move upward", "stay additive", "staying additive", "additive"))
+    generic = _has_any(text, ("as needed", "best practices", "improve quality"))
+    return has_pressure and has_decision and not generic
+
+
+def _specific_component_delta(value: Any) -> bool:
+    if not _specific_text(value):
+        return False
+    text = str(value).lower()
+    has_component = _has_any(text, ("c3-", "component", "owner"))
+    has_delta = _has_any(text, ("new", "split", "extract", "move", "no new", "no-delta", "keep"))
+    generic = _has_any(text, ("as needed", "best practices", "improve quality", "change components as needed"))
+    return has_component and has_delta and not generic
+
+
+def evaluate_threshold_pressure(
+    case_id: str,
+    tokens_total: int | None,
+    accuracy_score: float,
+    adr_quality_score: float,
+    trace_metrics: dict[str, Any],
+) -> dict[str, Any]:
+    if tokens_total is None:
+        return {
+            "status": "unknown",
+            "action": "measure",
+            "reasons": [],
+            "target_tokens": None,
+            "potential_savings": None,
+        }
+
+    reasons: list[str] = []
+    if tokens_total >= TOKEN_THRESHOLDS["no_go"]:
+        status = "no_go"
+    elif tokens_total >= TOKEN_THRESHOLDS["upper"]:
+        status = "upper"
+    elif tokens_total >= TOKEN_THRESHOLDS["soft"]:
+        status = "soft"
+    else:
+        status = "ok"
+
+    if status != "ok":
+        reasons.append(f"tokens_{status}")
+    if (trace_metrics.get("broad_search_count") or 0) > 0:
+        reasons.append("broad_search")
+    if (trace_metrics.get("tool_output_bytes_total") or 0) >= 50000:
+        reasons.append("tool_output_pressure")
+    if accuracy_score < 0.66:
+        reasons.append("accuracy_below_guard")
+    if "adr" in case_id and tokens_total >= TOKEN_THRESHOLDS["soft"] and adr_quality_score < ADR_QUALITY_FLOOR:
+        reasons.append("adr_quality_below_floor")
+
+    if accuracy_score < 0.66:
+        action = "fail_accuracy"
+        target = tokens_total
+    elif status == "no_go":
+        action = "stop_or_split"
+        target = TOKEN_THRESHOLDS["no_go"]
+    elif "adr_quality_below_floor" in reasons:
+        action = "fail_quality_or_split"
+        target = TOKEN_THRESHOLDS["soft"]
+    elif status == "upper":
+        action = "require_cap_justification"
+        target = TOKEN_THRESHOLDS["upper"]
+    elif status == "soft":
+        action = "warn_and_bound_scope"
+        target = TOKEN_THRESHOLDS["soft"]
+    else:
+        action = "accept"
+        target = tokens_total
+
+    return {
+        "status": status,
+        "action": action,
+        "reasons": reasons,
+        "target_tokens": target,
+        "potential_savings": max(0, tokens_total - target),
+    }
 
 
 def score_result(result: RunResult) -> dict[str, Any]:
     accuracy_values = list(result.accuracy_checks.values())
     accuracy_score = sum(1 for value in accuracy_values if value) / len(accuracy_values) if accuracy_values else 0.0
     turn_count = result.turn_count if result.turn_count is not None else extract_turn_count(result.stdout + "\n" + result.stderr)
-    return {
+    quality_workspace = Path(result.output_dir) if result.output_dir else None
+    if quality_workspace is not None and not quality_workspace.exists():
+        quality_workspace = Path(result.artifact_dir) if result.artifact_dir else None
+    adr_quality = evaluate_adr_quality(quality_workspace, result.stdout + "\n" + result.stderr)
+    tokens_total = result.token_usage.get("total_tokens") if result.token_usage else None
+    pressure = evaluate_threshold_pressure(
+        result.case_id,
+        tokens_total,
+        accuracy_score,
+        adr_quality["score"],
+        result.trace_metrics,
+    )
+    scored = {
         "agent": result.agent_id,
         "case": result.case_id,
         "dry_run": result.dry_run,
         "exit_code": result.exit_code,
         "elapsed_ms": result.elapsed_ms,
-        "tokens_total": result.token_usage.get("total_tokens") if result.token_usage else None,
+        "tokens_total": tokens_total,
         "turn_count": turn_count,
         "accuracy_score": accuracy_score,
         "accuracy_checks": result.accuracy_checks,
@@ -424,8 +633,16 @@ def score_result(result: RunResult) -> dict[str, Any]:
         "artifact_dir": result.artifact_dir,
         "command": result.command,
         "metric_basis": METRIC_BASIS,
+        "adr_quality_score": adr_quality["score"],
+        "adr_quality_checks": adr_quality["checks"],
+        "threshold_status": pressure["status"],
+        "threshold_action": pressure["action"],
+        "threshold_reasons": pressure["reasons"],
+        "threshold_target_tokens": pressure["target_tokens"],
+        "threshold_potential_savings": pressure["potential_savings"],
         **result.trace_metrics,
     }
+    return scored
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

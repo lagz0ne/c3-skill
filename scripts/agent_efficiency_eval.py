@@ -351,12 +351,21 @@ def extract_trace_metrics(text: str) -> dict[str, Any]:
     broad_search_pattern = re.compile(r"^(?:rg\b|grep\s+-R\b|find\s+\.)")
     c3_commands = []
     broad_search_commands = []
-    for command in trace_command_candidates(text):
+    tool_output_bytes_total = 0
+    c3_output_bytes_total = 0
+    for event in trace_command_events(text):
+        command = event["command"]
         if command.startswith("|"):
             continue
         match = c3_pattern.match(command)
         if broad_search_pattern.match(command) and command not in broad_search_commands:
             broad_search_commands.append(command)
+        output = event.get("output")
+        if output is not None:
+            output_bytes = len(output.encode())
+            tool_output_bytes_total += output_bytes
+            if match:
+                c3_output_bytes_total += output_bytes
         if not match:
             continue
         command = match.group(1).strip()
@@ -367,13 +376,19 @@ def extract_trace_metrics(text: str) -> dict[str, Any]:
         "c3_command_count": len(c3_commands),
         "c3_command_sequence": c3_commands,
         "broad_search_count": len(broad_search_commands),
-        "tool_output_bytes_total": len(text.encode()),
-        "c3_output_bytes_total": sum(len(cmd.encode()) for cmd in c3_commands),
+        "tool_output_bytes_total": tool_output_bytes_total,
+        "c3_output_bytes_total": c3_output_bytes_total,
+        "transcript_bytes_total": len(text.encode()),
+        "c3_command_bytes_total": sum(len(cmd.encode()) for cmd in c3_commands),
     }
 
 
 def trace_command_candidates(text: str) -> list[str]:
-    candidates: list[str] = []
+    return [event["command"] for event in trace_command_events(text)]
+
+
+def trace_command_events(text: str) -> list[dict[str, str | None]]:
+    events: list[dict[str, str | None]] = []
     for line in text.splitlines():
         stripped = line.strip()
         if not stripped:
@@ -381,13 +396,17 @@ def trace_command_candidates(text: str) -> list[str]:
         try:
             obj = json.loads(stripped)
         except json.JSONDecodeError:
-            candidates.append(stripped)
+            events.append({"command": stripped, "output": None})
             continue
         item = obj.get("item") if isinstance(obj, dict) else None
         command = item.get("command") if isinstance(item, dict) else None
         if isinstance(command, str):
-            candidates.append(normalize_shell_command(command))
-    return candidates
+            output = item.get("aggregated_output")
+            events.append({
+                "command": normalize_shell_command(command),
+                "output": output if isinstance(output, str) else "",
+            })
+    return events
 
 
 def normalize_shell_command(command: str) -> str:

@@ -120,6 +120,22 @@ class AgentEfficiencyEvalTests(unittest.TestCase):
         self.assertEqual(metrics["c3_command_count"], 1)
         self.assertEqual(metrics["broad_search_count"], 1)
 
+    def test_extract_trace_metrics_counts_actual_command_output_bytes(self):
+        text = (
+            '{"type":"item.completed","item":{"type":"command_execution","command":"/bin/bash -lc \'C3X_MODE=agent bash skills/c3/bin/c3x.sh schema adr\'",'
+            '"aggregated_output":"schema-output","status":"completed"}}\n'
+            '{"type":"item.completed","item":{"type":"command_execution","command":"/bin/bash -lc \'rg --files .c3 | head\'",'
+            '"aggregated_output":"search-output","status":"completed"}}\n'
+            "| c3x check focused mode | Verifies one ADR. |\n"
+        )
+
+        metrics = ev.extract_trace_metrics(text)
+
+        self.assertEqual(metrics["tool_output_bytes_total"], len("schema-output") + len("search-output"))
+        self.assertEqual(metrics["c3_output_bytes_total"], len("schema-output"))
+        self.assertEqual(metrics["transcript_bytes_total"], len(text.encode()))
+        self.assertGreater(metrics["c3_command_bytes_total"], 0)
+
     def test_run_writes_jsonl_records_for_dry_run(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / "results.jsonl"

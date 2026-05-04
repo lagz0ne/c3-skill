@@ -1,7 +1,7 @@
 ---
 id: c3-101
 c3-version: 4
-c3-seal: 0657d2e64fc951a9bb3f6640bccd2caf869f547676c2b020cb9681d2d191c831
+c3-seal: 87c958c706ef21ff77642769d887613817d23ca51be20728f049a14d267d1ffd
 title: frontmatter
 type: component
 category: foundation
@@ -52,6 +52,12 @@ Provide durable agent-ready documentation for frontmatter so generated code, tes
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-1 | policy | Governs frontmatter behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
+
+## Up Cap
+
+| Unit | Soft Cap | Current Load | Escalation | Evidence |
+| --- | --- | --- | --- | --- |
+| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-101. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-101 --depth 1 |
 
 ## Contract
 

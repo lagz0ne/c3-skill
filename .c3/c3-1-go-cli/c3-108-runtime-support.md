@@ -1,6 +1,6 @@
 ---
 id: c3-108
-c3-seal: ab80f21c52a4138da854eff84e6adae35554c5f7b269eda903c461d004762ae2
+c3-seal: e7ec3eb35e669a8a29a97fb0c1ce02b98c15f8ab7b4100b5409355d7ca6d80b7
 title: runtime-support
 type: component
 category: foundation
@@ -54,6 +54,12 @@ Own CLI runtime behavior shared across commands: argument parsing, environment m
 | adr-20260415-force-agent-toon-output | adr | Systematic sweep of command wrappers and direct encoders that bypassed writeJSON. | Shared output helpers beat command-local JSON encoding. | add, migrate dry-run, and legacy check now use TOON-aware structured output in agent mode. |
 | adr-20260415-mutation-preverify-repair-bypass | adr | Dispatcher preverify gate for broken canonical docs. | Mutating commands need command-local validation and export path access; read-only commands stay gated. | Prevents repair catch-22 for add, write, set, wire, delete, codemap, and migrate. |
 | adr-20260421-self-healing-preflight | adr | Dispatcher preflight self-heals recoverable canonical/cache drift before normal command dispatch. | New self-healing policy supersedes older read-only broken-canonical blocking wording. | repair remains explicit, but normal operations attempt it automatically before failing. |
+
+## Up Cap
+
+| Unit | Soft Cap | Current Load | Escalation | Evidence |
+| --- | --- | --- | --- | --- |
+| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-108. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-108 --depth 1 |
 
 ## Contract
 

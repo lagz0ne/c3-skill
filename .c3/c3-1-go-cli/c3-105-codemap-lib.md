@@ -1,7 +1,7 @@
 ---
 id: c3-105
 c3-version: 4
-c3-seal: 0d3dc1a8b465eadf8581c93d6a8e89a560b8e4d24907bad77a4b9f1df380379a
+c3-seal: 92b1cddae2153481c4bedf61084484d80f610a804e0f3edc9b966a72f5e15a86
 title: codemap-lib
 type: component
 category: foundation
@@ -54,6 +54,12 @@ Provide durable agent-ready documentation for codemap-lib so generated code, tes
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-1 | policy | Governs codemap-lib behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
+
+## Up Cap
+
+| Unit | Soft Cap | Current Load | Escalation | Evidence |
+| --- | --- | --- | --- | --- |
+| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-105. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-105 --depth 1 |
 
 ## Contract
 

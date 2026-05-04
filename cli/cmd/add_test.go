@@ -217,7 +217,7 @@ func fullADRBody(goal string) string {
 		"| go test | Pending fixture execution. |\n"
 }
 
-func TestRunAdd_AdrRequiresImplicitRelatedRefs(t *testing.T) {
+func TestRunAdd_AdrAllowsOmittedImplicitRelatedRefs(t *testing.T) {
 	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
@@ -238,27 +238,24 @@ func TestRunAdd_AdrRequiresImplicitRelatedRefs(t *testing.T) {
 		"| cli | Update ADR validation. | go test. |\n\n" +
 		"## Underlay C3 Changes\n\n" +
 		"| Underlay area | Exact C3 change | Verification evidence |\n|---------------|-----------------|-----------------------|\n" +
-		"| cli/cmd/add.go | Reject missing implicit refs. | go test. |\n\n" +
+		"| cli/cmd/add.go | Allow omitted implicit refs during ADR authoring. | go test. |\n\n" +
 		"## Enforcement Surfaces\n\n" +
 		"| Surface | Behavior | Evidence |\n|---------|----------|----------|\n" +
-		"| c3x add adr | Fails when affected topology omits inherited refs. | go test. |\n\n" +
+		"| c3x add adr | Allows affected topology to omit inherited refs during authoring. | go test. |\n\n" +
 		"## Alternatives Considered\n\n" +
 		"| Alternative | Rejected because |\n|-------------|------------------|\n" +
-		"| Trust the model to infer refs. | The CLI would stop proving linkage coverage. |\n\n" +
+		"| Block add on every inferred ref. | That creates high-turn ADR repair loops before the work order exists. |\n\n" +
 		"## Risks\n\n" +
 		"| Risk | Mitigation | Verification |\n|------|------------|--------------|\n" +
-		"| Missing inherited refs | Structural validation checks scoped refs. | go test. |\n\n" +
+		"| Missing inherited refs | Check-time validation still reports scoped refs for review. | go test. |\n\n" +
 		"## Verification\n\n" +
 		"| Check | Result |\n|-------|--------|\n" +
 		"| go test | Pending. |\n"
 
 	err := RunAdd("adr", "auth-ref-gap", s, "", false, strings.NewReader(body), &buf)
-	if err == nil {
-		t.Fatal("expected ADR add to fail when implicit refs are omitted")
+	if err != nil {
+		t.Fatalf("bounded ADR authoring should not fail on inferred compliance refs: %v", err)
 	}
-	requireAll(t, err.Error(),
-		"ADR missing compliance ref ref-jwt",
-	)
 }
 
 func TestRunAdd_AdrRequiresWhyColumnsUnlessNATopology(t *testing.T) {

@@ -1,6 +1,6 @@
 ---
 id: c3-107
-c3-seal: db80187370674dc92daa5492549e6c2b4228d7622d2f0d8f05668838bd819492
+c3-seal: 4a13a5d57e6edf70e206151b916888cb1032a44f7895f944fe78c77f5bf1c8be
 title: store-lib
 type: component
 category: foundation
@@ -50,6 +50,12 @@ Provide durable agent-ready documentation for store-lib so generated code, tests
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-1 | policy | Governs store-lib behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
+
+## Up Cap
+
+| Unit | Soft Cap | Current Load | Escalation | Evidence |
+| --- | --- | --- | --- | --- |
+| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-107. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-107 --depth 1 |
 
 ## Contract
 

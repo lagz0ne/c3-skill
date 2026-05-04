@@ -21,7 +21,7 @@ func TestRunSchema_Component(t *testing.T) {
 	}
 
 	output := buf.String()
-	for _, section := range []string{"Goal", "Parent Fit", "Foundational Flow", "Business Flow", "Governance", "Contract", "Change Safety", "Derived Materials"} {
+	for _, section := range []string{"Goal", "Parent Fit", "Foundational Flow", "Business Flow", "Governance", "Up Cap", "Contract", "Change Safety", "Derived Materials"} {
 		if !strings.Contains(output, section) {
 			t.Errorf("component schema should include %q, got: %s", section, output)
 		}
@@ -86,6 +86,8 @@ func TestRunSchema_ADRIncludesDecisionLedger(t *testing.T) {
 		"rejected when:",
 		"REJECT IF:",
 		"Run c3x schema adr before drafting",
+		"volatile Discovery Brief",
+		"owner, governing material, stop condition",
 		"Compliance rows must say why the ref/rule applies",
 	} {
 		if !strings.Contains(output, want) {
@@ -201,6 +203,12 @@ func TestRunSchema_JSON_ADRRejectIf(t *testing.T) {
 	}
 	if out.Workorder == "" {
 		t.Error("ADR JSON output should include workorder prose")
+	}
+	if !strings.Contains(out.Workorder, "volatile Discovery Brief") {
+		t.Fatalf("ADR JSON workorder should require a volatile Discovery Brief, got %q", out.Workorder)
+	}
+	if !strings.Contains(out.Workorder, "owner, governing material, stop condition") {
+		t.Fatalf("ADR JSON workorder should name the brief fields, got %q", out.Workorder)
 	}
 }
 

@@ -1,7 +1,7 @@
 ---
 id: c3-103
 c3-version: 4
-c3-seal: bcd3b11f9786ba3ba4a52c626405396979f7504350471cddfeade1ea7a2cd23f
+c3-seal: f35105aefaa61da5f928400dacdac241b3049f46f18b254182fe1c1afc6c6d0e
 title: templates
 type: component
 category: foundation
@@ -52,6 +52,12 @@ Provide durable agent-ready documentation for templates so generated code, tests
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-1 | policy | Governs templates behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
+
+## Up Cap
+
+| Unit | Soft Cap | Current Load | Escalation | Evidence |
+| --- | --- | --- | --- | --- |
+| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-103. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-103 --depth 1 |
 
 ## Contract
 

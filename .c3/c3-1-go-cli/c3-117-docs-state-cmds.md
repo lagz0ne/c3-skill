@@ -1,6 +1,6 @@
 ---
 id: c3-117
-c3-seal: 54a42fc5ca76da168b5e53a35be48bf5d4f1048694f4a8ae3937bf67ed96d021
+c3-seal: 71559f2c9a7220681d656cadfde2ac01b0b420580a301e209c4a0bf3f929b687
 title: docs-state-cmds
 type: component
 category: feature
@@ -50,6 +50,12 @@ Provide durable agent-ready documentation for docs-state-cmds so generated code,
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-1 | policy | Governs docs-state-cmds behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
+
+## Up Cap
+
+| Unit | Soft Cap | Current Load | Escalation | Evidence |
+| --- | --- | --- | --- | --- |
+| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-117. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-117 --depth 1 |
 
 ## Contract
 

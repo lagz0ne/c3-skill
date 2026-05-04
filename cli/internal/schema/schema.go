@@ -41,7 +41,7 @@ var RejectRegistry = map[string]RejectRules{
 			"Alternatives Considered rows have no repo-specific rejection reason",
 			"Underlay C3 Changes lacks the exact validators/tests/help that enforce the decision",
 		},
-		Workorder: "Run c3x schema adr before drafting; do not draft ADR prose first and reconcile later.\nTreat each 'fill' line as required authoring guidance, not optional commentary.\nADR creation is all-or-nothing: thin sections fail at creation, no incremental fill later.",
+		Workorder: "Run c3x schema adr before drafting; do not draft ADR prose first and reconcile later.\nBefore the ADR body, make a volatile Discovery Brief from the task goal and targeted c3x reads: owner, governing material, stop condition.\nTreat each 'fill' line as required authoring guidance, not optional commentary.\nADR creation is all-or-nothing: thin sections fail at creation, no incremental fill later.",
 	},
 	"ref": {
 		Bullets: []string{
@@ -95,6 +95,13 @@ var Registry = map[string][]SectionDef{
 			{Name: "Governs", Type: "text"},
 			{Name: "Precedence", Type: "text"},
 			{Name: "Notes", Type: "text"},
+		}},
+		{Name: "Up Cap", ContentType: "table", Required: true, Purpose: "Governance load limit that triggers upward escalation or component decomposition", MinRows: 1, Columns: []ColumnDef{
+			{Name: "Unit", Type: "enum", Values: []string{"references", "rules", "adrs", "specs", "policies", "examples", "mixed", "N.A - <reason>"}},
+			{Name: "Soft Cap", Type: "text"},
+			{Name: "Current Load", Type: "text"},
+			{Name: "Escalation", Type: "text"},
+			{Name: "Evidence", Type: "text"},
 		}},
 		{Name: "Contract", ContentType: "table", Required: true, Purpose: "Behavior surfaces that downstream code/material must honor", MinRows: 2, Columns: []ColumnDef{
 			{Name: "Surface", Type: "text"},

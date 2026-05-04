@@ -17,6 +17,7 @@ var (
 		"Foundational Flow",
 		"Business Flow",
 		"Governance",
+		"Up Cap",
 		"Contract",
 		"Change Safety",
 		"Derived Materials",
@@ -26,6 +27,7 @@ var (
 		"Foundational Flow": {"Aspect", "Detail", "Reference"},
 		"Business Flow":     {"Aspect", "Detail", "Reference"},
 		"Governance":        {"Reference", "Type", "Governs", "Precedence", "Notes"},
+		"Up Cap":            {"Unit", "Soft Cap", "Current Load", "Escalation", "Evidence"},
 		"Contract":          {"Surface", "Direction", "Contract", "Boundary", "Evidence"},
 		"Change Safety":     {"Risk", "Trigger", "Detection", "Required Verification"},
 		"Derived Materials": {"Material", "Must derive from", "Allowed variance", "Evidence"},
@@ -35,6 +37,7 @@ var (
 		"Foundational Flow": 4,
 		"Business Flow":     4,
 		"Governance":        1,
+		"Up Cap":            1,
 		"Contract":          2,
 		"Change Safety":     2,
 		"Derived Materials": 1,
@@ -42,6 +45,9 @@ var (
 	strictColumnEnums = map[string]map[string][]string{
 		"Governance": {
 			"Type": {"ref", "rule", "adr", "spec", "policy", "example"},
+		},
+		"Up Cap": {
+			"Unit": {"references", "rules", "adrs", "specs", "policies", "examples", "mixed"},
 		},
 		"Contract": {
 			"Direction": {"IN", "OUT", "IN/OUT"},
@@ -67,7 +73,7 @@ func validateStrictComponentDoc(body string, severity string) []Issue {
 	}
 
 	var issues []Issue
-	for i, name := range componentSectionOrder {
+	for _, name := range componentSectionOrder {
 		if seen[name] > 1 {
 			issues = append(issues, strictIssue(severity, fmt.Sprintf("duplicate required section: %s", name)))
 		}
@@ -80,10 +86,8 @@ func validateStrictComponentDoc(body string, severity string) []Issue {
 			issues = append(issues, strictIssue(severity, fmt.Sprintf("empty required section: %s", name)))
 			continue
 		}
-		if i < len(orderedNames) && orderedNames[i] != name {
-			issues = append(issues, strictIssue(severity, fmt.Sprintf("component sections out of order: expected %s before %s", name, orderedNames[i])))
-		}
 	}
+	issues = append(issues, validateRequiredSectionOrder(orderedNames, severity)...)
 
 	if goal, ok := sectionMap["Goal"]; ok {
 		issues = append(issues, validateTextSubstance("Goal", goal.Content, severity)...)
@@ -115,11 +119,30 @@ func validateStrictComponentDoc(body string, severity string) []Issue {
 	return issues
 }
 
+func validateRequiredSectionOrder(orderedNames []string, severity string) []Issue {
+	var issues []Issue
+	lastIndex := -1
+	lastName := ""
+	for _, required := range componentSectionOrder {
+		index := slices.Index(orderedNames, required)
+		if index < 0 {
+			continue
+		}
+		if index < lastIndex {
+			issues = append(issues, strictIssue(severity, fmt.Sprintf("component sections out of order: expected %s before %s", lastName, required)))
+			continue
+		}
+		lastIndex = index
+		lastName = required
+	}
+	return issues
+}
+
 func strictIssue(severity, message string) Issue {
 	return Issue{
 		Severity: severity,
 		Message:  message,
-		Hint:     "write reviewer-ready component docs: Parent Fit, Purpose, Foundational Flow, Business Flow, Governance, Contract, Change Safety, Derived Materials",
+		Hint:     "write reviewer-ready component docs: Parent Fit, Purpose, Foundational Flow, Business Flow, Governance, Up Cap, Contract, Change Safety, Derived Materials",
 	}
 }
 
@@ -256,7 +279,7 @@ func mentionsComponentSection(value string) bool {
 
 func isSemanticDetailColumn(header string) bool {
 	switch header {
-	case "Detail", "Governs", "Contract", "Detection", "Required Verification", "Evidence":
+	case "Detail", "Governs", "Soft Cap", "Current Load", "Escalation", "Contract", "Detection", "Required Verification", "Evidence":
 		return true
 	default:
 		return false

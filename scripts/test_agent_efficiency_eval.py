@@ -88,6 +88,7 @@ class AgentEfficiencyEvalTests(unittest.TestCase):
         self.assertEqual(usage["output_tokens"], 3)
         self.assertEqual(usage["reasoning_output_tokens"], 2)
         self.assertEqual(usage["total_tokens"], 13)
+        self.assertEqual(usage["effective_tokens"], 9)
 
     def test_extract_turn_count_reads_codex_turn_completion(self):
         text = '{"type":"turn.completed","usage":{"input_tokens":1,"output_tokens":1}}\n'
@@ -385,13 +386,14 @@ class AgentEfficiencyEvalTests(unittest.TestCase):
             output_dir="",
             artifact_dir="/tmp/artifacts",
             accuracy_checks={"verified": True},
-            token_usage={"total_tokens": 58681},
+            token_usage={"total_tokens": 58681, "effective_tokens": 9000},
             turn_count=1,
             trace_metrics={"broad_search_count": 0, "tool_output_bytes_total": 4264},
         )
 
         scored = ev.score_result(result)
 
+        self.assertEqual(scored["effective_tokens_total"], 9000)
         self.assertEqual(scored["threshold_status"], "ok")
         self.assertEqual(scored["threshold_action"], "accept")
         self.assertEqual(scored["threshold_potential_savings"], 0)

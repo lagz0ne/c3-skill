@@ -325,6 +325,7 @@ def extract_token_usage(text: str) -> dict[str, int] | None:
         return None
     if "total_tokens" not in usage:
         usage["total_tokens"] = usage.get("input_tokens", 0) + usage.get("output_tokens", 0)
+    usage["effective_tokens"] = max(0, usage.get("input_tokens", 0) - usage.get("cached_input_tokens", 0)) + usage.get("output_tokens", 0)
     return usage
 
 
@@ -613,9 +614,10 @@ def score_result(result: RunResult) -> dict[str, Any]:
         quality_workspace = Path(result.artifact_dir) if result.artifact_dir else None
     adr_quality = evaluate_adr_quality(quality_workspace, result.stdout + "\n" + result.stderr)
     tokens_total = result.token_usage.get("total_tokens") if result.token_usage else None
+    effective_tokens = result.token_usage.get("effective_tokens") if result.token_usage else None
     pressure = evaluate_threshold_pressure(
         result.case_id,
-        tokens_total,
+        effective_tokens,
         accuracy_score,
         adr_quality["score"],
         result.trace_metrics,
@@ -627,6 +629,7 @@ def score_result(result: RunResult) -> dict[str, Any]:
         "exit_code": result.exit_code,
         "elapsed_ms": result.elapsed_ms,
         "tokens_total": tokens_total,
+        "effective_tokens_total": effective_tokens,
         "turn_count": turn_count,
         "accuracy_score": accuracy_score,
         "accuracy_checks": result.accuracy_checks,

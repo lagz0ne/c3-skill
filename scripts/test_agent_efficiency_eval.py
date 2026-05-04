@@ -90,6 +90,22 @@ class AgentEfficiencyEvalTests(unittest.TestCase):
         self.assertEqual(metrics["c3_command_count"], 1)
         self.assertIn("lookup cli/cmd/list.go", metrics["c3_command_sequence"][0])
 
+    def test_extract_trace_metrics_ignores_markdown_command_mentions(self):
+        text = (
+            '{"type":"item.completed","item":{"type":"command_execution","command":"/bin/bash -lc \'rg --files .c3 | head\'",'
+            '"aggregated_output":"| c3x check focused mode | Verifies one ADR. |"}}\n'
+            "| Surface | Behavior |\n"
+            "| c3x check focused mode | Verifies one ADR. |\n"
+            "Do not run broad searches with rg or find . during eval.\n"
+            "C3X_MODE=agent bash skills/c3/bin/c3x.sh schema adr\n"
+        )
+
+        metrics = ev.extract_trace_metrics(text)
+
+        self.assertEqual(metrics["c3_command_sequence"], ["C3X_MODE=agent bash skills/c3/bin/c3x.sh schema adr"])
+        self.assertEqual(metrics["c3_command_count"], 1)
+        self.assertEqual(metrics["broad_search_count"], 1)
+
     def test_run_writes_jsonl_records_for_dry_run(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / "results.jsonl"

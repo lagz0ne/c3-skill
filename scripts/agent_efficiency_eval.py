@@ -321,12 +321,20 @@ def extract_turn_count(text: str) -> int | None:
 
 def extract_trace_metrics(text: str) -> dict[str, Any]:
     c3_pattern = re.compile(
-        r"(?m)(?:^|[;&|]\s*)"
-        r"((?:C3X_MODE=agent\s+)?bash\s+skills/c3/bin/c3x\.sh\s+[^\n\"']+|"
-        r"c3x\s+(?:lookup|read|list|check|schema|graph|add|write|set|wire|delete)\b[^\n\"']*)"
+        r"^((?:C3X_MODE=agent\s+)?bash\s+skills/c3/bin/c3x\.sh\s+[^\n\"']+|"
+        r"c3x\s+(?:lookup|read|list|check|schema|graph|add|write|set|wire|delete)\b[^\n\"']*)$"
     )
+    broad_search_pattern = re.compile(r"^(?:rg\b|grep\s+-R\b|find\s+\.)")
     c3_commands = []
-    for match in c3_pattern.finditer(text):
+    broad_search_commands = []
+    for command in trace_command_candidates(text):
+        if command.startswith("|"):
+            continue
+        match = c3_pattern.match(command)
+        if broad_search_pattern.match(command) and command not in broad_search_commands:
+            broad_search_commands.append(command)
+        if not match:
+            continue
         command = match.group(1).strip()
         if command not in c3_commands:
             c3_commands.append(command)
@@ -334,10 +342,38 @@ def extract_trace_metrics(text: str) -> dict[str, Any]:
         "json_event_count": sum(1 for line in text.splitlines() if line.strip().startswith("{")),
         "c3_command_count": len(c3_commands),
         "c3_command_sequence": c3_commands,
-        "broad_search_count": len(re.findall(r"\brg\s+|grep\s+-R|find\s+\.", text)),
+        "broad_search_count": len(broad_search_commands),
         "tool_output_bytes_total": len(text.encode()),
         "c3_output_bytes_total": sum(len(cmd.encode()) for cmd in c3_commands),
     }
+
+
+def trace_command_candidates(text: str) -> list[str]:
+    candidates: list[str] = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        try:
+            obj = json.loads(stripped)
+        except json.JSONDecodeError:
+            candidates.append(stripped)
+            continue
+        item = obj.get("item") if isinstance(obj, dict) else None
+        command = item.get("command") if isinstance(item, dict) else None
+        if isinstance(command, str):
+            candidates.append(normalize_shell_command(command))
+    return candidates
+
+
+def normalize_shell_command(command: str) -> str:
+    try:
+        parts = shlex.split(command)
+    except ValueError:
+        return command.strip()
+    if len(parts) >= 3 and parts[0].endswith("bash") and parts[1] == "-lc":
+        return parts[2].strip()
+    return command.strip()
 
 
 def evaluate_accuracy(workspace: Path | None, case: EvalCase, stdout: str, stderr: str) -> dict[str, bool]:

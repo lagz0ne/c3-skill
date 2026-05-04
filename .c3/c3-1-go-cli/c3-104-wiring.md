@@ -1,7 +1,7 @@
 ---
 id: c3-104
 c3-version: 4
-c3-seal: 3a6b8813a713136a534c4e5eae10e13634c9fee4f1f249775eb78f86b9d80202
+c3-seal: 49534a980c58c7636c1ae8f3342c54dada28bf24935e2f3d11dceca27f9d6ec1
 title: wiring
 type: component
 category: foundation
@@ -52,6 +52,12 @@ Provide durable agent-ready documentation for wiring so generated code, tests, a
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-1 | policy | Governs wiring behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
+
+## Up Cap
+
+| Unit | Soft Cap | Current Load | Escalation | Evidence |
+| --- | --- | --- | --- | --- |
+| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-104. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-104 --depth 1 |
 
 ## Contract
 

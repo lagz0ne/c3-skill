@@ -1,7 +1,7 @@
 ---
 id: c3-114
 c3-version: 4
-c3-seal: 08be744f4f2dda3c20b4afead3985470749e04445ca53a2f60f62d616db464b6
+c3-seal: d39eee312e90b9fcb337ef5016dd39508c0a97839db25379264986b872c55a36
 title: lookup-cmd
 type: component
 category: feature
@@ -56,6 +56,12 @@ Provide durable agent-ready documentation for lookup-cmd so generated code, test
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-1 | policy | Governs lookup-cmd behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
+
+## Up Cap
+
+| Unit | Soft Cap | Current Load | Escalation | Evidence |
+| --- | --- | --- | --- | --- |
+| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-114. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-114 --depth 1 |
 
 ## Contract
 

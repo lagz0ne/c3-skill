@@ -1,6 +1,6 @@
 ---
 id: c3-106
-c3-seal: e120f8b392c9582196141294207c8fbe95b382a00b190ddecc78832b9b1c74ea
+c3-seal: 5d281928b819cfd409f4ce50e9c09b7180515fca9878a51e60186d82b0eb79bd
 title: content-lib
 type: component
 category: foundation
@@ -50,6 +50,12 @@ Provide durable agent-ready documentation for content-lib so generated code, tes
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-1 | policy | Governs content-lib behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
+
+## Up Cap
+
+| Unit | Soft Cap | Current Load | Escalation | Evidence |
+| --- | --- | --- | --- | --- |
+| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-106. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-106 --depth 1 |
 
 ## Contract
 

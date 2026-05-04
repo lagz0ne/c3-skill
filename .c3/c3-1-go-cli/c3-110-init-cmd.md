@@ -1,7 +1,7 @@
 ---
 id: c3-110
 c3-version: 4
-c3-seal: bce3dc6c674730878bf9b8ed2f1320e4511baade9c714d577d8924b64f9d80eb
+c3-seal: cdd9ee28f37062687089ce14e52fa5f13bb124a1f64c3baa9b53bfee4990f98e
 title: init-cmd
 type: component
 category: feature
@@ -54,6 +54,12 @@ Provide durable agent-ready documentation for init-cmd so generated code, tests,
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-1 | policy | Governs init-cmd behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
+
+## Up Cap
+
+| Unit | Soft Cap | Current Load | Escalation | Evidence |
+| --- | --- | --- | --- | --- |
+| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-110. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-110 --depth 1 |
 
 ## Contract
 

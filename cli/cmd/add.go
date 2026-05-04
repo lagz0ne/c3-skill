@@ -49,7 +49,7 @@ func RunAddDryRun(entityType, slug string, s *store.Store, container string, fea
 	issues := validateBodyContent(bodyContent, entityType)
 	if entityType == "adr" {
 		issues = append(issues, validateADRCreationBody(bodyContent)...)
-		issues = append(issues, validateADRCoverage(s, bodyContent, "error")...)
+		issues = append(issues, validateADRAuthoredCoverage(s, bodyContent, "error")...)
 	}
 	if len(issues) > 0 {
 		return formatValidationError(entityType+"-"+slug, issues)
@@ -84,7 +84,7 @@ func RunAddFormatted(entityType, slug string, s *store.Store, container string, 
 	issues := validateBodyContent(bodyContent, entityType)
 	if entityType == "adr" {
 		issues = append(issues, validateADRCreationBody(bodyContent)...)
-		issues = append(issues, validateADRCoverage(s, bodyContent, "error")...)
+		issues = append(issues, validateADRAuthoredCoverage(s, bodyContent, "error")...)
 	}
 	if len(issues) > 0 {
 		return formatValidationError(entityType+"-"+slug, issues)

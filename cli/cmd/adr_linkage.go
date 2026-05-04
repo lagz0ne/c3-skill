@@ -20,12 +20,23 @@ type adrCoverage struct {
 }
 
 func validateADRCoverage(s *store.Store, body string, severity string) []Issue {
+	return validateADRCoverageMode(s, body, severity, true)
+}
+
+func validateADRAuthoredCoverage(s *store.Store, body string, severity string) []Issue {
+	return validateADRCoverageMode(s, body, severity, false)
+}
+
+func validateADRCoverageMode(s *store.Store, body string, severity string, includeMissing bool) []Issue {
 	affected, issues := parseADRAffectedTopology(s, body, severity)
 	relatedRefs, refIssues := parseADRRelatedTable(s, body, "Compliance Refs", "Ref", "ref", severity)
 	issues = append(issues, refIssues...)
 	relatedRules, ruleIssues := parseADRRelatedTable(s, body, "Compliance Rules", "Rule", "rule", severity)
 	issues = append(issues, ruleIssues...)
 
+	if !includeMissing {
+		return issues
+	}
 	expected := expectedADRCoverage(s, affected)
 	issues = append(issues, missingADRCoverageIssues(expected.refs, relatedRefs, "ref", severity)...)
 	issues = append(issues, missingADRCoverageIssues(expected.rules, relatedRules, "rule", severity)...)

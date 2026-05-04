@@ -1,6 +1,6 @@
 ---
 id: c3-109
-c3-seal: cc8351a323230ee1cb4ebcb2febf442a212209933a5367a77678de8222427468
+c3-seal: 7c672bdcfe2afc53cbd80d430fadb0648f40183f6e474f7ba5bf4552060ee834
 title: npm-cli-wrapper
 type: component
 category: foundation
@@ -50,6 +50,12 @@ Own the thin npm wrapper used by humans and scripts that want `npx @c3x/cli` or 
 | c3-108 | policy | Output-mode ownership and human/agent presentation boundaries. | Runtime output policy beats wrapper convenience. | The npm shim strips inherited C3X_MODE; explicit c3x flags still pass through. |
 | adr-20260415-npm-cli-human-mode | adr | Decision to chart the npm shim and keep npm delegation human/default by default. | Release-specific decision for this wrapper change. | Added with the 9.1.0 release bump. |
 | c3-1 | policy | Packaging and release placement inside the CLI container. | Parent container scope beats local package convenience. | README and package metadata must match wrapper behavior before publish. |
+
+## Up Cap
+
+| Unit | Soft Cap | Current Load | Escalation | Evidence |
+| --- | --- | --- | --- | --- |
+| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-109. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-109 --depth 1 |
 
 ## Contract
 

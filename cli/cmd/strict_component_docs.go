@@ -17,7 +17,6 @@ var (
 		"Foundational Flow",
 		"Business Flow",
 		"Governance",
-		"Up Cap",
 		"Contract",
 		"Change Safety",
 		"Derived Materials",
@@ -27,7 +26,6 @@ var (
 		"Foundational Flow": {"Aspect", "Detail", "Reference"},
 		"Business Flow":     {"Aspect", "Detail", "Reference"},
 		"Governance":        {"Reference", "Type", "Governs", "Precedence", "Notes"},
-		"Up Cap":            {"Unit", "Soft Cap", "Current Load", "Escalation", "Evidence"},
 		"Contract":          {"Surface", "Direction", "Contract", "Boundary", "Evidence"},
 		"Change Safety":     {"Risk", "Trigger", "Detection", "Required Verification"},
 		"Derived Materials": {"Material", "Must derive from", "Allowed variance", "Evidence"},
@@ -37,7 +35,6 @@ var (
 		"Foundational Flow": 4,
 		"Business Flow":     4,
 		"Governance":        1,
-		"Up Cap":            1,
 		"Contract":          2,
 		"Change Safety":     2,
 		"Derived Materials": 1,
@@ -45,9 +42,6 @@ var (
 	strictColumnEnums = map[string]map[string][]string{
 		"Governance": {
 			"Type": {"ref", "rule", "adr", "spec", "policy", "example"},
-		},
-		"Up Cap": {
-			"Unit": {"references", "rules", "adrs", "specs", "policies", "examples", "mixed"},
 		},
 		"Contract": {
 			"Direction": {"IN", "OUT", "IN/OUT"},
@@ -142,7 +136,7 @@ func strictIssue(severity, message string) Issue {
 	return Issue{
 		Severity: severity,
 		Message:  message,
-		Hint:     "write reviewer-ready component docs: Parent Fit, Purpose, Foundational Flow, Business Flow, Governance, Up Cap, Contract, Change Safety, Derived Materials",
+		Hint:     "write reviewer-ready component docs: Parent Fit, Purpose, Foundational Flow, Business Flow, Governance, Contract, Change Safety, Derived Materials",
 	}
 }
 

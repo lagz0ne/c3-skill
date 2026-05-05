@@ -1,6 +1,6 @@
 ---
 id: c3-216
-c3-seal: e7320f29a872917b710c9e56d81a005399d66f6aae151292dd76b9d7b5ac1a1e
+c3-seal: 02e090c1852af537e940fc79b759a39f900df84f7b0d5c51818574dafa493317
 title: ref-operation
 type: component
 category: feature
@@ -53,12 +53,6 @@ Provide durable agent-ready documentation for ref-operation so generated code, t
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-2 | policy | Governs ref-operation behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
-
-## Up Cap
-
-| Unit | Soft Cap | Current Load | Escalation | Evidence |
-| --- | --- | --- | --- | --- |
-| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-216. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-216 --depth 1 |
 
 ## Contract
 

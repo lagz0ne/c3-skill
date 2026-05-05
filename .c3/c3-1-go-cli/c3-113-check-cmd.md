@@ -1,7 +1,7 @@
 ---
 id: c3-113
 c3-version: 4
-c3-seal: c39ddca41cc2dab12c823986d8553902f9bdbb34ea7d3a492b73a0a52faa13cf
+c3-seal: 539a2ac1b7138a3896cb718923306534f35bf5b8b69cf5e3db3c37eb9ccb9b3e
 title: check-cmd
 type: component
 category: feature
@@ -56,12 +56,6 @@ Provide durable agent-ready documentation for check-cmd so generated code, tests
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-1 | policy | Governs check-cmd behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
-
-## Up Cap
-
-| Unit | Soft Cap | Current Load | Escalation | Evidence |
-| --- | --- | --- | --- | --- |
-| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-113. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-113 --depth 1 |
 
 ## Contract
 

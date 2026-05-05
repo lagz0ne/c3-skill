@@ -1,7 +1,7 @@
 ---
 id: c3-210
 c3-version: 4
-c3-seal: 4873016595b01540a0cbeb38d7f20aa0b62a60979209d1d582e8a052a9142eb8
+c3-seal: 81d2350dfcd7559e9bb798812fdf9a5425ca8dd72fc34a7d84aeebf72c21b61f
 title: operation-workflow-index
 type: component
 category: feature
@@ -54,12 +54,6 @@ Provide durable agent-ready documentation for operation-workflow-index so genera
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-2 | policy | Governs operation-workflow-index behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
-
-## Up Cap
-
-| Unit | Soft Cap | Current Load | Escalation | Evidence |
-| --- | --- | --- | --- | --- |
-| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-210. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-210 --depth 1 |
 
 ## Contract
 

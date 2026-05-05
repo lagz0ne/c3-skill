@@ -1,7 +1,7 @@
 ---
 id: c3-116
 c3-version: 4
-c3-seal: 2e09f96f380501534b40824ed1140c9de1e51be2b1fe22401884762659bcbb75
+c3-seal: 69ce05c979685ed52a95f2f82dc1ee76ce00cfc774ca05cdcc297393b9a1fcf1
 title: coverage-cmd
 type: component
 category: feature
@@ -56,12 +56,6 @@ Provide durable agent-ready documentation for coverage-cmd so generated code, te
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-1 | policy | Governs coverage-cmd behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
-
-## Up Cap
-
-| Unit | Soft Cap | Current Load | Escalation | Evidence |
-| --- | --- | --- | --- | --- |
-| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-116. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-116 --depth 1 |
 
 ## Contract
 

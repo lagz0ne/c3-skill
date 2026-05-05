@@ -47,19 +47,18 @@ func TestRead_ADRTemplateIncludesDecisionLedger(t *testing.T) {
 	}
 }
 
-func TestRead_ComponentTemplateIncludesUpCap(t *testing.T) {
+func TestRead_ComponentTemplateOmitsUpCap(t *testing.T) {
 	content, err := Read("component.md")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	for _, want := range []string{
+	for _, banned := range []string{
 		"## Up Cap",
 		"| Unit | Soft Cap | Current Load | Escalation | Evidence |",
-		"references",
 	} {
-		if !strings.Contains(content, want) {
-			t.Fatalf("component template missing %q:\n%s", want, content)
+		if strings.Contains(content, banned) {
+			t.Fatalf("component template should not include %q:\n%s", banned, content)
 		}
 	}
 }

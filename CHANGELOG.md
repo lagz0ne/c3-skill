@@ -5,6 +5,14 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.8.0] - 2026-05-05
+
+### Changed
+
+- **Removed Component Up Cap as a required section** — component schema, strict validation, templates, canonical C3 component docs, and README now use Governance, Contract, Change Safety, and Derived Materials without requiring a separate `Up Cap` table.
+- **Graph/governance pressure replaces Up Cap prompts** — agent-efficiency ADR evals now ask agents to inspect targeted graph/governance pressure, use the correct `c3-112` list-command graph target, and require a concrete `pressure_response` instead of accepting transcript-only keywords.
+- **Skill guidance stays CLI-only** — removed stale raw `.c3/` grep instructions so body inspection routes through targeted `c3x read` output.
+
 ## [9.7.0] - 2026-05-04
 
 ### Added

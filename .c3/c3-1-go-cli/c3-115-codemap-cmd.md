@@ -1,7 +1,7 @@
 ---
 id: c3-115
 c3-version: 4
-c3-seal: 3664735d74ce3651d1d5d90b23653bfef4317e210a12933c15edc64896ae2f8f
+c3-seal: 0f2dc4b9fd5bbee9041363a131d18c5160ac3d63208d30558d015cbae3491e2a
 title: codemap-cmd
 type: component
 category: feature
@@ -56,12 +56,6 @@ Provide durable agent-ready documentation for codemap-cmd so generated code, tes
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-1 | policy | Governs codemap-cmd behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
-
-## Up Cap
-
-| Unit | Soft Cap | Current Load | Escalation | Evidence |
-| --- | --- | --- | --- | --- |
-| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-115. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-115 --depth 1 |
 
 ## Contract
 

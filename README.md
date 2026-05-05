@@ -93,6 +93,8 @@ c3x check --rule rule-xyz                # scope to citers of a rule
 c3x check --fix                          # auto-fix title-matched references
 ```
 
+Agent-mode compact `c3x list` keeps topology bounded while still exposing recipe `description` and `sources`, so cross-cutting shortcuts can be matched before a deeper `read`.
+
 **Full command list:** `c3x --help` (12 user-facing commands)
 
 ### Schema enforcement
@@ -118,7 +120,9 @@ ADR schema output also carries a pre-draft workorder: create a volatile Discover
 .c3/
 ├── README.md       # canonical context doc
 ├── adr/            # canonical ADR markdown
-├── refs/           # canonical refs/rules/recipes/containers/components
+├── refs/           # canonical refs
+├── rules/          # canonical rules
+├── recipes/        # cross-cutting trace shortcuts
 ├── .gitignore      # ignores local cache and backups inside the C3 tree
 └── c3.db           # local cache only (rebuildable)
 ```

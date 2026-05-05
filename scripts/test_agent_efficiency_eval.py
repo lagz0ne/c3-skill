@@ -31,10 +31,11 @@ class AgentEfficiencyEvalTests(unittest.TestCase):
         self.assertIn("mentions_pressure_response", cases["skill_content_limit_adr"].accuracy_checks)
         self.assertIn("mentions_component_delta", cases["adr_create"].accuracy_checks)
         self.assertIn("mentions_component_delta", cases["skill_content_limit_adr"].accuracy_checks)
-        self.assertIn("Up Cap", cases["adr_create"].prompt)
         self.assertIn("Discovery Brief", cases["adr_create"].prompt)
         self.assertIn("stop before implementing source-code changes", cases["adr_create"].prompt)
-        self.assertIn("c3x read c3-108 --section Up Cap", cases["adr_create"].prompt)
+        self.assertIn("c3x graph c3-112 --depth 1", cases["adr_create"].prompt)
+        self.assertNotIn("c3x graph c3-108 --depth 1", cases["adr_create"].prompt)
+        self.assertNotIn("Up Cap", cases["adr_create"].prompt)
         self.assertIn("Do not use rg/find/sed/cat", cases["adr_create"].prompt)
         self.assertIn("decompose", cases["skill_content_limit_adr"].prompt)
         self.assertIn("component_delta", cases["skill_content_limit_adr"].prompt)
@@ -210,8 +211,8 @@ class AgentEfficiencyEvalTests(unittest.TestCase):
                         "artifacts": ["adr-20260503-limit-list-content.md"],
                         "root_cause": "RunList emits too much detail from cli/cmd/list.go by default.",
                         "design_change": "Update cli/cmd/list.go and cli/cmd/list_test.go to keep default list output bounded while preserving explicit detail output.",
-                        "pressure_response": "c3-112 should stay additive for now because Up Cap current load is below the reference cap; split if list output refs exceed the cap.",
-                        "component_delta": "No new component now: keep c3-112 as owner, but extract c3-121 list-output-budget if Up Cap current load exceeds the references cap.",
+                        "pressure_response": "c3-112 should stay additive for now because graph pressure is below the reference split threshold; split if list output refs exceed that pressure.",
+                        "component_delta": "No new component now: keep c3-112 as owner, but extract c3-121 list-output-budget if graph pressure exceeds the references threshold.",
                         "adr_id": "adr-20260503-limit-list-content",
                     }
                 )
@@ -260,7 +261,7 @@ class AgentEfficiencyEvalTests(unittest.TestCase):
                     {
                         "verified": True,
                         "adr_id": "adr-20260504-token-cost",
-                        "pressure_response": "Up Cap pressure means c3-112 should split.",
+                        "pressure_response": "Governance pressure means c3-112 should split.",
                     }
                 )
             )
@@ -269,6 +270,13 @@ class AgentEfficiencyEvalTests(unittest.TestCase):
 
         self.assertTrue(checks["mentions_pressure_response"])
         self.assertFalse(checks["mentions_component_delta"])
+
+    def test_evaluate_accuracy_rejects_transcript_only_pressure_words(self):
+        case = next(case for case in ev.default_cases() if case.id == "adr_create")
+
+        checks = ev.evaluate_accuracy(None, case, "I will split this component under pressure.", "")
+
+        self.assertFalse(checks["mentions_pressure_response"])
 
     def test_score_result_includes_adr_quality_metric(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -319,7 +327,7 @@ class AgentEfficiencyEvalTests(unittest.TestCase):
                         "artifacts": ["adr-20260504-token-cost.md"],
                         "root_cause": "Agent-mode c3x output repeats token-heavy command prose.",
                         "design_change": "Update cli/cmd output helpers to return compact TOON repair evidence.",
-                        "pressure_response": "c3-112 stays additive because Up Cap pressure is below the cap.",
+                        "pressure_response": "c3-112 stays additive because graph pressure is below the split threshold.",
                         "component_delta": "no-delta: keep c3-112 as owner until output helper duplication appears.",
                         "adr_id": "adr-20260504-token-cost",
                     }

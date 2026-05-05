@@ -96,13 +96,6 @@ var Registry = map[string][]SectionDef{
 			{Name: "Precedence", Type: "text"},
 			{Name: "Notes", Type: "text"},
 		}},
-		{Name: "Up Cap", ContentType: "table", Required: true, Purpose: "Governance load limit that triggers upward escalation or component decomposition", MinRows: 1, Columns: []ColumnDef{
-			{Name: "Unit", Type: "enum", Values: []string{"references", "rules", "adrs", "specs", "policies", "examples", "mixed", "N.A - <reason>"}},
-			{Name: "Soft Cap", Type: "text"},
-			{Name: "Current Load", Type: "text"},
-			{Name: "Escalation", Type: "text"},
-			{Name: "Evidence", Type: "text"},
-		}},
 		{Name: "Contract", ContentType: "table", Required: true, Purpose: "Behavior surfaces that downstream code/material must honor", MinRows: 2, Columns: []ColumnDef{
 			{Name: "Surface", Type: "text"},
 			{Name: "Direction", Type: "enum", Values: []string{"IN", "OUT", "IN/OUT", "N.A - <reason>"}},

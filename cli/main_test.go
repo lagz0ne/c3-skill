@@ -692,9 +692,6 @@ func richComponentBody(title, goal string) string {
 		"## Governance\n\n" +
 		"| Reference | Type | Governs | Precedence | Notes |\n|-----------|------|---------|------------|-------|\n" +
 		"| ref-jwt | ref | Token format and validation expectations. | Required | Applied to all auth decisions. |\n\n" +
-		"## Up Cap\n\n" +
-		"| Unit | Soft Cap | Current Load | Escalation | Evidence |\n|------|----------|--------------|------------|----------|\n" +
-		"| references | 3 refs before split review | ref-jwt governs this component today. | Extract a narrower auth component or push cross-cutting policy to c3-1. | c3x graph c3-101 --depth 1 |\n\n" +
 		"## Contract\n\n" +
 		"| Surface | Direction | Contract | Boundary | Evidence |\n|---------|-----------|----------|----------|----------|\n" +
 		"| Credentials | IN | Caller supplies credentials or token material. | API boundary | ref-jwt |\n" +

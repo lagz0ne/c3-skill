@@ -47,26 +47,19 @@ func TestRuleSchemaExists(t *testing.T) {
 	}
 }
 
-func TestComponentSchemaHasGovernanceAndUpCap(t *testing.T) {
+func TestComponentSchemaHasGovernanceAndNoUpCap(t *testing.T) {
 	sections := ForType("component")
 	foundGovernance := false
-	foundUpCap := false
 	for _, s := range sections {
 		if s.Name == "Governance" {
 			foundGovernance = true
 		}
 		if s.Name == "Up Cap" {
-			foundUpCap = true
-			if s.Purpose == "" {
-				t.Error("component Up Cap section should explain its purpose")
-			}
+			t.Error("component schema should not include 'Up Cap'")
 		}
 	}
 	if !foundGovernance {
 		t.Error("component schema should have 'Governance' section")
-	}
-	if !foundUpCap {
-		t.Error("component schema should have 'Up Cap' section")
 	}
 }
 

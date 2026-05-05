@@ -1,6 +1,6 @@
 ---
 id: c3-211
-c3-seal: 87f6152452d70d46dd863a320ced9e17a79daf7aae97bcb888a038ad93c5ce88
+c3-seal: 6b3e5350873ed3f7ad60439a90b50b1ae18d0fe60db598e02afd72219b945f99
 title: onboard-operation
 type: component
 category: feature
@@ -53,12 +53,6 @@ Provide durable agent-ready documentation for onboard-operation so generated cod
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-2 | policy | Governs onboard-operation behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
-
-## Up Cap
-
-| Unit | Soft Cap | Current Load | Escalation | Evidence |
-| --- | --- | --- | --- | --- |
-| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-211. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-211 --depth 1 |
 
 ## Contract
 

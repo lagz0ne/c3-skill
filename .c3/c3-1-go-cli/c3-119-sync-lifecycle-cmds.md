@@ -1,6 +1,6 @@
 ---
 id: c3-119
-c3-seal: 1e2070e113cf2d76eda8f360d65d12d7c54300a244961587026b1f18a9d9fba4
+c3-seal: 957063d128fe20f55ec06c03b65cf282a1e9a0e0e63df2affe41bbfbf39a144f
 title: sync-lifecycle-cmds
 type: component
 category: feature
@@ -51,12 +51,6 @@ Provide the lifecycle commands that keep canonical `.c3/` state repairable. Thes
 | --- | --- | --- | --- | --- |
 | c3-1 | policy | Governs sync-lifecycle-cmds behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
 | adr-20260415-migrate-repair-command-flow | adr | Tight migration repair commands and failure output. | Specific repair-flow ADR beats older broad batch-repair wording. | Adds machine blocker reports, repair-plan, cache clear, scoped repair, writesMade proof, matched token, and continue. |
-
-## Up Cap
-
-| Unit | Soft Cap | Current Load | Escalation | Evidence |
-| --- | --- | --- | --- | --- |
-| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-119. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-119 --depth 1 |
 
 ## Contract
 

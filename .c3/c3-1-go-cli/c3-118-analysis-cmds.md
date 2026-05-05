@@ -1,6 +1,6 @@
 ---
 id: c3-118
-c3-seal: 5f062bc1807c348f0ce927e2209a888623e5aff56bf54e497854c1724d06a282
+c3-seal: 42244be2d9fe6ee62a209cc4495b40423e84b41e08655426f0290b11eaf9b416
 title: analysis-cmds
 type: component
 category: feature
@@ -50,12 +50,6 @@ Provide durable agent-ready documentation for analysis-cmds so generated code, t
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-1 | policy | Governs analysis-cmds behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
-
-## Up Cap
-
-| Unit | Soft Cap | Current Load | Escalation | Evidence |
-| --- | --- | --- | --- | --- |
-| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-118. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-118 --depth 1 |
 
 ## Contract
 

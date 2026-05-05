@@ -100,7 +100,7 @@ First `AskUserQuestion` denial -> `ASSUMPTION_MODE = true` for session.
 
 Missing c3x operation -> STOP, tell user. No file-tool workarounds.
 
-**Search strategy:** code->entity via `c3x lookup <file-or-glob>`; topology via `c3x list`; full-text over doc bodies -> grep over `.c3/`.
+**Search strategy:** code->entity via `c3x lookup <file-or-glob>`; topology via `c3x list`; doc bodies via targeted `c3x read <id> --section <name>` or `c3x read <id> --full`.
 
 **`c3x check` after every mutation** (`add`, `write`, `set`, `wire`, `delete`). Errors = blockers.
 
@@ -186,7 +186,7 @@ No `.c3/` or re-onboard. Scaffold -> discovery -> inject CLAUDE.md -> show capab
 `references/onboard.md`
 
 ### query
-`c3x list` for topology, `c3x lookup <file-or-glob>` for code->entity, `c3x graph <id> --direction reverse` for dependents. Full-text over bodies -> grep over `.c3/`.
+`c3x list` for topology, `c3x lookup <file-or-glob>` for code->entity, `c3x graph <id> --direction reverse` for dependents. For body text, use targeted `c3x read` output.
 `references/query.md`
 
 ### audit

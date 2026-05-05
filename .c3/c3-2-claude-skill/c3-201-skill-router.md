@@ -1,7 +1,7 @@
 ---
 id: c3-201
 c3-version: 4
-c3-seal: bced8ca98b695abbeedb878b6e3e30231f073df8151acc4391c7b2196c64fb49
+c3-seal: f68d317e96b60e6aa5b4419502085a1df329fc47534f0e69f3c3c8a668c75ce6
 title: skill-router
 type: component
 category: foundation
@@ -52,12 +52,6 @@ Provide durable agent-ready documentation for skill-router so generated code, te
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-2 | policy | Governs skill-router behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
-
-## Up Cap
-
-| Unit | Soft Cap | Current Load | Escalation | Evidence |
-| --- | --- | --- | --- | --- |
-| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-201. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-201 --depth 1 |
 
 ## Contract
 

@@ -5,6 +5,12 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.8.1] - 2026-05-05
+
+### Changed
+
+- **Agent-mode `c3x list` includes bounded goal snippets** — compact TOON rows now include a short `goal` column so agents can navigate topology candidates without an immediate `read` for every entity. Autoresearch tuned the snippet cap to preserve the navigation signal while keeping output size bounded.
+
 ## [9.8.0] - 2026-05-05
 
 ### Changed

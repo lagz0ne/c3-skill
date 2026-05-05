@@ -382,6 +382,14 @@ func TestRunList_JSONIncludesTotalCount(t *testing.T) {
 func TestRunList_TOONOutput(t *testing.T) {
 	t.Setenv("C3X_MODE", "agent")
 	s := createRichDBFixture(t)
+	longGoal := strings.Repeat("navigation context ", 10)
+	if err := s.UpdateEntity(&store.Entity{
+		ID: "c3-101", Type: "component", Title: "auth", Slug: "auth",
+		Category: "foundation", ParentID: "c3-1", Status: "active",
+		Goal: longGoal, Metadata: "{}",
+	}); err != nil {
+		t.Fatal(err)
+	}
 	var buf bytes.Buffer
 
 	// Agent mode + JSONExplicit=false -> TOON output
@@ -392,6 +400,15 @@ func TestRunList_TOONOutput(t *testing.T) {
 	out := buf.String()
 	if !strings.Contains(out, "entities[") {
 		t.Errorf("expected TOON table header with 'entities[', got:\n%s", out)
+	}
+	if !strings.Contains(out, "{id,type,title,goal,parent,status}") {
+		t.Errorf("expected compact TOON rows to include goal column, got:\n%s", out)
+	}
+	if !strings.Contains(out, "navigation context") {
+		t.Errorf("expected compact TOON rows to include goal snippets, got:\n%s", out)
+	}
+	if strings.Contains(out, longGoal) {
+		t.Errorf("expected compact TOON goal to be truncated, got full goal in:\n%s", out)
 	}
 	// Should contain tabular rows, not JSON
 	if strings.HasPrefix(strings.TrimSpace(out), "[") || strings.HasPrefix(strings.TrimSpace(out), "{") {

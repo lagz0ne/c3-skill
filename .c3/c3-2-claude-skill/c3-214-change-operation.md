@@ -1,6 +1,6 @@
 ---
 id: c3-214
-c3-seal: a00decc38234f84f7cef632e8104f0c4263c3907deb2d61375741f5837e01495
+c3-seal: 1ffd795a6e8eaea2c594525f84d2bbbeda1f69fbd04dc61bca3ba2dbc25c6467
 title: change-operation
 type: component
 category: feature
@@ -53,12 +53,6 @@ Ensure architecture-affecting work starts with an ADR that carries enough detail
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-2 | policy | Governs change-operation behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
-
-## Up Cap
-
-| Unit | Soft Cap | Current Load | Escalation | Evidence |
-| --- | --- | --- | --- | --- |
-| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-214. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-214 --depth 1 |
 
 ## Contract
 

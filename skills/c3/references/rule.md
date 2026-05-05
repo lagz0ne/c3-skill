@@ -256,7 +256,7 @@ Display full rule content. If `--source` needed, `AskUserQuestion` (ASSUMPTION_M
 ### Step 2: Discover Overlap (2-5 Grep calls)
 
 Search project for patterns overlapping marketplace rule:
-- Existing rules/refs covering similar ground (`c3x list`; for body text use grep over `.c3/`)
+- Existing rules/refs covering similar ground (`c3x list`; for body text use targeted `c3x read` output)
 - Code matching `## Golden Example`
 - Anti-patterns matching `## Not This`
 

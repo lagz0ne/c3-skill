@@ -21,10 +21,13 @@ func TestRunSchema_Component(t *testing.T) {
 	}
 
 	output := buf.String()
-	for _, section := range []string{"Goal", "Parent Fit", "Foundational Flow", "Business Flow", "Governance", "Up Cap", "Contract", "Change Safety", "Derived Materials"} {
+	for _, section := range []string{"Goal", "Parent Fit", "Foundational Flow", "Business Flow", "Governance", "Contract", "Change Safety", "Derived Materials"} {
 		if !strings.Contains(output, section) {
 			t.Errorf("component schema should include %q, got: %s", section, output)
 		}
+	}
+	if strings.Contains(output, "Up Cap") {
+		t.Errorf("component schema should not require Up Cap, got: %s", output)
 	}
 }
 

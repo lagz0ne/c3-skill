@@ -52,12 +52,6 @@ Own authentication behavior for API requests, including token acceptance, failur
 | --- | --- | --- | --- | --- |
 | ref-jwt | ref | Token format and validation expectations. | scoped ref beats local prose | Applies because component cites JWT behavior. |
 
-## Up Cap
-
-| Unit | Soft Cap | Current Load | Escalation | Evidence |
-| --- | --- | --- | --- | --- |
-| references | 3 refs before split review | ref-jwt governs this component today. | Extract a narrower component or push cross-cutting rationale to parent container. | c3x graph c3-101 --depth 1 |
-
 ## Contract
 
 | Surface | Direction | Contract | Boundary | Evidence |
@@ -125,43 +119,6 @@ func TestStrictComponentDocs_AllowsEnrichedComponentOnWrite(t *testing.T) {
 		t.Fatal(err)
 	}
 	requireAll(t, body, "## Parent Fit", "## Contract", "## Derived Materials")
-}
-
-func TestStrictComponentDocs_RequiresUpCap(t *testing.T) {
-	body := strings.Replace(
-		strictComponentBody("auth", "Provide reviewer-ready authentication behavior documentation."),
-		`## Up Cap
-
-| Unit | Soft Cap | Current Load | Escalation | Evidence |
-| --- | --- | --- | --- | --- |
-| references | 3 refs before split review | ref-jwt governs this component today. | Extract a narrower component or push cross-cutting rationale to parent container. | c3x graph c3-101 --depth 1 |
-
-`,
-		"",
-		1,
-	)
-
-	issues := validateStrictComponentDoc(body, "error")
-	if !hasIssue(issues, "missing required section: Up Cap") {
-		t.Fatalf("expected missing Up Cap issue, got %#v", issues)
-	}
-	if hasIssue(issues, "component sections out of order") {
-		t.Fatalf("missing Up Cap should not cascade into order noise, got %#v", issues)
-	}
-}
-
-func TestStrictComponentDocs_RejectsUngroundedUpCapEvidence(t *testing.T) {
-	body := strings.Replace(
-		strictComponentBody("auth", "Provide reviewer-ready authentication behavior documentation."),
-		"| references | 3 refs before split review | ref-jwt governs this component today. | Extract a narrower component or push cross-cutting rationale to parent container. | c3x graph c3-101 --depth 1 |",
-		"| references | 3 refs before split review | ref-jwt governs this component today. | Extract a narrower component or push cross-cutting rationale to parent container. | review manually |",
-		1,
-	)
-
-	issues := validateStrictComponentDoc(body, "error")
-	if !hasIssue(issues, "ungrounded evidence in Up Cap row 1 column Evidence") {
-		t.Fatalf("expected Up Cap evidence issue, got %#v", issues)
-	}
 }
 
 func TestStrictComponentDocs_CheckFlagsInvalidComponent(t *testing.T) {

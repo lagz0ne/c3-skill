@@ -1,6 +1,6 @@
 ---
 id: c3-218
-c3-seal: 61629672b497e4d48a8c227ede53aec31cc6de8ed46d31d4889be38c3aa5e3c2
+c3-seal: 4f4ae95f67780fb2788e9be87a5384078318298aa94d856d25f9531ed6f34231
 title: sweep-operation
 type: component
 category: feature
@@ -53,12 +53,6 @@ Provide durable agent-ready documentation for sweep-operation so generated code,
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-2 | policy | Governs sweep-operation behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
-
-## Up Cap
-
-| Unit | Soft Cap | Current Load | Escalation | Evidence |
-| --- | --- | --- | --- | --- |
-| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-218. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-218 --depth 1 |
 
 ## Contract
 

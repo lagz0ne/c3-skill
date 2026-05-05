@@ -88,7 +88,7 @@ def default_cases() -> list[EvalCase]:
         "Keep output concise."
     )
     pressure_marker = (
-        "Before creating an ADR, inspect Up Cap pressure and decide whether to decompose/split a component, "
+        "Before creating an ADR, inspect graph/governance pressure and decide whether to decompose/split a component, "
         "move the concern upward, or explicitly justify staying additive; record this as pressure_response. "
         "Also record component_delta naming the new/split/extracted component or a no-delta justification. "
     )
@@ -123,9 +123,9 @@ def default_cases() -> list[EvalCase]:
             prompt=(
                 "Token-budgeted C3 ADR task. Use local c3x only. Do not run broad searches. "
                 "Create one valid ADR for reducing c3x token cost. Before drafting, write a terse Discovery Brief "
-                "from the task goal and Up Cap read: owner, governing material, and stop condition. "
+                "from the task goal and targeted C3 reads: owner, governing material, and stop condition. "
                 "This is ADR-only; stop before implementing source-code changes. Run at most: c3x schema adr; "
-                "c3x read c3-108 --section Up Cap; c3x add adr <slug> --file <body>; "
+                "c3x lookup cli/cmd/list.go; c3x graph c3-112 --depth 1; c3x add adr <slug> --file <body>; "
                 "c3x check --include-adr --only <adr-id>. Do not use rg/find/sed/cat or raw .c3 file reads. "
                 + pressure_marker
                 + marker
@@ -447,11 +447,7 @@ def evaluate_accuracy(workspace: Path | None, case: EvalCase, stdout: str, stder
         elif check == "mentions_design_change":
             checks[check] = bool(result.get("design_change")) or "design change" in text
         elif check == "mentions_pressure_response":
-            pressure_response = result.get("pressure_response")
-            checks[check] = _specific_pressure_response(pressure_response) or _has_any(
-                text,
-                ("pressure_response", "up cap", "decompose", "split", "staying additive", "stay additive"),
-            )
+            checks[check] = _specific_pressure_response(result.get("pressure_response"))
         elif check == "mentions_component_delta":
             component_delta = result.get("component_delta")
             checks[check] = _specific_component_delta(component_delta) or _has_any(
@@ -481,7 +477,7 @@ def evaluate_adr_quality(workspace: Path | None, transcript_text: str) -> dict[s
         "owner_correct": _has_any(text, ("cli/cmd/", "scripts/", "skills/", "c3-", "ref-", "rule-")),
         "root_cause_specific": _specific_text(result.get("root_cause")) or _has_any(text, ("root cause", "runlist", "liststructured", "agent-mode", "token", "output")),
         "decision_concrete": _specific_text(result.get("design_change")) and not _has_any(str(result.get("design_change", "")).lower(), ("best practices", "improve quality")),
-        "pressure_response_specific": _specific_pressure_response(result.get("pressure_response")) or _has_any(text, ("up cap", "decompose", "split component", "split ownership", "stay additive", "staying additive")),
+        "pressure_response_specific": _specific_pressure_response(result.get("pressure_response")),
         "component_delta_specific": _specific_component_delta(result.get("component_delta")) or _has_any(text, ("new component", "split component", "extract component", "no-delta")),
         "scope_bounded": _has_any(text, ("stop before", "before implementation", "do not edit", "no source", "not change", "preserve")),
         "verification_executable": _has_any(text, ("c3x check", "go test", "python ", "pytest", "npm test", "bunx", "smoke")),
@@ -545,7 +541,7 @@ def _specific_pressure_response(value: Any) -> bool:
     if not _specific_text(value):
         return False
     text = str(value).lower()
-    has_pressure = _has_any(text, ("up cap", "pressure", "cap", "current load", "token"))
+    has_pressure = _has_any(text, ("governance pressure", "graph pressure", "pressure", "current load", "token"))
     has_decision = _has_any(text, ("decompose", "split", "extract", "move upward", "stay additive", "staying additive", "additive"))
     generic = _has_any(text, ("as needed", "best practices", "improve quality"))
     return has_pressure and has_decision and not generic

@@ -31,9 +31,12 @@ type compactEntity struct {
 	ID     string `json:"id"`
 	Type   string `json:"type"`
 	Title  string `json:"title"`
+	Goal   string `json:"goal,omitempty"`
 	Parent string `json:"parent,omitempty"`
 	Status string `json:"status,omitempty"`
 }
+
+const compactGoalMaxLen = 38
 
 // RunList outputs the topology of entities from the store.
 func RunList(opts ListOptions, w io.Writer) error {
@@ -79,13 +82,13 @@ func listStructured(opts ListOptions, format OutputFormat, w io.Writer) error {
 		for _, e := range entities {
 			result = append(result, compactEntity{
 				ID: e.ID, Type: e.Type, Title: e.Title,
-				Parent: e.ParentID, Status: e.Status,
+				Goal: shortGoal(e.Goal), Parent: e.ParentID, Status: e.Status,
 			})
 		}
 
 		if format == FormatTOON {
 			fmt.Fprintf(w, "totalCount: %d\n", len(result))
-			return WriteTableOutput(w, "entities", result, []string{"id", "type", "title", "parent", "status"}, format, hints)
+			return WriteTableOutput(w, "entities", result, []string{"id", "type", "title", "goal", "parent", "status"}, format, hints)
 		}
 		if opts.JSONExplicit {
 			return writeJSON(w, ListResult{TotalCount: len(result), Entities: result})
@@ -156,6 +159,15 @@ func listStructured(opts ListOptions, format OutputFormat, w io.Writer) error {
 	}
 	// Legacy JSON path — plain array
 	return writeJSON(w, data)
+}
+
+func shortGoal(goal string) string {
+	goal = strings.Join(strings.Fields(goal), " ")
+	runes := []rune(goal)
+	if len(runes) <= compactGoalMaxLen {
+		return goal
+	}
+	return strings.TrimSpace(string(runes[:compactGoalMaxLen-3])) + "..."
 }
 
 func listFlat(s *store.Store, includeADR bool, w io.Writer) error {

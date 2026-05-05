@@ -416,6 +416,30 @@ func TestRunList_TOONOutput(t *testing.T) {
 	}
 }
 
+func TestRunListStructuredAgentCompactIncludesRecipeDiscoveryFields(t *testing.T) {
+	t.Setenv("C3X_MODE", "agent")
+	s := createRichDBFixture(t)
+	s.InsertEntity(&store.Entity{
+		ID: "recipe-auth", Type: "recipe", Title: "Auth Flow",
+		Slug: "auth", Goal: "Auth flow recipe", Status: "active",
+		Metadata: `{"description":"Trace login and token validation."}`,
+	})
+	s.AddRelationship(&store.Relationship{FromID: "recipe-auth", ToID: "c3-101", RelType: "sources"})
+	var buf bytes.Buffer
+
+	if err := RunList(ListOptions{Store: s, JSON: true, JSONExplicit: false}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	out := buf.String()
+	if !strings.Contains(out, "description") || !strings.Contains(out, "Trace login and token validation.") {
+		t.Errorf("agent compact recipe row should include description, got:\n%s", out)
+	}
+	if !strings.Contains(out, "sources") || !strings.Contains(out, "c3-101") {
+		t.Errorf("agent compact recipe row should include sources, got:\n%s", out)
+	}
+}
+
 func TestRunList_HelpHintsInAgentMode(t *testing.T) {
 	t.Setenv("C3X_MODE", "agent")
 	s := createRichDBFixture(t)
@@ -453,7 +477,8 @@ func TestListTopology_RecipesCompact(t *testing.T) {
 	s := createRichDBFixture(t)
 	s.InsertEntity(&store.Entity{
 		ID: "recipe-auth", Type: "recipe", Title: "Auth Flow",
-		Slug: "auth", Goal: "Auth flow recipe", Status: "active", Metadata: "{}",
+		Slug: "auth", Goal: "Auth flow recipe", Status: "active",
+		Metadata: `{"description":"Trace login and token validation."}`,
 	})
 	s.AddRelationship(&store.Relationship{FromID: "recipe-auth", ToID: "c3-101", RelType: "sources"})
 
@@ -467,7 +492,10 @@ func TestListTopology_RecipesCompact(t *testing.T) {
 	if !strings.Contains(output, "recipe-auth") {
 		t.Error("compact should still list recipe-auth")
 	}
-	if strings.Contains(output, "sources:") {
-		t.Error("compact should not show sources detail")
+	if !strings.Contains(output, "description: Trace login and token validation.") {
+		t.Errorf("compact should show recipe description, got:\n%s", output)
+	}
+	if !strings.Contains(output, "sources: c3-101") {
+		t.Errorf("compact should show recipe sources, got:\n%s", output)
 	}
 }

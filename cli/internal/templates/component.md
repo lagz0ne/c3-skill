@@ -52,12 +52,6 @@ Explain the durable reason this component exists, the behavior it owns, and at l
 |-----------|------|---------|------------|-------|
 | N.A - no governing reference chosen yet | N.A - no reference type yet | State what future ref, rule, ADR, spec, policy, or example should govern. | Parent container contract wins until replaced. | Replace before review when a governing source exists. |
 
-## Up Cap
-
-| Unit | Soft Cap | Current Load | Escalation | Evidence |
-|------|----------|--------------|------------|----------|
-| references | Name the reference count or governance load that should trigger split review. | Name the current refs, rules, ADRs, specs, policies, or examples this component must absorb. | Name the parent move, sibling split, or narrower component extraction to consider when the cap is exceeded. | c3x graph c3-${N}${NN} --depth 1 |
-
 ## Contract
 
 | Surface | Direction | Contract | Boundary | Evidence |

@@ -1,6 +1,6 @@
 ---
 id: c3-217
-c3-seal: 62d75c7302a19550573a2390671a5c706d3f52e47b356ab814620b4256341a67
+c3-seal: 9919b2c1098311892343fae972e641fc14e1a26b203667ecaf9c0c980b9be415
 title: rule-operation
 type: component
 category: feature
@@ -53,12 +53,6 @@ Provide durable agent-ready documentation for rule-operation so generated code, 
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-2 | policy | Governs rule-operation behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
-
-## Up Cap
-
-| Unit | Soft Cap | Current Load | Escalation | Evidence |
-| --- | --- | --- | --- | --- |
-| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-217. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-217 --depth 1 |
 
 ## Contract
 

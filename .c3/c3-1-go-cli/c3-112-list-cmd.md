@@ -1,7 +1,7 @@
 ---
 id: c3-112
 c3-version: 4
-c3-seal: 46788a9f15d4a965254dd92f01fa5442dbe2c14c5a24628cb3b312a1d4ba12c3
+c3-seal: ccc33812f06c963d3d59edad61b0ca7d7e7d7573a96b74ccba682c1223944f69
 title: list-cmd
 type: component
 category: feature
@@ -55,12 +55,6 @@ Provide durable agent-ready documentation for list-cmd so generated code, tests,
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-1 | policy | Governs list-cmd behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
-
-## Up Cap
-
-| Unit | Soft Cap | Current Load | Escalation | Evidence |
-| --- | --- | --- | --- | --- |
-| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-112. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-112 --depth 1 |
 
 ## Contract
 

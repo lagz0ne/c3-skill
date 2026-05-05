@@ -1,7 +1,7 @@
 ---
 id: c3-111
 c3-version: 4
-c3-seal: 87f0b5ee4f96230b94d2d60788a4e247dc1f16b6d5dad459f587ed7f668b5f7e
+c3-seal: 0dfea1e6263344d87672463270ce0b2eb5474001b2dde6b408419ceacb543c06
 title: add-cmd
 type: component
 category: feature
@@ -57,12 +57,6 @@ Provide durable agent-ready documentation for add-cmd so generated code, tests, 
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-1 | policy | Governs add-cmd behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
-
-## Up Cap
-
-| Unit | Soft Cap | Current Load | Escalation | Evidence |
-| --- | --- | --- | --- | --- |
-| references | 3 governance references before split review | Governance section records active refs, rules, ADRs, specs, policies, or examples for c3-111. | Move cross-cutting guidance to the parent container or extract a narrower sibling component when cap pressure grows. | c3x graph c3-111 --depth 1 |
 
 ## Contract
 

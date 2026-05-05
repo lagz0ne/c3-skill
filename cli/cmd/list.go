@@ -28,12 +28,14 @@ type ListResult struct {
 
 // compactEntity is a minimal entity representation for compact/TOON output.
 type compactEntity struct {
-	ID     string `json:"id"`
-	Type   string `json:"type"`
-	Title  string `json:"title"`
-	Goal   string `json:"goal,omitempty"`
-	Parent string `json:"parent,omitempty"`
-	Status string `json:"status,omitempty"`
+	ID          string   `json:"id"`
+	Type        string   `json:"type"`
+	Title       string   `json:"title"`
+	Goal        string   `json:"goal,omitempty"`
+	Parent      string   `json:"parent,omitempty"`
+	Status      string   `json:"status,omitempty"`
+	Description string   `json:"description,omitempty"`
+	Sources     []string `json:"sources,omitempty"`
 }
 
 const compactGoalMaxLen = 38
@@ -79,16 +81,23 @@ func listStructured(opts ListOptions, format OutputFormat, w io.Writer) error {
 
 	if compact {
 		var result []compactEntity
+		fields := []string{"id", "type", "title", "goal", "parent", "status"}
 		for _, e := range entities {
-			result = append(result, compactEntity{
+			row := compactEntity{
 				ID: e.ID, Type: e.Type, Title: e.Title,
 				Goal: shortGoal(e.Goal), Parent: e.ParentID, Status: e.Status,
-			})
+			}
+			if e.Type == "recipe" {
+				row.Description = shortGoal(metadataString(e.Metadata, "description"))
+				row.Sources = relationshipTargets(opts.Store, e.ID, "sources")
+				fields = []string{"id", "type", "title", "goal", "parent", "status", "description", "sources"}
+			}
+			result = append(result, row)
 		}
 
 		if format == FormatTOON {
 			fmt.Fprintf(w, "totalCount: %d\n", len(result))
-			return WriteTableOutput(w, "entities", result, []string{"id", "type", "title", "goal", "parent", "status"}, format, hints)
+			return WriteTableOutput(w, "entities", result, fields, format, hints)
 		}
 		if opts.JSONExplicit {
 			return writeJSON(w, ListResult{TotalCount: len(result), Entities: result})
@@ -168,6 +177,23 @@ func shortGoal(goal string) string {
 		return goal
 	}
 	return strings.TrimSpace(string(runes[:compactGoalMaxLen-3])) + "..."
+}
+
+func metadataString(raw, key string) string {
+	value, _ := parseMetadataMap(raw)[key].(string)
+	return value
+}
+
+func relationshipTargets(s *store.Store, fromID, relType string) []string {
+	rels, _ := s.RelationshipsFrom(fromID)
+	var ids []string
+	for _, rel := range rels {
+		if rel.RelType == relType {
+			ids = append(ids, rel.ToID)
+		}
+	}
+	sort.Strings(ids)
+	return ids
 }
 
 func listFlat(s *store.Store, includeADR bool, w io.Writer) error {
@@ -407,18 +433,13 @@ func listTopology(s *store.Store, compact bool, includeADR bool, w io.Writer) er
 			}
 			fmt.Fprintln(w, line)
 
-			// Sources from relationships
-			if !compact {
-				rels, _ := s.RelationshipsFrom(r.ID)
-				var sourceIDs []string
-				for _, rel := range rels {
-					if rel.RelType == "sources" {
-						sourceIDs = append(sourceIDs, rel.ToID)
-					}
-				}
-				if len(sourceIDs) > 0 {
-					fmt.Fprintf(w, "    sources: %s\n", strings.Join(sourceIDs, ", "))
-				}
+			description := metadataString(r.Metadata, "description")
+			if compact && description != "" {
+				fmt.Fprintf(w, "    description: %s\n", description)
+			}
+			sourceIDs := relationshipTargets(s, r.ID, "sources")
+			if len(sourceIDs) > 0 {
+				fmt.Fprintf(w, "    sources: %s\n", strings.Join(sourceIDs, ", "))
 			}
 		}
 		fmt.Fprintln(w)

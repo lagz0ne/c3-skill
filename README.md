@@ -101,7 +101,7 @@ Every entity type has required sections. The CLI enforces them on write:
 
 | Entity | Required sections |
 |--------|------------------|
-| Component | Goal, Parent Fit, Purpose, Foundational Flow, Business Flow, Governance, Up Cap, Contract, Change Safety, Derived Materials |
+| Component | Goal, Parent Fit, Purpose, Foundational Flow, Business Flow, Governance, Contract, Change Safety, Derived Materials |
 | Container | Goal, Components, Responsibilities |
 | Ref | Goal, Choice, Why |
 | Rule | Goal, Rule, Golden Example |

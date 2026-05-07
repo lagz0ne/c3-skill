@@ -8,10 +8,10 @@ Answer where/how/why about architecture. Full context = docs + code.
 
 ## Progress
 
-- [ ] Topology loaded (`c3x list`)
+- [ ] Topology loaded (`c3 list`)
 - [ ] Intent clarified (or skipped if specific)
 - [ ] Entity matched from topology
-- [ ] `c3x lookup` run on every file path surfaced
+- [ ] `c3 lookup` run on every file path surfaced
 - [ ] Code explored
 - [ ] Response delivered
 
@@ -21,18 +21,18 @@ Answer where/how/why about architecture. Full context = docs + code.
 
 **First action:**
 ```bash
-bash <skill-dir>/bin/c3x.sh list
+c3 list
 ```
 Returns all entities: id, type, title, path, relationships, frontmatter. Match query to entities by title/type/relationship.
 
 Never manually Glob/Read `.c3/`. Topology has everything for discovery. Read only after identifying specific entities.
 
-For code→entity mapping use `c3x lookup <file-or-glob>`. For full-text search over doc bodies, use `grep` over `.c3/` directly.
+For code→entity mapping use `c3 lookup <file-or-glob>`. For doc body text, identify candidate entities from `c3 list`, then read targeted bodies with `c3 read <id>` or `c3 read <id> --full`.
 
 ## Step 0a+: Check Recipes
 
 After topology, check for matching recipes:
-1. Filter `recipe` type from `c3x list`
+1. Filter `recipe` type from `c3 list`
 2. Match query against recipe title + description
 3. Match → read recipe, serve sources as narrative trace
 4. No match → normal query flow
@@ -50,7 +50,7 @@ Skip when: C3 ID given, specific query, "show me everything about X".
 
 Top-down: Context → Container → Component.
 
-Match from topology. `c3x read <id>` when body content needed beyond `list`.
+Match from topology. `c3 read <id>` when body content needed beyond `list`.
 
 | Source | Use For |
 |--------|---------|
@@ -61,9 +61,9 @@ Match from topology. `c3x read <id>` when body content needed beyond `list`.
 ## Step 2: Extract + Lookup
 
 For every file path:
-1. **Run `c3x lookup <file>` before reading source** — returns component + governing refs/rules. Directory-level: `c3x lookup 'src/auth/**'`.
-2. Check relationships via `c3x read <id>` or `c3x graph <id> --format mermaid`. Always include mermaid output as code block — graph matched entity (container or component, never c3-0).
-3. Find `ref-*` and `rule-*` from topology. `c3x read <id>` for body.
+1. **Run `c3 lookup <file>` before reading source** — returns component + governing refs/rules. Directory-level: `c3 lookup 'src/auth/**'`.
+2. Check relationships via `c3 read <id>` or `c3 graph <id> --format mermaid`. Always include mermaid output as code block — graph matched entity (container or component, never c3-0).
+3. Find `ref-*` and `rule-*` from topology. `c3 read <id>` for body.
 
 Lookup-returned refs/rules = constraints governing that file.
 
@@ -105,7 +105,7 @@ src/auth/**/*.ts
 ```
 
 **Constraint Chain Graph:**
-(mermaid from `c3x graph <target-component> --direction reverse --format mermaid`)
+(mermaid from `c3 graph <target-component> --direction reverse --format mermaid`)
 
 ## ADR Handling
 
@@ -139,7 +139,7 @@ ADRs in results → historical context only. Verify against current entity docs 
 <Architecture from docs>
 
 **Graph:**
-(mermaid from c3x graph <matched-entity> --format mermaid)
+(mermaid from c3 graph <matched-entity> --format mermaid)
 
 **Code Map:** `path/file.ts` - <role>
 

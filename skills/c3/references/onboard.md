@@ -2,7 +2,7 @@
 
 ## Precondition
 
-`c3x list` returns entities → already onboarded. `AskUserQuestion`: re-onboard or cancel (skip if ASSUMPTION_MODE). Cancel → suggest audit/query.
+`c3 list` returns entities → already onboarded. `AskUserQuestion`: re-onboard or cancel (skip if ASSUMPTION_MODE). Cancel → suggest audit/query.
 
 ## Component Categories
 
@@ -30,7 +30,7 @@ Foundation: infra others depend on. Feature: biz logic. Ref: conventions/shared 
 
 ### 0.1 Scaffold
 
-Scaffold `.c3/` with config, README, refs/, rules/, adr/. Update ADR-000 via `c3x write <adr-000> --section <name> --file <path>` for any body with tables, mermaid, or code blocks; short single-sentence fields via `c3x set <adr-000> <field> <value>` or `echo "..." | c3x write <adr-000> --section <name>`.
+Scaffold `.c3/` with config, README, refs/, rules/, adr/. Update ADR-000 via `c3 write <adr-000> --section <name> --file <path>` for any body with tables, mermaid, or code blocks; short single-sentence fields via `c3 set <adr-000> <field> <value>` or `echo "..." | c3 write <adr-000> --section <name>`.
 
 ### 0.2 Context Discovery
 
@@ -82,7 +82,7 @@ Common: naming conventions, forbidden patterns, lint rules, security constraints
 
 Per container:
 ```bash
-bash <skill-dir>/bin/c3x.sh graph <container-id> --format mermaid
+c3 graph <container-id> --format mermaid
 ```
 Include each as mermaid code block.
 
@@ -102,27 +102,27 @@ Include each as mermaid code block.
 
 ### 1.1 Context Doc
 
-Short text fields: `echo "<goal>" | c3x write c3-0 --section Goal`. Whole body rewrite: `c3x write c3-0 --file content.md`.
+Short text fields: `echo "<goal>" | c3 write c3-0 --section Goal`. Whole body rewrite: `c3 write c3-0 --file content.md`.
 
 ### 1.2 Container Docs
 
 **Create container** (body in a file — tables and mermaid require `--file`):
 ```bash
 # body.md contains: ## Goal / ## Components (table) / ## Responsibilities
-bash <skill-dir>/bin/c3x.sh add container <slug> --file body.md
+c3 add container <slug> --file body.md
 ```
 
 **Create components** (body in a file):
 ```bash
 # Foundation (01-09):
-bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N --file body.md
+c3 add component <slug> --container c3-N --file body.md
 
 # Feature (10+): add --feature flag
-bash <skill-dir>/bin/c3x.sh add component <slug> --container c3-N --feature --file body.md
+c3 add component <slug> --container c3-N --feature --file body.md
 ```
 Body should contain `## Goal` plus `## Dependencies` table. Any content with markdown tables, mermaid, or code fences MUST go through `--file <path>` — inline strings corrupt quoting.
 
-Code-map patterns: `c3x set <id> codemap <pattern>`. Bracket paths (`[id]`, `[...slug]`) work automatically.
+Code-map patterns: `c3 set <id> codemap <pattern>`. Bracket paths (`[id]`, `[...slug]`) work automatically.
 
 **Extract Refs:** "Would this change if we swapped underlying tech?" Yes → ref.
 
@@ -140,14 +140,14 @@ Code-map patterns: `c3x set <id> codemap <pattern>`. Bracket paths (`[id]`, `[..
 
 ```bash
 # body.md: ## Goal / ## Choice / ## Why (+ optional How, Scope, Not This, Override)
-bash <skill-dir>/bin/c3x.sh add ref <slug> --file body.md
+c3 add ref <slug> --file body.md
 ```
 
 ### 1.4 Rule Docs
 
 ```bash
 # body.md: ## Goal / ## Rule / ## Golden Example (code fence) (+ optional Not This, Scope, Override)
-bash <skill-dir>/bin/c3x.sh add rule <slug> --file body.md
+c3 add rule <slug> --file body.md
 ```
 Golden Example contains code fences -> `--file` is mandatory.
 
@@ -167,15 +167,15 @@ Golden Example contains code fences -> `--file` is mandatory.
 
 Set glob patterns per component/ref/rule:
 ```bash
-bash <skill-dir>/bin/c3x.sh set <id> codemap '<glob>'
-bash <skill-dir>/bin/c3x.sh lookup 'src/**'   # spot-check mapping
+c3 set <id> codemap '<glob>'
+c3 lookup 'src/**'   # spot-check mapping
 ```
 
 ### 2.2 Validate
 
 ```bash
-bash <skill-dir>/bin/c3x.sh check
-bash <skill-dir>/bin/c3x.sh list              # coverage + counts
+c3 check
+c3 list              # coverage + counts
 ```
 
 ### 2.3 Semantic
@@ -204,22 +204,22 @@ Issues → Inventory (Gate 0) or Detail (Gate 1).
 ## Final Checks
 
 ```bash
-bash <skill-dir>/bin/c3x.sh list
-bash <skill-dir>/bin/c3x.sh check
-bash <skill-dir>/bin/c3x.sh lookup <any-mapped-file>
-bash <skill-dir>/bin/c3x.sh lookup 'src/**'
+c3 list
+c3 check
+c3 lookup <any-mapped-file>
+c3 lookup 'src/**'
 ```
 
 **Fix before completing:**
 
 | Signal | Problem | Fix |
 |--------|---------|-----|
-| No system goal | Missing `goal:` in README.md | `c3x set <id> goal "<text>"` |
-| No `files:` | Missing code-map pattern | `c3x set <id> codemap '<glob>'` |
-| No `uses:` | Ref not wired | `c3x wire <component> <ref>` |
+| No system goal | Missing `goal:` in README.md | `c3 set <id> goal "<text>"` |
+| No `files:` | Missing code-map pattern | `c3 set <id> codemap '<glob>'` |
+| No `uses:` | Ref not wired | `c3 wire <component> <ref>` |
 | Ref has no `via:` | Uncited ref | Wire or delete |
 | `[provisioning]` | Design-only | Expected or implement |
-| `lookup` returns nothing | Bad/missing codemap | Fix patterns via `c3x set <id> codemap '<glob>'`; re-check with `lookup 'src/**'` |
+| `lookup` returns nothing | Bad/missing codemap | Fix patterns via `c3 set <id> codemap '<glob>'`; re-check with `lookup 'src/**'` |
 | Low coverage % | Many unmapped files | `_exclude` for tests/configs, map rest |
 
 ---
@@ -233,7 +233,7 @@ bash <skill-dir>/bin/c3x.sh lookup 'src/**'
 This project uses C3 docs in `.c3/`.
 For architecture questions, changes, audits, file context -> `/c3`.
 Operations: query, audit, change, ref, rule, sweep.
-File lookup: `c3x lookup <file-or-glob>` maps files/directories to components + refs.
+File lookup: `c3 lookup <file-or-glob>` maps files/directories to components + refs.
 ```
 
 ### Capabilities Reveal
@@ -243,15 +243,15 @@ File lookup: `c3x lookup <file-or-glob>` maps files/directories to components + 
 
 **Typical flow:**
 
-1. Understand what exists: `c3x list` → topology + coverage, then `c3x lookup <file>` → which component owns it
-2. Make changes: `c3x add` / `c3x write` / `c3x set` / `c3x wire` to create and connect entities (use `--file <path>` for bodies with tables, mermaid, or code fences)
-3. Validate: `c3x check` catches broken links, schema gaps, orphans
-4. Visualize: `c3x graph <container-or-component> --format mermaid` renders architecture as mermaid diagrams
+1. Understand what exists: `c3 list` → topology + coverage, then `c3 lookup <file>` → which component owns it
+2. Make changes: `c3 add` / `c3 write` / `c3 set` / `c3 wire` to create and connect entities (use `--file <path>` for bodies with tables, mermaid, or code fences)
+3. Validate: `c3 check` catches broken links, schema gaps, orphans
+4. Visualize: `c3 graph <container-or-component> --format mermaid` renders architecture as mermaid diagrams
 
 For architecture questions, changes, audits → just say `/c3` + what you want.
 
-Run `c3x --help` to see all available commands.
-Run `c3x <command> --help` for detailed usage.
+Run `c3 --help` to see all available commands.
+Run `c3 <command> --help` for detailed usage.
 ```
 
 ## Complexity Guide

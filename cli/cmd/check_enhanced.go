@@ -305,7 +305,8 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 			}
 		}
 		if entity.Type == "adr" {
-			for _, issue := range validateADRCoverage(opts.Store, body, "warning") {
+			includeMissingADRCoverage := slices.Contains(opts.Only, entity.ID)
+			for _, issue := range validateADRCoverageMode(opts.Store, body, "warning", includeMissingADRCoverage) {
 				issue.Entity = entity.ID
 				issues = append(issues, issue)
 			}

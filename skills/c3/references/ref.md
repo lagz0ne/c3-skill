@@ -25,7 +25,7 @@ Flow: `Scaffold → Discover → Fill Content → Discover Usage → Update Citi
 ### Step 1: Scaffold
 
 ```bash
-bash <skill-dir>/bin/c3x.sh add ref <slug>
+c3 add ref <slug>
 ```
 
 ### Step 2: Discover (2-5 Grep calls)
@@ -58,7 +58,7 @@ Write 1-3 YES/NO compliance questions from `## How`. Can't write them → patter
 
 ### Step 3: Fill Content
 
-**First:** `c3x schema ref` — the output leads with `REJECT IF:` bullets that ARE the rejection contract. Per-section `fill:` and `rejected when:` lines apply the same gate at section level. Draft to the contract, do not freehand.
+**First:** `c3 schema ref` — the output leads with `REJECT IF:` bullets that ARE the rejection contract. Per-section `fill:` and `rejected when:` lines apply the same gate at section level. Draft to the contract, do not freehand.
 
 - `## Goal` — what it standardizes
 - `## Choice` — option chosen (REQUIRED)
@@ -74,8 +74,8 @@ Find components using pattern.
 ### Step 5: Update Citing Components
 
 Per component using pattern:
-1. `c3x lookup <file>` per code-map entry — loads constraint chain
-2. `c3x read <component-id>`
+1. `c3 lookup <file>` per code-map entry — loads constraint chain
+2. `c3 read <component-id>`
 3. Add to `## Related Refs`:
 
 ```markdown
@@ -93,10 +93,10 @@ Only modify `## Related Refs`. Other changes → route to change.
 ADRs cannot be created as `implemented` and cannot transition `proposed → implemented` directly. Two-step:
 
 ```bash
-bash <skill-dir>/bin/c3x.sh add adr ref-{slug}-adoption < adr-body.md
-bash <skill-dir>/bin/c3x.sh set adr-YYYYMMDD-ref-{slug}-adoption status accepted
+c3 add adr ref-{slug}-adoption < adr-body.md
+c3 set adr-YYYYMMDD-ref-{slug}-adoption status accepted
 # ref doc is wired and the deliverable is in place
-bash <skill-dir>/bin/c3x.sh set adr-YYYYMMDD-ref-{slug}-adoption status implemented
+c3 set adr-YYYYMMDD-ref-{slug}-adoption status implemented
 ```
 
 Final state:
@@ -108,7 +108,7 @@ status: implemented
 ---
 ```
 
-Ref adoption ADRs end in `status: implemented` — ref doc IS deliverable. After implemented, the ADR becomes historical and is exempt from `c3x check` validation.
+Ref adoption ADRs end in `status: implemented` — ref doc IS deliverable. After implemented, the ADR becomes historical and is exempt from `c3 check` validation.
 
 ---
 
@@ -117,8 +117,8 @@ Ref adoption ADRs end in `status: implemented` — ref doc IS deliverable. After
 Flow: `Clarify → Find Citings → Check Compliance → Surface Impact → Execute`
 
 1. **Clarify:** `AskUserQuestion` — add/modify/remove rule or clarify docs (ASSUMPTION_MODE: skip)
-2. **Find citings:** `c3x list` → ref entity → `relationships`. Depth: `c3x graph ref-{slug} --direction reverse`.
-3. **Check compliance:** `c3x lookup <file>` per code-map entry. Categorize: compliant / needs-update / breaking.
+2. **Find citings:** `c3 list` → ref entity → `relationships`. Depth: `c3 graph ref-{slug} --direction reverse`.
+3. **Check compliance:** `c3 lookup <file>` per code-map entry. Categorize: compliant / needs-update / breaking.
 4. **Surface impact:** `AskUserQuestion` — proceed/narrow/cancel (ASSUMPTION_MODE: skip)
 5. **Execute:** Update ref doc + create ADR. Non-compliant → TODO in ADR (no code changes).
 6. Code changes → route to change.
@@ -128,7 +128,7 @@ Flow: `Clarify → Find Citings → Check Compliance → Surface Impact → Exec
 ## List
 
 ```bash
-bash <skill-dir>/bin/c3x.sh list
+c3 list
 ```
 
 Filter `type: "ref"`. Show: id, title, goal, citing components.
@@ -146,12 +146,12 @@ Filter `type: "ref"`. Show: id, title, goal, citing components.
 ## Usage
 
 ```bash
-bash <skill-dir>/bin/c3x.sh list
+c3 list
 ```
 
-Find `id: "ref-{slug}"`, read `relationships`. `c3x read <id>` each citing doc.
+Find `id: "ref-{slug}"`, read `relationships`. `c3 read <id>` each citing doc.
 
-**Citation Graph:** `c3x graph ref-<slug> --format mermaid` → include as mermaid block.
+**Citation Graph:** `c3 graph ref-<slug> --format mermaid` → include as mermaid block.
 
 ```
 **ref-{slug} Usage**
@@ -160,7 +160,7 @@ Find `id: "ref-{slug}"`, read `relationships`. `c3x read <id>` each citing doc.
 - c3-101 (Auth Middleware) - JWT validation
 
 **Citation Graph:**
-(mermaid block from c3x graph)
+(mermaid block from c3 graph)
 
 **Pattern Summary:** {Key rules}
 ```

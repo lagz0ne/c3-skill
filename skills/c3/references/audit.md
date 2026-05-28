@@ -6,8 +6,8 @@ Three tiers: **structural** (CLI) → **inventory** (CLI) → **semantic** (reas
 
 ## Progress
 
-- [ ] Phase 0: Structural (`c3x check`)
-- [ ] Phase 1: Inventory (`c3x list`)
+- [ ] Phase 0: Structural (`c3 check`)
+- [ ] Phase 1: Inventory (`c3 list`)
 - [ ] Phase 2: Inventory vs Code
 - [ ] Phase 3: Component Categorization
 - [ ] Phase 4: Code Map Validation
@@ -24,18 +24,18 @@ Three tiers: **structural** (CLI) → **inventory** (CLI) → **semantic** (reas
 ## Phase 0: Structural
 
 ```bash
-bash <skill-dir>/bin/c3x.sh check
+c3 check
 ```
 Detects: broken links, orphans, dup IDs, missing parents. Overlaps Phases 2,4,7 — skip re-check.
 
 ## Phase 1: Inventory
 
 ```bash
-bash <skill-dir>/bin/c3x.sh list
+c3 list
 ```
 Source of truth for all subsequent phases. No manual Glob+Read of `.c3/`.
 
-**Topology Graphs:** Per container, run `c3x graph <container-id> --format mermaid` — include as mermaid blocks. Visual baseline for audit; subsequent phases reference these.
+**Topology Graphs:** Per container, run `c3 graph <container-id> --format mermaid` — include as mermaid blocks. Visual baseline for audit; subsequent phases reference these.
 
 ## Phase 2: Inventory vs Code
 
@@ -50,13 +50,13 @@ Wrong category → WARN.
 
 ## Phase 4: Code Map Validation
 
-Per Component: `c3x lookup <file>` per mapped path — verify resolution, load constraint chain.
+Per Component: `c3 lookup <file>` per mapped path — verify resolution, load constraint chain.
 - Symbol: grep definition, flag if missing
 - Pattern: glob, flag if zero matches
 - Path: check exists, flag if missing
 - Report: valid / stale / broken
 
-Coverage signal is emitted by `c3x check`. Low coverage → WARN. Formula: `mapped / (total - excluded)` — `_exclude` patterns don't penalize score. Suggest `_exclude` for test/config files, map remaining.
+Coverage signal is emitted by `c3 check`. Low coverage → WARN. Formula: `mapped / (total - excluded)` — `_exclude` patterns don't penalize score. Suggest `_exclude` for test/config files, map remaining.
 
 ## Phase 5: Diagram Accuracy
 
@@ -64,8 +64,8 @@ All diagram IDs → verify exist in inventory. Stale reference → FAIL.
 
 ## Phase 6: ADR Lifecycle (--include-adr only)
 
-ADRs = ephemeral work orders, hidden from default `c3x` ops.
-Only audit when explicitly requested or with `c3x check --include-adr`.
+ADRs = ephemeral work orders, hidden from default `c3` ops.
+Only audit when explicitly requested or with `c3 check --include-adr`.
 
 `status=accepted` + >30 days without `implemented` → WARN.
 
@@ -73,15 +73,15 @@ Only audit when explicitly requested or with `c3x check --include-adr`.
 
 - Ref: requires Choice + Why sections
 - Ref: cited by ≥1 component (orphan → WARN)
-- Citing component: ref entity exists in store (verify via `c3x list`)
+- Citing component: ref entity exists in store (verify via `c3 list`)
 - Rule: requires Rule + Golden Example sections
 - Rule: cited by ≥1 component (orphan → WARN)
-- Citing component: rule entity exists in store (verify via `c3x list`)
+- Citing component: rule entity exists in store (verify via `c3 list`)
 
 ## Phase 7b: Ref Compliance
 
 Per ref with `## How` containing golden patterns:
-1. Find citing components via `c3x list`
+1. Find citing components via `c3 list`
 2. Per citing component, spot-check 1-2 mapped files
 3. Compare code against `## How` pattern
 
@@ -98,11 +98,11 @@ Per ref with `## How` containing golden patterns:
 **Rule Compliance:** Per rule with `## Golden Example`:
 1. Load rule:
    ```bash
-   bash <skill-dir>/bin/c3x.sh read <rule-id>
+   c3 read <rule-id>
    ```
    Extract `## Rule`, `## Golden Example`, `## Not This`.
 2. Derive 1-3 YES/NO questions from `## Rule` + `## Golden Example` (e.g., "Does error return use CmdError struct?" / "Is slog used with component context?"). Can't derive → WARN: rule too vague.
-3. Find citing components via `c3x list`
+3. Find citing components via `c3 list`
 4. Per citing component, spot-check 1-2 mapped files
 5. Apply YES/NO questions to spot-checked code
 
@@ -162,8 +162,8 @@ Expected block:
 <!-- c3-generated: c3-201 -->
 # c3-201: Component Title
 
-Before modifying this code, run: c3x read c3-201
-Patterns: ref-error-handling, ref-logging (run: c3x read ref-error-handling)
+Before modifying this code, run: c3 read c3-201
+Patterns: ref-error-handling, ref-logging (run: c3 read ref-error-handling)
 <!-- end-c3-generated -->
 ```
 

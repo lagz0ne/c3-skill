@@ -7,8 +7,8 @@ Spawn parallel subagents via Task tool for complex work.
 ## Progress Checklist
 
 ```
-- [ ] Phase 1: `c3x schema adr` read and complete ADR body drafted to schema
-- [ ] Phase 1b: complete ADR created (`c3x add adr <slug> --file adr-body.md`)
+- [ ] Phase 1: `c3 schema adr` read and complete ADR body drafted to schema
+- [ ] Phase 1b: complete ADR created (`c3 add adr <slug> --file adr-body.md`)
 - [ ] Phase 2: topology loaded, impact analyzed, ADR body complete work order
 - [ ] Phase 2b: provision gate (implement or design-only?)
 - [ ] Phase 3: execute work breakdown
@@ -22,7 +22,7 @@ Spawn parallel subagents via Task tool for complex work.
 ## Phase 1: ADR Schema First (FIRST — non-negotiable)
 
 ```bash
-bash <skill-dir>/bin/c3x.sh schema adr
+c3 schema adr
 ```
 
 Read the schema BEFORE writing the ADR. Do not draft freehand first. The schema output is not just field names:
@@ -44,7 +44,7 @@ Minimum bar:
 Create ADR immediately once the full body exists:
 
 ```bash
-bash <skill-dir>/bin/c3x.sh add adr <slug> --file adr-body.md
+c3 add adr <slug> --file adr-body.md
 ```
 
 Slug = change intent (e.g., `add-rate-limiting`, `migrate-to-postgres`).
@@ -57,28 +57,28 @@ git diff <ref> > adr-notes.diff
 ## Phase 2: Understand + Fill ADR
 
 ```bash
-bash <skill-dir>/bin/c3x.sh list
+c3 list
 ```
 
 Clarify with user (ASSUMPTION_MODE: skip). Analyze:
 - Affected containers, components, refs
-- Per file mentioned/discovered: `c3x lookup <file>` — load constraint chain before reasoning
+- Per file mentioned/discovered: `c3 lookup <file>` — load constraint chain before reasoning
 - Lookup returns no mapping → uncharted territory, flag coverage gap
-- `c3x read` upward: component → container → context → cited refs
+- `c3 read` upward: component → container → context → cited refs
 - Risks
 
-ADR body must have enough detail for later agent to recover decision without chat history. Update `affects:` in frontmatter when entities known; otherwise rewrite full body via `c3x write <adr-id> --file adr-body.md` once context loaded.
+ADR body must have enough detail for later agent to recover decision without chat history. Update `affects:` in frontmatter when entities known; otherwise rewrite full body via `c3 write <adr-id> --file adr-body.md` once context loaded.
 
 CLI = source of truth for ADR structure and fill quality:
 
 ```bash
-bash <skill-dir>/bin/c3x.sh schema adr
-bash <skill-dir>/bin/c3x.sh read <adr-id> --full
+c3 schema adr
+c3 read <adr-id> --full
 ```
 
-Follow `c3x schema adr` sections and `help[]` hints literally. `c3x add adr` = all-or-nothing: no thin ADR + incremental fill later. If `c3x schema adr` says a section prevents a specific failure, fill that section to prevent exactly that failure. For validator/schema/command/ref/rule/derived-material changes, ADR must preserve underlay C3 changes: exact commands, validators, tests, help/hints, schemas, verification evidence. Rich sections (command tables, code fences, mermaid) go through `c3x write <adr-id> --section <name> --file <path>`.
+Follow `c3 schema adr` sections and `help[]` hints literally. `c3 add adr` = all-or-nothing: no thin ADR + incremental fill later. If `c3 schema adr` says a section prevents a specific failure, fill that section to prevent exactly that failure. For validator/schema/command/ref/rule/derived-material changes, ADR must preserve underlay C3 changes: exact commands, validators, tests, help/hints, schemas, verification evidence. Rich sections (command tables, code fences, mermaid) go through `c3 write <adr-id> --section <name> --file <path>`.
 
-**Visual Impact:** Run `c3x graph <primary-affected-container-or-component> --format mermaid` — include in approval presentation. Multiple containers → graph each separately.
+**Visual Impact:** Run `c3 graph <primary-affected-container-or-component> --format mermaid` — include in approval presentation. Multiple containers → graph each separately.
 
 Present for approval (ASSUMPTION_MODE: mark `[ASSUMED]`).
 
@@ -94,7 +94,7 @@ To implement provisioned later: invoke change, pick up ADR + docs, resume Phase 
 
 ## Phase 3: Execute
 
-Scaffold: `add` patterns in onboard.md §1.2-1.4 (body via `--file <path>` for tables/mermaid/code; stdin for plain prose). Edit existing: `c3x write <id> --section <name> --file body.md` for rich content, `echo "..." | c3x write <id> --section <name>` for short text, `c3x set <id> <field> <value>` for frontmatter. Delete: `c3x delete <id> [--dry-run]`.
+Scaffold: `add` patterns in onboard.md §1.2-1.4 (body via `--file <path>` for tables/mermaid/code; stdin for plain prose). Edit existing: `c3 write <id> --section <name> --file body.md` for rich content, `echo "..." | c3 write <id> --section <name>` for short text, `c3 set <id> <field> <value>` for frontmatter. Delete: `c3 delete <id> [--dry-run]`.
 
 **File context gate (SKILL.md §File Context) — MANDATORY before touching any file.**
 
@@ -127,7 +127,7 @@ Rules:
 
 Per file touched in Phase 3:
 ```bash
-bash <skill-dir>/bin/c3x.sh lookup <file-path>
+c3 lookup <file-path>
 ```
 
 Per returned ref, check compliance by comparison mode:
@@ -161,7 +161,7 @@ Rules:
 ## Phase 4: Audit
 
 ```bash
-bash <skill-dir>/bin/c3x.sh check
+c3 check
 ```
 
 - Docs match code
@@ -187,6 +187,6 @@ bash <skill-dir>/bin/c3x.sh check
 Status: `proposed → accepted → (provisioned | implemented)`. ADRs hidden by default; `--include-adr` to inspect.
 
 **Enforcement:**
-- `c3x add adr` always creates with `status: proposed`. Cannot create as `implemented`.
-- `c3x set <adr-id> status implemented` is BLOCKED if current status is `proposed`. Transition `proposed → accepted → implemented` (or via `provisioned`).
-- `c3x check --include-adr` skips terminal-state ADRs (`implemented`, `provisioned`) — they are historical, content frozen. Use `c3x check --only <adr-id>` to force re-validation of a specific terminal ADR.
+- `c3 add adr` always creates with `status: proposed`. Cannot create as `implemented`.
+- `c3 set <adr-id> status implemented` is BLOCKED if current status is `proposed`. Transition `proposed → accepted → implemented` (or via `provisioned`).
+- `c3 check --include-adr` skips terminal-state ADRs (`implemented`, `provisioned`) — they are historical, content frozen. Use `c3 check --only <adr-id>` to force re-validation of a specific terminal ADR.

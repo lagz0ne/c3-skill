@@ -27,7 +27,7 @@ Flow: `Scaffold → Discover → Extract Golden Pattern → Confirm → Fill Con
 ### Step 1: Scaffold
 
 ```bash
-bash <skill-dir>/bin/c3x.sh add rule <slug>
+c3 add rule <slug>
 ```
 
 ### Step 2: Discover (2-5 Grep calls)
@@ -58,7 +58,7 @@ Write 1-3 YES/NO compliance questions from `## Rule` + `## Golden Example`. Can'
 
 ### Step 6: Fill Content
 
-**First:** `c3x schema rule` — the output leads with `REJECT IF:` bullets that ARE the rejection contract. Per-section `fill:` and `rejected when:` lines apply the same gate at section level. Draft to the contract, do not freehand.
+**First:** `c3 schema rule` — the output leads with `REJECT IF:` bullets that ARE the rejection contract. Per-section `fill:` and `rejected when:` lines apply the same gate at section level. Draft to the contract, do not freehand.
 
 - `## Rule` — one-line statement of what must be true
 - `## Golden Example` — canonical code (code blocks, do/don't pairs)
@@ -72,8 +72,8 @@ Find components using pattern.
 ### Step 8: Update Citing Components
 
 Per component using pattern:
-1. `c3x lookup <file>` per code-map entry
-2. `c3x read <component-id>`
+1. `c3 lookup <file>` per code-map entry
+2. `c3 read <component-id>`
 3. Add to `## Related Rules`:
 
 ```markdown
@@ -91,10 +91,10 @@ Only modify `## Related Rules`. Other changes → route to change.
 ADRs cannot be created as `implemented` and cannot transition `proposed → implemented` directly. Two-step:
 
 ```bash
-bash <skill-dir>/bin/c3x.sh add adr rule-{slug}-adoption < adr-body.md
-bash <skill-dir>/bin/c3x.sh set adr-YYYYMMDD-rule-{slug}-adoption status accepted
+c3 add adr rule-{slug}-adoption < adr-body.md
+c3 set adr-YYYYMMDD-rule-{slug}-adoption status accepted
 # rule doc is wired and the deliverable is in place
-bash <skill-dir>/bin/c3x.sh set adr-YYYYMMDD-rule-{slug}-adoption status implemented
+c3 set adr-YYYYMMDD-rule-{slug}-adoption status implemented
 ```
 
 Final state:
@@ -106,7 +106,7 @@ status: implemented
 ---
 ```
 
-Rule adoption ADRs end in `status: implemented` — rule doc IS deliverable. After implemented, the ADR becomes historical and is exempt from `c3x check` validation.
+Rule adoption ADRs end in `status: implemented` — rule doc IS deliverable. After implemented, the ADR becomes historical and is exempt from `c3 check` validation.
 
 ---
 
@@ -115,8 +115,8 @@ Rule adoption ADRs end in `status: implemented` — rule doc IS deliverable. Aft
 Flow: `Clarify → Find Citings → Check Compliance → Surface Impact → Execute`
 
 1. **Clarify:** `AskUserQuestion` — add/modify/remove rule or clarify docs (ASSUMPTION_MODE: skip)
-2. **Find citings:** `c3x list` → rule entity → `relationships`. Depth: `c3x graph rule-{slug} --direction reverse`.
-3. **Check compliance:** `c3x lookup <file>` per code-map entry. Compare against `## Golden Example` + `## Not This`. Categorize: compliant / needs-update / breaking.
+2. **Find citings:** `c3 list` → rule entity → `relationships`. Depth: `c3 graph rule-{slug} --direction reverse`.
+3. **Check compliance:** `c3 lookup <file>` per code-map entry. Compare against `## Golden Example` + `## Not This`. Categorize: compliant / needs-update / breaking.
 4. **Surface impact:** `AskUserQuestion` — proceed/narrow/cancel (ASSUMPTION_MODE: skip)
 5. **Execute:** Update rule doc + create ADR. Non-compliant → TODO in ADR (no code changes).
 6. Code changes → route to change.
@@ -126,7 +126,7 @@ Flow: `Clarify → Find Citings → Check Compliance → Surface Impact → Exec
 ## List
 
 ```bash
-bash <skill-dir>/bin/c3x.sh list
+c3 list
 ```
 
 Filter `type: "rule"`. Show: id, title, goal, citing components.
@@ -136,12 +136,12 @@ Filter `type: "rule"`. Show: id, title, goal, citing components.
 ## Usage
 
 ```bash
-bash <skill-dir>/bin/c3x.sh list
+c3 list
 ```
 
-Find `id: "rule-{slug}"`, read `relationships`. `c3x read <id>` each citing doc.
+Find `id: "rule-{slug}"`, read `relationships`. `c3 read <id>` each citing doc.
 
-**Citation Graph:** `c3x graph rule-<slug> --format mermaid` → include as mermaid block.
+**Citation Graph:** `c3 graph rule-<slug> --format mermaid` → include as mermaid block.
 
 ---
 
@@ -154,10 +154,10 @@ Use when adopting rules in project with existing refs, or auditing refs for rule
 ### Step 1: Scan existing refs
 
 ```bash
-bash <skill-dir>/bin/c3x.sh list
+c3 list
 ```
 
-Filter `type: "ref"`. `c3x read <ref-id>` each.
+Filter `type: "ref"`. `c3 read <ref-id>` each.
 
 ### Step 2: Apply Separation Test
 
@@ -175,7 +175,7 @@ Present classification to user (ASSUMPTION_MODE: mark `[ASSUMED]`).
 
 Ref entirely about enforcement, not rationale.
 
-1. `c3x add rule <slug>` — scaffold
+1. `c3 add rule <slug>` — scaffold
 2. Copy content, adapting sections:
    - `## Goal` → keep
    - `## How` → `## Golden Example`
@@ -183,8 +183,8 @@ Ref entirely about enforcement, not rationale.
    - `## Not This` → keep
    - `## Why` → `origin:` if parent ref exists, else drop
 3. Set `origin: [ref-{old-slug}]` if old ref kept for rationale
-4. `c3x wire <component> rule-{slug}` per citer
-5. If deleting ref: `c3x wire <component> ref-{slug} --remove` per citer, then delete
+4. `c3 wire <component> rule-{slug}` per citer
+5. If deleting ref: `c3 wire <component> ref-{slug} --remove` per citer, then delete
 6. Move ref's file patterns to rule in code-map
 
 ### Step 3b: Split (dual-nature)
@@ -198,7 +198,7 @@ Ref has both rationale AND enforcement.
    - Keep `## Not This` if about rejected alternatives (not code anti-patterns)
 
 2. **Create rule** — extract enforcement:
-   - `c3x add rule <slug>`
+   - `c3 add rule <slug>`
    - `## Rule` — one-line from `## How`
    - `## Golden Example` — code patterns from `## How`
    - `## Not This` — code anti-patterns (not rejected alternatives)
@@ -206,7 +206,7 @@ Ref has both rationale AND enforcement.
 
 3. **Rewire citations:**
    - Need rationale → keep `ref-{slug}` in `uses:`
-   - Need enforcement → add `rule-{slug}` via `c3x wire`
+   - Need enforcement → add `rule-{slug}` via `c3 wire`
    - Most need both → keep ref, add rule
 
 4. **Update code-map:**
@@ -231,8 +231,8 @@ Body: list what was converted, split, or kept.
 ### Step 5: Verify
 
 ```bash
-bash <skill-dir>/bin/c3x.sh check
-bash <skill-dir>/bin/c3x.sh list
+c3 check
+c3 list
 ```
 
 Confirm: no orphan refs, all rules have golden examples, all citations intact.
@@ -248,7 +248,7 @@ Adopt marketplace rule into project `.c3/rules/` (if using marketplace plugin pa
 ### Step 1: Preview
 
 ```bash
-bash <skill-dir>/bin/c3x.sh marketplace show <rule-id>
+c3 marketplace show <rule-id>
 ```
 
 Display full rule content. If `--source` needed, `AskUserQuestion` (ASSUMPTION_MODE: pick first match).
@@ -256,7 +256,7 @@ Display full rule content. If `--source` needed, `AskUserQuestion` (ASSUMPTION_M
 ### Step 2: Discover Overlap (2-5 Grep calls)
 
 Search project for patterns overlapping marketplace rule:
-- Existing rules/refs covering similar ground (`c3x list`; for body text use targeted `c3x read` output)
+- Existing rules/refs covering similar ground (`c3 list`; for body text use targeted `c3 read` output)
 - Code matching `## Golden Example`
 - Anti-patterns matching `## Not This`
 
@@ -278,18 +278,18 @@ Required sections (Rule, Golden Example) cannot be skipped.
 Write the adapted body sections to files first (Golden Example and Not This contain code fences → use `--file`), then apply:
 
 ```bash
-bash <skill-dir>/bin/c3x.sh add rule <slug>
-bash <skill-dir>/bin/c3x.sh set rule-<slug> goal "<adapted goal>"
-echo "<adapted rule statement>" | bash <skill-dir>/bin/c3x.sh write rule-<slug> --section "Rule"
-bash <skill-dir>/bin/c3x.sh write rule-<slug> --section "Golden Example" --file golden.md
-bash <skill-dir>/bin/c3x.sh write rule-<slug> --section "Not This" --file not-this.md
+c3 add rule <slug>
+c3 set rule-<slug> goal "<adapted goal>"
+echo "<adapted rule statement>" | c3 write rule-<slug> --section "Rule"
+c3 write rule-<slug> --section "Golden Example" --file golden.md
+c3 write rule-<slug> --section "Not This" --file not-this.md
 ```
 
 ### Step 5: Wire
 
 Per component from overlap search:
 ```bash
-bash <skill-dir>/bin/c3x.sh wire <component-id> rule-<slug>
+c3 wire <component-id> rule-<slug>
 ```
 
 ### Step 6: Adoption ADR
@@ -297,13 +297,13 @@ bash <skill-dir>/bin/c3x.sh wire <component-id> rule-<slug>
 ADRs cannot be created as `implemented` and cannot transition `proposed → implemented` directly. Two-step:
 
 ```bash
-bash <skill-dir>/bin/c3x.sh add adr adopt-rule-<slug> < adr-body.md
-bash <skill-dir>/bin/c3x.sh set adr-YYYYMMDD-adopt-rule-<slug> status accepted
+c3 add adr adopt-rule-<slug> < adr-body.md
+c3 set adr-YYYYMMDD-adopt-rule-<slug> status accepted
 # rule wired and adapted from marketplace
-bash <skill-dir>/bin/c3x.sh set adr-YYYYMMDD-adopt-rule-<slug> status implemented
+c3 set adr-YYYYMMDD-adopt-rule-<slug> status implemented
 ```
 
-Body with rationale + adaptation notes → `c3x write adr-YYYYMMDD-adopt-rule-<slug> --file body.md`.
+Body with rationale + adaptation notes → `c3 write adr-YYYYMMDD-adopt-rule-<slug> --file body.md`.
 
 Body: note source marketplace and adaptations.
 

@@ -129,6 +129,32 @@ func TestRunCheck_IncludeADRSkipsProvisioned(t *testing.T) {
 	}
 }
 
+func TestRunCheck_IncludeADRSkipsSuperseded(t *testing.T) {
+	s := createRichDBFixture(t)
+	adr, _ := s.GetEntity("adr-20260226-use-go")
+	adr.Status = "superseded"
+	if err := s.UpdateEntity(adr); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	opts := CheckOptions{Store: s, JSON: true, IncludeADR: true}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	var result CheckResult
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
+	}
+
+	for _, issue := range result.Issues {
+		if strings.Contains(issue.Entity, "adr-") {
+			t.Errorf("--include-adr should skip superseded ADRs (terminal), but found issue for: %s", issue.Entity)
+		}
+	}
+}
+
 func TestRunCheck_OnlyOverridesTerminalSkip(t *testing.T) {
 	s := createRichDBFixture(t)
 	adr, _ := s.GetEntity("adr-20260226-use-go")
@@ -639,6 +665,36 @@ func TestRunCheck_RuleFilterNoCiters(t *testing.T) {
 
 func TestRunCheck_AdrWarnsWhenAffectedTopologyOmitsRelatedRefsAndRules(t *testing.T) {
 	s := createRichDBFixture(t)
+	writeADRLinkReviewFixture(t, s, "Affected topology should surface compliance refs and rules.", "Require explicit ADR linkage rows.")
+
+	var buf bytes.Buffer
+	err := RunCheckV2(CheckOptions{Store: s, IncludeADR: true, Only: []string{"adr-20260424-adr-link-review"}}, &buf)
+	if err != nil {
+		t.Fatalf("RunCheckV2 should warn, not fail: %v", err)
+	}
+	out := buf.String()
+	requireAll(t, out,
+		"adr-20260424-adr-link-review: ADR missing compliance ref ref-error-handling",
+		"adr-20260424-adr-link-review: ADR missing compliance rule rule-logging",
+	)
+}
+
+func TestRunCheck_IncludeADRBroadDoesNotDeriveMissingCompliance(t *testing.T) {
+	s := createRichDBFixture(t)
+	writeADRLinkReviewFixture(t, s, "Affected topology should surface authored compliance refs and rules.", "Require explicitly authored ADR linkage rows to reference real entities.")
+
+	var buf bytes.Buffer
+	err := RunCheckV2(CheckOptions{Store: s, IncludeADR: true}, &buf)
+	if err != nil {
+		t.Fatalf("RunCheckV2 should warn, not fail: %v", err)
+	}
+	if strings.Contains(buf.String(), "ADR missing compliance") {
+		t.Fatalf("broad --include-adr should not derive missing compliance warnings, got:\n%s", buf.String())
+	}
+}
+
+func writeADRLinkReviewFixture(t *testing.T, s *store.Store, contextText string, decisionText string) {
+	t.Helper()
 	if err := s.InsertEntity(&store.Entity{
 		ID: "rule-logging", Type: "rule", Title: "Structured Logging", Slug: "logging",
 		Status: "active", Metadata: "{}",
@@ -659,8 +715,8 @@ func TestRunCheck_AdrWarnsWhenAffectedTopologyOmitsRelatedRefsAndRules(t *testin
 	}
 	body := "# ADR Link Review\n\n" +
 		"## Goal\n\nReview ADR related linkage.\n\n" +
-		"## Context\n\nAffected topology should surface compliance refs and rules.\n\n" +
-		"## Decision\n\nRequire explicit ADR linkage rows.\n\n" +
+		"## Context\n\n" + contextText + "\n\n" +
+		"## Decision\n\n" + decisionText + "\n\n" +
 		"## Affected Topology\n\n" +
 		"| Entity | Type | Why affected | Governance review |\n|--------|------|--------------|-------------------|\n" +
 		"| c3-1 | container | API changes are in scope. | Review inherited and cited governance. |\n\n" +
@@ -675,31 +731,20 @@ func TestRunCheck_AdrWarnsWhenAffectedTopologyOmitsRelatedRefsAndRules(t *testin
 		"| cli | Add ADR linkage validation. | go test. |\n\n" +
 		"## Underlay C3 Changes\n\n" +
 		"| Underlay area | Exact C3 change | Verification evidence |\n|---------------|-----------------|-----------------------|\n" +
-		"| cli/cmd/check_enhanced.go | Warn on missing compliance refs/rules. | go test. |\n\n" +
+		"| cli/cmd/check_enhanced.go | Validate ADR linkage rows. | go test. |\n\n" +
 		"## Enforcement Surfaces\n\n" +
 		"| Surface | Behavior | Evidence |\n|---------|----------|----------|\n" +
-		"| c3x check | Warns on missing ADR linkage coverage. | go test. |\n\n" +
+		"| c3x check | Validates ADR linkage coverage. | go test. |\n\n" +
 		"## Alternatives Considered\n\n" +
 		"| Alternative | Rejected because |\n|-------------|------------------|\n" +
 		"| Skip linkage review. | ADRs would hide relevant governance. |\n\n" +
 		"## Risks\n\n" +
 		"| Risk | Mitigation | Verification |\n|------|------------|--------------|\n" +
-		"| Missing refs or rules | Check derives expected links from affected topology. | go test. |\n\n" +
+		"| Missing refs or rules | Check derives expected links when strict ADR validation is requested. | go test. |\n\n" +
 		"## Verification\n\n" +
 		"| Check | Result |\n|-------|--------|\n" +
 		"| go test | Pending. |\n"
 	if err := content.WriteEntity(s, "adr-20260424-adr-link-review", body); err != nil {
 		t.Fatal(err)
 	}
-
-	var buf bytes.Buffer
-	err := RunCheckV2(CheckOptions{Store: s, IncludeADR: true}, &buf)
-	if err != nil {
-		t.Fatalf("RunCheckV2 should warn, not fail: %v", err)
-	}
-	out := buf.String()
-	requireAll(t, out,
-		"adr-20260424-adr-link-review: ADR missing compliance ref ref-error-handling",
-		"adr-20260424-adr-link-review: ADR missing compliance rule rule-logging",
-	)
 }

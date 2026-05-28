@@ -10,11 +10,15 @@ description: >
 
 # C3
 
-CLI: `C3X_MODE=agent bash <skill-dir>/bin/c3x.sh <command> [args]`
+CLI binary: packaged with this skill at `<skill-dir>/bin/c3x.sh`.
 
-- **Enforce:** `c3x` = single source. Skill = router: classify -> run c3x -> follow output. No duplicate CLI checklists.
+- **Agent command handle:** create a session-local alias/function once, then use it for every command:
+  ```bash
+  c3() { C3X_MODE=agent bash <skill-dir>/bin/c3x.sh "$@"; }
+  ```
+- **Enforce:** packaged `c3x.sh` = single source. Skill = router: classify -> run `c3` -> follow output. No duplicate CLI checklists.
 - **Agent mode:** `C3X_MODE=agent` -> TOON output (~40% fewer tokens). Commands append `help[]` hints.
-- **Entry point:** `c3x list` for topology + coverage, `c3x check` for validation. `--help` for help.
+- **Entry point:** `c3 list` for topology + coverage, `c3 check` for validation. `--help` for help.
 
 | Command | Purpose |
 |---------|---------|
@@ -32,7 +36,7 @@ CLI: `C3X_MODE=agent bash <skill-dir>/bin/c3x.sh <command> [args]`
 
 Types for `add`: `container`, `component`, `ref`, `rule`, `adr`, `recipe`
 
-**Authoring:** body with mermaid, code fences, or tables -> use `--file <path>`, not inline strings. Single-sentence text edits -> `echo "..." | c3x write <id> --section <name>`. Whole-body rewrite -> `c3x write <id> --file body.md`. Frontmatter fields -> `c3x set <id> <field> <value>`.
+**Authoring:** body with mermaid, code fences, or tables -> use `--file <path>`, not inline strings. Single-sentence text edits -> `echo "..." | c3 write <id> --section <name>`. Whole-body rewrite -> `c3 write <id> --file body.md`. Frontmatter fields -> `c3 set <id> <field> <value>`.
 
 ---
 
@@ -58,12 +62,12 @@ Types for `add`: `container`, `component`, `ref`, `rule`, `adr`, `recipe`
 
 ## Precondition
 
-**Read-only fast path:** for file-owner, "where is", summarize constraints, or smallest-next-action queries that do not mutate docs/code, start with the narrowest `c3x lookup <file>` or `c3x read <id> --section <name>`. Skip `list` and `check` unless lookup misses, drift is suspected, topology-wide inventory is required, or the user explicitly asks for validation/audit. Prefer section reads. Skip graph unless relationship/dependent impact is part of the answer.
+**Read-only fast path:** for file-owner, "where is", summarize constraints, or smallest-next-action queries that do not mutate docs/code, start with the narrowest `c3 lookup <file>` or `c3 read <id> --section <name>`. Skip `list` and `check` unless lookup misses, drift is suspected, topology-wide inventory is required, or the user explicitly asks for validation/audit. Prefer section reads. Skip graph unless relationship/dependent impact is part of the answer.
 
 Before every op except onboard:
 ```bash
-bash <skill-dir>/bin/c3x.sh list
-bash <skill-dir>/bin/c3x.sh check
+c3 list
+c3 check
 ```
 Missing `.c3/` -> **onboard**. Follow `help[]` hints in output.
 
@@ -71,7 +75,7 @@ Missing `.c3/` -> **onboard**. Follow `help[]` hints in output.
 
 C3 context loaded. Before touching anything, ask C3 first:
 
-`c3x lookup <file-or-glob>` -> component docs, refs, constraints. They supersede assumptions.
+`c3 lookup <file-or-glob>` -> component docs, refs, constraints. They supersede assumptions.
 
 Context shifts mid-task -> look up again. Topology = source of truth.
 
@@ -88,7 +92,7 @@ First `AskUserQuestion` denial -> `ASSUMPTION_MODE = true` for session.
 
 **HARD RULE -- .c3/ is CLI-only. NEVER Read/Glob/Edit/Write `.c3/` files.**
 
-`.c3/c3.db` = disposable cache, not submitted state. Raw file access bypasses CLI contract -> stale/misleading. ALL access via c3x:
+`.c3/c3.db` = disposable cache, not submitted state. Raw file access bypasses CLI contract -> stale/misleading. ALL access via the `c3` command handle:
 
 | Op | Commands |
 |----|----------|
@@ -98,19 +102,19 @@ First `AskUserQuestion` denial -> `ASSUMPTION_MODE = true` for session.
 | Delete | `delete` |
 | Validate | `check`, `schema` |
 
-Missing c3x operation -> STOP, tell user. No file-tool workarounds.
+Missing packaged CLI operation -> STOP, tell user. No file-tool workarounds.
 
-**Search strategy:** code->entity via `c3x lookup <file-or-glob>`; topology via `c3x list`; doc bodies via targeted `c3x read <id> --section <name>` or `c3x read <id> --full`.
+**Search strategy:** code->entity via `c3 lookup <file-or-glob>`; topology via `c3 list`; doc bodies via targeted `c3 read <id> --section <name>` or `c3 read <id> --full`.
 
-**`c3x check` after every mutation** (`add`, `write`, `set`, `wire`, `delete`). Errors = blockers.
+**`c3 check` after every mutation** (`add`, `write`, `set`, `wire`, `delete`). Errors = blockers.
 
 **ADR-first for changes:**
-Every **change** starts `c3x add adr <slug>` before implementation.
+Every **change** starts `c3 add adr <slug>` before implementation.
 (Exception: **ref-add** creates ADR at completion -- `references/ref.md`.)
-ADR = work order. Start with `c3x schema adr` BEFORE drafting any ADR body. The schema output leads with a **REJECT IF** block — read it first; the bullets ARE the rejection contract. Per-section `fill:` and `rejected when:` lines apply the same gate at section level. Same shape for `c3x schema ref` and `c3x schema rule` — REJECT IF first, fill the body to the contract, never draft freehand and reconcile later. Use `c3x read <adr> --full` and `help[]` to verify the body still matches the contract. ADR creation is all-or-nothing; thin sections fail at creation, `N.A - <reason>` for inapplicable rows. `list`/`check` exclude ADRs by default; `--include-adr` only when working on specific ADR. **Terminal-state ADRs (`status: implemented` and `status: provisioned`) are exempt from `c3x check` validation** — they are historical, content frozen. ADRs cannot be created as `implemented`; transition `proposed → accepted → implemented` (direct `proposed → implemented` is blocked). ADR content historical -- verify against current docs.
+ADR = work order. Start with `c3 schema adr` BEFORE drafting any ADR body. The schema output leads with a **REJECT IF** block — read it first; the bullets ARE the rejection contract. Per-section `fill:` and `rejected when:` lines apply the same gate at section level. Same shape for `c3 schema ref` and `c3 schema rule` — REJECT IF first, fill the body to the contract, never draft freehand and reconcile later. Use `c3 read <adr> --full` and `help[]` to verify the body still matches the contract. ADR creation is all-or-nothing; thin sections fail at creation, `N.A - <reason>` for inapplicable rows. `list`/`check` exclude ADRs by default; `--include-adr` only when working on specific ADR. **Terminal-state ADRs (`status: implemented` and `status: provisioned`) are exempt from `c3 check` validation** — they are historical, content frozen. ADRs cannot be created as `implemented`; transition `proposed → accepted → implemented` (direct `proposed → implemented` is blocked). ADR content historical -- verify against current docs.
 
 **Stop if:**
-- No ADR for change -> `c3x add adr <slug>` NOW
+- No ADR for change -> `c3 add adr <slug>` NOW
 - Guessing intent -> `AskUserQuestion` (skip if ASSUMPTION_MODE)
 - Jumping to component -> start Context down
 - Updating docs without code check
@@ -119,28 +123,28 @@ ADR = work order. Start with `c3x schema adr` BEFORE drafting any ADR body. The 
 
 **1. Lookup:**
 ```bash
-bash <skill-dir>/bin/c3x.sh lookup <file-path>
-bash <skill-dir>/bin/c3x.sh lookup 'src/auth/**'
+c3 lookup <file-path>
+c3 lookup 'src/auth/**'
 ```
 Run when any file path surfaces. No match = uncharted.
 
 **2. Load rules:** For every `rule-*` from lookup:
 ```bash
-bash <skill-dir>/bin/c3x.sh read <rule-id>
+c3 read <rule-id>
 ```
 Extract `## Rule`, `## Golden Example`, `## Not This`. Code MUST match golden pattern. Deviations need Override or new ADR.
 
 **3. Parent context:** Read upward first:
 ```bash
-bash <skill-dir>/bin/c3x.sh read <parent-container-id>
-bash <skill-dir>/bin/c3x.sh read <component-id>
+c3 read <parent-container-id>
+c3 read <component-id>
 ```
 Parent responsibilities + membership = integration contract.
 
 **4. Graph context:**
 ```bash
-bash <skill-dir>/bin/c3x.sh graph <parent-container-id> --depth 1
-bash <skill-dir>/bin/c3x.sh graph <component-id> --depth 1
+c3 graph <parent-container-id> --depth 1
+c3 graph <component-id> --depth 1
 ```
 Change affects interface -> check consumers first.
 
@@ -154,7 +158,7 @@ Change affects interface -> check consumers first.
 
 Include mermaid when relationships matter:
 ```bash
-bash <skill-dir>/bin/c3x.sh graph <entity-id> --format mermaid
+c3 graph <entity-id> --format mermaid
 ```
 Root selection > depth:
 - **container**: components + refs (query, audit, onboard)
@@ -186,15 +190,15 @@ No `.c3/` or re-onboard. Scaffold -> discovery -> inject CLAUDE.md -> show capab
 `references/onboard.md`
 
 ### query
-`c3x list` for topology, `c3x lookup <file-or-glob>` for code->entity, `c3x graph <id> --direction reverse` for dependents. For body text, use targeted `c3x read` output.
+`c3 list` for topology, `c3 lookup <file-or-glob>` for code->entity, `c3 graph <id> --direction reverse` for dependents. For body text, use targeted `c3 read` output.
 `references/query.md`
 
 ### audit
-`c3x check` -> `c3x list` -> semantic phases -> PASS/WARN/FAIL table.
+`c3 check` -> `c3 list` -> semantic phases -> PASS/WARN/FAIL table.
 `references/audit.md`
 
 ### change
-ADR first -> `c3x list` -> affected entities -> `c3x lookup` files -> fill ADR -> approve -> execute -> `c3x check`. Provision gate: implement or `status: provisioned`.
+ADR first -> `c3 list` -> affected entities -> `c3 lookup` files -> fill ADR -> approve -> execute -> `c3 check`. Provision gate: implement or `status: provisioned`.
 `references/change.md`
 
 ### ref
@@ -206,5 +210,5 @@ Modes: Add / Update / List / Usage.
 `references/rule.md`
 
 ### sweep
-`c3x graph <id> --direction reverse` -> transitive deps -> parallel assessment -> synthesize. Advisory only.
+`c3 graph <id> --direction reverse` -> transitive deps -> parallel assessment -> synthesize. Advisory only.
 `references/sweep.md`

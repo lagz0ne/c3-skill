@@ -19,7 +19,7 @@ Spawn subagents via Task tool for parallel per-entity assessment.
 ## Step 1: Topology
 
 ```bash
-bash <skill-dir>/bin/c3x.sh list
+c3 list
 ```
 
 ## Step 2: Affected Entities
@@ -32,18 +32,18 @@ From proposed change, identify:
 
 Subagents for parallelism when multiple containers affected.
 
-**Container:** `c3x read <container-id>` → change affect responsibilities? → identify affected components.
+**Container:** `c3 read <container-id>` → change affect responsibilities? → identify affected components.
 
 **Component:**
-1. `c3x read <component-id>`
-2. Per code-map file: `c3x lookup <file>` — loads constraint chain before inspecting code
+1. `c3 read <component-id>`
+2. Per code-map file: `c3 lookup <file>` — loads constraint chain before inspecting code
 3. Check code against constraints
 4. Change modify behavior, API, dependencies?
 5. Check applicable refs. Identify downstream dependents.
 
-**Ref:** `c3x read <ref-id>` → proposed change comply or violate? → note severity + override requirements.
+**Ref:** `c3 read <ref-id>` → proposed change comply or violate? → note severity + override requirements.
 
-**Rule:** `c3x read <rule-id>` → proposed change violate golden pattern? Note severity + remediation.
+**Rule:** `c3 read <rule-id>` → proposed change violate golden pattern? Note severity + remediation.
 
 ## Step 4: Constraint Chain
 
@@ -54,7 +54,7 @@ Flag any proposed violation.
 
 ## Step 5: Synthesize
 
-**Impact Graph:** Include `c3x graph <target-entity> --direction reverse --format mermaid` as mermaid code block atop report (reverse direction = who depends on the changed entity). Graph from most specific affected entity (component > container). For ref/rule impact, graph ref/rule itself to show all citers.
+**Impact Graph:** Include `c3 graph <target-entity> --direction reverse --format mermaid` as mermaid code block atop report (reverse direction = who depends on the changed entity). Graph from most specific affected entity (component > container). For ref/rule impact, graph ref/rule itself to show all citers.
 
 ```
 **C3 Impact Assessment**

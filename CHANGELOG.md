@@ -5,6 +5,13 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [9.9.1] - 2026-05-07
+
+### Changed
+
+- **Agent C3 command handle uses the packaged skill binary** — skill and operation workflow docs now tell agents to create a session-local `c3` function backed by `<skill-dir>/bin/c3x.sh`, then use `c3 ...` commands. This preserves offline/self-contained skill operation while keeping prompts shorter.
+- **Query workflow stays CLI-only for `.c3/` docs** — removed the stale instruction to grep `.c3/` directly; doc body inspection now routes through `c3 list` plus targeted `c3 read`.
+
 ## [9.9.0] - 2026-05-05
 
 ### Added

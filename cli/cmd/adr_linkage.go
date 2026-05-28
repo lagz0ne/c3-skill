@@ -268,5 +268,5 @@ func appendUniqueString(values []string, value string) []string {
 // isADRTerminal reports whether an ADR status is a terminal (historical) state.
 // Terminal-state ADRs are exempt from check validation; their content is frozen.
 func isADRTerminal(status string) bool {
-	return status == "implemented" || status == "provisioned"
+	return status == "implemented" || status == "provisioned" || status == "superseded"
 }

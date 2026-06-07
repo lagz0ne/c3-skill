@@ -33,6 +33,10 @@ func RunAdd(entityType, slug string, s *store.Store, container string, feature b
 
 // RunAddDryRun validates entity content without creating the entity.
 func RunAddDryRun(entityType, slug string, s *store.Store, container string, feature bool, body io.Reader, w io.Writer) error {
+	return RunAddDryRunWithTemplate(entityType, slug, s, container, feature, "", "", body, w)
+}
+
+func RunAddDryRunWithTemplate(entityType, slug string, s *store.Store, container string, feature bool, templateID, c3Dir string, body io.Reader, w io.Writer) error {
 	if entityType == "" || slug == "" {
 		return fmt.Errorf("error: usage: c3x add <type> <slug> < body.md\nhint: types: container, component, ref, rule, adr, recipe")
 	}
@@ -43,12 +47,16 @@ func RunAddDryRun(entityType, slug string, s *store.Store, container string, fea
 	if err != nil {
 		return err
 	}
+	def, err := resolveDefinitionForAdd(entityType, templateID, c3Dir)
+	if err != nil {
+		return err
+	}
 	if _, err := buildEntity(entityType, slug, s, container, feature); err != nil {
 		return err
 	}
-	issues := validateBodyContent(bodyContent, entityType)
+	issues := validateBodyContentWithDefinition(bodyContent, entityType, def.Sections)
 	if entityType == "adr" {
-		issues = append(issues, validateADRCreationBody(bodyContent)...)
+		issues = append(issues, validateADRCreationBody(bodyContent, def)...)
 		issues = append(issues, validateADRAuthoredCoverage(s, bodyContent, "error")...)
 	}
 	if len(issues) > 0 {
@@ -60,6 +68,10 @@ func RunAddDryRun(entityType, slug string, s *store.Store, container string, fea
 
 // RunAddFormatted creates a new C3 entity and writes either human or structured output.
 func RunAddFormatted(entityType, slug string, s *store.Store, container string, feature bool, body io.Reader, w io.Writer, format OutputFormat) error {
+	return RunAddFormattedWithTemplate(entityType, slug, s, container, feature, "", "", body, w, format)
+}
+
+func RunAddFormattedWithTemplate(entityType, slug string, s *store.Store, container string, feature bool, templateID, c3Dir string, body io.Reader, w io.Writer, format OutputFormat) error {
 	if entityType == "" || slug == "" {
 		return fmt.Errorf("error: usage: c3x add <type> <slug> < body.md\nhint: types: container, component, ref, rule, adr, recipe")
 	}
@@ -74,16 +86,19 @@ func RunAddFormatted(entityType, slug string, s *store.Store, container string, 
 		return err
 	}
 
-	// Build entity
+	def, err := resolveDefinitionForAdd(entityType, templateID, c3Dir)
+	if err != nil {
+		return err
+	}
 	entity, err := buildEntity(entityType, slug, s, container, feature)
 	if err != nil {
 		return err
 	}
 
 	// Validate body against schema BEFORE any DB writes
-	issues := validateBodyContent(bodyContent, entityType)
+	issues := validateBodyContentWithDefinition(bodyContent, entityType, def.Sections)
 	if entityType == "adr" {
-		issues = append(issues, validateADRCreationBody(bodyContent)...)
+		issues = append(issues, validateADRCreationBody(bodyContent, def)...)
 		issues = append(issues, validateADRAuthoredCoverage(s, bodyContent, "error")...)
 	}
 	if len(issues) > 0 {
@@ -103,7 +118,7 @@ func RunAddFormatted(entityType, slug string, s *store.Store, container string, 
 	}
 
 	result := AddResult{ID: entity.ID, Type: entityType}
-	if sections := schema.ForType(entityType); sections != nil {
+	if sections := sectionsForEntityAddResult(def); sections != nil {
 		for _, sec := range sections {
 			result.Sections = append(result.Sections, sec.Name)
 		}
@@ -140,7 +155,13 @@ func readBody(r io.Reader) (string, error) {
 	return body, nil
 }
 
-func validateADRCreationBody(body string) []Issue {
+func validateADRCreationBody(body string, defs ...schema.Canvas) []Issue {
+	var def schema.Canvas
+	if len(defs) > 0 {
+		def = defs[0]
+	} else {
+		def, _ = schema.DefinitionFor("adr")
+	}
 	sections := markdown.ParseSections(body)
 	sectionMap := make(map[string]string)
 	for _, section := range sections {
@@ -150,54 +171,80 @@ func validateADRCreationBody(body string) []Issue {
 	}
 
 	var issues []Issue
-	for _, def := range schema.ForType("adr") {
-		content, exists := sectionMap[def.Name]
+	for _, sectionDef := range sectionsForEntityAddResult(def) {
+		if !sectionDef.Required {
+			continue
+		}
+		content, exists := sectionMap[sectionDef.Name]
 		if !exists {
 			issues = append(issues, Issue{
 				Severity: "error",
-				Message:  fmt.Sprintf("missing required section: %s", def.Name),
-				Hint:     fmt.Sprintf("add ## %s before running c3x add adr; ADR creation is all-or-nothing", def.Name),
+				Message:  fmt.Sprintf("missing required section: %s", sectionDef.Name),
+				Hint:     fmt.Sprintf("add ## %s before running c3x add adr; ADR creation is all-or-nothing; inspect columns with %s", sectionDef.Name, adrSchemaHint()),
 			})
 			continue
 		}
 		if content == "" {
 			issues = append(issues, Issue{
 				Severity: "error",
-				Message:  fmt.Sprintf("empty required section: %s", def.Name),
-				Hint:     fmt.Sprintf("fill ## %s before running c3x add adr; use N.A - <reason> when not applicable", def.Name),
+				Message:  fmt.Sprintf("empty required section: %s", sectionDef.Name),
+				Hint:     fmt.Sprintf("fill ## %s before running c3x add adr; use N.A - <reason> when not applicable; inspect with %s", sectionDef.Name, adrSchemaHint()),
 			})
 			continue
 		}
-		if def.ContentType != "table" {
+		if sectionDef.ContentType != "table" {
 			continue
 		}
 		table, err := markdown.ParseTable(content)
 		if err != nil {
 			issues = append(issues, Issue{
 				Severity: "error",
-				Message:  fmt.Sprintf("invalid required table: %s", def.Name),
-				Hint:     fmt.Sprintf("use c3x schema adr for the %s table columns", def.Name),
+				Message:  fmt.Sprintf("invalid required table: %s", sectionDef.Name),
+				Hint:     fmt.Sprintf("use %s for the %s table columns", adrSchemaHint(), sectionDef.Name),
 			})
 			continue
 		}
 		if len(table.Rows) == 0 {
 			issues = append(issues, Issue{
 				Severity: "error",
-				Message:  fmt.Sprintf("empty required table: %s", def.Name),
-				Hint:     fmt.Sprintf("add at least one %s row; use N.A - <reason> when not applicable", def.Name),
+				Message:  fmt.Sprintf("empty required table: %s", sectionDef.Name),
+				Hint:     fmt.Sprintf("add at least one %s row; use N.A - <reason> when not applicable; inspect with %s", sectionDef.Name, adrSchemaHint()),
 			})
 		}
-		for _, col := range def.Columns {
+		for _, col := range sectionDef.Columns {
 			if !containsString(table.Headers, col.Name) {
 				issues = append(issues, Issue{
 					Severity: "error",
-					Message:  fmt.Sprintf("missing required column %q in table: %s", col.Name, def.Name),
-					Hint:     fmt.Sprintf("use c3x schema adr for the %s table columns", def.Name),
+					Message:  fmt.Sprintf("missing required column %q in table: %s", col.Name, sectionDef.Name),
+					Hint:     fmt.Sprintf("use %s for the %s table columns", adrSchemaHint(), sectionDef.Name),
 				})
 			}
 		}
 	}
 	return issues
+}
+
+func adrSchemaCommand() string {
+	return "c3x schema adr"
+}
+
+func adrSchemaHint() string {
+	return adrSchemaCommand()
+}
+
+func resolveDefinitionForAdd(entityType, templateID, c3Dir string) (schema.Canvas, error) {
+	if templateID != "" {
+		return schema.Canvas{}, fmt.Errorf("error: --template has been retired\nhint: use c3x canvas read adr or c3x schema adr")
+	}
+	def, ok := schema.DefinitionForDir(c3Dir, entityType)
+	if !ok {
+		return schema.Canvas{}, fmt.Errorf("error: unknown entity type '%s'\nhint: run c3x canvas list", entityType)
+	}
+	return def, nil
+}
+
+func sectionsForEntityAddResult(def schema.Canvas) []schema.SectionDef {
+	return def.Sections
 }
 
 func containsString(values []string, want string) bool {
@@ -224,8 +271,18 @@ func buildEntity(entityType, slug string, s *store.Store, container string, feat
 	case "recipe":
 		return buildRecipe(slug, s)
 	default:
-		return nil, fmt.Errorf("error: unknown entity type '%s'\nhint: types: container, component, ref, rule, adr, recipe", entityType)
+		return buildGenericDocument(entityType, slug, s)
 	}
+}
+
+func buildGenericDocument(entityType, slug string, s *store.Store) (*store.Entity, error) {
+	id := entityType + "-" + slug
+	if _, err := s.GetEntity(id); err == nil {
+		return nil, fmt.Errorf("error: %s already exists", id)
+	}
+	return &store.Entity{
+		ID: id, Type: entityType, Title: slug, Slug: slug, Status: "active", Metadata: "{}",
+	}, nil
 }
 
 func buildContainer(slug string, s *store.Store) (*store.Entity, error) {

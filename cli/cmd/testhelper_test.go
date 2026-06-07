@@ -437,7 +437,9 @@ func createDBFixture(t *testing.T) *store.Store {
 
 	// Populate node trees via content.WriteEntity
 	bodies := map[string]string{
-		"c3-0": "# TestProject\n\n## Goal\n\nTest the system.\n",
+		"c3-0":    "# TestProject\n\n## Goal\n\nTest the system.\n",
+		"c3-1":    "# api\n\n## Goal\n\nServe API requests.\n",
+		"ref-jwt": "# JWT Authentication\n\n## Goal\n\nStandardize auth tokens.\n\n## Choice\n\nUse RS256 signed JWTs.\n\n## Why\n\nIndustry standard, asymmetric verification.\n",
 	}
 	for id, body := range bodies {
 		if err := content.WriteEntity(s, id, body); err != nil {
@@ -446,6 +448,28 @@ func createDBFixture(t *testing.T) *store.Store {
 	}
 
 	return s
+}
+
+func testCitationForEntity(t *testing.T, s *store.Store, entityID string) string {
+	t.Helper()
+	entity, err := s.GetEntity(entityID)
+	if err != nil {
+		t.Fatalf("get entity %s: %v", entityID, err)
+	}
+	nodes, err := s.NodesForEntity(entityID)
+	if err != nil {
+		t.Fatalf("nodes for %s: %v", entityID, err)
+	}
+	for _, n := range nodes {
+		if !isCitableNode(n) {
+			continue
+		}
+		if snippet := citationSnippet(n.Content); snippet != "" {
+			return nodeCitation(entity, n, snippet)
+		}
+	}
+	t.Fatalf("no citable node for %s", entityID)
+	return ""
 }
 
 // createRichDBFixture creates a store with the same entities as createRichFixture,

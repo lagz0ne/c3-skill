@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/lagz0ne/c3-design/cli/internal/schema"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
@@ -18,6 +19,14 @@ func RunInitDB(c3Dir string, projectName string, w io.Writer) error {
 
 	if err := os.MkdirAll(c3Dir, 0755); err != nil {
 		return fmt.Errorf("error: creating %s: %w", c3Dir, err)
+	}
+	defs, err := schema.AllDefinitions("")
+	if err != nil {
+		return fmt.Errorf("error: loading built-in canvas definitions: %w", err)
+	}
+	writtenDefs, err := MaterializeDefinitions(c3Dir, defs)
+	if err != nil {
+		return fmt.Errorf("error: materializing canvas definitions: %w", err)
 	}
 
 	today := time.Now().Format("20060102")
@@ -67,6 +76,9 @@ func RunInitDB(c3Dir string, projectName string, w io.Writer) error {
 
 	fmt.Fprintln(w, "Created .c3/")
 	fmt.Fprintln(w, "  └── c3.db (system: c3-0, adr: adr-00000000-c3-adoption)")
+	if len(writtenDefs) > 0 {
+		fmt.Fprintf(w, "  └── canvases/ (%d definitions)\n", len(writtenDefs))
+	}
 
 	return nil
 }

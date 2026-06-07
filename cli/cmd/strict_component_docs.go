@@ -7,52 +7,86 @@ import (
 	"strings"
 
 	"github.com/lagz0ne/c3-design/cli/internal/markdown"
+	"github.com/lagz0ne/c3-design/cli/internal/schema"
 )
 
 var (
-	componentSectionOrder = []string{
-		"Goal",
-		"Parent Fit",
-		"Purpose",
-		"Foundational Flow",
-		"Business Flow",
-		"Governance",
-		"Contract",
-		"Change Safety",
-		"Derived Materials",
-	}
-	strictTableHeaders = map[string][]string{
-		"Parent Fit":        {"Field", "Value"},
-		"Foundational Flow": {"Aspect", "Detail", "Reference"},
-		"Business Flow":     {"Aspect", "Detail", "Reference"},
-		"Governance":        {"Reference", "Type", "Governs", "Precedence", "Notes"},
-		"Contract":          {"Surface", "Direction", "Contract", "Boundary", "Evidence"},
-		"Change Safety":     {"Risk", "Trigger", "Detection", "Required Verification"},
-		"Derived Materials": {"Material", "Must derive from", "Allowed variance", "Evidence"},
-	}
-	strictMinRows = map[string]int{
-		"Parent Fit":        4,
-		"Foundational Flow": 4,
-		"Business Flow":     4,
-		"Governance":        1,
-		"Contract":          2,
-		"Change Safety":     2,
-		"Derived Materials": 1,
-	}
-	strictColumnEnums = map[string]map[string][]string{
-		"Governance": {
-			"Type": {"ref", "rule", "adr", "spec", "policy", "example"},
-		},
-		"Contract": {
-			"Direction": {"IN", "OUT", "IN/OUT"},
-		},
-	}
 	placeholderPattern = regexp.MustCompile(`(?i)\b(TBD|TODO|maybe|optional|later|if applicable)\b`)
 	entityRefPattern   = regexp.MustCompile(`\b(c3-[0-9]+|ref-[a-z0-9-]+|rule-[a-z0-9-]+|adr-[0-9]{8}-[a-z0-9-]+|recipe-[a-z0-9-]+)\b`)
 	evidencePattern    = regexp.MustCompile(`(?i)(\b(c3x|go test|bunx|npm|pnpm|yarn|cargo|pytest|make|bash)\b|[./][A-Za-z0-9_./*-]+|\b[A-Za-z0-9_-]+\.(go|md|ts|tsx|js|jsx|py|rs|yaml|yml|json)\b|\b(c3-[0-9]+|ref-[a-z0-9-]+|rule-[a-z0-9-]+|adr-[0-9]{8}-[a-z0-9-]+|recipe-[a-z0-9-]+)\b)`)
 )
 
+// strictRules is the structural validation contract for an entity type, derived
+// entirely from its canvas/schema definition — the single source of shape. No
+// per-type hardcoded maps: whatever a definition declares (required sections in
+// order, table columns, min rows, enum values) is what gets enforced.
+type strictRules struct {
+	sectionOrder []string                       // required sections, in definition order
+	tableHeaders map[string][]string            // table section -> column names
+	minRows      map[string]int                 // table section -> required rows
+	columnEnums  map[string]map[string][]string // section -> column -> allowed values (sans N.A sentinel)
+	columnTypes  map[string]map[string]string   // section -> column -> declared type (reference/evidence/...)
+}
+
+// deriveStrictRules projects a definition's []SectionDef into the structural
+// rules the strict validator enforces. This is the seam that makes strict
+// validation generic over any canvas definition rather than bound to component.
+func deriveStrictRules(defs []schema.SectionDef) strictRules {
+	rules := strictRules{
+		tableHeaders: map[string][]string{},
+		minRows:      map[string]int{},
+		columnEnums:  map[string]map[string][]string{},
+		columnTypes:  map[string]map[string]string{},
+	}
+	for _, section := range defs {
+		if !section.Required {
+			continue
+		}
+		rules.sectionOrder = append(rules.sectionOrder, section.Name)
+		if section.ContentType != "table" {
+			continue
+		}
+		headers := make([]string, 0, len(section.Columns))
+		for _, col := range section.Columns {
+			headers = append(headers, col.Name)
+			if rules.columnTypes[section.Name] == nil {
+				rules.columnTypes[section.Name] = map[string]string{}
+			}
+			rules.columnTypes[section.Name][col.Name] = col.Type
+			if col.Type != "enum" {
+				continue
+			}
+			var allowed []string
+			for _, v := range col.Values {
+				// The N.A escape is handled generically by strictEnumAllowed;
+				// keep it out of the declared set so messages stay precise.
+				if strings.HasPrefix(v, "N.A") {
+					continue
+				}
+				allowed = append(allowed, v)
+			}
+			if len(allowed) > 0 {
+				if rules.columnEnums[section.Name] == nil {
+					rules.columnEnums[section.Name] = map[string][]string{}
+				}
+				rules.columnEnums[section.Name][col.Name] = allowed
+			}
+		}
+		rules.tableHeaders[section.Name] = headers
+		rules.minRows[section.Name] = section.MinRows
+	}
+	return rules
+}
+
+// validateStrictComponentDoc validates a component body against the component
+// definition. The component-specific entry point is preserved; the engine
+// underneath (validateStrictDoc) is generic over any definition.
 func validateStrictComponentDoc(body string, severity string) []Issue {
+	return validateStrictDoc(schema.ForType("component"), body, severity)
+}
+
+func validateStrictDoc(defs []schema.SectionDef, body string, severity string) []Issue {
+	rules := deriveStrictRules(defs)
 	sections := markdown.ParseSections(body)
 	sectionMap := make(map[string]markdown.Section)
 	seen := make(map[string]int)
@@ -67,7 +101,7 @@ func validateStrictComponentDoc(body string, severity string) []Issue {
 	}
 
 	var issues []Issue
-	for _, name := range componentSectionOrder {
+	for _, name := range rules.sectionOrder {
 		if seen[name] > 1 {
 			issues = append(issues, strictIssue(severity, fmt.Sprintf("duplicate required section: %s", name)))
 		}
@@ -81,7 +115,7 @@ func validateStrictComponentDoc(body string, severity string) []Issue {
 			continue
 		}
 	}
-	issues = append(issues, validateRequiredSectionOrder(orderedNames, severity)...)
+	issues = append(issues, validateRequiredSectionOrder(orderedNames, rules.sectionOrder, severity)...)
 
 	if goal, ok := sectionMap["Goal"]; ok {
 		issues = append(issues, validateTextSubstance("Goal", goal.Content, severity)...)
@@ -90,7 +124,7 @@ func validateStrictComponentDoc(body string, severity string) []Issue {
 		issues = append(issues, validateTextSubstance("Purpose", purpose.Content, severity)...)
 	}
 
-	for sectionName, headers := range strictTableHeaders {
+	for sectionName, headers := range rules.tableHeaders {
 		section, ok := sectionMap[sectionName]
 		if !ok {
 			continue
@@ -103,21 +137,21 @@ func validateStrictComponentDoc(body string, severity string) []Issue {
 		if !slices.Equal(table.Headers, headers) {
 			issues = append(issues, strictIssue(severity, fmt.Sprintf("wrong table columns in %s: expected %s", sectionName, strings.Join(headers, ", "))))
 		}
-		if len(table.Rows) < strictMinRows[sectionName] {
-			issues = append(issues, strictIssue(severity, fmt.Sprintf("not enough rows in %s: need at least %d", sectionName, strictMinRows[sectionName])))
+		if len(table.Rows) < rules.minRows[sectionName] {
+			issues = append(issues, strictIssue(severity, fmt.Sprintf("not enough rows in %s: need at least %d", sectionName, rules.minRows[sectionName])))
 		}
-		issues = append(issues, validateStrictTableCells(sectionName, table, severity)...)
-		issues = append(issues, validateStrictTableSemantics(sectionName, table, severity)...)
+		issues = append(issues, validateStrictTableCells(sectionName, table, rules.columnEnums, severity)...)
+		issues = append(issues, validateStrictTableSemantics(sectionName, table, rules.columnTypes[sectionName], rules.sectionOrder, severity)...)
 	}
 
 	return issues
 }
 
-func validateRequiredSectionOrder(orderedNames []string, severity string) []Issue {
+func validateRequiredSectionOrder(orderedNames []string, sectionOrder []string, severity string) []Issue {
 	var issues []Issue
 	lastIndex := -1
 	lastName := ""
-	for _, required := range componentSectionOrder {
+	for _, required := range sectionOrder {
 		index := slices.Index(orderedNames, required)
 		if index < 0 {
 			continue
@@ -158,7 +192,7 @@ func validateTextSubstance(sectionName, text, severity string) []Issue {
 	return issues
 }
 
-func validateStrictTableCells(sectionName string, table *markdown.Table, severity string) []Issue {
+func validateStrictTableCells(sectionName string, table *markdown.Table, columnEnums map[string]map[string][]string, severity string) []Issue {
 	var issues []Issue
 	for rowIndex, row := range table.Rows {
 		naCells := 0
@@ -178,7 +212,7 @@ func validateStrictTableCells(sectionName string, table *markdown.Table, severit
 			if strings.Contains(value, "N.A") && !strings.HasPrefix(value, "N.A - ") {
 				issues = append(issues, strictIssue(severity, fmt.Sprintf("invalid N.A in %s: use N.A - <reason>", cell)))
 			}
-			if allowed, ok := strictColumnEnums[sectionName][header]; ok && !strictEnumAllowed(value, allowed) {
+			if allowed, ok := columnEnums[sectionName][header]; ok && !strictEnumAllowed(value, allowed) {
 				issues = append(issues, strictIssue(severity, fmt.Sprintf("invalid enum value in %s: expected one of %s or N.A - <reason>", cell, strings.Join(allowed, ", "))))
 			}
 		}
@@ -189,27 +223,38 @@ func validateStrictTableCells(sectionName string, table *markdown.Table, severit
 	return issues
 }
 
-func validateStrictTableSemantics(sectionName string, table *markdown.Table, severity string) []Issue {
+// validateStrictTableSemantics enforces cell grounding by COLUMN TYPE, read from
+// the definition (columnTypes) — not by hardcoded section/column names. Any
+// definition that types a column "reference" or "evidence" gets the same
+// grounding rules, so the semantics are generic over any canvas definition.
+func validateStrictTableSemantics(sectionName string, table *markdown.Table, columnTypes map[string]string, sectionOrder []string, severity string) []Issue {
 	var issues []Issue
 	repeated := map[string]string{}
 	groundedReferences := 0
+	hasReferenceColumn := false
+	for _, t := range columnTypes {
+		if t == "reference" {
+			hasReferenceColumn = true
+			break
+		}
+	}
 
 	for rowIndex, row := range table.Rows {
 		for _, header := range table.Headers {
 			value := strings.TrimSpace(row[header])
 			cell := fmt.Sprintf("%s row %d column %s", sectionName, rowIndex+1, header)
 
-			if isReferenceColumn(sectionName, header) {
+			if columnTypes[header] == "reference" {
 				if !isGroundedReference(value) {
 					issues = append(issues, strictIssue(severity, fmt.Sprintf("ungrounded reference in %s: use an entity id or N.A - <reason>", cell)))
 				} else if !isNAReason(value) {
 					groundedReferences++
 				}
 			}
-			if isEvidenceColumn(sectionName, header) && !isGroundedEvidence(value) {
+			if columnTypes[header] == "evidence" && !isGroundedEvidence(value) {
 				issues = append(issues, strictIssue(severity, fmt.Sprintf("ungrounded evidence in %s: name a command, file path, or entity id", cell)))
 			}
-			if sectionName == "Derived Materials" && header == "Must derive from" && !mentionsComponentSection(value) {
+			if sectionName == "Derived Materials" && header == "Must derive from" && !mentionsComponentSection(value, sectionOrder) {
 				issues = append(issues, strictIssue(severity, fmt.Sprintf("ungrounded derivation in %s: cite strict component sections", cell)))
 			}
 			if isSemanticDetailColumn(header) && !isNAReason(value) {
@@ -223,7 +268,7 @@ func validateStrictTableSemantics(sectionName string, table *markdown.Table, sev
 		}
 	}
 
-	if requiresGroundedReference(sectionName) && len(table.Rows) > 0 && groundedReferences == 0 {
+	if hasReferenceColumn && len(table.Rows) > 0 && groundedReferences == 0 {
 		issues = append(issues, strictIssue(severity, fmt.Sprintf("%s needs at least one grounded reference", sectionName)))
 	}
 	return issues
@@ -240,14 +285,6 @@ func isNAReason(value string) bool {
 	return strings.HasPrefix(strings.TrimSpace(value), "N.A - ")
 }
 
-func isReferenceColumn(sectionName, header string) bool {
-	return header == "Reference" && (sectionName == "Foundational Flow" || sectionName == "Business Flow" || sectionName == "Governance")
-}
-
-func isEvidenceColumn(sectionName, header string) bool {
-	return header == "Evidence" || header == "Required Verification"
-}
-
 func isGroundedReference(value string) bool {
 	value = strings.TrimSpace(value)
 	return isNAReason(value) || entityRefPattern.MatchString(value)
@@ -258,12 +295,8 @@ func isGroundedEvidence(value string) bool {
 	return isNAReason(value) || evidencePattern.MatchString(value)
 }
 
-func requiresGroundedReference(sectionName string) bool {
-	return sectionName == "Foundational Flow" || sectionName == "Business Flow" || sectionName == "Governance"
-}
-
-func mentionsComponentSection(value string) bool {
-	for _, section := range componentSectionOrder {
+func mentionsComponentSection(value string, sectionOrder []string) bool {
+	for _, section := range sectionOrder {
 		if strings.Contains(value, section) {
 			return true
 		}

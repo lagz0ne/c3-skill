@@ -117,7 +117,8 @@ func entityRelativePath(e *store.Entity, parentSlug map[string]string) string {
 		fileName := fmt.Sprintf("%s.md", e.ID)
 		return filepath.Join("rules", fileName)
 	default:
-		return ""
+		fileName := fmt.Sprintf("%s.md", e.ID)
+		return filepath.Join("documents", e.Type, fileName)
 	}
 }
 

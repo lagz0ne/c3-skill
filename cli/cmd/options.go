@@ -33,11 +33,13 @@ type Options struct {
 	KeepOriginals bool
 	Stdin         bool
 	Limit         int
+	Hybrid        bool
 	Source        string
 	Tag           string
 	Recompute     bool
 	Keep          int
 	Full          bool
+	Cite          bool
 	JSONExplicit  bool
 	Force         bool
 	Only          []string
@@ -47,6 +49,7 @@ type Options struct {
 	Since         string
 	FromDiff      bool
 	File          string
+	Template      string
 }
 
 // ParseArgs parses command-line arguments into Options.
@@ -137,6 +140,8 @@ func ParseArgs(argv []string) Options {
 				i++
 				opts.Limit, _ = strconv.Atoi(argv[i])
 			}
+		case "--hybrid":
+			opts.Hybrid = true
 		case "--source":
 			if i+1 < len(argv) {
 				i++
@@ -149,6 +154,8 @@ func ParseArgs(argv []string) Options {
 			}
 		case "--full":
 			opts.Full = true
+		case "--cite":
+			opts.Cite = true
 		case "--recompute":
 			opts.Recompute = true
 		case "--force":
@@ -176,6 +183,11 @@ func ParseArgs(argv []string) Options {
 			if i+1 < len(argv) {
 				i++
 				opts.File = argv[i]
+			}
+		case "--template":
+			if i+1 < len(argv) {
+				i++
+				opts.Template = argv[i]
 			}
 		case "--keep":
 			if i+1 < len(argv) {

@@ -178,7 +178,9 @@ func renderCanonicalDoc(doc canonicalDoc, includeSeal bool) string {
 		}
 		writeYAMLField(&b, "c3-seal", seal)
 	}
-	writeYAMLField(&b, "title", doc.Title)
+	if doc.Type != "adr-template" && doc.Type != "canvas" {
+		writeYAMLField(&b, "title", doc.Title)
+	}
 	if doc.Type != "" && doc.Type != "system" {
 		writeYAMLField(&b, "type", doc.Type)
 	}

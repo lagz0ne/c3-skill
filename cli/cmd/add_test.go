@@ -6,13 +6,14 @@ import (
 	"testing"
 
 	"github.com/lagz0ne/c3-design/cli/internal/content"
+	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
 func TestRunAdd_ContainerWithBody(t *testing.T) {
 	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	body := "## Goal\nPayment processing.\n\n## Components\n| ID | Name | Goal |\n|---|---|---|\n| c3-301 | stripe | Stripe integration |\n\n## Responsibilities\n- Process payments\n"
+	body := "## Goal\nPayment processing.\n\n## Components\n| ID | Name | Category | Status | Goal Contribution |\n|---|---|---|---|---|\n| c3-301 | stripe | feature | active | Stripe integration |\n\n## Responsibilities\n- Process payments\n"
 
 	err := RunAdd("container", "payments", s, "", false, strings.NewReader(body), &buf)
 	if err != nil {
@@ -148,12 +149,133 @@ func TestRunAdd_AdrAgentHintsUseCLISchema(t *testing.T) {
 		"adr-",
 		"help[5]",
 		"c3x schema adr",
-		"authoritative ADR contract for affected topology plus compliance refs/rules",
+		"authoritative ADR canvas contract for required sections, tables, and rejection rules",
 		"c3x read adr-",
 		"c3x write adr-",
 		"c3x check --include-adr --only adr-",
 		"c3x check --include-adr",
 	)
+}
+
+func TestRunAddFormatted_AdrReportsDefaultTemplateSections(t *testing.T) {
+	s, _ := createDBFixtureWithC3Dir(t)
+	var buf bytes.Buffer
+
+	body := fullADRBody("Adopt OAuth for third-party auth.")
+	err := RunAddFormatted("adr", "oauth-support", s, "", false, strings.NewReader(body), &buf, FormatTOON)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	requireAll(t, buf.String(),
+		"Affected Topology",
+		"Underlay C3 Changes",
+		"Enforcement Surfaces",
+		"Verification",
+	)
+}
+
+func TestRunAddFormatted_AdrUsesProjectCanvas(t *testing.T) {
+	s, c3Dir := createDBFixtureWithC3Dir(t)
+	if err := RunCanvas(CanvasOptions{C3Dir: c3Dir, Sub: "write", ID: "adr", Body: strings.NewReader(projectADRCanvasDoc())}, &bytes.Buffer{}); err != nil {
+		t.Fatal(err)
+	}
+	var buf bytes.Buffer
+
+	body := "## Decision Note\n\nUse the project ADR canvas for this decision.\n"
+	err := RunAddFormattedWithTemplate("adr", "small-decision", s, "", false, "", c3Dir, strings.NewReader(body), &buf, FormatTOON)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	requireAll(t, buf.String(), "Decision Note")
+	adrs, err := s.EntitiesByType("adr")
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, adr := range adrs {
+		if adr.Slug != "small-decision" {
+			continue
+		}
+		found = true
+		if got := metadataString(adr.Metadata, "template"); got != "" {
+			t.Fatalf("retired template metadata = %q", got)
+		}
+	}
+	if !found {
+		t.Fatal("new ADR not found")
+	}
+}
+
+func TestRunAddFormatted_ProjectCanvasValidationUsesCanvasSchema(t *testing.T) {
+	s, c3Dir := createDBFixtureWithC3Dir(t)
+	if err := RunCanvas(CanvasOptions{C3Dir: c3Dir, Sub: "write", ID: "adr", Body: strings.NewReader(projectADRCanvasDoc())}, &bytes.Buffer{}); err != nil {
+		t.Fatal(err)
+	}
+
+	err := RunAddFormattedWithTemplate("adr", "small-decision", s, "", false, "", c3Dir, strings.NewReader("## Other\n\nNope.\n"), &bytes.Buffer{}, FormatTOON)
+	if err == nil {
+		t.Fatal("expected project canvas validation to fail")
+	}
+	requireAll(t, err.Error(), "missing required section: Decision Note", "c3x schema adr")
+}
+
+func TestBDD_CanvasDefinedEntityAddWriteCheckUsesCanvasContract(t *testing.T) {
+	s, c3Dir := createDBFixtureWithC3Dir(t)
+	if err := RunCanvas(CanvasOptions{C3Dir: c3Dir, Sub: "add", ID: "research-note", Body: strings.NewReader(researchNoteCanvasDoc())}, &bytes.Buffer{}); err != nil {
+		t.Fatal(err)
+	}
+
+	valid := researchNoteBody(
+		testCitationForEntity(t, s, "c3-1"),
+		testCitationForEntity(t, s, "ref-jwt"),
+	)
+	var buf bytes.Buffer
+	if err := RunAddFormattedWithTemplate("research-note", "api-latency", s, "", false, "", c3Dir, strings.NewReader(valid), &buf, FormatTOON); err != nil {
+		t.Fatal(err)
+	}
+	requireAll(t, buf.String(), "id: research-note-api-latency", "type: research-note", "Findings", "Decision Pressure")
+
+	entity, err := s.GetEntity("research-note-api-latency")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if entity.Type != "research-note" {
+		t.Fatalf("type = %q, want research-note", entity.Type)
+	}
+
+	buf.Reset()
+	if err := RunCheckV2(CheckOptions{Store: s, C3Dir: c3Dir, JSON: true, Only: []string{"research-note-api-latency"}}, &buf); err != nil {
+		t.Fatalf("valid research-note should check cleanly: %v\n%s", err, buf.String())
+	}
+
+	invalid := strings.Replace(valid, "| Finding | Evidence | Trace |", "| Finding | Trace |", 1)
+	invalid = strings.Replace(invalid, "| Checkout API p95 rose from 180 ms to 420 ms after the pool change. | "+testCitationForEntity(t, s, "c3-1")+" | fact:p95-latency -> decision:pool-wait-investigation |", "| Checkout API p95 rose from 180 ms to 420 ms after the pool change. | fact:p95-latency -> decision:pool-wait-investigation |", 1)
+	buf.Reset()
+	err = RunWrite(WriteOptions{Store: s, C3Dir: c3Dir, ID: "research-note-api-latency", Content: invalid}, &buf)
+	if err == nil {
+		t.Fatal("expected invalid write to fail")
+	}
+	requireAll(t, err.Error(), `missing required column "Evidence" in table: Findings`)
+
+	body, readErr := content.ReadEntity(s, "research-note-api-latency")
+	if readErr != nil {
+		t.Fatal(readErr)
+	}
+	requireAll(t, body, "Checkout API p95 rose from 180 ms to 420 ms", "Decision Pressure")
+}
+
+func TestCascadeHintsForADRUseCanvasSchema(t *testing.T) {
+	entity := &store.Entity{ID: "adr-1", Type: "adr", Metadata: `{"template":"small-change"}`}
+
+	hints := cascadeHintsForEntity(entity)
+	if len(hints) == 0 {
+		t.Fatal("expected ADR hints")
+	}
+	if hints[0].Command != "c3x schema adr" {
+		t.Fatalf("first ADR hint = %q", hints[0].Command)
+	}
 }
 
 func TestRunAdd_AdrRequiresCompleteBody(t *testing.T) {
@@ -189,14 +311,14 @@ func fullADRBody(goal string) string {
 		"## Context\nCurrent behavior and constraints are captured before creation.\n\n" +
 		"## Decision\nCreate the complete ADR as one work order.\n\n" +
 		"## Affected Topology\n\n" +
-		"| Entity | Type | Why affected | Governance review |\n|--------|------|--------------|-------------------|\n" +
-		"| N.A - test | N.A - fixture only. | N.A - fixture only. | N.A - fixture only. |\n\n" +
+		"| Entity | Type | Why affected | Evidence | Governance review |\n|--------|------|--------------|----------|-------------------|\n" +
+		"| N.A - test | N.A - fixture only. | N.A - fixture only. | N.A - fixture only. | N.A - fixture only. |\n\n" +
 		"## Compliance Refs\n\n" +
-		"| Ref | Why required | Action |\n|-----|--------------|--------|\n" +
-		"| N.A - test | N.A - fixture only. | N.A - fixture only. |\n\n" +
+		"| Ref | Why required | Evidence | Action |\n|-----|--------------|----------|--------|\n" +
+		"| N.A - test | N.A - fixture only. | N.A - fixture only. | N.A - fixture only. |\n\n" +
 		"## Compliance Rules\n\n" +
-		"| Rule | Why required | Action |\n|------|--------------|--------|\n" +
-		"| N.A - test | N.A - fixture only. | N.A - fixture only. |\n\n" +
+		"| Rule | Why required | Evidence | Action |\n|------|--------------|----------|--------|\n" +
+		"| N.A - test | N.A - fixture only. | N.A - fixture only. | N.A - fixture only. |\n\n" +
 		"## Work Breakdown\n\n" +
 		"| Area | Detail | Evidence |\n|------|--------|----------|\n" +
 		"| N.A - test | N.A - no implementation work in fixture. | Test fixture. |\n\n" +
@@ -225,14 +347,14 @@ func TestRunAdd_AdrAllowsOmittedImplicitRelatedRefs(t *testing.T) {
 		"## Context\nAuth component is changing.\n\n" +
 		"## Decision\nTrack compliance references explicitly.\n\n" +
 		"## Affected Topology\n\n" +
-		"| Entity | Type | Why affected | Governance review |\n|--------|------|--------------|-------------------|\n" +
-		"| c3-1 | container | Auth changes touch the API container. | Review inherited refs. |\n\n" +
+		"| Entity | Type | Why affected | Evidence | Governance review |\n|--------|------|--------------|----------|-------------------|\n" +
+		"| c3-1 | container | Auth changes touch the API container. | " + testCitationForEntity(t, s, "c3-1") + " | Review inherited refs. |\n\n" +
 		"## Compliance Refs\n\n" +
-		"| Ref | Why required | Action |\n|-----|--------------|--------|\n" +
-		"| N.A - missing | N.A - omitted on purpose. | N.A - test. |\n\n" +
+		"| Ref | Why required | Evidence | Action |\n|-----|--------------|----------|--------|\n" +
+		"| N.A - missing | N.A - omitted on purpose. | N.A - omitted on purpose. | N.A - test. |\n\n" +
 		"## Compliance Rules\n\n" +
-		"| Rule | Why required | Action |\n|------|--------------|--------|\n" +
-		"| N.A - test | N.A - no rules in base fixture. | N.A - test. |\n\n" +
+		"| Rule | Why required | Evidence | Action |\n|------|--------------|----------|--------|\n" +
+		"| N.A - test | N.A - no rules in base fixture. | N.A - no rules in base fixture. | N.A - test. |\n\n" +
 		"## Work Breakdown\n\n" +
 		"| Area | Detail | Evidence |\n|------|--------|----------|\n" +
 		"| cli | Update ADR validation. | go test. |\n\n" +
@@ -266,14 +388,14 @@ func TestRunAdd_AdrRequiresWhyColumnsUnlessNATopology(t *testing.T) {
 		"## Context\nAuth component is changing.\n\n" +
 		"## Decision\nTrack compliance references explicitly.\n\n" +
 		"## Affected Topology\n\n" +
-		"| Entity | Type | Why affected | Governance review |\n|--------|------|--------------|-------------------|\n" +
-		"| c3-1 | container |  | Review inherited refs. |\n\n" +
+		"| Entity | Type | Why affected | Evidence | Governance review |\n|--------|------|--------------|----------|-------------------|\n" +
+		"| c3-1 | container |  | " + testCitationForEntity(t, s, "c3-1") + " | Review inherited refs. |\n\n" +
 		"## Compliance Refs\n\n" +
-		"| Ref | Why required | Action |\n|-----|--------------|--------|\n" +
-		"| ref-jwt |  | review |\n\n" +
+		"| Ref | Why required | Evidence | Action |\n|-----|--------------|----------|--------|\n" +
+		"| ref-jwt |  | " + testCitationForEntity(t, s, "ref-jwt") + " | review |\n\n" +
 		"## Compliance Rules\n\n" +
-		"| Rule | Why required | Action |\n|------|--------------|--------|\n" +
-		"| N.A - test | N.A - no rules in base fixture. | N.A - test. |\n\n" +
+		"| Rule | Why required | Evidence | Action |\n|------|--------------|----------|--------|\n" +
+		"| N.A - test | N.A - no rules in base fixture. | N.A - no rules in base fixture. | N.A - test. |\n\n" +
 		"## Work Breakdown\n\n" +
 		"| Area | Detail | Evidence |\n|------|--------|----------|\n" +
 		"| cli | Update ADR validation. | go test. |\n\n" +
@@ -470,8 +592,8 @@ func TestRunAdd_SequentialContainers(t *testing.T) {
 	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer
 
-	body1 := "## Goal\nFirst.\n\n## Components\n| ID | Name | Goal |\n|---|---|---|\n| x | y | z |\n\n## Responsibilities\n- Do things\n"
-	body2 := "## Goal\nSecond.\n\n## Components\n| ID | Name | Goal |\n|---|---|---|\n| x | y | z |\n\n## Responsibilities\n- Do other things\n"
+	body1 := "## Goal\nFirst.\n\n## Components\n| ID | Name | Category | Status | Goal Contribution |\n|---|---|---|---|---|\n| c3-301 | y | feature | active | z |\n\n## Responsibilities\n- Do things\n"
+	body2 := "## Goal\nSecond.\n\n## Components\n| ID | Name | Category | Status | Goal Contribution |\n|---|---|---|---|---|\n| c3-401 | y | feature | active | z |\n\n## Responsibilities\n- Do other things\n"
 
 	if err := RunAdd("container", "first", s, "", false, strings.NewReader(body1), &buf); err != nil {
 		t.Fatal(err)

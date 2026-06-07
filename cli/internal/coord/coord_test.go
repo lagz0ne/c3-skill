@@ -1,6 +1,7 @@
 package coord
 
 import (
+	"errors"
 	"net"
 	"os"
 	"path/filepath"
@@ -46,6 +47,9 @@ func TestLeaderForwardsQueuedRequest(t *testing.T) {
 
 	leader, err := NewLeader(c3Dir)
 	if err != nil {
+		if errors.Is(err, ErrUnavailable) {
+			t.Skipf("unix socket coordinator unavailable in this environment: %v", err)
+		}
 		t.Fatal(err)
 	}
 	defer leader.Close()
@@ -83,6 +87,9 @@ func TestNewLeaderRejectsSecondLeader(t *testing.T) {
 	}
 	leader, err := NewLeader(c3Dir)
 	if err != nil {
+		if errors.Is(err, ErrUnavailable) {
+			t.Skipf("unix socket coordinator unavailable in this environment: %v", err)
+		}
 		t.Fatal(err)
 	}
 	defer leader.Close()

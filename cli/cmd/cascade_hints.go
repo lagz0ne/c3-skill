@@ -34,13 +34,7 @@ func cascadeHintsForEntity(entity *store.Entity) []HelpHint {
 
 	switch entity.Type {
 	case "adr":
-		return []HelpHint{
-			{Command: "c3x schema adr", Description: "authoritative ADR contract for affected topology plus compliance refs/rules"},
-			{Command: fmt.Sprintf("c3x read %s --full", entity.ID), Description: "inspect the complete ADR work order, including why each compliance row is required"},
-			{Command: fmt.Sprintf("c3x write %s < adr.md", entity.ID), Description: "replace the full ADR only if the complete work order must change"},
-			{Command: fmt.Sprintf("c3x check --include-adr --only %s", entity.ID), Description: "prove this ADR while other branch docs are still in progress"},
-			{Command: "c3x check --include-adr", Description: "prove ADR compliance rows, structural coverage, and canonical sync before final handoff"},
-		}
+		return adrHints(entity.ID)
 	case "component":
 		var hints []HelpHint
 		if entity.ParentID != "" {
@@ -70,6 +64,17 @@ func cascadeHintsForEntity(entity *store.Entity) []HelpHint {
 			}
 		}
 		return cascadeReviewHints()
+	}
+}
+
+func adrHints(entityID string) []HelpHint {
+	schemaCommand := "c3x schema adr"
+	return []HelpHint{
+		{Command: schemaCommand, Description: "authoritative ADR canvas contract for required sections, tables, and rejection rules"},
+		{Command: fmt.Sprintf("c3x read %s --full", entityID), Description: "inspect the complete ADR work order, including why each compliance row is required"},
+		{Command: fmt.Sprintf("c3x write %s < adr.md", entityID), Description: "replace the full ADR only if the complete work order must change"},
+		{Command: fmt.Sprintf("c3x check --include-adr --only %s", entityID), Description: "prove this ADR while other branch docs are still in progress"},
+		{Command: "c3x check --include-adr", Description: "prove ADR compliance rows, structural coverage, and canonical sync before final handoff"},
 	}
 }
 

@@ -1,0 +1,405 @@
+package cmd
+
+import (
+	"fmt"
+	"io"
+	"sort"
+	"strings"
+	"unicode"
+
+	"github.com/lagz0ne/c3-design/cli/internal/content"
+	"github.com/lagz0ne/c3-design/cli/internal/store"
+)
+
+// SearchOptions configures the search command boundary.
+type SearchOptions struct {
+	Store      *store.Store
+	Query      string
+	Hybrid     bool
+	JSON       bool
+	Limit      int
+	Type       string
+	TypeFilter string
+}
+
+// SearchOutput is the structured search response.
+type SearchOutput struct {
+	Query   string            `json:"query"`
+	Results []SearchResultRow `json:"results"`
+}
+
+// SearchResultRow is one ranked result with search and graph provenance.
+type SearchResultRow struct {
+	ID           string        `json:"id"`
+	Type         string        `json:"type"`
+	Title        string        `json:"title"`
+	Snippet      string        `json:"snippet"`
+	MatchSources []string      `json:"match_sources"`
+	Context      SearchContext `json:"context"`
+}
+
+// SearchContext captures the most useful graph/code-map context for a hit.
+type SearchContext struct {
+	Component EntityRef `json:"component"`
+	Ref       EntityRef `json:"ref"`
+	Rule      EntityRef `json:"rule"`
+	Path      string    `json:"path"`
+}
+
+// EntityRef is a lightweight entity reference in search context.
+type EntityRef struct {
+	ID    string `json:"id"`
+	Title string `json:"title"`
+}
+
+// RunSearch performs content/entity FTS and optionally enriches hits with graph context.
+func RunSearch(opts SearchOptions, w io.Writer) error {
+	if opts.Store == nil {
+		return fmt.Errorf("error: search store is required")
+	}
+	if strings.TrimSpace(opts.Query) == "" {
+		return fmt.Errorf("error: search requires a <query> argument\nhint: c3x search \"pool wait\" --hybrid")
+	}
+	limit := opts.Limit
+	if limit <= 0 {
+		limit = 20
+	}
+	entityType := opts.TypeFilter
+	if entityType == "" {
+		entityType = opts.Type
+	}
+
+	rows, err := collectSearchRows(opts.Store, opts.Query, entityType, limit)
+	if err != nil {
+		return err
+	}
+	if opts.Hybrid {
+		rows, err = expandHybridRows(opts.Store, rows, opts.Query, entityType, limit)
+		if err != nil {
+			return err
+		}
+		for i := range rows {
+			if err := enrichSearchRow(opts.Store, &rows[i]); err != nil {
+				return err
+			}
+		}
+	}
+
+	format := ResolveFormat(opts.JSON, isAgentMode())
+	return WriteObjectOutput(w, SearchOutput{
+		Query:   opts.Query,
+		Results: rows,
+	}, format, nil)
+}
+
+func collectSearchRows(s *store.Store, query, entityType string, limit int) ([]SearchResultRow, error) {
+	byID := make(map[string]*SearchResultRow)
+	order := make(map[string]int)
+	nextOrder := 0
+
+	addResults := func(results []store.SearchResult, source string) {
+		for _, hit := range results {
+			if entityType != "" && hit.Type != entityType {
+				continue
+			}
+			snippet := cleanSnippet(hit.Snippet)
+			if source == "content_fts" {
+				snippet = bestContentSnippet(s, hit.ID, query, snippet)
+			}
+			row, ok := byID[hit.ID]
+			if !ok {
+				nextOrder++
+				order[hit.ID] = nextOrder
+				row = &SearchResultRow{
+					ID:      hit.ID,
+					Type:    hit.Type,
+					Title:   hit.Title,
+					Snippet: snippet,
+				}
+				byID[hit.ID] = row
+			}
+			addMatchSource(row, source)
+			if row.Snippet == "" || source == "content_fts" {
+				row.Snippet = snippet
+			}
+		}
+	}
+
+	contentHits, err := s.SearchContent(query, limit)
+	if err != nil {
+		return nil, err
+	}
+	if len(contentHits) == 0 {
+		contentHits, err = s.SearchContent(ftsDisjunction(query), limit)
+		if err != nil {
+			return nil, err
+		}
+	}
+	addResults(contentHits, "content_fts")
+
+	entityHits, err := s.SearchWithLimit(query, entityType, limit)
+	if err != nil {
+		return nil, err
+	}
+	if len(entityHits) == 0 {
+		entityHits, err = s.SearchWithLimit(ftsDisjunction(query), entityType, limit)
+		if err != nil {
+			return nil, err
+		}
+	}
+	addResults(entityHits, "entity_fts")
+
+	rows := make([]SearchResultRow, 0, len(byID))
+	for _, row := range byID {
+		rows = append(rows, *row)
+	}
+	sortSearchRows(rows, order)
+	if len(rows) > limit {
+		rows = rows[:limit]
+	}
+	return rows, nil
+}
+
+func expandHybridRows(s *store.Store, rows []SearchResultRow, query, entityType string, limit int) ([]SearchResultRow, error) {
+	byID := make(map[string]SearchResultRow, len(rows))
+	order := make(map[string]int, len(rows))
+	for i, row := range rows {
+		byID[row.ID] = row
+		order[row.ID] = i + 1
+	}
+
+	for _, base := range rows {
+		inbound, err := s.RelationshipsTo(base.ID)
+		if err != nil {
+			return nil, fmt.Errorf("search inbound graph %s: %w", base.ID, err)
+		}
+		for _, rel := range inbound {
+			from, err := s.GetEntity(rel.FromID)
+			if err != nil {
+				return nil, fmt.Errorf("search inbound graph source %s: %w", rel.FromID, err)
+			}
+			if entityType != "" && from.Type != entityType {
+				continue
+			}
+			row, ok := byID[from.ID]
+			if !ok {
+				row = SearchResultRow{
+					ID:      from.ID,
+					Type:    from.Type,
+					Title:   from.Title,
+					Snippet: bestContentSnippet(s, from.ID, query, from.Title),
+				}
+				order[from.ID] = len(order) + 1
+			}
+			addMatchSource(&row, "graph:"+rel.RelType+":"+base.ID)
+			byID[from.ID] = row
+		}
+	}
+
+	expanded := make([]SearchResultRow, 0, len(byID))
+	for _, row := range byID {
+		expanded = append(expanded, row)
+	}
+	sortSearchRows(expanded, order)
+	if len(expanded) > limit {
+		expanded = expanded[:limit]
+	}
+	return expanded, nil
+}
+
+func sortSearchRows(rows []SearchResultRow, order map[string]int) {
+	sort.SliceStable(rows, func(i, j int) bool {
+		leftContent := hasSource(rows[i].MatchSources, "content_fts")
+		rightContent := hasSource(rows[j].MatchSources, "content_fts")
+		if leftContent != rightContent {
+			return leftContent
+		}
+		leftGraphDoc := isGraphExpandedDocument(rows[i])
+		rightGraphDoc := isGraphExpandedDocument(rows[j])
+		if leftGraphDoc != rightGraphDoc {
+			return leftGraphDoc
+		}
+		if len(rows[i].MatchSources) != len(rows[j].MatchSources) {
+			return len(rows[i].MatchSources) > len(rows[j].MatchSources)
+		}
+		return order[rows[i].ID] < order[rows[j].ID]
+	})
+}
+
+func isGraphExpandedDocument(row SearchResultRow) bool {
+	if !isContentDocumentType(row.Type) {
+		return false
+	}
+	for _, source := range row.MatchSources {
+		if strings.HasPrefix(source, "graph:") {
+			return true
+		}
+	}
+	return false
+}
+
+func isContentDocumentType(entityType string) bool {
+	switch entityType {
+	case "system", "container", "component", "ref", "rule":
+		return false
+	default:
+		return true
+	}
+}
+
+func enrichSearchRow(s *store.Store, row *SearchResultRow) error {
+	rels, err := s.RelationshipsFrom(row.ID)
+	if err != nil {
+		return fmt.Errorf("search graph %s: %w", row.ID, err)
+	}
+	for _, rel := range rels {
+		target, err := s.GetEntity(rel.ToID)
+		if err != nil {
+			return fmt.Errorf("search graph target %s: %w", rel.ToID, err)
+		}
+		addMatchSource(row, "graph:"+rel.RelType+":"+rel.ToID)
+		assignSearchContext(row, rel, target)
+	}
+
+	if row.Context.Component.ID != "" {
+		if err := enrichFromComponent(s, row, row.Context.Component.ID); err != nil {
+			return err
+		}
+	}
+	sort.Strings(row.MatchSources)
+	return nil
+}
+
+func enrichFromComponent(s *store.Store, row *SearchResultRow, componentID string) error {
+	rels, err := s.RelationshipsFrom(componentID)
+	if err != nil {
+		return fmt.Errorf("search component graph %s: %w", componentID, err)
+	}
+	for _, rel := range rels {
+		target, err := s.GetEntity(rel.ToID)
+		if err != nil {
+			return fmt.Errorf("search component graph target %s: %w", rel.ToID, err)
+		}
+		assignSearchContext(row, rel, target)
+	}
+
+	patterns, err := s.CodeMapFor(componentID)
+	if err != nil {
+		return fmt.Errorf("search code-map %s: %w", componentID, err)
+	}
+	if path := bestCodeMapPath(patterns); path != "" {
+		row.Context.Path = path
+		addMatchSource(row, "code-map:"+path)
+	}
+	return nil
+}
+
+func assignSearchContext(row *SearchResultRow, rel *store.Relationship, target *store.Entity) {
+	ref := EntityRef{ID: target.ID, Title: target.Title}
+	switch target.Type {
+	case "component":
+		if rel.RelType == "affects" || rel.RelType == "sources" || row.Context.Component.ID == "" {
+			row.Context.Component = ref
+		}
+	case "ref":
+		if row.Context.Ref.ID == "" {
+			row.Context.Ref = ref
+		}
+	case "rule":
+		if row.Context.Rule.ID == "" {
+			row.Context.Rule = ref
+		}
+	}
+}
+
+func bestCodeMapPath(patterns []string) string {
+	for _, pattern := range patterns {
+		if !strings.ContainsAny(pattern, "*?[") {
+			return pattern
+		}
+	}
+	if len(patterns) == 0 {
+		return ""
+	}
+	return patterns[0]
+}
+
+func cleanSnippet(snippet string) string {
+	snippet = strings.ReplaceAll(snippet, ">>>", "")
+	snippet = strings.ReplaceAll(snippet, "<<<", "")
+	return strings.Join(strings.Fields(snippet), " ")
+}
+
+func bestContentSnippet(s *store.Store, entityID, query, fallback string) string {
+	body, err := content.ReadEntity(s, entityID)
+	if err != nil {
+		return fallback
+	}
+	terms := searchTerms(query)
+	best := fallback
+	bestScore := 0
+	for _, line := range strings.Split(body, "\n") {
+		line = cleanSnippet(line)
+		if line == "" {
+			continue
+		}
+		score := termScore(line, terms)
+		if score > bestScore {
+			best = line
+			bestScore = score
+		}
+	}
+	return best
+}
+
+func termScore(text string, terms []string) int {
+	text = strings.ToLower(text)
+	score := 0
+	for _, term := range terms {
+		if strings.Contains(text, strings.ToLower(term)) {
+			score++
+		}
+	}
+	return score
+}
+
+func searchTerms(query string) []string {
+	parts := strings.FieldsFunc(query, func(r rune) bool {
+		return !(unicode.IsLetter(r) || unicode.IsDigit(r) || r == '-')
+	})
+	terms := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.Trim(part, "-")
+		if part == "" {
+			continue
+		}
+		switch strings.ToUpper(part) {
+		case "AND", "OR", "NOT", "NEAR":
+			continue
+		default:
+			terms = append(terms, part)
+		}
+	}
+	return terms
+}
+
+func ftsDisjunction(query string) string {
+	terms := searchTerms(query)
+	return strings.Join(terms, " OR ")
+}
+
+func addMatchSource(row *SearchResultRow, source string) {
+	if source == "" || hasSource(row.MatchSources, source) {
+		return
+	}
+	row.MatchSources = append(row.MatchSources, source)
+}
+
+func hasSource(sources []string, source string) bool {
+	for _, existing := range sources {
+		if existing == source {
+			return true
+		}
+	}
+	return false
+}

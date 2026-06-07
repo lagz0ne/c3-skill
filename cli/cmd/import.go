@@ -11,6 +11,7 @@ import (
 	"github.com/lagz0ne/c3-design/cli/internal/codemap"
 	"github.com/lagz0ne/c3-design/cli/internal/content"
 	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
+	"github.com/lagz0ne/c3-design/cli/internal/schema"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 	"github.com/lagz0ne/c3-design/cli/internal/walker"
 )
@@ -35,6 +36,19 @@ func docTypeToStoreType(dt frontmatter.DocType) string {
 	default:
 		return ""
 	}
+}
+
+func storeTypeForFrontmatter(c3Dir string, fm *frontmatter.Frontmatter) string {
+	storeType := docTypeToStoreType(frontmatter.ClassifyDoc(fm))
+	if storeType != "" {
+		return storeType
+	}
+	if fm != nil && fm.Type != "" {
+		if _, ok := schema.DefinitionForDir(c3Dir, fm.Type); ok {
+			return fm.Type
+		}
+	}
+	return ""
 }
 
 func addRelSafe(s *store.Store, fromID, toID, relType string) error {
@@ -195,8 +209,7 @@ func importDocsToStore(s *store.Store, c3Dir string, result *walker.WalkResult) 
 	entityCount := 0
 	for _, doc := range result.Docs {
 		fm := doc.Frontmatter
-		dt := frontmatter.ClassifyDoc(fm)
-		storeType := docTypeToStoreType(dt)
+		storeType := storeTypeForFrontmatter(c3Dir, fm)
 		if storeType == "" {
 			continue
 		}
@@ -230,7 +243,7 @@ func importDocsToStore(s *store.Store, c3Dir string, result *walker.WalkResult) 
 
 	for _, doc := range result.Docs {
 		fm := doc.Frontmatter
-		if docTypeToStoreType(frontmatter.ClassifyDoc(fm)) == "" {
+		if storeTypeForFrontmatter(c3Dir, fm) == "" {
 			continue
 		}
 

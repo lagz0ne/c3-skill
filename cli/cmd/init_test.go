@@ -73,6 +73,13 @@ func TestRunInitDB_CreatesDatabase(t *testing.T) {
 	if !found {
 		t.Error("missing adr -> c3-0 (affects) relationship")
 	}
+
+	for _, name := range []string{"system", "container", "component", "ref", "rule", "adr", "prd", "user-story"} {
+		path := filepath.Join(c3Dir, "canvases", name+".md")
+		if _, err := os.Stat(path); err != nil {
+			t.Fatalf("init should materialize %s: %v", path, err)
+		}
+	}
 }
 
 func TestRunInitDB_FailsIfExists(t *testing.T) {

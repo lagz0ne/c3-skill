@@ -97,7 +97,11 @@ func listStructured(opts ListOptions, format OutputFormat, w io.Writer) error {
 
 		if format == FormatTOON {
 			fmt.Fprintf(w, "totalCount: %d\n", len(result))
-			return WriteTableOutput(w, "entities", result, fields, format, hints)
+			if err := WriteTableOutput(w, "entities", result, fields, format, nil); err != nil {
+				return err
+			}
+			writeHints(w, hints)
+			return nil
 		}
 		if opts.JSONExplicit {
 			return writeJSON(w, ListResult{TotalCount: len(result), Entities: result})

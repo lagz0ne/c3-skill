@@ -31,7 +31,7 @@ Normal users rarely need this after initial setup.`,
 		Name:     "read",
 		Args:     "<entity-id>",
 		OneLiner: "Output full entity content (frontmatter + body)",
-		Help: `Usage: c3x read <entity-id> [--section <name>] [--json] [--full]
+		Help: `Usage: c3x read <entity-id> [--section <name>] [--json] [--full] [--cite]
 
 Output the full content of an entity as markdown (default) or structured data.
 Markdown output includes YAML frontmatter + body — same format accepted by write.
@@ -43,11 +43,13 @@ Options:
   --section <name>   Output only the named section's content
   --json             Structured JSON output outside agent mode; agent mode stays TOON
   --full             Disable body truncation in agent mode
+  --cite             Append canonical entity or section evidence handles
 
 Examples:
   c3x read c3-101                        # full markdown output
   c3x read ref-jwt --json                # structured JSON
   c3x read c3-101 --section Goal         # just the Goal section
+  c3x read c3-101 --section Goal --cite  # section content plus evidence handle
   c3x read c3-101 --full                 # full body in agent mode`,
 	},
 	{
@@ -82,7 +84,9 @@ Topology view with system goal, entity goals, file coverage, and ref usage.
   --compact      Goals-only tree (no files/uses detail); with --json: lightweight output (id, type, title, parent, status only)
   --flat         Simple file list (id, type, path)
   --json         Machine-readable output
-  --include-adr  Include ADR entities (hidden by default)`,
+  --include-adr  Include ADR entities (hidden by default)
+
+Use c3x canvas list to inspect available entity definitions.`,
 	},
 	{
 		Name:     "check",
@@ -128,23 +132,60 @@ Options:
 		OneLiner: "Create entity (auto-numbering + wiring)",
 		Help: `Usage: c3x add <type> <slug> [options]
 
-Types: container, component, ref, rule, adr, recipe
+Types come from c3x canvas list, including built-ins and project-defined document types.
 
 Options:
   --container <id>       Parent container (component only)
   --feature              Feature numbering (10+) vs foundation (01-09)
-  --goal <text>          Pre-fill goal in frontmatter + body
-  --summary <text>       Pre-fill summary
-  --boundary <text>      Pre-fill boundary (container only)
+  --file <path>          Read body from file instead of stdin
   --json                 Output as JSON (id, type, sections list)
   --dry-run              Validate content without creating the entity
 
 Examples:
-  c3x add container payments --goal "Process payments" --boundary service
-  c3x add ref rate-limiting --goal "Consistent rate limiting"
-  c3x add rule structured-logging --goal "Consistent structured logging"
-  c3x add component auth --container c3-1 --dry-run < auth.md   # validate only
-  c3x add recipe auth-flow`,
+  c3x schema container > container.md
+  c3x add container payments --file container.md
+  c3x schema component > component.md
+  c3x add component auth --container c3-1 --dry-run --file component.md
+  c3x schema adr > adr.md
+  c3x add adr config-change --file adr.md`,
+	},
+	{
+		Name:     "template",
+		Args:     "<list|read|add|write>",
+		OneLiner: "Retired; use canvas",
+		Hidden:   true,
+		Help: `Usage: c3x canvas <list|read|add|write>
+
+ADR templates have been retired. ADR is the adr canvas definition.
+
+Examples:
+  c3x canvas read adr
+  c3x canvas write adr --file adr-canvas.md
+  c3x schema adr`,
+	},
+	{
+		Name:     "canvas",
+		Args:     "<list|read|add|write>",
+		OneLiner: "Manage generic canvas definitions",
+		Help: `Usage: c3x canvas list
+       c3x canvas read <id>
+       c3x canvas add <id> < canvas.md
+       c3x canvas write <id> < canvas.md
+
+Canvases are sealed canonical C3 markdown files under .c3/canvases/.
+They are generic knowledge-graph contracts, not ADR-only templates.
+
+Supported primitive column types:
+  text, date, enum, table sections, edge<...>, cite, check, entity_id
+
+Built-in examples cover C3 ADRs, atomic design changes, PM requirements,
+PRDs, and user stories.
+
+Examples:
+  c3x canvas list
+  c3x canvas read atomic-design-change
+  c3x canvas read prd > prd-canvas.md
+  c3x canvas add release-note --file canvas.md`,
 	},
 	{
 		Name:     "set",
@@ -200,7 +241,7 @@ Examples:
 		Help: `Usage: c3x schema <type> [--json]
 
 Show known sections for an entity type.
-Types: context, container, component, ref, rule, adr, recipe
+Types come from c3x canvas list (system, container, component, ref, rule, adr, recipe, and project-defined document types).
 
 Output includes:
   - REJECT IF: leading rejection contract for adr, ref, rule (read these BEFORE drafting)
@@ -208,9 +249,12 @@ Output includes:
   - fill: what the author must put there
   - rejected when: the failure that triggers rejection of that section
 
-JSON output includes section guidance plus column types (filepath, entity_id, enum, ref_id).
+JSON output includes section guidance plus column types (text, date, enum, cite, check, entity_id, reference, evidence, edge<...>).
 
-Example: c3x schema component --json`,
+Examples:
+  c3x schema component --json
+  c3x canvas read adr
+  c3x schema adr`,
 	},
 	{
 		Name:     "codemap",
@@ -241,6 +285,26 @@ Bracket paths ([id], [...slug]) for Next.js/SvelteKit routes work automatically.
 Examples:
   c3x lookup src/auth/login.ts
   c3x lookup 'src/auth/**/*.ts'`,
+	},
+	{
+		Name:     "search",
+		Args:     "<query>",
+		OneLiner: "Search content with optional graph context",
+		Help: `Usage: c3x search <query> [--hybrid] [--type <type>] [--limit N] [--json]
+
+Search entity metadata and indexed markdown content. With --hybrid, results are
+decorated with graph relationships, governing refs/rules, and code-map paths so
+agents can inspect content plus its topology.
+
+Options:
+  --hybrid        Include graph, ref/rule, and code-map context
+  --type <type>   Restrict metadata search by entity type
+  --limit N       Maximum number of results (default 20)
+  --json          Structured output outside agent mode; agent mode stays TOON
+
+Examples:
+  c3x search "pool wait p95 latency" --hybrid
+  c3x search traceparent --hybrid --json --limit 3`,
 	},
 	{
 		Name:     "graph",
@@ -389,12 +453,14 @@ Workflows:
 
   Understand the architecture before making changes:
     c3x list                # topology: goals, file coverage, ref usage
+    c3x canvas list         # available entity definitions
     c3x schema component    # required sections for a given entity type
     c3x check               # validate refs, orphans, schema gaps
     c3x lookup src/auth.ts  # map code to owning component + refs
 
   Normal change flow:
-    c3x add component auth --container c3-1 --goal "JWT auth for all services"
+    c3x schema component > auth.md
+    c3x add component auth --container c3-1 --file auth.md
     c3x wire c3-101 cite ref-jwt
     c3x check
 
@@ -403,13 +469,16 @@ Workflows:
     c3x repair             # rebuild cache and reseal if check reports seal drift
 
   Add a component to an existing container:
-    c3x add component auth --container c3-1 --goal "JWT auth for all services"
+    c3x schema component > auth.md
+    c3x add component auth --container c3-1 --file auth.md
     c3x wire c3-101 cite ref-jwt
     c3x check
 
   Add a new domain (container + first component):
-    c3x add container payments --goal "Process payments" --boundary service
-    c3x add component billing --container c3-1 --goal "Invoice generation via Stripe"
+    c3x schema container > payments.md
+    c3x add container payments --file payments.md
+    c3x schema component > billing.md
+    c3x add component billing --container c3-1 --file billing.md
     c3x check
 
   Remove an entity cleanly:
@@ -418,13 +487,14 @@ Workflows:
     c3x delete ref-jwt --dry-run   # preview cleanup plan without mutations
 
   Document a cross-cutting concern:
-    c3x add ref rate-limiting --goal "Consistent rate limiting across services"
+    c3x schema ref > rate-limiting.md
+    c3x add ref rate-limiting --file rate-limiting.md
     c3x wire c3-101 cite ref-rate-limiting
     c3x check
 
   Record an architectural decision:
-    c3x add adr use-grpc --goal "Migrate to gRPC for internal services" --json
-    # use the returned ADR id for follow-up set/write commands`)
+    c3x schema adr > adr.md
+    c3x add adr use-grpc --file adr.md`)
 
 	return b.String()
 }

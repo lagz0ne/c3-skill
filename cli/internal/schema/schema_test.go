@@ -107,3 +107,32 @@ func TestRuleRequiredSectionsHaveFillAndFailure(t *testing.T) {
 		}
 	}
 }
+
+func TestADRDefinitionOwnsCurrentSectionsAndRejectRules(t *testing.T) {
+	def, ok := DefinitionFor("adr")
+	if !ok {
+		t.Fatal("adr definition should exist")
+	}
+	if def.ID != "adr" {
+		t.Fatalf("definition id = %q, want adr", def.ID)
+	}
+	if len(def.Sections) == 0 {
+		t.Fatal("adr definition should expose sections")
+	}
+	if len(def.Reject.Bullets) == 0 {
+		t.Fatal("adr definition should expose reject rules")
+	}
+	if got, want := def.Reject, RejectFor("adr"); len(got.Bullets) != len(want.Bullets) || got.Workorder != want.Workorder {
+		t.Fatalf("adr definition reject rules should match reject registry")
+	}
+
+	registrySections := ForType("adr")
+	if len(def.Sections) != len(registrySections) {
+		t.Fatalf("definition sections = %d, registry sections = %d", len(def.Sections), len(registrySections))
+	}
+	for i := range registrySections {
+		if def.Sections[i].Name != registrySections[i].Name {
+			t.Fatalf("section %d = %q, want %q", i, def.Sections[i].Name, registrySections[i].Name)
+		}
+	}
+}

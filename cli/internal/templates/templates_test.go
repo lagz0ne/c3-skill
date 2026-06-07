@@ -24,7 +24,7 @@ func TestRead(t *testing.T) {
 	}
 }
 
-func TestRead_ADRTemplateIncludesDecisionLedger(t *testing.T) {
+func TestRead_ADRScaffoldIncludesDecisionLedger(t *testing.T) {
 	content, err := Read("adr.md")
 	if err != nil {
 		t.Fatal(err)
@@ -42,7 +42,7 @@ func TestRead_ADRTemplateIncludesDecisionLedger(t *testing.T) {
 		"## Verification",
 	} {
 		if !strings.Contains(content, want) {
-			t.Fatalf("ADR template missing %q:\n%s", want, content)
+			t.Fatalf("ADR scaffold missing %q:\n%s", want, content)
 		}
 	}
 }

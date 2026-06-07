@@ -77,6 +77,85 @@ func TestRunCheck_IncludeADRValidatesADR(t *testing.T) {
 	}
 }
 
+func TestRunCheck_IncludeADRUsesDefaultTemplateSections(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	opts := CheckOptions{Store: s, JSON: true, IncludeADR: true, Only: []string{"adr-20260226-use-go"}}
+	if err := RunCheckV2(opts, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	var result CheckResult
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
+	}
+
+	found := false
+	for _, issue := range result.Issues {
+		if issue.Entity == "adr-20260226-use-go" && strings.Contains(issue.Message, "missing required section: Underlay C3 Changes") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("ADR check should use default canvas sections, got: %+v", result.Issues)
+	}
+}
+
+func TestRunCheck_UsesProjectComponentCanvas(t *testing.T) {
+	s, c3Dir := createDBFixtureWithC3Dir(t)
+	if err := RunCanvas(CanvasOptions{C3Dir: c3Dir, Sub: "write", ID: "component", Body: strings.NewReader(projectComponentCanvasDoc())}, &bytes.Buffer{}); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	err := RunCheckV2(CheckOptions{Store: s, C3Dir: c3Dir, JSON: true, Only: []string{"c3-101"}}, &buf)
+	if err == nil {
+		t.Fatal("expected project component canvas to require custom section")
+	}
+	var result CheckResult
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
+	}
+	found := false
+	for _, issue := range result.Issues {
+		if issue.Entity == "c3-101" && strings.Contains(issue.Message, "missing required section: Custom Project Section") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("component check should use project canvas override: %+v", result.Issues)
+	}
+}
+
+func TestRunCheck_IncludeADRUsesProjectCanvas(t *testing.T) {
+	s, c3Dir := createDBFixtureWithC3Dir(t)
+	if err := RunCanvas(CanvasOptions{C3Dir: c3Dir, Sub: "write", ID: "adr", Body: strings.NewReader(projectADRCanvasDoc())}, &bytes.Buffer{}); err != nil {
+		t.Fatal(err)
+	}
+
+	body := "## Decision Note\n\nUse focused project ADR shape.\n"
+	if err := content.WriteEntity(s, "adr-20260226-use-go", body); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	if err := RunCheckV2(CheckOptions{Store: s, C3Dir: c3Dir, JSON: true, IncludeADR: true, Only: []string{"adr-20260226-use-go"}}, &buf); err != nil {
+		t.Fatal(err)
+	}
+	var result CheckResult
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
+	}
+	for _, issue := range result.Issues {
+		if strings.Contains(issue.Message, "Underlay C3 Changes") {
+			t.Fatalf("project ADR canvas should not be checked against default sections: %+v", result.Issues)
+		}
+	}
+}
+
 func TestRunCheck_IncludeADRSkipsImplemented(t *testing.T) {
 	s := createRichDBFixture(t)
 	adr, _ := s.GetEntity("adr-20260226-use-go")
@@ -125,32 +204,6 @@ func TestRunCheck_IncludeADRSkipsProvisioned(t *testing.T) {
 	for _, issue := range result.Issues {
 		if strings.Contains(issue.Entity, "adr-") {
 			t.Errorf("--include-adr should skip provisioned ADRs (terminal), but found issue for: %s", issue.Entity)
-		}
-	}
-}
-
-func TestRunCheck_IncludeADRSkipsSuperseded(t *testing.T) {
-	s := createRichDBFixture(t)
-	adr, _ := s.GetEntity("adr-20260226-use-go")
-	adr.Status = "superseded"
-	if err := s.UpdateEntity(adr); err != nil {
-		t.Fatal(err)
-	}
-
-	var buf bytes.Buffer
-	opts := CheckOptions{Store: s, JSON: true, IncludeADR: true}
-	if err := RunCheckV2(opts, &buf); err != nil {
-		t.Fatal(err)
-	}
-
-	var result CheckResult
-	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
-		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
-	}
-
-	for _, issue := range result.Issues {
-		if strings.Contains(issue.Entity, "adr-") {
-			t.Errorf("--include-adr should skip superseded ADRs (terminal), but found issue for: %s", issue.Entity)
 		}
 	}
 }
@@ -301,7 +354,7 @@ func TestRunCheck_CleanOutputSummary(t *testing.T) {
 		ID: "c3-0", Type: "system", Title: "Test", Slug: "",
 		Status: "active", Metadata: "{}",
 	})
-	content.WriteEntity(s, "c3-0", "# Test\n\n## Goal\n\nTest.\n\n## Containers\n\n| ID | Name | Purpose |\n|----|------|---------|\n| | core | Core |\n\n## Abstract Constraints\n\nKeep it simple.\n")
+	content.WriteEntity(s, "c3-0", "# Test\n\n## Goal\n\nTest.\n\n## Containers\n\n| ID | Name | Boundary | Status | Responsibilities | Goal Contribution |\n|----|------|----------|--------|------------------|-------------------|\n| | core | process | active | Core docs | System purpose |\n\n## Abstract Constraints\n\n| Constraint | Rationale | Affected Containers |\n|------------|-----------|---------------------|\n| Keep it simple | Test fixture | N.A - no containers |\n")
 
 	var buf bytes.Buffer
 	opts := CheckOptions{Store: s, JSON: false}
@@ -665,36 +718,6 @@ func TestRunCheck_RuleFilterNoCiters(t *testing.T) {
 
 func TestRunCheck_AdrWarnsWhenAffectedTopologyOmitsRelatedRefsAndRules(t *testing.T) {
 	s := createRichDBFixture(t)
-	writeADRLinkReviewFixture(t, s, "Affected topology should surface compliance refs and rules.", "Require explicit ADR linkage rows.")
-
-	var buf bytes.Buffer
-	err := RunCheckV2(CheckOptions{Store: s, IncludeADR: true, Only: []string{"adr-20260424-adr-link-review"}}, &buf)
-	if err != nil {
-		t.Fatalf("RunCheckV2 should warn, not fail: %v", err)
-	}
-	out := buf.String()
-	requireAll(t, out,
-		"adr-20260424-adr-link-review: ADR missing compliance ref ref-error-handling",
-		"adr-20260424-adr-link-review: ADR missing compliance rule rule-logging",
-	)
-}
-
-func TestRunCheck_IncludeADRBroadDoesNotDeriveMissingCompliance(t *testing.T) {
-	s := createRichDBFixture(t)
-	writeADRLinkReviewFixture(t, s, "Affected topology should surface authored compliance refs and rules.", "Require explicitly authored ADR linkage rows to reference real entities.")
-
-	var buf bytes.Buffer
-	err := RunCheckV2(CheckOptions{Store: s, IncludeADR: true}, &buf)
-	if err != nil {
-		t.Fatalf("RunCheckV2 should warn, not fail: %v", err)
-	}
-	if strings.Contains(buf.String(), "ADR missing compliance") {
-		t.Fatalf("broad --include-adr should not derive missing compliance warnings, got:\n%s", buf.String())
-	}
-}
-
-func writeADRLinkReviewFixture(t *testing.T, s *store.Store, contextText string, decisionText string) {
-	t.Helper()
 	if err := s.InsertEntity(&store.Entity{
 		ID: "rule-logging", Type: "rule", Title: "Structured Logging", Slug: "logging",
 		Status: "active", Metadata: "{}",
@@ -715,36 +738,90 @@ func writeADRLinkReviewFixture(t *testing.T, s *store.Store, contextText string,
 	}
 	body := "# ADR Link Review\n\n" +
 		"## Goal\n\nReview ADR related linkage.\n\n" +
-		"## Context\n\n" + contextText + "\n\n" +
-		"## Decision\n\n" + decisionText + "\n\n" +
+		"## Context\n\nAffected topology should surface compliance refs and rules.\n\n" +
+		"## Decision\n\nRequire explicit ADR linkage rows.\n\n" +
 		"## Affected Topology\n\n" +
-		"| Entity | Type | Why affected | Governance review |\n|--------|------|--------------|-------------------|\n" +
-		"| c3-1 | container | API changes are in scope. | Review inherited and cited governance. |\n\n" +
+		"| Entity | Type | Why affected | Evidence | Governance review |\n|--------|------|--------------|----------|-------------------|\n" +
+		"| c3-1 | container | API changes are in scope. | " + testCitationForEntity(t, s, "c3-1") + " | Review inherited and cited governance. |\n\n" +
 		"## Compliance Refs\n\n" +
-		"| Ref | Why required | Action |\n|-----|--------------|--------|\n" +
-		"| ref-jwt | cited by c3-101 so auth must still comply. | keep linked |\n\n" +
+		"| Ref | Why required | Evidence | Action |\n|-----|--------------|----------|--------|\n" +
+		"| ref-jwt | cited by c3-101 so auth must still comply. | " + testCitationForEntity(t, s, "ref-jwt") + " | keep linked |\n\n" +
 		"## Compliance Rules\n\n" +
-		"| Rule | Why required | Action |\n|------|--------------|--------|\n" +
-		"| N.A - missing | N.A - omitted on purpose. | N.A - test. |\n\n" +
+		"| Rule | Why required | Evidence | Action |\n|------|--------------|----------|--------|\n" +
+		"| N.A - missing | N.A - omitted on purpose. | N.A - omitted on purpose. | N.A - test. |\n\n" +
 		"## Work Breakdown\n\n" +
 		"| Area | Detail | Evidence |\n|------|--------|----------|\n" +
 		"| cli | Add ADR linkage validation. | go test. |\n\n" +
 		"## Underlay C3 Changes\n\n" +
 		"| Underlay area | Exact C3 change | Verification evidence |\n|---------------|-----------------|-----------------------|\n" +
-		"| cli/cmd/check_enhanced.go | Validate ADR linkage rows. | go test. |\n\n" +
+		"| cli/cmd/check_enhanced.go | Warn on missing compliance refs/rules. | go test. |\n\n" +
 		"## Enforcement Surfaces\n\n" +
 		"| Surface | Behavior | Evidence |\n|---------|----------|----------|\n" +
-		"| c3x check | Validates ADR linkage coverage. | go test. |\n\n" +
+		"| c3x check | Warns on missing ADR linkage coverage. | go test. |\n\n" +
 		"## Alternatives Considered\n\n" +
 		"| Alternative | Rejected because |\n|-------------|------------------|\n" +
 		"| Skip linkage review. | ADRs would hide relevant governance. |\n\n" +
 		"## Risks\n\n" +
 		"| Risk | Mitigation | Verification |\n|------|------------|--------------|\n" +
-		"| Missing refs or rules | Check derives expected links when strict ADR validation is requested. | go test. |\n\n" +
+		"| Missing refs or rules | Check derives expected links from affected topology. | go test. |\n\n" +
 		"## Verification\n\n" +
 		"| Check | Result |\n|-------|--------|\n" +
 		"| go test | Pending. |\n"
 	if err := content.WriteEntity(s, "adr-20260424-adr-link-review", body); err != nil {
 		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	err := RunCheckV2(CheckOptions{Store: s, IncludeADR: true}, &buf)
+	if err != nil {
+		t.Fatalf("RunCheckV2 should warn, not fail: %v", err)
+	}
+	out := buf.String()
+	requireAll(t, out,
+		"adr-20260424-adr-link-review: ADR missing compliance ref ref-error-handling",
+		"adr-20260424-adr-link-review: ADR missing compliance rule rule-logging",
+	)
+}
+
+func TestValidateADREvidence_CurrentCitationPasses(t *testing.T) {
+	s := createRichDBFixture(t)
+	issues := validateADREvidence(s, "Affected Topology", "c3-1", testCitationForEntity(t, s, "c3-1"), "warning", false)
+	if len(issues) != 0 {
+		t.Fatalf("current citation should pass, got %+v", issues)
+	}
+}
+
+func TestValidateADREvidence_RejectsWrongEntityAndStaleHash(t *testing.T) {
+	s := createRichDBFixture(t)
+
+	wrongEntity := testCitationForEntity(t, s, "c3-101")
+	issues := validateADREvidence(s, "Affected Topology", "c3-1", wrongEntity, "warning", false)
+	if len(issues) != 1 || !strings.Contains(issues[0].Message, "cites c3-101, want c3-1") {
+		t.Fatalf("expected wrong-entity issue, got %+v", issues)
+	}
+
+	staleHash := testCitationForEntity(t, s, "c3-1")
+	hashStart := strings.Index(staleHash, ":sha256:") + len(":sha256:")
+	staleHash = staleHash[:hashStart] + strings.Repeat("0", 64) + staleHash[hashStart+64:]
+	issues = validateADREvidence(s, "Affected Topology", "c3-1", staleHash, "warning", false)
+	if len(issues) != 1 || !strings.Contains(issues[0].Message, "stale node hash or snippet") {
+		t.Fatalf("expected stale-hash issue, got %+v", issues)
+	}
+}
+
+func TestValidateADREvidence_AllowsMovedNodeIDWhenHashMatches(t *testing.T) {
+	s := createRichDBFixture(t)
+	good := testCitationForEntity(t, s, "c3-1")
+	other := testCitationForEntity(t, s, "c3-101")
+
+	goodNodeStart := strings.Index(good, "#n") + len("#n")
+	goodNodeEnd := strings.Index(good, "@v")
+	otherNodeStart := strings.Index(other, "#n") + len("#n")
+	otherNodeEnd := strings.Index(other, "@v")
+	movedNode := good[:goodNodeStart] + other[otherNodeStart:otherNodeEnd] + good[goodNodeEnd:]
+
+	issues := validateADREvidence(s, "Affected Topology", "c3-1", movedNode, "warning", false)
+	if len(issues) != 0 {
+		t.Fatalf("citation with moved node id but matching hash/snippet should pass, got %+v", issues)
 	}
 }

@@ -16,20 +16,35 @@ type SchemaOutput struct {
 	Workorder string              `json:"workorder,omitempty"`
 }
 
+type SchemaOptions struct {
+	EntityType string
+	JSON       bool
+	C3Dir      string
+	Template   string
+}
+
 // RunSchema outputs the section schema for a given entity type.
 func RunSchema(entityType string, jsonOutput bool, w io.Writer) error {
-	sections := schema.ForType(entityType)
-	if sections == nil {
+	return RunSchemaWithOptions(SchemaOptions{EntityType: entityType, JSON: jsonOutput}, w)
+}
+
+func RunSchemaWithOptions(opts SchemaOptions, w io.Writer) error {
+	entityType := opts.EntityType
+	if opts.Template != "" {
+		return fmt.Errorf("error: --template has been retired\nhint: use c3x canvas read adr or c3x schema adr")
+	}
+	def, ok := schema.DefinitionForDir(opts.C3Dir, entityType)
+	if !ok {
 		return fmt.Errorf("unknown entity type: %q", entityType)
 	}
+	sections := def.Sections
 
-	if jsonOutput {
-		rules := schema.RejectFor(entityType)
+	if opts.JSON {
 		out := SchemaOutput{
 			Type:      entityType,
 			Sections:  sections,
-			RejectIf:  rules.Bullets,
-			Workorder: rules.Workorder,
+			RejectIf:  def.Reject.Bullets,
+			Workorder: def.Reject.Workorder,
 		}
 		return writeJSON(w, out)
 	}
@@ -37,7 +52,7 @@ func RunSchema(entityType string, jsonOutput bool, w io.Writer) error {
 	// Text output
 	fmt.Fprintf(w, "Schema: %s\n", entityType)
 
-	writeRejectIfBlock(w, entityType)
+	writeRejectIfBlock(w, def.Reject)
 
 	for _, s := range sections {
 		req := ""
@@ -85,10 +100,9 @@ func RunSchema(entityType string, jsonOutput bool, w io.Writer) error {
 	return nil
 }
 
-// writeRejectIfBlock prints the REJECT IF rejection contract sourced from
-// schema.RejectRegistry. Empty contract (component, container, context, recipe) prints nothing.
-func writeRejectIfBlock(w io.Writer, entityType string) {
-	rules := schema.RejectFor(entityType)
+// writeRejectIfBlock prints the REJECT IF rejection contract from the resolved
+// canvas definition. Empty contracts print nothing.
+func writeRejectIfBlock(w io.Writer, rules schema.RejectRules) {
 	if len(rules.Bullets) == 0 {
 		return
 	}

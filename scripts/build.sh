@@ -46,6 +46,7 @@ for target in "${TARGETS[@]}"; do
   echo "  Building ${OS}/${ARCH} -> c3x-${VERSION}-${OS}-${ARCH}"
   CGO_ENABLED=0 GOOS="$OS" GOARCH="$ARCH" go build \
     -C "$CLI_DIR" \
+    -buildvcs=false \
     -ldflags="-s -w -X main.version=${VERSION}" \
     -o "$OUTPUT" \
     .

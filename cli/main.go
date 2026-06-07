@@ -118,8 +118,6 @@ func runWithIO(argv []string, stdin io.Reader, stdinTerminal bool, w io.Writer, 
 			if err := cmd.EnsureLocalCache(c3Dir, opts.IncludeADR, opts.Only, io.Discard); err != nil {
 				return fmt.Errorf("error: refresh cache before %q: %w", opts.Command, err)
 			}
-		} else if err := cmd.RunVerify(cmd.VerifyOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: opts.Only}, io.Discard); err != nil {
-			fmt.Fprintln(stderr, "warning: .c3/ drift detected; run 'c3x check' to reconcile")
 		}
 		hasDB = fileExists(dbPath)
 	}
@@ -348,8 +346,20 @@ func runThroughCoordinator(argv []string, stdin io.Reader, stdinTerminal bool, c
 		return err
 	}
 
-	leader, err := coord.NewLeader(c3Dir)
-	if err != nil {
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		leader, err := coord.NewLeader(c3Dir)
+		if err == nil {
+			defer leader.Close()
+			resp := leader.Serve(req, func(queued coord.Request) coord.Response {
+				return runQueuedRequest(queued)
+			})
+			writeCoordinatorResponse(resp, w, stderr)
+			if resp.Error != "" {
+				return fmt.Errorf("%s", resp.Error)
+			}
+			return nil
+		}
 		if resp, handled, retryErr := coord.ForwardWithRetry(c3Dir, req, 2*time.Second); handled {
 			writeCoordinatorResponse(resp, w, stderr)
 			if resp.Error != "" {
@@ -358,19 +368,14 @@ func runThroughCoordinator(argv []string, stdin io.Reader, stdinTerminal bool, c
 			return retryErr
 		}
 		if err == coord.ErrBusy {
-			return fmt.Errorf("error: write coordinator busy for %s", c3Dir)
+			if time.Now().After(deadline) {
+				return fmt.Errorf("error: write coordinator busy for %s", c3Dir)
+			}
+			time.Sleep(25 * time.Millisecond)
+			continue
 		}
 		return runWithIO(argv, bytes.NewReader(data), stdinTerminal, w, stderr, false)
 	}
-	defer leader.Close()
-	resp := leader.Serve(req, func(queued coord.Request) coord.Response {
-		return runQueuedRequest(queued)
-	})
-	writeCoordinatorResponse(resp, w, stderr)
-	if resp.Error != "" {
-		return fmt.Errorf("%s", resp.Error)
-	}
-	return nil
 }
 
 func runQueuedRequest(req coord.Request) coord.Response {
@@ -447,7 +452,7 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 		if len(opts.Args) >= 1 {
 			entityID = opts.Args[0]
 		}
-		err = cmd.RunRead(cmd.ReadOptions{Store: s, ID: entityID, JSON: opts.JSON, Section: opts.Section, Full: opts.Full}, w)
+		err = cmd.RunRead(cmd.ReadOptions{Store: s, ID: entityID, JSON: opts.JSON, Section: opts.Section, Full: opts.Full, Cite: opts.Cite}, w)
 	case "write":
 		entityID := ""
 		if len(opts.Args) >= 1 {
@@ -461,9 +466,9 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 		if err != nil {
 			return fmt.Errorf("error: reading stdin: %w", err)
 		}
-		err = cmd.RunWrite(cmd.WriteOptions{Store: s, ID: entityID, Section: opts.Section, Content: string(content)}, w)
+		err = cmd.RunWrite(cmd.WriteOptions{Store: s, C3Dir: c3Dir, ID: entityID, Section: opts.Section, Content: string(content)}, w)
 	case "add":
-		err = runAdd(opts, s, stdin, stdinTerminal, w)
+		err = runAdd(opts, s, c3Dir, stdin, stdinTerminal, w)
 	case "set":
 		err = runSet(opts, s, c3Dir, stdin, stdinTerminal, w)
 	case "wire":
@@ -479,6 +484,19 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 			ProjectDir: projectDir,
 			C3Dir:      c3Dir,
 		}, w)
+	case "search":
+		query := ""
+		if len(opts.Args) >= 1 {
+			query = opts.Args[0]
+		}
+		err = cmd.RunSearch(cmd.SearchOptions{
+			Store:      s,
+			Query:      query,
+			Hybrid:     opts.Hybrid,
+			JSON:       opts.JSON,
+			Limit:      opts.Limit,
+			TypeFilter: opts.TypeFilter,
+		}, w)
 	case "codemap":
 		err = cmd.RunCodemap(cmd.CodemapOptions{Store: s, JSON: opts.JSON}, w)
 	case "schema":
@@ -486,7 +504,27 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 		if len(opts.Args) >= 1 {
 			entityType = opts.Args[0]
 		}
-		err = cmd.RunSchema(entityType, opts.JSON, w)
+		err = cmd.RunSchemaWithOptions(cmd.SchemaOptions{EntityType: entityType, JSON: opts.JSON, C3Dir: c3Dir, Template: opts.Template}, w)
+	case "template":
+		sub := "list"
+		id := ""
+		if len(opts.Args) >= 1 {
+			sub = opts.Args[0]
+		}
+		if len(opts.Args) >= 2 {
+			id = opts.Args[1]
+		}
+		err = cmd.RunTemplate(cmd.TemplateOptions{C3Dir: c3Dir, JSON: opts.JSONExplicit, Sub: sub, ID: id, Body: stdin, StdinTerminal: stdinTerminal}, w)
+	case "canvas":
+		sub := "list"
+		id := ""
+		if len(opts.Args) >= 1 {
+			sub = opts.Args[0]
+		}
+		if len(opts.Args) >= 2 {
+			id = opts.Args[1]
+		}
+		err = cmd.RunCanvas(cmd.CanvasOptions{C3Dir: c3Dir, JSON: opts.JSONExplicit, Sub: sub, ID: id, Body: stdin, StdinTerminal: stdinTerminal}, w)
 	case "graph":
 		entityID := ""
 		if len(opts.Args) >= 1 {
@@ -523,7 +561,13 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 
 func commandMutatesCanonical(opts cmd.Options) bool {
 	switch opts.Command {
-	case "write", "add", "set", "wire", "delete", "repair":
+	case "write", "add", "set", "wire", "delete", "repair", "template", "canvas":
+		if opts.Command == "template" && !(len(opts.Args) > 0 && (opts.Args[0] == "add" || opts.Args[0] == "write")) {
+			return false
+		}
+		if opts.Command == "canvas" && !(len(opts.Args) > 0 && (opts.Args[0] == "add" || opts.Args[0] == "write")) {
+			return false
+		}
 		if opts.Command == "delete" {
 			return !opts.DryRun
 		}
@@ -535,7 +579,7 @@ func commandMutatesCanonical(opts cmd.Options) bool {
 	}
 }
 
-func runAdd(opts cmd.Options, s *store.Store, stdin io.Reader, stdinTerminal bool, w io.Writer) error {
+func runAdd(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader, stdinTerminal bool, w io.Writer) error {
 	entityType := ""
 	slug := ""
 	if len(opts.Args) >= 1 {
@@ -551,14 +595,14 @@ func runAdd(opts cmd.Options, s *store.Store, stdin io.Reader, stdinTerminal boo
 	}
 
 	if opts.DryRun {
-		return cmd.RunAddDryRun(entityType, slug, s, opts.Container, opts.Feature, stdin, w)
+		return cmd.RunAddDryRunWithTemplate(entityType, slug, s, opts.Container, opts.Feature, opts.Template, c3Dir, stdin, w)
 	}
 
 	format := cmd.FormatHuman
 	if opts.JSON {
 		format = cmd.ResolveFormat(opts.JSONExplicit, os.Getenv("C3X_MODE") == "agent")
 	}
-	return cmd.RunAddFormatted(entityType, slug, s, opts.Container, opts.Feature, stdin, w, format)
+	return cmd.RunAddFormattedWithTemplate(entityType, slug, s, opts.Container, opts.Feature, opts.Template, c3Dir, stdin, w, format)
 }
 
 func runSet(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader, stdinTerminal bool, w io.Writer) error {
@@ -591,7 +635,7 @@ func runSet(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader, std
 
 func commandAcceptsFile(cmd string) bool {
 	switch cmd {
-	case "write", "add", "set":
+	case "write", "add", "set", "template", "canvas":
 		return true
 	}
 	return false

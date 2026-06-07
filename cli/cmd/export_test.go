@@ -210,11 +210,12 @@ func TestEntityExportPath_OrphanComponent(t *testing.T) {
 	}
 }
 
-func TestEntityExportPath_UnknownType(t *testing.T) {
-	e := &store.Entity{ID: "x", Type: "unknown", Slug: "x"}
+func TestEntityExportPath_GenericDocumentType(t *testing.T) {
+	e := &store.Entity{ID: "research-note-api-latency", Type: "research-note", Slug: "api-latency"}
 	path := entityExportPath("/out", e, map[string]string{})
-	if path != "" {
-		t.Errorf("unknown type should return empty path, got %q", path)
+	want := filepath.Join("/out", "documents", "research-note", "research-note-api-latency.md")
+	if path != want {
+		t.Errorf("generic document path = %q, want %q", path, want)
 	}
 }
 
@@ -299,7 +300,6 @@ func TestBuildExportContent_PreservesMetadataFields(t *testing.T) {
 		}
 	}
 }
-
 
 func captureExportTree(t *testing.T, root string) map[string]string {
 	t.Helper()

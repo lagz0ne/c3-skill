@@ -30,7 +30,6 @@ import (
 // one-shot LLM scaffolds.
 // ---------------------------------------------------------------------------
 
-
 // ---------------------------------------------------------------------------
 // SECTION 2: Schema Constraint Visibility
 // Schema output should contain enough info for an LLM to produce valid content
@@ -350,8 +349,8 @@ func TestEval_EmbeddedTemplateHasAllRequiredSections(t *testing.T) {
 	}
 }
 
-func TestEval_EmbeddedADRTemplateHasTableHeaders(t *testing.T) {
-	// ADR template tables should have correct column headers matching schema
+func TestEval_EmbeddedADRScaffoldHasTableHeaders(t *testing.T) {
+	// ADR scaffold tables should have correct column headers matching schema.
 	content, err := templates.Read("adr.md")
 	if err != nil {
 		t.Fatal(err)
@@ -364,7 +363,7 @@ func TestEval_EmbeddedADRTemplateHasTableHeaders(t *testing.T) {
 		}
 		for _, col := range sec.Columns {
 			if !strings.Contains(content, col.Name) {
-				t.Errorf("ADR template missing column %q in section %s", col.Name, sec.Name)
+				t.Errorf("ADR scaffold missing column %q in section %s", col.Name, sec.Name)
 			}
 		}
 	}

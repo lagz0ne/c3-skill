@@ -98,11 +98,30 @@ func TestRunSchema_ADRIncludesDecisionLedger(t *testing.T) {
 		}
 	}
 
+	if strings.Contains(output, "Template:") {
+		t.Errorf("ADR schema should not mention retired ADR templates, got: %s", output)
+	}
 	if strings.Contains(output, "if weak/missing:") {
 		t.Errorf("ADR schema should NOT contain renamed label %q", "if weak/missing:")
 	}
 	if strings.Contains(output, "ADR rules:") {
 		t.Errorf("ADR schema should NOT contain old %q header (merged into REJECT IF)", "ADR rules:")
+	}
+}
+
+func TestRunSchema_ADRUsesCanvasDefinition(t *testing.T) {
+	sections := schema.ForType("adr")
+	def, ok := schema.DefinitionFor("adr")
+	if !ok {
+		t.Fatal("adr definition missing")
+	}
+	if len(sections) != len(def.Sections) {
+		t.Fatalf("sections = %d, definition sections = %d", len(sections), len(def.Sections))
+	}
+	for i := range sections {
+		if sections[i].Name != def.Sections[i].Name {
+			t.Fatalf("section %d = %q, want %q", i, sections[i].Name, def.Sections[i].Name)
+		}
 	}
 }
 
@@ -312,15 +331,15 @@ func TestRunSchema_JSON_ADRUnderlayColumns(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var schema SchemaOutput
-	if err := json.Unmarshal(buf.Bytes(), &schema); err != nil {
+	var out SchemaOutput
+	if err := json.Unmarshal(buf.Bytes(), &out); err != nil {
 		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
 	}
 
-	if schema.Type != "adr" {
-		t.Errorf("type = %q, want adr", schema.Type)
+	if out.Type != "adr" {
+		t.Errorf("type = %q, want adr", out.Type)
 	}
-	for _, s := range schema.Sections {
+	for _, s := range out.Sections {
 		if s.Name != "Underlay C3 Changes" {
 			continue
 		}
@@ -338,6 +357,32 @@ func TestRunSchema_JSON_ADRUnderlayColumns(t *testing.T) {
 		return
 	}
 	t.Fatal("Underlay C3 Changes section not found in ADR schema")
+}
+
+func TestRunSchema_ReadsProjectCanvasOverride(t *testing.T) {
+	_, c3Dir := createDBFixtureWithC3Dir(t)
+	if err := RunCanvas(CanvasOptions{C3Dir: c3Dir, Sub: "write", ID: "component", Body: strings.NewReader(projectComponentCanvasDoc())}, &bytes.Buffer{}); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	if err := RunSchemaWithOptions(SchemaOptions{EntityType: "component", C3Dir: c3Dir}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	requireAll(t, buf.String(),
+		"Schema: component",
+		"Custom Project Section",
+	)
+}
+
+func TestRunSchema_TemplateFlagRetired(t *testing.T) {
+	var buf bytes.Buffer
+	err := RunSchemaWithOptions(SchemaOptions{EntityType: "adr", Template: "small-change"}, &buf)
+	if err == nil {
+		t.Fatal("expected schema template option to fail")
+	}
+	requireAll(t, err.Error(), "--template has been retired", "c3x canvas read adr")
 }
 
 func TestRunSchema_JSON(t *testing.T) {
@@ -427,8 +472,10 @@ func TestRunSchema_JSON_TableColumns(t *testing.T) {
 			if evidenceCol == nil {
 				t.Fatal("Evidence column not found")
 			}
-			if evidenceCol.Type != "text" {
-				t.Errorf("Evidence column type = %q, want %q", evidenceCol.Type, "text")
+			// Evidence is a semantic "evidence" column: validation (grounded
+			// command/path/entity-id) keys off this type, not the column name.
+			if evidenceCol.Type != "evidence" {
+				t.Errorf("Evidence column type = %q, want %q", evidenceCol.Type, "evidence")
 			}
 			return
 		}

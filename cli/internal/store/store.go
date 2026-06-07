@@ -57,7 +57,7 @@ func (s *Store) createSchema() error {
 const schemaSQL = `
 CREATE TABLE IF NOT EXISTS entities (
 	id          TEXT PRIMARY KEY,
-	type        TEXT NOT NULL CHECK(type IN ('system','container','component','ref','adr','rule','recipe')),
+	type        TEXT NOT NULL,
 	title       TEXT NOT NULL,
 	slug        TEXT NOT NULL,
 	category    TEXT NOT NULL DEFAULT '',
@@ -176,6 +176,16 @@ CREATE TABLE IF NOT EXISTS store_meta (
 `
 
 func (s *Store) migrateSchema() error {
+	if err := s.ensureEntityMerkleColumns(); err != nil {
+		return err
+	}
+	if err := s.ensureEntityTypeIsCanvasDefined(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Store) ensureEntityMerkleColumns() error {
 	var count int
 	s.db.QueryRow(`SELECT COUNT(*) FROM pragma_table_info('entities') WHERE name = 'root_merkle'`).Scan(&count)
 	if count > 0 {
@@ -189,6 +199,71 @@ func (s *Store) migrateSchema() error {
 		if _, err := s.db.Exec(m); err != nil && !strings.Contains(err.Error(), "duplicate column") {
 			return fmt.Errorf("migrate: %w", err)
 		}
+	}
+	return nil
+}
+
+func (s *Store) ensureEntityTypeIsCanvasDefined() error {
+	var tableSQL string
+	err := s.db.QueryRow(`SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'entities'`).Scan(&tableSQL)
+	if err != nil {
+		return fmt.Errorf("inspect entities schema: %w", err)
+	}
+	if !strings.Contains(tableSQL, "CHECK(type IN") {
+		return nil
+	}
+
+	if _, err := s.db.Exec(`PRAGMA foreign_keys=OFF`); err != nil {
+		return fmt.Errorf("disable foreign keys for entity type migration: %w", err)
+	}
+	defer s.db.Exec(`PRAGMA foreign_keys=ON`)
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return fmt.Errorf("begin entity type migration: %w", err)
+	}
+	defer tx.Rollback()
+
+	migrations := []string{
+		`DROP TRIGGER IF EXISTS entities_ai`,
+		`DROP TRIGGER IF EXISTS entities_ad`,
+		`DROP TRIGGER IF EXISTS entities_au`,
+		`DROP TABLE IF EXISTS entities_new`,
+		`CREATE TABLE entities_new (
+			id          TEXT PRIMARY KEY,
+			type        TEXT NOT NULL,
+			title       TEXT NOT NULL,
+			slug        TEXT NOT NULL,
+			category    TEXT NOT NULL DEFAULT '',
+			parent_id   TEXT REFERENCES entities(id) ON DELETE SET NULL,
+			goal        TEXT NOT NULL DEFAULT '',
+			status      TEXT NOT NULL DEFAULT 'active',
+			boundary    TEXT NOT NULL DEFAULT '',
+			date        TEXT NOT NULL DEFAULT '',
+			metadata    TEXT NOT NULL DEFAULT '{}',
+			root_merkle TEXT NOT NULL DEFAULT '',
+			version     INTEGER NOT NULL DEFAULT 0,
+			created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+			updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+		)`,
+		`INSERT INTO entities_new(rowid, id, type, title, slug, category, parent_id, goal, status, boundary, date, metadata, root_merkle, version, created_at, updated_at)
+		 SELECT rowid, id, type, title, slug, category, parent_id, goal, status, boundary, date, metadata, root_merkle, version, created_at, updated_at FROM entities`,
+		`DROP TABLE entities`,
+		`ALTER TABLE entities_new RENAME TO entities`,
+	}
+	for _, migration := range migrations {
+		if _, err := tx.Exec(migration); err != nil {
+			return fmt.Errorf("migrate entity type constraint: %w", err)
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit entity type migration: %w", err)
+	}
+	if err := s.createSchema(); err != nil {
+		return fmt.Errorf("recreate entity triggers: %w", err)
+	}
+	if _, err := s.db.Exec(`INSERT INTO entities_fts(entities_fts) VALUES ('rebuild')`); err != nil {
+		return fmt.Errorf("rebuild entity search index: %w", err)
 	}
 	return nil
 }

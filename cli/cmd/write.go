@@ -15,6 +15,7 @@ import (
 // WriteOptions holds parameters for the write command.
 type WriteOptions struct {
 	Store   *store.Store
+	C3Dir   string
 	ID      string
 	Section string // if set, only replace this section's content
 	Content string // full markdown (no --section) or section body (with --section)
@@ -47,8 +48,12 @@ func runWriteFull(existing *store.Entity, opts WriteOptions, w io.Writer) error 
 		mdBody = opts.Content
 	}
 
+	def, err := resolveDefinitionForEntity(existing, opts.C3Dir)
+	if err != nil {
+		return err
+	}
 	// Validate against schema before writing.
-	issues := validateBodyContent(mdBody, existing.Type)
+	issues := validateBodyContentWithDefinition(mdBody, existing.Type, def.Sections)
 	if len(issues) > 0 {
 		return formatValidationError(opts.ID, issues)
 	}
@@ -59,7 +64,7 @@ func runWriteFull(existing *store.Entity, opts WriteOptions, w io.Writer) error 
 	}
 
 	// Re-fetch entity (WriteEntity updated merkle/version/goal from nodes).
-	existing, err := opts.Store.GetEntity(opts.ID)
+	existing, err = opts.Store.GetEntity(opts.ID)
 	if err != nil {
 		return fmt.Errorf("error: re-fetch entity: %w", err)
 	}
@@ -96,7 +101,11 @@ func runWriteSection(existing *store.Entity, opts WriteOptions, w io.Writer) err
 		return fmt.Errorf("error: section %q not found in %s\nhint: available sections: %s",
 			opts.Section, opts.ID, availableSections(currentBody))
 	}
-	if issues := validateBodyContent(newBody, existing.Type); len(issues) > 0 {
+	def, err := resolveDefinitionForEntity(existing, opts.C3Dir)
+	if err != nil {
+		return err
+	}
+	if issues := validateBodyContentWithDefinition(newBody, existing.Type, def.Sections); len(issues) > 0 {
 		return formatValidationError(opts.ID, issues)
 	}
 
@@ -204,7 +213,14 @@ func formatValidationError(id string, issues []Issue) error {
 
 // validateBodyContent checks required schema sections against a markdown body string.
 func validateBodyContent(body, entityType string) []Issue {
-	schemaSections := schema.ForType(entityType)
+	def, ok := schema.DefinitionFor(entityType)
+	if !ok {
+		return nil
+	}
+	return validateBodyContentWithDefinition(body, entityType, def.Sections)
+}
+
+func validateBodyContentWithDefinition(body, entityType string, schemaSections []schema.SectionDef) []Issue {
 	if schemaSections == nil {
 		return nil
 	}
@@ -216,10 +232,10 @@ func validateBodyContent(body, entityType string) []Issue {
 		return append(validateStrictComponentDoc(body, "error"), unknownSectionIssues(sections, allowed, entityType)...)
 	}
 
-	sectionMap := make(map[string]string)
+	sectionMap := make(map[string]markdown.Section)
 	for _, s := range sections {
 		if s.Name != "" {
-			sectionMap[s.Name] = strings.TrimSpace(s.Content)
+			sectionMap[s.Name] = s
 		}
 	}
 
@@ -229,7 +245,7 @@ func validateBodyContent(body, entityType string) []Issue {
 			continue
 		}
 
-		c, exists := sectionMap[sec.Name]
+		bodySection, exists := sectionMap[sec.Name]
 		if !exists {
 			issues = append(issues, Issue{
 				Severity: "error",
@@ -239,26 +255,127 @@ func validateBodyContent(body, entityType string) []Issue {
 			continue
 		}
 
+		c := strings.TrimSpace(bodySection.Content)
 		if c == "" {
+			message := fmt.Sprintf("empty required section: %s", sec.Name)
+			if sec.ContentType == "table" {
+				message = fmt.Sprintf("empty required table: %s", sec.Name)
+			}
+			issues = append(issues, Issue{Severity: "error", Message: message, Hint: fmt.Sprintf("add content to ## %s — %s", sec.Name, sec.Purpose)})
+			continue
+		}
+
+		if sec.ContentType != "table" {
+			continue
+		}
+		table, err := markdown.ParseTable(c)
+		if err != nil {
+			headers, ok := tableHeadersFromMarkdown(c)
+			if !ok {
+				issues = append(issues, Issue{
+					Severity: "error",
+					Message:  fmt.Sprintf("invalid required table: %s", sec.Name),
+					Hint:     fmt.Sprintf("run 'c3x schema %s' for the %s table columns", entityType, sec.Name),
+				})
+				continue
+			}
+			missingColumns := false
+			for _, col := range sec.Columns {
+				if !containsString(headers, col.Name) {
+					missingColumns = true
+					issues = append(issues, Issue{
+						Severity: "error",
+						Message:  fmt.Sprintf("missing required column %q in table: %s", col.Name, sec.Name),
+						Hint:     fmt.Sprintf("run 'c3x schema %s' for the %s table columns", entityType, sec.Name),
+					})
+				}
+			}
+			if !missingColumns {
+				issues = append(issues, Issue{
+					Severity: "error",
+					Message:  fmt.Sprintf("invalid required table: %s", sec.Name),
+					Hint:     fmt.Sprintf("run 'c3x schema %s' for the %s table columns", entityType, sec.Name),
+				})
+			}
+			continue
+		}
+		if len(table.Rows) == 0 {
 			issues = append(issues, Issue{
 				Severity: "error",
-				Message:  fmt.Sprintf("empty required section: %s", sec.Name),
-				Hint:     fmt.Sprintf("add content to ## %s — %s", sec.Name, sec.Purpose),
+				Message:  fmt.Sprintf("empty required table: %s (headers only, no data rows)", sec.Name),
+				Hint:     fmt.Sprintf("add at least one row to ## %s", sec.Name),
 			})
+			continue
+		}
+		for _, col := range sec.Columns {
+			if !containsString(table.Headers, col.Name) {
+				issues = append(issues, Issue{
+					Severity: "error",
+					Message:  fmt.Sprintf("missing required column %q in table: %s", col.Name, sec.Name),
+					Hint:     fmt.Sprintf("run 'c3x schema %s' for the %s table columns", entityType, sec.Name),
+				})
+			}
 		}
 	}
 
 	return append(issues, unknownSectionIssues(sections, allowed, entityType)...)
 }
 
-func allowedSectionNames(entityType string, schemaSections []schema.SectionDef) map[string]bool {
-	allowed := make(map[string]bool)
-	if entityType == "component" {
-		for _, name := range componentSectionOrder {
-			allowed[name] = true
+func tableHeadersFromMarkdown(markdownTable string) ([]string, bool) {
+	for _, line := range strings.Split(strings.TrimSpace(markdownTable), "\n") {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" || strings.HasPrefix(trimmed, "<!--") {
+			continue
 		}
-		return allowed
+		headers := splitMarkdownTableCells(trimmed)
+		return headers, len(headers) > 0
 	}
+	return nil, false
+}
+
+func splitMarkdownTableCells(line string) []string {
+	line = strings.TrimSpace(line)
+	if strings.HasPrefix(line, "|") {
+		line = line[1:]
+	}
+	if strings.HasSuffix(line, "|") {
+		line = line[:len(line)-1]
+	}
+	var cells []string
+	var current strings.Builder
+	escaped := false
+	for _, r := range line {
+		switch {
+		case escaped:
+			current.WriteRune(r)
+			escaped = false
+		case r == '\\':
+			current.WriteRune(r)
+			escaped = true
+		case r == '|':
+			cells = append(cells, strings.TrimSpace(current.String()))
+			current.Reset()
+		default:
+			current.WriteRune(r)
+		}
+	}
+	cells = append(cells, strings.TrimSpace(current.String()))
+	return cells
+}
+
+func resolveDefinitionForEntity(entity *store.Entity, c3Dir string) (schema.Canvas, error) {
+	if entity == nil {
+		return schema.Canvas{}, fmt.Errorf("error: missing entity")
+	}
+	def, ok := schema.DefinitionForDir(c3Dir, entity.Type)
+	if !ok {
+		return schema.Canvas{}, fmt.Errorf("error: unknown entity type %q\nhint: run c3x canvas list", entity.Type)
+	}
+	return def, nil
+}
+
+func allowedSectionNames(_ string, schemaSections []schema.SectionDef) map[string]bool {
+	allowed := make(map[string]bool)
 	for _, sec := range schemaSections {
 		allowed[sec.Name] = true
 	}

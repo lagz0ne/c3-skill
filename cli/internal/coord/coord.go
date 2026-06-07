@@ -109,6 +109,9 @@ func NewLeader(c3Dir string) (*Leader, error) {
 	ln, err := net.ListenUnix("unix", addr)
 	if err != nil {
 		lock.Close()
+		if errors.Is(err, syscall.EPERM) || errors.Is(err, syscall.EACCES) {
+			return nil, ErrUnavailable
+		}
 		return nil, err
 	}
 	return &Leader{listener: ln, lock: lock, paths: p}, nil

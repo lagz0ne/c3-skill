@@ -65,6 +65,16 @@ func TestParseArgs(t *testing.T) {
 			argv: []string{"check", "--only", "c3-101", "--only", "refs/ref-jwt.md"},
 			want: Options{Command: "check", Only: []string{"c3-101", "refs/ref-jwt.md"}},
 		},
+		{
+			name: "schema adr template flag",
+			argv: []string{"schema", "adr", "--template", "small-change"},
+			want: Options{Command: "schema", Args: []string{"adr"}, Template: "small-change"},
+		},
+		{
+			name: "read cite flag",
+			argv: []string{"read", "c3-101", "--section", "Goal", "--cite"},
+			want: Options{Command: "read", Args: []string{"c3-101"}, Section: "Goal", Cite: true},
+		},
 	}
 
 	for _, tt := range tests {
@@ -99,6 +109,15 @@ func TestParseArgs(t *testing.T) {
 			}
 			if got.Continue != tt.want.Continue {
 				t.Errorf("Continue = %v, want %v", got.Continue, tt.want.Continue)
+			}
+			if got.Template != tt.want.Template {
+				t.Errorf("Template = %q, want %q", got.Template, tt.want.Template)
+			}
+			if got.Section != tt.want.Section {
+				t.Errorf("Section = %q, want %q", got.Section, tt.want.Section)
+			}
+			if got.Cite != tt.want.Cite {
+				t.Errorf("Cite = %v, want %v", got.Cite, tt.want.Cite)
 			}
 			if len(got.Only) != len(tt.want.Only) {
 				t.Errorf("Only len = %d, want %d", len(got.Only), len(tt.want.Only))

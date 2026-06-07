@@ -43,6 +43,9 @@ func RunSyncExport(opts ExportOptions, w io.Writer) error {
 		if _, ok := after[stale]; ok {
 			continue
 		}
+		if isRetiredADRTemplatesCanonicalPath(stale) || isCanvasCanonicalPath(stale) {
+			continue
+		}
 		path := filepath.Join(opts.OutputDir, filepath.FromSlash(stale))
 		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
 			return fmt.Errorf("sync export: remove stale %s: %w", stale, err)
@@ -91,6 +94,10 @@ func RunSyncCheck(opts ExportOptions, w io.Writer) error {
 		expected = filterADRSnapshot(expected)
 		broken = filterADRPaths(broken)
 	}
+	actual = filterRetiredADRTemplatesSnapshot(actual)
+	expected = filterRetiredADRTemplatesSnapshot(expected)
+	actual = filterCanvasSnapshot(actual)
+	expected = filterCanvasSnapshot(expected)
 	if len(opts.Only) > 0 {
 		actual = filterSnapshotByTargets(actual, opts.Only)
 		expected = filterSnapshotByTargets(expected, opts.Only)
@@ -193,6 +200,36 @@ func filterADRPaths(paths []string) []string {
 
 func isADRCanonicalPath(path string) bool {
 	return strings.HasPrefix(filepath.ToSlash(path), "adr/") && strings.HasSuffix(path, ".md")
+}
+
+func filterRetiredADRTemplatesSnapshot(files map[string]string) map[string]string {
+	filtered := make(map[string]string, len(files))
+	for path, content := range files {
+		if isRetiredADRTemplatesCanonicalPath(path) {
+			continue
+		}
+		filtered[path] = content
+	}
+	return filtered
+}
+
+func isRetiredADRTemplatesCanonicalPath(path string) bool {
+	return strings.HasPrefix(filepath.ToSlash(path), "adr-templates/") && strings.HasSuffix(path, ".md")
+}
+
+func filterCanvasSnapshot(files map[string]string) map[string]string {
+	filtered := make(map[string]string, len(files))
+	for path, content := range files {
+		if isCanvasCanonicalPath(path) {
+			continue
+		}
+		filtered[path] = content
+	}
+	return filtered
+}
+
+func isCanvasCanonicalPath(path string) bool {
+	return strings.HasPrefix(filepath.ToSlash(path), "canvases/") && strings.HasSuffix(path, ".md")
 }
 
 func filterSnapshotByTargets(files map[string]string, targets []string) map[string]string {

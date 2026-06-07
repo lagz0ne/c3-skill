@@ -194,6 +194,44 @@ func checkRecipeSourcesStore(s *store.Store) []Issue {
 	return issues
 }
 
+func checkProjectCanvases(c3Dir string) []Issue {
+	if c3Dir == "" {
+		return nil
+	}
+	if _, err := schema.LoadProjectCanvases(c3Dir); err != nil {
+		return []Issue{{
+			Severity: "error",
+			Entity:   "canvas",
+			Message:  err.Error(),
+			Hint:     "run c3x canvas list and repair the invalid canvas file",
+		}}
+	}
+	return nil
+}
+
+func checkProjectCanvasesForTargets(c3Dir string, targets []string) []Issue {
+	if c3Dir == "" || len(targets) == 0 {
+		return nil
+	}
+	for _, target := range targets {
+		target = strings.TrimSpace(filepath.ToSlash(target))
+		if target == "" {
+			continue
+		}
+		if strings.HasPrefix(target, "canvases/") || strings.HasPrefix(target, ".c3/canvases/") {
+			return checkProjectCanvases(c3Dir)
+		}
+		if strings.HasSuffix(target, ".md") {
+			continue
+		}
+		path := filepath.Join(c3Dir, schema.CanvasesDir, target+".md")
+		if _, err := os.Stat(path); err == nil {
+			return checkProjectCanvases(c3Dir)
+		}
+	}
+	return nil
+}
+
 // RunCheckV2 validates entities against the schema registry.
 func RunCheckV2(opts CheckOptions, w io.Writer) error {
 	var issues []Issue
@@ -228,10 +266,11 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 			continue
 		}
 
-		schemaSections := schema.ForType(entity.Type)
-		if schemaSections == nil {
+		def, ok := schema.DefinitionForDir(opts.C3Dir, entity.Type)
+		if !ok {
 			continue
 		}
+		schemaSections := def.Sections
 
 		// Read body from node tree.
 		body, err := content.ReadEntity(opts.Store, entity.ID)
@@ -249,70 +288,75 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 			}
 		}
 
-		if entity.Type != "component" {
-			for _, schemaDef := range schemaSections {
-				if !schemaDef.Required {
-					continue
-				}
+		for _, schemaDef := range schemaSections {
+			if !schemaDef.Required {
+				continue
+			}
 
-				bodySection, exists := sectionMap[schemaDef.Name]
+			bodySection, exists := sectionMap[schemaDef.Name]
 
-				if !exists {
+			if !exists {
+				issues = append(issues, Issue{
+					Severity: "warning",
+					Entity:   entity.ID,
+					Message:  fmt.Sprintf("missing required section: %s", schemaDef.Name),
+				})
+				continue
+			}
+
+			content := strings.TrimSpace(bodySection.Content)
+
+			if schemaDef.ContentType == "table" {
+				if content == "" {
 					issues = append(issues, Issue{
 						Severity: "warning",
 						Entity:   entity.ID,
-						Message:  fmt.Sprintf("missing required section: %s", schemaDef.Name),
+						Message:  fmt.Sprintf("empty required table: %s", schemaDef.Name),
+					})
+					continue
+				}
+				table, err := markdown.ParseTable(content)
+				if err != nil {
+					continue
+				}
+				if len(table.Rows) == 0 {
+					issues = append(issues, Issue{
+						Severity: "warning",
+						Entity:   entity.ID,
+						Message:  fmt.Sprintf("empty required table: %s (headers only, no data rows)", schemaDef.Name),
 					})
 					continue
 				}
 
-				content := strings.TrimSpace(bodySection.Content)
-
-				if schemaDef.ContentType == "table" {
-					if content == "" {
+				for _, col := range schemaDef.Columns {
+					if !containsString(table.Headers, col.Name) {
 						issues = append(issues, Issue{
 							Severity: "warning",
 							Entity:   entity.ID,
-							Message:  fmt.Sprintf("empty required table: %s", schemaDef.Name),
+							Message:  fmt.Sprintf("missing required column %q in table: %s", col.Name, schemaDef.Name),
 						})
 						continue
 					}
-					table, err := markdown.ParseTable(content)
-					if err != nil {
-						continue
-					}
-					if len(table.Rows) == 0 {
-						issues = append(issues, Issue{
-							Severity: "warning",
-							Entity:   entity.ID,
-							Message:  fmt.Sprintf("empty required table: %s (headers only, no data rows)", schemaDef.Name),
-						})
-						continue
-					}
-
-					for _, col := range schemaDef.Columns {
-						issues = append(issues, validateColumn(col, table, entity, opts, titleMap)...)
-					}
-				} else {
-					if content == "" {
-						issues = append(issues, Issue{
-							Severity: "warning",
-							Entity:   entity.ID,
-							Message:  fmt.Sprintf("empty required section: %s", schemaDef.Name),
-						})
-					}
+					issues = append(issues, validateColumn(col, table, entity, opts, titleMap)...)
+				}
+			} else {
+				if content == "" {
+					issues = append(issues, Issue{
+						Severity: "warning",
+						Entity:   entity.ID,
+						Message:  fmt.Sprintf("empty required section: %s", schemaDef.Name),
+					})
 				}
 			}
 		}
 		if entity.Type == "adr" {
-			includeMissingADRCoverage := slices.Contains(opts.Only, entity.ID)
-			for _, issue := range validateADRCoverageMode(opts.Store, body, "warning", includeMissingADRCoverage) {
+			for _, issue := range validateADRCoverage(opts.Store, body, "warning") {
 				issue.Entity = entity.ID
 				issues = append(issues, issue)
 			}
 		}
 		if entity.Type == "component" {
-			for _, issue := range validateStrictComponentDoc(body, "error") {
+			for _, issue := range validateStrictDoc(schemaSections, body, "error") {
 				issue.Entity = entity.ID
 				issues = append(issues, issue)
 			}
@@ -336,6 +380,9 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 				continue
 			}
 			for _, col := range schemaDef.Columns {
+				if !containsString(table.Headers, col.Name) {
+					continue
+				}
 				issues = append(issues, validateColumn(col, table, entity, opts, titleMap)...)
 			}
 		}
@@ -397,9 +444,11 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 	}
 
 	if len(opts.Only) == 0 {
+		issues = append(issues, checkProjectCanvases(opts.C3Dir)...)
 		issues = append(issues, checkRecipeSourcesStore(opts.Store)...)
 		issues = append(issues, checkLayerDisconnectsStore(opts.Store)...)
 	} else {
+		issues = append(issues, checkProjectCanvasesForTargets(opts.C3Dir, opts.Only)...)
 		issues = append(issues, filterIssuesByTargets(opts.Store, targetMatcher, checkRecipeSourcesStore(opts.Store))...)
 		issues = append(issues, filterIssuesByTargets(opts.Store, targetMatcher, checkLayerDisconnectsStore(opts.Store))...)
 	}
@@ -673,6 +722,89 @@ func validateColumn(col schema.ColumnDef, table *markdown.Table, entity *store.E
 				})
 			}
 		}
+	case "reference":
+		for _, row := range table.Rows {
+			val := strings.TrimSpace(row[col.Name])
+			if val == "" || isNAReason(val) {
+				continue
+			}
+			refs := entityRefPattern.FindAllString(val, -1)
+			if len(refs) == 0 {
+				issues = append(issues, Issue{
+					Severity: "warning",
+					Entity:   entity.ID,
+					Message:  fmt.Sprintf("ungrounded reference in %s: %s", col.Name, val),
+					Hint:     "use an entity id or N.A - <reason>",
+				})
+				continue
+			}
+			for _, ref := range refs {
+				if _, err := opts.Store.GetEntity(ref); err != nil {
+					msg := fmt.Sprintf("unknown entity reference: %s", ref)
+					if suggested := suggestByTitle(ref, titleMap); suggested != "" {
+						msg = fmt.Sprintf("unknown entity reference: %s (did you mean %s?)", ref, suggested)
+					}
+					issues = append(issues, Issue{
+						Severity: "warning",
+						Entity:   entity.ID,
+						Message:  msg,
+					})
+				}
+			}
+		}
+	case "evidence":
+		for _, row := range table.Rows {
+			val := strings.TrimSpace(row[col.Name])
+			if val == "" || isNAReason(val) {
+				continue
+			}
+			if !isGroundedEvidence(val) {
+				issues = append(issues, Issue{
+					Severity: "warning",
+					Entity:   entity.ID,
+					Message:  fmt.Sprintf("ungrounded evidence in %s: %s", col.Name, val),
+					Hint:     "name a command, file path, or entity id",
+				})
+			}
+		}
+	case "cite":
+		for _, row := range table.Rows {
+			val := strings.TrimSpace(row[col.Name])
+			if val == "" || isNAReason(val) {
+				continue
+			}
+			issues = append(issues, validateCitationColumnValue(val, entity, opts)...)
+		}
+	case "check":
+		for _, row := range table.Rows {
+			val := strings.TrimSpace(row[col.Name])
+			if val == "" || isNAReason(val) {
+				continue
+			}
+			if placeholderPattern.MatchString(val) {
+				issues = append(issues, Issue{
+					Severity: "warning",
+					Entity:   entity.ID,
+					Message:  fmt.Sprintf("placeholder check result in %s: %s", col.Name, val),
+					Hint:     "record an observed command result or N.A - <reason>",
+				})
+			}
+		}
+	case "enum":
+		for _, row := range table.Rows {
+			val := strings.TrimSpace(row[col.Name])
+			if val == "" {
+				continue
+			}
+			if !enumValueAllowed(val, col.Values) {
+				issues = append(issues, Issue{
+					Severity: "warning",
+					Entity:   entity.ID,
+					Message:  fmt.Sprintf("invalid enum value in %s: %s", col.Name, val),
+					Hint:     fmt.Sprintf("expected one of: %s", strings.Join(col.Values, ", ")),
+				})
+			}
+		}
 	case "ref_id":
 		for _, row := range table.Rows {
 			val := strings.TrimSpace(row[col.Name])
@@ -691,6 +823,56 @@ func validateColumn(col schema.ColumnDef, table *markdown.Table, entity *store.E
 				})
 			}
 		}
+	default:
+		if strings.HasPrefix(col.Type, "edge<") {
+			for _, row := range table.Rows {
+				val := strings.TrimSpace(row[col.Name])
+				if val == "" || isNAReason(val) {
+					continue
+				}
+				if placeholderPattern.MatchString(val) {
+					issues = append(issues, Issue{
+						Severity: "warning",
+						Entity:   entity.ID,
+						Message:  fmt.Sprintf("placeholder edge value in %s: %s", col.Name, val),
+						Hint:     "record a concrete edge target or N.A - <reason>",
+					})
+				}
+			}
+		}
 	}
 	return issues
+}
+
+func enumValueAllowed(value string, allowed []string) bool {
+	for _, candidate := range allowed {
+		if value == candidate {
+			return true
+		}
+		if strings.HasPrefix(candidate, "N.A") && isNAReason(value) {
+			return true
+		}
+	}
+	return false
+}
+
+func validateCitationColumnValue(raw string, entity *store.Entity, opts CheckOptions) []Issue {
+	m := citationHandleRE.FindStringSubmatch(raw)
+	if m == nil {
+		return []Issue{{
+			Severity: "warning",
+			Entity:   entity.ID,
+			Message:  fmt.Sprintf("invalid citation handle: %s", raw),
+			Hint:     `expected <entity>#n<node>@v<version>:sha256:<nodeHash> "exact snippet" from c3x read --cite`,
+		}}
+	}
+	citedEntity := m[1]
+	if _, err := opts.Store.GetEntity(citedEntity); err != nil {
+		return []Issue{{
+			Severity: "warning",
+			Entity:   entity.ID,
+			Message:  fmt.Sprintf("citation references unknown entity: %s", citedEntity),
+		}}
+	}
+	return nil
 }

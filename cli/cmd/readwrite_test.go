@@ -53,6 +53,20 @@ func TestRunRead_JSON(t *testing.T) {
 	}
 }
 
+func TestRunRead_CiteEntity(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	if err := RunRead(ReadOptions{Store: s, ID: "c3-101", Cite: true}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "citation: c3-101@v1:sha256:") {
+		t.Errorf("entity citation missing from output: %s", output)
+	}
+}
+
 func TestRunRead_NotFound(t *testing.T) {
 	s := createRichDBFixture(t)
 	var buf bytes.Buffer
@@ -128,6 +142,46 @@ func TestRunRead_Section_JSON(t *testing.T) {
 	}
 	if result.Content == "" {
 		t.Error("content should not be empty")
+	}
+}
+
+func TestRunRead_SectionCite(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	if err := RunRead(ReadOptions{Store: s, ID: "c3-101", Section: "Goal", Cite: true}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "citation: c3-101#n") {
+		t.Errorf("section citation missing from output: %s", output)
+	}
+	if !strings.Contains(output, "@v1:sha256:") {
+		t.Errorf("section citation should include version and hash: %s", output)
+	}
+	if !strings.Contains(output, `"Handle authentication behavior for API requests."`) {
+		t.Errorf("section citation should include exact source snippet: %s", output)
+	}
+}
+
+func TestRunRead_SectionCiteJSON(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	if err := RunRead(ReadOptions{Store: s, ID: "c3-101", Section: "Goal", JSON: true, Cite: true}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	var result ReadSectionResult
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("JSON parse: %v", err)
+	}
+	if len(result.Citations) != 1 {
+		t.Fatalf("citations len = %d, want 1: %+v", len(result.Citations), result.Citations)
+	}
+	if !strings.Contains(result.Citations[0], "c3-101#n") {
+		t.Errorf("citation = %q", result.Citations[0])
 	}
 }
 
@@ -236,6 +290,26 @@ Has goal but no Parent Fit section.
 	if !strings.Contains(err.Error(), "Parent Fit") {
 		t.Errorf("error should mention Parent Fit: %v", err)
 	}
+}
+
+func TestRunWrite_AdrRejectsMissingDefaultTemplateSection(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	body := strings.Replace(fullADRBody("Adopt OAuth for third-party auth."), adrEnforcementSurfacesSection(), "", 1)
+	err := RunWrite(WriteOptions{Store: s, ID: "adr-20260226-use-go", Content: body}, &buf)
+	if err == nil {
+		t.Fatal("expected ADR write to fail when a default template section is missing")
+	}
+	if !strings.Contains(err.Error(), "missing required section: Enforcement Surfaces") {
+		t.Fatalf("error should mention Enforcement Surfaces: %v", err)
+	}
+}
+
+func adrEnforcementSurfacesSection() string {
+	return "## Enforcement Surfaces\n\n" +
+		"| Surface | Behavior | Evidence |\n|---------|----------|----------|\n" +
+		"| c3x add adr | Creates complete ADR only. | Test fixture. |\n\n"
 }
 
 func TestRunWrite_RejectsEmptySection(t *testing.T) {

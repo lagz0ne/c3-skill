@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -91,6 +93,7 @@ func TestRun_ConcurrentMutationsUseShortLivedCoordinator(t *testing.T) {
 	if err := coord.Cleanup(c3Dir); err != nil {
 		t.Fatal(err)
 	}
+	requireCoordinatorAvailable(t, c3Dir)
 	t.Setenv("C3X_COORDINATOR_IDLE_MS", "75")
 
 	var wg sync.WaitGroup
@@ -132,6 +135,7 @@ func TestRun_CoordinatorForwardsPipedInput(t *testing.T) {
 	if err := coord.Cleanup(c3Dir); err != nil {
 		t.Fatal(err)
 	}
+	requireCoordinatorAvailable(t, c3Dir)
 	t.Setenv("C3X_COORDINATOR_IDLE_MS", "10")
 
 	body := richComponentBody("auth", "Handle auth with forwarded stdin.")
@@ -159,6 +163,23 @@ func TestRun_CoordinatorForwardsPipedInput(t *testing.T) {
 	}
 	if entity.Goal != "Handle auth with forwarded stdin." {
 		t.Fatalf("stdin write did not update goal: %q", entity.Goal)
+	}
+}
+
+func requireCoordinatorAvailable(t *testing.T, c3Dir string) {
+	t.Helper()
+	leader, err := coord.NewLeader(c3Dir)
+	if errors.Is(err, coord.ErrUnavailable) {
+		t.Skipf("unix socket coordinator unavailable in this environment: %v", err)
+	}
+	if err != nil {
+		t.Fatalf("probe coordinator: %v", err)
+	}
+	if err := leader.Close(); err != nil {
+		t.Fatalf("close coordinator probe: %v", err)
+	}
+	if err := coord.Cleanup(c3Dir); err != nil {
+		t.Fatalf("cleanup coordinator probe: %v", err)
 	}
 }
 
@@ -319,6 +340,90 @@ func TestRun_MutationBypassesPreverify(t *testing.T) {
 	err := run([]string{"--c3-dir", c3Dir, "set", "c3-0", "goal", "Updated despite drift"}, &buf)
 	if err != nil {
 		t.Fatalf("mutation must bypass preverify, got: %v", err)
+	}
+}
+
+func TestBDD_ReadOnlyLookupSkipsCanonicalPreverifyWhenCacheExists(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	seedCanonicalReadme(t, c3Dir)
+
+	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	entity, err := s.GetEntity("c3-101")
+	if err != nil {
+		s.Close()
+		t.Fatal(err)
+	}
+	entity.Title = "api-latency-gateway"
+	entity.Goal = "Own API request routing and latency instrumentation."
+	if err := s.UpdateEntity(entity); err != nil {
+		s.Close()
+		t.Fatal(err)
+	}
+	if err := s.SetCodeMap("c3-101", []string{"src/api/handlers/latency.go"}); err != nil {
+		s.Close()
+		t.Fatal(err)
+	}
+	s.Close()
+
+	c101Path := filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md")
+	broken := "---\nid: c3-101\nc3-seal: deadbeef\ntitle: auth\ntype: component\ncategory: foundation\nparent: c3-1\n---\n\n# auth\n\n## Goal\n\nThin.\n"
+	if err := os.WriteFile(c101Path, []byte(broken), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	err = runWithIO(
+		[]string{"--c3-dir", c3Dir, "lookup", "src/api/handlers/latency.go"},
+		strings.NewReader(""),
+		true,
+		&stdout,
+		&stderr,
+		false,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(stdout.String(), "c3-101") || !strings.Contains(stdout.String(), "api-latency-gateway") {
+		t.Fatalf("lookup should use cache-backed result, stdout:\n%s", stdout.String())
+	}
+	if strings.Contains(stderr.String(), ".c3/ drift detected") {
+		t.Fatalf("read-only lookup should not preverify canonical drift, stderr:\n%s", stderr.String())
+	}
+}
+
+func TestBDD_RunSearchHybridJSONDispatch(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	seedMainHybridSearchFixture(t, s)
+	s.Close()
+
+	var stdout, stderr bytes.Buffer
+	err = runWithIO(
+		[]string{"--c3-dir", c3Dir, "search", "pool wait p95 latency", "--hybrid", "--json", "--limit", "3"},
+		strings.NewReader(""),
+		true,
+		&stdout,
+		&stderr,
+		false,
+	)
+	if err != nil {
+		t.Fatalf("search dispatch failed: %v\nstderr:\n%s", err, stderr.String())
+	}
+	var out cmd.SearchOutput
+	if err := json.Unmarshal(stdout.Bytes(), &out); err != nil {
+		t.Fatalf("invalid search JSON: %v\n%s", err, stdout.String())
+	}
+	if len(out.Results) == 0 || out.Results[0].ID != "research-note-20260605-api-latency" {
+		t.Fatalf("unexpected search result: %+v", out.Results)
+	}
+	if out.Results[0].Context.Component.ID != "c3-101" || out.Results[0].Context.Path != "src/api/handlers/latency.go" {
+		t.Fatalf("hybrid context missing: %+v", out.Results[0].Context)
 	}
 }
 
@@ -668,6 +773,44 @@ func setupRichC3DB(t *testing.T) string {
 	}
 
 	return c3Dir
+}
+
+func seedMainHybridSearchFixture(t *testing.T, s *store.Store) {
+	t.Helper()
+	for _, e := range []*store.Entity{
+		{ID: "rule-trace-context", Type: "rule", Title: "Trace Context Propagation", Slug: "trace-context", Goal: "Every outbound API call carries traceparent and request_id.", Status: "active", Metadata: "{}"},
+		{ID: "ref-latency-budget", Type: "ref", Title: "Latency Budget", Slug: "latency-budget", Goal: "Keep API p95 under 250 ms before checkout release.", Status: "active", Metadata: "{}"},
+		{ID: "research-note-20260605-api-latency", Type: "research-note", Title: "API Latency Investigation", Slug: "api-latency", Goal: "Investigate checkout API latency pool wait regression.", Status: "active", Metadata: "{}"},
+	} {
+		if err := s.InsertEntity(e); err != nil {
+			t.Fatal(err)
+		}
+	}
+	auth, err := s.GetEntity("c3-101")
+	if err != nil {
+		t.Fatal(err)
+	}
+	auth.Title = "api-latency-gateway"
+	auth.Goal = "Own API request routing and latency instrumentation."
+	if err := s.UpdateEntity(auth); err != nil {
+		t.Fatal(err)
+	}
+	for _, rel := range []*store.Relationship{
+		{FromID: "research-note-20260605-api-latency", ToID: "c3-101", RelType: "affects"},
+		{FromID: "research-note-20260605-api-latency", ToID: "ref-latency-budget", RelType: "uses"},
+		{FromID: "research-note-20260605-api-latency", ToID: "rule-trace-context", RelType: "uses"},
+	} {
+		if err := s.AddRelationship(rel); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := s.SetCodeMap("c3-101", []string{"src/api/handlers/latency.go"}); err != nil {
+		t.Fatal(err)
+	}
+	body := "## Summary\n\nCheckout API p95 increased from 180 ms to 420 ms after the connection-pool change. Span evidence points to DB pool wait.\n"
+	if err := content.WriteEntity(s, "research-note-20260605-api-latency", body); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func richComponentBody(title, goal string) string {

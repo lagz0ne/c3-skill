@@ -1,13 +1,15 @@
 ---
 id: c3-101
 c3-version: 4
-c3-seal: 0657d2e64fc951a9bb3f6640bccd2caf869f547676c2b020cb9681d2d191c831
+c3-seal: 20da22a5af33dd3d4840e061396aadd647e7f7e6fdaea5b5945208aa6b4597b2
 title: frontmatter
 type: component
 category: foundation
 parent: c3-1
 goal: Parse and write YAML frontmatter embedded in `.c3/` markdown files.
 summary: Provides Get/Set access to frontmatter fields; used by every command that reads entity metadata
+uses:
+    - ref-frontmatter-docs
 ---
 
 # frontmatter
@@ -52,6 +54,7 @@ Provide durable agent-ready documentation for frontmatter so generated code, tes
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-1 | policy | Governs frontmatter behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
+| ref-frontmatter-docs | ref | frontmatter.go ParseFrontmatter is the canonical implementation: enforces the leading --- line and \n---\n terminator that define every .c3 doc, and owns the c3-seal field. | Cited ref contract beats uncited local prose. | Changes to the frontmatter delimiter or seal placement must comply with ref-frontmatter-docs. |
 
 ## Contract
 

@@ -71,12 +71,14 @@ Only audit when explicitly requested or with `c3 check --include-adr`.
 
 ## Phase 7: Ref & Rule Validation
 
-- Ref: requires Choice + Why sections
-- Ref: cited by ≥1 component (orphan → WARN)
-- Citing component: ref entity exists in store (verify via `c3 list`)
-- Rule: requires Rule + Golden Example sections
-- Rule: cited by ≥1 component (orphan → WARN)
-- Citing component: rule entity exists in store (verify via `c3 list`)
+Required sections come from each type's **canvas definition** (`c3 schema ref`,
+`c3 schema rule`) — never a fixed list here. `c3 check` already validates each
+entity against its definition; flag entities missing canvas-required sections.
+If a project edited a definition, that edit is the contract. Then add the
+relational checks `check` does not cover:
+
+- Ref / Rule: cited by ≥1 component (orphan → WARN)
+- Citing component: the ref/rule entity exists in store (verify via `c3 list`)
 
 ## Phase 7b: Ref Compliance
 

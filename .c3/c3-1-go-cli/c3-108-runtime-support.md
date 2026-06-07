@@ -1,11 +1,15 @@
 ---
 id: c3-108
-c3-seal: ab80f21c52a4138da854eff84e6adae35554c5f7b269eda903c461d004762ae2
+c3-seal: 4693626695530f4371ed8b0b4a59a28ef4296811bb83a1cb9a121377bbeba24b
 title: runtime-support
 type: component
 category: foundation
 parent: c3-1
 goal: Provide CLI bootstrap, option parsing, output shaping, config resolution, and human/agent presentation helpers.
+uses:
+    - rule-dispatcher-error-hint
+    - rule-output-via-helpers
+    - rule-wrap-error-cause
 ---
 
 # runtime-support
@@ -54,6 +58,9 @@ Own CLI runtime behavior shared across commands: argument parsing, environment m
 | adr-20260415-force-agent-toon-output | adr | Systematic sweep of command wrappers and direct encoders that bypassed writeJSON. | Shared output helpers beat command-local JSON encoding. | add, migrate dry-run, and legacy check now use TOON-aware structured output in agent mode. |
 | adr-20260415-mutation-preverify-repair-bypass | adr | Dispatcher preverify gate for broken canonical docs. | Mutating commands need command-local validation and export path access; read-only commands stay gated. | Prevents repair catch-22 for add, write, set, wire, delete, codemap, and migrate. |
 | adr-20260421-self-healing-preflight | adr | Dispatcher preflight self-heals recoverable canonical/cache drift before normal command dispatch. | New self-healing policy supersedes older read-only broken-canonical blocking wording. | repair remains explicit, but normal operations attempt it automatically before failing. |
+| rule-wrap-error-cause | rule | Errors returned across layers in this component must wrap the cause with %w (golden: main.go cache-refresh wrap). | Cited rule beats uncited local prose. | Dispatcher and command error paths must preserve the unwrap chain. |
+| rule-dispatcher-error-hint | rule | User-facing dispatcher errors carry an error: prefix and a recoverable hint: step (golden: main.go cache-unavailable). | Cited rule beats uncited local prose. | main.go surfaces recoverable failures with an actionable next command. |
+| rule-output-via-helpers | rule | Command results serialize via WriteTableOutput/WriteObjectOutput so agent mode stays TOON (golden: output.go ResolveFormat). | Cited rule beats uncited local prose. | This component owns the shared output layer every command must route through. |
 
 ## Contract
 

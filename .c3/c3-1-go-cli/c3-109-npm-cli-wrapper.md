@@ -1,11 +1,13 @@
 ---
 id: c3-109
-c3-seal: cc8351a323230ee1cb4ebcb2febf442a212209933a5367a77678de8222427468
+c3-seal: 0ea670cc6e412384820f5ddbb04061d45b94641a234dcc3193c1f8e2748b264b
 title: npm-cli-wrapper
 type: component
 category: foundation
 parent: c3-1
 goal: Provide the npm `@c3x/cli` shim that discovers an installed C3 binary and delegates commands without changing the caller's intended output mode.
+uses:
+    - ref-cross-compiled-binary
 ---
 
 ## Goal
@@ -50,6 +52,7 @@ Own the thin npm wrapper used by humans and scripts that want `npx @c3x/cli` or 
 | c3-108 | policy | Output-mode ownership and human/agent presentation boundaries. | Runtime output policy beats wrapper convenience. | The npm shim strips inherited C3X_MODE; explicit c3x flags still pass through. |
 | adr-20260415-npm-cli-human-mode | adr | Decision to chart the npm shim and keep npm delegation human/default by default. | Release-specific decision for this wrapper change. | Added with the 9.1.0 release bump. |
 | c3-1 | policy | Packaging and release placement inside the CLI container. | Parent container scope beats local package convenience. | README and package metadata must match wrapper behavior before publish. |
+| ref-cross-compiled-binary | ref | The npm wrapper depends on the prebuilt-binary distribution: it resolves skills/c3/bin/VERSION and c3x.sh produced by cross-compilation, with no Go toolchain at runtime. | Cited ref contract beats uncited local prose. | Wrapper binary discovery must track the cross-compiled artifact layout per ref-cross-compiled-binary. |
 
 ## Contract
 

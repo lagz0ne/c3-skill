@@ -1,13 +1,15 @@
 ---
 id: c3-103
 c3-version: 4
-c3-seal: bcd3b11f9786ba3ba4a52c626405396979f7504350471cddfeade1ea7a2cd23f
+c3-seal: 840d512af9fba2c600322bcb29599700a2d2bcfec627bcac71060fecf09ce8a7
 title: templates
 type: component
 category: foundation
 parent: c3-1
 goal: Provide embedded markdown templates for scaffolding new `.c3/` docs (context, container, component, ref, rule, ADR).
 summary: Go embed bundle of all doc templates; used by init-cmd and add-cmd to create well-structured stubs
+uses:
+    - ref-embedded-templates
 ---
 
 # templates
@@ -52,6 +54,7 @@ Provide durable agent-ready documentation for templates so generated code, tests
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-1 | policy | Governs templates behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
+| ref-embedded-templates | ref | templates.go embeds doc templates via //go:embed all:*.md (embed.FS) and serves them through Read/Render — the pattern this ref describes. | Cited ref contract beats uncited local prose. | New or moved templates must stay under the embedded FS per ref-embedded-templates. |
 
 ## Contract
 

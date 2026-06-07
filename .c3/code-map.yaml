@@ -32,6 +32,8 @@ c3-108:
   - cli/internal/toon/**
   - cli/main.go
   - cli/main_test.go
+  - scripts/agent_efficiency_eval.py
+  - scripts/test_agent_efficiency_eval.py
 c3-109:
   - packages/cli/README.md
   - packages/cli/package-lock.json
@@ -67,6 +69,8 @@ c3-116:
   - cli/cmd/coverage.go
   - cli/cmd/coverage_test.go
 c3-117:
+  - cli/cmd/canvas.go
+  - cli/cmd/canvas_test.go
   - cli/cmd/read.go
   - cli/cmd/readwrite_test.go
   - cli/cmd/schema.go

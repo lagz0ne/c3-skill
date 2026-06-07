@@ -1,11 +1,13 @@
 ---
 id: c3-106
-c3-seal: e120f8b392c9582196141294207c8fbe95b382a00b190ddecc78832b9b1c74ea
+c3-seal: a3c03bf171a878d6f088033d074382e370e77c8edbb2e91a17d9be7fad0d6385
 title: content-lib
 type: component
 category: foundation
 parent: c3-1
 goal: Parse, render, and bridge structured markdown content to node-tree storage for C3 entities.
+uses:
+    - ref-frontmatter-docs
 ---
 
 # content-lib
@@ -50,6 +52,7 @@ Provide durable agent-ready documentation for content-lib so generated code, tes
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | c3-1 | policy | Governs content-lib behavior, derivation, or review when applicable. | Explicit cited governance beats uncited local prose. | Migrated from legacy component form; refine during next component touch. |
+| ref-frontmatter-docs | ref | content/bridge.go stripFrontmatter re-applies the same --- delimiter contract to split frontmatter metadata from the node-tree body. | Cited ref contract beats uncited local prose. | The content library must keep its frontmatter split consistent with ref-frontmatter-docs. |
 
 ## Contract
 

@@ -10,7 +10,7 @@ import agent_efficiency_eval as ev
 
 
 class AgentEfficiencyEvalTests(unittest.TestCase):
-    def test_default_matrix_has_six_cases_and_two_agents(self):
+    def test_default_matrix_has_canvas_cases_and_two_agents(self):
         self.assertEqual(
             [case.id for case in ev.default_cases()],
             [
@@ -20,6 +20,11 @@ class AgentEfficiencyEvalTests(unittest.TestCase):
                 "task_session",
                 "debug_session",
                 "system_design_change",
+                "canvas_c3_adr",
+                "canvas_atomic_design",
+                "canvas_pm_requirement",
+                "canvas_prd",
+                "canvas_user_story",
             ],
         )
         self.assertEqual([agent.id for agent in ev.default_agents()], ["claude", "codex"])
@@ -43,13 +48,22 @@ class AgentEfficiencyEvalTests(unittest.TestCase):
     def test_dry_run_builds_full_matrix_without_execution(self):
         plan = ev.build_plan(ev.default_cases(), ev.default_agents(), dry_run=True)
 
-        self.assertEqual(len(plan), 12)
+        self.assertEqual(len(plan), 22)
         self.assertTrue(all(item.dry_run for item in plan))
         self.assertTrue(all(item.command for item in plan))
         self.assertEqual(
             {(item.agent_id, item.case_id) for item in plan},
             {(agent.id, case.id) for agent in ev.default_agents() for case in ev.default_cases()},
         )
+
+    def test_repeat_expands_matrix_with_trial_numbers(self):
+        case = next(case for case in ev.default_cases() if case.id == "canvas_prd")
+        agent = next(agent for agent in ev.default_agents() if agent.id == "codex")
+
+        plan = ev.build_plan([case], [agent], dry_run=True, repeat=3)
+
+        self.assertEqual([item.trial for item in plan], [1, 2, 3])
+        self.assertEqual({item.case_id for item in plan}, {"canvas_prd"})
 
     def test_score_result_handles_missing_token_metadata(self):
         result = ev.RunResult(
@@ -99,13 +113,13 @@ class AgentEfficiencyEvalTests(unittest.TestCase):
         self.assertEqual(ev.extract_turn_count(text), 1)
 
     def test_extract_trace_metrics_finds_c3_commands(self):
-        text = 'C3X_MODE=agent bash skills/c3/bin/c3x.sh lookup cli/cmd/list.go\n{"type":"turn.completed"}\n'
+        text = 'C3X_MODE=agent bash skills/c3/bin/c3x.sh canvas read prd\n{"type":"turn.completed"}\n'
 
         metrics = ev.extract_trace_metrics(text)
 
         self.assertEqual(metrics["json_event_count"], 1)
         self.assertEqual(metrics["c3_command_count"], 1)
-        self.assertIn("lookup cli/cmd/list.go", metrics["c3_command_sequence"][0])
+        self.assertIn("canvas read prd", metrics["c3_command_sequence"][0])
 
     def test_extract_trace_metrics_ignores_markdown_command_mentions(self):
         text = (
@@ -139,22 +153,211 @@ class AgentEfficiencyEvalTests(unittest.TestCase):
         self.assertEqual(metrics["transcript_bytes_total"], len(text.encode()))
         self.assertGreater(metrics["c3_command_bytes_total"], 0)
 
+    def test_extract_trace_metrics_marks_agent_unavailable(self):
+        metrics = ev.extract_trace_metrics("Failed to authenticate. API Error: 401 Invalid authentication credentials")
+
+        self.assertTrue(metrics["agent_unavailable"])
+
+    def test_extract_trace_metrics_does_not_treat_missing_source_text_as_unavailable(self):
+        metrics = ev.extract_trace_metrics("N.A - source does not exist yet in local C3 docs")
+
+        self.assertFalse(metrics["agent_unavailable"])
+
     def test_run_writes_jsonl_records_for_dry_run(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / "results.jsonl"
+            summary = Path(tmp) / "summary.json"
 
-            code = ev.main(["--dry-run", "--output", str(out)])
+            code = ev.main(["--dry-run", "--output", str(out), "--summary", str(summary)])
 
             self.assertEqual(code, 0)
             records = [json.loads(line) for line in out.read_text().splitlines()]
-            self.assertEqual(len(records), 12)
+            summary_data = json.loads(summary.read_text())
+            self.assertEqual(len(records), 22)
             self.assertTrue(all(record["dry_run"] for record in records))
             self.assertEqual({record["accuracy_score"] for record in records}, {0.0})
+            self.assertEqual(summary_data["record_count"], 22)
+            self.assertEqual(summary_data["canvas_record_count"], 0)
+            self.assertEqual(summary_data["canvas_unavailable_count"], 0)
+            self.assertTrue(summary_data["canvas_all_agents_available"])
+            self.assertFalse(summary_data["canvas_gate_passed"])
             self.assertEqual(
                 {record["metric_basis"] for record in records},
                 {"tokens_total, turn_count, accuracy_score, elapsed_ms"},
             )
             self.assertTrue(all(Path(record["artifact_dir"]).exists() for record in records))
+
+    def test_dry_run_repeat_writes_trial_numbers(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "results.jsonl"
+
+            code = ev.main(
+                [
+                    "--dry-run",
+                    "--agent",
+                    "codex",
+                    "--case",
+                    "canvas_prd",
+                    "--repeat",
+                    "2",
+                    "--output",
+                    str(out),
+                ]
+            )
+
+            records = [json.loads(line) for line in out.read_text().splitlines()]
+            self.assertEqual(code, 0)
+            self.assertEqual([record["trial"] for record in records], [1, 2])
+
+    def test_from_results_replays_summary_and_gates_without_running_agents(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            results = Path(tmp) / "results.jsonl"
+            summary = Path(tmp) / "summary.json"
+            results.write_text(
+                "\n".join(
+                    [
+                        json.dumps(
+                            {
+                                "agent": "claude",
+                                "case": "canvas_prd",
+                                "dry_run": False,
+                                "exit_code": 1,
+                                "agent_unavailable": True,
+                                "accuracy_score": 0.0,
+                                "canvas_quality_passed": False,
+                            }
+                        ),
+                        json.dumps(
+                            {
+                                "agent": "codex",
+                                "case": "canvas_prd",
+                                "dry_run": False,
+                                "exit_code": 0,
+                                "agent_unavailable": False,
+                                "accuracy_score": 1.0,
+                                "canvas_quality_passed": True,
+                            }
+                        ),
+                    ]
+                )
+                + "\n"
+            )
+
+            code = ev.main(
+                [
+                    "--from-results",
+                    str(results),
+                    "--summary",
+                    str(summary),
+                    "--require-canvas-90",
+                    "--require-canvas-agent-availability",
+                ]
+            )
+
+            summary_data = json.loads(summary.read_text())
+            self.assertEqual(code, 1)
+            self.assertTrue(summary_data["canvas_gate_passed"])
+            self.assertFalse(summary_data["canvas_all_agents_available"])
+
+    def test_from_results_can_require_minimum_canvas_records(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            results = Path(tmp) / "results.jsonl"
+            records = [
+                {
+                    "agent": "codex",
+                    "case": "canvas_prd",
+                    "dry_run": False,
+                    "exit_code": 0,
+                    "agent_unavailable": False,
+                    "accuracy_score": 1.0,
+                    "canvas_quality_passed": True,
+                }
+                for _ in range(2)
+            ]
+            results.write_text("\n".join(json.dumps(record) for record in records) + "\n")
+
+            code = ev.main(["--from-results", str(results), "--require-canvas-90", "--min-canvas-records", "3"])
+
+            self.assertEqual(code, 1)
+
+    def test_from_results_can_require_minimum_records_per_canvas_case(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            results = Path(tmp) / "results.jsonl"
+            records = [
+                {
+                    "agent": "codex",
+                    "case": "canvas_prd",
+                    "dry_run": False,
+                    "exit_code": 0,
+                    "agent_unavailable": False,
+                    "accuracy_score": 1.0,
+                    "canvas_quality_passed": True,
+                }
+                for _ in range(10)
+            ]
+            results.write_text("\n".join(json.dumps(record) for record in records) + "\n")
+
+            code = ev.main(
+                [
+                    "--from-results",
+                    str(results),
+                    "--require-canvas-90",
+                    "--min-canvas-records",
+                    "10",
+                    "--min-canvas-records-per-case",
+                    "1",
+                ]
+            )
+
+            self.assertEqual(code, 1)
+
+    def test_from_results_can_require_named_canvas_agents(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            results = Path(tmp) / "results.jsonl"
+            records = [
+                {
+                    "agent": "codex",
+                    "case": "canvas_prd",
+                    "dry_run": False,
+                    "exit_code": 0,
+                    "agent_unavailable": False,
+                    "accuracy_score": 1.0,
+                    "canvas_quality_passed": True,
+                }
+            ]
+            results.write_text("\n".join(json.dumps(record) for record in records) + "\n")
+
+            code = ev.main(["--from-results", str(results), "--require-canvas-agent", "claude"])
+
+            self.assertEqual(code, 1)
+
+    def test_from_results_accepts_present_named_canvas_agent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            results = Path(tmp) / "results.jsonl"
+            records = [
+                {
+                    "agent": "codex",
+                    "case": "canvas_prd",
+                    "dry_run": False,
+                    "exit_code": 0,
+                    "agent_unavailable": False,
+                    "accuracy_score": 1.0,
+                    "canvas_quality_passed": True,
+                }
+            ]
+            results.write_text("\n".join(json.dumps(record) for record in records) + "\n")
+
+            code = ev.main(["--from-results", str(results), "--require-canvas-agent", "codex"])
+
+            self.assertEqual(code, 0)
+
+    def test_from_results_rejects_invalid_jsonl(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            results = Path(tmp) / "results.jsonl"
+            results.write_text("{not-json}\n")
+
+            with self.assertRaises(ValueError):
+                ev.main(["--from-results", str(results)])
 
     def test_live_run_scores_eval_result_before_cleanup(self):
         original_copy = ev._copy_controlled_workspace
@@ -370,6 +573,314 @@ class AgentEfficiencyEvalTests(unittest.TestCase):
 
         self.assertEqual(quality["score"], 0.0)
         self.assertFalse(any(quality["checks"].values()))
+
+    def test_canvas_cases_require_canvas_score(self):
+        cases = {case.id: case for case in ev.default_cases()}
+
+        for case_id, expectation in ev.CANVAS_EXPECTATIONS.items():
+            self.assertIn(case_id, cases)
+            self.assertIn("canvas_score_90", cases[case_id].accuracy_checks)
+            self.assertIn(f"canvas read {expectation.canvas_id}", cases[case_id].prompt)
+            self.assertIn(expectation.artifact_name, cases[case_id].prompt)
+            self.assertIn("## <section name>", cases[case_id].prompt)
+
+    def test_evaluate_canvas_quality_scores_matching_prd_artifact(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            (workspace / "eval_result.json").write_text(
+                json.dumps(
+                    {
+                        "verified": True,
+                        "canvas_id": "prd",
+                        "canvas_artifact": "canvas-prd.md",
+                        "artifacts": ["canvas-prd.md"],
+                    }
+                )
+            )
+            (workspace / "canvas-prd.md").write_text(
+                "## Goal\n\nShip notification preferences with verified story trace.\n\n"
+                "## Requirements\n\n"
+                "| Requirement | Priority | Evidence |\n| --- | --- | --- |\n"
+                "| Users can mute workspace channels. | must | c3-117#n1998@v1:sha256:3a377de9129c41b25fa893dc4431afb0aad2814a699e530c70d0de2567204ff6 \"Read, write, set, validate schema, and report status for canonical C3 documents.\" |\n\n"
+                "## Story Traces\n\n"
+                "| Story | Status | Evidence |\n| --- | --- | --- |\n"
+                "| implements:story-mute-channel | pass | c3-117#n1998@v1:sha256:3a377de9129c41b25fa893dc4431afb0aad2814a699e530c70d0de2567204ff6 \"Read, write, set, validate schema, and report status for canonical C3 documents.\" |\n"
+            )
+            result = ev._read_eval_result(workspace)
+
+            quality = ev.evaluate_canvas_quality(workspace, result, "canvas_prd")
+
+        self.assertGreaterEqual(quality["score"], 0.9)
+        self.assertTrue(quality["checks"]["required_sections_present"])
+        self.assertTrue(quality["checks"]["tables_have_required_columns"])
+        self.assertTrue(quality["checks"]["cite_cells_grounded"])
+
+    def test_evaluate_canvas_quality_penalizes_missing_primitives(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            (workspace / "eval_result.json").write_text(
+                json.dumps({"verified": True, "canvas_id": "prd", "canvas_artifact": "canvas-prd.md"})
+            )
+            (workspace / "canvas-prd.md").write_text(
+                "## Goal\n\nTBD\n\n"
+                "## Requirements\n\n| Requirement | Priority | Evidence |\n| --- | --- | --- |\n| Better notifications | urgent | see above |\n"
+            )
+            result = ev._read_eval_result(workspace)
+
+            quality = ev.evaluate_canvas_quality(workspace, result, "canvas_prd")
+
+        self.assertLess(quality["score"], 0.9)
+        self.assertFalse(quality["checks"]["cite_cells_grounded"])
+        self.assertFalse(quality["checks"]["enum_cells_valid"])
+        self.assertFalse(quality["checks"]["no_placeholder_text"])
+
+    def test_grounded_cite_accepts_current_entity_citation(self):
+        self.assertTrue(
+            ev._grounded_cite('"c3-117@v1:sha256:039c07590db58500b91f3e44b6d69361aaefde33218f0564b7786aec325af81a"')
+        )
+        self.assertFalse(ev._grounded_cite("c3-117"))
+
+    def test_valid_edge_accepts_c3_ids_and_adr_ids(self):
+        self.assertTrue(ev._valid_edge("c3-117"))
+        self.assertTrue(ev._valid_edge("adr-20260528-generic-canvas-cli"))
+        self.assertTrue(ev._valid_edge("requirement:R-001"))
+        self.assertFalse(ev._valid_edge("plain words only"))
+
+    def test_score_result_includes_canvas_quality_metric(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            (workspace / "eval_result.json").write_text(
+                json.dumps(
+                    {
+                        "verified": True,
+                        "canvas_id": "user-story",
+                        "canvas_artifact": "canvas-user-story.md",
+                        "artifacts": ["canvas-user-story.md"],
+                    }
+                )
+            )
+            (workspace / "canvas-user-story.md").write_text(
+                "## Story\n\nAs a workspace owner I want to mute a noisy channel so I can reduce notification load.\n\n"
+                "## Acceptance\n\n| Criterion | Result | Evidence |\n| --- | --- | --- |\n"
+                "| Muted channel sends no notifications. | pass | N.A - source story fixture has no C3 node yet. |\n\n"
+                "## Trace\n\n| Source | Why derived | Evidence |\n| --- | --- | --- |\n"
+                "| prd:workspace-notifications | Derived from notification preference PRD. | N.A - source PRD fixture has no C3 node yet. |\n"
+            )
+            result = ev.RunResult(
+                agent_id="codex",
+                case_id="canvas_user_story",
+                command=["codex", "exec", "prompt"],
+                dry_run=False,
+                exit_code=0,
+                elapsed_ms=1200,
+                stdout="",
+                stderr="",
+                output_dir=str(workspace),
+                artifact_dir="/tmp/artifacts",
+                accuracy_checks={"has_canvas_artifact": True, "canvas_score_90": True},
+                token_usage={"total_tokens": 100},
+                turn_count=1,
+                trace_metrics={},
+            )
+
+            scored = ev.score_result(result)
+
+        self.assertGreaterEqual(scored["canvas_quality_score"], 0.9)
+        self.assertTrue(scored["canvas_quality_passed"])
+        self.assertIn("canvas_quality_checks", scored)
+
+    def test_summarize_records_requires_canvas_90_percent_pass_rate(self):
+        records = [
+            {
+                "case": "canvas_prd",
+                "dry_run": False,
+                "exit_code": 0,
+                "accuracy_score": 1.0,
+                "canvas_quality_score": 0.9,
+                "canvas_quality_passed": True,
+            }
+            for _ in range(9)
+        ]
+        records.append(
+            {
+                "case": "canvas_user_story",
+                "dry_run": False,
+                "exit_code": 0,
+                "accuracy_score": 1.0,
+                "canvas_quality_score": 0.8,
+                "canvas_quality_passed": False,
+            }
+        )
+
+        summary = ev.summarize_records(records)
+
+        self.assertEqual(summary["canvas_record_count"], 10)
+        self.assertEqual(summary["canvas_unavailable_count"], 0)
+        self.assertTrue(summary["canvas_all_agents_available"])
+        self.assertEqual(summary["canvas_pass_count"], 9)
+        self.assertEqual(summary["canvas_pass_rate"], 0.9)
+        self.assertTrue(summary["canvas_gate_passed"])
+
+    def test_summarize_records_skips_unavailable_agents(self):
+        records = [
+            {
+                "agent": "claude",
+                "case": "canvas_prd",
+                "dry_run": False,
+                "exit_code": 1,
+                "agent_unavailable": True,
+                "accuracy_score": 0.0,
+                "canvas_quality_score": 0.0,
+                "canvas_quality_passed": False,
+            },
+            {
+                "agent": "codex",
+                "case": "canvas_prd",
+                "dry_run": False,
+                "exit_code": 0,
+                "agent_unavailable": False,
+                "accuracy_score": 1.0,
+                "canvas_quality_score": 1.0,
+                "canvas_quality_passed": True,
+            },
+        ]
+
+        summary = ev.summarize_records(records)
+
+        self.assertEqual(summary["canvas_record_count"], 1)
+        self.assertEqual(summary["canvas_unavailable_count"], 1)
+        self.assertFalse(summary["canvas_all_agents_available"])
+        self.assertEqual(summary["canvas_by_agent"]["claude"]["unavailable"], 1)
+        self.assertEqual(summary["canvas_by_agent"]["codex"]["passes"], 1)
+        self.assertEqual(summary["canvas_pass_rate"], 1.0)
+        self.assertTrue(summary["canvas_gate_passed"])
+
+    def test_require_canvas_agent_availability_fails_on_unavailable_provider(self):
+        original_agents = ev.default_agents
+        original_cases = ev.default_cases
+        original_run = ev.run_plan_item
+        try:
+            ev.default_agents = lambda: [
+                ev.AgentSpec("claude", ("unavailable",)),
+                ev.AgentSpec("codex", ("available",)),
+            ]
+            ev.default_cases = lambda: [
+                ev.EvalCase("canvas_prd", "PRD", "prompt", ("has_eval_result", "verified", "has_canvas_artifact", "canvas_score_90"))
+            ]
+
+            def fake_run(item, case, keep_workspace):
+                return ev.RunResult(
+                    agent_id=item.agent_id,
+                    case_id=item.case_id,
+                    command=list(item.command),
+                    dry_run=False,
+                    exit_code=1 if item.agent_id == "claude" else 0,
+                    elapsed_ms=1,
+                    stdout="Failed to authenticate. API Error: 401 Invalid authentication credentials"
+                    if item.agent_id == "claude"
+                    else "",
+                    stderr="",
+                    output_dir="",
+                    artifact_dir="",
+                    accuracy_checks={
+                        "has_eval_result": item.agent_id == "codex",
+                        "verified": item.agent_id == "codex",
+                        "has_canvas_artifact": item.agent_id == "codex",
+                        "canvas_score_90": item.agent_id == "codex",
+                    },
+                    token_usage=None,
+                    turn_count=None,
+                    trace_metrics={"agent_unavailable": item.agent_id == "claude"},
+                    trial=item.trial,
+                )
+
+            ev.run_plan_item = fake_run
+
+            with tempfile.TemporaryDirectory() as tmp:
+                code = ev.main(
+                    [
+                        "--run",
+                        "--output",
+                        str(Path(tmp) / "results.jsonl"),
+                        "--summary",
+                        str(Path(tmp) / "summary.json"),
+                        "--require-canvas-agent-availability",
+                    ]
+                )
+
+            self.assertEqual(code, 1)
+        finally:
+            ev.default_agents = original_agents
+            ev.default_cases = original_cases
+            ev.run_plan_item = original_run
+
+    def test_summarize_records_fails_below_canvas_gate(self):
+        records = [
+            {
+                "case": "canvas_prd",
+                "dry_run": False,
+                "exit_code": 0,
+                "accuracy_score": 1.0,
+                "canvas_quality_score": 0.9,
+                "canvas_quality_passed": True,
+            }
+            for _ in range(8)
+        ]
+        records.extend(
+            [
+                {
+                    "case": "canvas_prd",
+                    "dry_run": False,
+                    "exit_code": 1,
+                    "accuracy_score": 1.0,
+                    "canvas_quality_score": 1.0,
+                    "canvas_quality_passed": True,
+                },
+                {
+                    "case": "canvas_prd",
+                    "dry_run": False,
+                    "exit_code": 0,
+                    "accuracy_score": 0.75,
+                    "canvas_quality_score": 1.0,
+                    "canvas_quality_passed": True,
+                },
+            ]
+        )
+
+        summary = ev.summarize_records(records)
+
+        self.assertEqual(summary["canvas_pass_rate"], 0.8)
+        self.assertFalse(summary["canvas_gate_passed"])
+
+    def test_live_run_copies_declared_canvas_artifact_before_cleanup(self):
+        original_copy = ev._copy_controlled_workspace
+        ev._copy_controlled_workspace = lambda workspace: None
+        try:
+            case = next(case for case in ev.default_cases() if case.id == "canvas_user_story")
+            artifact_body = (
+                "## Story\n\nAs a workspace owner I want to mute a noisy channel so I can reduce notification load.\n\n"
+                "## Acceptance\n\n| Criterion | Result | Evidence |\n| --- | --- | --- |\n"
+                "| Muted channel sends no notifications. | pass | N.A - source story fixture has no C3 node yet. |\n\n"
+                "## Trace\n\n| Source | Why derived | Evidence |\n| --- | --- | --- |\n"
+                "| prd:workspace-notifications | Derived from notification preference PRD. | N.A - source PRD fixture has no C3 node yet. |\n"
+            )
+            script = (
+                "import json; "
+                f"open('canvas-user-story.md','w').write({artifact_body!r}); "
+                "open('eval_result.json','w').write(json.dumps({"
+                "'verified': True, 'canvas_id': 'user-story', "
+                "'canvas_artifact': 'canvas-user-story.md', 'artifacts': ['canvas-user-story.md']}))"
+            )
+            item = ev.PlanItem("fake", case.id, [sys.executable, "-c", script], case.prompt, dry_run=False)
+
+            scored = ev.score_result(ev.run_plan_item(item, case, keep_workspace=False))
+
+            artifact = Path(scored["artifact_dir"], "canvas-user-story.md")
+            self.assertTrue(artifact.exists())
+            self.assertGreaterEqual(scored["canvas_quality_score"], 0.9)
+            self.assertTrue(scored["canvas_quality_passed"])
+        finally:
+            ev._copy_controlled_workspace = original_copy
 
     def test_threshold_pressure_marks_no_go_runaway(self):
         pressure = ev.evaluate_threshold_pressure(

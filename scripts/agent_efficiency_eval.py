@@ -38,6 +38,90 @@ ADR_QUALITY_CHECKS = (
     "no_boilerplate_na",
     "stop_condition_met",
 )
+CANVAS_QUALITY_FLOOR = 0.9
+
+
+@dataclass(frozen=True)
+class CanvasExpectation:
+    canvas_id: str
+    artifact_name: str
+    required_sections: tuple[str, ...]
+    table_columns: dict[str, tuple[str, ...]]
+    enum_columns: dict[tuple[str, str], tuple[str, ...]]
+    cite_columns: tuple[tuple[str, str], ...]
+    check_columns: tuple[tuple[str, str], ...]
+    edge_columns: tuple[tuple[str, str], ...]
+
+
+CANVAS_EXPECTATIONS: dict[str, CanvasExpectation] = {
+    "canvas_c3_adr": CanvasExpectation(
+        canvas_id="c3-adr",
+        artifact_name="canvas-c3-adr.md",
+        required_sections=("Goal", "Context", "Decision", "Affected Topology", "Compliance Refs", "Compliance Rules", "Work Breakdown", "Underlay C3 Changes", "Enforcement Surfaces", "Alternatives Considered", "Risks", "Verification"),
+        table_columns={
+            "Affected Topology": ("Entity", "Type", "Why affected", "Evidence", "Governance review"),
+            "Compliance Refs": ("Ref", "Why required", "Evidence", "Action"),
+            "Compliance Rules": ("Rule", "Why required", "Evidence", "Action"),
+            "Verification": ("Check", "Result"),
+        },
+        enum_columns={("Affected Topology", "Type"): ("system", "container", "component", "N.A - <reason>")},
+        cite_columns=(("Affected Topology", "Evidence"), ("Compliance Refs", "Evidence"), ("Compliance Rules", "Evidence")),
+        check_columns=(),
+        edge_columns=(),
+    ),
+    "canvas_atomic_design": CanvasExpectation(
+        canvas_id="atomic-design-change",
+        artifact_name="canvas-atomic-design-change.md",
+        required_sections=("Goal", "Affected Units", "Change Record"),
+        table_columns={
+            "Affected Units": ("Unit", "Level", "Why affected", "Evidence"),
+            "Change Record": ("Change", "Break risk", "Result", "Evidence"),
+        },
+        enum_columns={("Affected Units", "Level"): ("atom", "molecule", "organism", "template", "page", "N.A - <reason>")},
+        cite_columns=(("Affected Units", "Evidence"), ("Change Record", "Evidence")),
+        check_columns=(("Change Record", "Result"),),
+        edge_columns=(),
+    ),
+    "canvas_pm_requirement": CanvasExpectation(
+        canvas_id="pm-requirement",
+        artifact_name="canvas-pm-requirement.md",
+        required_sections=("Need", "Facts", "Acceptance"),
+        table_columns={
+            "Facts": ("Fact", "Evidence"),
+            "Acceptance": ("Scenario", "Result", "Trace"),
+        },
+        enum_columns={},
+        cite_columns=(("Facts", "Evidence"),),
+        check_columns=(("Acceptance", "Result"),),
+        edge_columns=(("Acceptance", "Trace"),),
+    ),
+    "canvas_prd": CanvasExpectation(
+        canvas_id="prd",
+        artifact_name="canvas-prd.md",
+        required_sections=("Goal", "Requirements", "Story Traces"),
+        table_columns={
+            "Requirements": ("Requirement", "Priority", "Evidence"),
+            "Story Traces": ("Story", "Status", "Evidence"),
+        },
+        enum_columns={("Requirements", "Priority"): ("must", "should", "could", "wont")},
+        cite_columns=(("Requirements", "Evidence"), ("Story Traces", "Evidence")),
+        check_columns=(("Story Traces", "Status"),),
+        edge_columns=(("Story Traces", "Story"),),
+    ),
+    "canvas_user_story": CanvasExpectation(
+        canvas_id="user-story",
+        artifact_name="canvas-user-story.md",
+        required_sections=("Story", "Acceptance", "Trace"),
+        table_columns={
+            "Acceptance": ("Criterion", "Result", "Evidence"),
+            "Trace": ("Source", "Why derived", "Evidence"),
+        },
+        enum_columns={},
+        cite_columns=(("Acceptance", "Evidence"), ("Trace", "Evidence")),
+        check_columns=(("Acceptance", "Result"),),
+        edge_columns=(("Trace", "Source"),),
+    ),
+}
 
 
 @dataclass(frozen=True)
@@ -61,6 +145,7 @@ class PlanItem:
     command: list[str]
     prompt: str
     dry_run: bool
+    trial: int = 1
 
 
 @dataclass
@@ -79,6 +164,7 @@ class RunResult:
     token_usage: dict[str, int] | None
     turn_count: int | None
     trace_metrics: dict[str, Any]
+    trial: int = 1
 
 
 def default_cases() -> list[EvalCase]:
@@ -91,6 +177,16 @@ def default_cases() -> list[EvalCase]:
         "Before creating an ADR, inspect graph/governance pressure and decide whether to decompose/split a component, "
         "move the concern upward, or explicitly justify staying additive; record this as pressure_response. "
         "Also record component_delta naming the new/split/extracted component or a no-delta justification. "
+    )
+    canvas_marker = (
+        "Use local C3 only. Run `C3X_MODE=agent bash skills/c3/bin/c3x.sh canvas read {canvas_id}` first. "
+        "Write one markdown artifact at {artifact_name} that matches the canvas sections and table columns. "
+        "Use `## <section name>` headings for every canvas section exactly as named by `canvas read`; do not use `#` for section headings. "
+        "Use concrete non-placeholder content. For cite cells, paste an exact C3 citation handle from `c3x read --cite` "
+        "or `c3x read <id> --section <section> --cite`; the handle must include `@v` and `:sha256:`. "
+        "Use `N.A - <reason>` only when the source does not exist yet. For check cells use pass, fail, blocked, skipped, pending, or n_a. "
+        "For edge cells use `relation:target-id`, `source->target`, a C3 id, or `N.A - <reason>`. "
+        "When done, write eval_result.json with keys summary, verified, canvas_id, canvas_artifact, artifacts. "
     )
     return [
         EvalCase(
@@ -167,6 +263,41 @@ def default_cases() -> list[EvalCase]:
             ),
             accuracy_checks=("has_eval_result", "verified", "mentions_design_change"),
         ),
+        EvalCase(
+            id="canvas_c3_adr",
+            title="Author C3 ADR Canvas File",
+            prompt=canvas_marker.format(canvas_id="c3-adr", artifact_name="canvas-c3-adr.md")
+            + "Theme: decide whether canvas validation belongs in check-cmd or docs-state-cmds.",
+            accuracy_checks=("has_eval_result", "verified", "has_canvas_artifact", "canvas_score_90"),
+        ),
+        EvalCase(
+            id="canvas_atomic_design",
+            title="Author Atomic Design Change Canvas File",
+            prompt=canvas_marker.format(canvas_id="atomic-design-change", artifact_name="canvas-atomic-design-change.md")
+            + "Theme: change a button atom color token and trace impact to molecule, organism, template, and page levels.",
+            accuracy_checks=("has_eval_result", "verified", "has_canvas_artifact", "canvas_score_90"),
+        ),
+        EvalCase(
+            id="canvas_pm_requirement",
+            title="Author PM Requirement Canvas File",
+            prompt=canvas_marker.format(canvas_id="pm-requirement", artifact_name="canvas-pm-requirement.md")
+            + "Theme: require saved filter sharing in a project dashboard.",
+            accuracy_checks=("has_eval_result", "verified", "has_canvas_artifact", "canvas_score_90"),
+        ),
+        EvalCase(
+            id="canvas_prd",
+            title="Author PRD Canvas File",
+            prompt=canvas_marker.format(canvas_id="prd", artifact_name="canvas-prd.md")
+            + "Theme: define PRD requirements for workspace notification preferences.",
+            accuracy_checks=("has_eval_result", "verified", "has_canvas_artifact", "canvas_score_90"),
+        ),
+        EvalCase(
+            id="canvas_user_story",
+            title="Author User Story Canvas File",
+            prompt=canvas_marker.format(canvas_id="user-story", artifact_name="canvas-user-story.md")
+            + "Theme: user can mute a noisy workspace channel from notification settings.",
+            accuracy_checks=("has_eval_result", "verified", "has_canvas_artifact", "canvas_score_90"),
+        ),
     ]
 
 
@@ -189,12 +320,13 @@ def _env_command(name: str, fallback: str) -> list[str]:
     return shlex.split(os.environ.get(name, fallback))
 
 
-def build_plan(cases: list[EvalCase], agents: list[AgentSpec], dry_run: bool) -> list[PlanItem]:
+def build_plan(cases: list[EvalCase], agents: list[AgentSpec], dry_run: bool, repeat: int = 1) -> list[PlanItem]:
     plan: list[PlanItem] = []
     for agent in agents:
         for case in cases:
-            command = [part.format(prompt=case.prompt) for part in agent.command_template]
-            plan.append(PlanItem(agent.id, case.id, command, case.prompt, dry_run))
+            for trial in range(1, repeat + 1):
+                command = [part.format(prompt=case.prompt) for part in agent.command_template]
+                plan.append(PlanItem(agent.id, case.id, command, case.prompt, dry_run, trial))
     return plan
 
 
@@ -205,7 +337,7 @@ def run_plan_item(item: PlanItem, case: EvalCase, keep_workspace: bool) -> RunRe
     stderr = ""
     exit_code = 0
     tmp: tempfile.TemporaryDirectory[str] | None = None
-    artifact_dir = tempfile.mkdtemp(prefix=f"c3-eval-artifacts-{item.agent_id}-{item.case_id}-")
+    artifact_dir = tempfile.mkdtemp(prefix=f"c3-eval-artifacts-{item.agent_id}-{item.case_id}-t{item.trial}-")
 
     if item.dry_run:
         stdout = "dry-run: " + " ".join(shlex.quote(part) for part in item.command)
@@ -250,6 +382,7 @@ def run_plan_item(item: PlanItem, case: EvalCase, keep_workspace: bool) -> RunRe
         token_usage=token_usage,
         turn_count=turn_count,
         trace_metrics=trace_metrics,
+        trial=item.trial,
     )
     if tmp is not None and not keep_workspace:
         tmp.cleanup()
@@ -268,6 +401,7 @@ def write_artifacts(path: Path, item: PlanItem, stdout: str, stderr: str, worksp
         result_path = Path(workspace) / "eval_result.json"
         if result_path.exists():
             shutil.copy2(result_path, path / "eval_result.json")
+            copy_declared_artifacts(Path(workspace), path, result_path)
         diff = subprocess.run(
             ["git", "diff", "--no-ext-diff"],
             cwd=workspace,
@@ -276,6 +410,32 @@ def write_artifacts(path: Path, item: PlanItem, stdout: str, stderr: str, worksp
             check=False,
         )
         (path / "workspace_diff.patch").write_text(diff.stdout)
+
+
+def copy_declared_artifacts(workspace: Path, artifact_dir: Path, result_path: Path) -> None:
+    try:
+        result = json.loads(result_path.read_text())
+    except json.JSONDecodeError:
+        return
+    candidates: list[str] = []
+    canvas_artifact = result.get("canvas_artifact")
+    if isinstance(canvas_artifact, str):
+        candidates.append(canvas_artifact)
+    for artifact in result.get("artifacts") or []:
+        if isinstance(artifact, str):
+            candidates.append(artifact)
+    seen: set[str] = set()
+    for rel in candidates:
+        rel_path = Path(rel)
+        if rel_path.is_absolute() or ".." in rel_path.parts or str(rel_path) in seen:
+            continue
+        seen.add(str(rel_path))
+        src = workspace / rel_path
+        if not src.is_file():
+            continue
+        dst = artifact_dir / rel_path
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dst)
 
 
 def _copy_controlled_workspace(dst: Path) -> None:
@@ -348,7 +508,7 @@ def extract_turn_count(text: str) -> int | None:
 def extract_trace_metrics(text: str) -> dict[str, Any]:
     c3_pattern = re.compile(
         r"^((?:C3X_MODE=agent\s+)?bash\s+skills/c3/bin/c3x\.sh\s+[^\n\"']+|"
-        r"c3x\s+(?:lookup|read|list|check|schema|graph|add|write|set|wire|delete)\b[^\n\"']*)$"
+        r"c3x\s+(?:lookup|read|list|check|schema|graph|add|write|set|wire|delete|canvas)\b[^\n\"']*)$"
     )
     broad_search_pattern = re.compile(r"^(?:rg\b|grep\s+-R\b|find\s+\.)")
     c3_commands = []
@@ -382,6 +542,7 @@ def extract_trace_metrics(text: str) -> dict[str, Any]:
         "c3_output_bytes_total": c3_output_bytes_total,
         "transcript_bytes_total": len(text.encode()),
         "c3_command_bytes_total": sum(len(cmd.encode()) for cmd in c3_commands),
+        "agent_unavailable": _agent_unavailable(text),
     }
 
 
@@ -454,9 +615,171 @@ def evaluate_accuracy(workspace: Path | None, case: EvalCase, stdout: str, stder
                 text,
                 ("component_delta", "new component", "split component", "extract component", "no-delta"),
             )
+        elif check == "has_canvas_artifact":
+            checks[check] = _canvas_artifact_path(workspace, result, case.id) is not None
+        elif check == "canvas_score_90":
+            checks[check] = canvas_quality_passes(evaluate_canvas_quality(workspace, result, case.id))
         else:
             checks[check] = False
     return checks
+
+
+def evaluate_canvas_quality(workspace: Path | None, result: dict[str, Any], case_id: str) -> dict[str, Any]:
+    expectation = CANVAS_EXPECTATIONS.get(case_id)
+    checks = {
+        "has_canvas_artifact": False,
+        "canvas_id_matches": False,
+        "required_sections_present": False,
+        "tables_have_required_columns": False,
+        "tables_have_rows": False,
+        "cite_cells_grounded": False,
+        "check_cells_valid": False,
+        "edge_cells_nonempty": False,
+        "enum_cells_valid": False,
+        "no_placeholder_text": False,
+    }
+    if expectation is None:
+        return {"score": 0.0, "checks": checks, "artifact": None}
+
+    artifact = _canvas_artifact_path(workspace, result, case_id)
+    if artifact is None:
+        return {"score": 0.0, "checks": checks, "artifact": None}
+    text = artifact.read_text(errors="replace")
+    sections = parse_markdown_sections(text)
+    tables = {name: parse_first_markdown_table(body) for name, body in sections.items()}
+
+    checks["has_canvas_artifact"] = True
+    checks["canvas_id_matches"] = result.get("canvas_id") == expectation.canvas_id or expectation.canvas_id in text
+    checks["required_sections_present"] = all(section in sections and sections[section].strip() for section in expectation.required_sections)
+    checks["tables_have_required_columns"] = all(
+        table is not None and all(column in table["headers"] for column in columns)
+        for section, columns in expectation.table_columns.items()
+        for table in [tables.get(section)]
+    )
+    checks["tables_have_rows"] = all(
+        table is not None and len(table["rows"]) > 0
+        for section, table in tables.items()
+        if section in expectation.table_columns
+    )
+    checks["cite_cells_grounded"] = _canvas_cells_pass(expectation.cite_columns, tables, _grounded_cite)
+    checks["check_cells_valid"] = _canvas_cells_pass(expectation.check_columns, tables, _valid_check_result)
+    checks["edge_cells_nonempty"] = _canvas_cells_pass(expectation.edge_columns, tables, _valid_edge)
+    checks["enum_cells_valid"] = all(
+        _canvas_cells_pass(((section, column),), tables, lambda value, allowed=allowed: _valid_enum(value, allowed))
+        for (section, column), allowed in expectation.enum_columns.items()
+    )
+    checks["no_placeholder_text"] = not _has_any(text.lower(), ("tbd", "todo", "lorem", "as needed", "best practices"))
+
+    score = sum(1 for value in checks.values() if value) / len(checks)
+    return {"score": round(score, 4), "checks": checks, "artifact": str(artifact)}
+
+
+def canvas_quality_passes(quality: dict[str, Any]) -> bool:
+    checks = quality.get("checks") if isinstance(quality, dict) else None
+    return (
+        isinstance(checks, dict)
+        and (quality.get("score") or 0.0) >= CANVAS_QUALITY_FLOOR
+        and all(bool(value) for value in checks.values())
+    )
+
+
+def _canvas_artifact_path(workspace: Path | None, result: dict[str, Any], case_id: str) -> Path | None:
+    expectation = CANVAS_EXPECTATIONS.get(case_id)
+    if workspace is None or expectation is None:
+        return None
+    candidates: list[Path] = []
+    declared = result.get("canvas_artifact")
+    if isinstance(declared, str) and declared:
+        candidates.append(workspace / declared)
+    for artifact in result.get("artifacts") or []:
+        if isinstance(artifact, str):
+            candidates.append(workspace / artifact)
+    candidates.append(workspace / expectation.artifact_name)
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def parse_markdown_sections(text: str) -> dict[str, str]:
+    sections: dict[str, list[str]] = {}
+    current: str | None = None
+    for line in text.splitlines():
+        if line.startswith("## ") and not line.startswith("### "):
+            current = line[3:].strip()
+            sections[current] = []
+            continue
+        if current is not None:
+            sections[current].append(line)
+    return {name: "\n".join(lines).strip() for name, lines in sections.items()}
+
+
+def parse_first_markdown_table(text: str) -> dict[str, Any] | None:
+    lines = [line.strip() for line in text.splitlines() if line.strip().startswith("|")]
+    if len(lines) < 3:
+        return None
+    headers = _split_markdown_row(lines[0])
+    separator = _split_markdown_row(lines[1])
+    if not headers or not all(set(cell.replace(":", "").strip()) <= {"-"} for cell in separator):
+        return None
+    rows = []
+    for line in lines[2:]:
+        cells = _split_markdown_row(line)
+        if len(cells) != len(headers):
+            continue
+        rows.append(dict(zip(headers, cells)))
+    return {"headers": headers, "rows": rows}
+
+
+def _split_markdown_row(line: str) -> list[str]:
+    line = line.strip()
+    if line.startswith("|"):
+        line = line[1:]
+    if line.endswith("|"):
+        line = line[:-1]
+    return [cell.strip() for cell in line.split("|")]
+
+
+def _canvas_cells_pass(columns: tuple[tuple[str, str], ...], tables: dict[str, dict[str, Any] | None], predicate: Any) -> bool:
+    if not columns:
+        return True
+    for section, column in columns:
+        table = tables.get(section)
+        if table is None or not table["rows"]:
+            return False
+        for row in table["rows"]:
+            if not predicate(row.get(column, "")):
+                return False
+    return True
+
+
+def _grounded_cite(value: str) -> bool:
+    value = value.strip().strip('"')
+    if value.startswith("N.A -") and len(value.split()) >= 4:
+        return True
+    return "@v" in value and ":sha256:" in value
+
+
+def _valid_check_result(value: str) -> bool:
+    return value.strip().lower() in {"pass", "fail", "blocked", "skipped", "pending", "n_a", "n.a - not applicable"}
+
+
+def _valid_edge(value: str) -> bool:
+    value = value.strip()
+    if value == "" or value.startswith("TBD"):
+        return False
+    return (
+        ":" in value
+        or "->" in value
+        or "#" in value
+        or value.startswith("N.A -")
+        or re.fullmatch(r"[A-Za-z][A-Za-z0-9_.-]*-[A-Za-z0-9_.-]+", value) is not None
+    )
+
+
+def _valid_enum(value: str, allowed: tuple[str, ...]) -> bool:
+    value = value.strip()
+    return value in allowed or (value.startswith("N.A -") and any(item.startswith("N.A -") for item in allowed))
 
 
 def evaluate_adr_quality(workspace: Path | None, transcript_text: str) -> dict[str, Any]:
@@ -557,6 +880,18 @@ def _specific_component_delta(value: Any) -> bool:
     return has_component and has_delta and not generic
 
 
+def _agent_unavailable(text: str) -> bool:
+    return _has_any(
+        text.lower(),
+        (
+            "failed to authenticate",
+            "invalid authentication credentials",
+            "api error: 401",
+            "command not found",
+        ),
+    )
+
+
 def evaluate_threshold_pressure(
     case_id: str,
     tokens_total: int | None,
@@ -630,6 +965,8 @@ def score_result(result: RunResult) -> dict[str, Any]:
     if quality_workspace is not None and not quality_workspace.exists():
         quality_workspace = Path(result.artifact_dir) if result.artifact_dir else None
     adr_quality = evaluate_adr_quality(quality_workspace, result.stdout + "\n" + result.stderr)
+    eval_result = _read_eval_result(quality_workspace)
+    canvas_quality = evaluate_canvas_quality(quality_workspace, eval_result, result.case_id)
     tokens_total = result.token_usage.get("total_tokens") if result.token_usage else None
     effective_tokens = result.token_usage.get("effective_tokens") if result.token_usage else None
     pressure = evaluate_threshold_pressure(
@@ -642,6 +979,7 @@ def score_result(result: RunResult) -> dict[str, Any]:
     scored = {
         "agent": result.agent_id,
         "case": result.case_id,
+        "trial": result.trial,
         "dry_run": result.dry_run,
         "exit_code": result.exit_code,
         "elapsed_ms": result.elapsed_ms,
@@ -656,6 +994,10 @@ def score_result(result: RunResult) -> dict[str, Any]:
         "metric_basis": METRIC_BASIS,
         "adr_quality_score": adr_quality["score"],
         "adr_quality_checks": adr_quality["checks"],
+        "canvas_quality_score": canvas_quality["score"],
+        "canvas_quality_passed": canvas_quality_passes(canvas_quality),
+        "canvas_quality_checks": canvas_quality["checks"],
+        "canvas_artifact": canvas_quality["artifact"],
         "threshold_status": pressure["status"],
         "threshold_action": pressure["action"],
         "threshold_reasons": pressure["reasons"],
@@ -666,36 +1008,186 @@ def score_result(result: RunResult) -> dict[str, Any]:
     return scored
 
 
+def summarize_records(records: list[dict[str, Any]]) -> dict[str, Any]:
+    canvas_records = [
+        record
+        for record in records
+        if record.get("case") in CANVAS_EXPECTATIONS and not record.get("dry_run")
+    ]
+    available_canvas_records = [record for record in canvas_records if not record.get("agent_unavailable")]
+    unavailable_canvas_records = [record for record in canvas_records if record.get("agent_unavailable")]
+    canvas_passes = [
+        record
+        for record in available_canvas_records
+        if record.get("exit_code") == 0
+        and bool(record.get("canvas_quality_passed"))
+        and (record.get("accuracy_score") or 0.0) >= 1.0
+    ]
+    pass_rate = len(canvas_passes) / len(available_canvas_records) if available_canvas_records else 0.0
+    by_case: dict[str, dict[str, Any]] = {}
+    for case_id in CANVAS_EXPECTATIONS:
+        case_records = [record for record in available_canvas_records if record.get("case") == case_id]
+        case_passes = [record for record in canvas_passes if record.get("case") == case_id]
+        by_case[case_id] = {
+            "records": len(case_records),
+            "passes": len(case_passes),
+            "pass_rate": round(len(case_passes) / len(case_records), 4) if case_records else 0.0,
+        }
+    by_agent: dict[str, dict[str, Any]] = {}
+    for agent_id in sorted({str(record.get("agent")) for record in canvas_records if record.get("agent")}):
+        agent_records = [record for record in canvas_records if record.get("agent") == agent_id]
+        available_agent_records = [record for record in agent_records if not record.get("agent_unavailable")]
+        agent_passes = [record for record in canvas_passes if record.get("agent") == agent_id]
+        by_agent[agent_id] = {
+            "records": len(available_agent_records),
+            "unavailable": len(agent_records) - len(available_agent_records),
+            "passes": len(agent_passes),
+            "pass_rate": round(len(agent_passes) / len(available_agent_records), 4) if available_agent_records else 0.0,
+        }
+    return {
+        "record_count": len(records),
+        "canvas_record_count": len(available_canvas_records),
+        "canvas_unavailable_count": len(unavailable_canvas_records),
+        "canvas_pass_count": len(canvas_passes),
+        "canvas_pass_rate": round(pass_rate, 4),
+        "canvas_target": CANVAS_QUALITY_FLOOR,
+        "canvas_gate_passed": bool(available_canvas_records) and pass_rate >= CANVAS_QUALITY_FLOOR,
+        "canvas_all_agents_available": len(unavailable_canvas_records) == 0,
+        "canvas_by_case": by_case,
+        "canvas_by_agent": by_agent,
+    }
+
+
+def load_jsonl_records(path: Path) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    for line_number, line in enumerate(path.read_text().splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError as err:
+            raise ValueError(f"{path}:{line_number}: invalid JSONL record: {err}") from err
+        if not isinstance(record, dict):
+            raise ValueError(f"{path}:{line_number}: JSONL record must be an object")
+        records.append(record)
+    return records
+
+
+def write_summary_if_requested(summary: dict[str, Any], path: str | None) -> None:
+    if not path:
+        return
+    summary_path = Path(path)
+    summary_path.parent.mkdir(parents=True, exist_ok=True)
+    summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
+
+
+def print_canvas_summary(summary: dict[str, Any], output: Path | None = None) -> None:
+    if output is not None:
+        print(f"wrote {summary['record_count']} eval record(s) to {output}")
+    print(
+        "canvas pass rate: "
+        f"{summary['canvas_pass_count']}/{summary['canvas_record_count']} "
+        f"({summary['canvas_pass_rate']:.0%}); target {summary['canvas_target']:.0%}"
+    )
+    if summary["canvas_unavailable_count"]:
+        print(f"canvas unavailable records: {summary['canvas_unavailable_count']}")
+
+
+def gate_exit_code(
+    summary: dict[str, Any],
+    require_canvas_90: bool,
+    require_canvas_agent_availability: bool,
+    min_canvas_records: int = 0,
+    min_canvas_records_per_case: int = 0,
+    require_canvas_agents: list[str] | None = None,
+) -> int:
+    if require_canvas_90 and not summary["canvas_gate_passed"]:
+        return 1
+    if require_canvas_agent_availability and not summary["canvas_all_agents_available"]:
+        return 1
+    if min_canvas_records and summary["canvas_record_count"] < min_canvas_records:
+        return 1
+    if min_canvas_records_per_case:
+        for case_summary in summary["canvas_by_case"].values():
+            if case_summary["records"] < min_canvas_records_per_case:
+                return 1
+    for agent_id in require_canvas_agents or []:
+        agent_summary = summary["canvas_by_agent"].get(agent_id)
+        if agent_summary is None or agent_summary["records"] == 0 or agent_summary["unavailable"] > 0:
+            return 1
+    return 0
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run", action="store_true", help="execute agent CLIs and spend tokens")
     parser.add_argument("--dry-run", action="store_true", help="print/write planned matrix only")
+    parser.add_argument("--from-results", help="summarize and gate an existing JSONL result file without running agents")
+    parser.add_argument("--repeat", type=int, default=1, help="repeat each selected agent/case this many times")
     parser.add_argument("--agent", choices=["claude", "codex"], action="append", help="limit agent")
     parser.add_argument("--case", choices=[case.id for case in default_cases()], action="append", help="limit case")
     parser.add_argument("--output", default="agent-efficiency-results.jsonl", help="JSONL output path")
+    parser.add_argument("--summary", help="optional JSON summary output path")
+    parser.add_argument("--require-canvas-90", action="store_true", help="exit nonzero unless live canvas records pass the 90 percent gate")
+    parser.add_argument("--require-canvas-agent-availability", action="store_true", help="exit nonzero if any requested live canvas agent is unavailable")
+    parser.add_argument("--require-canvas-agent", choices=["claude", "codex"], action="append", help="exit nonzero unless this agent has available live canvas records and no unavailable rows")
+    parser.add_argument("--min-canvas-records", type=int, default=0, help="exit nonzero unless at least this many available live canvas records are present")
+    parser.add_argument("--min-canvas-records-per-case", type=int, default=0, help="exit nonzero unless every built-in canvas case has this many available live records")
     parser.add_argument("--keep-workspace", action="store_true", help="keep live temp workspaces")
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+    if args.from_results:
+        records = load_jsonl_records(Path(args.from_results))
+        summary = summarize_records(records)
+        write_summary_if_requested(summary, args.summary)
+        print_canvas_summary(summary)
+        return gate_exit_code(
+            summary,
+            args.require_canvas_90,
+            args.require_canvas_agent_availability,
+            args.min_canvas_records,
+            args.min_canvas_records_per_case,
+            args.require_canvas_agent,
+        )
+
     dry_run = not args.run
+    if args.repeat < 1:
+        raise ValueError("--repeat must be >= 1")
+    if args.min_canvas_records < 0:
+        raise ValueError("--min-canvas-records must be >= 0")
+    if args.min_canvas_records_per_case < 0:
+        raise ValueError("--min-canvas-records-per-case must be >= 0")
     cases = [case for case in default_cases() if not args.case or case.id in args.case]
     agents = [agent for agent in default_agents() if not args.agent or agent.id in args.agent]
-    plan = build_plan(cases, agents, dry_run=dry_run)
+    plan = build_plan(cases, agents, dry_run=dry_run, repeat=args.repeat)
     cases_by_id = {case.id: case for case in cases}
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
 
+    scored_records = []
     with output.open("w") as fh:
         for item in plan:
             result = run_plan_item(item, cases_by_id[item.case_id], keep_workspace=args.keep_workspace)
-            fh.write(json.dumps(score_result(result), sort_keys=True) + "\n")
+            scored = score_result(result)
+            scored_records.append(scored)
+            fh.write(json.dumps(scored, sort_keys=True) + "\n")
 
-    print(f"wrote {len(plan)} eval record(s) to {output}")
+    summary = summarize_records(scored_records)
+    write_summary_if_requested(summary, args.summary)
+    print_canvas_summary(summary, output)
     if dry_run:
         print("dry-run only; pass --run to execute agent CLIs and spend tokens")
-    return 0
+    return gate_exit_code(
+        summary,
+        args.require_canvas_90,
+        args.require_canvas_agent_availability,
+        args.min_canvas_records,
+        args.min_canvas_records_per_case,
+        args.require_canvas_agent,
+    )
 
 
 if __name__ == "__main__":

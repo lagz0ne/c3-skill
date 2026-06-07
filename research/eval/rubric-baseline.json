@@ -1,0 +1,22 @@
+{
+  "_about": "Rubric Q&A baseline for the C3 skill against this repo's current .c3 docs. Established 2026-06-02 from an authoritative claude-only run with the corrected scorers (scripts/rubric_eval.py + research/eval/rubric.jsonl). The post-skill-rebuild eval is compared against this to prove no regression.",
+  "agent_basis": "claude (codex unavailable: 401 token_revoked in this environment, excluded from the denominator)",
+  "pass_rate": 1.0,
+  "pass_count": 40,
+  "record_count": 40,
+  "unavailable_count": 0,
+  "by_category": {
+    "navigation": 1.0,
+    "ownership": 1.0,
+    "relationships": 1.0,
+    "governance": 1.0,
+    "change-impact": 1.0,
+    "definition": 1.0,
+    "validation": 1.0
+  },
+  "notes": [
+    "Baseline-1 raw was claude 38/40; the 2 'fails' were scorer false-negatives (exact id_set too brittle for free-text answers that add correct context). REL-1/2/3 fixed to ids_include; baseline-2 is the authoritative 40/40.",
+    "Discrimination caveat: claude aces CLI-grounded Q&A regardless of skill nuance, so this rubric primarily catches REGRESSIONS from the skill rebuild, not fine-grained skill improvements. Harder skill-sensitive items are a future refinement.",
+    "Re-run: python scripts/rubric_eval.py --run --agent claude --output <run>.jsonl --summary <run>-summary.json (then compare pass_rate to 1.0)."
+  ]
+}

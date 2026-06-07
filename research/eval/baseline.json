@@ -1,0 +1,83 @@
+{
+  "adr_quality_floor": 0.8,
+  "by_agent": {
+    "claude": {
+      "pass_rate": 0.9091,
+      "passes": 10,
+      "records": 11
+    },
+    "codex": {
+      "pass_rate": 0.8889,
+      "passes": 8,
+      "records": 9
+    }
+  },
+  "by_case": {
+    "adr_create": {
+      "pass_rate": 1.0,
+      "passes": 2,
+      "records": 2
+    },
+    "canvas_atomic_design": {
+      "pass_rate": 1.0,
+      "passes": 2,
+      "records": 2
+    },
+    "canvas_c3_adr": {
+      "pass_rate": 0.5,
+      "passes": 1,
+      "records": 2
+    },
+    "canvas_pm_requirement": {
+      "pass_rate": 1.0,
+      "passes": 2,
+      "records": 2
+    },
+    "canvas_prd": {
+      "pass_rate": 1.0,
+      "passes": 1,
+      "records": 1
+    },
+    "canvas_user_story": {
+      "pass_rate": 1.0,
+      "passes": 2,
+      "records": 2
+    },
+    "debug_session": {
+      "pass_rate": 1.0,
+      "passes": 1,
+      "records": 1
+    },
+    "skill_content_limit_adr": {
+      "pass_rate": 0.5,
+      "passes": 1,
+      "records": 2
+    },
+    "skill_task_session": {
+      "pass_rate": 1.0,
+      "passes": 2,
+      "records": 2
+    },
+    "system_design_change": {
+      "pass_rate": 1.0,
+      "passes": 2,
+      "records": 2
+    },
+    "task_session": {
+      "pass_rate": 1.0,
+      "passes": 2,
+      "records": 2
+    }
+  },
+  "canvas_quality_floor": 0.9,
+  "effective_tokens_mean": 66805.6,
+  "established": true,
+  "label": "initial baseline (claude+codex, full matrix)",
+  "pass_count": 18,
+  "pass_rate": 0.9,
+  "record_count": 20,
+  "timestamp": 1780309433.1905305,
+  "token_no_go_count": 0,
+  "tokens_max": 2391450,
+  "tokens_mean": 254945.7
+}

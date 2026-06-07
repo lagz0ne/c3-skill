@@ -1,0 +1,8 @@
+{
+  "_about": "Verification of the canvas-model skill rebuild against the rubric. Combined result of the main post-rebuild run (32 items) + an 8-item re-run of items that hit transient API rate-limiting in the main run (VAL-3/4/5, DEF-1..5).",
+  "skill": "rebuilt for the canvas model (SKILL.md + references/canvas.md + audit de-hardcode + canvas-read-for-all-types); c3x 9.9.1",
+  "agent_basis": "claude (codex 401-unavailable, excluded)",
+  "result": "40/40 = 100%, 0 failures, 0 regression vs baseline (research/eval/rubric-baseline.json)",
+  "coverage_note": "Main run scored 32/32 (8 items hit transient rate-limiting -> agent_unavailable, correctly excluded); the 8-item re-run scored 8/8. DEF items (definition-awareness via c3 schema <type>) confirm the canvas model answers correctly.",
+  "by_category": {"navigation":1.0,"ownership":1.0,"relationships":1.0,"governance":1.0,"change-impact":1.0,"definition":1.0,"validation":1.0}
+}

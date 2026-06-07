@@ -1,0 +1,1 @@
+{"baseline_pass_rate": null, "baseline_updated": true, "candidate_pass_rate": 0.9, "decision": "establish", "label": "initial baseline (claude+codex, full matrix)", "pass_rate_delta": null, "record_count": 20, "timestamp": 1780309433.1905305, "token_guardrail_breached": false, "tokens_max": 2391450, "tokens_mean": 254945.7}

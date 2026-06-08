@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -10,17 +11,92 @@ import (
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
+type searchSemanticProvider struct {
+	calls int
+}
+
+func (p *searchSemanticProvider) Embed(ctx context.Context, text string, allowDownload bool) ([]float32, bool, error) {
+	if strings.TrimSpace(text) == "" {
+		return nil, false, nil
+	}
+	p.calls++
+	vec := make([]float32, 384)
+	vec[0] = 1
+	return vec, true, nil
+}
+
+func TestSearch_DefaultEnsuresSemanticIndexAndReusesIt(t *testing.T) {
+	provider := &searchSemanticProvider{}
+	restore := store.SetSemanticProviderForTest(provider)
+	defer restore()
+	s := createDBFixture(t)
+	seedHybridSearchFixture(t, s)
+
+	var buf bytes.Buffer
+	err := RunSearch(SearchOptions{
+		Store: s,
+		Query: "pool wait p95 latency",
+		JSON:  true,
+		Limit: 5,
+	}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var out SearchOutput
+	if err := json.Unmarshal(buf.Bytes(), &out); err != nil {
+		t.Fatalf("invalid search JSON: %v\n%s", err, buf.String())
+	}
+	var research *SearchResultRow
+	for i := range out.Results {
+		if out.Results[i].ID == "research-note-20260605-api-latency" {
+			research = &out.Results[i]
+			break
+		}
+	}
+	if research == nil {
+		t.Fatalf("research note missing from default hybrid search: %+v", out.Results)
+	}
+	requireStringSliceContains(t, research.MatchSources, "semantic")
+	count, err := s.SemanticIndexCount()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count == 0 {
+		t.Fatal("default search should build semantic vectors on a fresh index")
+	}
+	firstCalls := provider.calls
+	if firstCalls <= 1 {
+		t.Fatalf("first default search should embed entities plus query, calls = %d", firstCalls)
+	}
+
+	buf.Reset()
+	err = RunSearch(SearchOptions{
+		Store: s,
+		Query: "pool wait p95 latency",
+		JSON:  true,
+		Limit: 5,
+	}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if provider.calls != firstCalls+1 {
+		t.Fatalf("repeat search should reuse entity vectors and embed only the query; calls = %d, want %d", provider.calls, firstCalls+1)
+	}
+}
+
 func TestBDD_SearchHybridReturnsFTSAndGraphContext(t *testing.T) {
 	s := createDBFixture(t)
 	seedHybridSearchFixture(t, s)
 
 	var buf bytes.Buffer
 	err := RunSearch(SearchOptions{
-		Store:  s,
-		Query:  "pool wait p95 latency",
-		Hybrid: true,
-		JSON:   true,
-		Limit:  3,
+		Store:      s,
+		Query:      "pool wait p95 latency",
+		Hybrid:     true,
+		NoSemantic: true,
+		JSON:       true,
+		Limit:      3,
 	}, &buf)
 	if err != nil {
 		t.Fatal(err)
@@ -54,11 +130,12 @@ func TestBDD_SearchHybridReturnsFTSAndGraphContext(t *testing.T) {
 
 	buf.Reset()
 	err = RunSearch(SearchOptions{
-		Store:  s,
-		Query:  "traceparent request_id",
-		Hybrid: true,
-		JSON:   true,
-		Limit:  3,
+		Store:      s,
+		Query:      "traceparent request_id",
+		Hybrid:     true,
+		NoSemantic: true,
+		JSON:       true,
+		Limit:      3,
 	}, &buf)
 	if err != nil {
 		t.Fatal(err)
@@ -72,8 +149,9 @@ func TestBDD_SearchHybridReturnsFTSAndGraphContext(t *testing.T) {
 	requireStringSliceContains(t, out.Results[0].MatchSources, "graph:uses:rule-trace-context")
 }
 
-func TestSearch_DefaultNoSemanticIndexStillReturnsKeywordGraph(t *testing.T) {
+func TestSearch_DefaultUnavailableSemanticModelDegradesToKeywordGraph(t *testing.T) {
 	t.Setenv("C3_SEMANTIC_CACHE_DIR", t.TempDir())
+	t.Setenv("C3_SEMANTIC_OFFLINE", "1")
 	s := createDBFixture(t)
 	seedHybridSearchFixture(t, s)
 
@@ -102,6 +180,38 @@ func TestSearch_DefaultNoSemanticIndexStillReturnsKeywordGraph(t *testing.T) {
 	for _, result := range out.Results {
 		if hasSource(result.MatchSources, "semantic") {
 			t.Fatalf("unexpected semantic source without index/model: %+v", result)
+		}
+	}
+}
+
+func TestSearch_NoSemanticSkipsAutoEnsure(t *testing.T) {
+	provider := &searchSemanticProvider{}
+	restore := store.SetSemanticProviderForTest(provider)
+	defer restore()
+	s := createDBFixture(t)
+	seedHybridSearchFixture(t, s)
+
+	var buf bytes.Buffer
+	err := RunSearch(SearchOptions{
+		Store:      s,
+		Query:      "pool wait p95 latency",
+		NoSemantic: true,
+		JSON:       true,
+		Limit:      3,
+	}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if provider.calls != 0 {
+		t.Fatalf("--no-semantic should skip entity and query embedding; calls = %d", provider.calls)
+	}
+	var out SearchOutput
+	if err := json.Unmarshal(buf.Bytes(), &out); err != nil {
+		t.Fatalf("invalid search JSON: %v\n%s", err, buf.String())
+	}
+	for _, result := range out.Results {
+		if hasSource(result.MatchSources, "semantic") {
+			t.Fatalf("unexpected semantic source with --no-semantic: %+v", result)
 		}
 	}
 }

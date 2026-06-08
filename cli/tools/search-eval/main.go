@@ -97,11 +97,19 @@ var cases = []evalCase{
 func main() {
 	var dbPath string
 	var limit int
-	var semantic bool
+	semantic := true
+	var noSemantic bool
 	flag.StringVar(&dbPath, "db", "", "path to .c3/c3.db")
 	flag.IntVar(&limit, "k", 5, "ranking cutoff")
-	flag.BoolVar(&semantic, "semantic", false, "enable local ONNX semantic fusion")
+	flag.BoolVar(&semantic, "semantic", true, "enable local ONNX semantic fusion (default true)")
+	flag.BoolVar(&noSemantic, "no-semantic", false, "disable semantic fusion for keyword/graph baseline")
 	flag.Parse()
+	if noSemantic {
+		semantic = false
+	}
+	if semantic {
+		seedEvalVersionEnv()
+	}
 
 	if limit <= 0 {
 		fail("k must be positive")
@@ -143,6 +151,27 @@ func defaultDBPath() (string, error) {
 		}
 	}
 	return "", fmt.Errorf("could not find .c3/c3.db; pass --db")
+}
+
+func seedEvalVersionEnv() {
+	if strings.TrimSpace(os.Getenv("C3X_VERSION")) != "" {
+		return
+	}
+	candidates := []string{
+		filepath.Join("..", "skills", "c3", "bin", "VERSION"),
+		filepath.Join("..", "..", "skills", "c3", "bin", "VERSION"),
+		filepath.Join("skills", "c3", "bin", "VERSION"),
+	}
+	for _, candidate := range candidates {
+		data, err := os.ReadFile(candidate)
+		if err != nil {
+			continue
+		}
+		if version := strings.TrimSpace(string(data)); version != "" {
+			os.Setenv("C3X_VERSION", version)
+			return
+		}
+	}
 }
 
 func runEval(s *store.Store, dbPath string, limit int, semantic bool) (evalReport, error) {

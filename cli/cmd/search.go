@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"sort"
@@ -55,13 +56,13 @@ type EntityRef struct {
 	Title string `json:"title"`
 }
 
-// RunSearch performs content/entity FTS and optionally enriches hits with graph context.
+// RunSearch performs semantic, content/entity FTS, and graph-context search.
 func RunSearch(opts SearchOptions, w io.Writer) error {
 	if opts.Store == nil {
 		return fmt.Errorf("error: search store is required")
 	}
 	if strings.TrimSpace(opts.Query) == "" {
-		return fmt.Errorf("error: search requires a <query> argument\nhint: c3x search \"pool wait\" --hybrid")
+		return fmt.Errorf("error: search requires a <query> argument\nhint: c3x search \"pool wait\"")
 	}
 	limit := opts.Limit
 	if limit <= 0 {
@@ -72,9 +73,22 @@ func RunSearch(opts SearchOptions, w io.Writer) error {
 		entityType = opts.Type
 	}
 
-	if opts.Semantic {
-		if err := ensureSemanticIndex(opts.Store); err != nil {
+	semanticEnabled := !opts.NoSemantic
+	if semanticEnabled {
+		if _, err := opts.Store.EnsureSemanticIndexWithOptions(context.Background(), store.SemanticIndexOptions{AllowDownload: true}); err != nil {
+			if errors.Is(err, store.ErrSemanticUnavailable) {
+				semanticEnabled = false
+			} else {
+				return fmt.Errorf("ensure semantic index: %w", err)
+			}
+		}
+	}
+
+	if semanticEnabled {
+		if count, err := opts.Store.SemanticIndexCount(); err != nil {
 			return err
+		} else if count == 0 {
+			semanticEnabled = false
 		}
 	}
 
@@ -82,27 +96,27 @@ func RunSearch(opts SearchOptions, w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	if opts.Hybrid {
-		rows, err = expandHybridRows(opts.Store, rows, opts.Query, entityType, limit)
-		if err != nil {
-			return err
-		}
+	rows, err = expandHybridRows(opts.Store, rows, opts.Query, entityType, limit)
+	if err != nil {
+		return err
 	}
 	var semanticRows []store.SearchResult
-	if !opts.NoSemantic {
+	if semanticEnabled {
 		semanticRows, err = opts.Store.SearchSemanticWithOptions(context.Background(), opts.Query, entityType, semanticSearchLimit(limit), store.SemanticSearchOptions{
-			AllowDownload: opts.Semantic,
+			AllowDownload: true,
 		})
 		if err != nil {
-			return err
+			if errors.Is(err, store.ErrSemanticUnavailable) {
+				semanticRows = nil
+			} else {
+				return fmt.Errorf("search semantic: %w", err)
+			}
 		}
 	}
 	rows = fuseSemanticRows(rows, semanticRows, limit)
-	if opts.Hybrid {
-		for i := range rows {
-			if err := enrichSearchRow(opts.Store, &rows[i]); err != nil {
-				return err
-			}
+	for i := range rows {
+		if err := enrichSearchRow(opts.Store, &rows[i]); err != nil {
+			return err
 		}
 	}
 
@@ -111,17 +125,6 @@ func RunSearch(opts SearchOptions, w io.Writer) error {
 		Query:   opts.Query,
 		Results: rows,
 	}, format, nil)
-}
-
-func ensureSemanticIndex(s *store.Store) error {
-	count, err := s.SemanticIndexCount()
-	if err != nil {
-		return err
-	}
-	if count > 0 {
-		return nil
-	}
-	return s.RebuildSemanticIndexWithOptions(context.Background(), store.SemanticIndexOptions{AllowDownload: true})
 }
 
 func semanticSearchLimit(limit int) int {

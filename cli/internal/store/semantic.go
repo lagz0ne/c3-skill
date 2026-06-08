@@ -28,6 +28,15 @@ type SemanticIndexOptions struct {
 	AllowDownload bool
 }
 
+// SemanticIndexStats describes the work done while making the local semantic
+// index match current entity text.
+type SemanticIndexStats struct {
+	Total   int
+	Fresh   int
+	Indexed int
+	Deleted int
+}
+
 // SemanticSearchOptions controls model fetching during query embedding.
 type SemanticSearchOptions struct {
 	AllowDownload bool
@@ -39,10 +48,25 @@ type semanticEmbedder interface {
 
 var semanticProvider semanticEmbedder = &onnxMiniLMProvider{}
 
+// SetSemanticProviderForTest swaps the process-wide semantic provider.
+func SetSemanticProviderForTest(provider semanticEmbedder) func() {
+	old := semanticProvider
+	semanticProvider = provider
+	return func() {
+		semanticProvider = old
+	}
+}
+
 type semanticEmbeddingRow struct {
 	entityID string
 	hash     string
 	vector   []float32
+}
+
+type semanticIndexedRow struct {
+	model string
+	dims  int
+	hash  string
 }
 
 // RebuildSemanticIndex embeds every entity into the local SQLite vector table.
@@ -61,7 +85,8 @@ func (s *Store) RebuildSemanticIndexWithOptions(ctx context.Context, opts Semant
 
 	rows := make([]semanticEmbeddingRow, 0, len(entities))
 	for _, e := range entities {
-		row, ok, err := s.semanticEmbeddingForEntity(ctx, e, opts.AllowDownload)
+		text := s.semanticTextForEntity(e)
+		row, ok, err := semanticEmbeddingForText(ctx, e.ID, text, opts.AllowDownload)
 		if err != nil {
 			return err
 		}
@@ -104,6 +129,104 @@ func (s *Store) RebuildSemanticIndexWithOptions(ctx context.Context, opts Semant
 	return nil
 }
 
+// EnsureSemanticIndexWithOptions makes the semantic index fresh for the current
+// entity set. It reuses existing rows when the text hash still matches and only
+// embeds missing or stale entities.
+func (s *Store) EnsureSemanticIndexWithOptions(ctx context.Context, opts SemanticIndexOptions) (SemanticIndexStats, error) {
+	entities, err := s.AllEntities()
+	if err != nil {
+		return SemanticIndexStats{}, fmt.Errorf("load semantic entities: %w", err)
+	}
+	indexed, err := s.semanticIndexedRows()
+	if err != nil {
+		return SemanticIndexStats{}, err
+	}
+
+	stats := SemanticIndexStats{Total: len(entities)}
+	currentIDs := make(map[string]bool, len(entities))
+	type candidate struct {
+		entity *Entity
+		text   string
+	}
+	var changed []candidate
+	for _, e := range entities {
+		text := s.semanticTextForEntity(e)
+		hash := semanticTextHash(text)
+		currentIDs[e.ID] = true
+		row, ok := indexed[e.ID]
+		if ok && row.model == SemanticEmbeddingModel && row.dims == semanticEmbeddingDims && row.hash == hash {
+			stats.Fresh++
+			continue
+		}
+		changed = append(changed, candidate{entity: e, text: text})
+	}
+
+	deleteIDs := make([]string, 0)
+	for id := range indexed {
+		if !currentIDs[id] {
+			deleteIDs = append(deleteIDs, id)
+		}
+	}
+
+	if len(changed) == 0 && len(deleteIDs) == 0 {
+		return stats, nil
+	}
+
+	rows := make([]semanticEmbeddingRow, 0, len(changed))
+	for _, item := range changed {
+		row, ok, err := semanticEmbeddingForText(ctx, item.entity.ID, item.text, opts.AllowDownload)
+		if err != nil {
+			return stats, err
+		}
+		if !ok {
+			deleteIDs = append(deleteIDs, item.entity.ID)
+			continue
+		}
+		rows = append(rows, row)
+	}
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return stats, fmt.Errorf("begin semantic index ensure: %w", err)
+	}
+	defer tx.Rollback()
+
+	for _, id := range deleteIDs {
+		res, err := tx.Exec(`DELETE FROM entity_embeddings WHERE entity_id = ?`, id)
+		if err != nil {
+			return stats, fmt.Errorf("delete stale semantic embedding %s: %w", id, err)
+		}
+		if n, _ := res.RowsAffected(); n > 0 {
+			stats.Deleted += int(n)
+		}
+	}
+
+	stmt, err := tx.Prepare(`
+		INSERT INTO entity_embeddings(entity_id, model, dims, text_hash, vector, updated_at)
+		VALUES (?, ?, ?, ?, ?, datetime('now'))
+		ON CONFLICT(entity_id) DO UPDATE SET
+			model = excluded.model,
+			dims = excluded.dims,
+			text_hash = excluded.text_hash,
+			vector = excluded.vector,
+			updated_at = excluded.updated_at`)
+	if err != nil {
+		return stats, fmt.Errorf("prepare semantic index ensure insert: %w", err)
+	}
+	defer stmt.Close()
+
+	for _, row := range rows {
+		if _, err := stmt.Exec(row.entityID, SemanticEmbeddingModel, semanticEmbeddingDims, row.hash, encodeFloat32Vector(row.vector)); err != nil {
+			return stats, fmt.Errorf("ensure semantic embedding %s: %w", row.entityID, err)
+		}
+		stats.Indexed++
+	}
+	if err := tx.Commit(); err != nil {
+		return stats, fmt.Errorf("commit semantic index ensure: %w", err)
+	}
+	return stats, nil
+}
+
 // SemanticIndexCount returns the number of usable local semantic vectors.
 func (s *Store) SemanticIndexCount() (int, error) {
 	var count int
@@ -116,20 +239,43 @@ func (s *Store) SemanticIndexCount() (int, error) {
 	return count, nil
 }
 
+func (s *Store) semanticIndexedRows() (map[string]semanticIndexedRow, error) {
+	rows, err := s.db.Query(`SELECT entity_id, model, dims, text_hash FROM entity_embeddings`)
+	if err != nil {
+		return nil, fmt.Errorf("load semantic index rows: %w", err)
+	}
+	defer rows.Close()
+
+	indexed := make(map[string]semanticIndexedRow)
+	for rows.Next() {
+		var entityID string
+		var row semanticIndexedRow
+		if err := rows.Scan(&entityID, &row.model, &row.dims, &row.hash); err != nil {
+			return nil, fmt.Errorf("scan semantic index row: %w", err)
+		}
+		indexed[entityID] = row
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("scan semantic index rows: %w", err)
+	}
+	return indexed, nil
+}
+
 // UpsertEntityEmbedding refreshes one entity's local semantic vector.
 func (s *Store) UpsertEntityEmbedding(entityID string) error {
 	return s.UpsertEntityEmbeddingWithOptions(context.Background(), entityID, SemanticIndexOptions{AllowDownload: true})
 }
 
 // UpsertEntityEmbeddingWithOptions refreshes one entity vector with explicit
-// download policy. Normal entity writes do not call this; semantic indexing is
-// opt-in so keyword search stays offline-safe.
+// download policy. Normal entity writes do not call this; search and index
+// commands refresh vectors on demand.
 func (s *Store) UpsertEntityEmbeddingWithOptions(ctx context.Context, entityID string, opts SemanticIndexOptions) error {
 	e, err := s.GetEntity(entityID)
 	if err != nil {
 		return err
 	}
-	row, ok, err := s.semanticEmbeddingForEntity(ctx, e, opts.AllowDownload)
+	text := s.semanticTextForEntity(e)
+	row, ok, err := semanticEmbeddingForText(ctx, e.ID, text, opts.AllowDownload)
 	if err != nil {
 		return err
 	}
@@ -154,21 +300,24 @@ func (s *Store) UpsertEntityEmbeddingWithOptions(ctx context.Context, entityID s
 	return nil
 }
 
-func (s *Store) semanticEmbeddingForEntity(ctx context.Context, e *Entity, allowDownload bool) (semanticEmbeddingRow, bool, error) {
-	text := s.semanticTextForEntity(e)
+func semanticEmbeddingForText(ctx context.Context, entityID, text string, allowDownload bool) (semanticEmbeddingRow, bool, error) {
 	vec, ok, err := embedSemanticText(ctx, text, allowDownload)
 	if err != nil {
-		return semanticEmbeddingRow{}, false, fmt.Errorf("embed semantic entity %s: %w", e.ID, err)
+		return semanticEmbeddingRow{}, false, fmt.Errorf("embed semantic entity %s: %w", entityID, err)
 	}
 	if !ok {
 		return semanticEmbeddingRow{}, false, nil
 	}
-	sum := sha256.Sum256([]byte(text))
 	return semanticEmbeddingRow{
-		entityID: e.ID,
-		hash:     fmt.Sprintf("%x", sum[:]),
+		entityID: entityID,
+		hash:     semanticTextHash(text),
 		vector:   vec,
 	}, true, nil
+}
+
+func semanticTextHash(text string) string {
+	sum := sha256.Sum256([]byte(text))
+	return fmt.Sprintf("%x", sum[:])
 }
 
 func (s *Store) semanticTextForEntity(e *Entity) string {

@@ -61,23 +61,23 @@ func (p *onnxMiniLMProvider) get(ctx context.Context, allowDownload bool) (*onnx
 		return nil, err
 	}
 	if err := initializeONNXRuntime(assets.RuntimeLibPath); err != nil {
-		return nil, fmt.Errorf("initialize onnxruntime: %w", err)
+		return nil, fmt.Errorf("%w: initialize onnxruntime: %w", ErrSemanticUnavailable, err)
 	}
 	tokenizer, err := loadWordPieceTokenizer(assets.VocabPath)
 	if err != nil {
-		return nil, fmt.Errorf("load tokenizer vocab: %w", err)
+		return nil, fmt.Errorf("%w: load tokenizer vocab: %w", ErrSemanticUnavailable, err)
 	}
 	inputInfos, outputInfos, err := ort.GetInputOutputInfo(assets.ModelPath)
 	if err != nil {
-		return nil, fmt.Errorf("inspect MiniLM ONNX model: %w", err)
+		return nil, fmt.Errorf("%w: inspect MiniLM ONNX model: %w", ErrSemanticUnavailable, err)
 	}
 	inputs, err := selectMiniLMInputs(inputInfos)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: select MiniLM inputs: %w", ErrSemanticUnavailable, err)
 	}
 	outputName, err := selectMiniLMOutput(outputInfos)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: select MiniLM output: %w", ErrSemanticUnavailable, err)
 	}
 	inputNames := make([]string, len(inputs))
 	for i, input := range inputs {
@@ -85,7 +85,7 @@ func (p *onnxMiniLMProvider) get(ctx context.Context, allowDownload bool) (*onnx
 	}
 	session, err := ort.NewDynamicAdvancedSession(assets.ModelPath, inputNames, []string{outputName}, nil)
 	if err != nil {
-		return nil, fmt.Errorf("load MiniLM ONNX model: %w", err)
+		return nil, fmt.Errorf("%w: load MiniLM ONNX model: %w", ErrSemanticUnavailable, err)
 	}
 	p.embedder = &onnxMiniLMEmbedder{
 		session:   session,

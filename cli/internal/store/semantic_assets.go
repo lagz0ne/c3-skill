@@ -93,7 +93,7 @@ func ensureSemanticAssets(ctx context.Context, allowDownload bool) (semanticAsse
 		return semanticAssets{}, ErrSemanticUnavailable
 	}
 	if err := downloadRuntimeLib(ctx, asset, runtimeDir, assets.RuntimeLibPath); err != nil {
-		return semanticAssets{}, err
+		return semanticAssets{}, fmt.Errorf("%w: download onnxruntime: %w", ErrSemanticUnavailable, err)
 	}
 	return assets, nil
 }
@@ -178,16 +178,16 @@ func ensureReleaseFile(ctx context.Context, path, assetName string, allowDownloa
 	}
 	want, err := downloadAssetChecksum(ctx, assetName)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: download checksum for %s: %w", ErrSemanticUnavailable, assetName, err)
 	}
 	tmp := path + ".tmp"
 	if err := downloadURL(ctx, releaseAssetURL(assetName), tmp); err != nil {
 		_ = os.Remove(tmp)
-		return fmt.Errorf("download semantic asset %s: %w\nhint: connect once to GitHub Releases or use the fat C3 build for offline semantic search", assetName, err)
+		return fmt.Errorf("%w: download semantic asset %s: %w\nhint: connect once to GitHub Releases or use the fat C3 build for offline semantic search", ErrSemanticUnavailable, assetName, err)
 	}
 	if err := verifyFileSHA256(tmp, want); err != nil {
 		_ = os.Remove(tmp)
-		return fmt.Errorf("verify semantic asset %s: %w", assetName, err)
+		return fmt.Errorf("%w: verify semantic asset %s: %w", ErrSemanticUnavailable, assetName, err)
 	}
 	return os.Rename(tmp, path)
 }

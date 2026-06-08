@@ -395,6 +395,8 @@ func TestBDD_ReadOnlyLookupSkipsCanonicalPreverifyWhenCacheExists(t *testing.T) 
 }
 
 func TestBDD_RunSearchHybridJSONDispatch(t *testing.T) {
+	t.Setenv("C3_SEMANTIC_CACHE_DIR", t.TempDir())
+	t.Setenv("C3_SEMANTIC_OFFLINE", "1")
 	c3Dir := setupRichC3DB(t)
 	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
 	if err != nil {
@@ -405,7 +407,7 @@ func TestBDD_RunSearchHybridJSONDispatch(t *testing.T) {
 
 	var stdout, stderr bytes.Buffer
 	err = runWithIO(
-		[]string{"--c3-dir", c3Dir, "search", "pool wait p95 latency", "--hybrid", "--json", "--limit", "3"},
+		[]string{"--c3-dir", c3Dir, "search", "pool wait p95 latency", "--json", "--limit", "3"},
 		strings.NewReader(""),
 		true,
 		&stdout,

@@ -289,29 +289,29 @@ Examples:
 	{
 		Name:     "search",
 		Args:     "<query>",
-		OneLiner: "Search content with optional graph context",
+		OneLiner: "Search content with semantic, keyword, and graph context",
 		Help: `Usage: c3x search <query> [--hybrid] [--semantic] [--no-semantic] [--type <type>] [--limit N] [--json]
 
-Search entity metadata and indexed markdown content. With --hybrid, results are
-decorated with graph relationships, governing refs/rules, and code-map paths so
-agents can inspect content plus its topology.
+Search entity metadata and indexed markdown content. By default, results fuse
+local semantic similarity, keyword/BM25 matches, and graph relationships, then
+decorate hits with governing refs/rules and code-map paths.
 
-If a local semantic index and ONNX cache already exist, search fuses semantic
-similarity into the ranked results. Use --semantic to download missing assets
-and build the index on first use.
+Search auto-builds or refreshes the local semantic index on first use and reuses
+fresh vectors on repeat runs. If the semantic model is unavailable, search falls
+back to keyword plus graph without failing.
 
 Options:
-  --hybrid        Include graph, ref/rule, and code-map context
-  --semantic      Build/use local all-MiniLM-L6-v2 ONNX embeddings
-  --no-semantic   Force keyword/graph ranking even if an index exists
+  --hybrid        Compatibility flag; graph context is already included by default
+  --semantic      Compatibility flag; semantic is already enabled by default
+  --no-semantic   Force keyword/graph ranking and skip semantic index refresh
   --type <type>   Restrict metadata search by entity type
   --limit N       Maximum number of results (default 20)
   --json          Structured output outside agent mode; agent mode stays TOON
 
 Examples:
-  c3x search "pool wait p95 latency" --hybrid
-  c3x search "owns a source path" --hybrid --semantic
-  c3x search traceparent --hybrid --json --limit 3`,
+  c3x search "pool wait p95 latency"
+  c3x search "owns a source path"
+  c3x search traceparent --json --limit 3`,
 	},
 	{
 		Name:     "index",

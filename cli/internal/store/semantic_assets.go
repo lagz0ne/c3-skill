@@ -114,7 +114,7 @@ func ensureSemanticAssets(ctx context.Context, allowDownload bool) (semanticAsse
 		return semanticAssets{}, ErrSemanticUnavailable
 	}
 	if err := downloadRuntimeLib(ctx, asset, runtimeDir, assets.RuntimeLibPath); err != nil {
-		return semanticAssets{}, err
+		return semanticAssets{}, fmt.Errorf("%w: download onnxruntime: %w", ErrSemanticUnavailable, err)
 	}
 	return assets, nil
 }
@@ -326,11 +326,11 @@ func ensureCanonicalSemanticFile(ctx context.Context, path string, source semant
 	tmp := path + ".tmp"
 	if err := downloadURL(ctx, semanticModelSourceURL(source), tmp); err != nil {
 		_ = os.Remove(tmp)
-		return fmt.Errorf("download semantic asset %s: %w\nhint: connect once to Hugging Face or use the fat C3 build for offline semantic search", source.assetName, err)
+		return fmt.Errorf("%w: download semantic asset %s: %w\nhint: connect once to Hugging Face or use the fat C3 build for offline semantic search", ErrSemanticUnavailable, source.assetName, err)
 	}
 	if err := verifyFileSHA256(tmp, source.sha256); err != nil {
 		_ = os.Remove(tmp)
-		return fmt.Errorf("verify semantic asset %s: %w", source.assetName, err)
+		return fmt.Errorf("%w: verify semantic asset %s: %w", ErrSemanticUnavailable, source.assetName, err)
 	}
 	return os.Rename(tmp, path)
 }

@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -42,6 +43,31 @@ func TestEnsureCanonicalSemanticFileDownloadsPinnedAssetWithChecksum(t *testing.
 	assertFileBytes(t, target, data)
 }
 
+func TestSemanticModelSourceURLUsesPinnedHuggingFaceRevision(t *testing.T) {
+	source := semanticModelSources()[0]
+	want := "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/" + semanticHFRevision + "/onnx/model.onnx"
+	if got := semanticModelSourceURL(source); got != want {
+		t.Fatalf("semanticModelSourceURL() = %q, want %q", got, want)
+	}
+}
+
+func TestEnsureCanonicalSemanticFileDownloadErrorIsSemanticUnavailable(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "down", http.StatusBadGateway)
+	}))
+	t.Cleanup(server.Close)
+
+	source := testSourceWithURL("model.onnx", "model.onnx", []byte("model bytes"), server.URL+"/model.onnx")
+	target := filepath.Join(t.TempDir(), "model.onnx")
+	err := ensureCanonicalSemanticFile(context.Background(), target, source, true)
+	if !errors.Is(err, ErrSemanticUnavailable) {
+		t.Fatalf("err = %v, want ErrSemanticUnavailable", err)
+	}
+	if !strings.Contains(err.Error(), "Hugging Face") {
+		t.Fatalf("err = %v, want Hugging Face hint", err)
+	}
+}
+
 func TestEnsureCanonicalSemanticFileRejectsChecksumMismatch(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("actual bytes"))
@@ -58,6 +84,9 @@ func TestEnsureCanonicalSemanticFileRejectsChecksumMismatch(t *testing.T) {
 	err := ensureCanonicalSemanticFile(context.Background(), target, source, true)
 	if err == nil {
 		t.Fatal("expected checksum failure")
+	}
+	if !errors.Is(err, ErrSemanticUnavailable) {
+		t.Fatalf("err = %v, want ErrSemanticUnavailable", err)
 	}
 	if !strings.Contains(err.Error(), "sha256 mismatch") {
 		t.Fatalf("expected sha256 mismatch, got %v", err)

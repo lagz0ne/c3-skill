@@ -1,64 +1,78 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Cross-compile Go CLI for 4 targets and assemble into skills/c3/bin/
-#
-# Usage:
-#   ./scripts/build.sh           # Build all targets
-#   ./scripts/build.sh --version 6.0.0  # Set version string
-
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 CLI_DIR="$ROOT/cli"
-BIN_DIR="$ROOT/skills/c3/bin"
+DEFAULT_OUT_DIR="$ROOT/dist/c3x"
 
-# Parse args
 VERSION="dev"
+VARIANT="thin"
+OUT_DIR="$DEFAULT_OUT_DIR"
+TARGET_OS=""
+TARGET_ARCH=""
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --version) VERSION="$2"; shift 2 ;;
+    --variant) VARIANT="$2"; shift 2 ;;
+    --out-dir) OUT_DIR="$2"; shift 2 ;;
+    --os) TARGET_OS="$2"; shift 2 ;;
+    --arch) TARGET_ARCH="$2"; shift 2 ;;
     *) echo "Unknown arg: $1" >&2; exit 1 ;;
   esac
 done
 
-# Read version from skills VERSION file if not explicitly set
 if [ "$VERSION" = "dev" ] && [ -f "$ROOT/skills/c3/bin/VERSION" ]; then
-  VERSION=$(cat "$ROOT/skills/c3/bin/VERSION" | tr -d '[:space:]')
+  VERSION=$(tr -d '[:space:]' < "$ROOT/skills/c3/bin/VERSION")
 fi
 
-echo "Building c3x CLI v${VERSION}"
-echo "================================"
+if [ -z "$TARGET_OS" ]; then
+  TARGET_OS=$(go env GOOS)
+fi
+if [ -z "$TARGET_ARCH" ]; then
+  TARGET_ARCH=$(go env GOARCH)
+fi
 
-TARGETS=(
-  "linux:amd64"
-  "linux:arm64"
-  "darwin:amd64"
-  "darwin:arm64"
-)
+build_variant() {
+  local variant="$1"
+  local tags=""
+  local suffix=""
+  if [ "$variant" = "fat" ]; then
+    tags="-tags embedmodel"
+    suffix="-fat"
+  elif [ "$variant" != "thin" ]; then
+    echo "Unknown variant: $variant" >&2
+    exit 1
+  fi
 
-mkdir -p "$BIN_DIR"
-
-for target in "${TARGETS[@]}"; do
-  OS="${target%%:*}"
-  ARCH="${target##*:}"
-  OUTPUT="$BIN_DIR/c3x-${VERSION}-${OS}-${ARCH}"
-
-  echo "  Building ${OS}/${ARCH} -> c3x-${VERSION}-${OS}-${ARCH}"
-  CGO_ENABLED=0 GOOS="$OS" GOARCH="$ARCH" go build \
+  local output_dir="$OUT_DIR/$variant"
+  local output="$output_dir/c3x-${VERSION}-${TARGET_OS}-${TARGET_ARCH}${suffix}"
+  mkdir -p "$output_dir"
+  echo "Building $variant c3x v${VERSION} for ${TARGET_OS}/${TARGET_ARCH}"
+  GOOS="$TARGET_OS" GOARCH="$TARGET_ARCH" go build \
     -C "$CLI_DIR" \
+    $tags \
     -buildvcs=false \
     -ldflags="-s -w -X main.version=${VERSION}" \
-    -o "$OUTPUT" \
+    -o "$output" \
     .
-done
+  chmod +x "$output"
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$output" > "$output.sha256"
+  else
+    shasum -a 256 "$output" > "$output.sha256"
+  fi
+}
 
-# Write VERSION file so c3x.sh knows which binary to use
-echo "$VERSION" > "$BIN_DIR/VERSION"
+case "$VARIANT" in
+  thin) build_variant thin ;;
+  fat) build_variant fat ;;
+  both)
+    build_variant thin
+    build_variant fat
+    ;;
+  *) echo "Unknown variant: $VARIANT" >&2; exit 1 ;;
+esac
 
-chmod +x "$BIN_DIR"/c3x-*
-
-echo ""
-echo "Built binaries:"
-ls -lh "$BIN_DIR"/c3x-* 2>/dev/null
-echo ""
-echo "Done."
+echo "Built artifacts under $OUT_DIR"

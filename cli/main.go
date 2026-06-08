@@ -103,6 +103,10 @@ func runWithIO(argv []string, stdin io.Reader, stdinTerminal bool, w io.Writer, 
 		return runGit(opts, config.ProjectDir(c3Dir), c3Dir, w)
 	}
 
+	if opts.Command == "check" && !opts.Fix && len(opts.Rules) == 0 {
+		return cmd.RunVerify(cmd.VerifyOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: opts.Only}, w)
+	}
+
 	dbPath := filepath.Join(c3Dir, "c3.db")
 	hasDB := fileExists(dbPath)
 	hasCanonical := hasCanonicalDocs(c3Dir)
@@ -496,7 +500,11 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 			JSON:       opts.JSON,
 			Limit:      opts.Limit,
 			TypeFilter: opts.TypeFilter,
+			Semantic:   opts.Semantic,
+			NoSemantic: opts.NoSemantic,
 		}, w)
+	case "index":
+		err = cmd.RunSemanticIndex(cmd.SemanticIndexOptions{Store: s, JSON: opts.JSON}, w)
 	case "codemap":
 		err = cmd.RunCodemap(cmd.CodemapOptions{Store: s, JSON: opts.JSON}, w)
 	case "schema":

@@ -1,18 +1,18 @@
 ---
 id: c3-109
-c3-seal: 0ea670cc6e412384820f5ddbb04061d45b94641a234dcc3193c1f8e2748b264b
+c3-seal: c338a60df165c278942c16ca3dfafa53a9134b15927fe1ee7f9370613a14f3ec
 title: npm-cli-wrapper
 type: component
 category: foundation
 parent: c3-1
-goal: Provide the npm `@c3x/cli` shim that discovers an installed C3 binary and delegates commands without changing the caller's intended output mode.
+goal: Provide the npm `@c3x/cli` manager that downloads, verifies, caches, and execs the pinned thin C3 release binary without changing caller output mode.
 uses:
     - ref-cross-compiled-binary
 ---
 
 ## Goal
 
-Provide the npm `@c3x/cli` shim that discovers an installed C3 binary and delegates commands without changing the caller's intended output mode.
+Provide the npm `@c3x/cli` manager that downloads, verifies, caches, and execs the pinned thin C3 release binary without changing caller output mode.
 
 ## Parent Fit
 
@@ -25,25 +25,25 @@ Provide the npm `@c3x/cli` shim that discovers an installed C3 binary and delega
 
 ## Purpose
 
-Own the thin npm wrapper used by humans and scripts that want `npx @c3x/cli` or a global npm command. The component discovers candidate skill/plugin installs, chooses the highest semver with deterministic priority tie-breaks, and invokes that install's `c3x.sh`. It must not silently force agent output; agent mode belongs to the skill wrapper or explicit CLI flags.
+Own the thin npm manager used by humans and scripts that want `npx @c3x/cli` or a global npm command. The component resolves the supported OS/arch, pinned C3 version, GitHub Release asset names, versioned user cache, SHA256 checksums, semantic model/vocab prefetch, old-version garbage collection, and final exec into the cached Go binary. It does not parse or mutate C3 architecture docs; all document behavior remains inside the selected Go binary.
 
 ## Foundational Flow
 
 | Aspect | Detail | Reference |
 | --- | --- | --- |
-| Preconditions | At least one candidate install exposes skills/c3/bin/VERSION and skills/c3/bin/c3x.sh; otherwise the wrapper prints searched locations and exits non-zero. | c3-1 |
-| Inputs | Accepts npm CLI argv, wrapper flag --agent claude or --agent codex, current working directory, home directory, and installed skill/plugin version files. | c3-1 |
-| State / data | Reads version files only for discovery; package metadata and lockfile define the npm publication contract. | c3-1 |
-| Shared dependencies | Uses Node standard library for process execution and filesystem discovery; build output comes from tsdown. | c3-108 |
+| Preconditions | The npm package carries only JavaScript manager code and a pinned C3 binary version; release assets must exist for the requested platform/version. | ref-cross-compiled-binary |
+| Inputs | Accepts npm CLI argv, process platform/arch, current working directory, HOME, XDG_CACHE_HOME, C3X_VERSION, C3X_RELEASE_BASE_URL, and C3X_SKIP_MODEL_DOWNLOAD. | c3-1 |
+| State / data | Reads and writes only the versioned cache under $XDG_CACHE_HOME/c3x/<version> or ~/.cache/c3x/<version>, including binary, semantic model, vocab, and old-version pruning. | ref-cross-compiled-binary |
+| Shared dependencies | Uses Node core modules for download, hashing, filesystem writes, and process exec; delegates C3 document behavior to the cached Go binary. | c3-108 |
 
 ## Business Flow
 
 | Aspect | Detail | Reference |
 | --- | --- | --- |
-| Actor / caller | Human shell, npm script, or automation invokes c3x through npx @c3x/cli or a globally installed npm binary. | c3-1 |
-| Primary path | Parse wrapper-only flags, discover candidates from project, Claude, Codex, and marketplace paths, select highest semver, then delegate remaining args to c3x.sh. | c3-1 |
-| Alternate paths | --agent claude limits non-project candidates to Claude locations; --agent codex limits non-project candidates to Codex locations. | c3-1 |
-| Failure behavior | If no candidate exists or the child command fails, print actionable install/search information or propagate the child exit status. | c3-108 |
+| Actor / caller | Human or script invokes c3x through npm, npx, or a globally installed package. | c3-1 |
+| Primary path | Resolve platform and pinned version, ensure the thin binary and semantic assets exist in the versioned cache with valid SHA256 checksums, prune older versions, then exec the cached binary with original argv and cwd. | ref-cross-compiled-binary |
+| Failure path | Unsupported platforms, failed downloads, missing checksums, integrity mismatches, and exec failures exit non-zero with a clear hint to retry with network/cache repair or use the fat C3 build. | rule-dispatcher-error-hint |
+| Output mode | The manager does not force C3X_MODE; human/default output remains the Go binary default and agent output remains controlled by skill launchers or explicit caller environment. | rule-output-via-helpers |
 
 ## Governance
 

@@ -2,154 +2,139 @@ name: Build & Distribute
 
 on:
   push:
-    branches: [dev]
+    tags:
+      - 'v*'
+  workflow_dispatch:
 
 permissions:
   contents: write
-  pull-requests: write
+
+env:
+  MODEL_REVISION: 1110a243fdf4706b3f48f1d95db1a4f5529b4d41
 
 jobs:
-  distribute:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout dev
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
         with:
           go-version-file: cli/go.mod
           cache-dependency-path: cli/go.sum
-
-      - name: Run tests
-        working-directory: cli
-        run: go test ./...
-
-      - name: Cross-compile
-        run: bash scripts/build.sh
-
-      - name: Distribute to main via PR
-        id: distribute
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          BRANCH="ci/distribute-dev-to-main"
-
-          # Save built binaries
-          mkdir -p /tmp/c3x-bins
-          cp skills/c3/bin/c3x-*-*-* /tmp/c3x-bins/
-
-          # Reset build artifacts before checkout (merge will bring dev's versions)
-          git checkout -- skills/c3/bin/VERSION
-
-          # Start from main (not dev) to avoid merge conflicts with old binaries
-          git fetch origin main
-          git checkout -B "$BRANCH" origin/main
-
-          # Merge dev into the branch
-          git merge origin/dev --no-edit
-
-          # Remove ALL old binaries (including from prior versions), add only fresh ones
-          git ls-files 'skills/c3/bin/c3x-*' | xargs -r git rm -f 2>/dev/null || true
-          rm -f skills/c3/bin/c3x-*-*-*
-          cp /tmp/c3x-bins/* skills/c3/bin/
-          git add -f skills/c3/bin/c3x-*
-
-          if ! git diff --staged --quiet; then
-            git commit -m "build: update c3x binaries"
-          fi
-
-          # Force-push the distribute branch
-          git push origin "$BRANCH" --force
-
-          # Close any existing PR from this branch
-          EXISTING_PR=$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number')
-          if [ -n "$EXISTING_PR" ]; then
-            gh pr close "$EXISTING_PR" --delete-branch=false
-          fi
-
-          # Create and merge PR
-          PR_URL=$(gh pr create \
-            --base main \
-            --head "$BRANCH" \
-            --title "ci: distribute dev to main" \
-            --body "Automated merge of dev into main with built c3x binaries.")
-
-          gh pr merge "$PR_URL" --merge --delete-branch
-
-          # Read version for release step
-          CURRENT_VERSION=$(cat skills/c3/bin/VERSION | tr -d '[:space:]')
-          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-
-      - name: Check if release needed
-        id: release_check
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          VERSION=${{ steps.distribute.outputs.version }}
-          if gh release view "v$VERSION" >/dev/null 2>&1; then
-            echo "Release v$VERSION already exists, skipping"
-            echo "should_release=false" >> $GITHUB_OUTPUT
-          else
-            echo "New version: $VERSION"
-            echo "should_release=true" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Checkout main for release
-        if: steps.release_check.outputs.should_release == 'true'
-        uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          ref: main
-          fetch-depth: 0
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: packages/cli/package-lock.json
+      - name: Go tests
+        working-directory: cli
+        run: |
+          go build ./...
+          go build -tags embedmodel ./...
+          go test ./...
+      - name: npm manager tests
+        working-directory: packages/cli
+        run: |
+          npm ci
+          npm test
 
-      - name: Create GitHub Release
-        if: steps.release_check.outputs.should_release == 'true'
+  model-assets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download pinned MiniLM assets
+        run: |
+          mkdir -p dist/model
+          MODEL="c3x-semantic-model-all-MiniLM-L6-v2-${MODEL_REVISION}.onnx"
+          VOCAB="c3x-semantic-vocab-all-MiniLM-L6-v2-${MODEL_REVISION}.txt"
+          curl -fsSL "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/${MODEL_REVISION}/onnx/model.onnx" -o "dist/model/$MODEL"
+          curl -fsSL "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/${MODEL_REVISION}/vocab.txt" -o "dist/model/$VOCAB"
+          sha256sum "dist/model/$MODEL" > "dist/model/$MODEL.sha256"
+          sha256sum "dist/model/$VOCAB" > "dist/model/$VOCAB.sha256"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: semantic-assets
+          path: dist/model/*
+
+  build:
+    needs: [test, model-assets]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            os: linux
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            os: linux
+            arch: arm64
+          - runner: macos-13
+            os: darwin
+            arch: amd64
+          - runner: macos-14
+            os: darwin
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: cli/go.mod
+          cache-dependency-path: cli/go.sum
+      - uses: actions/download-artifact@v4
+        with:
+          name: semantic-assets
+          path: /tmp/c3x-model
+      - name: Build thin and fat binaries
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          MODEL="c3x-semantic-model-all-MiniLM-L6-v2-${MODEL_REVISION}.onnx"
+          VOCAB="c3x-semantic-vocab-all-MiniLM-L6-v2-${MODEL_REVISION}.txt"
+          cp "/tmp/c3x-model/$MODEL" cli/internal/store/semantic_model/model.onnx
+          cp "/tmp/c3x-model/$VOCAB" cli/internal/store/semantic_model/vocab.txt
+          bash scripts/build.sh --version "$VERSION" --variant both --os "${{ matrix.os }}" --arch "${{ matrix.arch }}" --out-dir dist/c3x
+      - uses: actions/upload-artifact@v4
+        with:
+          name: c3x-${{ matrix.os }}-${{ matrix.arch }}
+          path: dist/c3x/**/*
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build, model-assets]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist/artifacts
+      - name: Assemble release assets
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p dist/release
+          find dist/artifacts -type f -name 'c3x-*' -exec cp {} dist/release/ \;
+          find dist/artifacts/semantic-assets -type f -exec cp {} dist/release/ \;
+
+          rm -f skills/c3/bin/c3x-*
+          zip -r "dist/release/c3-skill-thin-v${VERSION}.zip" .claude-plugin/ skills/ -x "*.DS_Store"
+
+          for fat in dist/release/c3x-${VERSION}-*-*-fat; do
+            platform="$(basename "$fat" | sed -E "s/^c3x-${VERSION}-//; s/-fat$//")"
+            work="/tmp/c3-skill-fat-$platform"
+            rm -rf "$work"
+            mkdir -p "$work"
+            cp -R .claude-plugin skills "$work/"
+            rm -f "$work/skills/c3/bin/c3x-"*
+            cp "$fat" "$work/skills/c3/bin/"
+            (cd "$work" && zip -r "c3-skill-fat-${platform}-v${VERSION}.zip" .claude-plugin/ skills/ -x "*.DS_Store")
+            cp "$work/c3-skill-fat-${platform}-v${VERSION}.zip" dist/release/
+          done
+
+          (cd dist/release && sha256sum * > SHA256SUMS)
+      - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          VERSION=${{ steps.distribute.outputs.version }}
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          awk -v version="$VERSION" '
-            $0 ~ "^## \\[" version "\\]" { in_section=1; print; next }
-            in_section && $0 ~ "^## \\[" { exit }
-            in_section { print }
-          ' CHANGELOG.md > /tmp/changelog.md
-
-          if ! grep -q '[^[:space:]]' /tmp/changelog.md; then
-            if [ -z "$LAST_TAG" ]; then
-              COMMITS=$(git log --pretty=format:"- %s" --no-merges)
-            else
-              COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s" --no-merges)
-            fi
-
-            {
-              echo "## What's Changed"
-              echo ""
-              echo "$COMMITS"
-              echo ""
-            } > /tmp/changelog.md
+          VERSION="${GITHUB_REF_NAME#v}"
+          if ! gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release create "$GITHUB_REF_NAME" --title "C3 v${VERSION}" --notes "C3 v${VERSION}"
           fi
-
-          {
-            echo ""
-            echo "---"
-            echo ""
-            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG:-initial}...v${VERSION}"
-          } >> /tmp/changelog.md
-
-          # Package release asset
-          zip -r "/tmp/c3-skill-v${VERSION}.zip" \
-            .claude-plugin/ \
-            skills/ \
-            -x "*.DS_Store"
-
-          # Create release
-          gh release create "v${VERSION}" \
-            --title "C3 v${VERSION}" \
-            --notes-file /tmp/changelog.md \
-            "/tmp/c3-skill-v${VERSION}.zip"
+          gh release upload "$GITHUB_REF_NAME" dist/release/* --clobber

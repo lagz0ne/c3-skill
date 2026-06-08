@@ -1,0 +1,7 @@
+[PAD]
+[UNK]
+[CLS]
+[SEP]
+[MASK]
+c3
+architecture

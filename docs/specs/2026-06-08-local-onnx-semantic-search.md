@@ -1,0 +1,7 @@
+# Local ONNX Semantic Search
+
+`c3x` uses `sentence-transformers/all-MiniLM-L6-v2` through the repository's ONNX export pinned at Hugging Face revision `1110a243fdf4706b3f48f1d95db1a4f5529b4d41`. Query and entity text are tokenized with the model `vocab.txt`, run through ONNX Runtime, mean-pooled over the attention mask, and L2-normalized into 384-dimensional vectors.
+
+Distribution choice: two variants. The default thin Go binary stays small and does not embed the roughly 90 MB model. It expects semantic assets in `C3_SEMANTIC_CACHE_DIR` or the versioned C3X cache under `$XDG_CACHE_HOME/c3x/<version>/semantic` / `~/.cache/c3x/<version>/semantic`, and it downloads missing model/vocab assets from the matching GitHub Release with SHA256 verification on first semantic use. The fat build uses `go build -tags embedmodel` and embeds the ONNX model/vocab before release packaging so offline plugin artifacts can run without model download. ONNX Runtime remains platform-native and cache-managed. The ONNX Go binding itself is CGO-backed; `CGO_ENABLED=0` builds compile with a semantic-unavailable stub, while CGO-enabled platform builds get real local embeddings. Plain keyword/graph search never downloads assets and remains usable with no model present.
+
+Search fusion is additive. FTS5/content/graph results remain the primary offline path; when the semantic index and cached ONNX runtime are present, semantic hits are combined with keyword/graph ranks using reciprocal-rank fusion.

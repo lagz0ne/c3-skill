@@ -1,53 +1,46 @@
 # @c3x/cli
 
-Thin CLI wrapper for [c3x](https://github.com/lagz0ne/c3-skill) — the architecture documentation toolkit.
+Thin npm manager for `c3x`, the C3 architecture documentation CLI.
 
-This package does **not** bundle the c3x binary. It discovers an already-installed binary from your Claude Code or Codex skill installations and delegates to it.
+The package does not bundle Go binaries or the ONNX model. On invocation it resolves the pinned C3 version, downloads release assets from GitHub Releases, verifies SHA256 checksums, caches them, and execs the cached Go binary.
 
 ## Install
 
 ```bash
-# Prerequisites: install the c3 skill in Claude Code or Codex
-claude plugin install lagz0ne/c3-skill
-
-# Then use c3x directly
-npx @c3x/cli list
-# or install globally
 npm install -g @c3x/cli
 c3x list
 ```
 
-## How it works
+`npx @c3x/cli list` works the same way.
 
-`@c3x/cli` searches for the c3x Go binary across agent skill installation paths, picks the highest version, and delegates all commands to it. Your working directory is preserved — `.c3/` discovery works from wherever you run it.
+## Cache
 
-### Resolution order
+Assets are cached under:
 
-| Priority | Location |
-|----------|----------|
-| 1 | `<project>/skills/c3/bin/` (walks up from cwd, stops at `.git`) |
-| 2 | `~/.claude/skills/c3/bin/` |
-| 3 | `~/.codex/skills/c3/bin/` |
-| 4 | `~/.claude/plugins/marketplaces/*/skills/c3/bin/` |
-
-All paths are checked. Highest semver wins. On tie, earlier priority wins.
-
-### Agent filtering
-
-```bash
-c3x --agent claude list    # only search Claude paths (+ project)
-c3x --agent codex list     # only search Codex paths (+ project)
-c3x list                   # search all (default)
+```text
+$XDG_CACHE_HOME/c3x/<version>/
+~/.cache/c3x/<version>/
 ```
 
-## Human vs agent output
+The manager downloads:
 
-| Caller | Output |
-|--------|--------|
-| Human via `@c3x/cli` | Text (default) |
-| Agent via `/c3` skill | Agent format through the local skill wrapper |
+- `c3x-<version>-<os>-<arch>`
+- `c3x-semantic-model-all-MiniLM-L6-v2-<revision>.onnx`
+- `c3x-semantic-vocab-all-MiniLM-L6-v2-<revision>.txt`
+- matching `.sha256` files
 
-Explicit `--json` or `--compact` flags override either default.
+Old version directories are removed after the pinned version is prepared.
+
+## Environment
+
+| Variable | Use |
+| --- | --- |
+| `C3X_VERSION` | Override the pinned Go binary version. |
+| `C3X_RELEASE_BASE_URL` | Override the GitHub Release asset base URL. |
+| `XDG_CACHE_HOME` | Select the cache root. |
+| `C3X_SKIP_MODEL_DOWNLOAD` | Download only the Go binary; the Go CLI can fetch semantic assets later. |
+
+If the first download happens offline, use the fat C3 skill artifact or prefill the cache from a connected machine.
 
 ## License
 

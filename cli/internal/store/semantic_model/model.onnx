@@ -1,0 +1,2 @@
+c3x placeholder ONNX model for local embedmodel compilation.
+Release builds replace this file with the real all-MiniLM-L6-v2 ONNX model before `go build -tags embedmodel`.

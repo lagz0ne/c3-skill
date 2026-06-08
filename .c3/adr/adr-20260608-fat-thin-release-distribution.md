@@ -1,6 +1,6 @@
 ---
 id: adr-20260608-fat-thin-release-distribution
-c3-seal: 6cbf8c1602697a1d6d81bbe12c6b170b2ec4edd6e85b0e468df4db44ecbff841
+c3-seal: d125c9fc0ac68988bc5205e6b339dba769e1db9612d625be51a9152910033225
 title: fat-thin-release-distribution
 type: adr
 goal: '**Traced-TDD block.**'
@@ -47,10 +47,10 @@ flowchart TD
 | Test | Owns failure |
 | --- | --- |
 | go test ./... with default tags | thin binary compiles and keyword+graph works without model |
-| go test -tags embedmodel ./... or fat compile check | embedded model path compiles and loader uses embed before network |
-| semantic asset unit tests with local test server/file | download/cache/checksum behavior without real network |
+| go test -tags embedmodel ./internal/store | embedded model path materializes from embed before network |
+| semantic asset unit tests with local test server | download/cache/checksum behavior without real network |
 | package CLI unit tests with stub downloader | os/arch, cache path, version pin, checksum, GC, and exec target |
-| workflow diff inspection plus build commands | release assets are thin binaries, fat skill archive, model, checksums, npm excludes model |
+| workflow diff inspection plus build script smoke | release assets are thin binaries, fat skill archive, model, checksums, npm excludes model |
 
 Split C3 distribution into fat and thin variants so normal shipped artifacts do not include the ONNX model or four large Go binaries, while preserving an offline fat channel for air-gapped installs and keeping keyword plus graph search usable without semantic assets.
 
@@ -64,30 +64,30 @@ Use a Go build tag named `embedmodel` for the fat channel. Default builds are th
 
 ## Affected Topology
 
-| Entity | Type | Why affected | Governance review |
-| --- | --- | --- | --- |
-| c3-1 | container | Go CLI build tags, semantic asset loading, search behavior, and release build contract change inside this container. | Review Go CLI refs and runtime support components before implementation. |
-| c3-107 | component | Semantic model asset resolution and search indexing live in store internals. | Ensure asset tests own download/embed/cache errors. |
-| c3-108 | component | Runtime version/build metadata and CLI command behavior are part of runtime support. | Ensure errors use dispatcher hint patterns and output helpers. |
-| c3-109 | component | The npm wrapper changes from a shim to a bootstrapping manager. | Ensure resolver/cache unit tests own manager errors. |
-| c3-2 | container | Skill distribution changes from committed platform binaries to thin launcher plus fat artifact. | Review cross-compiled binary distribution ref and skill launcher behavior. |
-| c3-201 | component | skills/c3/bin/c3x.sh must select thin or fat/local paths. | Smoke launcher behavior and document env selection. |
+| Entity | Type | Why affected | Evidence | Governance review |
+| --- | --- | --- | --- | --- |
+| c3-1 | container | Go CLI build tags, semantic asset loading, search behavior, and release build contract change inside this container. | c3-1#n1450@v1:sha256:1f10b60594a91ba79c9f39e43539257e287197fb4d527506c35b42a09cf7bb95 "Compile to a self-contained binary for all supported platforms" | Review Go CLI refs and runtime support components before implementation. |
+| c3-107 | component | Semantic model asset resolution and search indexing live in store internals. | c3-107#n1747@v1:sha256:b4745317e94e8953c629e7c21068db0444d6b010b45ee305639f581f6047c9ef "Provide persistent entity, relationship, changelog, codemap, hash, node, and version storage operations for the CLI." | Ensure asset tests own download/embed/cache errors. |
+| c3-108 | component | Runtime version/build metadata and CLI command behavior are part of runtime support. | c3-108#n1791@v1:sha256:ae80704ae7172ccccc82f6ba7b67f4fe434e41a8e3571e164a7b2165e4e4f06b "Provide CLI bootstrap, option parsing, output shaping, config resolution, and human/agent presentation helpers." | Ensure errors use dispatcher hint patterns and output helpers. |
+| c3-109 | component | The npm wrapper changes from a shim to a bootstrapping manager. | c3-109#n5432@v5:sha256:0a83b9a8acb0b670c3a4deeb6a99f64cedb3ac13ee92ee737c18cc0f4f3fc385 "It does not parse or mutate C3 architecture docs" | Ensure resolver/cache unit tests own manager errors. |
+| c3-2 | container | Skill distribution changes from committed platform binaries to thin launcher plus fat artifact. | c3-2#n2427@v1:sha256:859ab1aa2a8e03cd63cea0fc2c735b4e29551d6f18aeb59ecb1729f0e440d7ea "Call c3x commands for enforcement, schemas, help, hints, repair steps, and verification." | Review cross-compiled binary distribution ref and skill launcher behavior. |
+| c3-201 | component | skills/c3/bin/c3x.sh must select thin or fat/local paths. | c3-201#n2447@v1:sha256:d5b50d2fbc74f525d0aacfaabe555f4f4e1070069201e113fd469be7c3c14eb0 "Classify user intent into a supported C3 operation and dispatch to the matching workflow component." | Smoke launcher behavior and document env selection. |
 
 ## Compliance Refs
 
-| Ref | Why required | Action |
-| --- | --- | --- |
-| ref-cross-compiled-binary | Governs platform-specific CLI binary packaging and wrapper resolution. | update-ref |
-| ref-embedded-templates | Build-tag embedding must stay scoped to semantic model assets, not doc templates. | review |
-| ref-frontmatter-docs | ADR and C3 docs remain canonical markdown with frontmatter/seals managed by c3x. | comply |
+| Ref | Why required | Evidence | Action |
+| --- | --- | --- | --- |
+| ref-cross-compiled-binary | Governs platform-specific CLI binary packaging and wrapper resolution. | ref-cross-compiled-binary#n3116@v2:sha256:90bdc1dce31722c7d28535fa7aaf8b4ae1ea7ebb6955aaa1c7a44d15305b9e1c "Standardize how C3 distributes platform-specific Go executables and semantic model assets without forcing every install channel to carry every large binary blob" | update-ref |
+| ref-embedded-templates | Build-tag embedding must stay scoped to semantic model assets, not doc templates. | ref-embedded-templates#n2920@v1:sha256:db227a0598059041ce49f2746f25fc8501e6ae86b9c9f688f593279ecde35ff8 "Doc templates are bundled in the CLI binary so scaffolding works without external files at any install path." | review |
+| ref-frontmatter-docs | ADR and C3 docs remain canonical markdown with frontmatter/seals managed by c3x. | ref-frontmatter-docs#n2941@v1:sha256:27959709c9aa210a07dabf189c66e2aae5c1376d69c62343c583a0f8e2ee7d9a "tables and diagrams" | comply |
 
 ## Compliance Rules
 
-| Rule | Why required | Action |
-| --- | --- | --- |
-| rule-output-via-helpers | Any agent-facing command output introduced or touched must stay on shared helpers. | comply |
-| rule-dispatcher-error-hint | Download/cache/integrity failures must include clear next repair steps. | comply |
-| rule-wrap-error-cause | Go errors added around asset download/cache must wrap causes. | comply |
+| Rule | Why required | Evidence | Action |
+| --- | --- | --- | --- |
+| rule-output-via-helpers | Any agent-facing command output introduced or touched must stay on shared helpers. | rule-output-via-helpers#n2969@v1:sha256:4c8f10ca43e5ccb0607defedf34c5c672702e512f4fed9259f8a5fa19ef866e3 "All command results serialize through one output layer so agent mode always yields TOON and human/JSON formats stay consistent across commands." | comply |
+| rule-dispatcher-error-hint | Download/cache/integrity failures must include clear next repair steps. | rule-dispatcher-error-hint#n2949@v1:sha256:c88ba0daf18b558254516480e305ec64cacb996ef674a8540d5b99e103488cb4 "User-facing CLI errors from the top-level dispatcher guide the user to a next step, so a failure is actionable rather than a bare message." | comply |
+| rule-wrap-error-cause | Go errors added around asset download/cache must wrap causes. | rule-wrap-error-cause#n2989@v1:sha256:20a5bd788231e5b7b7403d387c6414f0d5b8b31303d720d83369abbe18c9ab26 "Every returned error in the Go CLI preserves its cause and context so failures stay traceable across the dispatcher, store, and command layers." | comply |
 
 ## Work Breakdown
 
@@ -96,9 +96,9 @@ Use a Go build tag named `embedmodel` for the fat channel. Default builds are th
 | Go semantic assets | Split embedded model behind embedmodel; default loader downloads/caches release model on semantic use only. | go build ./..., go build -tags embedmodel ./..., semantic asset tests. |
 | Search behavior | Keep keyword+graph search independent from model presence in both variants. | Search tests with empty model cache and default tag. |
 | npm manager | Replace JS shim with resolver/downloader/cache/checksum/GC/exec manager. | npm test and package build. |
-| Release workflows | Upload thin binaries, fat skill artifact, model, and checksums to GitHub Releases; npm publishes only manager. | Workflow file inspection and build commands. |
+| Release workflows | Upload thin binaries, fat skill artifact, model, and checksums to GitHub Releases; npm publishes only manager. | Workflow file inspection and build script smoke. |
 | Skill launcher | Default to thin managed cache; allow env-selected fat/local binary path. | Launcher smoke and documented env vars. |
-| C3 docs | Add this ADR and update governing distribution ref if needed. | c3x check --include-adr. |
+| C3 docs | Add this ADR and update governing distribution ref. | c3x check --include-adr. |
 
 ## Underlay C3 Changes
 

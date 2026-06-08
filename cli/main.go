@@ -103,6 +103,10 @@ func runWithIO(argv []string, stdin io.Reader, stdinTerminal bool, w io.Writer, 
 		return runGit(opts, config.ProjectDir(c3Dir), c3Dir, w)
 	}
 
+	if opts.Command == "check" && !opts.Fix && len(opts.Rules) == 0 {
+		return cmd.RunVerify(cmd.VerifyOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: opts.Only}, w)
+	}
+
 	dbPath := filepath.Join(c3Dir, "c3.db")
 	hasDB := fileExists(dbPath)
 	hasCanonical := hasCanonicalDocs(c3Dir)

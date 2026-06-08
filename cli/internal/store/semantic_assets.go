@@ -5,6 +5,9 @@ import (
 	"archive/zip"
 	"compress/gzip"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -19,10 +22,11 @@ const (
 	semanticHFRevision     = "1110a243fdf4706b3f48f1d95db1a4f5529b4d41"
 	semanticONNXRuntimeVer = "1.26.0"
 	semanticHTTPTimeout    = 15 * time.Minute
+	semanticReleaseRepo    = "https://github.com/lagz0ne/c3-design/releases/download"
 )
 
-const semanticModelURL = "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/" + semanticHFRevision + "/onnx/model.onnx"
-const semanticVocabURL = "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/" + semanticHFRevision + "/vocab.txt"
+const semanticModelAsset = "c3x-semantic-model-all-MiniLM-L6-v2-" + semanticHFRevision + ".onnx"
+const semanticVocabAsset = "c3x-semantic-vocab-all-MiniLM-L6-v2-" + semanticHFRevision + ".txt"
 
 type semanticAssets struct {
 	ModelPath      string
@@ -43,11 +47,19 @@ func SemanticCacheDir() (string, error) {
 	if dir := strings.TrimSpace(os.Getenv("C3_SEMANTIC_CACHE_DIR")); dir != "" {
 		return dir, nil
 	}
-	base, err := os.UserCacheDir()
-	if err != nil {
-		return "", fmt.Errorf("semantic cache dir: %w", err)
+	base := strings.TrimSpace(os.Getenv("XDG_CACHE_HOME"))
+	if base == "" {
+		var err error
+		base, err = os.UserCacheDir()
+		if err != nil {
+			return "", fmt.Errorf("semantic cache dir: %w", err)
+		}
 	}
-	return filepath.Join(base, "c3", "semantic"), nil
+	version := strings.TrimSpace(os.Getenv("C3X_VERSION"))
+	if version == "" {
+		version = "dev"
+	}
+	return filepath.Join(base, "c3x", version), nil
 }
 
 func ensureSemanticAssets(ctx context.Context, allowDownload bool) (semanticAssets, error) {
@@ -71,10 +83,7 @@ func ensureSemanticAssets(ctx context.Context, allowDownload bool) (semanticAsse
 		CacheDir:       cacheDir,
 	}
 
-	if err := ensureFile(ctx, assets.ModelPath, semanticModelURL, allowDownload); err != nil {
-		return semanticAssets{}, err
-	}
-	if err := ensureFile(ctx, assets.VocabPath, semanticVocabURL, allowDownload); err != nil {
+	if err := ensureSemanticModelFiles(ctx, assets, allowDownload); err != nil {
 		return semanticAssets{}, err
 	}
 	if fileExistsAndNonEmpty(assets.RuntimeLibPath) {
@@ -87,6 +96,18 @@ func ensureSemanticAssets(ctx context.Context, allowDownload bool) (semanticAsse
 		return semanticAssets{}, err
 	}
 	return assets, nil
+}
+
+func ensureSemanticModelFiles(ctx context.Context, assets semanticAssets, allowDownload bool) error {
+	if ok, err := materializeEmbeddedSemanticAssets(assets.ModelPath, assets.VocabPath); err != nil {
+		return err
+	} else if ok {
+		return nil
+	}
+	if err := ensureReleaseFile(ctx, assets.ModelPath, semanticModelAsset, allowDownload); err != nil {
+		return err
+	}
+	return ensureReleaseFile(ctx, assets.VocabPath, semanticVocabAsset, allowDownload)
 }
 
 func currentRuntimeAsset() (runtimeAsset, error) {
@@ -145,7 +166,7 @@ func currentRuntimeAsset() (runtimeAsset, error) {
 	}
 }
 
-func ensureFile(ctx context.Context, path, url string, allowDownload bool) error {
+func ensureReleaseFile(ctx context.Context, path, assetName string, allowDownload bool) error {
 	if fileExistsAndNonEmpty(path) {
 		return nil
 	}
@@ -155,12 +176,51 @@ func ensureFile(ctx context.Context, path, url string, allowDownload bool) error
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
-	tmp := path + ".tmp"
-	if err := downloadURL(ctx, url, tmp); err != nil {
-		_ = os.Remove(tmp)
+	want, err := downloadAssetChecksum(ctx, assetName)
+	if err != nil {
 		return err
 	}
+	tmp := path + ".tmp"
+	if err := downloadURL(ctx, releaseAssetURL(assetName), tmp); err != nil {
+		_ = os.Remove(tmp)
+		return fmt.Errorf("download semantic asset %s: %w\nhint: connect once to GitHub Releases or use the fat C3 build for offline semantic search", assetName, err)
+	}
+	if err := verifyFileSHA256(tmp, want); err != nil {
+		_ = os.Remove(tmp)
+		return fmt.Errorf("verify semantic asset %s: %w", assetName, err)
+	}
 	return os.Rename(tmp, path)
+}
+
+func releaseAssetURL(assetName string) string {
+	base := strings.TrimRight(strings.TrimSpace(os.Getenv("C3_SEMANTIC_RELEASE_BASE_URL")), "/")
+	if base == "" {
+		base = strings.TrimRight(strings.TrimSpace(os.Getenv("C3X_RELEASE_BASE_URL")), "/")
+	}
+	if base == "" {
+		version := strings.TrimSpace(os.Getenv("C3X_VERSION"))
+		if version == "" {
+			version = "dev"
+		}
+		base = semanticReleaseRepo + "/v" + version
+	}
+	return base + "/" + assetName
+}
+
+func downloadAssetChecksum(ctx context.Context, assetName string) (string, error) {
+	body, err := downloadBytes(ctx, releaseAssetURL(assetName+".sha256"))
+	if err != nil {
+		return "", fmt.Errorf("download checksum for %s: %w", assetName, err)
+	}
+	for _, field := range strings.Fields(string(body)) {
+		if len(field) != sha256.Size*2 {
+			continue
+		}
+		if _, err := hex.DecodeString(field); err == nil {
+			return strings.ToLower(field), nil
+		}
+	}
+	return "", fmt.Errorf("checksum for %s: missing sha256 digest", assetName)
 }
 
 func downloadRuntimeLib(ctx context.Context, asset runtimeAsset, dir, target string) error {
@@ -192,24 +252,15 @@ func downloadRuntimeLib(ctx context.Context, asset runtimeAsset, dir, target str
 }
 
 func downloadURL(ctx context.Context, url, target string) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	body, err := downloadBytes(ctx, url)
 	if err != nil {
 		return err
-	}
-	client := &http.Client{Timeout: semanticHTTPTimeout}
-	res, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("download %s: %w", url, err)
-	}
-	defer res.Body.Close()
-	if res.StatusCode < 200 || res.StatusCode >= 300 {
-		return fmt.Errorf("download %s: status %s", url, res.Status)
 	}
 	out, err := os.OpenFile(target, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
-	if _, err := io.Copy(out, res.Body); err != nil {
+	if _, err := out.Write(body); err != nil {
 		_ = out.Close()
 		return err
 	}
@@ -218,6 +269,40 @@ func downloadURL(ctx context.Context, url, target string) error {
 	}
 	if !fileExistsAndNonEmpty(target) {
 		return fmt.Errorf("download %s: empty file", url)
+	}
+	return nil
+}
+
+func downloadBytes(ctx context.Context, url string) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	client := &http.Client{Timeout: semanticHTTPTimeout}
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("download %s: %w", url, err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		return nil, fmt.Errorf("download %s: status %s", url, res.Status)
+	}
+	return io.ReadAll(res.Body)
+}
+
+func verifyFileSHA256(path, wantHex string) error {
+	f, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return err
+	}
+	got := hex.EncodeToString(h.Sum(nil))
+	if !strings.EqualFold(got, wantHex) {
+		return errors.New("sha256 mismatch")
 	}
 	return nil
 }

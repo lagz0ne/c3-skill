@@ -20,13 +20,28 @@ import (
 
 const (
 	semanticHFRevision     = "1110a243fdf4706b3f48f1d95db1a4f5529b4d41"
+	semanticHFRepo         = "sentence-transformers/all-MiniLM-L6-v2"
 	semanticONNXRuntimeVer = "1.26.0"
 	semanticHTTPTimeout    = 15 * time.Minute
-	semanticReleaseRepo    = "https://github.com/lagz0ne/c3-design/releases/download"
 )
 
 const semanticModelAsset = "c3x-semantic-model-all-MiniLM-L6-v2-" + semanticHFRevision + ".onnx"
 const semanticVocabAsset = "c3x-semantic-vocab-all-MiniLM-L6-v2-" + semanticHFRevision + ".txt"
+
+const (
+	semanticModelHFPath = "onnx/model.onnx"
+	semanticVocabHFPath = "vocab.txt"
+	semanticModelSHA256 = "6fd5d72fe4589f189f8ebc006442dbb529bb7ce38f8082112682524616046452"
+	semanticVocabSHA256 = "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3"
+)
+
+type semanticModelSource struct {
+	assetName string
+	cacheName string
+	hfPath    string
+	url       string
+	sha256    string
+}
 
 type semanticAssets struct {
 	ModelPath      string
@@ -40,6 +55,7 @@ type runtimeAsset struct {
 	Archive   string
 	MemberEnd string
 	LibName   string
+	Platform  string
 }
 
 // SemanticCacheDir returns the cache root used for downloaded semantic assets.
@@ -70,12 +86,12 @@ func ensureSemanticAssets(ctx context.Context, allowDownload bool) (semanticAsse
 	if err != nil {
 		return semanticAssets{}, err
 	}
-	modelDir := filepath.Join(cacheDir, "models", "all-MiniLM-L6-v2-"+semanticHFRevision)
-	runtimeDir := filepath.Join(cacheDir, "onnxruntime", semanticONNXRuntimeVer, runtime.GOOS+"-"+runtime.GOARCH)
+	modelDir := semanticModelCacheDir(cacheDir)
 	asset, err := currentRuntimeAsset()
 	if err != nil {
 		return semanticAssets{}, err
 	}
+	runtimeDir := semanticRuntimeCacheDir(cacheDir, asset)
 	assets := semanticAssets{
 		ModelPath:      filepath.Join(modelDir, "model.onnx"),
 		VocabPath:      filepath.Join(modelDir, "vocab.txt"),
@@ -87,6 +103,11 @@ func ensureSemanticAssets(ctx context.Context, allowDownload bool) (semanticAsse
 		return semanticAssets{}, err
 	}
 	if fileExistsAndNonEmpty(assets.RuntimeLibPath) {
+		return assets, nil
+	}
+	if ok, err := materializeEmbeddedSemanticRuntime(assets.RuntimeLibPath, asset.LibName); err != nil {
+		return semanticAssets{}, err
+	} else if ok {
 		return assets, nil
 	}
 	if !allowDownload {
@@ -104,70 +125,196 @@ func ensureSemanticModelFiles(ctx context.Context, assets semanticAssets, allowD
 	} else if ok {
 		return nil
 	}
-	if err := ensureReleaseFile(ctx, assets.ModelPath, semanticModelAsset, allowDownload); err != nil {
+	sources := semanticModelSources()
+	if err := ensureCanonicalSemanticFile(ctx, assets.ModelPath, sources[0], allowDownload); err != nil {
 		return err
 	}
-	return ensureReleaseFile(ctx, assets.VocabPath, semanticVocabAsset, allowDownload)
+	return ensureCanonicalSemanticFile(ctx, assets.VocabPath, sources[1], allowDownload)
 }
 
-func currentRuntimeAsset() (runtimeAsset, error) {
-	base := "https://github.com/microsoft/onnxruntime/releases/download/v" + semanticONNXRuntimeVer + "/"
-	switch runtime.GOOS + "/" + runtime.GOARCH {
-	case "linux/amd64":
-		name := "onnxruntime-linux-x64-" + semanticONNXRuntimeVer + ".tgz"
-		return runtimeAsset{
-			URL:       base + name,
-			Archive:   "tgz",
-			MemberEnd: "/lib/libonnxruntime.so." + semanticONNXRuntimeVer,
-			LibName:   "libonnxruntime.so." + semanticONNXRuntimeVer,
-		}, nil
-	case "linux/arm64":
-		name := "onnxruntime-linux-aarch64-" + semanticONNXRuntimeVer + ".tgz"
-		return runtimeAsset{
-			URL:       base + name,
-			Archive:   "tgz",
-			MemberEnd: "/lib/libonnxruntime.so." + semanticONNXRuntimeVer,
-			LibName:   "libonnxruntime.so." + semanticONNXRuntimeVer,
-		}, nil
-	case "darwin/amd64":
-		name := "onnxruntime-osx-x86_64-" + semanticONNXRuntimeVer + ".tgz"
-		return runtimeAsset{
-			URL:       base + name,
-			Archive:   "tgz",
-			MemberEnd: "/lib/libonnxruntime." + semanticONNXRuntimeVer + ".dylib",
-			LibName:   "libonnxruntime." + semanticONNXRuntimeVer + ".dylib",
-		}, nil
-	case "darwin/arm64":
-		name := "onnxruntime-osx-arm64-" + semanticONNXRuntimeVer + ".tgz"
-		return runtimeAsset{
-			URL:       base + name,
-			Archive:   "tgz",
-			MemberEnd: "/lib/libonnxruntime." + semanticONNXRuntimeVer + ".dylib",
-			LibName:   "libonnxruntime." + semanticONNXRuntimeVer + ".dylib",
-		}, nil
-	case "windows/amd64":
-		name := "onnxruntime-win-x64-" + semanticONNXRuntimeVer + ".zip"
-		return runtimeAsset{
-			URL:       base + name,
-			Archive:   "zip",
-			MemberEnd: "/lib/onnxruntime.dll",
-			LibName:   "onnxruntime.dll",
-		}, nil
-	case "windows/arm64":
-		name := "onnxruntime-win-arm64-" + semanticONNXRuntimeVer + ".zip"
-		return runtimeAsset{
-			URL:       base + name,
-			Archive:   "zip",
-			MemberEnd: "/lib/onnxruntime.dll",
-			LibName:   "onnxruntime.dll",
-		}, nil
-	default:
-		return runtimeAsset{}, fmt.Errorf("%w: unsupported platform %s/%s", ErrSemanticUnavailable, runtime.GOOS, runtime.GOARCH)
+// PrepareEmbeddedSemanticAssets writes verified canonical model and runtime
+// files into the go:embed directory used by fat release builds.
+func PrepareEmbeddedSemanticAssets(ctx context.Context, embedDir, targetOS, targetArch string) error {
+	if err := PrepareEmbeddedSemanticModelAssets(ctx, embedDir); err != nil {
+		return err
+	}
+	asset, err := runtimeAssetFor(targetOS, targetArch)
+	if err != nil {
+		return err
+	}
+	cacheDir, err := SemanticCacheDir()
+	if err != nil {
+		return err
+	}
+	return prepareEmbeddedSemanticRuntime(ctx, embedDir, asset, semanticModelCacheCandidateDirs(cacheDir))
+}
+
+// PrepareEmbeddedSemanticModelAssets writes the verified canonical model files
+// into the go:embed directory used by fat release builds.
+func PrepareEmbeddedSemanticModelAssets(ctx context.Context, embedDir string) error {
+	cacheDir, err := SemanticCacheDir()
+	if err != nil {
+		return err
+	}
+	return prepareEmbeddedSemanticModelAssets(ctx, embedDir, semanticModelCacheCandidateDirs(cacheDir), semanticModelSources())
+}
+
+// PrepareReleaseSemanticModelAssets writes verified model release assets and
+// matching .sha256 files for distribution packaging.
+func PrepareReleaseSemanticModelAssets(ctx context.Context, outDir string) error {
+	cacheDir, err := SemanticCacheDir()
+	if err != nil {
+		return err
+	}
+	return prepareReleaseSemanticModelAssets(ctx, outDir, semanticModelCacheCandidateDirs(cacheDir), semanticModelSources())
+}
+
+func semanticModelSources() []semanticModelSource {
+	return []semanticModelSource{
+		{
+			assetName: semanticModelAsset,
+			cacheName: "model.onnx",
+			hfPath:    semanticModelHFPath,
+			sha256:    semanticModelSHA256,
+		},
+		{
+			assetName: semanticVocabAsset,
+			cacheName: "vocab.txt",
+			hfPath:    semanticVocabHFPath,
+			sha256:    semanticVocabSHA256,
+		},
 	}
 }
 
-func ensureReleaseFile(ctx context.Context, path, assetName string, allowDownload bool) error {
-	if fileExistsAndNonEmpty(path) {
+func semanticModelCacheDir(cacheDir string) string {
+	return filepath.Join(cacheDir, "models", "all-MiniLM-L6-v2-"+semanticHFRevision)
+}
+
+func semanticRuntimeCacheDir(cacheDir string, asset runtimeAsset) string {
+	return filepath.Join(cacheDir, "onnxruntime", semanticONNXRuntimeVer, asset.Platform)
+}
+
+func semanticModelSourceURL(source semanticModelSource) string {
+	if source.url != "" {
+		return source.url
+	}
+	return "https://huggingface.co/" + semanticHFRepo + "/resolve/" + semanticHFRevision + "/" + source.hfPath
+}
+
+func semanticModelCacheCandidateDirs(primary string) []string {
+	dirs := []string{primary}
+	if legacy, err := legacySemanticCacheDir(); err == nil && legacy != "" && legacy != primary {
+		dirs = append(dirs, legacy)
+	}
+	return dirs
+}
+
+func legacySemanticCacheDir() (string, error) {
+	base, err := os.UserCacheDir()
+	if err != nil {
+		return "", fmt.Errorf("legacy semantic cache dir: %w", err)
+	}
+	return filepath.Join(base, "c3", "semantic"), nil
+}
+
+func prepareEmbeddedSemanticModelAssets(ctx context.Context, embedDir string, cacheDirs []string, sources []semanticModelSource) error {
+	if err := os.MkdirAll(embedDir, 0755); err != nil {
+		return err
+	}
+	for _, source := range sources {
+		cachePath, err := ensureCanonicalSemanticCachedFile(ctx, source, cacheDirs)
+		if err != nil {
+			return err
+		}
+		target := filepath.Join(embedDir, source.cacheName)
+		if err := copyVerifiedSemanticFile(cachePath, target, source.sha256); err != nil {
+			return fmt.Errorf("stage embedded semantic asset %s: %w", source.assetName, err)
+		}
+	}
+	return nil
+}
+
+func prepareReleaseSemanticModelAssets(ctx context.Context, outDir string, cacheDirs []string, sources []semanticModelSource) error {
+	if err := os.MkdirAll(outDir, 0755); err != nil {
+		return err
+	}
+	for _, source := range sources {
+		cachePath, err := ensureCanonicalSemanticCachedFile(ctx, source, cacheDirs)
+		if err != nil {
+			return err
+		}
+		target := filepath.Join(outDir, source.assetName)
+		if err := copyVerifiedSemanticFile(cachePath, target, source.sha256); err != nil {
+			return fmt.Errorf("write release semantic asset %s: %w", source.assetName, err)
+		}
+		sumPath := target + ".sha256"
+		if err := os.WriteFile(sumPath, []byte(source.sha256+"  "+source.assetName+"\n"), 0644); err != nil {
+			return fmt.Errorf("write checksum %s: %w", filepath.Base(sumPath), err)
+		}
+	}
+	return nil
+}
+
+func prepareEmbeddedSemanticRuntime(ctx context.Context, embedDir string, asset runtimeAsset, cacheDirs []string) error {
+	cachePath, err := ensureSemanticRuntimeCachedFile(ctx, asset, cacheDirs)
+	if err != nil {
+		return err
+	}
+	target := filepath.Join(embedDir, "runtime", asset.LibName)
+	if err := copySemanticFile(cachePath, target); err != nil {
+		return fmt.Errorf("stage embedded runtime asset %s: %w", asset.LibName, err)
+	}
+	return nil
+}
+
+func ensureSemanticRuntimeCachedFile(ctx context.Context, asset runtimeAsset, cacheDirs []string) (string, error) {
+	if len(cacheDirs) == 0 {
+		return "", errors.New("semantic cache candidates: empty")
+	}
+	primary := filepath.Join(semanticRuntimeCacheDir(cacheDirs[0], asset), asset.LibName)
+	for _, cacheDir := range cacheDirs {
+		candidate := filepath.Join(semanticRuntimeCacheDir(cacheDir, asset), asset.LibName)
+		if !fileExistsAndNonEmpty(candidate) {
+			continue
+		}
+		if candidate != primary {
+			if err := copySemanticFile(candidate, primary); err != nil {
+				return "", fmt.Errorf("copy runtime asset from legacy cache: %w", err)
+			}
+		}
+		return primary, nil
+	}
+	if err := downloadRuntimeLib(ctx, asset, filepath.Dir(primary), primary); err != nil {
+		return "", err
+	}
+	return primary, nil
+}
+
+func ensureCanonicalSemanticCachedFile(ctx context.Context, source semanticModelSource, cacheDirs []string) (string, error) {
+	if len(cacheDirs) == 0 {
+		return "", errors.New("semantic cache candidates: empty")
+	}
+	primary := filepath.Join(semanticModelCacheDir(cacheDirs[0]), source.cacheName)
+	for _, cacheDir := range cacheDirs {
+		candidate := filepath.Join(semanticModelCacheDir(cacheDir), source.cacheName)
+		if err := verifyFileSHA256(candidate, source.sha256); err != nil {
+			continue
+		}
+		if candidate != primary {
+			if err := copyVerifiedSemanticFile(candidate, primary, source.sha256); err != nil {
+				return "", fmt.Errorf("copy semantic asset from legacy cache: %w", err)
+			}
+		}
+		return primary, nil
+	}
+	if err := ensureCanonicalSemanticFile(ctx, primary, source, true); err != nil {
+		return "", err
+	}
+	return primary, nil
+}
+
+func ensureCanonicalSemanticFile(ctx context.Context, path string, source semanticModelSource, allowDownload bool) error {
+	if err := verifyFileSHA256(path, source.sha256); err == nil {
 		return nil
 	}
 	if !allowDownload {
@@ -176,51 +323,121 @@ func ensureReleaseFile(ctx context.Context, path, assetName string, allowDownloa
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
-	want, err := downloadAssetChecksum(ctx, assetName)
-	if err != nil {
-		return err
-	}
 	tmp := path + ".tmp"
-	if err := downloadURL(ctx, releaseAssetURL(assetName), tmp); err != nil {
+	if err := downloadURL(ctx, semanticModelSourceURL(source), tmp); err != nil {
 		_ = os.Remove(tmp)
-		return fmt.Errorf("download semantic asset %s: %w\nhint: connect once to GitHub Releases or use the fat C3 build for offline semantic search", assetName, err)
+		return fmt.Errorf("download semantic asset %s: %w\nhint: connect once to Hugging Face or use the fat C3 build for offline semantic search", source.assetName, err)
 	}
-	if err := verifyFileSHA256(tmp, want); err != nil {
+	if err := verifyFileSHA256(tmp, source.sha256); err != nil {
 		_ = os.Remove(tmp)
-		return fmt.Errorf("verify semantic asset %s: %w", assetName, err)
+		return fmt.Errorf("verify semantic asset %s: %w", source.assetName, err)
 	}
 	return os.Rename(tmp, path)
 }
 
-func releaseAssetURL(assetName string) string {
-	base := strings.TrimRight(strings.TrimSpace(os.Getenv("C3_SEMANTIC_RELEASE_BASE_URL")), "/")
-	if base == "" {
-		base = strings.TrimRight(strings.TrimSpace(os.Getenv("C3X_RELEASE_BASE_URL")), "/")
+func copyVerifiedSemanticFile(source, target, wantHex string) error {
+	if err := verifyFileSHA256(source, wantHex); err != nil {
+		return fmt.Errorf("verify source %s: %w", source, err)
 	}
-	if base == "" {
-		version := strings.TrimSpace(os.Getenv("C3X_VERSION"))
-		if version == "" {
-			version = "dev"
-		}
-		base = semanticReleaseRepo + "/v" + version
+	if err := copySemanticFile(source, target); err != nil {
+		return err
 	}
-	return base + "/" + assetName
+	if err := verifyFileSHA256(target, wantHex); err != nil {
+		return fmt.Errorf("verify copied %s: %w", target, err)
+	}
+	return nil
 }
 
-func downloadAssetChecksum(ctx context.Context, assetName string) (string, error) {
-	body, err := downloadBytes(ctx, releaseAssetURL(assetName+".sha256"))
+func copySemanticFile(source, target string) error {
+	in, err := os.Open(source)
 	if err != nil {
-		return "", fmt.Errorf("download checksum for %s: %w", assetName, err)
+		return err
 	}
-	for _, field := range strings.Fields(string(body)) {
-		if len(field) != sha256.Size*2 {
-			continue
-		}
-		if _, err := hex.DecodeString(field); err == nil {
-			return strings.ToLower(field), nil
-		}
+	defer in.Close()
+	if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
+		return err
 	}
-	return "", fmt.Errorf("checksum for %s: missing sha256 digest", assetName)
+	tmp := target + ".tmp"
+	out, err := os.OpenFile(tmp, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(out, in); err != nil {
+		_ = out.Close()
+		_ = os.Remove(tmp)
+		return err
+	}
+	if err := out.Close(); err != nil {
+		_ = os.Remove(tmp)
+		return err
+	}
+	return os.Rename(tmp, target)
+}
+
+func currentRuntimeAsset() (runtimeAsset, error) {
+	return runtimeAssetFor(runtime.GOOS, runtime.GOARCH)
+}
+
+func runtimeAssetFor(goos, goarch string) (runtimeAsset, error) {
+	base := "https://github.com/microsoft/onnxruntime/releases/download/v" + semanticONNXRuntimeVer + "/"
+	switch goos + "/" + goarch {
+	case "linux/amd64":
+		name := "onnxruntime-linux-x64-" + semanticONNXRuntimeVer + ".tgz"
+		return runtimeAsset{
+			URL:       base + name,
+			Archive:   "tgz",
+			MemberEnd: "/lib/libonnxruntime.so." + semanticONNXRuntimeVer,
+			LibName:   "libonnxruntime.so." + semanticONNXRuntimeVer,
+			Platform:  "linux-amd64",
+		}, nil
+	case "linux/arm64":
+		name := "onnxruntime-linux-aarch64-" + semanticONNXRuntimeVer + ".tgz"
+		return runtimeAsset{
+			URL:       base + name,
+			Archive:   "tgz",
+			MemberEnd: "/lib/libonnxruntime.so." + semanticONNXRuntimeVer,
+			LibName:   "libonnxruntime.so." + semanticONNXRuntimeVer,
+			Platform:  "linux-arm64",
+		}, nil
+	case "darwin/amd64":
+		name := "onnxruntime-osx-x86_64-" + semanticONNXRuntimeVer + ".tgz"
+		return runtimeAsset{
+			URL:       base + name,
+			Archive:   "tgz",
+			MemberEnd: "/lib/libonnxruntime." + semanticONNXRuntimeVer + ".dylib",
+			LibName:   "libonnxruntime." + semanticONNXRuntimeVer + ".dylib",
+			Platform:  "darwin-amd64",
+		}, nil
+	case "darwin/arm64":
+		name := "onnxruntime-osx-arm64-" + semanticONNXRuntimeVer + ".tgz"
+		return runtimeAsset{
+			URL:       base + name,
+			Archive:   "tgz",
+			MemberEnd: "/lib/libonnxruntime." + semanticONNXRuntimeVer + ".dylib",
+			LibName:   "libonnxruntime." + semanticONNXRuntimeVer + ".dylib",
+			Platform:  "darwin-arm64",
+		}, nil
+	case "windows/amd64":
+		name := "onnxruntime-win-x64-" + semanticONNXRuntimeVer + ".zip"
+		return runtimeAsset{
+			URL:       base + name,
+			Archive:   "zip",
+			MemberEnd: "/lib/onnxruntime.dll",
+			LibName:   "onnxruntime.dll",
+			Platform:  "windows-amd64",
+		}, nil
+	case "windows/arm64":
+		name := "onnxruntime-win-arm64-" + semanticONNXRuntimeVer + ".zip"
+		return runtimeAsset{
+			URL:       base + name,
+			Archive:   "zip",
+			MemberEnd: "/lib/onnxruntime.dll",
+			LibName:   "onnxruntime.dll",
+			Platform:  "windows-arm64",
+		}, nil
+	default:
+		return runtimeAsset{}, fmt.Errorf("%w: unsupported platform %s/%s", ErrSemanticUnavailable, goos, goarch)
+	}
 }
 
 func downloadRuntimeLib(ctx context.Context, asset runtimeAsset, dir, target string) error {

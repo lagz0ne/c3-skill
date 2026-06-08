@@ -320,7 +320,7 @@ Examples:
 
 Download the pinned all-MiniLM-L6-v2 ONNX model and matching onnxruntime shared
 library into the user cache if missing, then rebuild SQLite entity embeddings.
-The base CLI binary does not bundle these large/native assets.
+Fat builds already embed these assets; thin builds fetch them on first semantic use.
 
 Examples:
   c3x index

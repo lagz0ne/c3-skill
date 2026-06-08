@@ -9,9 +9,6 @@ on:
 permissions:
   contents: write
 
-env:
-  MODEL_REVISION: 1110a243fdf4706b3f48f1d95db1a4f5529b4d41
-
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -41,22 +38,21 @@ jobs:
   model-assets:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: cli/go.mod
+          cache-dependency-path: cli/go.sum
       - name: Download pinned MiniLM assets
-        run: |
-          mkdir -p dist/model
-          MODEL="c3x-semantic-model-all-MiniLM-L6-v2-${MODEL_REVISION}.onnx"
-          VOCAB="c3x-semantic-vocab-all-MiniLM-L6-v2-${MODEL_REVISION}.txt"
-          curl -fsSL "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/${MODEL_REVISION}/onnx/model.onnx" -o "dist/model/$MODEL"
-          curl -fsSL "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/${MODEL_REVISION}/vocab.txt" -o "dist/model/$VOCAB"
-          sha256sum "dist/model/$MODEL" > "dist/model/$MODEL.sha256"
-          sha256sum "dist/model/$VOCAB" > "dist/model/$VOCAB.sha256"
+        working-directory: cli
+        run: go run ./tools/semantic-assets --release-dir ../dist/model
       - uses: actions/upload-artifact@v4
         with:
           name: semantic-assets
           path: dist/model/*
 
   build:
-    needs: [test, model-assets]
+    needs: [test]
     strategy:
       fail-fast: false
       matrix:
@@ -80,17 +76,9 @@ jobs:
         with:
           go-version-file: cli/go.mod
           cache-dependency-path: cli/go.sum
-      - uses: actions/download-artifact@v4
-        with:
-          name: semantic-assets
-          path: /tmp/c3x-model
       - name: Build thin npm assets and fat skill binaries
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          MODEL="c3x-semantic-model-all-MiniLM-L6-v2-${MODEL_REVISION}.onnx"
-          VOCAB="c3x-semantic-vocab-all-MiniLM-L6-v2-${MODEL_REVISION}.txt"
-          cp "/tmp/c3x-model/$MODEL" cli/internal/store/semantic_model/model.onnx
-          cp "/tmp/c3x-model/$VOCAB" cli/internal/store/semantic_model/vocab.txt
           bash scripts/build.sh --version "$VERSION" --variant both --os "${{ matrix.os }}" --arch "${{ matrix.arch }}" --out-dir dist/c3x
       - uses: actions/upload-artifact@v4
         with:

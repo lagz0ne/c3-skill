@@ -14,6 +14,8 @@ c3-106:
   - cli/internal/content/**
 c3-107:
   - cli/internal/store/**
+  - cli/tools/semantic-assets/**
+  - docs/specs/2026-06-08-local-onnx-semantic-search.md
 c3-108:
   - cli/cmd/cascade_hints.go
   - cli/cmd/cascade_hints_test.go

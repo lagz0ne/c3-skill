@@ -3,6 +3,8 @@ package cmd
 import (
 	"os"
 	"path/filepath"
+	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/lagz0ne/c3-design/cli/internal/schema"
@@ -54,6 +56,48 @@ func TestMaterializeDefinitions_WriteIfAbsentAndRoundTrips(t *testing.T) {
 	}
 	if canvas.ID != "ref" || len(canvas.Sections) == 0 {
 		t.Errorf("round-tripped canvas wrong: id=%q sections=%d", canvas.ID, len(canvas.Sections))
+	}
+}
+
+func TestMaterializeDefinitions_WritesAllBuiltIns(t *testing.T) {
+	dir := t.TempDir()
+	defs, err := schema.AllDefinitions("")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	written, err := MaterializeDefinitions(dir, defs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	slices.Sort(written)
+	want := schema.BuiltInDefinitionIDs()
+	if !slices.Equal(written, want) {
+		t.Fatalf("written = %v; want all built-ins %v", written, want)
+	}
+
+	for _, id := range want {
+		data, err := os.ReadFile(filepath.Join(dir, schema.CanvasesDir, id+".md"))
+		if err != nil {
+			t.Fatalf("read materialized %s: %v", id, err)
+		}
+		got, err := schema.ParseCanvasDocument(filepath.ToSlash(filepath.Join(schema.CanvasesDir, id+".md")), string(data))
+		if err != nil {
+			t.Fatalf("parse materialized %s: %v", id, err)
+		}
+		got.Source = "built-in"
+		embedded, ok := schema.DefinitionFor(id)
+		if !ok {
+			t.Fatalf("DefinitionFor(%q): not found", id)
+		}
+		if !reflect.DeepEqual(got, embedded) {
+			t.Errorf("materialized %s does not round-trip to embedded definition", id)
+		}
+	}
+
+	adr, _ := schema.DefinitionFor("adr")
+	if len(adr.Reject.Bullets) == 0 || adr.Reject.Workorder == "" {
+		t.Fatal("materialized built-ins must preserve ADR rejection contract")
 	}
 }
 

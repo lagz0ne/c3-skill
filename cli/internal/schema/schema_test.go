@@ -2,15 +2,15 @@ package schema
 
 import "testing"
 
-func TestRegistry_HasAllTypes(t *testing.T) {
+func TestDefinitionFor_HasAllTypes(t *testing.T) {
 	for _, typ := range []string{"component", "container", "context", "ref", "rule", "adr"} {
 		if ForType(typ) == nil {
-			t.Errorf("Registry missing type %q", typ)
+			t.Errorf("DefinitionFor missing type %q", typ)
 		}
 	}
 }
 
-func TestRegistry_UnknownType(t *testing.T) {
+func TestDefinitionFor_UnknownType(t *testing.T) {
 	if ForType("bogus") != nil {
 		t.Error("expected nil for unknown type")
 	}
@@ -63,7 +63,7 @@ func TestComponentSchemaHasGovernanceAndNoUpCap(t *testing.T) {
 	}
 }
 
-func TestRegistry_ComponentHasPurpose(t *testing.T) {
+func TestDefinitionFor_ComponentHasPurpose(t *testing.T) {
 	sections := ForType("component")
 	for _, s := range sections {
 		if s.Purpose == "" {

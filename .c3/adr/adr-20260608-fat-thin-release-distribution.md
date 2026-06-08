@@ -1,6 +1,6 @@
 ---
 id: adr-20260608-fat-thin-release-distribution
-c3-seal: d125c9fc0ac68988bc5205e6b339dba769e1db9612d625be51a9152910033225
+c3-seal: 236c6bab08091320a111f215638825e8b671a6b7e5eddd3ff09709105e0e1a69
 title: fat-thin-release-distribution
 type: adr
 goal: '**Traced-TDD block.**'
@@ -62,6 +62,8 @@ Phase C added local ONNX semantic search using all-MiniLM-L6-v2. Embedding that 
 
 Use a Go build tag named `embedmodel` for the fat channel. Default builds are thin: they do not embed the ONNX model, they use keyword and graph search offline, and they fetch the model into a versioned cache only when semantic search first needs it. Fat builds use `go build -tags embedmodel` and load the embedded model before any downloader. The npm package becomes the normal thin manager: it resolves platform and version, downloads the thin Go binary plus model from GitHub Release assets into the user cache, verifies checksums, prunes old versions, and execs the cached binary. The skill launcher supports thin manager mode by default and a fat/local mode for offline skill artifacts.
 
+Build contract: `scripts/build.sh` owns fat semantic asset staging. Before each fat build it invokes the repo semantic asset helper, which reuses a verified local cache or downloads the canonical pinned all-MiniLM-L6-v2 model/vocab plus target ONNX Runtime from the source constants in `cli/internal/store/semantic_assets.go`, verifies model/vocab SHA256, writes the real files into `cli/internal/store/semantic_model/` for `go:embed`, builds with `-tags embedmodel`, then restores the tracked stub files with git. CI must not pre-copy model files into the embed directory; the fat build path proves the no-cache download path itself.
+
 ## Affected Topology
 
 | Entity | Type | Why affected | Evidence | Governance review |
@@ -69,7 +71,7 @@ Use a Go build tag named `embedmodel` for the fat channel. Default builds are th
 | c3-1 | container | Go CLI build tags, semantic asset loading, search behavior, and release build contract change inside this container. | c3-1#n1450@v1:sha256:1f10b60594a91ba79c9f39e43539257e287197fb4d527506c35b42a09cf7bb95 "Compile to a self-contained binary for all supported platforms" | Review Go CLI refs and runtime support components before implementation. |
 | c3-107 | component | Semantic model asset resolution and search indexing live in store internals. | c3-107#n1747@v1:sha256:b4745317e94e8953c629e7c21068db0444d6b010b45ee305639f581f6047c9ef "Provide persistent entity, relationship, changelog, codemap, hash, node, and version storage operations for the CLI." | Ensure asset tests own download/embed/cache errors. |
 | c3-108 | component | Runtime version/build metadata and CLI command behavior are part of runtime support. | c3-108#n1791@v1:sha256:ae80704ae7172ccccc82f6ba7b67f4fe434e41a8e3571e164a7b2165e4e4f06b "Provide CLI bootstrap, option parsing, output shaping, config resolution, and human/agent presentation helpers." | Ensure errors use dispatcher hint patterns and output helpers. |
-| c3-109 | component | The npm wrapper changes from a shim to a bootstrapping manager. | c3-109#n5432@v5:sha256:0a83b9a8acb0b670c3a4deeb6a99f64cedb3ac13ee92ee737c18cc0f4f3fc385 "It does not parse or mutate C3 architecture docs" | Ensure resolver/cache unit tests own manager errors. |
+| c3-109 | component | The npm wrapper changes from a shim to a bootstrapping manager. | c3-109#n2041@v1:sha256:0a83b9a8acb0b670c3a4deeb6a99f64cedb3ac13ee92ee737c18cc0f4f3fc385 "It does not parse or mutate C3 architecture docs" | Ensure resolver/cache unit tests own manager errors. |
 | c3-2 | container | Skill distribution changes from committed platform binaries to thin launcher plus fat artifact. | c3-2#n2427@v1:sha256:859ab1aa2a8e03cd63cea0fc2c735b4e29551d6f18aeb59ecb1729f0e440d7ea "Call c3x commands for enforcement, schemas, help, hints, repair steps, and verification." | Review cross-compiled binary distribution ref and skill launcher behavior. |
 | c3-201 | component | skills/c3/bin/c3x.sh must select thin or fat/local paths. | c3-201#n2447@v1:sha256:d5b50d2fbc74f525d0aacfaabe555f4f4e1070069201e113fd469be7c3c14eb0 "Classify user intent into a supported C3 operation and dispatch to the matching workflow component." | Smoke launcher behavior and document env selection. |
 
@@ -77,7 +79,7 @@ Use a Go build tag named `embedmodel` for the fat channel. Default builds are th
 
 | Ref | Why required | Evidence | Action |
 | --- | --- | --- | --- |
-| ref-cross-compiled-binary | Governs platform-specific CLI binary packaging and wrapper resolution. | ref-cross-compiled-binary#n3116@v2:sha256:90bdc1dce31722c7d28535fa7aaf8b4ae1ea7ebb6955aaa1c7a44d15305b9e1c "Standardize how C3 distributes platform-specific Go executables and semantic model assets without forcing every install channel to carry every large binary blob" | update-ref |
+| ref-cross-compiled-binary | Governs platform-specific CLI binary packaging and wrapper resolution. | ref-cross-compiled-binary#n3730@v3:sha256:90bdc1dce31722c7d28535fa7aaf8b4ae1ea7ebb6955aaa1c7a44d15305b9e1c "Standardize how C3 distributes platform-specific Go executables and semantic model assets without forcing every install channel to carry every large binary blob" | update-ref |
 | ref-embedded-templates | Build-tag embedding must stay scoped to semantic model assets, not doc templates. | ref-embedded-templates#n2920@v1:sha256:db227a0598059041ce49f2746f25fc8501e6ae86b9c9f688f593279ecde35ff8 "Doc templates are bundled in the CLI binary so scaffolding works without external files at any install path." | review |
 | ref-frontmatter-docs | ADR and C3 docs remain canonical markdown with frontmatter/seals managed by c3x. | ref-frontmatter-docs#n2941@v1:sha256:27959709c9aa210a07dabf189c66e2aae5c1376d69c62343c583a0f8e2ee7d9a "tables and diagrams" | comply |
 

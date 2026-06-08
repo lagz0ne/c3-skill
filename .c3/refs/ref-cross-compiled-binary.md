@@ -1,7 +1,7 @@
 ---
 id: ref-cross-compiled-binary
 c3-version: 4
-c3-seal: f39d35dba48e2cd134924c88af62da72e79cd0023a481eb469ff2b443e08aa98
+c3-seal: 869995bfe49f6096aced6a10581bf15c81741389ae89151e19f8565288aef704
 title: Cross-Compiled Binary Distribution
 type: ref
 goal: Standardize how C3 distributes platform-specific Go executables and semantic model assets without forcing every install channel to carry every large binary blob.
@@ -26,6 +26,6 @@ REQUIRED pattern from `skills/c3/bin/c3x.sh`: the launcher reads `skills/c3/bin/
 
 REQUIRED pattern from `packages/cli/src/manager.ts`: npm is thin-only. It resolves Node `process.platform` and `process.arch` to the release binary name `c3x-<version>-<os>-<arch>`, uses `~/.cache/c3x/<version>/` or `$XDG_CACHE_HOME/c3x/<version>/`, verifies SHA256 before chmod/exec, downloads the ONNX model and vocab as release assets, and removes old version directories after preparing the pinned version.
 
-REQUIRED pattern from `scripts/build.sh`: the default build variant is fat. Thin builds use default tags for npm release assets; fat builds pass `-tags embedmodel` and write `-fat` suffixed artifacts plus `.sha256` files under `dist/c3x/<variant>/`.
+REQUIRED pattern from `scripts/build.sh`: the default build variant is fat. Thin builds use default tags and never stage semantic model files in `cli/internal/store/semantic_model/`. Fat builds first run the repo helper `go run ./tools/semantic-assets --embed-dir cli/internal/store/semantic_model --os <target-os> --arch <target-arch>` to reuse a verified local cache or download the canonical pinned all-MiniLM-L6-v2 model/vocab plus target ONNX Runtime from `cli/internal/store/semantic_assets.go`, verify model/vocab SHA256, stage the real files for `go:embed`, pass `-tags embedmodel`, write `-fat` suffixed artifacts plus `.sha256` files under `dist/c3x/fat/`, then restore the tracked stub files with git before exiting.
 
-REQUIRED release packaging pattern from `.github/workflows/distribute.yml`: tag releases upload thin binaries, model/vocab assets, their checksums, and `SHA256SUMS` for the npm manager. Per-platform default skill zips are assembled from fat build outputs, rename the embedded-model binary to `skills/c3/bin/c3x-<version>-<os>-<arch>` inside the zip, and do not publish a thin skill zip.
+REQUIRED release packaging pattern from `.github/workflows/distribute.yml`: tag releases upload thin binaries, model/vocab assets, their checksums, and `SHA256SUMS` for the npm manager. The model asset job uses the repo semantic asset helper instead of duplicating model URLs. The build job does not pre-copy model files into `cli/internal/store/semantic_model/`; `scripts/build.sh` owns fat staging and cleanup. Per-platform default skill zips are assembled from fat build outputs, rename the embedded-model binary to `skills/c3/bin/c3x-<version>-<os>-<arch>` inside the zip, and do not publish a thin skill zip.

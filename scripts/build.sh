@@ -11,6 +11,7 @@ VARIANT="fat"
 OUT_DIR="$DEFAULT_OUT_DIR"
 TARGET_OS=""
 TARGET_ARCH=""
+SEMANTIC_MODEL_BACKUP=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -50,6 +51,17 @@ build_variant() {
   local output="$output_dir/c3x-${VERSION}-${TARGET_OS}-${TARGET_ARCH}${suffix}"
   mkdir -p "$output_dir"
   echo "Building $variant c3x v${VERSION} for ${TARGET_OS}/${TARGET_ARCH}"
+
+  if [ "$variant" = "fat" ]; then
+    backup_semantic_model_stubs
+    if ! prepare_fat_semantic_model; then
+      restore_semantic_model_stubs
+      exit 1
+    fi
+  fi
+
+  local build_status=0
+  set +e
   GOOS="$TARGET_OS" GOARCH="$TARGET_ARCH" go build \
     -C "$CLI_DIR" \
     $tags \
@@ -57,12 +69,46 @@ build_variant() {
     -ldflags="-s -w -X main.version=${VERSION}" \
     -o "$output" \
     .
+  build_status=$?
+  set -e
+
+  if [ "$variant" = "fat" ]; then
+    restore_semantic_model_stubs
+  fi
+  if [ "$build_status" -ne 0 ]; then
+    exit "$build_status"
+  fi
+
   chmod +x "$output"
   if command -v sha256sum >/dev/null 2>&1; then
     sha256sum "$output" > "$output.sha256"
   else
     shasum -a 256 "$output" > "$output.sha256"
   fi
+}
+
+backup_semantic_model_stubs() {
+  SEMANTIC_MODEL_BACKUP="$(mktemp -d)"
+  cp -R "$CLI_DIR/internal/store/semantic_model/." "$SEMANTIC_MODEL_BACKUP/"
+}
+
+prepare_fat_semantic_model() {
+  echo "Preparing embedded semantic model assets"
+  C3X_VERSION="$VERSION" go \
+    -C "$CLI_DIR" \
+    run ./tools/semantic-assets \
+    --embed-dir "$CLI_DIR/internal/store/semantic_model" \
+    --os "$TARGET_OS" \
+    --arch "$TARGET_ARCH"
+}
+
+restore_semantic_model_stubs() {
+  if [ -n "$SEMANTIC_MODEL_BACKUP" ] && [ -d "$SEMANTIC_MODEL_BACKUP" ]; then
+    cp -R "$SEMANTIC_MODEL_BACKUP/." "$CLI_DIR/internal/store/semantic_model/"
+    rm -rf "$SEMANTIC_MODEL_BACKUP"
+    SEMANTIC_MODEL_BACKUP=""
+  fi
+  git -C "$ROOT" checkout -- cli/internal/store/semantic_model/
 }
 
 case "$VARIANT" in

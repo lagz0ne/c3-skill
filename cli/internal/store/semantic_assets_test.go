@@ -5,6 +5,7 @@ package store
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -30,40 +31,31 @@ func TestSemanticCacheDirUsesVersionedC3XCache(t *testing.T) {
 	}
 }
 
-func TestEnsureSemanticModelFilesDownloadsReleaseAssetsWithChecksums(t *testing.T) {
-	model := []byte("model bytes")
-	vocab := []byte("[PAD]\n[UNK]\n")
-	server := semanticAssetServer(t, map[string][]byte{
-		semanticModelAsset: model,
-		semanticVocabAsset: vocab,
-	})
-	t.Setenv("C3_SEMANTIC_RELEASE_BASE_URL", server.URL)
+func TestEnsureCanonicalSemanticFileDownloadsPinnedAssetWithChecksum(t *testing.T) {
+	data := []byte("model bytes")
+	source := testSemanticModelSource(t, "model.onnx", data)
 
-	dir := t.TempDir()
-	assets := semanticAssets{
-		ModelPath: filepath.Join(dir, "model.onnx"),
-		VocabPath: filepath.Join(dir, "vocab.txt"),
-	}
-	if err := ensureSemanticModelFiles(context.Background(), assets, true); err != nil {
+	target := filepath.Join(t.TempDir(), "model.onnx")
+	if err := ensureCanonicalSemanticFile(context.Background(), target, source, true); err != nil {
 		t.Fatal(err)
 	}
-	assertFileBytes(t, assets.ModelPath, model)
-	assertFileBytes(t, assets.VocabPath, vocab)
+	assertFileBytes(t, target, data)
 }
 
-func TestEnsureReleaseFileRejectsChecksumMismatch(t *testing.T) {
+func TestEnsureCanonicalSemanticFileRejectsChecksumMismatch(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasSuffix(r.URL.Path, ".sha256") {
-			fmt.Fprintf(w, "%064x  %s\n", 1, semanticModelAsset)
-			return
-		}
 		_, _ = w.Write([]byte("actual bytes"))
 	}))
 	t.Cleanup(server.Close)
-	t.Setenv("C3_SEMANTIC_RELEASE_BASE_URL", server.URL)
 
+	source := semanticModelSource{
+		assetName: "model.onnx",
+		cacheName: "model.onnx",
+		url:       server.URL + "/model.onnx",
+		sha256:    fmt.Sprintf("%064x", 1),
+	}
 	target := filepath.Join(t.TempDir(), "model.onnx")
-	err := ensureReleaseFile(context.Background(), target, semanticModelAsset, true)
+	err := ensureCanonicalSemanticFile(context.Background(), target, source, true)
 	if err == nil {
 		t.Fatal("expected checksum failure")
 	}
@@ -75,30 +67,114 @@ func TestEnsureReleaseFileRejectsChecksumMismatch(t *testing.T) {
 	}
 }
 
-func semanticAssetServer(t *testing.T, assets map[string][]byte) *httptest.Server {
+func TestPrepareEmbeddedSemanticModelAssetsUsesVerifiedLegacyCache(t *testing.T) {
+	model := []byte("model bytes")
+	vocab := []byte("[PAD]\n[UNK]\n")
+	sources := []semanticModelSource{
+		testSource("model-asset.onnx", "model.onnx", model),
+		testSource("vocab-asset.txt", "vocab.txt", vocab),
+	}
+
+	primary := t.TempDir()
+	legacy := t.TempDir()
+	legacyModelDir := semanticModelCacheDir(legacy)
+	if err := os.MkdirAll(legacyModelDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(legacyModelDir, "model.onnx"), model, 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(legacyModelDir, "vocab.txt"), vocab, 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	embedDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(embedDir, "model.onnx"), []byte("stub"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(embedDir, "vocab.txt"), []byte("stub"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := prepareEmbeddedSemanticModelAssets(context.Background(), embedDir, []string{primary, legacy}, sources); err != nil {
+		t.Fatal(err)
+	}
+	assertFileBytes(t, filepath.Join(embedDir, "model.onnx"), model)
+	assertFileBytes(t, filepath.Join(embedDir, "vocab.txt"), vocab)
+	assertFileBytes(t, filepath.Join(semanticModelCacheDir(primary), "model.onnx"), model)
+	assertFileBytes(t, filepath.Join(semanticModelCacheDir(primary), "vocab.txt"), vocab)
+}
+
+func TestPrepareReleaseSemanticModelAssetsWritesChecksums(t *testing.T) {
+	model := []byte("model bytes")
+	source := testSource("model-asset.onnx", "model.onnx", model)
+	cacheDir := t.TempDir()
+	modelDir := semanticModelCacheDir(cacheDir)
+	if err := os.MkdirAll(modelDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(modelDir, "model.onnx"), model, 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	outDir := t.TempDir()
+	if err := prepareReleaseSemanticModelAssets(context.Background(), outDir, []string{cacheDir}, []semanticModelSource{source}); err != nil {
+		t.Fatal(err)
+	}
+	assertFileBytes(t, filepath.Join(outDir, "model-asset.onnx"), model)
+	checksum, err := os.ReadFile(filepath.Join(outDir, "model-asset.onnx.sha256"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := source.sha256 + "  model-asset.onnx\n"
+	if string(checksum) != want {
+		t.Fatalf("checksum = %q, want %q", string(checksum), want)
+	}
+}
+
+func TestPrepareEmbeddedSemanticRuntimeUsesCache(t *testing.T) {
+	runtimeBytes := []byte("runtime bytes")
+	asset := runtimeAsset{
+		LibName:  "libonnxruntime.test",
+		Platform: "linux-test",
+	}
+	cacheDir := t.TempDir()
+	runtimeDir := semanticRuntimeCacheDir(cacheDir, asset)
+	if err := os.MkdirAll(runtimeDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(runtimeDir, asset.LibName), runtimeBytes, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	embedDir := t.TempDir()
+	if err := prepareEmbeddedSemanticRuntime(context.Background(), embedDir, asset, []string{cacheDir}); err != nil {
+		t.Fatal(err)
+	}
+	assertFileBytes(t, filepath.Join(embedDir, "runtime", asset.LibName), runtimeBytes)
+}
+
+func testSemanticModelSource(t *testing.T, name string, data []byte) semanticModelSource {
 	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		name := strings.TrimPrefix(r.URL.Path, "/")
-		if strings.HasSuffix(name, ".sha256") {
-			assetName := strings.TrimSuffix(name, ".sha256")
-			data, ok := assets[assetName]
-			if !ok {
-				http.NotFound(w, r)
-				return
-			}
-			sum := sha256.Sum256(data)
-			fmt.Fprintf(w, "%x  %s\n", sum, assetName)
-			return
-		}
-		data, ok := assets[name]
-		if !ok {
-			http.NotFound(w, r)
-			return
-		}
 		_, _ = w.Write(data)
 	}))
 	t.Cleanup(server.Close)
-	return server
+	return testSourceWithURL(name, name, data, server.URL+"/"+name)
+}
+
+func testSource(assetName, cacheName string, data []byte) semanticModelSource {
+	return testSourceWithURL(assetName, cacheName, data, "")
+}
+
+func testSourceWithURL(assetName, cacheName string, data []byte, url string) semanticModelSource {
+	sum := sha256.Sum256(data)
+	return semanticModelSource{
+		assetName: assetName,
+		cacheName: cacheName,
+		url:       url,
+		sha256:    hex.EncodeToString(sum[:]),
+	}
 }
 
 func assertFileBytes(t *testing.T, path string, want []byte) {

@@ -48,7 +48,7 @@ export function resolvePlatform(platform = nodePlatform(), arch = nodeArch()): P
   const os = platform === 'darwin' || platform === 'linux' ? platform : ''
   const mappedArch = arch === 'x64' ? 'amd64' : arch === 'arm64' ? 'arm64' : ''
   if (!os || !mappedArch) {
-    throw new Error(`error: unsupported platform ${platform}/${arch}\nhint: use a fat C3 build for offline or unsupported environments`)
+    throw new Error(`error: unsupported platform ${platform}/${arch}\nhint: @c3x/cli supports linux/darwin on x64/arm64`)
   }
   return { os, arch: mappedArch }
 }
@@ -129,7 +129,7 @@ export async function ensureCachedAsset(opts: EnsureAssetOptions): Promise<void>
   const data = Buffer.from(await opts.downloader.download(`${opts.baseURL}/${opts.assetName}`))
   const got = sha256Buffer(data)
   if (got !== expected) {
-    throw new Error(`error: checksum mismatch for ${opts.assetName}\nhint: clear ${dirname(opts.targetPath)} and retry, or use the fat C3 build for offline installs`)
+    throw new Error(`error: checksum mismatch for ${opts.assetName}\nhint: clear ${dirname(opts.targetPath)} and retry`)
   }
   writeFileSync(tmp, data)
   if (opts.executable) chmodSync(tmp, 0o755)
@@ -201,7 +201,7 @@ class HttpDownloadClient implements DownloadClient {
         res.on('data', (chunk) => chunks.push(Buffer.from(chunk)))
         res.on('end', () => resolve(Buffer.concat(chunks)))
       })
-      req.on('error', (err) => reject(new Error(`download ${url}: ${err.message}\nhint: connect once to GitHub Releases or install the fat C3 build for offline use`)))
+      req.on('error', (err) => reject(new Error(`download ${url}: ${err.message}\nhint: connect to GitHub Releases, or prefill the @c3x/cli cache`)))
       req.setTimeout(15 * 60 * 1000, () => {
         req.destroy(new Error(`download ${url}: timed out`))
       })

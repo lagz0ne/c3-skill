@@ -39,6 +39,8 @@ c3-109:
   - packages/cli/package-lock.json
   - packages/cli/package.json
   - packages/cli/src/cli.ts
+  - packages/cli/src/manager.ts
+  - packages/cli/test/manager.test.mjs
   - packages/cli/tsdown.config.ts
 c3-110:
   - cli/cmd/init.go

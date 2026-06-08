@@ -1,6 +1,6 @@
 ---
 id: c3-109
-c3-seal: c338a60df165c278942c16ca3dfafa53a9134b15927fe1ee7f9370613a14f3ec
+c3-seal: ba1c5f14632a8dc0a6ac78d46e02c271c69048d3ba78ed1dbfd92b688fd33b2c
 title: npm-cli-wrapper
 type: component
 category: foundation
@@ -40,42 +40,45 @@ Own the thin npm manager used by humans and scripts that want `npx @c3x/cli` or 
 
 | Aspect | Detail | Reference |
 | --- | --- | --- |
-| Actor / caller | Human or script invokes c3x through npm, npx, or a globally installed package. | c3-1 |
+| Actor / caller | Human or script invokes c3x through npm, npx, or a globally installed @c3x/cli package. | c3-1 |
 | Primary path | Resolve platform and pinned version, ensure the thin binary and semantic assets exist in the versioned cache with valid SHA256 checksums, prune older versions, then exec the cached binary with original argv and cwd. | ref-cross-compiled-binary |
-| Failure path | Unsupported platforms, failed downloads, missing checksums, integrity mismatches, and exec failures exit non-zero with a clear hint to retry with network/cache repair or use the fat C3 build. | rule-dispatcher-error-hint |
-| Output mode | The manager does not force C3X_MODE; human/default output remains the Go binary default and agent output remains controlled by skill launchers or explicit caller environment. | rule-output-via-helpers |
+| Failure path | Unsupported platforms, failed downloads, missing checksums, integrity mismatches, and exec failures exit non-zero with a clear hint to retry, repair the cache, or prefill the npm cache from a connected machine. | rule-dispatcher-error-hint |
+| Output mode | The manager does not force C3X_MODE or serialize C3 command output; human, JSON, and agent output remain owned by the selected Go binary and caller environment. | rule-output-via-helpers |
 
 ## Governance
 
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
-| c3-108 | policy | Output-mode ownership and human/agent presentation boundaries. | Runtime output policy beats wrapper convenience. | The npm shim strips inherited C3X_MODE; explicit c3x flags still pass through. |
-| adr-20260415-npm-cli-human-mode | adr | Decision to chart the npm shim and keep npm delegation human/default by default. | Release-specific decision for this wrapper change. | Added with the 9.1.0 release bump. |
-| c3-1 | policy | Packaging and release placement inside the CLI container. | Parent container scope beats local package convenience. | README and package metadata must match wrapper behavior before publish. |
-| ref-cross-compiled-binary | ref | The npm wrapper depends on the prebuilt-binary distribution: it resolves skills/c3/bin/VERSION and c3x.sh produced by cross-compilation, with no Go toolchain at runtime. | Cited ref contract beats uncited local prose. | Wrapper binary discovery must track the cross-compiled artifact layout per ref-cross-compiled-binary. |
+| ref-cross-compiled-binary | ref | Thin npm manager asset naming, cache layout, checksum verification, semantic asset downloads, and old-version pruning. | Distribution ref beats local package prose. | npm stays thin-only; fat skill zips are outside this manager. |
+| c3-1 | policy | Packaging and release placement inside the CLI container. | Parent container scope beats local package convenience. | README, package metadata, tests, and release workflow must match wrapper behavior before publish. |
+| c3-108 | policy | Runtime output ownership and human/agent presentation boundaries. | Go binary output policy beats wrapper convenience. | The npm manager execs the Go binary and does not serialize C3 command results itself. |
+| adr-20260608-fat-default-thin-npm | adr | Decision to make fat skill zips default and npm the thin-only opt-in manager. | Current branch work order beats older fat/thin split ADR wording. | Use this ADR for final verification evidence. |
 
 ## Contract
 
 | Surface | Direction | Contract | Boundary | Evidence |
 | --- | --- | --- | --- | --- |
-| npm argv | IN | Accept wrapper flag --agent and forward all remaining args unchanged to the selected c3x.sh. | c3-1 boundary | npm run build; temp shim smoke via node packages/cli/dist/cli.mjs list. |
-| install discovery | OUT | Select the highest semver candidate across project, Claude, Codex, and marketplace paths, with priority as tie-breaker. | c3-1 boundary | packages/cli/src/cli.ts discovery code plus packages/cli/README.md resolution table. |
-| child environment | OUT | Remove inherited C3X_MODE before delegation so npm callers receive human/default output unless they pass explicit c3x output flags. | c3-108 boundary | C3X_MODE=agent node packages/cli/dist/cli.mjs list temp shim smoke prints unset. |
-| npm publication | OUT | Package version changes when wrapper behavior changes so the Publish @c3x/cli workflow can publish. | c3-1 boundary | packages/cli/package.json and packages/cli/package-lock.json at 0.1.2. |
+| npm argv | IN | Forward all CLI arguments unchanged to the cached thin Go binary. | c3-1 boundary | cd packages/cli && npm test; cd packages/cli && npm run build. |
+| release assets | IN | Resolve only thin asset names: c3x-<version>-<os>-<arch>, semantic model, semantic vocab, and matching .sha256 files. | ref-cross-compiled-binary boundary | packages/cli/src/manager.ts assetNames; npm tests with stub downloader. |
+| versioned cache | OUT | Store assets under $XDG_CACHE_HOME/c3x/<version>/ or ~/.cache/c3x/<version>/, chmod the binary after checksum verification, and prune older version directories. | ref-cross-compiled-binary boundary | packages/cli/test/manager.test.mjs prepareRuntime and gcOldVersions tests. |
+| child environment | OUT | Set C3X_VERSION and C3_SEMANTIC_CACHE_DIR for the child process while leaving C3 output mode to the caller and Go binary. | c3-108 boundary | packages/cli/src/manager.ts runCli; npm build/test. |
+| npm publication | OUT | Package ships manager JavaScript only; no Go binaries, ONNX model, vocab, or fat variant files are included in npm. | c3-1 boundary | packages/cli/package.json files and README cache section. |
 
 ## Change Safety
 
 | Risk | Trigger | Detection | Required Verification |
 | --- | --- | --- | --- |
-| Agent-mode leak | Wrapper inherits C3X_MODE=agent from a parent process and forces agent output for npm users. | Temp fake install prints child environment while parent exports C3X_MODE=agent. | Run npm run build and C3X_MODE=agent node packages/cli/dist/cli.mjs list from a temp project; expect unset. |
-| Discovery regression | Changes to candidate paths, semver sorting, or --agent filtering select the wrong install. | Compare packages/cli/src/cli.ts discovery logic to packages/cli/README.md resolution order. | Run npm run build and a temp project-scope shim smoke. |
-| Publish skip | Code changes without npm package version bump leave npm workflow no-op. | Compare packages/cli/package.json against .github/workflows/npm-publish.yml version check behavior. | Run jq empty packages/cli/package.json packages/cli/package-lock.json; verify version 0.1.2. |
-| C3 ownership drift | Wrapper files change without mapped component ownership. | c3x lookup packages/cli/src/cli.ts should resolve to this component. | Run c3x lookup packages/cli/src/cli.ts, c3x check --include-adr, and c3x verify. |
+| Wrong thin asset name | Platform mapping or version formatting changes select a non-release asset. | Stub downloader test fails on missing asset name. | cd packages/cli && npm test covers prepareRuntime asset names. |
+| Checksum bypass | Cached or downloaded asset is used without matching the release SHA256. | ensureCachedAsset mismatch test rejects corrupted data. | cd packages/cli && npm test covers checksum mismatch rejection. |
+| Cache pollution | Preparing a new pinned version leaves old binary/model trees in place. | gcOldVersions test checks old directory removal. | cd packages/cli && npm test covers old-version pruning. |
+| Fat or variant drift returns to npm | New env flags or fat-suffixed asset names appear under packages/cli. | Text search finds forbidden fat or variant handling in npm package. | rg -n "fat" packages/cli; rg -n "variant" packages/cli; both return no matches. |
+| Package build drift | TypeScript manager exports no longer match tests or bin entry. | tsdown or Node test suite fails. | cd packages/cli && npm run build; cd packages/cli && npm test. |
 
 ## Derived Materials
 
 | Material | Must derive from | Allowed variance | Evidence |
 | --- | --- | --- | --- |
-| packages/cli/src/cli.ts | Purpose, Business Flow, Contract child environment row. | Implementation details may vary; inherited C3X_MODE must not reach c3x.sh. | npm run build; C3X_MODE=agent node packages/cli/dist/cli.mjs list temp shim smoke. |
-| packages/cli/package.json and package-lock.json | Contract npm publication row and Change Safety publish-skip row. | Patch version may advance; package name and bin contract stay stable. | jq empty packages/cli/package.json packages/cli/package-lock.json. |
-| packages/cli/README.md | Business Flow actor row and Governance notes. | Copy can be concise; must not claim npm sets agent mode automatically. | rg C3X_MODE packages/cli/README.md has no stale automatic-agent claim. |
+| packages/cli/src/manager.ts | Purpose, Foundational Flow, Business Flow primary path, and Contract release/cache rows. | Helper names may vary; behavior must stay thin-only with SHA256-verified release asset cache and exec. | cd packages/cli && npm test; cd packages/cli && npm run build. |
+| packages/cli/test/manager.test.mjs | Change Safety wrong asset, checksum, and cache-pruning risks. | Test data may use stub assets; no network is required. | cd packages/cli && npm test. |
+| packages/cli/README.md | Business Flow and Contract npm publication rows. | Copy can stay concise; must not promise bundled binaries or model files. | rg -n "c3x-<version>-<os>-<arch>" packages/cli/README.md. |
+| packages/cli/package.json and package-lock.json | Contract npm publication row. | Version may advance; files must keep npm scoped to dist/. | cd packages/cli && npm run build. |

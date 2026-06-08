@@ -84,7 +84,7 @@ jobs:
         with:
           name: semantic-assets
           path: /tmp/c3x-model
-      - name: Build thin and fat binaries
+      - name: Build thin npm assets and fat skill binaries
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           MODEL="c3x-semantic-model-all-MiniLM-L6-v2-${MODEL_REVISION}.onnx"
@@ -110,23 +110,27 @@ jobs:
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           mkdir -p dist/release
-          find dist/artifacts -type f -name 'c3x-*' -exec cp {} dist/release/ \;
+          find dist/artifacts -type f -path '*/thin/c3x-*' -exec cp {} dist/release/ \;
           find dist/artifacts/semantic-assets -type f -exec cp {} dist/release/ \;
 
-          rm -f skills/c3/bin/c3x-*
-          zip -r "dist/release/c3-skill-thin-v${VERSION}.zip" .claude-plugin/ skills/ -x "*.DS_Store"
-
-          for fat in dist/release/c3x-${VERSION}-*-*-fat; do
+          fat_count=0
+          while IFS= read -r fat; do
+            fat_count=$((fat_count + 1))
             platform="$(basename "$fat" | sed -E "s/^c3x-${VERSION}-//; s/-fat$//")"
-            work="/tmp/c3-skill-fat-$platform"
+            work="/tmp/c3-skill-$platform"
             rm -rf "$work"
             mkdir -p "$work"
             cp -R .claude-plugin skills "$work/"
             rm -f "$work/skills/c3/bin/c3x-"*
-            cp "$fat" "$work/skills/c3/bin/"
-            (cd "$work" && zip -r "c3-skill-fat-${platform}-v${VERSION}.zip" .claude-plugin/ skills/ -x "*.DS_Store")
-            cp "$work/c3-skill-fat-${platform}-v${VERSION}.zip" dist/release/
-          done
+            cp "$fat" "$work/skills/c3/bin/c3x-${VERSION}-${platform}"
+            chmod +x "$work/skills/c3/bin/c3x-${VERSION}-${platform}"
+            (cd "$work" && zip -r "c3-skill-${platform}-v${VERSION}.zip" .claude-plugin/ skills/ -x "*.DS_Store")
+            cp "$work/c3-skill-${platform}-v${VERSION}.zip" dist/release/
+          done < <(find dist/artifacts -type f -path '*/fat/c3x-*-fat' ! -name '*.sha256' | sort)
+          if [ "$fat_count" -eq 0 ]; then
+            echo "No fat skill binaries found" >&2
+            exit 1
+          fi
 
           (cd dist/release && sha256sum * > SHA256SUMS)
       - name: Publish GitHub Release

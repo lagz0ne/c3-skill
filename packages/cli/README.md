@@ -40,7 +40,7 @@ Old version directories are removed after the pinned version is prepared.
 | `XDG_CACHE_HOME` | Select the cache root. |
 | `C3X_SKIP_MODEL_DOWNLOAD` | Download only the Go binary; the Go CLI can fetch semantic assets later. |
 
-If the first download happens offline, use the fat C3 skill artifact or prefill the cache from a connected machine.
+If the first download happens offline, prefill the cache from a connected machine.
 
 ## License
 

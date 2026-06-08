@@ -290,21 +290,41 @@ Examples:
 		Name:     "search",
 		Args:     "<query>",
 		OneLiner: "Search content with optional graph context",
-		Help: `Usage: c3x search <query> [--hybrid] [--type <type>] [--limit N] [--json]
+		Help: `Usage: c3x search <query> [--hybrid] [--semantic] [--no-semantic] [--type <type>] [--limit N] [--json]
 
 Search entity metadata and indexed markdown content. With --hybrid, results are
 decorated with graph relationships, governing refs/rules, and code-map paths so
 agents can inspect content plus its topology.
 
+If a local semantic index and ONNX cache already exist, search fuses semantic
+similarity into the ranked results. Use --semantic to download missing assets
+and build the index on first use.
+
 Options:
   --hybrid        Include graph, ref/rule, and code-map context
+  --semantic      Build/use local all-MiniLM-L6-v2 ONNX embeddings
+  --no-semantic   Force keyword/graph ranking even if an index exists
   --type <type>   Restrict metadata search by entity type
   --limit N       Maximum number of results (default 20)
   --json          Structured output outside agent mode; agent mode stays TOON
 
 Examples:
   c3x search "pool wait p95 latency" --hybrid
+  c3x search "owns a source path" --hybrid --semantic
   c3x search traceparent --hybrid --json --limit 3`,
+	},
+	{
+		Name:     "index",
+		OneLiner: "Build local semantic embeddings",
+		Help: `Usage: c3x index [--json]
+
+Download the pinned all-MiniLM-L6-v2 ONNX model and matching onnxruntime shared
+library into the user cache if missing, then rebuild SQLite entity embeddings.
+The base CLI binary does not bundle these large/native assets.
+
+Examples:
+  c3x index
+  c3x index --json`,
 	},
 	{
 		Name:     "graph",

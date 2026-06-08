@@ -91,6 +91,17 @@ CREATE TABLE IF NOT EXISTS code_map_excludes (
 	pattern TEXT PRIMARY KEY
 );
 
+CREATE TABLE IF NOT EXISTS entity_embeddings (
+	entity_id TEXT PRIMARY KEY REFERENCES entities(id) ON DELETE CASCADE,
+	model     TEXT NOT NULL,
+	dims      INTEGER NOT NULL,
+	text_hash TEXT NOT NULL,
+	vector    BLOB NOT NULL,
+	updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_entity_embeddings_model
+	ON entity_embeddings(model, dims);
+
 CREATE VIRTUAL TABLE IF NOT EXISTS entities_fts USING fts5(
 	title, goal,
 	content='entities',

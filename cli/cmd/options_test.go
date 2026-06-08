@@ -232,6 +232,24 @@ func TestParseArgs_Extended(t *testing.T) {
 			},
 		},
 		{
+			name: "semantic flag",
+			argv: []string{"search", "auth", "--semantic"},
+			check: func(t *testing.T, got Options) {
+				if !got.Semantic {
+					t.Error("Semantic should be true")
+				}
+			},
+		},
+		{
+			name: "no semantic flag",
+			argv: []string{"search", "auth", "--no-semantic"},
+			check: func(t *testing.T, got Options) {
+				if !got.NoSemantic {
+					t.Error("NoSemantic should be true")
+				}
+			},
+		},
+		{
 			name: "compact flag",
 			argv: []string{"list", "--compact"},
 			check: func(t *testing.T, got Options) {

@@ -34,6 +34,8 @@ type Options struct {
 	Stdin         bool
 	Limit         int
 	Hybrid        bool
+	Semantic      bool
+	NoSemantic    bool
 	Source        string
 	Tag           string
 	Recompute     bool
@@ -142,6 +144,10 @@ func ParseArgs(argv []string) Options {
 			}
 		case "--hybrid":
 			opts.Hybrid = true
+		case "--semantic":
+			opts.Semantic = true
+		case "--no-semantic":
+			opts.NoSemantic = true
 		case "--source":
 			if i+1 < len(argv) {
 				i++

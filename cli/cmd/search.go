@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"sort"
@@ -20,6 +21,8 @@ type SearchOptions struct {
 	Limit      int
 	Type       string
 	TypeFilter string
+	Semantic   bool
+	NoSemantic bool
 }
 
 // SearchOutput is the structured search response.
@@ -69,6 +72,12 @@ func RunSearch(opts SearchOptions, w io.Writer) error {
 		entityType = opts.Type
 	}
 
+	if opts.Semantic {
+		if err := ensureSemanticIndex(opts.Store); err != nil {
+			return err
+		}
+	}
+
 	rows, err := collectSearchRows(opts.Store, opts.Query, entityType, limit)
 	if err != nil {
 		return err
@@ -78,6 +87,18 @@ func RunSearch(opts SearchOptions, w io.Writer) error {
 		if err != nil {
 			return err
 		}
+	}
+	var semanticRows []store.SearchResult
+	if !opts.NoSemantic {
+		semanticRows, err = opts.Store.SearchSemanticWithOptions(context.Background(), opts.Query, entityType, semanticSearchLimit(limit), store.SemanticSearchOptions{
+			AllowDownload: opts.Semantic,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	rows = fuseSemanticRows(rows, semanticRows, limit)
+	if opts.Hybrid {
 		for i := range rows {
 			if err := enrichSearchRow(opts.Store, &rows[i]); err != nil {
 				return err
@@ -90,6 +111,31 @@ func RunSearch(opts SearchOptions, w io.Writer) error {
 		Query:   opts.Query,
 		Results: rows,
 	}, format, nil)
+}
+
+func ensureSemanticIndex(s *store.Store) error {
+	count, err := s.SemanticIndexCount()
+	if err != nil {
+		return err
+	}
+	if count > 0 {
+		return nil
+	}
+	return s.RebuildSemanticIndexWithOptions(context.Background(), store.SemanticIndexOptions{AllowDownload: true})
+}
+
+func semanticSearchLimit(limit int) int {
+	if limit <= 0 {
+		limit = 20
+	}
+	n := limit * 4
+	if n < 20 {
+		return 20
+	}
+	if n > 100 {
+		return 100
+	}
+	return n
 }
 
 func collectSearchRows(s *store.Store, query, entityType string, limit int) ([]SearchResultRow, error) {
@@ -205,6 +251,82 @@ func expandHybridRows(s *store.Store, rows []SearchResultRow, query, entityType 
 		expanded = expanded[:limit]
 	}
 	return expanded, nil
+}
+
+func fuseSemanticRows(rows []SearchResultRow, semanticHits []store.SearchResult, limit int) []SearchResultRow {
+	if limit <= 0 {
+		limit = 20
+	}
+	if len(semanticHits) == 0 {
+		if len(rows) > limit {
+			return rows[:limit]
+		}
+		return rows
+	}
+
+	const rrfK = 60.0
+	type scoredRow struct {
+		row       SearchResultRow
+		score     float64
+		firstRank int
+	}
+	byID := make(map[string]*scoredRow, len(rows)+len(semanticHits))
+	addScore := func(id string, rank int) {
+		item := byID[id]
+		if item == nil {
+			return
+		}
+		item.score += 1 / (rrfK + float64(rank))
+		if item.firstRank == 0 || rank < item.firstRank {
+			item.firstRank = rank
+		}
+	}
+
+	for i, row := range rows {
+		rank := i + 1
+		copyRow := row
+		byID[row.ID] = &scoredRow{row: copyRow, firstRank: rank}
+		addScore(row.ID, rank)
+	}
+	for i, hit := range semanticHits {
+		rank := i + 1
+		item, ok := byID[hit.ID]
+		if !ok {
+			row := SearchResultRow{
+				ID:      hit.ID,
+				Type:    hit.Type,
+				Title:   hit.Title,
+				Snippet: cleanSnippet(hit.Snippet),
+			}
+			item = &scoredRow{row: row, firstRank: len(rows) + rank}
+			byID[hit.ID] = item
+		}
+		addMatchSource(&item.row, "semantic")
+		if item.row.Snippet == "" {
+			item.row.Snippet = cleanSnippet(hit.Snippet)
+		}
+		addScore(hit.ID, rank)
+	}
+
+	scored := make([]scoredRow, 0, len(byID))
+	for _, item := range byID {
+		scored = append(scored, *item)
+	}
+	sort.SliceStable(scored, func(i, j int) bool {
+		if scored[i].score != scored[j].score {
+			return scored[i].score > scored[j].score
+		}
+		if scored[i].firstRank != scored[j].firstRank {
+			return scored[i].firstRank < scored[j].firstRank
+		}
+		return scored[i].row.ID < scored[j].row.ID
+	})
+
+	fused := make([]SearchResultRow, 0, min(limit, len(scored)))
+	for i := 0; i < len(scored) && i < limit; i++ {
+		fused = append(fused, scored[i].row)
+	}
+	return fused
 }
 
 func sortSearchRows(rows []SearchResultRow, order map[string]int) {

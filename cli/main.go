@@ -496,7 +496,11 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 			JSON:       opts.JSON,
 			Limit:      opts.Limit,
 			TypeFilter: opts.TypeFilter,
+			Semantic:   opts.Semantic,
+			NoSemantic: opts.NoSemantic,
 		}, w)
+	case "index":
+		err = cmd.RunSemanticIndex(cmd.SemanticIndexOptions{Store: s, JSON: opts.JSON}, w)
 	case "codemap":
 		err = cmd.RunCodemap(cmd.CodemapOptions{Store: s, JSON: opts.JSON}, w)
 	case "schema":

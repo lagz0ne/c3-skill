@@ -97,8 +97,10 @@ var cases = []evalCase{
 func main() {
 	var dbPath string
 	var limit int
+	var semantic bool
 	flag.StringVar(&dbPath, "db", "", "path to .c3/c3.db")
 	flag.IntVar(&limit, "k", 5, "ranking cutoff")
+	flag.BoolVar(&semantic, "semantic", false, "enable local ONNX semantic fusion")
 	flag.Parse()
 
 	if limit <= 0 {
@@ -118,7 +120,7 @@ func main() {
 	}
 	defer s.Close()
 
-	report, err := runEval(s, dbPath, limit)
+	report, err := runEval(s, dbPath, limit, semantic)
 	if err != nil {
 		fail(err.Error())
 	}
@@ -143,13 +145,13 @@ func defaultDBPath() (string, error) {
 	return "", fmt.Errorf("could not find .c3/c3.db; pass --db")
 }
 
-func runEval(s *store.Store, dbPath string, limit int) (evalReport, error) {
+func runEval(s *store.Store, dbPath string, limit int, semantic bool) (evalReport, error) {
 	// The CLI resolves C3X_MODE=agent to TOON. The eval needs JSON from RunSearch.
 	os.Unsetenv("C3X_MODE")
 
 	results := make([]caseResult, 0, len(cases))
 	for _, tc := range cases {
-		hits, err := searchIDs(s, tc.Query, limit)
+		hits, err := searchIDs(s, tc.Query, limit, semantic)
 		if err != nil {
 			return evalReport{}, fmt.Errorf("%s: %w", tc.ID, err)
 		}
@@ -169,8 +171,12 @@ func runEval(s *store.Store, dbPath string, limit int) (evalReport, error) {
 		byKind[kind] = summarize(kindCases)
 	}
 
+	mode := "keyword_graph"
+	if semantic {
+		mode = "keyword_graph_onnx_semantic"
+	}
 	return evalReport{
-		Mode:    "keyword_graph",
+		Mode:    mode,
 		DB:      dbPath,
 		Limit:   limit,
 		Metrics: summarize(results),
@@ -179,14 +185,16 @@ func runEval(s *store.Store, dbPath string, limit int) (evalReport, error) {
 	}, nil
 }
 
-func searchIDs(s *store.Store, query string, limit int) ([]string, error) {
+func searchIDs(s *store.Store, query string, limit int, semantic bool) ([]string, error) {
 	var buf bytes.Buffer
 	if err := cmd.RunSearch(cmd.SearchOptions{
-		Store:  s,
-		Query:  query,
-		Hybrid: true,
-		JSON:   true,
-		Limit:  limit,
+		Store:      s,
+		Query:      query,
+		Hybrid:     true,
+		Semantic:   semantic,
+		NoSemantic: !semantic,
+		JSON:       true,
+		Limit:      limit,
 	}, &buf); err != nil {
 		return nil, fmt.Errorf("search: %w", err)
 	}

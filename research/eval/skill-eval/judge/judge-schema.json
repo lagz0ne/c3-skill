@@ -1,0 +1,64 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "case_id",
+    "dimensions",
+    "overall",
+    "verdict",
+    "summary",
+    "quality_gaps"
+  ],
+  "properties": {
+    "case_id": { "type": "string" },
+    "dimensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "correctness",
+        "trace_completeness",
+        "reasoning_depth",
+        "grounding",
+        "no_hallucination",
+        "change_usefulness"
+      ],
+      "properties": {
+        "correctness": { "$ref": "#/$defs/dimension" },
+        "trace_completeness": { "$ref": "#/$defs/dimension" },
+        "reasoning_depth": { "$ref": "#/$defs/dimension" },
+        "grounding": { "$ref": "#/$defs/dimension" },
+        "no_hallucination": { "$ref": "#/$defs/dimension" },
+        "change_usefulness": { "$ref": "#/$defs/dimension" }
+      }
+    },
+    "overall": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["pass", "fail"]
+    },
+    "summary": { "type": "string" },
+    "quality_gaps": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "$defs": {
+    "dimension": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["score", "justification"],
+      "properties": {
+        "score": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "justification": { "type": "string" }
+      }
+    }
+  }
+}

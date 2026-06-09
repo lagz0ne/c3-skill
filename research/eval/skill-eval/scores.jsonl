@@ -17,3 +17,12 @@
 {"case": "CROSSCUT-STEP-ADVANCE-1", "failed": ["U4 exact-ids missing=['c3-101']", "U5 governance-with-why missing_why=['ref-approval-chain']", "ids_include:c3-101", "trace_coverage:sync missing=['c3-101']"], "max": 29, "phase": "crosscut", "round": 1, "score": 25}
 {"case": "CROSSCUT-NOTIFICATION-BELL-1", "failed": ["U4 exact-ids missing=['recipe-realtime-sync']", "ids_include:recipe-realtime-sync"], "max": 28, "phase": "crosscut", "round": 1, "score": 26}
 {"case": "CROSSCUT-SLACK-APPROVAL-1", "failed": ["U4 exact-ids missing=['c3-202']", "U5 governance-with-why missing_why=['ref-pull-dispatcher', 'ref-sync']", "ids_include:c3-202"], "max": 30, "phase": "crosscut", "round": 1, "score": 26}
+{"case": "AUTH-1", "failed": [], "max": 24, "phase": "crosscut", "round": 2, "score": 24}
+{"case": "NATS-1", "failed": [], "max": 22, "phase": "crosscut", "round": 2, "score": 22}
+{"case": "ADMIN-1", "failed": [], "max": 20, "phase": "crosscut", "round": 2, "score": 20}
+{"case": "APPROVAL-1", "failed": [], "max": 23, "phase": "crosscut", "round": 2, "score": 23}
+{"case": "UI-1", "failed": [], "max": 23, "phase": "crosscut", "round": 2, "score": 23}
+{"case": "CROSSCUT-MASS-APPROVAL-1", "failed": ["notification_mechanism_terms:['c3-211', 'jetstream', 'notification']"], "max": 30, "phase": "crosscut", "round": 2, "score": 29}
+{"case": "CROSSCUT-STEP-ADVANCE-1", "failed": [], "max": 29, "phase": "crosscut", "round": 2, "score": 29}
+{"case": "CROSSCUT-NOTIFICATION-BELL-1", "failed": ["require:sync.user", "notification_mechanism_terms:['c3-211', 'sync.user', 'notification']"], "max": 28, "phase": "crosscut", "round": 2, "score": 26}
+{"case": "CROSSCUT-SLACK-APPROVAL-1", "failed": ["notification_mechanism_terms:['c3-211', 'slackchannel', 'notification']"], "max": 30, "phase": "crosscut", "round": 2, "score": 29}

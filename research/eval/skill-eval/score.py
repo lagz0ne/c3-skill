@@ -115,10 +115,6 @@ def any_term_group_present(text_lower: str, groups: list[list[str]]) -> bool:
 
 
 def nearby_why(text_lower: str, ref_id: str) -> bool:
-    idx = text_lower.find(ref_id.lower())
-    if idx == -1:
-        return False
-    window = text_lower[max(0, idx - 160) : idx + 260]
     why_terms = [
         "because",
         "why",
@@ -131,7 +127,12 @@ def nearby_why(text_lower: str, ref_id: str) -> bool:
         "separates",
         "means",
     ]
-    return any(term in window for term in why_terms)
+    for match in re.finditer(re.escape(ref_id.lower()), text_lower):
+        idx = match.start()
+        window = text_lower[max(0, idx - 160) : idx + 260]
+        if any(term in window for term in why_terms):
+            return True
+    return False
 
 
 def score(case_id: str, answer_file: Path) -> dict:

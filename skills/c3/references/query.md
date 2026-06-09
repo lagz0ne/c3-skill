@@ -59,7 +59,10 @@ stop at the first owner. Build the path:
    name the concrete transport (`NATS WebSocket`, deltas/acks, `executionId`).
 4. **Notification mechanism**: search/read notification candidates (`c3-211`,
    notification ADRs/refs/channels), then graph them to find dispatcher/channel
-   touchpoints.
+   touchpoints. Copy the exact queue/subject/channel names from the read docs:
+   examples include `NATS JetStream`, `sync.user.<email>`, and `slackChannel`.
+   Do not collapse these to generic "notification system" wording when the
+   question is about who gets informed.
 5. **Emergent property**: state what falls out of the combined mechanisms, such
    as async/non-blocking notification, targeted user subjects vs broadcast sync,
    step-advance-only notification, or flow entry preserving side effects.

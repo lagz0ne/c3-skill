@@ -1,0 +1,276 @@
+c3-101:
+  - apps/start/src/lib/pumped/**
+c3-102:
+  - apps/start/src/components/Form.tsx
+  - apps/start/src/components/FormComponents.tsx
+  - apps/start/src/components/Validator.tsx
+  - apps/start/src/lib/validation.ts
+c3-103:
+  - apps/start/src/components/AppSidebar.tsx
+  - apps/start/src/components/Avatar.tsx
+  - apps/start/src/components/Drawer.tsx
+  - apps/start/src/components/ErrorBoundary.tsx
+  - apps/start/src/components/ErrorDisplay.tsx
+  - apps/start/src/components/InitErrorDisplay.tsx
+  - apps/start/src/components/LoginScreen.tsx
+  - apps/start/src/components/Logo.tsx
+  - apps/start/src/components/Modal.tsx
+  - apps/start/src/components/index.ts
+  - apps/start/src/components/ui/**
+  - apps/start/src/lib/capabilities.ts
+  - apps/start/src/lib/useEvent.ts
+  - apps/start/src/lib/utils.ts
+  - apps/start/src/router.tsx
+  - apps/start/src/routes/__root.tsx
+  - apps/start/src/routes/index.tsx
+c3-104:
+  - apps/start/src/components/InvoiceFilter*.tsx
+  - apps/start/src/data/invoices.ts
+  - apps/start/src/routes/_authed/invoices.tsx
+  - apps/start/src/screens/InvoiceScreen.tsx
+c3-105:
+  - apps/start/src/components/PDFPreviewDialog.tsx
+  - apps/start/src/components/PRFilter*.tsx
+  - apps/start/src/hooks/use-pdf-gestures.ts
+  - apps/start/src/lib/pdfPreviewUtils.ts
+  - apps/start/src/lib/prHelpers.ts
+  - apps/start/src/routes/_authed/prs.tsx
+  - apps/start/src/screens/PaymentRequestsScreen.tsx
+  - apps/start/src/screens/paymentRequestHooks.ts
+c3-106:
+  - apps/start/src/components/PaymentForm.tsx
+  - apps/start/src/routes/_authed/payments.tsx
+  - apps/start/src/screens/PaymentsScreen.tsx
+c3-107:
+  - apps/start/src/components/admin/**
+  - apps/start/src/routes/_authed/admin.tsx
+  - apps/start/src/routes/_authed/admin/**
+  - apps/start/src/screens/admin/**
+c3-108:
+  - apps/start/src/components/DevChatPanel.tsx
+  - apps/start/src/components/DevShell.tsx
+  - apps/start/src/lib/components/DevLogViewer.tsx
+  - apps/start/src/routes/dev/**
+  - apps/start/src/server/functions/devChat.ts
+c3-109:
+  - apps/start/src/routes/_authed/approvals.tsx
+  - apps/start/src/routes/_authed/workbench.tsx
+  - apps/start/src/screens/WorkbenchScreen.tsx
+  - apps/start/src/screens/workbenchCsv.ts
+c3-201:
+  - apps/start/src/server/flows/index.ts
+  - apps/start/src/server/flows/types.approvalConfig.ts
+c3-202:
+  - apps/start/src/server/resources/executionId.ts
+  - apps/start/src/server/tags.ts
+c3-203:
+  - apps/start/src/server.tsx
+  - apps/start/src/server/extension.ts
+  - apps/start/src/server/functions/middleware.ts
+  - apps/start/src/server/middlewares/**
+  - apps/start/src/server/resources/index.ts
+  - apps/start/src/server/util.parser.ts
+c3-204:
+  - apps/start/drizzle.config.ts
+  - apps/start/src/server/dbs/context.ts
+  - apps/start/src/server/dbs/db.ts
+  - apps/start/src/server/dbs/drizzle.ts
+  - apps/start/src/server/dbs/index.ts
+  - apps/start/src/server/dbs/migrate.ts
+  - apps/start/src/server/dbs/migrations/**
+  - apps/start/src/server/dbs/queries/index.ts
+  - apps/start/src/server/dbs/queries/types.ts
+  - apps/start/src/server/dbs/schema.ts
+  - apps/start/src/server/dbs/seed-owner-role.ts
+  - apps/start/src/server/dbs/transaction.ts
+  - apps/start/test/helpers/test-db.ts
+c3-205:
+  - apps/start/src/server/dbs/queries/approval.ts
+  - apps/start/src/server/dbs/queries/pr.ts
+  - apps/start/src/server/flows/pr.ts
+  - apps/start/src/server/functions/pr.ts
+  - apps/start/src/server/services/pr.ts
+c3-206:
+  - apps/start/src/server/dbs/queries/invoices.ts
+  - apps/start/src/server/flows/invoice.helpers.ts
+  - apps/start/src/server/flows/invoice.ts
+  - apps/start/src/server/functions/invoice.ts
+  - apps/start/src/server/services/invoice.ts
+c3-207:
+  - apps/start/src/server/dbs/queries/payments.ts
+  - apps/start/src/server/flows/payment.ts
+  - apps/start/src/server/functions/payment.ts
+  - apps/start/src/server/services/payment.ts
+c3-208:
+  - apps/start/src/server/dbs/queries/audit.ts
+  - apps/start/src/server/flows/audit.ts
+  - apps/start/src/server/functions/audit.ts
+  - apps/start/src/server/resources/audit.ts
+c3-209:
+  - apps/start/src/server/resources/natsConnection.ts
+  - apps/start/src/server/resources/natsCredentials.ts
+c3-210:
+  - apps/start/src/server/dbs/queries/approvalConfig.ts
+  - apps/start/src/server/dbs/queries/rbac.ts
+  - apps/start/src/server/dbs/queries/teams.ts
+  - apps/start/src/server/dbs/queries/users.ts
+  - apps/start/src/server/flows/approvalConfig.ts
+  - apps/start/src/server/flows/role.ts
+  - apps/start/src/server/flows/team.ts
+  - apps/start/src/server/flows/user.ts
+  - apps/start/src/server/functions/admin.ts
+  - apps/start/src/server/functions/approvalConfig.ts
+c3-211:
+  - apps/start/src/server/flows/notification.ts
+  - apps/start/src/server/resources/emailChannel.ts
+  - apps/start/src/server/resources/emailTransport.ts
+  - apps/start/src/server/resources/inAppChannel.ts
+  - apps/start/src/server/resources/notificationChannels.ts
+  - apps/start/src/server/resources/notificationController.ts
+  - apps/start/src/server/resources/notificationDispatcher.ts
+  - apps/start/src/server/resources/notificationPublisher.ts
+  - apps/start/src/server/services/notification.ts
+  - apps/start/test/notifications/setup.ts
+  - packages/shared/src/notification.ts
+c3-212:
+  - apps/start/src/server/dbs/queries/exportTemplate.ts
+  - apps/start/src/server/flows/workbench.ts
+  - apps/start/src/server/functions/workbench.ts
+  - apps/start/src/server/lib/exportTemplate.types.ts
+  - apps/start/src/server/lib/templateGenerator.ts
+  - apps/start/src/server/lib/templateProcessor.ts
+  - packages/shared/src/exportTemplate.ts
+c3-213:
+  - apps/start/src/routes/_authed.tsx
+  - apps/start/src/routes/auth.google.url.tsx
+  - apps/start/src/routes/cb.tsx
+  - apps/start/src/routes/login.tsx
+  - apps/start/src/routes/logout.tsx
+  - apps/start/src/routes/me.tsx
+  - apps/start/src/routes/test-login.tsx
+  - apps/start/src/server/flows/authenticate.ts
+  - apps/start/src/server/resources/auth.ts
+  - apps/start/src/server/resources/currentUser.ts
+c3-214:
+  - apps/start/src/components/NotificationBell.tsx
+  - apps/start/src/lib/pumped/atoms/notifications.ts
+  - apps/start/src/server/dbs/queries/notification.ts
+  - apps/start/src/server/flows/notificationLog.ts
+  - apps/start/src/server/functions/notifications.ts
+  - apps/start/src/server/resources/userNotificationStream.ts
+c3-215:
+  - apps/start/src/routes/api.slack.events.tsx
+  - apps/start/src/server/dbs/queries/slack.ts
+  - apps/start/src/server/resources/slackActions.ts
+  - apps/start/src/server/resources/slackBot.ts
+  - apps/start/src/server/resources/slackCards.ts
+  - apps/start/src/server/resources/slackChannel.ts
+  - apps/start/src/server/resources/slackCommands.ts
+ref-admin-page-layout:
+  - apps/start/src/components/admin/AdminSidebar.tsx
+  - apps/start/src/routes/_authed/admin.tsx
+ref-approval-chain:
+  - packages/shared/src/approval.test.ts
+  - packages/shared/src/approval.ts
+  - packages/shared/src/index.ts
+ref-audit-timeline:
+  - apps/start/src/components/AuditLogPanel.tsx
+ref-file-handling:
+  - apps/start/src/routes/files.$hash.tsx
+  - apps/start/src/server/dbs/queries/files.ts
+  - apps/start/src/server/resources/files.ts
+  - apps/start/src/server/resources/staticAssets.ts
+ref-filter-footer:
+  - apps/start/src/components/FilterFooter.tsx
+ref-list-view-patterns:
+  - apps/start/src/components/CrudTable.tsx
+ref-master-detail-layout:
+  - apps/start/src/components/MasterDetailLayout.tsx
+ref-nats-jwt-auth:
+  - infra/jwt/**
+  - infra/nats*.conf
+ref-org-tiles:
+  - apps/start/src/routes/act.tsx
+ref-pull-dispatcher:
+  - apps/start/src/server/resources/notificationDispatcher.ts
+ref-query-services:
+  - apps/start/src/server/services/**
+ref-responsive-layout:
+  - apps/start/src/components/BottomSheet.tsx
+  - apps/start/src/components/MobileHeader.tsx
+  - apps/start/src/hooks/use-mobile.tsx
+ref-scope-controlled-config:
+  - apps/start/src/server/resources/config.ts
+  - apps/start/src/server/resources/serverConfig.ts
+ref-server-functions:
+  - apps/start/src/server/functions/**
+ref-structured-logging:
+  - apps/start/src/lib/logger.ts
+  - apps/start/src/routes/health.tsx
+  - apps/start/src/routes/log.tsx
+  - apps/start/src/server/logger.ts
+ref-sync:
+  - apps/start/src/lib/pumped/atoms/natsSync.ts
+  - apps/start/src/server/resources/natsPublisher.ts
+  - apps/start/src/server/resources/sync.ts
+ref-variant-system:
+  - apps/start/src/components/ui/variants.ts
+_exclude:
+  - **/*.css
+  - **/*.d.ts
+  - **/*.dmp
+  - **/*.example
+  - **/*.html
+  - **/*.ico
+  - **/*.json
+  - **/*.log
+  - **/*.md
+  - **/*.mjs
+  - **/*.pdf
+  - **/*.png
+  - **/*.spec.ts
+  - **/*.sql
+  - **/*.svg
+  - **/*.test.ts
+  - **/*.txt
+  - **/*.yaml
+  - **/*.yml
+  - **/.env*
+  - **/.gitattributes
+  - **/.gitignore
+  - **/.output/**
+  - **/.tanstack/**
+  - **/bun.lock
+  - **/dist/**
+  - **/migrations/**
+  - **/node_modules/**
+  - **/pnpm-lock.yaml
+  - **/routeTree.gen.ts
+  - **/tsconfig*
+  - **/vite.config.ts
+  - **/vitest.config.*
+  - .beads/**
+  - .c3/**
+  - .claude/**
+  - .dockerignore
+  - .git/**
+  - .playwright-mcp/**
+  - .prev*
+  - .sft/**
+  - .turbo/**
+  - .vscode/**
+  - .worktrees/**
+  - Dockerfile
+  - apps/e2e/**
+  - apps/start/test/sft/helpers/**
+  - conv.md
+  - data/**
+  - docker-compose.yml
+  - docs/**
+  - infra/.gitignore
+  - logs/**
+  - patches/**
+  - public/**
+  - scripts/**
+  - tasks/**
+  - test-results/**

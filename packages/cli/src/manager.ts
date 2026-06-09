@@ -7,7 +7,7 @@ import { homedir, platform as nodePlatform, arch as nodeArch } from 'node:os'
 import { dirname, join } from 'node:path'
 import { C3X_VERSION, SEMANTIC_MODEL_REVISION } from './version.js'
 
-const RELEASE_REPO = 'https://github.com/lagz0ne/c3-design/releases/download'
+const RELEASE_REPO = 'https://github.com/lagz0ne/c3-skill/releases/download'
 
 export interface PlatformTarget {
   os: string
@@ -189,11 +189,27 @@ function sha256Buffer(data: Uint8Array): string {
 
 class HttpDownloadClient implements DownloadClient {
   async download(url: string): Promise<Uint8Array> {
+    return this.fetch(url, 0)
+  }
+
+  private fetch(url: string, redirects: number): Promise<Uint8Array> {
     return new Promise((resolve, reject) => {
       const get = url.startsWith('http://') ? httpGet : httpsGet
       const req = get(url, (res) => {
-        if (!res.statusCode || res.statusCode < 200 || res.statusCode >= 300) {
-          reject(new Error(`download ${url}: status ${res.statusCode}`))
+        const status = res.statusCode ?? 0
+        // GitHub release assets 302-redirect to a CDN — follow redirects.
+        if (status >= 300 && status < 400 && res.headers.location) {
+          res.resume()
+          if (redirects >= 5) {
+            reject(new Error(`download ${url}: too many redirects`))
+            return
+          }
+          const next = new URL(res.headers.location, url).toString()
+          this.fetch(next, redirects + 1).then(resolve, reject)
+          return
+        }
+        if (status < 200 || status >= 300) {
+          reject(new Error(`download ${url}: status ${status}`))
           res.resume()
           return
         }

@@ -2,7 +2,11 @@
 
 C3 turns your codebase into something an LLM can navigate. A sealed `.c3/` tree is the shared architectural truth for Git review and merges, while `c3.db` stays a local cache the CLI can rebuild at any time.
 
-One Claude Code plugin. One `/c3` command. The agent figures out the rest.
+Use it through the Claude Code plugin or the `npx` CLI. Both run the same `c3x` commands; the install shape differs.
+
+## Install / Run
+
+**Claude Code plugin (fat, self-contained):**
 
 ```bash
 claude plugin install lagz0ne/c3-skill
@@ -10,10 +14,22 @@ claude plugin install lagz0ne/c3-skill
 
 Then: `/c3 onboard this project`
 
+The plugin carries the `c3x` binary and embedded semantic model, so meaning-based search works offline after install.
+
+**`npx` CLI (thin, fetched on demand):**
+
+```bash
+npx @c3x/cli check
+npx @c3x/cli search "how do users sign in and get permissions"
+```
+
+The npm package downloads the matching `c3x` binary and semantic model from the GitHub Release into a local cache when needed.
+
 ## Why
 
 Architecture docs rot because nobody enforces them. C3 fixes this by making the docs machine-writable and machine-verifiable:
 
+- **LLMs can ask by meaning** — `c3x search "how do users sign in and get permissions"` can surface authentication/RBAC/JWT docs even when those exact words differ
 - **LLMs read them before touching code** — `c3x lookup src/auth/login.ts` tells the agent which component owns the file, which refs govern it, what rules apply
 - **Writes are validated** — every content update passes through schema enforcement. Missing a required section? Rejected with a hint
 - **Canonical text is reviewable** — Git diffs and merges happen on sealed `.c3/*.md` files and `code-map.yaml`, not on an opaque cache
@@ -27,7 +43,7 @@ Architecture docs rot because nobody enforces them. C3 fixes this by making the 
 | Say this | C3 does this |
 |----------|-------------|
 | `/c3` adopt this project | **onboard** — discovers your architecture through conversation, scaffolds `.c3/` |
-| `/c3` where is auth? | **query** — topology traversal via `list`, `lookup`, `read`, `graph` |
+| `/c3` where is auth? | **query** — meaning-based discovery via `search`, then `lookup`, `read`, `graph` |
 | `/c3` add rate limiting | **change** — ADR-first: impact analysis → decision record → execute → validate |
 | `/c3` create a ref for error handling | **ref** — cross-cutting pattern with Choice/Why/How sections and cite wiring |
 | `/c3` add a rule for structured logging | **rule** — enforceable standard with golden example and anti-patterns |
@@ -69,11 +85,32 @@ c3x set c3-101 codemap "src/new/**" --append
 
 **Navigate the architecture:**
 ```bash
+c3x search "what handles tenant permissions?" # meaning → candidate entities
 c3x list                                 # topology: goals, file coverage, ref usage
 c3x lookup src/auth/login.ts             # file → component + refs + rules
 c3x graph c3-1 --format mermaid          # forward subgraph as mermaid
 c3x graph ref-jwt --direction reverse    # what breaks if this changes?
 c3x schema adr                           # required sections + pre-draft workorder
+```
+
+### Find by meaning
+
+Use `c3x search "<question in plain English>"` when you know the concept but not the entity name or file path.
+
+```bash
+c3x search "how do users sign in and get permissions"
+```
+
+Hybrid search fuses three signals:
+
+- **semantic** — local ONNX all-MiniLM embeddings rank docs by meaning, so "sign in" can match "authentication" and "permissions" can match "RBAC"
+- **keyword/BM25** — exact terms still matter when the wording lines up
+- **graph** — related components, refs, rules, and code-map paths add architectural context
+
+For example, in an auth system this query can surface `ref-rbac` and `ref-nats-jwt-auth` even if the docs say "authentication", "RBAC", and "JWT" rather than "sign in" or "permissions". Compare with keyword-only mode when you need to see what semantic search added:
+
+```bash
+c3x search "how do users sign in and get permissions" --no-semantic
 ```
 
 **Relationships and removal:**
@@ -95,7 +132,7 @@ c3x check --fix                          # auto-fix title-matched references
 
 Agent-mode compact `c3x list` keeps topology bounded while still exposing recipe `description` and `sources`, so cross-cutting shortcuts can be matched before a deeper `read`.
 
-**Full command list:** `c3x --help` (12 user-facing commands)
+**Full command list:** `c3x --help`
 
 ### Schema enforcement
 
@@ -113,6 +150,18 @@ Every entity type has required sections. The CLI enforces them on write:
 `c3x write` (full body) validates required sections before accepting. `c3x write --section` on a component validates the full resulting document, so component docs stay all-or-nothing. `c3x check` validates everything post-hoc.
 
 ADR schema output also carries a pre-draft workorder: create a volatile Discovery Brief from the task goal and targeted `c3x` reads before writing the ADR body. The brief names owner, governing material, and stop condition so agents read relevant references without turning candidate coverage into add-time error floods.
+
+### Your entity model, not ours (canvases)
+
+The required sections above are not hardcoded — each entity type is defined by a **canvas**: data declaring its sections, table columns, and reject rules. c3x ships 11 built-in canvases (`container`, `component`, `ref`, `rule`, `adr`, `recipe`, `system`, plus product types `prd`, `user-story`, `pm-requirement`, `atomic-design-change`) as seeds; on onboard they materialize into `.c3/canvases/<type>.md` and **your team owns them from there**.
+
+```bash
+c3x canvas list             # every entity definition + domain + source
+c3x canvas read component   # the canonical definition (yours to edit)
+c3x schema component        # render its sections, columns, REJECT IF rules
+```
+
+Edit a canvas to shape docs around *your* architecture vocabulary — add a section, tighten a reject rule, define a new entity type — and `c3x check` / `c3x write` enforce *your* definition, not a baked-in one. Definitions are data, so the model travels with the repo and is reviewable in Git like everything else.
 
 ### Canonical `.c3/` tree
 
@@ -158,9 +207,9 @@ c3x marketplace show rule-error-wrapping
 - after branch switches, selective merges, or conflict resolution, `c3x check` rebuilds cache and verifies seals as part of validation
 - install once: `c3x git install` (pre-commit guardrails + `.c3/.gitignore` policy)
 
-## Self-contained distribution
+## Distribution details
 
-The plugin ships with pre-built binaries — no Go toolchain, no npm, no PATH configuration:
+The Claude Code plugin is the fat distribution: pre-built binaries plus the embedded semantic model. It needs no Go toolchain, npm, PATH configuration, or model download:
 
 ```
 skills/c3/bin/
@@ -173,6 +222,8 @@ skills/c3/bin/
 ```
 
 Each plugin version carries its own binary. Different projects can use different versions without conflict.
+
+The `npx @c3x/cli` package is the thin distribution: a small manager that resolves OS/ARCH, downloads the matching GitHub Release binary and semantic assets into a versioned local cache, then executes the cached binary.
 
 ## VS Code Extension
 

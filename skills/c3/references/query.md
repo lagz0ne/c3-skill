@@ -4,38 +4,46 @@ Answer where/how/why about architecture. Full context = docs + code.
 
 ## Flow
 
-`Topology → Clarify → Navigate → Lookup → Explore Code`
+`Discover Candidates → Read Detail → Lookup Files → Graph if Needed → Explore Code`
 
 ## Progress
 
-- [ ] Topology loaded (`c3 list`)
+- [ ] Candidates discovered (`c3 search "<question>"`, `c3 lookup <file>`, or `c3 read <id>`)
 - [ ] Intent clarified (or skipped if specific)
-- [ ] Entity matched from topology
+- [ ] Entity matched from ranked candidates
 - [ ] `c3 lookup` run on every file path surfaced
 - [ ] Code explored
 - [ ] Response delivered
 
 ---
 
-## Step 0a: Topology
+## Step 0a: Discover Candidates
 
-**First action:**
+Choose the narrowest discovery tool that matches what the user gave you:
+
+| Input shape | First command | Outcome |
+|-------------|---------------|---------|
+| Concept, capability, paraphrase, "where is X", "what handles Y" | `c3 search "<question>"` | Ranked candidate entities by semantic + keyword + graph signals |
+| Known file or glob | `c3 lookup <file-or-glob>` | Owning component plus governing refs/rules |
+| Known C3 ID | `c3 read <id>` | Entity detail |
+
+For natural-language questions, reach for search before topology/title matching:
+
 ```bash
-c3 list
+c3 search "how do users sign in and get permissions"
 ```
-Returns all entities: id, type, title, path, relationships, frontmatter. Match query to entities by title/type/relationship.
 
-Never manually Glob/Read `.c3/`. Topology has everything for discovery. Read only after identifying specific entities.
+Use `match_sources` to understand why a candidate ranked: `semantic` means meaning matched even when wording differs; `content_fts` / `entity_fts` means keyword match; `graph:*` means relationship context helped.
 
-For code→entity mapping use `c3 lookup <file-or-glob>`. For doc body text, identify candidate entities from `c3 list`, then read targeted bodies with `c3 read <id>` or `c3 read <id> --full`.
+Anti-goal: do not fall back to `c3 list` plus title matching when the query is conceptual. Search it. Use `c3 list` when you need topology-wide inventory, coverage, or relationship overview after candidates are known.
+
+Never manually Glob/Read `.c3/`. Read only after identifying specific entities.
+
+For code→entity mapping use `c3 lookup <file-or-glob>`. For doc body text, identify candidate entities from search/lookup, then read targeted bodies with `c3 read <id>` or `c3 read <id> --full`.
 
 ## Step 0a+: Check Recipes
 
-After topology, check for matching recipes:
-1. Filter `recipe` type from `c3 list`
-2. Match query against recipe title + description
-3. Match → read recipe, serve sources as narrative trace
-4. No match → normal query flow
+Recipes are candidate entities too. If search returns a matching `recipe`, read it first and serve its sources as a narrative trace. If you already needed `c3 list` for inventory, filter `recipe` rows by title + description before deeper reads.
 
 ## Step 0b: Clarify Intent
 
@@ -50,7 +58,7 @@ Skip when: C3 ID given, specific query, "show me everything about X".
 
 Top-down: Context → Container → Component.
 
-Match from topology. `c3 read <id>` when body content needed beyond `list`.
+Start from the best search/lookup candidate. `c3 read <id>` when body content is needed beyond the candidate snippet. Move up to parent context or down to components when the answer needs ownership, boundaries, or implementation detail.
 
 | Source | Use For |
 |--------|---------|

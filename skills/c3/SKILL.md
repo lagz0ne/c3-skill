@@ -50,6 +50,7 @@ at `.c3/canvases/<type>.md`; `c3 canvas` manages them and the user may edit them
 | `set <id> <field> <val>` | Update frontmatter field (goal, status, boundary, category, title, date, codemap patterns) |
 | `wire <src> <tgt>` | Link entities (`--remove` unlinks) |
 | `read <id>` | Entity content; agent truncates 1500 chars (`--full` bypasses) |
+| `search <query>` | Natural-language or conceptual query -> candidate entities by semantic + keyword + graph signals |
 | `lookup <file-or-glob>` | File/glob -> component + refs |
 | `delete <id>` | Remove entity + clean refs (`--dry-run`) |
 | `graph <id>` | Relationship graph (`--depth`, `--direction forward|reverse`, `--format mermaid`) |
@@ -65,7 +66,7 @@ at `.c3/canvases/<type>.md`; `c3 canvas` manages them and the user may edit them
 | Keywords | Op | Ref |
 |----------|----|-----|
 | adopt, init, scaffold, bootstrap, onboard, "create .c3" | **onboard** | `references/onboard.md` |
-| where, explain, how, diagram, trace, "show me", "what is" | **query** | `references/query.md` |
+| where, explain, how, diagram, trace, "show me", "what is", "what handles" | **query** | `references/query.md` |
 | audit, validate, "check docs", drift | **audit** | `references/audit.md` |
 | add, change, fix, implement, refactor, remove, provision, design | **change** | `references/change.md` |
 | pattern, convention, "create ref", "update ref", standardize | **ref** | `references/ref.md` |
@@ -83,7 +84,7 @@ at `.c3/canvases/<type>.md`; `c3 canvas` manages them and the user may edit them
 
 ## Precondition
 
-**Read-only fast path:** for file-owner, "where is", summarize constraints, or smallest-next-action queries that do not mutate docs/code, start with the narrowest `c3 lookup <file>` or `c3 read <id> --section <name>`. Skip `list` and `check` unless lookup misses, drift is suspected, topology-wide inventory is required, or the user explicitly asks for validation/audit. Prefer section reads. Skip graph unless relationship/dependent impact is part of the answer.
+**Read-only fast path:** for conceptual or natural-language discovery ("where is X", "what handles Y", paraphrases), start with `c3 search "<question>"`, then read the best candidates. For known files/globs, use `c3 lookup <file>`. For known IDs/sections, use `c3 read <id> --section <name>`. Skip `list` and `check` unless search/lookup misses, drift is suspected, topology-wide inventory is required, or the user explicitly asks for validation/audit. Prefer section reads. Skip graph unless relationship/dependent impact is part of the answer.
 
 Before every op except onboard:
 ```bash
@@ -128,7 +129,7 @@ First `AskUserQuestion` denial -> `ASSUMPTION_MODE = true` for session.
 
 Missing packaged CLI operation -> STOP, tell user. No file-tool workarounds.
 
-**Search strategy:** code->entity via `c3 lookup <file-or-glob>`; topology via `c3 list`; doc bodies via targeted `c3 read <id> --section <name>` or `c3 read <id> --full`.
+**Search strategy:** concept->entity via `c3 search "<question>"`; code->entity via `c3 lookup <file-or-glob>`; topology via `c3 list`; doc bodies via targeted `c3 read <id> --section <name>` or `c3 read <id> --full`.
 
 **`c3 check` after every mutation** (`add`, `write`, `set`, `wire`, `delete`, `canvas`). Errors = blockers.
 
@@ -218,7 +219,7 @@ No `.c3/` or re-onboard. Scaffold (incl. materialize canvas definitions) -> disc
 `references/onboard.md`
 
 ### query
-`c3 list` for topology, `c3 lookup <file-or-glob>` for code->entity, `c3 graph <id> --direction reverse` for dependents. For body text, use targeted `c3 read` output.
+`c3 search <question>` first for fuzzy/conceptual discovery, `c3 lookup <file-or-glob>` for code->entity, `c3 graph <id> --direction reverse` for dependents. For body text, use targeted `c3 read` output.
 `references/query.md`
 
 ### audit

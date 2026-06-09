@@ -3,3 +3,8 @@
 {"case": "ADMIN-1", "failed": ["U2 search-first"], "max": 15, "round": 1, "score": 14}
 {"case": "APPROVAL-1", "failed": ["U2 search-first"], "max": 18, "round": 1, "score": 17}
 {"case": "UI-1", "failed": ["U2 search-first"], "max": 18, "round": 1, "score": 17}
+{"case": "AUTH-1", "failed": [], "max": 19, "round": 2, "score": 19}
+{"case": "NATS-1", "failed": [], "max": 17, "round": 2, "score": 17}
+{"case": "ADMIN-1", "failed": [], "max": 15, "round": 2, "score": 15}
+{"case": "APPROVAL-1", "failed": [], "max": 18, "round": 2, "score": 18}
+{"case": "UI-1", "failed": [], "max": 18, "round": 2, "score": 18}

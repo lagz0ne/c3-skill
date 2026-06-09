@@ -24,6 +24,13 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# Resolve OUT_DIR to an absolute path. `go build -C "$CLI_DIR" -o "$output"`
+# treats a relative -o as relative to CLI_DIR, so a relative --out-dir (as CI
+# passes, e.g. dist/c3x) would land the binary under cli/ and the later chmod
+# at repo-root would fail. Absolutize so relative and absolute inputs both work.
+mkdir -p "$OUT_DIR"
+OUT_DIR="$(cd "$OUT_DIR" && pwd)"
+
 if [ "$VERSION" = "dev" ] && [ -f "$ROOT/skills/c3/bin/VERSION" ]; then
   VERSION=$(tr -d '[:space:]' < "$ROOT/skills/c3/bin/VERSION")
 fi

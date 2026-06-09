@@ -45,6 +45,28 @@ For code→entity mapping use `c3 lookup <file-or-glob>`. For doc body text, ide
 
 Recipes are candidate entities too. If search returns a matching `recipe`, read it first and serve its sources as a narrative trace. If you already needed `c3 list` for inventory, filter `recipe` rows by title + description before deeper reads.
 
+## Step 0a++: Cross-Cutting Flow Expansion
+
+For questions like "how does X happen and inform users", "trace end-to-end",
+"what breaks across sync/notifications", or any flow with side effects, do not
+stop at the first owner. Build the path:
+
+1. **Action / command owner**: read the screen/flow/component that accepts the
+   user action or external command.
+2. **State mutation owner**: read the component/service/ref that changes domain
+   state and governs semantics.
+3. **Sync mechanism**: search/read `ref-sync`, graph the mutating component, and
+   name the concrete transport (`NATS WebSocket`, deltas/acks, `executionId`).
+4. **Notification mechanism**: search/read notification candidates (`c3-211`,
+   notification ADRs/refs/channels), then graph them to find dispatcher/channel
+   touchpoints.
+5. **Emergent property**: state what falls out of the combined mechanisms, such
+   as async/non-blocking notification, targeted user subjects vs broadcast sync,
+   step-advance-only notification, or flow entry preserving side effects.
+
+When saying no rules apply, say "no `rule-*` entities found" instead of naming
+made-up negative ids like `rule-auth` or `rule-sync`.
+
 ## Step 0b: Clarify Intent
 
 Ask when (skip if ASSUMPTION_MODE):

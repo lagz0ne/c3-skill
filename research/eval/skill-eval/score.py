@@ -258,6 +258,22 @@ def score(case_id: str, answer_file: Path) -> dict:
             f"notification_mechanism_terms:{notification_terms}",
         )
 
+    mechanism_groups = scorer.get("mechanism_terms", [])
+    if mechanism_groups:
+        mechanism_points = 0
+        missing_mechanisms: list[str] = []
+        for group in mechanism_groups:
+            if term_group_present(text_lower, group):
+                mechanism_points += 1
+            else:
+                missing_mechanisms.append(str(group))
+        add_partial(
+            result,
+            mechanism_points,
+            len(mechanism_groups),
+            f"mechanism_terms:{'; '.join(missing_mechanisms)}",
+        )
+
     property_groups = scorer.get("emergent_property_terms", [])
     if property_groups:
         add_point(

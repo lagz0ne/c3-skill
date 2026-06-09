@@ -55,6 +55,8 @@ C3X_MODE=agent bash skills/c3/bin/c3x.sh --c3-dir research/eval/skill-eval/fixtu
 | File | Role |
 | --- | --- |
 | `cases/acountee-round1.md` | Questions, expected elements, evidence snippets, one sample skill-guided answer, and inspection. |
+| `cases/acountee-crosscut.md` | Cross-cutting trace cases added after round 1. |
+| `cases/acountee-properties.md` | Diverse emergent-property cases: audit atomicity, config blast radius, transport-auth/sync coupling, and import idempotency. |
 | `rubric.md` | Human-readable scoring criteria derived from the sample answer inspection. |
 | `rubric.jsonl` | Machine-scoreable seed in the existing `research/eval/rubric.jsonl` style. |
 | `fixtures/acountee/.c3/` | Portable C3 snapshot for the real acountee project. |
@@ -78,6 +80,13 @@ whether conceptual discovery started with `c3 search`.
 - `ADMIN-1`: What owns administrator features for users, teams, audit, and approval configuration?
 - `APPROVAL-1`: Where does approval workflow live and what governs changes to approvals?
 - `UI-1`: How should invoice and payment request screens stay consistent across detail and list layouts?
+
+## Properties case set
+
+- `PROPERTY-AUDIT-ATOMICITY-1`: If mass approval partially fails, is the audit trail still consistent?
+- `PROPERTY-CONFIG-BLAST-RADIUS-1`: What is affected if `NATS_SUBJECT_PREFIX` changes away from `sync`?
+- `PROPERTY-TRANSPORT-SYNC-COUPLING-1`: How does changing NATS JWT auth affect the sync layer?
+- `PROPERTY-FILE-IDEMPOTENCY-1`: If an invoice ZIP import has duplicates and parse failures, what keeps import/file state coherent?
 
 ## Iteration loop
 

@@ -70,6 +70,29 @@ stop at the first owner. Build the path:
 When saying no rules apply, say "no `rule-*` entities found" instead of naming
 made-up negative ids like `rule-auth` or `rule-sync`.
 
+## Step 0a+++ Diverse Property Expansion
+
+When the question asks about a property that emerges across mechanisms, name the
+property explicitly and trace the mechanism that creates it:
+
+- **Partial failure / bulk operation / rollback / consistency:** trace action
+  owner -> mutation owner -> transaction/audit/storage contract -> observation
+  surface. Name the property as atomicity, consistency, partial-success
+  boundary, or idempotency. For audit questions, read the audit ref/recipe and
+  the execution/transaction owner; say whether consistency is per committed
+  mutation or all-or-nothing for the whole batch.
+- **Config / env / prefix / scope changes:** after search, read the config/scope
+  ref and run `c3 graph <ref-or-component> --direction reverse` on both the
+  config mechanism and the domain contract it feeds. Enumerate the concrete ids
+  from the reverse graph; call this the blast radius or scope of impact.
+- **Transport/auth feeding sync or another mechanism:** trace credential
+  generation -> enforcement point -> dependent runtime path. Name the coupling,
+  the shared token/permission/subject/config, and the way the dependent path
+  fails even if the upstream feature still appears healthy.
+- **Duplicate/import/file processing:** trace UI/command -> import/storage flow
+  -> result taxonomy -> sync/audit/database boundary. Name idempotency,
+  deduplication, transactionality, and partial-success behavior when present.
+
 ## Step 0b: Clarify Intent
 
 Ask when (skip if ASSUMPTION_MODE):

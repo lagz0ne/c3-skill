@@ -35,6 +35,19 @@ Known entity/ref/component -> start with the entity graph:
 c3 graph <id> --direction reverse --depth 1
 ```
 
+For property-style impact questions, do not stop at the first owner:
+
+- **Config/scope/prefix/env changes:** run reverse graph on the config/scope ref
+  and on the behavior ref it feeds. Enumerate concrete dependent ids and name the
+  result as blast radius/scope of impact.
+- **Transport/auth changes that feed sync or delivery:** trace credential
+  generation, broker/enforcement, and client/runtime consumption. Name the
+  coupling and the shared subject/permission/token that carries the impact.
+- **Partial failure or bulk operation safety:** trace the mutation boundary,
+  transaction/audit/storage contract, and observation/query surface. Name
+  atomicity, consistency, idempotency, or partial-success boundary when those
+  properties are what the user is really asking about.
+
 ## Step 2: Impact Topology
 
 ```bash

@@ -1,0 +1,5 @@
+{"case": "AUTH-1", "failed": ["U2 search-first"], "max": 19, "round": 1, "score": 18}
+{"case": "NATS-1", "failed": ["U2 search-first"], "max": 17, "round": 1, "score": 16}
+{"case": "ADMIN-1", "failed": ["U2 search-first"], "max": 15, "round": 1, "score": 14}
+{"case": "APPROVAL-1", "failed": ["U2 search-first"], "max": 18, "round": 1, "score": 17}
+{"case": "UI-1", "failed": ["U2 search-first"], "max": 18, "round": 1, "score": 17}

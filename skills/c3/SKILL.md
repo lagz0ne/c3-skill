@@ -84,13 +84,8 @@ at `.c3/canvases/<type>.md`; `c3 canvas` manages them and the user may edit them
 
 ## Precondition
 
-**Read-only fast path:** for conceptual or natural-language discovery ("where is X", "what handles Y", paraphrases), start with `c3 search "<question>"`, then read the best candidates. For known files/globs, use `c3 lookup <file>`. For known IDs/sections, use `c3 read <id> --section <name>`. Skip `list` and `check` unless search/lookup misses, drift is suspected, topology-wide inventory is required, or the user explicitly asks for validation/audit. Prefer section reads. Skip graph unless relationship/dependent impact is part of the answer.
+**Read-only fast path:** for conceptual or natural-language discovery ("where is X", "what handles Y", paraphrases), start with `c3 search "<question>"`, then read the best candidates. For known files/globs, use `c3 lookup <file>`. For known IDs/sections, use `c3 read <id> --section <name>`. Do not run `c3 list` or `c3 check` before the first conceptual `c3 search`; use them only after search/lookup misses, drift is suspected, topology-wide inventory is required, mutation verification is needed, or the user explicitly asks for validation/audit. Prefer section reads. Skip graph unless relationship/dependent impact is part of the answer.
 
-Before every op except onboard:
-```bash
-c3 list
-c3 check
-```
 Missing `.c3/` -> **onboard**. Follow `help[]` hints in output.
 
 ## CoT Harness

@@ -26,3 +26,12 @@
 {"case": "CROSSCUT-STEP-ADVANCE-1", "failed": [], "max": 29, "phase": "crosscut", "round": 2, "score": 29}
 {"case": "CROSSCUT-NOTIFICATION-BELL-1", "failed": ["require:sync.user", "notification_mechanism_terms:['c3-211', 'sync.user', 'notification']"], "max": 28, "phase": "crosscut", "round": 2, "score": 26}
 {"case": "CROSSCUT-SLACK-APPROVAL-1", "failed": ["notification_mechanism_terms:['c3-211', 'slackchannel', 'notification']"], "max": 30, "phase": "crosscut", "round": 2, "score": 29}
+{"case": "AUTH-1", "failed": [], "max": 24, "phase": "crosscut", "round": 3, "score": 24}
+{"case": "NATS-1", "failed": [], "max": 22, "phase": "crosscut", "round": 3, "score": 22}
+{"case": "ADMIN-1", "failed": [], "max": 20, "phase": "crosscut", "round": 3, "score": 20}
+{"case": "APPROVAL-1", "failed": [], "max": 23, "phase": "crosscut", "round": 3, "score": 23}
+{"case": "UI-1", "failed": [], "max": 23, "phase": "crosscut", "round": 3, "score": 23}
+{"case": "CROSSCUT-MASS-APPROVAL-1", "failed": [], "max": 30, "phase": "crosscut", "round": 3, "score": 30}
+{"case": "CROSSCUT-STEP-ADVANCE-1", "failed": [], "max": 29, "phase": "crosscut", "round": 3, "score": 29}
+{"case": "CROSSCUT-NOTIFICATION-BELL-1", "failed": [], "max": 28, "phase": "crosscut", "round": 3, "score": 28}
+{"case": "CROSSCUT-SLACK-APPROVAL-1", "failed": [], "max": 30, "phase": "crosscut", "round": 3, "score": 30}

@@ -48,3 +48,16 @@
 {"case": "PROPERTY-CONFIG-BLAST-RADIUS-1", "failed": ["U4 exact-ids missing=['c3-202', 'c3-203', 'c3-204', 'c3-211', 'recipe-backend-foundations', 'c3-205', 'c3-206', 'c3-207', 'c3-210', 'c3-212', 'recipe-approval-workflow', 'recipe-realtime-sync']", "ids_include:c3-202", "ids_include:c3-203", "ids_include:c3-204", "ids_include:c3-211", "ids_include:recipe-backend-foundations", "ids_include:c3-205", "ids_include:c3-206", "ids_include:c3-207", "ids_include:c3-210", "ids_include:c3-212", "ids_include:recipe-approval-workflow", "ids_include:recipe-realtime-sync", "trace_coverage:config-scope missing=['c3-202', 'c3-203']; sync-dependents missing=['c3-205', 'c3-206', 'c3-207', 'c3-210', 'c3-212', 'recipe-realtime-sync']"], "max": 44, "phase": "properties", "round": 1, "score": 28}
 {"case": "PROPERTY-TRANSPORT-SYNC-COUPLING-1", "failed": ["U4 exact-ids missing=['recipe-realtime-sync', 'recipe-auth-and-access', 'adr-20260113-nats-jwt-resolver', 'adr-20260112-nats-auth-callout']", "ids_include:recipe-realtime-sync", "ids_include:recipe-auth-and-access", "ids_include:adr-20260113-nats-jwt-resolver", "ids_include:adr-20260112-nats-auth-callout", "trace_coverage:auth-generation missing=['adr-20260113-nats-jwt-resolver']; broker-enforcement missing=['adr-20260112-nats-auth-callout']; sync-client missing=['recipe-realtime-sync']", "mechanism_terms:['loaderdata']; ['subscribe-only']; ['executionid']"], "max": 36, "phase": "properties", "round": 1, "score": 24}
 {"case": "PROPERTY-FILE-IDEMPOTENCY-1", "failed": ["U4 exact-ids missing=['c3-204', 'adr-20260212-workbench-feature']", "ids_include:c3-204", "ids_include:adr-20260212-workbench-feature", "trace_coverage:file-storage missing=['c3-204']; result-sync missing=['adr-20260212-workbench-feature']", "mechanism_terms:['deduplication']", "emergent_property_terms:[['idempotency'], ['partial-success'], ['partial success'], ['coherent', 'state']]"], "max": 33, "phase": "properties", "round": 1, "score": 25}
+{"case": "AUTH-1", "failed": [], "max": 24, "phase": "properties", "round": 2, "score": 24}
+{"case": "NATS-1", "failed": [], "max": 22, "phase": "properties", "round": 2, "score": 22}
+{"case": "ADMIN-1", "failed": [], "max": 20, "phase": "properties", "round": 2, "score": 20}
+{"case": "APPROVAL-1", "failed": [], "max": 23, "phase": "properties", "round": 2, "score": 23}
+{"case": "UI-1", "failed": [], "max": 23, "phase": "properties", "round": 2, "score": 23}
+{"case": "CROSSCUT-MASS-APPROVAL-1", "failed": [], "max": 30, "phase": "properties", "round": 2, "score": 30}
+{"case": "CROSSCUT-STEP-ADVANCE-1", "failed": [], "max": 29, "phase": "properties", "round": 2, "score": 29}
+{"case": "CROSSCUT-NOTIFICATION-BELL-1", "failed": [], "max": 28, "phase": "properties", "round": 2, "score": 28}
+{"case": "CROSSCUT-SLACK-APPROVAL-1", "failed": [], "max": 30, "phase": "properties", "round": 2, "score": 30}
+{"case": "PROPERTY-AUDIT-ATOMICITY-1", "failed": [], "max": 32, "phase": "properties", "round": 2, "score": 32}
+{"case": "PROPERTY-CONFIG-BLAST-RADIUS-1", "failed": [], "max": 44, "phase": "properties", "round": 2, "score": 44}
+{"case": "PROPERTY-TRANSPORT-SYNC-COUPLING-1", "failed": [], "max": 36, "phase": "properties", "round": 2, "score": 36}
+{"case": "PROPERTY-FILE-IDEMPOTENCY-1", "failed": [], "max": 33, "phase": "properties", "round": 2, "score": 33}

@@ -27,6 +27,32 @@ COMMAND_SUBCOMMAND_RE = re.compile(
     r"(?:(?:\bc3\b)|(?:c3x\.sh)|(?:\bc3x\b)).*?\b(search|list|lookup|read|graph|check|schema|canvas)\b"
 )
 CONFIRMING_COMMANDS = {"read", "graph", "lookup", "schema"}
+WORD_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_./<>{}-]*")
+DUMP_COVERAGE = 0.7
+
+
+def strip_term_dumps(text: str, scorer: dict) -> str:
+    """Drop lines that are mostly rubric terms/IDs (bare term dumps), keep prose."""
+    keys = ("require", "require_any", "ids_include", "governance_refs", "sync_mechanism_terms", "notification_mechanism_terms")
+    terms = sum((scorer.get(k) or [] for k in keys), [])
+    terms += sum((seg.get("ids", []) for seg in scorer.get("trace_coverage", [])), [])
+    terms = [t.lower() for t in terms + sum(scorer.get("mechanism_terms", []) + scorer.get("emergent_property_terms", []), [])]
+    kept = []
+    for line in text.splitlines():
+        lower = line.lower()
+        covered = bytearray(len(line))
+        spans = [m.span() for m in ID_RE.finditer(lower)]
+        for term in terms:
+            pos = -1
+            while (pos := lower.find(term, pos + 1)) != -1:
+                spans.append((pos, pos + len(term)))
+        for s, e in spans:
+            covered[s:e] = b"\x01" * (e - s)
+        word_pos = [i for m in WORD_RE.finditer(line) for i in range(m.start(), m.end())]
+        if word_pos and sum(covered[i] for i in word_pos) / len(word_pos) >= DUMP_COVERAGE:
+            continue
+        kept.append(line)
+    return "\n".join(kept)
 
 
 def load_cases() -> dict[str, dict]:
@@ -143,6 +169,8 @@ def score(case_id: str, answer_file: Path) -> dict:
     case = cases[case_id]
     text = answer_file.read_text(encoding="utf-8")
     text_lower = text.lower()
+    content = strip_term_dumps(text, case["scorer"])  # content checks see prose only
+    content_lower = content.lower()
     evidence = evidence_region(text)
     commands = command_lines(evidence)
     valid_ids = fixture_ids()
@@ -175,7 +203,7 @@ def score(case_id: str, answer_file: Path) -> dict:
     add_point(result, bool(confirming), "U3 targeted-confirmation")
 
     required_ids = scorer.get("ids_include", [])
-    present_ids = [entity_id for entity_id in required_ids if entity_id in text]
+    present_ids = [entity_id for entity_id in required_ids if entity_id in content]
     if not required_ids or len(present_ids) == len(required_ids):
         u4_points = 3
     elif len(present_ids) == 0:
@@ -187,7 +215,7 @@ def score(case_id: str, answer_file: Path) -> dict:
     result["max"] += 3
     result["score"] += u4_points
     if u4_points < 3:
-        missing = [entity_id for entity_id in required_ids if entity_id not in text]
+        missing = [entity_id for entity_id in required_ids if entity_id not in content]
         result["failed"].append(f"U4 exact-ids missing={missing}")
 
     seen_ids = set(ID_RE.findall(text))
@@ -198,8 +226,8 @@ def score(case_id: str, answer_file: Path) -> dict:
     if governance_refs is None:
         governance_refs = [entity_id for entity_id in required_ids if entity_id.startswith("ref-")]
     if governance_refs:
-        refs_present = [ref_id for ref_id in governance_refs if ref_id in text]
-        refs_with_why = [ref_id for ref_id in refs_present if nearby_why(text_lower, ref_id)]
+        refs_present = [ref_id for ref_id in governance_refs if ref_id in content]
+        refs_with_why = [ref_id for ref_id in refs_present if nearby_why(content_lower, ref_id)]
         if not refs_present:
             u5_points = 0
         elif len(refs_with_why) == len(governance_refs):
@@ -219,10 +247,10 @@ def score(case_id: str, answer_file: Path) -> dict:
 
     any_terms = scorer.get("require_any", [])
     if any_terms:
-        add_point(result, any(term in text for term in any_terms), f"require_any:{any_terms}")
+        add_point(result, any(term in content for term in any_terms), f"require_any:{any_terms}")
 
     for entity_id in required_ids:
-        add_point(result, entity_id in text, f"ids_include:{entity_id}")
+        add_point(result, entity_id in content, f"ids_include:{entity_id}")
 
     forbidden_terms = scorer.get("forbid", [])
     if forbidden_terms:
@@ -235,7 +263,7 @@ def score(case_id: str, answer_file: Path) -> dict:
         missing_segments: list[str] = []
         for segment in trace_segments:
             ids = segment.get("ids", [])
-            missing = [entity_id for entity_id in ids if entity_id not in text]
+            missing = [entity_id for entity_id in ids if entity_id not in content]
             if missing:
                 missing_segments.append(f"{segment.get('name', 'segment')} missing={missing}")
             else:
@@ -246,7 +274,7 @@ def score(case_id: str, answer_file: Path) -> dict:
     if sync_terms:
         add_point(
             result,
-            term_group_present(text_lower, sync_terms),
+            term_group_present(content_lower, sync_terms),
             f"sync_mechanism_terms:{sync_terms}",
         )
 
@@ -254,7 +282,7 @@ def score(case_id: str, answer_file: Path) -> dict:
     if notification_terms:
         add_point(
             result,
-            term_group_present(text_lower, notification_terms),
+            term_group_present(content_lower, notification_terms),
             f"notification_mechanism_terms:{notification_terms}",
         )
 
@@ -263,7 +291,7 @@ def score(case_id: str, answer_file: Path) -> dict:
         mechanism_points = 0
         missing_mechanisms: list[str] = []
         for group in mechanism_groups:
-            if term_group_present(text_lower, group):
+            if term_group_present(content_lower, group):
                 mechanism_points += 1
             else:
                 missing_mechanisms.append(str(group))
@@ -278,7 +306,7 @@ def score(case_id: str, answer_file: Path) -> dict:
     if property_groups:
         add_point(
             result,
-            any_term_group_present(text_lower, property_groups),
+            any_term_group_present(content_lower, property_groups),
             f"emergent_property_terms:{property_groups}",
         )
 

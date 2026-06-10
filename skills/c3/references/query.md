@@ -201,7 +201,9 @@ these bars:
    about an entity's behavior, contract, or governance must come from a `read`/
    `graph`/`lookup`/`search` output you ran, and the answer says which (entity +
    section). Listing evidence commands up front grounds nothing by itself — if a
-   claim has no read behind it, run the read or drop the claim.
+   claim has no read behind it, run the read or drop the claim. Cite entities by
+   their exact c3 id as c3 output shows it — never a truncated id or a
+   directory/path-derived name.
 2. **Cross-cutting answers state the full causal chain** (Step 0a++ items 1–6)
    as a chain — action owner -> state mutation -> mechanism -> dependent/observer
    -> emergent property -> failure boundary — not as a flat entity list. Each
@@ -225,6 +227,14 @@ these bars:
    which concrete behavior (layout regions, sticky/empty/responsive states),
    what visibly breaks if the pattern changes, and how consistency is verified
    across the screens that share it.
+8. **Side effects belong to a layer — verify which one before any bypass claim.**
+   When a capability has multiple entry paths (UI, chat/bot action, API, direct
+   service call), read where each side effect — sync emit, notification dispatch,
+   audit write — is actually attached: flow layer, service layer, or storage
+   trigger. Then state explicitly which side effects each entry path triggers
+   and which it skips. Never assume a side effect survives entering below its
+   attachment layer; the attachment point decides, and the doc that declares it
+   is the evidence.
 
 ## Response Format
 

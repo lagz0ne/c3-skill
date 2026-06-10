@@ -1,0 +1,48 @@
+{
+  "case_id": "UI-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "Provides a usable change map: owners, shared refs, pattern boundaries, likely breakage modes, sibling-screen impact, and checks such as c3 graph/c3 check/SFT validation.",
+      "score": 5
+    },
+    "correctness": {
+      "justification": "Correctly identifies recipe-screen-anatomy as orientation, c3-104/c3-105 as screen owners, and the required governing refs: ref-master-detail-layout, ref-detail-content-strategy, ref-list-view-patterns, ref-filter-footer, and ref-responsive-layout. It also correctly states that no rule-* entities are surfaced. Minor precision risk comes from asserting many exact component internals and identical uses lists beyond the provided ground truth.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Major claims are tied to C3 read and graph commands and the grounding table maps claims to sources. However, many highly specific details are asserted from refs not included in the case excerpt, so they look over-grounded relative to the supplied evidence even if the cited ids exist.",
+      "score": 4
+    },
+    "no_hallucination": {
+      "justification": "No cited entity id is invented; all referenced ids are in the fixture inventory or resolve directly. The answer does not contradict the core ground truth or invent whole-batch/guaranteed-delivery style guarantees. Some unverifiable specifics are not hallucinations under the rubric but remain grounding risk.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "Explains the governing property as consistency through shared pattern ownership rather than copy/paste. It names concrete mechanisms, boundaries, breakage modes, and verification implications across shell, list, footer, detail grammar, tabs, variants, and responsive behavior.",
+      "score": 5
+    },
+    "trace_completeness": {
+      "justification": "Gives the full causal chain: shared screen archetype and owners -> shared refs -> specific layout/list/filter/detail/responsive mechanisms -> both invoice and payment request observers -> consistency and failure modes when patterns change.",
+      "score": 5
+    }
+  },
+  "overall": 4.5,
+  "quality_gaps": [
+    "Adds many extra refs and implementation specifics beyond the machine ground truth, making parts of the answer depend on evidence not visible in the excerpt.",
+    "The claim that c3-104 and c3-105 have an identical uses list is stronger than the case excerpt proves.",
+    "Several precise UI details, such as slot names, pixel widths, animation timing, context names, sticky-header internals, and typo behavior, are not verifiable from the supplied case file excerpt.",
+    "Grounding table cites sections and facts that may exist in the fixture but are not established by the provided excerpt, so a real judge should treat those as lower-confidence rather than fully proved."
+  ],
+  "reviewer_overalls": [
+    4.5,
+    4.5,
+    4.5
+  ],
+  "reviewer_verdicts": [
+    "pass",
+    "pass",
+    "pass"
+  ],
+  "summary": "Strong answer on the required owners, governing refs, consistency mechanism, and safe-change guidance. It passes, but it is more expansive than the supplied case evidence can fully support.",
+  "verdict": "pass"
+}

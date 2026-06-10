@@ -1,0 +1,48 @@
+{
+  "case_id": "AUTH-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "It gives a practical change map with owners, governing refs, causal flow, failure boundaries, configuration checks, and verification targets for login, RBAC, execution context, and NATS credentials.",
+      "score": 5
+    },
+    "correctness": {
+      "justification": "The answer captures the core ground truth: recipe-auth-and-access, c3-213 for Google OAuth/test-token auth, c3-202 currentUserTag/UserActor execution context, c3-209 NATS JWT/nkey credentials, c3-4 as NATS validator/enforcer, and refs ref-authentication/ref-rbac/ref-nats-jwt-auth with no rule-* entities. It adds c3-203 as middleware owner and many implementation details not in the provided ground-truth excerpt; these may be plausible but are not required and some ownership framing is more specific than the machine ground truth proves.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Major claims are tied to C3 reads, refs, recipe, and graphs. However, several high-detail claims rely on c3-203, ADRs, lookup results, and doc-body file paths outside the expected ground-truth set, and c3-4 is discussed without a direct read command. The answer is heavily grounded-looking but somewhat overextended beyond the case excerpt.",
+      "score": 4
+    },
+    "no_hallucination": {
+      "justification": "All cited entity ids appear in the fixture inventory or resolve as valid ids, and it correctly says no rule-* entities exist. There are no clear contradictions to the excerpt. Some claims are unverified by the provided excerpt, but that is a grounding issue rather than hallucination under the rubric.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "It explains mechanisms and boundaries well: OAuth is not sufficient without a DB user, middleware restores identity but enforcement is flow-level, RBAC checks and security logging are distinct from team capability gating, and NATS auth is a separate identity layer with subscribe-only permissions and no auth callout.",
+      "score": 5
+    },
+    "trace_completeness": {
+      "justification": "It traces action -> login/auth result -> cookie/session -> request restore/currentUserTag -> RBAC checks -> NATS credential generation -> c3-4 validation/permission enforcement, and separates HTTP session, application authorization, and NATS transport identity.",
+      "score": 5
+    }
+  },
+  "overall": 4.5,
+  "quality_gaps": [
+    "Over-includes c3-203, ADR history, code lookups, and file-path details that are not part of the machine ground truth and are only weakly supported by the provided excerpt.",
+    "Discusses c3-4 behavior but does not include a direct evidence command reading or graphing c3-4.",
+    "Frames c3-203 as a request-identity owner even though the expected execution-context owner in the case is c3-202; this is probably useful but could blur the required ownership boundary.",
+    "Some detailed operational claims such as exact cookie behavior, middleware non-rejection, security_events behavior, and RBAC role specifics are not independently verifiable from the excerpt and depend on candidate-cited reads outside the ground-truth summary."
+  ],
+  "reviewer_overalls": [
+    4.5,
+    4.5,
+    4.3
+  ],
+  "reviewer_verdicts": [
+    "pass",
+    "pass",
+    "pass"
+  ],
+  "summary": "Strong answer: correct core owners and refs, explicit causal chain, good caveats, and useful change guidance. Main weakness is over-breadth: it leans on extra entities and implementation details beyond the supplied ground truth, with some claims not directly proven in the excerpt.",
+  "verdict": "pass"
+}

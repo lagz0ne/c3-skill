@@ -1,0 +1,48 @@
+{
+  "case_id": "PROPERTY-FILE-IDEMPOTENCY-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "Useful for an engineer: it names owners, mechanisms, risks, and concrete verification checks. The unnecessary audit path and missing ADR precedent mean an engineer would still need to re-check part of the intended evidence chain.",
+      "score": 4
+    },
+    "correctness": {
+      "justification": "Correctly identifies c3-104 as the UI entry, c3-206/importFiles as the mutation owner, ref-file-handling as PostgreSQL BYTEA/content-hash/tri-state file handling, c3-204 as schema owner, ref-sync as post-success observer, and the idempotency/partial-success boundary. It misses the adr-20260212-workbench-feature per-item result precedent and has one overconfident retry/orphan-file inference that it later partially caveats.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Most central claims are tied to cited C3 reads and sections, especially c3-104, c3-206, ref-file-handling, c3-204, and ref-sync. Grounding is not perfect because several extra audit/query/lookup details are outside the provided case evidence, and the expected ADR evidence is omitted.",
+      "score": 4
+    },
+    "no_hallucination": {
+      "justification": "All cited entity ids exist in the fixture inventory, and the answer does not claim whole-batch atomicity or guaranteed sync delivery. It does not earn a 5 because some inferred behavior, especially retry after a stored parse failure, is stated too strongly before being caveated.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "It explains why duplicates become skipped, why ZIP imports are partial rather than batch-atomic, how successful entries commit and sync, and where concurrency, transaction, retry, and cleanup boundaries are undocumented.",
+      "score": 5
+    },
+    "trace_completeness": {
+      "justification": "The answer gives a usable action -> state change -> dedup/parse/result mechanism -> sync observer -> emergent property chain. The trace is weakened by not integrating the ADR precedent and by adding an audit side branch that is not part of the required causal chain.",
+      "score": 5
+    }
+  },
+  "overall": 4.4,
+  "quality_gaps": [
+    "Does not run or use `c3 read adr-20260212-workbench-feature --full`, despite the ground truth naming it as the per-item result precedent.",
+    "Adds audit, query-service transaction, actor attribution, and codemap-gap material that is not part of the expected import/file coherence chain and is not supported by the provided excerpt.",
+    "States that a leftover stored file from a failed earlier attempt does not block later successful insert, then later says retry-after-file-skip semantics are undocumented; this should have stayed caveated throughout.",
+    "The emergent property is renamed as content-hash convergence; acceptable, but it should explicitly retain the ground-truth label `import idempotency/partial-success boundary`."
+  ],
+  "reviewer_overalls": [
+    4.2,
+    4.5,
+    4.25
+  ],
+  "reviewer_verdicts": [
+    "pass",
+    "pass",
+    "pass"
+  ],
+  "summary": "Strong core answer: it captures the import idempotency and partial-success boundary and gives useful caveats. Main weaknesses are omission of the ADR precedent, some distracting unsupported side mechanisms, and one inconsistent retry/orphan-file inference.",
+  "verdict": "pass"
+}

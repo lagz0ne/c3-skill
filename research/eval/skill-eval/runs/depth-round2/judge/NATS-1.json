@@ -1,0 +1,48 @@
+{
+  "case_id": "NATS-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "The answer is highly actionable: it names owners, direct and transitive dependents, breakage modes, safe boundaries, caveats, and concrete post-change checks. An engineer could use it to assess or plan a NATS websocket auth change without redoing the core causal trace.",
+      "score": 5
+    },
+    "correctness": {
+      "justification": "The answer correctly identifies the live design as ref-nats-jwt-auth/JWT resolver rather than auth callout, c3-209 as credential generator, c3-4 as broker validator/permission enforcer, ref-sync as a dependent transport, and the relevant ADRs. It also correctly explains major breakages around key mismatch, permissions, credential handoff, TTL, and weakened auth. Minor issues: it adds many fixture details not present in the supplied excerpt, overstates some exact runtime/file-level specifics, and shifts affected topology toward c3-101/c3-211 without clearly preserving the expected c3-0/c3-1/c3-2 topology beyond ADR wording.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Major claims are tied to C3 reads/graphs in the grounding table, but the answer relies heavily on specific details not present in the case excerpt, such as exact subject names, email escaping, c3-101 wiring, c3-211 durability, endpoint paths, code lookup results, and timeout behavior. Those may be real fixture facts, but from the provided case materials they are not fully verifiable. Some evidence commands also look broader than the expected grounding path and are not all substantiated by the excerpt.",
+      "score": 3
+    },
+    "no_hallucination": {
+      "justification": "No cited concrete entity id is outside the fixture inventory, and the core answer does not contradict the machine ground truth. It avoids the severe hallucination of treating the superseded auth callout ADR as current. There is some risk of over-specific unverified behavior, but under the rubric that belongs mainly to grounding rather than hallucination.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "It explains the mechanisms and boundaries well: JWT signing versus resolver preload, embedded permissions, broadcast versus per-user subjects, server TCP publishing versus browser WebSocket delivery, degradation versus correctness, and the security failure mode of weakened auth. It also identifies tradeoffs and verification probes.",
+      "score": 5
+    },
+    "trace_completeness": {
+      "justification": "It gives an explicit action-to-state-to-mechanism-to-dependent-to-emergent-impact chain: auth change affects generated credentials/resolver config, c3-4 enforces or rejects, browser sync/notification subscribers depend on that, and emergent failures are stale UI, delayed wait fallback, lost real-time notifications, or silent data exposure if auth weakens.",
+      "score": 5
+    }
+  },
+  "overall": 4.35,
+  "quality_gaps": [
+    "Grounding includes many details not proven by the case excerpt, such as exact c3-101 atom names, subject literals, email escaping, JetStream retention, and file lookup outcomes.",
+    "Expected affected topology c3-0, c3-1, c3-2, c3-4 plus c3-209 is not cleanly emphasized; c3-101/c3-211 are foregrounded more than the machine ground truth requires.",
+    "Some exact credential shape language is imprecise against the ground truth's JWT+nkey wording, though the caveat partially acknowledges drift.",
+    "Evidence command list is broad and partly decorative; not every cited command is necessary or tied tightly to a material claim."
+  ],
+  "reviewer_overalls": [
+    4.35,
+    4.75,
+    4.15
+  ],
+  "reviewer_verdicts": [
+    "pass",
+    "pass",
+    "pass"
+  ],
+  "summary": "Strong answer. It captures the current JWT resolver design, owners, dependency chain, failure boundaries, and useful verification. Main weakness is over-specific grounding beyond the supplied excerpt, especially around c3-101/c3-211/file-level/runtime details.",
+  "verdict": "pass"
+}

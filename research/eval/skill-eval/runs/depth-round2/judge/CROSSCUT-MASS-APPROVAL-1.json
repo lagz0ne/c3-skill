@@ -1,0 +1,48 @@
+{
+  "case_id": "CROSSCUT-MASS-APPROVAL-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "Gives a safe change map with owners, mechanisms, side-effect layers, affected notification/sync paths, failure probes, and concrete checks. An engineer could use it to assess or modify the mass-approval path without redoing the main trace.",
+      "score": 5
+    },
+    "correctness": {
+      "justification": "Correctly identifies c3-105 as the Approvals-mode UI entry, c3-205 approveAll as the mutation owner, ref-approval-chain as approval-state semantics, ref-sync/NATS as the broadcast sync path, c3-211/JetStream as notification dispatch, and the async logged/suppressed notification failure boundary. It adds many detailed claims outside the provided excerpt; most are plausible and not contradicted, but some are over-specific relative to the available ground truth, such as precise channel internals, Slack behavior, and transaction/audit side paths.",
+      "score": 5
+    },
+    "grounding": {
+      "justification": "Major claims are tied to named C3 reads, graphs, ADRs, and refs, and the core trace is well grounded in the case excerpt. However, the answer includes a large amount of extra detail not present in the supplied excerpt, and several specific operational claims rely on asserted reads rather than evidence snippets visible in the case material.",
+      "score": 4
+    },
+    "no_hallucination": {
+      "justification": "All cited entity ids appear in the fixture inventory or resolve cleanly. The answer does not contradict the core ground truth and does not invent whole-batch atomicity or guaranteed notification delivery. Some details are unverifiable from the excerpt, but under the rubric those are grounding/precision issues rather than hallucinations.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "Explains the key emergent properties well: async/non-blocking notifications, per-PR partial success, targeted-vs-broadcast delivery, step-advance-only notification, and failure isolation. It also discusses boundaries and change checks, making the mechanisms understandable rather than just naming ids.",
+      "score": 5
+    },
+    "trace_completeness": {
+      "justification": "Explicitly traces action -> per-PR mutation -> approval-chain state progression -> sync broadcast/ack -> targeted notification dispatch -> observers/users -> emergent properties and failure boundaries. The answer clearly separates broadcast data sync from targeted notification delivery.",
+      "score": 5
+    }
+  },
+  "overall": 4.75,
+  "quality_gaps": [
+    "Over-specific details about Slack behavior, notification preferences, JetStream retention, audit attribution, and UI mechanics are not supported by the provided excerpt, even if the cited ids exist.",
+    "The answer is much broader than the case requires, which makes it harder to distinguish fixture-proved facts from plausible extra fixture details.",
+    "c3-101 is mentioned but not centered as clearly as ref-sync/c3-101 in the machine ground truth for WebSocket broadcast/user-subject sync.",
+    "Some caveats are useful but rely on negative reads of docs that the provided excerpt does not independently confirm."
+  ],
+  "reviewer_overalls": [
+    4.5,
+    4.75,
+    5.0
+  ],
+  "reviewer_verdicts": [
+    "pass",
+    "pass",
+    "pass"
+  ],
+  "summary": "Strong answer: correct core trace, explicit causal chain, and useful engineering boundaries. Main weakness is over-expansion into detailed claims beyond the supplied excerpt, which slightly weakens grounding precision but does not undermine the core answer.",
+  "verdict": "pass"
+}

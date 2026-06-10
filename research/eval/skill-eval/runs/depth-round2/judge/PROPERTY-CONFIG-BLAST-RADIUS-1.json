@@ -1,0 +1,49 @@
+{
+  "case_id": "PROPERTY-CONFIG-BLAST-RADIUS-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "It gives a practical change map: update frontend subscription wiring, JWT permissions, broker permissions, docs, and end-to-end sync/notification checks. It names failure boundaries and verification probes that would help an engineer safely assess the change.",
+      "score": 5
+    },
+    "correctness": {
+      "justification": "Major required facts are correct: ref-scope-controlled-config owns scope-tag config, ref-sync defines prefix-derived subjects, c3-209 uses natsConfig.subjectPrefix for JWT permissions, c3-101 hardcodes sync subscriptions, c3-4 broker permissions use {prefix}.>, and the blast radius crosses config, broker, permissions, frontend, sync, and notifications. Minor precision issues: it adds entities outside the expected trace, marks c3-2 as direct based on inferred ownership, and asserts some notification/JetStream boundaries more strongly than the provided ground truth proves.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Most important claims are tied to specific C3 reads or graphs, including the two reverse graphs, c3-209, c3-101, c3-4, ref-sync, and ref-scope-controlled-config. Grounding is weakened by extra asserted reads and greps not in the case excerpt, shorthand evidence rows, and some prose that claims more detail than the excerpt/ground truth establishes.",
+      "score": 4
+    },
+    "no_hallucination": {
+      "justification": "All cited C3/ADR/ref/recipe ids are present in the fixture inventory or are clear shorthand for inventory ids. The answer does not invent whole-batch atomicity or guaranteed delivery. It does contain a few over-strong inferred behaviors, but they are better treated as grounding/precision issues than direct contradictions.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "It clearly explains the emergent blast-radius/coupling property and the asymmetric break where backend/permissions are prefix-driven while frontend is hardcoded. It also discusses failure modes and verification. Some deeper claims, especially durable notification behavior and c3-2 directness, depend on inference beyond the supplied case evidence.",
+      "score": 4
+    },
+    "trace_completeness": {
+      "justification": "The answer gives an explicit action-to-impact chain: env/config tag change, subject contract, publisher and broker permissions, JWT permission generation, frontend subscriptions, flow-side sync effects, acks/timeouts, and affected observers. It also separates direct and transitive dependents.",
+      "score": 5
+    }
+  },
+  "overall": 4.3,
+  "quality_gaps": [
+    "Adds c3-2, c3-104, c3-105, ref-nats-jwt-auth, and ADR analysis beyond the expected case path; useful but not all tightly grounded by the provided excerpt.",
+    "Labels c3-2 as direct impact through inferred container ownership, while the machine ground truth emphasizes c3-209, c3-101, c3-4, ref-sync, and config-scope dependents.",
+    "Notification durability and JetStream independence are asserted more specifically than the machine ground truth requires or proves.",
+    "Some evidence entries use shorthand or claimed grep/filter results rather than fully traceable command-output facts.",
+    "The answer is more expansive than necessary, which increases review burden and creates opportunities for unsupported precision errors."
+  ],
+  "reviewer_overalls": [
+    4.3,
+    4.2,
+    4.5
+  ],
+  "reviewer_verdicts": [
+    "pass",
+    "pass",
+    "pass"
+  ],
+  "summary": "Strong answer. It captures the required blast-radius property and full causal chain, with useful direct/transitive impact mapping and verification guidance. Main weakness is over-expansion into extra entities and a few claims that are plausible but not tightly proved by the supplied ground truth.",
+  "verdict": "pass"
+}

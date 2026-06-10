@@ -5,6 +5,27 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [10.0.0] - 2026-06-10
+
+Major release: the canvas entity model, a new two-shape distribution, and a revamped, eval-hardened skill. Consolidates the unreleased 9.10.x line.
+
+### Added
+
+- **Canvas entity model** — every entity type (`container`, `component`, `ref`, `rule`, `adr`, `recipe`, plus document types like `prd`/`user-story`) is defined by a user-owned canvas at `.c3/canvases/<type>.md`. Built-ins are seeds; projects own and edit their definitions, and `c3x write`/`c3x check` enforce the project's definition, not a baked-in schema. New `canvas` operation in the skill router.
+- **Hybrid semantic search on by default** — `c3x search` fuses local ONNX all-MiniLM embeddings (offline), keyword/BM25, and graph signals; `match_sources` shows why each candidate ranked; `--no-semantic` opts out.
+- **Two-shape distribution** — fat plugin (binaries + embedded semantic model, fully offline) and thin `@c3x/cli` npm package (downloads the matching GitHub Release binary + model into a versioned cache). npm version pins the c3x release.
+- **Answer Depth Contract in the query skill** — claims bound to reads actually run, causal chain with failure boundary, direct vs transitive dependents, ADR status labels, evidence-backed negatives, side-effect attachment layers, exact-id citation. Sweep reports end with a runnable Verification table.
+- **Graded skill eval in-repo** — `research/eval/skill-eval/`: acountee-fixture cases, anti-gaming deterministic scorer (term-dump stripping + fixture-vocabulary attestation), and a K=3 LLM judge with calibrated hallucination criteria. Skill guidance changes are eval-driven (13/13 judge pass, mean 4.44 on the fixture at release).
+
+### Changed
+
+- **Search-first query flow** — conceptual questions start with `c3 search`; `c3 list`/`c3 check` only after misses or for inventory/validation. Cross-cutting and emergent-property questions trace the full mechanism chain (action owner → mutation → sync → notification → emergent property → failure boundary).
+- **macOS Intel (darwin-amd64) builds dropped** — supported targets are linux amd64/arm64 and darwin arm64.
+
+### Removed
+
+- **VS Code extension (c3-nav)** — extension source, release workflow, and docs removed; superseded by skill-driven navigation through the CLI.
+
 ## [9.9.1] - 2026-05-07
 
 ### Changed

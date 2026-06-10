@@ -1,8 +1,8 @@
 # C3: Architecture That Agents Can Read
 
-C3 turns your codebase into something an LLM can navigate. A sealed `.c3/` tree is the shared architectural truth for Git review and merges, while `c3.db` stays a local cache the CLI can rebuild at any time.
+C3 turns your codebase's architecture into something an LLM can navigate, query, and safely change. A sealed `.c3/` tree of markdown is the shared architectural truth — reviewable in Git, validated by machine — while `c3.db` stays a local cache the CLI rebuilds at any time.
 
-Use it through the Claude Code plugin or the `npx` CLI. Both run the same `c3x` commands; the install shape differs.
+Use it through the Claude Code plugin or the `npx` CLI. Both run the same `c3x` engine; only the install shape differs.
 
 ## Install / Run
 
@@ -14,7 +14,7 @@ claude plugin install lagz0ne/c3-skill
 
 Then: `/c3 onboard this project`
 
-The plugin carries the `c3x` binary and embedded semantic model, so meaning-based search works offline after install.
+The plugin carries the `c3x` binary and the embedded semantic model — meaning-based search works offline, no downloads, no toolchain.
 
 **`npx` CLI (thin, fetched on demand):**
 
@@ -23,18 +23,35 @@ npx @c3x/cli check
 npx @c3x/cli search "how do users sign in and get permissions"
 ```
 
-The npm package downloads the matching `c3x` binary and semantic model from the GitHub Release into a local cache when needed.
+The npm package downloads the matching `c3x` binary and semantic model from the GitHub Release into a versioned local cache on first use.
 
 ## Why
 
-Architecture docs rot because nobody enforces them. C3 fixes this by making the docs machine-writable and machine-verifiable:
+Architecture docs rot because nobody enforces them. C3 makes them machine-writable and machine-verifiable:
 
-- **LLMs can ask by meaning** — `c3x search "how do users sign in and get permissions"` can surface authentication/RBAC/JWT docs even when those exact words differ
-- **LLMs read them before touching code** — `c3x lookup src/auth/login.ts` tells the agent which component owns the file, which refs govern it, what rules apply
-- **Writes are validated** — every content update passes through schema enforcement. Missing a required section? Rejected with a hint
-- **Canonical text is reviewable** — Git diffs and merges happen on sealed `.c3/*.md` files and `code-map.yaml`, not on an opaque cache
-- **The cache is disposable** — `c3.db` accelerates queries and writes; `c3x check` rebuilds it from canonical text when needed
-- **Every element is trackable** — headings, paragraphs, table rows, list items each have a unique ID and SHA256 hash; entity-level merkle for O(1) change detection
+- **Your entity model, not ours** — every entity type is defined by a *canvas*, user-owned markdown your team edits; validation enforces *your* definition
+- **LLMs ask by meaning** — `c3x search "how do users sign in"` surfaces authentication/RBAC/JWT docs even when the wording differs
+- **LLMs read before touching code** — `c3x lookup src/auth/login.ts` returns the owning component, governing refs, and applicable rules
+- **Writes are validated** — every content update passes canvas enforcement; a missing required section is rejected with a hint
+- **Canonical text is reviewable** — Git diffs and merges happen on sealed `.c3/*.md` files, never on an opaque cache
+- **The cache is disposable** — `c3x check` rebuilds `c3.db` from canonical text whenever needed
+- **Every element is trackable** — headings, paragraphs, table rows, and list items carry stable IDs and hashes; entity-level merkle gives O(1) change detection
+
+## The canvas model
+
+The core idea of C3: **entity definitions are data, owned by your project.**
+
+Every entity type — `container`, `component`, `ref`, `rule`, `adr`, `recipe`, and document types like `prd` or `user-story` — is defined by a **canvas**: markdown declaring its sections, table columns, and reject rules. c3x ships built-in canvases as seeds; on onboard they materialize into `.c3/canvases/<type>.md` and your team owns them from there.
+
+```bash
+c3x canvas list             # every entity definition + domain + source
+c3x canvas read component   # the canonical definition (yours to edit)
+c3x schema component        # render its sections, columns, REJECT IF rules
+```
+
+Edit a canvas to shape docs around *your* architecture vocabulary — add a section, tighten a reject rule, define a new entity type — and `c3x write` / `c3x check` enforce *your* definition, not a baked-in one. Definitions travel with the repo and are reviewable in Git like everything else.
+
+The built-in component canvas, for example, requires Goal, Parent Fit, Purpose, Foundational Flow, Business Flow, Governance, Contract, Change Safety, and Derived Materials — but that is a seed default, not a contract baked into the binary.
 
 ## What You Get
 
@@ -47,14 +64,15 @@ Architecture docs rot because nobody enforces them. C3 fixes this by making the 
 | `/c3` add rate limiting | **change** — ADR-first: impact analysis → decision record → execute → validate |
 | `/c3` create a ref for error handling | **ref** — cross-cutting pattern with Choice/Why/How sections and cite wiring |
 | `/c3` add a rule for structured logging | **rule** — enforceable standard with golden example and anti-patterns |
+| `/c3` edit the canvas for ADRs | **canvas** — inspect or reshape the definitions that govern your docs |
 | `/c3` audit the docs | **audit** — structural → semantic → drift → compliance validation |
-| `/c3` what breaks if I change payments? | **sweep** — transitive impact across the entity graph |
+| `/c3` what breaks if I change payments? | **sweep** — transitive impact across the entity graph, with a verification table |
+
+Query answers follow the skill's Answer Depth Contract: claims bound to reads actually run, causal chains over entity lists, failure boundaries stated, direct vs transitive dependents separated.
 
 ### The `c3x` CLI
 
-A Go binary bundled inside the plugin. No separate install — the skill carries its own binary for every platform (linux/darwin x amd64/arm64).
-
-> **For agents:** The `/c3` skill handles invocation automatically via `bash <skill-dir>/bin/c3x.sh`. Never run bare `c3x` — always go through `/c3`. The examples below use `c3x` as shorthand for readability.
+> **For agents:** the `/c3` skill invokes the CLI automatically via `bash <skill-dir>/bin/c3x.sh`. Never run bare `c3x` — always go through `/c3`. The examples below use `c3x` as shorthand.
 
 **Read:**
 ```bash
@@ -107,7 +125,7 @@ Hybrid search fuses three signals:
 - **keyword/BM25** — exact terms still matter when the wording lines up
 - **graph** — related components, refs, rules, and code-map paths add architectural context
 
-For example, in an auth system this query can surface `ref-rbac` and `ref-nats-jwt-auth` even if the docs say "authentication", "RBAC", and "JWT" rather than "sign in" or "permissions". Compare with keyword-only mode when you need to see what semantic search added:
+`match_sources` in the output shows which signals ranked each candidate. Compare with keyword-only mode when you need to see what semantic search added:
 
 ```bash
 c3x search "how do users sign in and get permissions" --no-semantic
@@ -130,44 +148,20 @@ c3x check --rule rule-xyz                # scope to citers of a rule
 c3x check --fix                          # auto-fix title-matched references
 ```
 
-Agent-mode compact `c3x list` keeps topology bounded while still exposing recipe `description` and `sources`, so cross-cutting shortcuts can be matched before a deeper `read`.
-
 **Full command list:** `c3x --help`
 
-### Schema enforcement
+### Canvas enforcement
 
-Every entity type has required sections. The CLI enforces them on write:
+`c3x write` (full body) validates required sections before accepting. `c3x write --section` on a component validates the full resulting document, so component docs stay all-or-nothing. `c3x check` validates everything post-hoc — always against the project's own canvas definitions.
 
-| Entity | Required sections |
-|--------|------------------|
-| Component | Goal, Parent Fit, Purpose, Foundational Flow, Business Flow, Governance, Contract, Change Safety, Derived Materials |
-| Container | Goal, Components, Responsibilities |
-| Ref | Goal, Choice, Why |
-| Rule | Goal, Rule, Golden Example |
-| ADR | Goal, Context, Decision, Affected Topology, Compliance Refs, Compliance Rules, Work Breakdown, Underlay C3 Changes, Enforcement Surfaces, Alternatives Considered, Risks, Verification |
-| Recipe | Goal |
-
-`c3x write` (full body) validates required sections before accepting. `c3x write --section` on a component validates the full resulting document, so component docs stay all-or-nothing. `c3x check` validates everything post-hoc.
-
-ADR schema output also carries a pre-draft workorder: create a volatile Discovery Brief from the task goal and targeted `c3x` reads before writing the ADR body. The brief names owner, governing material, and stop condition so agents read relevant references without turning candidate coverage into add-time error floods.
-
-### Your entity model, not ours (canvases)
-
-The required sections above are not hardcoded — each entity type is defined by a **canvas**: data declaring its sections, table columns, and reject rules. c3x ships 11 built-in canvases (`container`, `component`, `ref`, `rule`, `adr`, `recipe`, `system`, plus product types `prd`, `user-story`, `pm-requirement`, `atomic-design-change`) as seeds; on onboard they materialize into `.c3/canvases/<type>.md` and **your team owns them from there**.
-
-```bash
-c3x canvas list             # every entity definition + domain + source
-c3x canvas read component   # the canonical definition (yours to edit)
-c3x schema component        # render its sections, columns, REJECT IF rules
-```
-
-Edit a canvas to shape docs around *your* architecture vocabulary — add a section, tighten a reject rule, define a new entity type — and `c3x check` / `c3x write` enforce *your* definition, not a baked-in one. Definitions are data, so the model travels with the repo and is reviewable in Git like everything else.
+ADR schema output carries a pre-draft workorder: create a volatile Discovery Brief from the task goal and targeted `c3x` reads before writing the ADR body, so agents read the governing material without flooding add-time errors.
 
 ### Canonical `.c3/` tree
 
 ```
 .c3/
 ├── README.md       # canonical context doc
+├── canvases/       # entity definitions (user-owned shape of each type)
 ├── adr/            # canonical ADR markdown
 ├── refs/           # canonical refs
 ├── rules/          # canonical rules
@@ -176,7 +170,7 @@ Edit a canvas to shape docs around *your* architecture vocabulary — add a sect
 └── c3.db           # local cache only (rebuildable)
 ```
 
-The sealed markdown tree is the shared truth. `c3.db` holds entities, a **content node tree** (every heading, paragraph, list item, table row), relationships, code-map globs, version history, and a mutation changelog as local cache.
+The sealed markdown tree is the shared truth. `c3.db` holds entities, a content node tree, relationships, code-map globs, version history, and a mutation changelog — as local cache.
 
 User rule:
 - review and merge `.c3/` text
@@ -185,9 +179,7 @@ User rule:
 
 Every canonical doc carries a `c3-seal` hash. `c3x check` verifies those seals and confirms the current `.c3/` tree matches canonical output.
 
-Entity types: `container`, `component`, `ref`, `rule`, `adr`, `recipe`.
-
-Code-map entries link entities to source files via glob patterns. `c3x lookup` resolves any file to its architecture context. `c3x check` reports coverage as part of validation.
+Code-map entries link entities to source files via glob patterns. `c3x lookup` resolves any file to its architecture context; `c3x check` reports coverage as part of validation.
 
 ### Marketplace
 
@@ -204,12 +196,13 @@ c3x marketplace show rule-error-wrapping
 - review `.c3/` diffs in Git
 - let `c3.db` stay local and disposable
 - run `c3x check` before commit (in CI too)
-- after branch switches, selective merges, or conflict resolution, `c3x check` rebuilds cache and verifies seals as part of validation
 - install once: `c3x git install` (pre-commit guardrails + `.c3/.gitignore` policy)
 
-## Distribution details
+## Distribution
 
-The Claude Code plugin is the fat distribution: pre-built binaries plus the embedded semantic model. It needs no Go toolchain, npm, PATH configuration, or model download:
+Two shapes, one engine:
+
+**Plugin (fat).** The Claude Code plugin bundles pre-built binaries plus the embedded semantic model. No Go toolchain, npm, PATH setup, or model download:
 
 ```
 skills/c3/bin/
@@ -217,29 +210,21 @@ skills/c3/bin/
 ├── c3x.sh                     # detects OS/ARCH, runs the right binary
 ├── c3x-<version>-linux-amd64
 ├── c3x-<version>-linux-arm64
-├── c3x-<version>-darwin-amd64
 └── c3x-<version>-darwin-arm64
 ```
 
-Each plugin version carries its own binary. Different projects can use different versions without conflict.
+Each plugin version carries its own binary, so different projects can run different versions without conflict.
 
-The `npx @c3x/cli` package is the thin distribution: a small manager that resolves OS/ARCH, downloads the matching GitHub Release binary and semantic assets into a versioned local cache, then executes the cached binary.
-
-## VS Code Extension
-
-**C3 Architecture Navigator** — Ctrl+Click on `c3-101` or `ref-jwt` in your code to jump to the doc. CodeLens, hover previews, glob path navigation.
-
-```bash
-curl -fsSL -o c3-nav.vsix https://github.com/Lagz0ne/c3-skill/releases/latest/download/c3-nav.vsix
-code --install-extension c3-nav.vsix --force
-```
+**npm (thin).** `@c3x/cli` is a small manager that resolves OS/ARCH, downloads the matching GitHub Release binary and semantic model into a versioned local cache, then executes the cached binary. The npm package version matches the c3x release it pins.
 
 ## Development
 
 ```bash
-cd cli && go test ./...       # 16 packages
-bash scripts/build.sh         # cross-compile for 4 targets
+cd cli && go test ./...       # run the Go test suite
+bash scripts/build.sh         # cross-compile release targets
 ```
+
+The skill itself is developed eval-first: see `research/eval/skill-eval/` for the graded eval (deterministic scorer + LLM judge) that drives guidance changes.
 
 ## License
 

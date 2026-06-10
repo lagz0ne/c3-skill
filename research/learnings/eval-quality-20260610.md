@@ -42,3 +42,21 @@ discrimination components. Baseline 0.625 → final 1.0 on a benchmark hardened 
   wide margins here but should be re-validated on a second fixture before being trusted generally.
 - wrong_text_pass_rate=0.75 is accepted by design (mechanism truth is the judge's job), tracked
   but unscored.
+
+## Addendum: skill-depth-20260610 (child session — skill vs the hardened eval)
+
+Loop flipped: eval frozen (after parent runs 7-8: unique-prefix id resolution; verdict from
+pass rule on aggregated dims, not reviewer majority — votes [pass,fail,pass] had disagreed
+with median overall 3.85), skill as the variable. Baseline 9/13 pass, mean 4.215.
+
+One targeted run reached the stop rule: **13/13 pass, mean 4.438 (+0.223)**. The change:
+depth-contract bar 8 — *side effects belong to a layer; read the attachment point (flow vs
+service vs storage trigger) before claiming any side effect survives a bypass path* — plus
+exact-id citation discipline in bar 1. Honest caveats: (a) compound with generation-prompt
+emphasis of existing contract bars, so the +0.223 is skill+emphasis, not the diff alone;
+(b) one fixture, one generator (claude/fable), same-vendor judge; (c) 13/13 on the training
+fixture says nothing about generalization — second-fixture check is the real test.
+
+Meta-lesson: diagnosed-failure-targeted skill edits (one bar per failure class) moved the
+judge mean far beyond its measured noise floor (0.094) in a single iteration; speculative
+guidance never had to be written.

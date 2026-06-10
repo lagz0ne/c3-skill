@@ -29,6 +29,26 @@ COMMAND_SUBCOMMAND_RE = re.compile(
 CONFIRMING_COMMANDS = {"read", "graph", "lookup", "schema"}
 WORD_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_./<>{}-]*")
 DUMP_COVERAGE = 0.7
+PROSE_TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_]{3,}")
+GROUNDED_VOCAB_RATIO = 0.75
+
+
+def fixture_vocab() -> set[str]:
+    vocab: set[str] = set()
+    if FIXTURE_C3.exists():
+        for path in FIXTURE_C3.rglob("*.md"):
+            vocab.update(
+                t.lower() for t in PROSE_TOKEN_RE.findall(ID_RE.sub(" ", path.read_text(encoding="utf-8")))
+            )
+    return vocab
+
+
+def rubric_term_tokens(scorer: dict) -> set[str]:
+    keys = ("require", "require_any", "ids_include", "governance_refs", "sync_mechanism_terms", "notification_mechanism_terms", "forbid")
+    terms = sum((scorer.get(k) or [] for k in keys), [])
+    terms += sum((seg.get("ids", []) for seg in scorer.get("trace_coverage", [])), [])
+    terms += sum(scorer.get("mechanism_terms", []) + scorer.get("emergent_property_terms", []), [])
+    return {tok.lower() for term in terms for tok in PROSE_TOKEN_RE.findall(term)}
 
 
 def strip_term_dumps(text: str, scorer: dict) -> str:
@@ -240,6 +260,17 @@ def score(case_id: str, answer_file: Path) -> dict:
 
     contract_terms = ["component", "ref", "recipe", "adr", "contract", "governance", "goal/choice/why"]
     add_point(result, any(term in text_lower for term in contract_terms), "U6 canvas-contract-awareness")
+
+    # U8: answer prose must draw its content vocabulary from the evidence corpus.
+    # Genuine answers reuse fixture vocabulary beyond the rubric's giveaway terms;
+    # dilution padding pulls discourse words absent from the fixture.
+    answer_start = text_lower.find("## answer")
+    body = ID_RE.sub(" ", text[answer_start:] if answer_start != -1 else text)
+    body_tokens = {t.lower() for t in PROSE_TOKEN_RE.findall(body)} - rubric_term_tokens(scorer)
+    vocab = fixture_vocab()
+    attested = sum(1 for t in body_tokens if t in vocab)
+    grounded = bool(body_tokens) and attested / len(body_tokens) >= GROUNDED_VOCAB_RATIO
+    add_point(result, grounded, f"U8 fixture-grounded-vocab attested={attested}/{len(body_tokens)}")
 
     # Case-local scorer from rubric.jsonl.
     for required in scorer.get("require", []):

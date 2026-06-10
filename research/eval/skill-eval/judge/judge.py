@@ -138,7 +138,10 @@ question: {case["question"]}
 # Fixture Entity Inventory
 
 Every id below EXISTS in the fixture. Citing one is never an invented id,
-even when it is absent from the ground truth or excerpt.
+even when it is absent from the ground truth or excerpt. A cited id that is a
+prefix of exactly one inventory id refers to that entity (sloppy citation, not
+invented); only ids matching zero inventory ids, or ambiguously matching
+several, are invented.
 
 {fixture_entity_ids()}
 

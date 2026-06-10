@@ -82,6 +82,14 @@ specifics the excerpt cannot verify — is NOT hallucination; score unverifiable
 claims under Grounding instead. Check each cited id against the inventory
 before calling it invented.
 
+Unique-prefix resolution: a cited id that is a prefix of EXACTLY ONE inventory
+id (e.g. `adr-20260202` when the only matching inventory id is
+`adr-20260202-notification-on-step-advance`) refers to that entity. That is a
+sloppy citation, NOT an invented id — penalize it under Grounding or
+Correctness precision if warranted, never under this dimension. A cited id
+that matches zero inventory ids, or is a prefix of two or more inventory ids
+(ambiguous), counts as invented.
+
 | Score | Bar |
 | --- | --- |
 | 1 | Multiple invented ids/contradictions or one severe unsafe hallucination. |

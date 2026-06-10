@@ -90,6 +90,8 @@ Flag any proposed violation.
 
 **Impact Graph:** Include `c3 graph <target-entity> --direction reverse --format mermaid` as mermaid code block atop report (reverse direction = who depends on the changed entity). Graph from most specific affected entity (component > container). For ref/rule impact, graph ref/rule itself to show all citers.
 
+**Direct vs transitive:** a reverse-graph edge is a candidate, not a conclusion. Assign concrete behavior to a dependent only after `c3 read` of that dependent. In the Affected Entities table, `Impact` distinguishes `direct` (cites or consumes the changed entity) from `transitive` (reached through another dependent) — never mark every graph neighbor as affected by default.
+
 ```
 **C3 Impact Assessment**
 
@@ -113,6 +115,16 @@ Flag any proposed violation.
 ## Risks
 - [Risk]: [impact + mitigation]
 
+## Verification
+| Check | How |
+|-------|-----|
+| [owner entity/file updated] | [c3 lookup / read to confirm] |
+| [config/permission/runtime value] | [command or observable to confirm] |
+| [sync/notification observable] | [subject/channel/log to assert] |
+| [failure-mode probe] | [what to break + expected degradation] |
+
 ## Recommended Approach
 1. [Step respecting constraints]
 ```
+
+An assessment without the Verification table is advice, not an assessment — every sweep ends with checks someone can actually run.

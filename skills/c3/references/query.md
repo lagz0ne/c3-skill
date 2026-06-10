@@ -66,6 +66,10 @@ stop at the first owner. Build the path:
 5. **Emergent property**: state what falls out of the combined mechanisms, such
    as async/non-blocking notification, targeted user subjects vs broadcast sync,
    step-advance-only notification, or flow entry preserving side effects.
+6. **Failure boundary**: state how the combined path degrades — what happens if
+   the sync/notification/transport leg fails or is bypassed, which side effects
+   are preserved vs lost, and who observes the failure. If the docs don't say,
+   report that as an explicit gap, never as a guess.
 
 When saying no rules apply, say "no `rule-*` entities found" instead of naming
 made-up negative ids like `rule-auth` or `rule-sync`.
@@ -177,7 +181,7 @@ ADRs = ephemeral work orders, not architectural truth. Default listings exclude 
 - Code navigation
 - Understanding current state
 
-ADRs in results → historical context only. Verify against current entity docs before acting.
+ADRs in results → historical context only. Verify against current entity docs before acting. Any ADR you cite in an answer gets an explicit label — current / superseded / historical — derived from its `status` and from newer ADRs or entity docs that cover the same ground.
 
 ## Edge Cases
 
@@ -186,6 +190,41 @@ ADRs in results → historical context only. Verify against current entity docs 
 | Topic not in C3 | Search code directly, suggest documenting |
 | Spans containers | List all affected, explain relationships |
 | Docs seem stale | Note, suggest audit |
+
+## Answer Depth Contract
+
+An answer is judged on depth, not term coverage. Naming the right entities while
+skipping the causal chain is a failing answer. Hold every delivered answer to
+these bars:
+
+1. **Every material claim is bound to evidence you actually collected.** A claim
+   about an entity's behavior, contract, or governance must come from a `read`/
+   `graph`/`lookup`/`search` output you ran, and the answer says which (entity +
+   section). Listing evidence commands up front grounds nothing by itself — if a
+   claim has no read behind it, run the read or drop the claim.
+2. **Cross-cutting answers state the full causal chain** (Step 0a++ items 1–6)
+   as a chain — action owner -> state mutation -> mechanism -> dependent/observer
+   -> emergent property -> failure boundary — not as a flat entity list. Each
+   arrow says WHY the next hop follows: which contract, ref, subject, or
+   permission carries it.
+3. **Direct vs indirect dependents are separated.** A reverse-graph neighbor is
+   a candidate, not a conclusion. Assign behavior to a dependent only after
+   reading it; label each one direct (cites/consumes the changed thing) or
+   transitive (reached through another entity).
+4. **Cited ADRs carry a status label** — current, superseded, or historical —
+   checked against `status` and newer ADRs/entity docs. Never present an old
+   decision as the live mechanism.
+5. **Negatives and caveats are evidence-backed.** "No rules apply" requires the
+   search/list output that showed it. A caveat ("may drift", "not enforced")
+   requires the doc row or check output suggesting it; otherwise omit it.
+6. **Change-usefulness means concrete checks, not advice.** When the question
+   implies a change, end with verifiable checks: which owner files/entities to
+   touch, which config/permission/runtime values to confirm, which sync or
+   notification observable to assert, and how to probe the failure mode.
+7. **UI/layout answers name pattern semantics, not ref lists**: which ref owns
+   which concrete behavior (layout regions, sticky/empty/responsive states),
+   what visibly breaks if the pattern changes, and how consistency is verified
+   across the screens that share it.
 
 ## Response Format
 

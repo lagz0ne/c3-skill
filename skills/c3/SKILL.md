@@ -214,7 +214,7 @@ No `.c3/` or re-onboard. Scaffold (incl. materialize canvas definitions) -> disc
 `references/onboard.md`
 
 ### query
-`c3 search <question>` first for fuzzy/conceptual discovery, `c3 lookup <file-or-glob>` for code->entity, `c3 graph <id> --direction reverse` for dependents. For body text, use targeted `c3 read` output.
+`c3 search <question>` first for fuzzy/conceptual discovery, `c3 lookup <file-or-glob>` for code->entity, `c3 graph <id> --direction reverse` for dependents. For body text, use targeted `c3 read` output. Deliver to the **Answer Depth Contract** in the reference — claims bound to reads, causal chain over entity lists, failure boundary stated.
 `references/query.md`
 
 ### audit

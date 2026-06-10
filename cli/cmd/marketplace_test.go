@@ -205,6 +205,23 @@ func TestRunMarketplaceList_WithSources(t *testing.T) {
 	}
 }
 
+func TestRunMarketplaceList_AgentModeUsesTOON(t *testing.T) {
+	t.Setenv("C3X_MODE", "agent")
+	baseDir := setupMarketplaceFixture(t)
+
+	var buf bytes.Buffer
+	if err := RunMarketplaceList(MarketplaceOptions{BaseDir: baseDir}, &buf); err != nil {
+		t.Fatal(err)
+	}
+	out := strings.TrimSpace(buf.String())
+	if strings.HasPrefix(out, "{") || strings.Contains(out, "No marketplace sources") {
+		t.Fatalf("agent marketplace list should emit TOON structured output, got:\n%s", out)
+	}
+	if !strings.Contains(out, "sources:") || !strings.Contains(out, "rule-error-wrapping") {
+		t.Fatalf("agent marketplace list output missing expected TOON content:\n%s", out)
+	}
+}
+
 func TestRunMarketplaceList_JSON(t *testing.T) {
 	baseDir := setupMarketplaceFixture(t)
 
@@ -267,6 +284,19 @@ func TestRunMarketplaceShow_FromFixture(t *testing.T) {
 	}
 	if !strings.Contains(buf.String(), "Error Wrapping") {
 		t.Error("should show rule content")
+	}
+}
+
+func TestRunMarketplaceShow_JSONExplicitRejected(t *testing.T) {
+	baseDir := setupMarketplaceFixture(t)
+
+	var buf bytes.Buffer
+	err := RunMarketplaceShow(MarketplaceOptions{BaseDir: baseDir, RuleID: "rule-error-wrapping", JSON: true, JSONExplicit: true}, &buf)
+	if err == nil {
+		t.Fatal("expected explicit JSON marketplace show to be rejected")
+	}
+	if !strings.Contains(err.Error(), "marketplace show no longer supports --json") {
+		t.Fatalf("expected sunset-json error, got: %v", err)
 	}
 }
 

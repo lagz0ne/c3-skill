@@ -15,7 +15,9 @@ import {
 
 test('resolvePlatform maps supported Node platform names', () => {
   assert.deepEqual(resolvePlatform('linux', 'x64'), { os: 'linux', arch: 'amd64' })
+  assert.deepEqual(resolvePlatform('linux', 'arm64'), { os: 'linux', arch: 'arm64' })
   assert.deepEqual(resolvePlatform('darwin', 'arm64'), { os: 'darwin', arch: 'arm64' })
+  assert.throws(() => resolvePlatform('darwin', 'x64'), /unsupported platform/)
   assert.throws(() => resolvePlatform('win32', 'x64'), /unsupported platform/)
 })
 

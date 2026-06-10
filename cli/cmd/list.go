@@ -42,8 +42,8 @@ const compactGoalMaxLen = 38
 
 // RunList outputs the topology of entities from the store.
 func RunList(opts ListOptions, w io.Writer) error {
-	format := ResolveFormat(opts.JSONExplicit, isAgentMode())
-	if opts.JSON || format == FormatTOON {
+	if opts.JSON || isAgentMode() {
+		format := ResolveFormat(opts.JSONExplicit, isAgentMode())
 		return listStructured(opts, format, w)
 	}
 	if opts.Flat {

@@ -28,10 +28,10 @@ func TestResolveFormat_HumanJSON(t *testing.T) {
 	}
 }
 
-func TestResolveFormat_HumanDefault(t *testing.T) {
+func TestResolveFormat_DefaultStructuredTOON(t *testing.T) {
 	got := ResolveFormat(false, false)
-	if got != FormatHuman {
-		t.Errorf("human default should be Human, got %d", got)
+	if got != FormatTOON {
+		t.Errorf("default structured output should be TOON, got %d", got)
 	}
 }
 
@@ -103,6 +103,25 @@ func TestWriteObjectOutput_TOONMode(t *testing.T) {
 	}
 	if !strings.Contains(out, "count: 5") {
 		t.Errorf("missing TOON key:value\ngot:\n%s", out)
+	}
+}
+
+func TestWriteObjectOutput_DefaultFormatDoesNotEmitJSON(t *testing.T) {
+	type status struct {
+		Project string `json:"project"`
+		Count   int    `json:"count"`
+	}
+	var buf bytes.Buffer
+
+	if err := WriteObjectOutput(&buf, status{Project: "Test", Count: 5}, FormatHuman, nil); err != nil {
+		t.Fatal(err)
+	}
+	out := strings.TrimSpace(buf.String())
+	if strings.HasPrefix(out, "{") {
+		t.Fatalf("default structured output must not be JSON:\n%s", out)
+	}
+	if !strings.Contains(out, "project: Test") || !strings.Contains(out, "count: 5") {
+		t.Fatalf("default structured output should emit TOON key:value output:\n%s", out)
 	}
 }
 

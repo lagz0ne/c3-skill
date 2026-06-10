@@ -5,6 +5,21 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [10.0.1] - 2026-06-10
+
+Patch release for the v10 line. The v10.0.0 GitHub Release was already published before these fixes, so the fixed CLI, skill metadata, and npm wrapper now pin v10.0.1 instead of reusing the public v10.0.0 assets.
+
+### Changed
+
+- **Agent structured output now defaults to TOON** — shared output helpers now prefer TOON for structured agent-facing output, while explicit JSON remains a non-agent compatibility path where still supported.
+- **Marketplace rule preview no longer supports `show --json`** — `marketplace show --json` now fails fast with a direct hint to use the normal preview output while the agent JSON show shape is sunset.
+- **Release metadata synchronized for v10.0.1** — the skill launcher version, plugin manifests, npm package version, and npm wrapper's pinned C3 binary version all target the same patch release.
+- **Supported platform checks now match release assets** — npm and skill launchers accept Linux amd64/arm64 and Darwin arm64, rejecting Darwin amd64 before trying to download or exec a missing release asset.
+
+### Fixed
+
+- **Hyphenated search queries no longer reach SQLite FTS syntax** — natural-language searches such as `real-time sync` treat the hyphen as a separator instead of producing `SQL logic error: no such column: time`.
+
 ## [10.0.0] - 2026-06-10
 
 Major release: the canvas entity model, a new two-shape distribution, and a revamped, eval-hardened skill. Consolidates the unreleased 9.10.x line.

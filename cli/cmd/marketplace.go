@@ -12,12 +12,13 @@ import (
 
 // MarketplaceOptions holds parameters for marketplace subcommands.
 type MarketplaceOptions struct {
-	BaseDir    string // override for ~/.c3/marketplace/
-	URL        string // git URL for add
-	SourceName string // filter for list, target for remove/update
-	Tag        string // filter for list
-	RuleID     string // target for show
-	JSON       bool
+	BaseDir      string // override for ~/.c3/marketplace/
+	URL          string // git URL for add
+	SourceName   string // filter for list, target for remove/update
+	Tag          string // filter for list
+	RuleID       string // target for show
+	JSON         bool
+	JSONExplicit bool
 }
 
 // RunMarketplaceAdd clones a marketplace repo and registers it.
@@ -130,8 +131,8 @@ func RunMarketplaceList(opts MarketplaceOptions, w io.Writer) error {
 		}
 	}
 
-	if opts.JSON {
-		return writeJSON(w, result)
+	if opts.JSON || isAgentMode() {
+		return WriteObjectOutput(w, result, ResolveFormat(opts.JSON, isAgentMode()), nil)
 	}
 
 	if len(result.Sources) == 0 {
@@ -168,6 +169,9 @@ func RunMarketplaceShow(opts MarketplaceOptions, w io.Writer) error {
 
 	if opts.RuleID == "" {
 		return fmt.Errorf("error: usage: c3x marketplace show <rule-id>")
+	}
+	if opts.JSONExplicit {
+		return fmt.Errorf("error: marketplace show no longer supports --json\nhint: run 'c3x marketplace show %s' for the rule preview", opts.RuleID)
 	}
 
 	sources, err := reg.List()

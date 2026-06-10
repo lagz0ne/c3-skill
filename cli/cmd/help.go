@@ -83,7 +83,7 @@ Examples:
 Topology view with system goal, entity goals, file coverage, and ref usage.
   --compact      Goals-only tree (no files/uses detail); with --json: lightweight output (id, type, title, parent, status only)
   --flat         Simple file list (id, type, path)
-  --json         Machine-readable output
+  --json         Explicit JSON compatibility outside agent mode; default structured output is TOON
   --include-adr  Include ADR entities (hidden by default)
 
 Use c3x canvas list to inspect available entity definitions.`,
@@ -249,7 +249,7 @@ Output includes:
   - fill: what the author must put there
   - rejected when: the failure that triggers rejection of that section
 
-JSON output includes section guidance plus column types (text, date, enum, cite, check, entity_id, reference, evidence, edge<...>).
+Structured output includes section guidance plus column types (text, date, enum, cite, check, entity_id, reference, evidence, edge<...>).
 
 Examples:
   c3x schema component --json
@@ -266,8 +266,8 @@ Scaffold or update code-map entries in the store for every component, ref,
 and rule in the C3 graph. Existing entries (patterns already set) are preserved.
 New entries are added with empty pattern lists for you to fill in.
 
-JSON output lists added and existing IDs. Default output is JSON;
-set HUMAN=1 for human-readable text.
+Default structured output is TOON and lists added and existing IDs;
+set HUMAN=1 for legacy human-readable text or --json for explicit JSON outside agent mode.
 
 Example: c3x codemap`,
 	},
@@ -342,7 +342,7 @@ Options:
   --direction reverse    Reverse deps — what points to this entity only
                          (default: all neighbors in both directions)
   --format mermaid       Mermaid flowchart output (pipe to diashort for rendering)
-  --json                 Machine-readable JSON output
+  --json                 Explicit JSON compatibility outside agent mode; agent/default structured output is TOON
 
 Examples:
   c3x graph c3-1                          # container + direct children
@@ -414,7 +414,7 @@ Subcommands:
 Options:
   --source <name>   Filter by source name
   --tag <tag>       Filter rules by tag
-  --json            Machine-readable output
+  --json            Explicit JSON compatibility for list only; marketplace show does not support JSON
 
 Examples:
   c3x marketplace add https://github.com/org/go-patterns
@@ -463,7 +463,7 @@ Commands:
 Entity Types: container, component, ref, rule, adr, recipe (context created by init)
 
 Global Options:
-  --json                     Machine-readable output
+  --json                     Explicit JSON compatibility outside agent mode; agent/default structured output is TOON
   --c3-dir <path>            Override .c3/ auto-detection
   --force                    Confirm advanced reset commands
   -h, --help                 Show help

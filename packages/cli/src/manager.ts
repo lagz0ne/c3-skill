@@ -47,8 +47,8 @@ export interface PreparedRuntime {
 export function resolvePlatform(platform = nodePlatform(), arch = nodeArch()): PlatformTarget {
   const os = platform === 'darwin' || platform === 'linux' ? platform : ''
   const mappedArch = arch === 'x64' ? 'amd64' : arch === 'arm64' ? 'arm64' : ''
-  if (!os || !mappedArch) {
-    throw new Error(`error: unsupported platform ${platform}/${arch}\nhint: @c3x/cli supports linux/darwin on x64/arm64`)
+  if (!os || !mappedArch || (os === 'darwin' && mappedArch !== 'arm64')) {
+    throw new Error(`error: unsupported platform ${platform}/${arch}\nhint: @c3x/cli supports linux x64/arm64 and darwin arm64`)
   }
   return { os, arch: mappedArch }
 }

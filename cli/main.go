@@ -292,8 +292,9 @@ func runMarketplace(opts cmd.Options, w io.Writer) error {
 		subCmd = opts.Args[0]
 	}
 	mOpts := cmd.MarketplaceOptions{
-		JSON: opts.JSON,
-		Tag:  opts.Tag,
+		JSON:         opts.JSON,
+		JSONExplicit: opts.JSONExplicit,
+		Tag:          opts.Tag,
 	}
 	if len(opts.Args) >= 2 {
 		switch subCmd {

@@ -13,8 +13,8 @@ type OutputFormat int
 
 const (
 	FormatJSON  OutputFormat = iota // --json explicit outside agent mode
-	FormatTOON                      // C3X_MODE=agent machine output
-	FormatHuman                     // non-agent, non-json
+	FormatTOON                      // default structured machine output
+	FormatHuman                     // command-specific human prose paths
 )
 
 // ResolveFormat determines output format from options and environment.
@@ -25,7 +25,7 @@ func ResolveFormat(jsonExplicit bool, agent bool) OutputFormat {
 	if jsonExplicit {
 		return FormatJSON
 	}
-	return FormatHuman
+	return FormatTOON
 }
 
 // HelpHint is a single next-step suggestion.
@@ -35,10 +35,16 @@ type HelpHint struct {
 }
 
 // WriteTableOutput writes a tabular dataset with optional help hints.
-// In TOON mode, uses toon.MarshalTable. In JSON mode, uses writeJSON.
+// JSON is explicit compatibility; every other structured format uses TOON.
 func WriteTableOutput(w io.Writer, label string, data any, fields []string, format OutputFormat, hints []HelpHint) error {
 	switch format {
-	case FormatTOON:
+	case FormatJSON:
+		if err := writeJSON(w, data); err != nil {
+			return err
+		}
+		writeHints(w, hints)
+		return nil
+	default:
 		out, err := toon.MarshalTable(label, data, fields)
 		if err != nil {
 			return err
@@ -46,31 +52,25 @@ func WriteTableOutput(w io.Writer, label string, data any, fields []string, form
 		fmt.Fprint(w, out)
 		writeHints(w, hints)
 		return nil
-	default:
+	}
+}
+
+// WriteObjectOutput writes a single object with optional help hints.
+// JSON is explicit compatibility; every other structured format uses TOON.
+func WriteObjectOutput(w io.Writer, data any, format OutputFormat, hints []HelpHint) error {
+	switch format {
+	case FormatJSON:
 		if err := writeJSON(w, data); err != nil {
 			return err
 		}
 		writeHints(w, hints)
 		return nil
-	}
-}
-
-// WriteObjectOutput writes a single object with optional help hints.
-// In TOON mode, uses toon.MarshalObject. In JSON mode, uses writeJSON.
-func WriteObjectOutput(w io.Writer, data any, format OutputFormat, hints []HelpHint) error {
-	switch format {
-	case FormatTOON:
+	default:
 		out, err := toon.MarshalObject(data)
 		if err != nil {
 			return err
 		}
 		fmt.Fprint(w, out)
-		writeHints(w, hints)
-		return nil
-	default:
-		if err := writeJSON(w, data); err != nil {
-			return err
-		}
 		writeHints(w, hints)
 		return nil
 	}

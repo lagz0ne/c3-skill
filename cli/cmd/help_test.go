@@ -117,6 +117,21 @@ func TestShowHelp_GlobalHasNoDeadEndAddFlags(t *testing.T) {
 	requireAll(t, output, "c3x add component auth --container c3-1 --file auth.md", "c3x canvas list")
 }
 
+func TestShowHelp_StructuredOutputDefaultsToTOON(t *testing.T) {
+	for _, command := range []string{"list", "codemap", "marketplace"} {
+		t.Run(command, func(t *testing.T) {
+			var buf bytes.Buffer
+			ShowHelp(command, &buf)
+			out := buf.String()
+			for _, stale := range []string{"Default output is JSON", "Machine-readable output"} {
+				if strings.Contains(out, stale) {
+					t.Fatalf("help should not advertise JSON as default machine output; found %q in:\n%s", stale, out)
+				}
+			}
+		})
+	}
+}
+
 func TestShowCapabilities(t *testing.T) {
 	var buf bytes.Buffer
 	ShowCapabilities(&buf)

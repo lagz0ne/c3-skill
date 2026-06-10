@@ -19,10 +19,10 @@ case "$ARCH" in
 esac
 
 case "$OS/$ARCH" in
-  linux/amd64|linux/arm64|darwin/amd64|darwin/arm64) ;;
+  linux/amd64|linux/arm64|darwin/arm64) ;;
   *)
     echo "Error: unsupported platform: $OS/$ARCH" >&2
-    echo "hint: supported platforms are linux/darwin on amd64/arm64" >&2
+    echo "hint: supported platforms are linux amd64/arm64 and darwin arm64" >&2
     exit 1
     ;;
 esac

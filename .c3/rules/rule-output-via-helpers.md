@@ -1,7 +1,7 @@
 ---
 id: rule-output-via-helpers
 c3-version: 4
-c3-seal: 6234046855c3c4d46a39553c9b27a9e91c75adb95993c6da3ea534aae05ac5de
+c3-seal: 913627f9b1ef2613fc80ecd2e04bac23864e1724d09a139579851c49f4214c26
 title: output-via-helpers
 type: rule
 goal: All command results serialize through one output layer so agent mode always yields TOON and human/JSON formats stay consistent across commands.
@@ -23,30 +23,36 @@ Commands must emit results via `WriteTableOutput`/`WriteObjectOutput` with a for
 ## Golden Example
 
 ```go
-// cli/cmd/output.go — format resolution + the shared table writer
+// cli/cmd/output.go - format resolution + the shared table writer
 func ResolveFormat(jsonExplicit bool, agent bool) OutputFormat {
-    if agent {
-        return FormatTOON // REQUIRED: agent mode is always TOON
-    }
-    if jsonExplicit {
-        return FormatJSON
-    }
-    return FormatHuman
+	if agent {
+		return FormatTOON // REQUIRED: agent mode is always TOON
+	}
+	if jsonExplicit {
+		return FormatJSON // REQUIRED: explicit JSON remains non-agent compatibility
+	}
+	return FormatTOON // REQUIRED: default structured output is TOON
 }
 
+// WriteTableOutput writes a tabular dataset with optional help hints.
+// JSON is explicit compatibility; every other structured format uses TOON.
 func WriteTableOutput(w io.Writer, label string, data any, fields []string, format OutputFormat, hints []HelpHint) error {
-    switch format {
-    case FormatTOON:
-        out, err := toon.MarshalTable(label, data, fields) // REQUIRED: TOON path goes through the shared marshaller
-        if err != nil {
-            return err
-        }
-        fmt.Fprint(w, out)
-        writeHints(w, hints)
-        return nil
-    default:
-        return writeJSON(w, data)
-    }
+	switch format {
+	case FormatJSON:
+		if err := writeJSON(w, data); err != nil {
+			return err
+		}
+		writeHints(w, hints)
+		return nil
+	default:
+		out, err := toon.MarshalTable(label, data, fields) // REQUIRED: TOON path goes through the shared marshaller
+		if err != nil {
+			return err
+		}
+		fmt.Fprint(w, out)
+		writeHints(w, hints)
+		return nil
+	}
 }
 ```
 

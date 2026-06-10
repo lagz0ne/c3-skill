@@ -149,6 +149,45 @@ func TestBDD_SearchHybridReturnsFTSAndGraphContext(t *testing.T) {
 	requireStringSliceContains(t, out.Results[0].MatchSources, "graph:uses:rule-trace-context")
 }
 
+func TestSearch_HyphenatedNaturalLanguageQueryDoesNotReachFTSSyntax(t *testing.T) {
+	s := createDBFixture(t)
+	mustInsertEntity(t, s, &store.Entity{
+		ID: "recipe-realtime-sync", Type: "recipe", Title: "Realtime Sync", Slug: "realtime-sync",
+		Goal: "Real time sync keeps websocket clients current without polling.", Status: "active", Metadata: "{}",
+	})
+	if err := content.WriteEntity(s, "recipe-realtime-sync", `# Realtime Sync
+
+## Goal
+
+Real time sync keeps websocket clients current without polling.
+`); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	err := RunSearch(SearchOptions{
+		Store:      s,
+		Query:      "real-time sync",
+		NoSemantic: true,
+		JSON:       true,
+		Limit:      5,
+	}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var out SearchOutput
+	if err := json.Unmarshal(buf.Bytes(), &out); err != nil {
+		t.Fatalf("invalid search JSON: %v\n%s", err, buf.String())
+	}
+	if len(out.Results) == 0 {
+		t.Fatalf("expected result for hyphenated natural-language query, got none: %s", buf.String())
+	}
+	if out.Results[0].ID != "recipe-realtime-sync" {
+		t.Fatalf("top result = %q, want recipe-realtime-sync; results: %+v", out.Results[0].ID, out.Results)
+	}
+}
+
 func TestSearch_DefaultUnavailableSemanticModelDegradesToKeywordGraph(t *testing.T) {
 	t.Setenv("C3_SEMANTIC_CACHE_DIR", t.TempDir())
 	t.Setenv("C3_SEMANTIC_OFFLINE", "1")

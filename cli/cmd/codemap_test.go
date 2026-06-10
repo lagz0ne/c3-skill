@@ -13,15 +13,14 @@ func TestRunCodemap_ScaffoldsEntries(t *testing.T) {
 	s := createRichDBFixture(t)
 
 	var buf bytes.Buffer
-	err := RunCodemap(CodemapOptions{Store: s, JSON: false}, &buf)
+	err := RunCodemap(CodemapOptions{Store: s, JSON: true}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Default output (no HUMAN env) is JSON
 	var result CodemapResult
 	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
-		t.Fatalf("expected JSON output: %v\nbody: %s", err, buf.String())
+		t.Fatalf("expected explicit JSON output: %v\nbody: %s", err, buf.String())
 	}
 
 	if len(result.Added) == 0 {
@@ -39,13 +38,30 @@ func TestRunCodemap_ScaffoldsEntries(t *testing.T) {
 	}
 }
 
+func TestRunCodemap_DefaultOutputTOON(t *testing.T) {
+	s := createRichDBFixture(t)
+
+	var buf bytes.Buffer
+	if err := RunCodemap(CodemapOptions{Store: s}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	out := strings.TrimSpace(buf.String())
+	if strings.HasPrefix(out, "{") {
+		t.Fatalf("default codemap output must not be JSON:\n%s", out)
+	}
+	if !strings.Contains(out, "added:") || !strings.Contains(out, "existing:") {
+		t.Fatalf("default codemap output should be TOON object output, got:\n%s", out)
+	}
+}
+
 func TestRunCodemap_PreservesExisting(t *testing.T) {
 	s := createRichDBFixture(t)
 	// Pre-set code-map entry for c3-101
 	s.SetCodeMap("c3-101", []string{"src/auth/**"})
 
 	var buf bytes.Buffer
-	err := RunCodemap(CodemapOptions{Store: s, JSON: false}, &buf)
+	err := RunCodemap(CodemapOptions{Store: s, JSON: true}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,7 +104,7 @@ func TestRunCodemap_WithExcludes(t *testing.T) {
 	s.AddExclude("**/*.test.ts")
 
 	var buf bytes.Buffer
-	err := RunCodemap(CodemapOptions{Store: s}, &buf)
+	err := RunCodemap(CodemapOptions{Store: s, JSON: true}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -108,13 +124,15 @@ func TestRunCodemap_WithRules(t *testing.T) {
 	})
 
 	var buf bytes.Buffer
-	err := RunCodemap(CodemapOptions{Store: s}, &buf)
+	err := RunCodemap(CodemapOptions{Store: s, JSON: true}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	var result CodemapResult
-	json.Unmarshal(buf.Bytes(), &result)
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("expected explicit JSON output: %v\nbody: %s", err, buf.String())
+	}
 	if !containsStr2(result.Added, "rule-logging") {
 		t.Error("rule-logging should be in added list")
 	}

@@ -60,8 +60,8 @@ func RunCodemap(opts CodemapOptions, w io.Writer) error {
 		Existing: sliceOrEmpty(existing),
 	}
 
-	if opts.JSON || os.Getenv("HUMAN") == "" {
-		return writeJSON(w, result)
+	if os.Getenv("HUMAN") != "1" || opts.JSON {
+		return WriteObjectOutput(w, result, ResolveFormat(opts.JSON, isAgentMode()), nil)
 	}
 
 	fmt.Fprintln(w, "codemap scaffolded")

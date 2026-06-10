@@ -11,7 +11,7 @@ import (
 // Converts | to OR. Strips all other FTS5 syntax characters.
 // Returns empty string if input contains no searchable words.
 func sanitizeFTS5(input string) string {
-	// Pass 1: tokenize — extract words and pipe symbols.
+	// Pass 1: tokenize — extract FTS-safe words and pipe symbols.
 	var tokens []string
 	var current strings.Builder
 	flush := func() {
@@ -28,7 +28,7 @@ func sanitizeFTS5(input string) string {
 		if r == '|' {
 			flush()
 			tokens = append(tokens, "|")
-		} else if unicode.IsLetter(r) || unicode.IsDigit(r) || r == '-' {
+		} else if unicode.IsLetter(r) || unicode.IsDigit(r) {
 			current.WriteRune(r)
 		} else {
 			flush()

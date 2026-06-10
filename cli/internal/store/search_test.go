@@ -15,7 +15,7 @@ func TestSanitizeFTS5(t *testing.T) {
 		{"plain words", "auth handler", "auth handler"},
 		{"comma separated", "auth, security", "auth security"},
 		{"period suffix", "test.", "test"},
-		{"hyphenated", "rate-limiter", "rate-limiter"},
+		{"hyphenated", "rate-limiter", "rate limiter"},
 
 		// Boolean operators preserved between words
 		{"OR between words", "auth OR security", "auth OR security"},
@@ -308,6 +308,7 @@ func TestSearch_SpecialCharacters(t *testing.T) {
 		{"semicolon", "auth; drop"},
 		{"plus", "auth + handler"},
 		{"dash prefix", "-auth"},
+		{"hyphenated term", "real-time sync"},
 		{"caret", "^auth"},
 		{"curly braces", "{auth}"},
 		{"brackets", "[auth]"},
@@ -343,6 +344,7 @@ func TestSearchContent_SpecialCharacters(t *testing.T) {
 		{"period", "service."},
 		{"double quotes", `"auth service"`},
 		{"parentheses", "auth(service)"},
+		{"hyphenated term", "real-time sync"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

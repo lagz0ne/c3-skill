@@ -577,6 +577,60 @@ func TestRun_AddAgentModeReturnsTOON(t *testing.T) {
 	}
 }
 
+func TestRun_AgentModeExplicitJSONStillReturnsTOON(t *testing.T) {
+	t.Setenv("C3X_MODE", "agent")
+	c3Dir := setupRichC3DB(t)
+
+	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.SetCodeMap("c3-101", []string{"src/auth/login.ts"}); err != nil {
+		s.Close()
+		t.Fatal(err)
+	}
+	s.Close()
+
+	cases := []struct {
+		name string
+		argv []string
+		want string
+	}{
+		{name: "list", argv: []string{"--c3-dir", c3Dir, "list", "--json"}, want: "totalCount:"},
+		{name: "read", argv: []string{"--c3-dir", c3Dir, "read", "c3-101", "--json"}, want: "id: c3-101"},
+		{name: "lookup", argv: []string{"--c3-dir", c3Dir, "lookup", "src/auth/login.ts", "--json"}, want: "file: src/auth/login.ts"},
+		{name: "schema", argv: []string{"--c3-dir", c3Dir, "schema", "component", "--json"}, want: "type: component"},
+		{name: "graph", argv: []string{"--c3-dir", c3Dir, "graph", "c3-101", "--json"}, want: "nodes:"},
+		{name: "search", argv: []string{"--c3-dir", c3Dir, "search", "auth", "--no-semantic", "--json"}, want: "query: auth"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			if err := run(tc.argv, &buf); err != nil {
+				t.Fatal(err)
+			}
+			out := strings.TrimSpace(buf.String())
+			if strings.HasPrefix(out, "{") || strings.HasPrefix(out, "[") {
+				t.Fatalf("agent %s --json must emit TOON, got JSON:\n%s", tc.name, out)
+			}
+			if !strings.Contains(out, tc.want) {
+				t.Fatalf("agent %s --json missing %q in:\n%s", tc.name, tc.want, out)
+			}
+		})
+	}
+}
+
+func TestRun_MarketplaceShowExplicitJSONRejected(t *testing.T) {
+	var buf bytes.Buffer
+	err := run([]string{"marketplace", "show", "rule-output-via-helpers", "--json"}, &buf)
+	if err == nil {
+		t.Fatal("expected marketplace show --json to be rejected")
+	}
+	if !strings.Contains(err.Error(), "marketplace show no longer supports --json") {
+		t.Fatalf("expected explicit-json rejection, got: %v", err)
+	}
+}
+
 func TestRun_Set(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
 	var buf bytes.Buffer

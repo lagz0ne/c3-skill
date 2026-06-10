@@ -1,0 +1,48 @@
+{
+  "case_id": "NATS-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "Provides a practical change map: direct owners, affected topology, dependent refs, failure modes, caveats, and concrete verification checks for key pairing, connection acceptance, broadcast sync, per-user delivery, and backend publishing.",
+      "score": 5
+    },
+    "correctness": {
+      "justification": "Major required facts are correct: current mechanism is ref-nats-jwt-auth JWT resolver rather than auth callout, c3-209 generates credentials, c3-4 validates/enforces, ref-sync depends on the transport, and the historical ADRs are identified. Some detailed claims go beyond the provided excerpt and may be over-specific, so not a 5.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "The answer ties most major claims to C3 reads, graphs, and ADRs, and includes a grounding table. However, several highly specific implementation details are grounded only by asserted document section names not present in the case excerpt, so the judge cannot fully verify every claim from supplied material.",
+      "score": 4
+    },
+    "no_hallucination": {
+      "justification": "No cited entity id is outside the fixture inventory, and the answer does not contradict the core ground truth. It avoids treating the auth-callout ADR as live. Some extra behavior claims are unverifiable from the excerpt, but not hallucinations under the rubric.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "Explains the emergent coupling between websocket auth, broadcast sync, per-user notifications, and timeout fallback behavior, with useful failure boundaries and partial degradation modes.",
+      "score": 5
+    },
+    "trace_completeness": {
+      "justification": "Explicitly traces generation -> loader/client state -> JWT resolver validation/permissions -> frontend sync/notification observers -> emergent stale UI/notification degradation. It also separates backend publishing from browser websocket consumption.",
+      "score": 5
+    }
+  },
+  "overall": 4.5,
+  "quality_gaps": [
+    "Several implementation details such as exact loader function calls, subject hardcoding, health endpoints, and config variable names are not verifiable from the provided excerpt.",
+    "The answer is very broad and may overstate transitive impact for entities it admits were not individually read.",
+    "Grounding relies partly on claimed section names from C3 reads rather than evidence snippets available in the case file.",
+    "Some caveats introduce doc-drift claims that may be true in the fixture but are not established by the excerpt."
+  ],
+  "reviewer_overalls": [
+    4.5,
+    4.5,
+    4.3
+  ],
+  "reviewer_verdicts": [
+    "pass",
+    "pass",
+    "pass"
+  ],
+  "summary": "Strong answer. It is causally complete, correctly identifies the live JWT-resolver design and main owners, and gives useful change-risk boundaries. Main weakness is over-specific detail beyond the supplied excerpt, though not contradictory or invented by rubric definition.",
+  "verdict": "pass"
+}

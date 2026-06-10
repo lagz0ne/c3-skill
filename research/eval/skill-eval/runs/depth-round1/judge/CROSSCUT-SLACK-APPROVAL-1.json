@@ -1,0 +1,49 @@
+{
+  "case_id": "CROSSCUT-SLACK-APPROVAL-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "The answer gives useful owners, risks, and verification ideas, but an engineer would need to redo the sync ownership trace before making a safe change. The concrete check that service-level entry still preserves broadcast deltas is misleading against the fixture.",
+      "score": 3
+    },
+    "correctness": {
+      "justification": "The answer gets the main entities and high-level flow mostly right: Slack c3-215 enters c3-205 flows, c3-211/ref-pull-dispatcher handle notifications, and ref-sync handles web propagation. However it materially misplaces part of the sync mechanism by saying service-level deltas still fire and direct prService use would mainly break next-approver notification. The ground truth says flow entry preserves sync/ack and notification side effects, and service-level entry would bypass sync/notification behavior.",
+      "score": 3
+    },
+    "grounding": {
+      "justification": "The answer includes many evidence commands and a grounding table, but it omits key expected reads for c3-202 and c3-101 while relying on claims about execution context and web-client updates. Several detailed claims go beyond the provided excerpt and are not needed to answer the case, while the incorrect service-level sync claim is not grounded in the ground truth.",
+      "score": 3
+    },
+    "no_hallucination": {
+      "justification": "No cited entity ids appear invented, but the answer contradicts the ground truth by claiming a direct service call would still emit the service-level broadcast delta and only silently break next-approver notification. The expected emergent property is that bypassing flows bypasses sync/ack and notification behavior.",
+      "score": 2
+    },
+    "reasoning_depth": {
+      "justification": "The answer explains entry-point independence, separated sync and notification planes, step-advance notification, and failure boundaries. But the most important property boundary is partly wrong: it treats service-level sync as preserved while the fixture expects flow-level entry to preserve both sync and notification side effects.",
+      "score": 4
+    },
+    "trace_completeness": {
+      "justification": "It provides an explicit action-to-mutation-to-sync-to-notification chain, but the web-client observer side is incomplete because c3-101 is not properly traced as the sync.broadcast consumer. The sync/ack ownership boundary is also wrong or muddled, so the causal chain is not safely complete.",
+      "score": 4
+    }
+  },
+  "overall": 3.3,
+  "quality_gaps": [
+    "Incorrectly says direct prService/service-level entry would still produce sync broadcast deltas; ground truth says service-level entry bypasses sync/notification behavior.",
+    "Does not properly trace c3-101 as the web client sync.broadcast consumer, despite c3-101 being required by the case ground truth.",
+    "Does not include the expected c3-202 evidence command while making execution-context claims.",
+    "Treats missing Slack executionId/ack behavior as near-fact, then caveats it later; this weakens the required sync/ack explanation.",
+    "Adds extensive JetStream, permission, and failure-mode detail that may be plausible but is not necessary and distracts from the incorrect core boundary."
+  ],
+  "reviewer_overalls": [
+    4.5,
+    2.9,
+    3.3
+  ],
+  "reviewer_verdicts": [
+    "pass",
+    "fail",
+    "fail"
+  ],
+  "summary": "Strong-looking and entity-rich, but it fails a key mechanism boundary: flow entry is the consistency preserving boundary, while the candidate says service-level sync deltas still fire. That makes the answer unsafe for assessing Slack approval consistency changes.",
+  "verdict": "fail"
+}

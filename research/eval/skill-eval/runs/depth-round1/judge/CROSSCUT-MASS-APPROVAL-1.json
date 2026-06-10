@@ -1,0 +1,49 @@
+{
+  "case_id": "CROSSCUT-MASS-APPROVAL-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "It gives a practical change map with owners, affected mechanisms, runtime values, observables, and failure probes. An engineer could use it to assess or modify the approval/notification path safely, while rechecking the extra details.",
+      "score": 5
+    },
+    "correctness": {
+      "justification": "Major chain is correct: c3-105 Approvals mode invokes c3-205 approveAll, approveAll iterates PRs, mutates approval-chain state, emits ref-sync updates, conditionally calls c3-211, and notifications are async/non-blocking with errors suppressed. Minor issues: it omits adr-20260121-notification-system, which the ground truth names for JetStream notification dispatch, and adds several specific behaviors not proved by the excerpt.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Most material claims are tied to cited C3 reads/graphs and the prose connects sources to mechanisms. Grounding is weakened by relying on adr-20260202 while omitting the ground-truth adr-20260121 for notification dispatch, and by including detailed claims about Slack, email, audit triggers, admin retry, codemap gaps, and dedupe that are not established by the provided excerpt.",
+      "score": 4
+    },
+    "no_hallucination": {
+      "justification": "No cited C3 entity id appears invented; all ids used are in the fixture inventory. The answer does not contradict the core ground truth or invent whole-batch atomicity/guaranteed delivery. However, it presents some unverifiable implementation details as facts rather than clearly separating them as beyond the excerpt.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "It explains the important properties well: async/non-blocking notification, targeted-vs-broadcast delivery, step-advance gating, partial-success bulk handling, and failure boundaries. Some extra claims such as idempotent JetStream dedupe and audit-trigger behavior are not required and not fully supported by the case excerpt.",
+      "score": 4
+    },
+    "trace_completeness": {
+      "justification": "The answer explicitly traces action -> state mutation -> approval-chain mechanism -> sync broadcast/ack -> targeted notification dispatch -> emergent non-blocking property, including partial-success and step-advance boundaries.",
+      "score": 5
+    }
+  },
+  "overall": 4.3,
+  "quality_gaps": [
+    "Does not include adr-20260121-notification-system even though the machine ground truth names it as part of the JetStream notification dispatch evidence.",
+    "Adds detailed audit-trigger behavior, Slack/email channel behavior, admin retry, notification preferences, and codemap gaps that are not established by the case excerpt.",
+    "Claims JetStream message-ID dedupe/idempotency as an emergent property; this is not in the machine ground truth and should have been caveated unless directly grounded in cited fixture text.",
+    "Grounds notification step-advance behavior mostly in adr-20260202, while the ground truth specifically pairs c3-211 with adr-20260121 for notification system dispatch.",
+    "Some prose is more expansive than needed for the case and may make unsupported fixture-specific details look as certain as the required causal chain."
+  ],
+  "reviewer_overalls": [
+    4.3,
+    4.2,
+    4.5
+  ],
+  "reviewer_verdicts": [
+    "pass",
+    "pass",
+    "pass"
+  ],
+  "summary": "Strong answer: correct causal chain, good emergent-property explanation, and useful engineering boundaries. Main strict gaps are omission of adr-20260121 and overconfident extra details beyond the supplied case evidence.",
+  "verdict": "pass"
+}

@@ -1,0 +1,48 @@
+{
+  "case_id": "CROSSCUT-STEP-ADVANCE-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "It gives useful owners, causal chain, risks, probes, and change surfaces. Usefulness is reduced by the invalid ADR shorthand, missing c3-101 trace point, and over-specific operational claims that an engineer would need to re-verify.",
+      "score": 5
+    },
+    "correctness": {
+      "justification": "Core mechanism matches ground truth: c3-205 owns the approval flows, ref-approval-chain supplies anyof/allof step advancement, adr-20260202-notification-on-step-advance adds stepAdvanced gating, and c3-211/ref-pull-dispatcher handle notifications. It misses the expected c3-101 observer role and includes extra operational assertions that are not needed to answer the case.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Most major claims are tied to C3 reads, refs, ADRs, and graphs in the answer's Grounding table. However, several detailed claims about JetStream configuration, transaction scope, admin retry UI, ADR supersession status, and lookup failures go beyond the provided case evidence and rely on asserted command output rather than supplied snippets.",
+      "score": 4
+    },
+    "no_hallucination": {
+      "justification": "The answer repeatedly cites `adr-20260202` as a command/source id, but that id is not in the fixture inventory; the valid id is `adr-20260202-notification-on-step-advance`. Apart from that non-inventory id, the core claims do not contradict the ground truth.",
+      "score": 2
+    },
+    "reasoning_depth": {
+      "justification": "It explains why notification is tied to current_step movement rather than any approval, covers anyof/allof behavior, final-step suppression, fragile inference avoidance, failure boundaries, and safe change surfaces.",
+      "score": 5
+    },
+    "trace_completeness": {
+      "justification": "The answer traces action -> approval state change -> stepAdvanced mechanism -> notification dispatch -> emergent step-advance-only property. The sync/browser observer side is incomplete because c3-101 and executionTracker resolution are omitted.",
+      "score": 4
+    }
+  },
+  "overall": 4.1,
+  "quality_gaps": [
+    "Cites non-inventory id `adr-20260202`; valid fixture id is `adr-20260202-notification-on-step-advance`.",
+    "Does not read or mention `c3-101`, so the ref-sync/browser-state consistency part of the expected trace is incomplete.",
+    "Several detailed operational claims are not supported by the supplied ground truth or excerpt, including JetStream retention/configuration, transaction scope via c3-202, admin retry UI details, and no-newer-ADR status.",
+    "Failure-mode language such as broadcast still propagating when notification infrastructure fails and concurrent notification dedupe should be treated as requiring direct verification, not as established by the case excerpt."
+  ],
+  "reviewer_overalls": [
+    4.3,
+    4.0,
+    4.55
+  ],
+  "reviewer_verdicts": [
+    "pass",
+    "fail",
+    "fail"
+  ],
+  "summary": "Strong causal answer on the main stepAdvanced notification behavior, but it fails the strict pass bar because it cites a non-inventory ADR id and leaves the c3-101 sync observer out of the expected trace.",
+  "verdict": "fail"
+}

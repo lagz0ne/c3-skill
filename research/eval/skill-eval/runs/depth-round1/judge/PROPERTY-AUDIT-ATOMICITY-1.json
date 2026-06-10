@@ -1,0 +1,48 @@
+{
+  "case_id": "PROPERTY-AUDIT-ATOMICITY-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "It gives owners, mechanisms, boundaries, failure modes, and concrete verification probes. An engineer could safely assess or change the mass-approval audit behavior from this map.",
+      "score": 5
+    },
+    "correctness": {
+      "justification": "The main answer matches the ground truth: c3-105/c3-205 bulk approval is partial-success, PR mutations are trigger-audited on pr, failed or rolled-back attempts should not create orphan audit entries, and consistency is per committed mutation rather than whole-batch atomicity. It also correctly names c3-202 and c3-208. Minor concern: it goes beyond the case by asserting mid-chain approval-record coverage gaps and some exact audit-entry behavior that are not established by the provided ground truth.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Major claims are tied to C3 read/search/graph commands and specific entities. Some extra claims are grounded only by asserted absence in docs, such as executionId not being written into audit metadata, no rule entities governing the path, and exact mid-chain approval audit invisibility. Those may be useful caveats, but they are less directly supported by the case excerpt.",
+      "score": 4
+    },
+    "no_hallucination": {
+      "justification": "All cited entity ids appear in the fixture inventory, and the main claims do not contradict the ground truth. The answer avoids inventing whole-batch atomicity or guaranteed delivery. It does make strong extrapolations beyond the excerpt, but they are framed mostly as caveats or probes rather than fixture contradictions.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "It clearly separates batch atomicity from per-mutation audit atomicity, explains why trigger-in-transaction behavior prevents orphan audit rows, discusses failure boundaries, transaction-granularity uncertainty, and verification probes. This is deep enough to guide a real change.",
+      "score": 5
+    },
+    "trace_completeness": {
+      "justification": "It gives the full causal chain from UI action to c3-205 approveAll, per-PR state changes, transaction/audit trigger mechanism, c3-208 observation surface, and the emergent per-mutation audit consistency property under partial failure.",
+      "score": 5
+    }
+  },
+  "overall": 4.5,
+  "quality_gaps": [
+    "Some claims rely on absence-based reasoning from docs, especially executionId or batch marker not being written to audit metadata.",
+    "Mid-chain approval audit coverage gap may be plausible, but it is outside the machine ground truth and should be labeled more clearly as an inferred documentation gap.",
+    "The statement that a committed PR mutation gets exactly one audit entry is stronger than the ground truth, which only establishes trigger-audited consistency, not entry cardinality.",
+    "The raw SQL shared-transaction scenario is useful but speculative relative to the excerpt; it should remain a caveat, not a conclusion."
+  ],
+  "reviewer_overalls": [
+    4.5,
+    4.5,
+    4.5
+  ],
+  "reviewer_verdicts": [
+    "pass",
+    "pass",
+    "pass"
+  ],
+  "summary": "Strong answer. It correctly identifies per-committed-PR audit consistency rather than batch atomicity, traces the causal path, and gives useful change boundaries. The main weakness is that it adds several doc-absence and mid-chain coverage claims beyond the provided ground truth, so not every detail is equally grounded.",
+  "verdict": "pass"
+}

@@ -1,0 +1,50 @@
+{
+  "case_id": "PROPERTY-FILE-IDEMPOTENCY-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "Useful orientation for an engineer changing import behavior, with checks for duplicate XML, malformed ZIP entries, and sync. But the safe change map is incomplete because it omits c3-204 schema ownership and the ADR precedent, and it sends engineers into audit/transaction/NATS areas that are not proven necessary for this case.",
+      "score": 3
+    },
+    "correctness": {
+      "justification": "Major core facts are correct: c3-104 UI action owner, c3-206 importFiles owner, raw XML MD5 invoice dedup, ref-file-handling BYTEA/content-hash/tri-state, ZIP partial success, and sync after successful mutations. However it omits c3-204 as the schema/database owner from the expected chain, downplays adr-20260212-workbench-feature despite ground truth naming it as per-item result precedent, and adds unsupported audit/transaction/NATS details that may distract from the actual import/file coherence mechanism.",
+      "score": 3
+    },
+    "grounding": {
+      "justification": "Core import/file/sync claims are tied to cited C3 reads. But several important claims are unsupported by the case excerpt or expected evidence, especially audit triggers for import, NATS ack behavior, transactionTag scope, Ctrl+I, storing_name details, and retry behavior after file-level skip. It also cites c3-204 nowhere despite the expected database-boundary evidence.",
+      "score": 3
+    },
+    "no_hallucination": {
+      "justification": "All cited ids appear in the fixture inventory, and the core claims do not contradict the ground truth. The answer mostly caveats inferential audit/transaction claims. Still, phrases like audit/client caches converge on exactly the committed subset and no audit rows for skipped/failure entries read like guarantees not established by the provided ground truth, so it does not merit a 5.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "It explains the emergent property well: content-hash idempotency, duplicate skipped results, parse failures as failures, partial-success boundary, and no whole-ZIP atomicity. It also states useful failure boundaries. Some depth is spent on unproven audit/transaction behavior rather than the documented schema/import boundary.",
+      "score": 4
+    },
+    "trace_completeness": {
+      "justification": "The answer traces action -> import owner -> dedup/result mechanism -> sync/emergent property reasonably well. It misses the required c3-204 database schema boundary and does not ground the ADR per-item precedent. The trace is also diluted by extra audit/query-service branches not required for the causal chain.",
+      "score": 4
+    }
+  },
+  "overall": 3.5,
+  "quality_gaps": [
+    "Missing expected c3-204 database/schema owner evidence for files, invoices, and related tables.",
+    "Does not use adr-20260212-workbench-feature as the expected per-item result precedent; instead calls it historical context only.",
+    "Adds audit-trail claims that are not in the case ground truth or excerpt and are only caveated after being used in the main answer.",
+    "Adds ref-query-services/c3-202 transactionTag reasoning without proving importFiles transaction scope.",
+    "Overstates convergence/no-audit-row behavior for skipped and failed entries beyond the provided evidence.",
+    "Evidence command list includes many extra reads while omitting expected c3-204 and full ADR reads, reducing precision."
+  ],
+  "reviewer_overalls": [
+    3.3,
+    3.85,
+    3.4
+  ],
+  "reviewer_verdicts": [
+    "fail",
+    "fail",
+    "fail"
+  ],
+  "summary": "Good core understanding of import idempotency and partial success, but incomplete against the required ground truth and overextended with weakly grounded audit/transaction/sync guarantees.",
+  "verdict": "fail"
+}

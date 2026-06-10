@@ -1,0 +1,40 @@
+{
+  "case_id": "APPROVAL-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "Useful as an orientation map for where approval workflow lives and which refs govern changes, but an engineer would still need to redo trace work for notification behavior, audit double-write boundaries, backend flow refs, and workbench-specific operations before safely changing approvals.",
+      "score": 3
+    },
+    "correctness": {
+      "justification": "Correctly identifies the primary recipe, core backend owner c3-205, workbench owner c3-212, UI participant c3-105, lifecycle, anyof/allof modes, governing refs, and no rule entities. It omits some expected details: c3-212 invoice cleanup, related notification owner c3-211, backend flow refs such as ref-rbac/ref-server-functions/ref-query-services, and the audit double-write caveat.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Evidence commands cover the key reads and the prose ties major claims to recipe, component, and ref evidence. Grounding is not complete because graph evidence for c3-212/ref-approval-chain is omitted and several expected claims are unsupported or absent.",
+      "score": 4
+    },
+    "no_hallucination": {
+      "justification": "No invented ids, rules, or unsupported guarantees are present. The answer stays within fixture-backed entities and cleanly states that there are no rule entities.",
+      "score": 5
+    },
+    "reasoning_depth": {
+      "justification": "Explains why the three main refs govern approvals at a high level, but does not deeply explain approval-chain semantics, step-advance gating, audit boundaries, sync ack behavior, notification side effects, or safe property boundaries.",
+      "score": 3
+    },
+    "trace_completeness": {
+      "justification": "Gives the main locations and some lifecycle/state information, but the causal chain is compressed. It does not explicitly trace PR action to state mutation to approval-chain step advancement to next-step notifications or sync/audit observers, and workbench import/export effects are only sketched.",
+      "score": 3
+    }
+  },
+  "overall": 3.6,
+  "quality_gaps": [
+    "Does not mention c3-211 as the related next-step approver notification owner.",
+    "Does not include c3-212 invoice cleanup, only import/export in broad terms.",
+    "Omits backend flow refs such as ref-rbac, ref-server-functions, and ref-query-services.",
+    "Does not state the ref-audit-trail caveat that PR mutations should not double-write audit entries.",
+    "Does not explicitly trace action -> state change -> approval-chain mechanism -> observer/dependent -> workflow property.",
+    "Evidence command set omits expected graphs for c3-212 and ref-approval-chain."
+  ],
+  "summary": "Mostly correct high-level answer with the key owners and governing refs, but it is too shallow for a strict pass because the causal trace and safe change boundaries are incomplete.",
+  "verdict": "fail"
+}

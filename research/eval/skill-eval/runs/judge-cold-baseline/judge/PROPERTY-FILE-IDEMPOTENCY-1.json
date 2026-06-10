@@ -1,0 +1,39 @@
+{
+  "case_id": "PROPERTY-FILE-IDEMPOTENCY-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "An engineer would know the main owners, mechanisms, partial-success/idempotency behavior, and sync/storage boundaries. Verification direction is limited to evidence commands and it omits some safe-change details around services, upload storage, and partial-state caveats.",
+      "score": 4
+    },
+    "correctness": {
+      "justification": "Major facts match ground truth: c3-104 initiates import, c3-206 handles XML/ZIP parsing, MD5 duplicate checks, inserts and sync, ref-file-handling covers PostgreSQL BYTEA/content-hash deduplication/tri-state results, c3-204 schema, ref-sync deltas, and ADR per-item result precedent. Minor gaps: it does not explicitly mention uploaded-file storage by c3-206 or invoice services, and caveats include unsupported fixture drift.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Evidence commands are complete and prose cites the main ids, but the Grounding section is thin and does not tie every important claim to specific reads or graph evidence. Several claims are asserted from the trace rather than explicitly grounded.",
+      "score": 3
+    },
+    "no_hallucination": {
+      "justification": "No invented core C3 ids or dangerous whole-batch atomicity claims. However, the caveat about known c3 check drift is unsupported by the provided ground truth/case excerpt, and 'No rule-* entities found' is not established by the listed evidence.",
+      "score": 3
+    },
+    "reasoning_depth": {
+      "justification": "It explains why duplicates become skipped, failures become failure, successes insert and sync, and why this creates an idempotency/partial-success boundary. It lacks deeper discussion of the boundary limits, especially that ZIP imports can intentionally leave partial state rather than whole-batch atomicity.",
+      "score": 4
+    },
+    "trace_completeness": {
+      "justification": "It gives the core chain from import action to state outcomes, mechanisms, storage/schema boundary, sync observer, and emergent idempotency/partial-success property. The chain is somewhat compressed and the dependent/observer side is less explicit than ideal, but usable.",
+      "score": 4
+    }
+  },
+  "overall": 3.75,
+  "quality_gaps": [
+    "Grounding section is generic and does not map specific claims to specific C3 reads/graphs.",
+    "Unsupported caveat: 'fixture has known c3 check drift' is not in the case ground truth or excerpt.",
+    "Unsupported negative fact: 'No rule-* entities found' is not proved by the listed commands.",
+    "Does not explicitly mention c3-206 storing uploaded files or inserting invoice services.",
+    "Does not clearly state the important boundary that ZIP imports may produce partial state rather than whole-batch atomicity."
+  ],
+  "summary": "Mostly correct and useful, but not pass-level because grounding is too thin and the caveats include unsupported claims. It captures the core idempotency/partial-success mechanism but leaves some boundary details implicit.",
+  "verdict": "fail"
+}

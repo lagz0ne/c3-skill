@@ -1,0 +1,39 @@
+{
+  "case_id": "PROPERTY-TRANSPORT-SYNC-COUPLING-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "An engineer would understand the owners and safe risk areas to inspect: JWT signing/resolver/preload/expiry/permissions, WebSocket connection, sync subjects, and executionId delivery. It gives useful change boundaries, though verification direction is limited to evidence commands and does not specify concrete checks after a change.",
+      "score": 4
+    },
+    "correctness": {
+      "justification": "Major facts match the ground truth: JWT resolver with no auth callout, c3-209 per-session JWT/nkey via loaderData, c3-4 broker validation, c3-101 WebSocket sync connection, sync.broadcast/user subjects, executionId/delta/ack dependency, and the transport-auth/sync coupling property. Minor imprecision: it frames permissions as 'subscribe-only' and does not explicitly state c3-4 accepts browser WSS connections or that the 20260112 callout ADR is historical/superseded rather than active.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "It lists the expected evidence commands and ties the main claims to key docs in prose, especially ref-nats-jwt-auth and ref-sync. However, grounding is broad rather than specific: several claims are asserted without tying them to c3-209, c3-4, c3-101, recipe-realtime-sync, or the ADRs in the Grounding section.",
+      "score": 3
+    },
+    "no_hallucination": {
+      "justification": "No invented ids or major invented behavior. The 'subscribe-only' permission phrasing and 'known c3 check drift' caveat are not established by the provided ground truth excerpt, but they are minor unsupported claims rather than severe hallucinations.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "It correctly names and explains transport-auth/sync coupling and why HTTP auth can keep working while NATS sync fails. It identifies concrete change risks: signing keys, resolver preload, expiration, and subject permissions. It lacks a fuller boundary discussion around targeted-vs-broadcast delivery and historical ADR migration context.",
+      "score": 4
+    },
+    "trace_completeness": {
+      "justification": "The answer gives a usable chain from credential generation to broker enforcement to client sync runtime and failure mode. It covers action -> auth state/config change -> WebSocket connection/permission mechanism -> sync delivery observers -> emergent coupling. It is slightly compressed and does not fully spell out executionId threading from HTTP response through execution context tag to sync emit/ack and client tracker.",
+      "score": 4
+    }
+  },
+  "overall": 3.85,
+  "quality_gaps": [
+    "Grounding section only names ref-nats-jwt-auth and ref-sync; it does not tie claims back to c3-209, c3-4, c3-101, recipe-realtime-sync, or the ADRs.",
+    "Does not explicitly state adr-20260113-nats-jwt-resolver supersedes adr-20260112-nats-auth-callout; including the old ADR under broker enforcement could imply it is active.",
+    "ExecutionId correlation is mentioned but not traced through HTTP response -> execution context tag -> sync.emit/ack -> client tracker.",
+    "'Subscribe-only permissions' and 'known c3 check drift' are unsupported by the provided ground truth excerpt.",
+    "No concrete post-change verification checks are given beyond the evidence-read commands."
+  ],
+  "summary": "Solid, mostly correct causal answer, but just below pass because grounding is too shallow and a few claims are imprecise or unsupported by the supplied fixture excerpt.",
+  "verdict": "fail"
+}

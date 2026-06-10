@@ -1,0 +1,39 @@
+{
+  "case_id": "CROSSCUT-STEP-ADVANCE-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "Gives a safe orientation to the owning approval component, notification component, sync path, and the stepAdvanced boundary. It would guide an engineer, though they would still need to reread evidence for exact notification dispatch details and verification checks.",
+      "score": 4
+    },
+    "correctness": {
+      "justification": "Major facts match ground truth: c3-205 owns approval actions, ref-approval-chain defines anyof/allof advancement, ADR adds stepAdvanced, c3-211 handles notification, and ref-sync/c3-101 handle browser sync. Minor omissions include first-step requestApprovals notification detail and c3-211 recipient/channel specifics.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Evidence commands are mostly relevant and the prose names the right docs, but grounding is shallow. It does not cite specific read results or snippets for notifyNextApprovers, per-recipient publish, NATS ack/broadcast, or current c3-205 behavior.",
+      "score": 3
+    },
+    "no_hallucination": {
+      "justification": "No invented ids or unsupported mechanisms. The caveat that the ADR is historical but matches current c3-205 behavior is consistent with the excerpt.",
+      "score": 5
+    },
+    "reasoning_depth": {
+      "justification": "It explains the core emergent property: stepAdvanced prevents notification on every approval and suppresses next-approver notification after final approval. It is useful but light on failure modes, such as why inferring advancement from approval events would be fragile.",
+      "score": 4
+    },
+    "trace_completeness": {
+      "justification": "It traces action ownership, approval state advancement, stepAdvanced mechanism, notification owner, and sync observer path. The chain is mostly explicit, though terse and not fully tied step-by-step to requestApprovals first-step versus approvePr/approveAll later-step behavior.",
+      "score": 4
+    }
+  },
+  "overall": 3.95,
+  "quality_gaps": [
+    "Grounding section mostly asserts which docs govern behavior instead of tying claims to specific evidence snippets.",
+    "Does not mention c3-211 publishes one notification per recipient or that channels include in-app, email, and Slack.",
+    "Does not explicitly state requestApprovals notifies first-step approvers, while approvePr/approveAll notify later-step approvers only on step advancement.",
+    "Does not include the second expected search command from the case excerpt.",
+    "Reasoning around fragile inference is named only indirectly; the failure mode is not explained in depth."
+  ],
+  "summary": "Correct and compact answer with the main causal chain and emergent property. It passes, but grounding is thinner than ideal and omits some concrete dispatch/channel and first-step details.",
+  "verdict": "fail"
+}

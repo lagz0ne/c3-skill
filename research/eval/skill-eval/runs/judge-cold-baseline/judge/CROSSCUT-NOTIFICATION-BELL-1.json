@@ -1,0 +1,39 @@
+{
+  "case_id": "CROSSCUT-NOTIFICATION-BELL-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "Useful debugging map: check producer flow, notification system, subject contract, frontend subscriptions, and atom routing before blaming UI. It could be safer with concrete checks for escaped email subject, JetStream/inAppChannel delivery, logs, message type routing, and the bell dropdown/atom boundary.",
+      "score": 4
+    },
+    "correctness": {
+      "justification": "Major path is correct: c3-205 approval flow trigger, c3-211 notification publish/dispatch, ref-sync subject split, c3-101 dual subscription and notifications atom, ADR visibility bug, and separate durable/targeted notification semantics versus ephemeral/global broadcast sync. Minor gaps: it does not name the specific approval methods, JetStream/inAppChannel persistence detail, or bell/dropdown UI decision.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "The answer ties most claims to the right C3 ids and includes the expected read/graph commands. The prose cites c3-205, c3-211, ref-sync, c3-101, the ADR, and recipe-realtime-sync. Grounding is still thin because the Grounding section only elaborates ref-sync and omits explicit evidence ties for c3-205, c3-211, c3-101, JetStream, and the ADR implementation facts.",
+      "score": 4
+    },
+    "no_hallucination": {
+      "justification": "No invented ids or unsupported mechanisms are present. Claims stay within the fixture and correctly avoid treating broadcast and targeted notification delivery as the same path.",
+      "score": 5
+    },
+    "reasoning_depth": {
+      "justification": "It explains the key emergent property: shared NATS does not mean shared semantics, because notifications are targeted/durable while broadcast sync is global/ephemeral. It is sufficient to guide debugging, but does not spell out failure modes such as wrong escaped email subject, missing user-subscription, JetStream persistence versus realtime publish, or message routing type mismatch.",
+      "score": 4
+    },
+    "trace_completeness": {
+      "justification": "It traces action -> notification dispatch -> subject contract -> frontend subscription/atom -> visibility failure/property. The chain is usable, but state-change and UI-observer details are compressed, and the final bell/dropdown/UI history segment is only implied through the ADR.",
+      "score": 4
+    }
+  },
+  "overall": 4.1,
+  "quality_gaps": [
+    "Does not name the specific c3-205 approval entry points requestApprovals, approvePr, or approveAll.",
+    "Does not mention c3-211 notification logs or inAppChannel real-time publish plus JetStream persistence.",
+    "Does not explicitly include adr-20260126-user-notification-ui bell dropdown/message-type addition as part of the UI observer history.",
+    "Grounding section is thinner than the answer: several claims are tied to ids in prose but not supported with specific snippets or command results.",
+    "Caveats only mention runtime NATS subscription state; they omit targeted subject escaping, user identity/email mismatch, message routing, persistence/log checks, and atom/UI rendering boundary."
+  ],
+  "summary": "Correct, grounded, and causal enough to pass. It identifies the real cross-cut path and emergent property, but is compact and misses several concrete verification and boundary details from the ground truth.",
+  "verdict": "pass"
+}

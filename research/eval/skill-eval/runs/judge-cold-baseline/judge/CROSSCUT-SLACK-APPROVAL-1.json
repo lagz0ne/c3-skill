@@ -1,0 +1,38 @@
+{
+  "case_id": "CROSSCUT-SLACK-APPROVAL-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "Useful for an engineer: it identifies the safe entry point, owners, affected sync and notification paths, and the direct-service bypass risk. It would be stronger with explicit verification checks and a clearer note that c3-205 owns the ack and step-advance notification side effects.",
+      "score": 4
+    },
+    "correctness": {
+      "justification": "Major owners and mechanisms match the ground truth: c3-215 handles Slack actions, uses c3-202 execution context, calls c3-205 flows, web sync goes through ref-sync/c3-101, and notifications go through c3-211/ref-pull-dispatcher. Minor gap: it does not explicitly state c3-205 owns sync ack and notification-on-step-advance, and the runtime-config caveat is not grounded in the provided fixture.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "The answer includes the right evidence commands and ties some claims to ids, but the Grounding section is thin. Several important claims, such as c3-205 flow side effects and c3-202 context concepts, are asserted rather than explicitly tied to cited reads/snippets.",
+      "score": 3
+    },
+    "no_hallucination": {
+      "justification": "No fake ids or major invented behavior. The only notable unsupported claim is the caveat that Slack runtime config can disable delivery, which may be plausible but is absent from the supplied ground truth/excerpt.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "It explains the key why: flow entry preserves cross-cutting sync and notification side effects that direct service entry would bypass. The answer is concise but does not deeply describe the property boundary, failure modes beyond direct service bypass, or tradeoffs.",
+      "score": 4
+    },
+    "trace_completeness": {
+      "justification": "The causal chain is mostly complete: Slack action, context creation, PR flow mutation, sync delivery to web clients, notification delivery to next approvers, and the flow-entry emergent property. It leaves some details implicit, especially c3-205 as the exact owner of sync ack and notification-on-step-advance.",
+      "score": 4
+    }
+  },
+  "overall": 3.85,
+  "quality_gaps": [
+    "Does not explicitly state that c3-205 flows own approval mutation, sync ack, and notification-on-step-advance together.",
+    "Grounding section is shallow and does not connect each major claim to specific reads or snippets.",
+    "The caveat about Slack runtime config disabling delivery is unsupported by the provided case file and ground truth.",
+    "Verification/change guidance is implied, not spelled out as checks an engineer should run."
+  ],
+  "summary": "Mostly correct and useful, but too terse in grounding and misses explicit c3-205 ownership of sync ack plus notification-on-step-advance. One unsupported caveat prevents a cleaner no-hallucination score.",
+  "verdict": "fail"
+}

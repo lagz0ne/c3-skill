@@ -1,0 +1,40 @@
+{
+  "case_id": "AUTH-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "Useful for orientation: it points engineers to the right recipe, components, and governing refs. It is not enough for a safe change map because it lacks explicit ownership boundaries, permission enforcement details, failure modes, and verification checks.",
+      "score": 3
+    },
+    "correctness": {
+      "justification": "Major entities and governance refs match the ground truth: recipe-auth-and-access, c3-213, c3-202, c3-209, c3-4, ref-authentication, ref-rbac, and ref-nats-jwt-auth are all identified correctly, and it correctly states there are no rule entities. Minor gaps: it does not explicitly mention c3-4 enforcing NATS WebSocket permissions, and it omits some fixture-specific contract/governance detail.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "The answer includes relevant evidence commands and ties the main claims to refs in prose. But it cites no read for c3-4 despite claiming its behavior, omits the expected ref-nats-jwt-auth graph command, and does not tie claims to specific component Governance/Contract or ref Goal/Choice/Why rows.",
+      "score": 3
+    },
+    "no_hallucination": {
+      "justification": "No invented rule ids or major fake components are present. The phrase 'JWT resolver credentials' is slightly over-specific relative to the provided ground truth, but not enough to count as a clear hallucination given the NATS JWT context.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "It explains the high-level split between HTTP session, RBAC, and separate NATS transport auth, and why the refs govern. However, it is shallow on how those mechanisms interact, what the governing contracts require, and what failure or change boundaries matter.",
+      "score": 3
+    },
+    "trace_completeness": {
+      "justification": "The answer sketches the layered path from app auth to execution context to NATS credentials, but the causal chain is compressed. It does not explicitly trace login/session state change through RBAC checks, currentUserTag/UserActor propagation, per-session credential generation, c3-4 validation, and the resulting access boundary.",
+      "score": 3
+    }
+  },
+  "overall": 3.35,
+  "quality_gaps": [
+    "Missing expected evidence command: c3 graph ref-nats-jwt-auth --depth 2.",
+    "Claims c3-4 behavior without an explicit supporting read or graph in the evidence list.",
+    "Does not explicitly describe c3-4 enforcing NATS WebSocket permissions.",
+    "Does not use the component Governance/Contract rows or ref Goal/Choice/Why rows called out by the case.",
+    "Trace is entity-oriented rather than causal; it does not show login/session -> RBAC -> execution context -> NATS credentials -> NATS validation/access.",
+    "Change guidance lacks concrete verification direction and safe boundaries."
+  ],
+  "summary": "Mostly correct but too shallow for the pass bar. It names the right auth layers and governing refs, but does not fully trace the causal path or provide enough grounded change guidance.",
+  "verdict": "fail"
+}

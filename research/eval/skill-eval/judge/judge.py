@@ -202,7 +202,7 @@ def normalize_verdict(verdict: dict[str, Any]) -> dict[str, Any]:
 
 
 def aggregate_reviews(reviews: list[dict[str, Any]]) -> dict[str, Any]:
-    """Median per dimension across reviewers; verdict by majority vote."""
+    """Median per dimension across reviewers; verdict from the pass rule on the aggregate."""
     if len(reviews) == 1:
         return reviews[0]
     majority = "pass" if sum(r["verdict"] == "pass" for r in reviews) * 2 > len(reviews) else "fail"
@@ -215,8 +215,10 @@ def aggregate_reviews(reviews: list[dict[str, Any]]) -> dict[str, Any]:
         }
         for name in DIMENSIONS
     }
+    # Verdict = pass rule applied to the aggregated dimensions (normalize_verdict),
+    # never reviewer majority — a 2-1 pass vote can disagree with median overall
+    # (observed: votes [pass, fail, pass] around aggregated overall 3.85).
     agg = normalize_verdict(agg)
-    agg["verdict"] = majority
     agg["reviewer_verdicts"] = [r["verdict"] for r in reviews]
     agg["reviewer_overalls"] = [r["overall"] for r in reviews]
     return agg

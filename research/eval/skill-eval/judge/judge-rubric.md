@@ -68,17 +68,27 @@ docs.
 
 ### 5. No Hallucination
 
-No invented ids, rules, behavior, or guarantees absent from fixture/ground
-truth. Penalize overclaims, especially whole-batch atomicity, guaranteed
-delivery, or invented `rule-*` ids.
+Hallucination means ONLY:
+
+- citing an entity id (`c3-*`, `ref-*`, `recipe-*`, `adr-*`, `rule-*`) that is
+  NOT in the fixture entity inventory,
+- claims that CONTRADICT the ground truth or case excerpt,
+- invented guarantees, rules, or behaviors, especially whole-batch atomicity
+  or guaranteed delivery.
+
+The ground truth and excerpt are a SAMPLE of the fixture, not its entirety.
+Detail beyond them — inventory-listed ids the excerpt omits, or plausible
+specifics the excerpt cannot verify — is NOT hallucination; score unverifiable
+claims under Grounding instead. Check each cited id against the inventory
+before calling it invented.
 
 | Score | Bar |
 | --- | --- |
-| 1 | Multiple invented ids/behaviors or one severe unsafe hallucination. |
-| 2 | One clear hallucination or several unsupported overclaims. |
-| 3 | No fake ids, but some overconfident claims beyond evidence. |
-| 4 | No hallucinations; minor imprecision only. |
-| 5 | Cleanly distinguishes proved facts, inference, and caveats. |
+| 1 | Multiple invented ids/contradictions or one severe unsafe hallucination. |
+| 2 | One invented id, one contradiction, or one invented guarantee. |
+| 3 | No invented ids, but a claim that distorts the ground truth. |
+| 4 | No invented ids, no contradictions, no invented guarantees. |
+| 5 | Additionally distinguishes proved facts, inference, and caveats cleanly. |
 
 ### 6. Change Usefulness
 

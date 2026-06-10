@@ -72,6 +72,16 @@ def extract_case_excerpt(case_id: str, case_files: tuple[Path, ...] = CASE_FILES
     raise SystemExit(f"case excerpt not found: {case_id}")
 
 
+def fixture_entity_ids() -> str:
+    fixture = ROOT / "fixtures" / "acountee" / ".c3"
+    ids: set[str] = set()
+    for path in sorted(fixture.rglob("*.md")):
+        if path.parent.name in ("adr", "refs", "recipes"):
+            ids.add(path.stem)
+        ids.update(re.findall(r"^id:\s*(\S+)", path.read_text(encoding="utf-8"), re.MULTILINE))
+    return ", ".join(sorted(ids))
+
+
 def build_prompt(case_id: str, answer_file: Path) -> str:
     cases = load_cases()
     if case_id not in cases:
@@ -93,6 +103,7 @@ Use only:
 - the case question,
 - the machine ground truth,
 - the case-file excerpt,
+- the fixture entity inventory,
 - the candidate answer.
 
 Return JSON only. Follow this schema:
@@ -119,6 +130,13 @@ question: {case["question"]}
 # Machine Ground Truth
 
 {case["ground_truth"]}
+
+# Fixture Entity Inventory
+
+Every id below EXISTS in the fixture. Citing one is never an invented id,
+even when it is absent from the ground truth or excerpt.
+
+{fixture_entity_ids()}
 
 # Case File Excerpt
 

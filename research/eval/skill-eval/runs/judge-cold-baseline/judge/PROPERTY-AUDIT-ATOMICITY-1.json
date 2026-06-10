@@ -1,0 +1,39 @@
+{
+  "case_id": "PROPERTY-AUDIT-ATOMICITY-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "Useful for an engineer: identifies the owners, mutation path, audit mechanism, duplicate-write risk, partial-failure boundary, and where audit entries are observed. Verification direction is implicit through evidence commands rather than spelled out as concrete checks.",
+      "score": 4
+    },
+    "correctness": {
+      "justification": "Correct on the main answer: mass approval enters via c3-105, approveAll in c3-205 iterates PR ids and collects approved/failed, PR audit is trigger-based, explicit createAuditEntry should not be double-written, and consistency is per committed PR mutation rather than whole-batch all-or-nothing. Minor imprecision around c3-202/transactionTag and actor attribution because the expected ground truth separately names ref-audit-trail transaction setup/app.current_user.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Major claims are tied to the expected C3 reads and graph commands, and the prose connects ids to behavior. Grounding is weaker in the Grounding section itself, which is brief and omits some expected concrete facts such as log_change, app.current_user, and c3-208's exact compliance query surface.",
+      "score": 4
+    },
+    "no_hallucination": {
+      "justification": "No invented ids or unsafe whole-batch atomicity claim. There is one unsupported caveat about known c3 check drift, and the transactionTag/actor-attribution phrasing slightly over-compresses separate facts, but these do not overturn the answer.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "Names and explains audit atomicity under partial failure, including the key boundary: persisted PR mutations are audited, failed or rolled-back attempts do not leave orphan audit rows, and the batch itself is not claimed all-or-nothing. Tradeoff and failure boundary are clear enough, though not deeply expanded.",
+      "score": 4
+    },
+    "trace_completeness": {
+      "justification": "Traces action to bulk mutation to approval semantics to audit mechanism to audit surface and emergent consistency property. It is nearly complete, but the execution-context link is compressed and does not explicitly name app.current_user/log_change as part of the trigger context.",
+      "score": 4
+    }
+  },
+  "overall": 4.0,
+  "quality_gaps": [
+    "Does not explicitly mention ref-audit-trail transaction setup setting app.current_user for trigger attribution.",
+    "Does not name log_change, only describes trigger capture generally.",
+    "Grounding section is thinner than the answer and omits several cited facts it relies on.",
+    "Unsupported caveat: fixture has known c3 check drift is not established by the provided case material.",
+    "Verification/check guidance is not made concrete beyond listing evidence commands."
+  ],
+  "summary": "Strong answer that captures the core atomicity property and avoids the major unsafe overclaim that bulk approval is all-or-nothing. Main gaps are compressed execution-context grounding and one unsupported caveat.",
+  "verdict": "pass"
+}

@@ -1,0 +1,48 @@
+{
+  "case_id": "ADMIN-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "Gives an engineer a useful change map: UI owner, backend owner, authorization gate, audit/query boundaries, relevant refs, caveats, and verification-style commands. The over-expanded audit ownership path means an engineer would still need to verify whether c3-208 should be treated as part of this admin-feature ownership answer or as a supporting audit subsystem.",
+      "score": 4
+    },
+    "correctness": {
+      "justification": "Correctly identifies the core owners required by ground truth: c3-107 for Admin Screens, c3-210 for backend Admin Flows, adr-20260121-admin-management-features as implemented history, and ref-rbac/ref-admin-page-layout as governing refs. It also correctly preserves the frontend/backend split and owner-only access. It adds c3-208 for audit querying and c3-204 persistence; those ids exist and may be fixture-supported, but c3-208 is not part of the machine ground-truth owner set for this case, so the answer slightly over-expands ownership beyond the expected answer.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Most major claims are tied to C3 reads, graphs, and specific sections. The answer includes the expected evidence commands and maps claims to evidence. Some detailed claims rely on evidence not included in the case excerpt, such as exact operation names, c3-208 details, lookup results, and UI drift notes; these are plausible but not verifiable from the supplied excerpt, so grounding is not perfect.",
+      "score": 4
+    },
+    "no_hallucination": {
+      "justification": "All cited entity ids appear in the fixture inventory or are unique valid ids. The answer does not invent whole-batch guarantees or contradict the core ground truth. The main risk is semantic overreach: saying admin audit query backend is c3-208 and not c3-210 expands the expected owner map, but it does not directly contradict the excerpt because c3-210 is only specified for teams, roles, users, and approval configuration flows.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "Explains why ownership splits across frontend screens, backend flows, authorization gates, mutation/audit behavior, and failure boundaries. It names useful boundaries such as non-owner rejection, flow-layer audit attachment, and direct lower-layer calls being outside documented guarantees. Some of this is beyond the provided ground truth and is not fully necessary for the case, but the reasoning is generally useful.",
+      "score": 4
+    },
+    "trace_completeness": {
+      "justification": "Provides a clear chain from admin UI action in c3-107 to server functions, RBAC owner gate, c3-210 mutations, audit writes, and audit observation. For an ownership case this is more causal than required. Minor issue: the answer emphasizes a c3-208 audit query branch not present in the required chain, which can blur the expected ownership boundary.",
+      "score": 4
+    }
+  },
+  "overall": 4.0,
+  "quality_gaps": [
+    "Over-expands the owner answer with c3-208 audit-query ownership, which is not part of the machine ground truth for ADMIN-1.",
+    "Some detailed operation names, lookup results, UI drift, and audit-gap claims are not supported by the provided case excerpt, even if the ids exist in the fixture.",
+    "The answer could more directly state the expected simple ownership conclusion before introducing supporting audit and persistence subsystems.",
+    "Canvas contract/ADR compliance rows are mentioned indirectly but not clearly tied to the expected c3-1, c3-2, and c3-204 compliance explanation."
+  ],
+  "reviewer_overalls": [
+    4.0,
+    4.0,
+    4.0
+  ],
+  "reviewer_verdicts": [
+    "pass",
+    "pass",
+    "pass"
+  ],
+  "summary": "Strong answer: it captures the required c3-107/c3-210 ownership split, ADR, RBAC, and frontend layout governance, and gives a useful causal and change map. It is slightly over-broad by elevating c3-208/c3-204 details beyond the machine ground-truth owner set.",
+  "verdict": "pass"
+}

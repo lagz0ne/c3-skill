@@ -1,0 +1,47 @@
+{
+  "case_id": "ADMIN-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "Gives a practical change map: touch c3-107 for screens, c3-210 for admin flows, c3-208 for audit-query changes, preserve RBAC owner gate, test NOT_OWNER and guard failures, and verify audit observability. It includes clear caveats and checks useful for an engineer.",
+      "score": 5
+    },
+    "correctness": {
+      "justification": "Covers the required owners and governance: c3-107 for frontend Admin Screens, c3-210 for backend Admin Flows, adr-20260121-admin-management-features as implemented history, ref-admin-page-layout for frontend layout, and ref-rbac for owner-only access. It also correctly distinguishes frontend UI gating from backend authorization. Minor issue: it elevates c3-208 as a backend audit owner even though the machine ground truth for this case names only c3-107 and c3-210; this is plausible from the excerpt but not part of the expected ownership answer.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Most important claims are tied to C3 reads, graphs, ADRs, and refs. The answer connects c3-107/c3-210/ref-rbac/ADR claims to specific sections. Some extra specifics, such as exact function counts, detailed operation error codes, lookup results, and c3-208 audit details, are beyond the provided excerpt and depend on cited reads the judge cannot verify here, so grounding is strong but not perfect.",
+      "score": 4
+    },
+    "no_hallucination": {
+      "justification": "All cited entity ids exist in the fixture inventory. The answer does not contradict the ground truth and explicitly avoids inventing audit-write atomicity. Extra c3-208 and ADR/doc claims are not hallucinations under the rubric because the ids exist and the excerpt suggests related audit backend context.",
+      "score": 5
+    },
+    "reasoning_depth": {
+      "justification": "Explains the ownership split, why owner-only access is enforced at the backend, what UI gating does and does not guarantee, and the failure boundary for NOT_OWNER and guard errors. It also notes the audit transactionality boundary as undocumented rather than inventing a guarantee.",
+      "score": 5
+    },
+    "trace_completeness": {
+      "justification": "Provides a full causal chain from admin screen action through server function/flow mutation, RBAC enforcement, audit observation, and failure boundary. It explicitly names state mutation ownership, authorization mechanism, observer/query side, and emergent server-side authorization property.",
+      "score": 5
+    }
+  },
+  "overall": 4.6,
+  "quality_gaps": [
+    "Adds c3-208 as a third backend audit owner even though the expected case answer centers ownership on c3-107 and c3-210.",
+    "Several detailed claims, including exact function counts, operation error codes, lookup coverage gaps, and UI drift, are not verifiable from the excerpt provided to the judge.",
+    "The answer is longer than needed for the ownership question, which may obscure the core required answer despite being mostly correct."
+  ],
+  "reviewer_overalls": [
+    4.6,
+    4.1,
+    4.6
+  ],
+  "reviewer_verdicts": [
+    "pass",
+    "pass",
+    "pass"
+  ],
+  "summary": "Strong answer. It identifies the required admin frontend/backend owners and governing refs, traces the enforcement mechanism, and gives useful change checks. The main weakness is that it adds c3-208 as an audit backend owner beyond the machine ground truth, though this is framed reasonably and not unsafe.",
+  "verdict": "pass"
+}

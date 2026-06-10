@@ -1,0 +1,48 @@
+{
+  "case_id": "CROSSCUT-NOTIFICATION-BELL-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "It gives a practical troubleshooting map before blaming UI: check notification_log, preferences, recipient email/escaping, JetStream/consumer health, subject prefix, JWT permissions/expiry, natsSync subscriptions, dismissed/read/cap behavior. This is actionable and preserves safe ownership boundaries.",
+      "score": 5
+    },
+    "correctness": {
+      "justification": "The answer covers the required path: c3-205 trigger, c3-211 dispatch/model, ref-sync subject contract, c3-101 subscription/notifications atom, adr-20260126 UI history, and recipe-realtime-sync separation. It correctly states the key semantic boundary between broadcast sync and targeted durable notifications. It adds many fixture-listed details beyond the case, some of which are not verifiable from the supplied excerpt and may overstate what 'published' proves, but it does not miss the main owners or mechanism.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Major claims are tied to cited reads and graphs, including the required evidence commands. However, the answer leans heavily on extra details from c3-214, c3-209, c3-4, ref-pull-dispatcher, and ref-jtbd that are not in the case excerpt or ground truth, so those claims cannot be fully verified here. Some evidence is asserted as command output rather than shown.",
+      "score": 4
+    },
+    "no_hallucination": {
+      "justification": "All cited C3-style ids are present in the inventory or uniquely resolve by prefix. The answer does not invent a guaranteed delivery or receipt guarantee and explicitly caveats that 'sent' is not receipt. Some unverified specifics may be overconfident, but they do not contradict the supplied ground truth.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "It explains why healthy broadcast sync does not prove notification delivery, identifies targeted-vs-broadcast semantics, durability, asynchronous dispatch, subject/email mismatch, preference filtering, and live-vs-fetch recovery boundaries. It also names plausible failure modes and explains how each changes what should be inspected next.",
+      "score": 5
+    },
+    "trace_completeness": {
+      "justification": "It explicitly traces action/recipient selection to durable enqueue, dispatcher/channel handling, user subject publish, transport/auth, frontend natsSync ingestion, fetch fallback, and bell visibility. The causal chain includes state changes, mechanisms, observers, and the emergent property.",
+      "score": 5
+    }
+  },
+  "overall": 4.5,
+  "quality_gaps": [
+    "Overstates some extra-system details as proven, especially JetStream stream configuration, JWT TTL/permission behavior, and c3-214 fetch caps, which are outside the case excerpt and machine ground truth.",
+    "The answer is much broader than necessary and may obscure the core required trace with secondary diagnostics.",
+    "Several grounding rows cite claimed tool output without showing snippets, so the judge can verify only the required excerpt-backed parts.",
+    "The phrase 'published means one thing only' is too rigid for the case wording; the ground truth mainly requires tracing from trigger through dispatch and targeted user-subject delivery before UI blame."
+  ],
+  "reviewer_overalls": [
+    4.5,
+    4.5,
+    4.35
+  ],
+  "reviewer_verdicts": [
+    "pass",
+    "pass",
+    "pass"
+  ],
+  "summary": "Strong answer. It is causally complete, correctly distinguishes targeted durable notifications from global ephemeral broadcast sync, and gives useful pre-UI checks. Main weakness is over-expansion into extra fixture areas with some claims not directly verifiable from the supplied excerpt.",
+  "verdict": "pass"
+}

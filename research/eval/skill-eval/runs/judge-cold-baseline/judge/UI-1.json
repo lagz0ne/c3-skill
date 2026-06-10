@@ -1,0 +1,40 @@
+{
+  "case_id": "UI-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "Useful for orientation and basic consistency checks, but an engineer would still need to reread the refs to know exact safe boundaries, required detail conventions, list behaviors, ownership contracts, and verification checks.",
+      "score": 3
+    },
+    "correctness": {
+      "justification": "Correctly identifies recipe-screen-anatomy, owners c3-104/c3-105, the main governing refs, and the no-rule caveat. It omits several expected specifics such as sticky group headers, facet/BIG grids, empty-state conventions, tablet behavior, and component Governance/Contract ownership rows.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Major claims are tied to the expected C3 reads and refs, and the evidence command set is mostly aligned with the case excerpt. Grounding remains terse and lacks the expected graph reads for ref-master-detail-layout and ref-detail-content-strategy, replacing them with graph c3-105.",
+      "score": 4
+    },
+    "no_hallucination": {
+      "justification": "No invented ids, rules, or unsupported guarantees. The caveat that the fixture has no rule entities is correct.",
+      "score": 5
+    },
+    "reasoning_depth": {
+      "justification": "Explains why each ref applies in broad terms, but does not discuss the concrete pattern boundaries: MasterDetailLayout owning responsive behavior, detail content strategy owning facet/section/empty-state conventions, list pattern owning virtualization and sticky headers, or FilterFooter as the common filter placement.",
+      "score": 3
+    },
+    "trace_completeness": {
+      "justification": "Gives a usable high-level chain from recipe to screen owners to shared layout refs, but the causal trace is compressed. It does not explicitly trace how each ref's Goal/Choice/Why or component contract preserves consistency across detail and list layouts.",
+      "score": 3
+    }
+  },
+  "overall": 3.6,
+  "quality_gaps": [
+    "Missing expected graph commands for ref-master-detail-layout and ref-detail-content-strategy.",
+    "Does not mention sticky group headers where appropriate for list layouts.",
+    "Does not mention facet grids, BIG grids, section ordering, or empty-state conventions for detail panes.",
+    "Does not mention tablet breakpoint behavior or that responsive behavior belongs to MasterDetailLayout/ref-responsive-layout.",
+    "Does not cover component Governance/Contract rows preserving ownership or ref Goal/Choice/Why as the pattern rationale.",
+    "Grounding is mostly id-to-claim mapping, not a concrete trace from cited evidence to implementation boundary."
+  ],
+  "summary": "Mostly correct but too shallow for the pass bar. It names the right owners and refs, but does not provide enough causal detail or change guidance to safely preserve consistency across the layouts.",
+  "verdict": "fail"
+}

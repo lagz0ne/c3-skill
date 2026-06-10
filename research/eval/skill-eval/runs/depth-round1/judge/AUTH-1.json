@@ -1,0 +1,48 @@
+{
+  "case_id": "AUTH-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "The answer is actionable: it gives owners, governing refs, causal chain, failure boundaries, concrete change checks, and caveats. It loses some safety because c3-4, the required external NATS enforcement boundary, is not integrated into the change map.",
+      "score": 4
+    },
+    "correctness": {
+      "justification": "The answer captures the core ground truth: recipe-auth-and-access, c3-213, c3-202, c3-209, ref-authentication, ref-rbac, ref-nats-jwt-auth, three auth layers, OAuth/test token, currentUserTag/UserActor, RBAC, and NATS JWT credentials. It correctly states no rule-* governance. The main gap is that it does not clearly include c3-4 as the external NATS validator/enforcer required by the case, only alluding to it in a caveat, and it broadens ownership to c3-203/c3-2 beyond the expected auth owners.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Most major claims are tied to cited reads and specific sections, and the answer distinguishes doc-body paths from codemap gaps. Some claims rely on entities outside the case excerpt, especially c3-203/c3-2/code paths, and the c3-4 mention is not supported by an evidence command in the answer.",
+      "score": 4
+    },
+    "no_hallucination": {
+      "justification": "No cited entity ids are invented; all referenced ids exist in the fixture inventory. It does not invent rule-* ids or whole-batch guarantees. The only concern is mild overreach in presenting c3-203/c3-2 as ownership-splitting without machine-ground-truth support, but it does not directly contradict the excerpt.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "It explains the important properties and boundaries: stateless session, DB membership as the real access gate, flow-level enforcement rather than middleware rejection, separate NATS transport identity, least-privilege subscribe-only credentials, expiry, and failure boundaries.",
+      "score": 5
+    },
+    "trace_completeness": {
+      "justification": "It gives a strong causal chain from login to cookie, middleware hydration, flow-level RBAC enforcement, and NATS credential generation/permissions. The chain is mostly explicit and useful. It is not fully complete because the external service c3-4 validation/enforcement hop is missing from the main trace.",
+      "score": 4
+    }
+  },
+  "overall": 4.2,
+  "quality_gaps": [
+    "Does not clearly name c3-4 in the main answer as the external service that validates JWTs and enforces NATS WebSocket permissions.",
+    "Evidence commands omit c3 read/graph coverage for c3-4 despite c3-4 being in machine ground truth.",
+    "Adds c3-203 and c3-2 as ownership/handling entities; this may be useful, but it is broader than the expected ground-truth owner set and needs tighter boundary wording.",
+    "Some detailed implementation claims from c3-203/code paths are outside the provided excerpt and are only acceptable as lower-grounding, not as case-proven facts."
+  ],
+  "reviewer_overalls": [
+    4.2,
+    4.0,
+    4.3
+  ],
+  "reviewer_verdicts": [
+    "pass",
+    "pass",
+    "pass"
+  ],
+  "summary": "Strong, mostly correct, well-grounded answer with a deep auth/access trace. It passes, but misses the required c3-4 external validation/enforcement role in the main answer and slightly over-expands ownership beyond the expected entities.",
+  "verdict": "pass"
+}

@@ -1,0 +1,47 @@
+{
+  "case_id": "PROPERTY-AUDIT-ATOMICITY-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "Gives a safe change map: owners, mechanism, per-PR boundary, audit invariants, attribution checks, duplicate-audit guard, and source-inspection targets. This would let an engineer verify or modify the path without confusing audit consistency with batch atomicity.",
+      "score": 5
+    },
+    "correctness": {
+      "justification": "Correctly identifies per-committed-mutation audit consistency, not whole-batch atomicity; names c3-105, c3-205, ref-approval-chain, recipe-approval-workflow, ref-audit-trail, recipe-audit-and-compliance, c3-208, and c3-202 with the right roles. It also preserves the caveat that transaction granularity of approveAll is not documented.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Most major claims are tied to specific C3 reads, sections, graph output, and lookup results. Some extra claims, such as exact-one audit entries, no sync delta/no notification for failed PRs, and request-scoped transaction implications, go slightly beyond the provided case excerpt and would need direct source verification, though they are presented with caveats in places.",
+      "score": 4
+    },
+    "no_hallucination": {
+      "justification": "All cited entity ids exist in the fixture inventory. The answer does not claim whole-batch atomicity or guaranteed delivery, and it distinguishes documented facts from unknown transaction and batch-correlation boundaries.",
+      "score": 5
+    },
+    "reasoning_depth": {
+      "justification": "Explains the key property boundary: successful committed PR mutations get trigger audit entries, failed or rolled-back attempts do not create orphan audit rows, and this is not a batch all-or-nothing guarantee. It also names practical failure boundaries and compliance gaps such as unaudited failed attempts and missing batch correlation.",
+      "score": 5
+    },
+    "trace_completeness": {
+      "justification": "Explicitly traces action -> bulk approve state/result arrays -> DB trigger audit mechanism -> audit observation surface -> emergent per-mutation atomicity/consistency. The chain is causally usable and tied to the expected fixture entities.",
+      "score": 5
+    }
+  },
+  "overall": 4.6,
+  "quality_gaps": [
+    "A few claims exceed the case excerpt and should be treated as source-verification targets, especially exact-one audit rows and failed PR notification/sync behavior.",
+    "The answer leans on inferred request-scoped transaction behavior from c3-202/ref-query-services while correctly caveating approveAll transaction granularity as undocumented.",
+    "Some extra evidence commands and unrelated ADR discussion add noise, though they do not materially harm correctness."
+  ],
+  "reviewer_overalls": [
+    4.85,
+    4.6,
+    4.5
+  ],
+  "reviewer_verdicts": [
+    "pass",
+    "pass",
+    "pass"
+  ],
+  "summary": "Strong answer: correct, causal, grounded, and useful. It cleanly captures the emergent audit atomicity property as per persisted PR mutation and avoids the unsafe whole-batch atomicity claim.",
+  "verdict": "pass"
+}

@@ -1,0 +1,49 @@
+{
+  "case_id": "PROPERTY-CONFIG-BLAST-RADIUS-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "The answer gives a practical change map: backend env, frontend subscription wiring, broker APP_ACCOUNT_JWT permissions, credential/session refresh, affected sync/notification paths, and concrete verification checks. An engineer could use it to plan and validate the change safely, while treating the extra inferred details with caution.",
+      "score": 5
+    },
+    "correctness": {
+      "justification": "The answer covers all major ground-truth owners and mechanisms: ref-scope-controlled-config, ref-sync, c3-101 hardcoded frontend subscriptions, c3-209 credential permissions, c3-4 broker permissions, c3-211 notifications, and the sync reverse-graph dependents. It correctly frames the emergent property as blast radius across config, permissions, broker, frontend, sync, and notification subjects. It loses precision for extra asserted dependents and behaviors not established by the provided ground truth, especially c3-2, c3-104/c3-105, ADR graph entries, exact env-read semantics, and delivery/runtime failure details.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Major claims are tied to C3 reads/graphs and match the expected evidence. However, several specific claims are only asserted through alleged reads not present in the case excerpt, and some evidence commands are malformed or non-standard, such as combining ADR ids with slashes in one c3 read command. The graph/body drift claim and additional dependency ids are not supported by the machine ground truth.",
+      "score": 3
+    },
+    "no_hallucination": {
+      "justification": "All cited entity ids exist in the fixture inventory, and the core claims do not contradict the ground truth. The answer does include many extra implementation and runtime-behavior assertions that are not proved by the excerpt, but it caveats some of them as inferred. No invented id or severe invented guarantee is clear enough to force a lower score.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "The answer explains why the prefix change is risky, not just which ids mention it. It identifies coupling boundaries, lockstep requirements, silent/stale UI failure modes, permission mismatch risks, and verification checks. Some details go beyond the supplied fixture excerpt, but the reasoning itself is deep and operationally useful.",
+      "score": 4
+    },
+    "trace_completeness": {
+      "justification": "The causal chain is explicit: env/config prefix changes, scope tag value changes, subject contract changes, JWT and broker permissions must align, frontend hardcoded subscriptions break, sync/notification observers stop receiving messages, and the emergent blast-radius property follows. It also separates direct consumers from transitive dependents.",
+      "score": 5
+    }
+  },
+  "overall": 4.15,
+  "quality_gaps": [
+    "Adds ADRs, c3-104/c3-105, and c3-2 into the impact story without support from the machine ground truth excerpt.",
+    "Claims graph/body citation drift, but the provided ground truth does not establish that drift.",
+    "Some evidence commands are not clean runnable C3 commands, especially the slash-combined ADR read command.",
+    "Overstates precise runtime behavior such as env read-once semantics, DB/HTTP remaining unaffected, exact 2s fallback observation, stale JWT TTL impact, and email/Slack unaffected status without case-excerpt proof.",
+    "Needs clearer labeling of proved fixture facts versus inferred operational expectations for the extra failure-mode and verification details."
+  ],
+  "reviewer_overalls": [
+    4.5,
+    4.05,
+    4.15
+  ],
+  "reviewer_verdicts": [
+    "pass",
+    "pass",
+    "pass"
+  ],
+  "summary": "Strong answer: it captures the required blast-radius chain and gives useful engineering guidance. Main weakness is overreach: it adds unsupported graph entries, components, and runtime guarantees beyond the provided ground truth.",
+  "verdict": "pass"
+}

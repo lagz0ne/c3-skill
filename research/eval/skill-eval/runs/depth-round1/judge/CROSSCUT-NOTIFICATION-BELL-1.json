@@ -1,0 +1,48 @@
+{
+  "case_id": "CROSSCUT-NOTIFICATION-BELL-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "It gives a practical troubleshooting map before blaming the UI: check dispatch/logs, target subject, user subscription, transport, frontend atom, and bell rendering. The main weakness is that it adds many checks outside the expected path, which could send an engineer into broader investigation than necessary.",
+      "score": 4
+    },
+    "correctness": {
+      "justification": "It captures the required major path: c3-205 trigger, c3-211 notification system, ref-sync user subject versus broadcast, c3-101 frontend subscription/atom, adr-20260126 UI history, and recipe-realtime-sync separation. It correctly states the emergent property that shared NATS does not imply shared semantics. The answer overextends into c3-214, c3-209, preferences, logs, TTLs, caps, and cold-load behavior beyond the supplied ground truth, and some of those claims are not proven by the excerpt, but they do not reverse the required mechanism.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Major required claims are tied to evidence commands and cited ids, including c3-211, ref-sync, recipe-realtime-sync, c3-101, and adr-20260126. However, many detailed operational claims depend on sections not present in the case excerpt, and the prose sometimes treats those as established facts rather than clearly separating excerpt-proven facts from additional fixture inference.",
+      "score": 4
+    },
+    "no_hallucination": {
+      "justification": "All cited entity ids appear in the fixture inventory, and the core semantics do not contradict the ground truth. The answer risks overclaiming details such as exact stream names, retention limits, preference behavior, and JWT TTLs, but under the provided hallucination definition these are grounding issues rather than invented ids or direct contradictions.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "The answer explains why targeted notifications can fail before the UI and distinguishes durable targeted notification delivery from ephemeral global broadcast sync. It gives useful failure boundaries, but several deeper claims about preferences, retention, JWT TTL, and cold fetch are asserted from extra fixture entities rather than required ground truth, so the reasoning is partly overbuilt.",
+      "score": 4
+    },
+    "trace_completeness": {
+      "justification": "The causal chain is explicit from approval-flow action through publishing/dispatch, subject routing, client subscription, notification atom, and bell visibility. It also separates live targeted delivery from persisted/fetch behavior, which is more complete than the minimum required chain.",
+      "score": 5
+    }
+  },
+  "overall": 4.2,
+  "quality_gaps": [
+    "Overweights extra entities c3-214 and c3-209 even though the expected trace centers on c3-205, c3-211, ref-sync, c3-101, adr-20260126-user-notification-ui, and recipe-realtime-sync.",
+    "Several detailed claims, including exact JetStream stream names, retention caps, preference filtering, JWT TTL, and cold-fetch limits, are not supported by the provided case excerpt.",
+    "The answer could more cleanly state the minimal required path before adding optional diagnostics.",
+    "Some grounding is citation-shaped: it names sections and ids, but the supplied excerpt only verifies a subset of those details."
+  ],
+  "reviewer_overalls": [
+    4.2,
+    3.6,
+    4.3
+  ],
+  "reviewer_verdicts": [
+    "pass",
+    "fail",
+    "pass"
+  ],
+  "summary": "Strong answer on the required causal path and emergent property, with good engineering usefulness. It is too expansive and treats several extra fixture details as settled without excerpt-level support, but the core answer is correct and grounded enough to pass.",
+  "verdict": "pass"
+}

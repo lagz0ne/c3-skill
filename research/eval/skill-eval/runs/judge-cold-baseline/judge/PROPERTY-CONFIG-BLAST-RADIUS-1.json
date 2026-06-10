@@ -1,0 +1,38 @@
+{
+  "case_id": "PROPERTY-CONFIG-BLAST-RADIUS-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "Useful for an engineer: it identifies the owners and systems that must move in lockstep and gives a real mismatch failure mode. It could be safer by separating direct change sites from reverse-graph dependents and by naming concrete verification checks after changing the prefix.",
+      "score": 4
+    },
+    "correctness": {
+      "justification": "Correctly identifies the main affected areas: scope-controlled config, ref-sync subject contract, c3-101 frontend hardcoded sync subscriptions, c3-209 JWT/browser subscribe permissions, c3-4 broker permissions, c3-211 notification path, and the expected reverse-graph dependents. Minor over-specificity appears in describing c3-205/c3-206/c3-207/c3-210/c3-212 as publishing mutation deltas/acks, which is not established by the provided ground truth.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "The answer includes the right evidence commands and cites key entities, but the Grounding section is thin and does not tie each material claim back to specific reads or graph outputs. Several detailed claims in the tables are asserted rather than explicitly connected to cited evidence snippets.",
+      "score": 3
+    },
+    "no_hallucination": {
+      "justification": "No invented ids or fake rule ids. The caveat about no rule-* entities is harmless. The main issue is an unsupported overclaim about several backend flow dependents publishing mutation deltas/acks; this is imprecise rather than a severe hallucination.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "Names and explains the emergent blast-radius property and the cross-system matching requirement. It also states a concrete failure mode: data can mutate while clients stop receiving sync/user-subject messages. More detail on property boundaries and which dependents are merely contract dependents versus direct prefix consumers would improve it.",
+      "score": 4
+    },
+    "trace_completeness": {
+      "justification": "Covers the causal chain from config prefix change to runtime config tags, subject contract, permissions, broker config, frontend subscriptions, and missed client notifications/sync messages. It does not explicitly tie every dependent/observer in the reverse graph to a precise observed behavior, but the main action-to-blast-radius chain is present.",
+      "score": 4
+    }
+  },
+  "overall": 3.85,
+  "quality_gaps": [
+    "Grounding section is generic and does not connect each claim to specific C3 reads or graph results.",
+    "Treats c3-205, c3-206, c3-207, c3-210, and c3-212 as backend flows that publish mutation deltas/acks, which is not established by the ground truth.",
+    "Does not clearly distinguish direct prefix consumers from reverse-graph dependents that may only depend on the broader ref-sync contract.",
+    "Missing concrete verification guidance, such as checking broker permissions, generated JWT permissions, server publish subjects, and frontend subscription subjects after the prefix change."
+  ],
+  "summary": "Mostly correct and useful, but not quite pass-level because grounding is too shallow and one set of dependent behaviors is over-specified beyond the provided evidence.",
+  "verdict": "fail"
+}

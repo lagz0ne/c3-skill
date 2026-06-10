@@ -1,0 +1,40 @@
+{
+  "case_id": "NATS-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "Useful high-level orientation for a change, naming the current mechanism and core owners. It lacks a safe change map: no affected c3-0/c3-1/c3-2 topology, no explicit verification path, no permission/expiry/resolver failure modes, and no component contract or canvas-contract boundary detail.",
+      "score": 3
+    },
+    "correctness": {
+      "justification": "Major claims match the ground truth: current auth is ref-nats-jwt-auth JWT resolver, not auth callout; c3-209 owns browser credentials; c3-4 validates JWT signatures, expiry, and permissions; ref-sync is impacted as the NATS-backed sync transport. It omits affected topology c3-0, c3-1, c3-2, and the websocket sync ADR, and is thin on credential details.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "The evidence commands are relevant and the prose ties some claims to ref-nats-jwt-auth and ref-sync. However, grounding is sparse: c3-209, c3-4, ADRs, and graph results are not tied to specific claims, and expected evidence like graph c3-4 and recipe-auth-and-access is missing.",
+      "score": 3
+    },
+    "no_hallucination": {
+      "justification": "No invented ids or fake rules. The answer avoids the common wrong auth-callout overclaim and correctly treats ADRs as historical. The phrase about deltas and acks may be more specific than the provided excerpt, but it is not a severe unsupported behavior claim.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "It identifies the important mechanism and break classes, but does not explain why JWT resolver memory preload/no-callout matters, how permission enforcement affects subject delivery, or the boundary between current active contracts and historical ADR decisions beyond a brief caveat.",
+      "score": 3
+    },
+    "trace_completeness": {
+      "justification": "It gives a partial causal chain from auth change to credential loading, connect/permissions, and sync delivery, but does not explicitly trace action -> state change -> resolver mechanism -> c3-4/c3-209/ref-sync dependents -> emergent breakage. The dependent topology is mostly absent.",
+      "score": 3
+    }
+  },
+  "overall": 3.35,
+  "quality_gaps": [
+    "Missing affected topology c3-0, c3-1, and c3-2; only c3-4 and c3-209 are named.",
+    "Does not mention adr-20260112-nats-websocket-sync from the expected historical ADR set.",
+    "Does not explain the full causal chain from auth change through resolver/config/credential state to permissions and sync subject delivery.",
+    "Grounding section cites refs generally but does not connect c3-209, c3-4, or graph evidence to specific claims.",
+    "No verification or change-safety guidance for checking credential generation, resolver preload/config, expiration, subject permissions, or sync delivery.",
+    "Omits the fixture negative fact that there are no applicable rules."
+  ],
+  "summary": "Correct but shallow. The candidate catches the main JWT-resolver-versus-auth-callout distinction and core owners, but the trace is incomplete and not grounded deeply enough for a safe change-impact answer.",
+  "verdict": "fail"
+}

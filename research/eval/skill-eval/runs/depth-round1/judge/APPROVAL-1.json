@@ -1,0 +1,49 @@
+{
+  "case_id": "APPROVAL-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "Gives useful owners, mechanisms, risks, failure modes, and verification checks. It would be stronger if the change map explicitly included c3-212/workbench verification whenever approval state semantics affect export/import or paid/completed PR handling.",
+      "score": 5
+    },
+    "correctness": {
+      "justification": "Covers all required major elements: recipe-approval-workflow, c3-205 core PR flows, c3-212 workbench extension, c3-105 UI, and governing refs ref-approval-chain/ref-audit-trail/ref-sync. Minor precision issues: c3-212 is underweighted in the main ownership summary, and some broader claims go beyond the case excerpt.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Most claims are tied to C3 reads/graphs in the Grounding table. Gaps remain: no direct c3-212 read/graph despite it being a required owner, and several detailed claims such as ADR status, exact operation count, c3-202 transaction scope, and c3-215 relatedness are not proven by the provided case excerpt.",
+      "score": 4
+    },
+    "no_hallucination": {
+      "justification": "No cited entity ids are invented and there is no clear contradiction of the ground truth. Some wording is overconfident, especially around 'every change is recorded' and 'all transaction-scoped', but the answer also includes caveats that reduce the risk of a hard invented guarantee.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "Explains anyof/allof enforcement, step advancement, DB-vs-application responsibility, audit duplication risk, sync, notification failure behavior, and blast radius well enough to guide engineering work.",
+      "score": 5
+    },
+    "trace_completeness": {
+      "justification": "Explicitly traces action -> backend mutation -> approval-chain mode logic -> audit/sync/notification observers -> emergent non-blocking, step-scoped notification behavior, with failure boundaries.",
+      "score": 5
+    }
+  },
+  "overall": 4.5,
+  "quality_gaps": [
+    "Direct evidence commands omit `c3 read c3-212 --full` and `c3 graph c3-212 --depth 1`, even though c3-212 is a required owner.",
+    "Top-level answer frames ref-approval-chain as the governing pattern before later adding ref-audit-trail and ref-sync, which slightly underemphasizes required governing refs.",
+    "Some specific details are not proven by the supplied excerpt: exact c3-205 operation count, c3-202 transaction scope, ADR status labels, c3-109, c3-215, and `c3 check --only c3-205`.",
+    "The phrase that every change is recorded is broader than the later caveat that approval table audit coverage is not explicit.",
+    "Concrete change checks focus on c3-205/prService/approvalQueries and notification path, but do not explicitly require c3-212 workbench checks for affected approval-state transitions."
+  ],
+  "reviewer_overalls": [
+    4.4,
+    4.5,
+    4.3
+  ],
+  "reviewer_verdicts": [
+    "pass",
+    "pass",
+    "pass"
+  ],
+  "summary": "Strong, causal, mostly grounded answer that satisfies the case. It passes, but with minor overreach and a weaker direct treatment of the workbench owner than ideal.",
+  "verdict": "pass"
+}

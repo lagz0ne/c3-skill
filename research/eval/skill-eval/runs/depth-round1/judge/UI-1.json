@@ -1,0 +1,49 @@
+{
+  "case_id": "UI-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "It gives a strong change map: screen owners, governing refs, which behavior each ref owns, expected breakage if a shared pattern changes, and concrete verification steps. An engineer could use it to assess layout consistency work safely, while rechecking the over-specific details against the actual C3 reads.",
+      "score": 5
+    },
+    "correctness": {
+      "justification": "The answer correctly identifies recipe-screen-anatomy as orientation, c3-104 and c3-105 as screen owners, and the core governing refs: ref-master-detail-layout, ref-detail-content-strategy, ref-list-view-patterns, ref-filter-footer, and ref-responsive-layout. It also states no rule-* entities surfaced, matching the fixture expectation. The main weakness is substantial extra specificity beyond the provided ground truth/excerpt, including exact widths, class names, SFT checks, variant behavior, and ADR status claims that are not verifiable from the supplied case material.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "The answer includes evidence commands and a grounding table that ties many claims to cited C3 reads/graphs. However, many important concrete claims are not present in the case excerpt or machine ground truth, such as exact slot APIs, CSS classes, animation duration, MobileBackContext behavior, SFT binding details, variant typo behavior, and ADR statuses. These may be true in the broader fixture, but from the provided evidence they remain asserted rather than independently grounded.",
+      "score": 4
+    },
+    "no_hallucination": {
+      "justification": "All cited entity ids appear in the fixture inventory, and the core claims do not contradict the machine ground truth or excerpt. The answer avoids invented rule ids and does not invent a whole-batch guarantee. It loses a point because it presents many unverified specifics as facts rather than distinguishing them as claims from cited reads that are outside the supplied excerpt.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "It explains why consistency is achieved by shared refs rather than per-screen implementation, and describes ownership boundaries, blast radius, responsive behavior, list/detail grammar, and verification implications. Some reasoning depends on highly specific claims that are not supported by the excerpt, so it falls short of a fully proven boundary analysis.",
+      "score": 5
+    },
+    "trace_completeness": {
+      "justification": "It gives a clear causal chain from responsive breakpoints to MasterDetailLayout skeleton, then list/filter/detail content refs, then shared styling variants, and explains how those govern both InvoiceScreen and PaymentRequestsScreen. It also discusses reverse graph dependents and visible breakage points.",
+      "score": 5
+    }
+  },
+  "overall": 4.5,
+  "quality_gaps": [
+    "Over-specific claims about slot names, widths, CSS classes, animation duration, and MobileBackContext are not present in the provided ground truth or excerpt.",
+    "Adds extra refs and mechanisms such as ref-sft-behavioral-spec, ref-variant-system, ref-ui-patterns, ADR status checks, and ConfirmDrawer beyond the expected answer without enough supplied grounding.",
+    "Claims the two component docs have an identical ten-ref uses set, which is not confirmed by the excerpt; the expected ground truth only requires the core governing refs plus shared UI refs from components.",
+    "Verification advice includes SFT validate/impact and component binding details that are not in the case ground truth, so an engineer would need to re-run the cited reads before relying on them.",
+    "The caveats are useful but include fixture-specific divergence claims, such as Applies To versus reverse graph and SFT binding gaps, that cannot be verified from the provided excerpt."
+  ],
+  "reviewer_overalls": [
+    4.15,
+    4.5,
+    4.5
+  ],
+  "reviewer_verdicts": [
+    "pass",
+    "pass",
+    "pass"
+  ],
+  "summary": "Strong answer on the required owners, refs, causal chain, and change guidance. It passes, but it is overconfident: many detailed implementation claims are not supported by the supplied excerpt and should have been caveated or limited to the required fixture-grounded facts.",
+  "verdict": "pass"
+}

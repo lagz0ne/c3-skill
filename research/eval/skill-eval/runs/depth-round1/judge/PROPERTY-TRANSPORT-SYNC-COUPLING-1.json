@@ -1,0 +1,46 @@
+{
+  "case_id": "PROPERTY-TRANSPORT-SYNC-COUPLING-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "Gives a safe change map with owners, affected runtime contracts, common failure modes, and concrete verification checks for key pairing, permissions, prefix lockstep, runtime ack/delta behavior, notifications, and TTL behavior.",
+      "score": 5
+    },
+    "correctness": {
+      "justification": "Correctly identifies JWT resolver auth with no callout, c3-209 credential minting, c3-4 broker enforcement, c3-101 WebSocket consumption, ref-sync/recipe-realtime-sync delta/ack and executionId dependence, and the current versus superseded ADRs. The answer also correctly frames that HTTP auth can remain healthy while browser sync delivery breaks.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Major claims are tied to specific C3 read/graph/search evidence in the Grounding table and Caveats. The prose connects sources to claims rather than merely listing ids.",
+      "score": 4
+    },
+    "no_hallucination": {
+      "justification": "All cited entity ids exist in the fixture inventory. The answer does not contradict the machine ground truth and avoids inventing whole-batch or guaranteed-delivery claims. It clearly marks caveats and inferences where evidence is indirect.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "Explains the mechanism and failure boundaries well: key rotation, permission narrowing, subject prefix or escaping drift, TTL expiry, receive-gated versus send-independent behavior, and timeout/staleness effects. This is more than term matching and is useful causal reasoning.",
+      "score": 5
+    },
+    "trace_completeness": {
+      "justification": "Explicitly traces generation -> loaderData/browser handoff -> NATS validation and permission enforcement -> frontend subscriptions -> deltas/acks/notifications -> emergent transport-auth/sync coupling. It also separates direct and transitive dependents.",
+      "score": 5
+    }
+  },
+  "overall": 4.5,
+  "quality_gaps": [
+    "Minor: includes some fixture-specific extra claims not present in the excerpt, such as WEBSOCKET-only and full TCP server permissions, but they are cited and not contradicted by the ground truth.",
+    "Minor: the hand-rendered Mermaid diagram is not itself C3 evidence, though the answer caveats that it was derived from graph node outputs."
+  ],
+  "reviewer_overalls": [
+    5.0,
+    4.5,
+    4.5
+  ],
+  "reviewer_verdicts": [
+    "pass",
+    "pass",
+    "pass"
+  ],
+  "summary": "Excellent answer: correct, causal, grounded, and directly useful for assessing NATS JWT auth changes against sync behavior.",
+  "verdict": "pass"
+}

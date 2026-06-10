@@ -1,0 +1,49 @@
+{
+  "case_id": "CROSSCUT-STEP-ADVANCE-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "Gives useful owner surfaces, causal mechanisms, risks, and concrete checks for changing the behavior. The answer would orient an engineer well, though some proposed checks and runtime details go beyond the verified fixture excerpt, so the engineer would still need to confirm those before relying on them.",
+      "score": 5
+    },
+    "correctness": {
+      "justification": "Captures the main ground truth: c3-205 owns requestApprovals/approvePr/approveAll, ref-approval-chain controls anyof/allof step advancement, adr-20260202 adds explicit stepAdvanced gating, c3-211/ref-pull-dispatcher dispatch notifications, and ref-sync/c3-101-like sync is separate. It overextends into Slack/UI/admin retry/JetStream internals and omits c3-101 in the actual answer despite including sync, but the central explanation is correct.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Major claims are tied to cited ids, especially c3-205, ref-approval-chain, adr-20260202, c3-211, ref-pull-dispatcher, and ref-sync. However, many detailed claims rely on entities outside the excerpt or asserted sections not present in the ground truth, and the answer cites c3-214/c3-215/c3-105/recipe details without enough case-provided support. It also does not cite c3-101 even though c3-101 is part of the expected sync trace.",
+      "score": 4
+    },
+    "no_hallucination": {
+      "justification": "All cited entity ids exist in the fixture or are generic patterns, and the core claims do not contradict the ground truth. There are several unverifiable specifics, but under the provided hallucination definition these are grounding issues rather than invented ids or contradictions. The 'exactly one actionable ping' phrasing is stronger than the ground truth and should be treated cautiously, but it is not a clear guaranteed-delivery hallucination.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "Explains why later approvers are gated by current_step advancement and anyof/allof completion, and names the emergent property. It also discusses boundaries and failure modes, but some deeper claims are not supported by the provided case material and risk distracting from the core mechanism.",
+      "score": 5
+    },
+    "trace_completeness": {
+      "justification": "Provides the full action -> mutation -> mechanism -> observer -> emergent property chain explicitly, including approvePr/approveAll, approval state advancement, stepAdvanced, notifyNextApprovers, dispatch channels, and the step-advance-only/no-final-notification property.",
+      "score": 5
+    }
+  },
+  "overall": 4.5,
+  "quality_gaps": [
+    "Does not meaningfully include c3-101 in the answer, even though the expected trace includes c3-101 as the browser sync receiver/resolver.",
+    "Overloads the answer with Slack, bell UI, admin retry, JetStream retention, notification_log, and runtime subject details that are not established by the ground truth/excerpt.",
+    "Uses strong phrasing like 'exactly one actionable ping' even though the case proves step-advance-only targeting, not guaranteed singular user-visible delivery across channels/retries.",
+    "Cites adr-20260121-notification-system as a governing decision, but the machine ground truth centers adr-20260202; the extra ADR may be valid but is not necessary or proved by the excerpt.",
+    "Grounding table often points to claimed sections and detailed behaviors that the case excerpt does not verify, making parts look evidence-backed without enough supplied evidence."
+  ],
+  "reviewer_overalls": [
+    4.05,
+    4.5,
+    4.3
+  ],
+  "reviewer_verdicts": [
+    "pass",
+    "pass",
+    "pass"
+  ],
+  "summary": "Strong causal answer with the expected stepAdvanced mechanism and notification boundary. It passes, but it is over-broad and includes many detailed claims outside the provided case evidence, so grounding is weaker than the polished shape suggests.",
+  "verdict": "pass"
+}

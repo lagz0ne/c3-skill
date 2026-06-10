@@ -1,0 +1,50 @@
+{
+  "case_id": "APPROVAL-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "Gives a usable change map: owners, governing refs, state/mode semantics, audit and sync boundaries, notification behavior, and concrete checks before changing approval behavior.",
+      "score": 5
+    },
+    "correctness": {
+      "justification": "Correctly identifies recipe-approval-workflow as the trace, c3-205 as core PR flow owner, c3-212 as workbench extension, c3-105 as UI participant, and ref-approval-chain/ref-audit-trail/ref-sync as governing refs. Minor risk from extra, highly specific claims not established by the case excerpt, including c3-107/c3-109 roles, exact operation count, ADR status semantics, and transaction/concurrency details.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Most major claims are tied to C3 reads, graphs, or search evidence in the Grounding table. However, several detailed claims rely on unshown search snippets or indirect evidence, ref-sync is not directly read despite being central, and some expected graph/read checks for c3-105, c3-212, and ref-approval-chain are missing or weaker than the case evidence set.",
+      "score": 4
+    },
+    "no_hallucination": {
+      "justification": "All cited entity ids exist or resolve in the fixture inventory, and the answer does not contradict the core ground truth. Some absolute claims, such as transaction serialization and implemented ADRs being terminal/frozen, are not proven by the excerpt and should be treated as weakly grounded rather than clear hallucinations.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "Explains why approval behavior is governed by app-level approval-chain logic, how anyof/allof and step advancement matter, why audit/sync/notification attach at different layers, and what bypassing the flow layer would affect.",
+      "score": 5
+    },
+    "trace_completeness": {
+      "justification": "Provides an explicit chain from UI actions to c3-205 mutation flows, approval-chain mechanism, audit/sync/notification observers, and change/failure boundaries. It covers the required action -> state change -> mechanism -> dependent/observer path.",
+      "score": 5
+    }
+  },
+  "overall": 4.5,
+  "quality_gaps": [
+    "Direct evidence for ref-sync is weaker than expected; the command list does not include c3 read ref-sync --full even though sync is a governing ref.",
+    "c3-105 is named correctly, but its role is grounded only through search snippets rather than a direct read/graph.",
+    "c3-212 is correctly included, but graph evidence around c3-212 and ref-approval-chain from the case excerpt is not reproduced.",
+    "Extra claims about c3-107, c3-109, exact operation count, table names, transaction serialization, and ADR lifecycle semantics may be true but are not proven by the supplied case excerpt.",
+    "Backend governance refs ref-server-functions and ref-query-services appear mainly in the graph, not in the substantive change guidance.",
+    "The claim that audit survives any entry path needs a clearer boundary because actor attribution and trigger behavior depend on the documented transaction wiring."
+  ],
+  "reviewer_overalls": [
+    4.5,
+    4.5,
+    4.6
+  ],
+  "reviewer_verdicts": [
+    "pass",
+    "pass",
+    "pass"
+  ],
+  "summary": "Strong answer on the required ownership and governance chain, with useful engineering boundaries. It passes, but it over-expands beyond the provided case evidence and should tighten or directly prove several specific claims.",
+  "verdict": "pass"
+}

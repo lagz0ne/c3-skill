@@ -1,0 +1,47 @@
+{
+  "case_id": "PROPERTY-TRANSPORT-SYNC-COUPLING-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "Gives a safe change map: owners to touch, account key rotation risk, permission and prefix lockstep, TTL reconnect behavior, silent failure probe, and which docs/components are affected.",
+      "score": 5
+    },
+    "correctness": {
+      "justification": "Correctly identifies JWT resolver/no auth-callout, c3-209 credential generation, c3-4 enforcement, c3-101 WebSocket subscriptions, ref-sync/recipe-realtime-sync delta/ack and executionId reliance, and ADR supersession. It also captures the key risk that sync can fail while HTTP auth and mutation paths still work.",
+      "score": 5
+    },
+    "grounding": {
+      "justification": "Most major claims are tied to specific C3 reads, graphs, and sections. Some details go beyond the provided excerpt, such as c3-211 notification behavior, c3-202 tag ownership, exact authenticator naming, and flow dependents; these are presented with cited commands but not fully verifiable from the case excerpt. Still, the central answer is strongly grounded.",
+      "score": 4
+    },
+    "no_hallucination": {
+      "justification": "All cited entity ids exist in the inventory, and the answer does not contradict the machine ground truth or invent whole-batch/guaranteed-delivery behavior. It makes a few strong claims beyond the excerpt, but these are grounding/precision issues rather than hallucinations under the rubric.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "Explains the mechanism and boundary well: transport identity gates sync delivery, subject permissions and account keys must align, backend publish path can remain healthy, and client-side sync degrades into stale data or timeout fallback. It names concrete failure modes and verification checks.",
+      "score": 5
+    },
+    "trace_completeness": {
+      "justification": "Explicitly traces credential generation -> JWT signing/loaderData -> broker verification and permission enforcement -> browser WebSocket subscriptions -> delta/ack/notification delivery -> emergent transport-auth/sync coupling and failure symptoms.",
+      "score": 5
+    }
+  },
+  "overall": 4.75,
+  "quality_gaps": [
+    "Some supporting details are outside the case excerpt and would require trusting the cited fixture reads, especially c3-211 notifications, c3-202 tag surfacing, and exact flow dependents.",
+    "It adds extra scope beyond the asked sync coupling, including notification and ADR-websocket-sync discussion; useful, but not necessary for the core case.",
+    "A few claims are phrased very strongly, such as server health signals staying green, where the safer claim is that HTTP app auth and backend mutation/publish paths can still succeed while browser sync delivery fails."
+  ],
+  "reviewer_overalls": [
+    4.75,
+    4.75,
+    4.85
+  ],
+  "reviewer_verdicts": [
+    "pass",
+    "pass",
+    "pass"
+  ],
+  "summary": "Strong answer. It is correct, causal, grounded enough, and highly useful for assessing NATS JWT auth changes against the sync layer.",
+  "verdict": "pass"
+}

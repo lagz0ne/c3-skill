@@ -1,0 +1,49 @@
+{
+  "case_id": "CROSSCUT-SLACK-APPROVAL-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "The answer gives an engineer a mostly safe change map: owners, side-effect attachment layers, direct-service risk, and verification-relevant caveats. It would be stronger with the missing expected mechanisms called out directly and less reliance on extra, unverifiable implementation detail.",
+      "score": 4
+    },
+    "correctness": {
+      "justification": "The answer gets the central mechanism right: Slack actions in c3-215 enter c3-205 PR flows, preserving approval mutation, sync/ack behavior, and step-advance notifications. It correctly names the flow-entry property and the direct-service failure boundary. Minor precision gaps remain around c3-202, c3-101, and ref-pull-dispatcher, and the service-layer sync.emit discussion could confuse the expected warning that service-level entry bypasses flow-owned sync/notification side effects.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Most major claims are tied to cited reads and the grounding table connects claims to sources. However, important expected sources are missing or underused: c3-202 for execution context concepts, c3-101 for browser store updates over sync.broadcast, and ref-pull-dispatcher for channel self-registration. Several detailed claims go beyond the supplied excerpt and are not clearly separated as inferred or code-verified.",
+      "score": 3
+    },
+    "no_hallucination": {
+      "justification": "All cited concrete ids appear in the fixture inventory or resolve by unique prefix, and there is no clear contradiction of the ground truth. The answer does add many extra specifics, but they are not invalid under the hallucination definition; they are mainly grounding/precision risks.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "It explains the layered side-effect model, step-advance-only notification boundary, async notification failure behavior, sync ack caveat, and why entering at the flow layer preserves cross-cutting behavior. This is useful causal reasoning rather than entity listing.",
+      "score": 5
+    },
+    "trace_completeness": {
+      "justification": "It gives a clear action -> context -> mutation -> sync/notification mechanisms -> observers -> emergent property chain, with failure boundaries. The trace is slightly incomplete against the expected chain because it does not explicitly ground the web-client observer in c3-101 or the notification channel registration mechanism in ref-pull-dispatcher.",
+      "score": 4
+    }
+  },
+  "overall": 4.05,
+  "quality_gaps": [
+    "Does not include or cite c3-202 in the evidence commands despite relying on currentUserTag, UserActor, transactionTag, and executionIdTag concepts.",
+    "Does not explicitly use c3-101 as the web-client receiver of sync.broadcast updates, substituting ref-sync/c3-4 discussion instead.",
+    "Does not read or ground ref-pull-dispatcher, so the expected channel self-registration mechanism is missing.",
+    "Extra details about audit triggers, JetStream retention, retry semantics, RBAC filtering, and subject-prefix coupling may be true but are not supported by the provided case excerpt.",
+    "The direct-service table says sync.emit would still fire, which is a nuanced claim but could blur the expected warning that service-level entry bypasses flow-owned sync ack and notification side effects."
+  ],
+  "reviewer_overalls": [
+    4.2,
+    4.05,
+    3.4
+  ],
+  "reviewer_verdicts": [
+    "pass",
+    "pass",
+    "fail"
+  ],
+  "summary": "Strong answer with the right causal model and useful engineering boundaries, but not fully disciplined on expected evidence coverage. It passes because the core flow-entry consistency property is correct and well reasoned.",
+  "verdict": "pass"
+}

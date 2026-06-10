@@ -1,0 +1,40 @@
+{
+  "case_id": "ADMIN-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "Useful for orienting an engineer to the primary frontend and backend owners and the access-control constraint. However, missing the fuller governing ref set, ADR affected components, and verification/change-safety boundaries means an engineer would need to redo part of the trace before changing the feature.",
+      "score": 3
+    },
+    "correctness": {
+      "justification": "Correctly identifies c3-107 as frontend Admin Screens owner, c3-210 as backend Admin Flows owner, and the ADR as the implemented feature decision. It also correctly notes no rule entities. It omits several expected supporting/governing refs and ADR/canvas boundary details, so it is not fully complete.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Provides the right evidence commands and ties two refs to claims, but the prose does not cite the actual read/graph results in much detail. Several expected refs and supporting docs are absent from grounding.",
+      "score": 3
+    },
+    "no_hallucination": {
+      "justification": "No invented ids, rules, or unsupported behaviors are present. The answer stays within the fixture and correctly states that there are no rule entities.",
+      "score": 5
+    },
+    "reasoning_depth": {
+      "justification": "Explains the basic why for ref-admin-page-layout and ref-rbac, including owner-only checks and NOT_OWNER. It does not discuss broader ownership boundaries, frontend/backend separation, mutation/sync behavior, or change-safety implications.",
+      "score": 3
+    },
+    "trace_completeness": {
+      "justification": "Traces the main ownership split and access-control mechanism, but mostly as assertions. It does not explicitly connect search/read/graph evidence to the owner boundaries, supporting refs, backend refs such as ref-sync, or ADR affected components.",
+      "score": 3
+    }
+  },
+  "overall": 3.45,
+  "quality_gaps": [
+    "Missing expected supporting docs: recipe-navigation-strategy and recipe-screen-anatomy.",
+    "Missing most governing frontend refs beyond ref-admin-page-layout and most backend refs beyond ref-rbac.",
+    "Does not mention ref-sync as governing mutation broadcasts for admin flow changes.",
+    "Does not include ADR compliance rows or affected components c3-1, c3-2, and c3-204.",
+    "Grounding lists commands but does not explicitly tie read/graph evidence to each ownership boundary.",
+    "Change guidance lacks safe verification direction and boundary details for frontend vs backend changes."
+  ],
+  "summary": "Accurate main ownership answer, but too shallow and incomplete for the pass bar. It names the core owners and key refs without enough traced grounding or safe-change boundary detail.",
+  "verdict": "fail"
+}

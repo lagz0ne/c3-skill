@@ -1,0 +1,39 @@
+{
+  "case_id": "CROSSCUT-MASS-APPROVAL-1",
+  "dimensions": {
+    "change_usefulness": {
+      "justification": "Useful for an engineer: it identifies the owners, core mechanisms, async notification boundary, and main docs to inspect. It would be safer with explicit checks around conditional per-PR notifications, sync.broadcast versus sync.user.<email>, and verification of logged/suppressed notification errors.",
+      "score": 4
+    },
+    "correctness": {
+      "justification": "Major ownership and mechanisms are correct: c3-105 starts Approvals mode, c3-205 approveAll iterates pr_ids and returns approved/failed, ref-approval-chain governs approval state, ref-sync/c3-101 handle realtime sync, and c3-211 plus adr-20260121 cover JetStream notification dispatch. Minor gaps: it does not explicitly state c3-205 conditionally notifies through c3-211 per PR, and it underplays user-subject notification delivery via c3-101 sync.user.<email>.",
+      "score": 4
+    },
+    "grounding": {
+      "justification": "Evidence commands are relevant and mostly complete, and the prose names the right docs. However, the Grounding section is thin and only ties ref-approval-chain and ref-sync to claims; it does not explicitly ground the notification async suppression claim, c3-211 dispatch model, or c3-101 user-subject/broadcast behavior to cited reads.",
+      "score": 3
+    },
+    "no_hallucination": {
+      "justification": "No invented ids or severe unsupported behavior. The claim that c3-101 receives broadcast messages is supported, but the answer is a bit imprecise by omitting the user-subject notification path and using broad wording like target users without distinguishing dispatch from websocket delivery.",
+      "score": 4
+    },
+    "reasoning_depth": {
+      "justification": "It explains the key emergent property: notifications are async and errors are logged rather than thrown, so approval/sync are not blocked by notification delivery. It gives enough why/how to guide change, but does not discuss property boundaries or failure modes beyond notification errors.",
+      "score": 4
+    },
+    "trace_completeness": {
+      "justification": "The answer covers the causal chain from UI action to mutation, approval-chain state change, sync mechanism, notification subsystem, and async/non-blocking emergent property. It is slightly compressed on dependent/observer details: broadcast sync is named, but user-subject notification delivery and the per-PR conditional notification link are not fully traced.",
+      "score": 4
+    }
+  },
+  "overall": 3.85,
+  "quality_gaps": [
+    "Grounding section does not tie the async error-suppression claim to c3-205 evidence.",
+    "Does not explicitly state c3-205 conditionally notifies through c3-211 per approved PR.",
+    "Mentions c3-101 broadcast subscription but omits sync.user.<email>/user-subject notification delivery, which is central to informing other users.",
+    "Caveat is generic and does not name fixture boundaries or negative facts such as notification failure not rolling back approval/sync.",
+    "Evidence commands omit the second search and recipe-realtime-sync from the case excerpt, though the core evidence is present."
+  ],
+  "summary": "Mostly correct and causally useful, but not strong enough to pass because grounding is thin and key notification delivery details are compressed or missing.",
+  "verdict": "fail"
+}

@@ -11,11 +11,15 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import statistics
 import subprocess
 import sys
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
+
+REVIEWERS = 3
 
 
 DIMENSIONS = (
@@ -194,6 +198,27 @@ def normalize_verdict(verdict: dict[str, Any]) -> dict[str, Any]:
     return verdict
 
 
+def aggregate_reviews(reviews: list[dict[str, Any]]) -> dict[str, Any]:
+    """Median per dimension across reviewers; verdict by majority vote."""
+    if len(reviews) == 1:
+        return reviews[0]
+    majority = "pass" if sum(r["verdict"] == "pass" for r in reviews) * 2 > len(reviews) else "fail"
+    base = next((r for r in reviews if r["verdict"] == majority), reviews[0])
+    agg = dict(base)
+    agg["dimensions"] = {
+        name: {
+            "score": int(statistics.median(r["dimensions"][name]["score"] for r in reviews)),
+            "justification": base["dimensions"][name]["justification"],
+        }
+        for name in DIMENSIONS
+    }
+    agg = normalize_verdict(agg)
+    agg["verdict"] = majority
+    agg["reviewer_verdicts"] = [r["verdict"] for r in reviews]
+    agg["reviewer_overalls"] = [r["overall"] for r in reviews]
+    return agg
+
+
 def run_codex(prompt: str, model: str | None) -> dict[str, Any]:
     with tempfile.TemporaryDirectory(prefix="c3-judge-") as td:
         out = Path(td) / "verdict.json"
@@ -247,7 +272,12 @@ def main(argv: list[str]) -> int:
         print(prompt)
         return 0
 
-    verdict = normalize_verdict(run_codex(prompt, args.model))
+    with ThreadPoolExecutor(max_workers=REVIEWERS) as pool:
+        reviews = [
+            normalize_verdict(r)
+            for r in pool.map(lambda _: run_codex(prompt, args.model), range(REVIEWERS))
+        ]
+    verdict = aggregate_reviews(reviews)
     verdict["case_id"] = args.case_id
     payload = json.dumps(verdict, indent=2, sort_keys=True)
     if args.output:

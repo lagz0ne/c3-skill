@@ -7,12 +7,14 @@ import (
 	"path/filepath"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/lagz0ne/c3-design/cli/internal/content"
 	"github.com/lagz0ne/c3-design/cli/internal/markdown"
 	"github.com/lagz0ne/c3-design/cli/internal/schema"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
+	"github.com/lagz0ne/c3-design/cli/internal/walker"
 )
 
 // Issue represents a validation finding.
@@ -123,7 +125,7 @@ func hintFor(message string) string {
 		{"unknown entity reference", "verify the ID with 'c3x list'; check for typos"},
 		{"unknown ref reference", "use a ref-* ID (e.g., ref-jwt); verify with 'c3x list'"},
 		{"file does not exist", "create the file or fix the path"},
-		{"layer disconnect", "update parent table or fix the child parent field; rebuild only proves storage, not layer integration"},
+		{"layer disconnect", "open a change doc (c3 add adr) that amends the parent table top-down; rebuild only proves storage, not layer integration"},
 	}
 	for _, p := range patterns {
 		if !strings.Contains(message, p.substr) {
@@ -262,6 +264,14 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 				continue
 			}
 		}
+		// Terminal change docs (prd/atomic and any non-ADR change doc) are frozen:
+		// their content is historical, so the default check skips them. `--only`
+		// naming the doc still inspects it. The ADR `--include-adr` default-flip is
+		// deferred to migration; this is the generalized terminal-skip only.
+		if entity.Type != "adr" && schema.IsChangeDoc(entity.Type) &&
+			isChangeDocTerminal(entity) && !slices.Contains(opts.Only, entity.ID) {
+			continue
+		}
 		if !targetMatcher.matches(entity) {
 			continue
 		}
@@ -276,6 +286,30 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 		body, err := content.ReadEntity(opts.Store, entity.ID)
 		if err != nil {
 			body = ""
+		}
+
+		// AUTO-DONE latch: an `accepted` change doc whose per-row After cites all
+		// resolve fresh is ready to actualize accepted->done, one-way. The flip is
+		// gated behind --fix: a plain `check` (opts.Fix == false) only REPORTS
+		// readiness and never mutates the DB or rewrites sealed markdown; only
+		// `check --fix` performs the flip. On a committed flip the doc is now
+		// terminal/frozen, so its discharge is not re-validated this pass.
+		if schema.IsChangeDoc(entity.Type) && entity.Status == "accepted" {
+			if ready, _ := autoDoneLatch(opts.Store, entity, body, opts.Fix); ready {
+				if opts.Fix {
+					issues = append(issues, Issue{
+						Severity: "info",
+						Entity:   entity.ID,
+						Message:  fmt.Sprintf("auto-done: all After cites resolved fresh; %s actualized accepted->done", entity.ID),
+					})
+					continue
+				}
+				issues = append(issues, Issue{
+					Severity: "info",
+					Entity:   entity.ID,
+					Message:  fmt.Sprintf("%s ready to auto-done: all After cites resolve fresh; run 'c3x check --fix' to actualize accepted->done", entity.ID),
+				})
+			}
 		}
 
 		bodySections := markdown.ParseSections(body)
@@ -355,11 +389,26 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 				issues = append(issues, issue)
 			}
 		}
-		if entity.Type == "component" {
+		// The STRICT change-set on a change doc is format + field/type checked,
+		// and a touch-nothing change-set FAILS discharge. The component-only gate
+		// is extended to change-doc canvases via the declared-status predicate,
+		// scoped to the STRICT (non-FREE) sections by deriveStrictRules. ADR keeps
+		// its dedicated validateADRCoverage discharge (above) and is not
+		// double-checked here.
+		isStrictChangeDoc := schema.IsChangeDoc(entity.Type) && entity.Type != "adr"
+		if entity.Type == "component" || isStrictChangeDoc {
 			for _, issue := range validateStrictDoc(schemaSections, body, "error") {
 				issue.Entity = entity.ID
 				issues = append(issues, issue)
 			}
+		}
+		if isStrictChangeDoc && changeDocTouchesNothing(schemaSections, body) {
+			issues = append(issues, Issue{
+				Severity: "error",
+				Entity:   entity.ID,
+				Message:  "change doc touches nothing: every STRICT change-set row is entirely N.A",
+				Hint:     "name at least one real change in the change-set, or this doc changes nothing",
+			})
 		}
 
 		// Layer 3: Check non-required table sections too
@@ -447,10 +496,12 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 		issues = append(issues, checkProjectCanvases(opts.C3Dir)...)
 		issues = append(issues, checkRecipeSourcesStore(opts.Store)...)
 		issues = append(issues, checkLayerDisconnectsStore(opts.Store)...)
+		issues = append(issues, checkFactSealsOnDisk(opts.C3Dir)...)
 	} else {
 		issues = append(issues, checkProjectCanvasesForTargets(opts.C3Dir, opts.Only)...)
 		issues = append(issues, filterIssuesByTargets(opts.Store, targetMatcher, checkRecipeSourcesStore(opts.Store))...)
 		issues = append(issues, filterIssuesByTargets(opts.Store, targetMatcher, checkLayerDisconnectsStore(opts.Store))...)
+		issues = append(issues, filterIssuesByTargets(opts.Store, targetMatcher, checkFactSealsOnDisk(opts.C3Dir))...)
 	}
 
 	// Scope cross-check
@@ -586,6 +637,56 @@ func filterIssuesByTargets(s *store.Store, matcher checkTargetMatcher, issues []
 		}
 	}
 	return filtered
+}
+
+// checkFactSealsOnDisk walks the on-disk .c3 tree and, for each doc whose content
+// no longer matches its committed c3-seal, emits a mechanical WARN. This is the
+// only seal verification on the check path; it mirrors the import-path seal check
+// without removing it.
+//
+// Scope covers BOTH facts and change docs (adr/prd/atomic-design-change). Change
+// docs mutate through the sanctioned status-writer path, which reseals on export;
+// so an on-disk seal mismatch on a change doc means its body/status was
+// hand-edited without resealing — tampering that must surface during routine
+// `check`, not only at import. The WARN is purely mechanical — it reports a
+// content/seal mismatch and never judges whether the edit was a legitimate reseal
+// or a sneaky hand-edit (provenance is judgment), and it never escalates to a hard
+// error/FAIL.
+func checkFactSealsOnDisk(c3Dir string) []Issue {
+	if c3Dir == "" {
+		return nil
+	}
+	docs, err := walker.WalkC3Docs(c3Dir)
+	if err != nil {
+		return nil
+	}
+	var issues []Issue
+	for _, doc := range docs {
+		if doc.Frontmatter == nil {
+			continue
+		}
+		actual, expected := verifyParsedDocSeal(doc)
+		if actual == "" || expected == "" {
+			continue
+		}
+		if actual == expected {
+			continue
+		}
+		issues = append(issues, Issue{
+			Severity: "warning",
+			Entity:   doc.Frontmatter.ID,
+			Message:  fmt.Sprintf("seal mismatch: %s content was hand-edited since its last seal (have %s, recomputed %s)", doc.Frontmatter.ID, sealPrefix(actual), sealPrefix(expected)),
+			Hint:     "reseal through the sanctioned path (e.g. 'c3x repair') if the edit is intended, or revert the hand-edit",
+		})
+	}
+	return issues
+}
+
+func sealPrefix(seal string) string {
+	if len(seal) > 12 {
+		return seal[:12]
+	}
+	return seal
 }
 
 func checkLayerDisconnectsStore(s *store.Store) []Issue {
@@ -856,6 +957,11 @@ func enumValueAllowed(value string, allowed []string) bool {
 	return false
 }
 
+// validateCitationColumnValue applies the same freshness/hash-intactness check the
+// ADR Evidence path uses (validateADREvidence) to ANY cite column: version,
+// node-hash, and snippet must still match the cited target. It only answers "is
+// this handle still current/intact?" — it never judges whether the cited node is
+// the right evidence for the claim.
 func validateCitationColumnValue(raw string, entity *store.Entity, opts CheckOptions) []Issue {
 	m := citationHandleRE.FindStringSubmatch(raw)
 	if m == nil {
@@ -867,12 +973,52 @@ func validateCitationColumnValue(raw string, entity *store.Entity, opts CheckOpt
 		}}
 	}
 	citedEntity := m[1]
-	if _, err := opts.Store.GetEntity(citedEntity); err != nil {
+	nodeID, _ := strconv.ParseInt(m[2], 10, 64)
+	version, _ := strconv.Atoi(m[3])
+	hash := m[4]
+	snippet := m[5]
+
+	cited, err := opts.Store.GetEntity(citedEntity)
+	if err != nil {
 		return []Issue{{
 			Severity: "warning",
 			Entity:   entity.ID,
 			Message:  fmt.Sprintf("citation references unknown entity: %s", citedEntity),
 		}}
 	}
-	return nil
+
+	if cited.Version != version {
+		return []Issue{{
+			Severity: "warning",
+			Entity:   entity.ID,
+			Message:  fmt.Sprintf("citation to %s cites version %d, current version is %d", citedEntity, version, cited.Version),
+			Hint:     fmt.Sprintf("refresh the handle with c3x read %s --cite", citedEntity),
+		}}
+	}
+
+	if evidenceNodeMatches(opts.Store, citedEntity, nodeID, hash, snippet) {
+		return nil
+	}
+	if node, err := opts.Store.GetNode(nodeID); err == nil && node.EntityID != citedEntity {
+		return []Issue{{
+			Severity: "warning",
+			Entity:   entity.ID,
+			Message:  fmt.Sprintf("citation to %s cites node %d from %s", citedEntity, nodeID, node.EntityID),
+			Hint:     fmt.Sprintf("refresh the handle with c3x read %s --cite", citedEntity),
+		}}
+	}
+	if snippet == "" {
+		return []Issue{{
+			Severity: "warning",
+			Entity:   entity.ID,
+			Message:  fmt.Sprintf("citation to %s has empty snippet", citedEntity),
+			Hint:     "paste the exact quoted snippet emitted by c3x read --cite",
+		}}
+	}
+	return []Issue{{
+		Severity: "warning",
+		Entity:   entity.ID,
+		Message:  fmt.Sprintf("citation to %s has stale node hash or snippet", citedEntity),
+		Hint:     fmt.Sprintf("refresh the handle with c3x read %s --cite", citedEntity),
+	}}
 }

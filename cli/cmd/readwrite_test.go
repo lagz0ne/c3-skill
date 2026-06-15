@@ -236,17 +236,27 @@ func TestRunWrite_FailsOnRelationshipSyncError(t *testing.T) {
 	}
 }
 
-// A read|write round-trip must clear fields the user removed from frontmatter.
-// Otherwise old DB values resurface on the next read/export.
+// A read|write round-trip must clear body-writable fields the user removed from
+// frontmatter (otherwise old DB values resurface on the next read/export). Status is
+// the EXCEPTION: it is EDIT-PROOF (Item 2) — a body write never touches it, so a
+// status that is removed from frontmatter is PRESERVED, not cleared.
+//
+// INTENTIONAL behavior flip (Item 2): the prior version of this test asserted status
+// was cleared on a status-omitting body write. The SETTLED reframe makes status
+// non-body-writable, so the status assertion now expects PRESERVATION. The boundary
+// (body-writable) assertion is unchanged. Flagged loudly per the edit-proof slice.
 func TestRunWrite_ClearsRemovedFrontmatterFields(t *testing.T) {
 	s := createRichDBFixture(t)
 	var buf bytes.Buffer
 
-	// Seed c3-101 with status + boundary set
+	// Seed c3-101 with boundary (body-writable) and status (edit-proof, via the
+	// dedicated writer since UpdateEntity no longer moves status).
 	e, _ := s.GetEntity("c3-101")
-	e.Status = "provisioned"
 	e.Boundary = "API edge"
 	if err := s.UpdateEntity(e); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.SetEntityStatus("c3-101", "provisioned"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -259,8 +269,8 @@ func TestRunWrite_ClearsRemovedFrontmatterFields(t *testing.T) {
 	}
 
 	e, _ = s.GetEntity("c3-101")
-	if e.Status != "" {
-		t.Errorf("status must be cleared when removed from frontmatter, got %q", e.Status)
+	if e.Status != "provisioned" {
+		t.Errorf("status is edit-proof and must be PRESERVED when omitted from frontmatter, got %q want %q", e.Status, "provisioned")
 	}
 	if e.Boundary != "" {
 		t.Errorf("boundary must be cleared when removed from frontmatter, got %q", e.Boundary)

@@ -191,3 +191,50 @@ func TestChildren_NoChildren(t *testing.T) {
 		t.Errorf("expected 0 children, got %d", len(children))
 	}
 }
+
+// TestUpdateEntity_DoesNotOverwriteStatusOnBodyUpdate (Item 2 — status edit-proof at
+// the store layer). A body UpdateEntity must NOT overwrite the stored status column,
+// even when the in-memory entity's Status field has been changed. The only DB path
+// that may write the status column is the dedicated SetEntityStatus writer (used by
+// the status command, supersede, the auto-done latch, and migration).
+func TestUpdateEntity_DoesNotOverwriteStatusOnBodyUpdate(t *testing.T) {
+	s := createTestStore(t)
+	seedFixture(t, s)
+
+	e, _ := s.GetEntity("api-gateway") // seeded status "active"
+	// Simulate a body write that also carries a (would-be) status change.
+	e.Goal = "Route and rate-limit"
+	e.Status = "superseded" // a body path must NOT be able to move status
+
+	if err := s.UpdateEntity(e); err != nil {
+		t.Fatalf("update: %v", err)
+	}
+
+	got, _ := s.GetEntity("api-gateway")
+	if got.Status != "active" {
+		t.Errorf("UpdateEntity overwrote status: got %q, want stored %q (body update must not move status)", got.Status, "active")
+	}
+	if got.Goal != "Route and rate-limit" {
+		t.Errorf("UpdateEntity should still write body fields: Goal = %q", got.Goal)
+	}
+}
+
+// TestSetEntityStatus_IsTheOnlyStatusWriter (Item 2) — the dedicated status writer is
+// the sole DB path that moves the status column; it changes status without disturbing
+// other fields.
+func TestSetEntityStatus_IsTheOnlyStatusWriter(t *testing.T) {
+	s := createTestStore(t)
+	seedFixture(t, s)
+
+	if err := s.SetEntityStatus("api-gateway", "accepted"); err != nil {
+		t.Fatalf("SetEntityStatus: %v", err)
+	}
+
+	got, _ := s.GetEntity("api-gateway")
+	if got.Status != "accepted" {
+		t.Errorf("SetEntityStatus did not move status: got %q, want %q", got.Status, "accepted")
+	}
+	if got.Goal != "Route requests" {
+		t.Errorf("SetEntityStatus must not disturb other fields: Goal = %q", got.Goal)
+	}
+}

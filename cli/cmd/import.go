@@ -232,7 +232,12 @@ func importDocsToStore(s *store.Store, c3Dir string, result *walker.WalkResult) 
 			Date:     fm.Date,
 			Metadata: buildMetadataFromFrontmatter(fm.Summary, fm.Description, fm.Extra),
 		}
-		if entity.Status == "" {
+		// Facts default to "active". Change docs (adr/prd/atomic-design-change) carry
+		// their lifecycle status in frontmatter and are EDIT-PROOF: never
+		// default a change doc's missing status to "active" — that would silently
+		// un-freeze / mis-label it. A blank change-doc status is left blank for the
+		// migration sweep to map explicitly, not coerced here.
+		if entity.Status == "" && !schema.IsChangeDoc(storeType) {
 			entity.Status = "active"
 		}
 		if err := s.InsertEntity(entity); err != nil {
@@ -257,6 +262,8 @@ func importDocsToStore(s *store.Store, c3Dir string, result *walker.WalkResult) 
 			{fm.Scope, "scope", true},
 			{fm.Sources, "sources", true},
 			{fm.Origin, "origin", true},
+			{fm.Supersedes, "supersedes", false},
+			{fm.Amends, "amends", false},
 		} {
 			for _, target := range rel.targets {
 				if rel.strip {

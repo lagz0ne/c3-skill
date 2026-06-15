@@ -152,8 +152,10 @@ func applyFrontmatter(e *store.Entity, fm *frontmatter.Frontmatter) {
 	metadata := parseMetadataMap(e.Metadata)
 	// Authoritative on full write: removing a field from FM clears it.
 	// Goal stays restorable from the body via promoteGoalIfEmpty.
+	// Status is EDIT-PROOF: a body write never touches status — it is moved
+	// only by the status command, supersede, the auto-done latch, and migration. (No
+	// e.Status = fm.Status here, and UpdateEntity ignores e.Status by construction.)
 	e.Goal = fm.Goal
-	e.Status = fm.Status
 	e.Boundary = fm.Boundary
 	e.Category = fm.Category
 	e.Date = fm.Date
@@ -414,6 +416,8 @@ func syncRelationships(s *store.Store, entityID string, fm *frontmatter.Frontmat
 		{fm.Scope, "scope", true},
 		{fm.Sources, "sources", true},
 		{fm.Origin, "origin", true},
+		{fm.Supersedes, "supersedes", false},
+		{fm.Amends, "amends", false},
 	} {
 		for _, target := range rt.targets {
 			if rt.strip {

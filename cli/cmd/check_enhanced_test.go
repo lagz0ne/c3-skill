@@ -158,9 +158,9 @@ func TestRunCheck_IncludeADRUsesProjectCanvas(t *testing.T) {
 
 func TestRunCheck_IncludeADRSkipsImplemented(t *testing.T) {
 	s := createRichDBFixture(t)
-	adr, _ := s.GetEntity("adr-20260226-use-go")
-	adr.Status = "implemented"
-	if err := s.UpdateEntity(adr); err != nil {
+	// Status is edit-proof (Item 2): seed terminal status via the dedicated writer,
+	// not UpdateEntity (which no longer touches the status column).
+	if err := s.SetEntityStatus("adr-20260226-use-go", "implemented"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -184,9 +184,8 @@ func TestRunCheck_IncludeADRSkipsImplemented(t *testing.T) {
 
 func TestRunCheck_IncludeADRSkipsProvisioned(t *testing.T) {
 	s := createRichDBFixture(t)
-	adr, _ := s.GetEntity("adr-20260226-use-go")
-	adr.Status = "provisioned"
-	if err := s.UpdateEntity(adr); err != nil {
+	// Status is edit-proof (Item 2): seed terminal status via the dedicated writer.
+	if err := s.SetEntityStatus("adr-20260226-use-go", "provisioned"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -210,9 +209,8 @@ func TestRunCheck_IncludeADRSkipsProvisioned(t *testing.T) {
 
 func TestRunCheck_OnlyOverridesTerminalSkip(t *testing.T) {
 	s := createRichDBFixture(t)
-	adr, _ := s.GetEntity("adr-20260226-use-go")
-	adr.Status = "implemented"
-	if err := s.UpdateEntity(adr); err != nil {
+	// Status is edit-proof (Item 2): seed terminal status via the dedicated writer.
+	if err := s.SetEntityStatus("adr-20260226-use-go", "implemented"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -236,6 +234,116 @@ func TestRunCheck_OnlyOverridesTerminalSkip(t *testing.T) {
 	}
 	if !hasADRIssue {
 		t.Error("--only naming a terminal-state ADR explicitly should validate it")
+	}
+}
+
+// Item 6 — validate OPEN change docs, skip TERMINAL (capability). The default
+// FLIP for ADR (`--include-adr`) is deferred to AFTER migration; here we prove the
+// generalized terminal predicate and the terminal-skip capability on the change
+// docs that already validate by default (prd/atomic).
+
+// seedCheckablePRD inserts a prd whose STRICT change-set Evidence column carries a
+// STALE cite handle (a mechanical Item-5 freshness warning), so the doc surfaces a
+// reproducible issue WHEN it is checked and none when it is skipped.
+func seedCheckablePRD(t *testing.T, s *store.Store) *store.Entity {
+	t.Helper()
+	stale := staleHashHandle(t, testCitationForEntity(t, s, "c3-1"))
+	body := acceptedPRDBody(stale, stale)
+	e := &store.Entity{ID: "prd-check", Type: "prd", Title: "Auth rollout", Slug: "auth-rollout", Status: "open", Metadata: "{}"}
+	if err := s.InsertEntity(e); err != nil {
+		t.Fatalf("seed prd: %v", err)
+	}
+	if err := content.WriteEntity(s, e.ID, body); err != nil {
+		t.Fatalf("write prd body: %v", err)
+	}
+	got, err := s.GetEntity(e.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return got
+}
+
+func hasIssueForEntity(t *testing.T, buf *bytes.Buffer, id string) bool {
+	t.Helper()
+	var result CheckResult
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
+	}
+	for _, issue := range result.Issues {
+		if issue.Entity == id {
+			return true
+		}
+	}
+	return false
+}
+
+func TestIsChangeDocTerminal_GeneralizesFromADR(t *testing.T) {
+	// The generalized predicate keys on declared status (Item 0/1), superseding
+	// isADRTerminal: terminal for the canonical {done, superseded} AND the migrated
+	// ADR terminals {implemented, provisioned}; non-terminal otherwise.
+	terminal := []string{"done", "superseded", "implemented", "provisioned"}
+	for _, st := range terminal {
+		e := &store.Entity{ID: "x", Type: "prd", Status: st}
+		if !isChangeDocTerminal(e) {
+			t.Errorf("status %q should be terminal", st)
+		}
+	}
+	open := []string{"open", "accepted", "proposed", "active", ""}
+	for _, st := range open {
+		e := &store.Entity{ID: "x", Type: "prd", Status: st}
+		if isChangeDocTerminal(e) {
+			t.Errorf("status %q should NOT be terminal", st)
+		}
+	}
+}
+
+func TestRunCheck_ValidatesOpenChangeDocsByDefault(t *testing.T) {
+	s := createRichDBFixture(t)
+	prd := seedCheckablePRD(t, s) // status open
+
+	var buf bytes.Buffer
+	if err := RunCheckV2(CheckOptions{Store: s, JSON: true}, &buf); err != nil {
+		t.Fatal(err)
+	}
+	if !hasIssueForEntity(t, &buf, prd.ID) {
+		t.Fatalf("expected open change doc to be validated by default and surface its stale-cite issue")
+	}
+}
+
+func TestRunCheck_SkipsTerminalChangeDocsByDefault(t *testing.T) {
+	s := createRichDBFixture(t)
+	prd := seedCheckablePRD(t, s)
+	// Drive it terminal via the sanctioned writer (open->accepted->done).
+	for _, st := range []string{"accepted", "done"} {
+		if err := s.SetEntityStatus(prd.ID, st); err != nil {
+			t.Fatalf("set %s: %v", st, err)
+		}
+	}
+
+	var buf bytes.Buffer
+	if err := RunCheckV2(CheckOptions{Store: s, JSON: true}, &buf); err != nil {
+		t.Fatal(err)
+	}
+	if hasIssueForEntity(t, &buf, prd.ID) {
+		t.Fatalf("a terminal (done) change doc should be skipped by default and produce no discharge issue")
+	}
+}
+
+func TestRunCheck_OnlyStillInspectsTerminal(t *testing.T) {
+	s := createRichDBFixture(t)
+	prd := seedCheckablePRD(t, s)
+	for _, st := range []string{"accepted", "done"} {
+		if err := s.SetEntityStatus(prd.ID, st); err != nil {
+			t.Fatalf("set %s: %v", st, err)
+		}
+	}
+
+	var buf bytes.Buffer
+	if err := RunCheckV2(CheckOptions{Store: s, JSON: true, Only: []string{prd.ID}}, &buf); err != nil {
+		t.Fatal(err)
+	}
+	if !hasIssueForEntity(t, &buf, prd.ID) {
+		t.Fatalf("--only naming a terminal change doc explicitly should still inspect it")
 	}
 }
 
@@ -432,7 +540,7 @@ func TestHintFor(t *testing.T) {
 		{"unknown ref reference: ref-missing", "use a ref-* ID (e.g., ref-jwt); verify with 'c3x list'"},
 		{"file does not exist: src/foo.ts", "create the file or fix the path"},
 		{"code-map parse error: yaml: unmarshal error", "check code-map entries with 'c3x list'"},
-		{"layer disconnect: child component c3-110 has parent c3-1 but is missing from c3-1 Components table", "update parent table or fix the child parent field; rebuild only proves storage, not layer integration"},
+		{"layer disconnect: child component c3-110 has parent c3-1 but is missing from c3-1 Components table", "open a change doc (c3 add adr) that amends the parent table top-down; rebuild only proves storage, not layer integration"},
 		{"something unknown", ""},
 	}
 	for _, tt := range tests {

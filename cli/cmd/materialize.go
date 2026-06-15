@@ -12,7 +12,7 @@ import (
 // .c3/canvases/<id>.md as sealed canonical markdown, WRITE-IF-ABSENT. It never
 // overwrites a definition a user already owns — that is the freeze guarantee: a
 // c3x upgrade ships new embedded seeds but never silently rewrites a project's
-// definitions. Returns the ids it actually wrote. (slice 9 core)
+// definitions. Returns the ids it actually wrote.
 func MaterializeDefinitions(c3Dir string, canvases []schema.Canvas) ([]string, error) {
 	dir := filepath.Join(c3Dir, schema.CanvasesDir)
 	if err := os.MkdirAll(dir, 0o755); err != nil {

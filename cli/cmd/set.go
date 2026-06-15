@@ -45,10 +45,23 @@ func runSetField(entity *store.Entity, opts SetOptions, w io.Writer) error {
 	case "goal":
 		entity.Goal = opts.Value
 	case "status":
-		if entity.Type == "adr" && entity.Status == "proposed" && opts.Value == "implemented" {
-			return fmt.Errorf("error: cannot transition adr from \"proposed\" directly to \"implemented\"\nhint: ADRs must be accepted first; run: c3x set %s status accepted", opts.ID)
+		// The status command is the manual legal-jump path. Status is edit-proof:
+		// it is NOT written by UpdateEntity, so it must move through the
+		// dedicated SetEntityStatus writer.
+		if !statusTransitionLegal(entity.Status, opts.Value) {
+			next := legalNextStates(entity.Status)
+			if len(next) == 0 {
+				return fmt.Errorf("error: cannot transition %s from %q (terminal) to %q\nhint: this status is terminal and has no legal next state", opts.ID, entity.Status, opts.Value)
+			}
+			return fmt.Errorf("error: cannot transition %s from %q directly to %q\nhint: legal next state(s): %s; run: c3x set %s status %s",
+				opts.ID, entity.Status, opts.Value, strings.Join(next, ", "), opts.ID, next[0])
 		}
-		entity.Status = opts.Value
+		if err := opts.Store.SetEntityStatus(opts.ID, opts.Value); err != nil {
+			return fmt.Errorf("updating status: %w", err)
+		}
+		fmt.Fprintf(w, "Updated %s field %q\n", opts.ID, opts.Field)
+		writeAgentHints(w, cascadeHintsForEntity(entity))
+		return nil
 	case "boundary":
 		entity.Boundary = opts.Value
 	case "category":

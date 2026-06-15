@@ -46,6 +46,12 @@ func (s *Store) GetEntity(id string) (*Entity, error) {
 	return scanEntity(row)
 }
 
+// UpdateEntity writes an entity's body/metadata fields. It is EDIT-PROOF for status:
+// the status column is NEVER written by this path — the existing stored status is
+// preserved regardless of e.Status. The only DB path that may move the status column
+// is SetEntityStatus (used by the status command, supersede, the auto-done latch, and
+// migration). This makes the omission-demotion bug structurally impossible: no body
+// write/import/repair can un-freeze a terminal doc (status is edit-proof).
 func (s *Store) UpdateEntity(e *Entity) error {
 	old, err := s.GetEntity(e.ID)
 	if err != nil {
@@ -56,13 +62,13 @@ func (s *Store) UpdateEntity(e *Entity) error {
 		UPDATE entities SET
 			type = ?, title = ?, slug = ?, category = ?,
 			parent_id = NULLIF(?, ''), goal = ?,
-			status = ?, boundary = ?,
+			boundary = ?,
 			date = ?, metadata = ?, root_merkle = ?, version = ?,
 			updated_at = datetime('now')
 		WHERE id = ?`,
 		e.Type, e.Title, e.Slug, e.Category,
 		e.ParentID, e.Goal,
-		e.Status, e.Boundary,
+		e.Boundary,
 		e.Date, e.Metadata, e.RootMerkle, e.Version,
 		e.ID,
 	)
@@ -76,12 +82,30 @@ func (s *Store) UpdateEntity(e *Entity) error {
 	logFieldChange(s, e.ID, "category", old.Category, e.Category)
 	logFieldChange(s, e.ID, "parent_id", old.ParentID, e.ParentID)
 	logFieldChange(s, e.ID, "goal", old.Goal, e.Goal)
-	logFieldChange(s, e.ID, "status", old.Status, e.Status)
 	logFieldChange(s, e.ID, "boundary", old.Boundary, e.Boundary)
 	logFieldChange(s, e.ID, "date", old.Date, e.Date)
 	logFieldChange(s, e.ID, "metadata", old.Metadata, e.Metadata)
 	logFieldChange(s, e.ID, "root_merkle", old.RootMerkle, e.RootMerkle)
 
+	return nil
+}
+
+// SetEntityStatus is the privileged, dedicated status writer — the ONLY DB path that
+// moves the status column. It is used by the status command, supersede, the auto-done
+// latch, and migration. Because UpdateEntity is status-edit-proof, this is the sole
+// way status changes, keeping terminal docs immutable from body paths.
+func (s *Store) SetEntityStatus(id, status string) error {
+	old, err := s.GetEntity(id)
+	if err != nil {
+		return fmt.Errorf("set status: get old: %w", err)
+	}
+	if _, err := s.db.Exec(`
+		UPDATE entities SET status = ?, updated_at = datetime('now') WHERE id = ?`,
+		status, id,
+	); err != nil {
+		return fmt.Errorf("set status %s=%s: %w", id, status, err)
+	}
+	logFieldChange(s, id, "status", old.Status, status)
 	return nil
 }
 

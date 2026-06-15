@@ -42,6 +42,12 @@ func deriveStrictRules(defs []schema.SectionDef) strictRules {
 		if !section.Required {
 			continue
 		}
+		// FREE sections are narrative: excluded from canvas-shape, MinWords,
+		// typed-column, and discharge checks. Only STRICT sections are enforced
+		// by the strict validator.
+		if section.Free {
+			continue
+		}
 		rules.sectionOrder = append(rules.sectionOrder, section.Name)
 		if section.ContentType != "table" {
 			continue
@@ -87,6 +93,15 @@ func validateStrictComponentDoc(body string, severity string) []Issue {
 
 func validateStrictDoc(defs []schema.SectionDef, body string, severity string) []Issue {
 	rules := deriveStrictRules(defs)
+	hint := strictHintFor(defs)
+	// minWords per declared text section — drives the thin-text check from the
+	// canvas (SectionDef.MinWords), not hardcoded literals.
+	minWords := map[string]int{}
+	for _, def := range defs {
+		if def.ContentType == "text" {
+			minWords[def.Name] = def.MinWords
+		}
+	}
 	sections := markdown.ParseSections(body)
 	sectionMap := make(map[string]markdown.Section)
 	seen := make(map[string]int)
@@ -103,25 +118,32 @@ func validateStrictDoc(defs []schema.SectionDef, body string, severity string) [
 	var issues []Issue
 	for _, name := range rules.sectionOrder {
 		if seen[name] > 1 {
-			issues = append(issues, strictIssue(severity, fmt.Sprintf("duplicate required section: %s", name)))
+			issues = append(issues, strictIssue(severity, fmt.Sprintf("duplicate required section: %s", name), hint))
 		}
 		section, exists := sectionMap[name]
 		if !exists {
-			issues = append(issues, strictIssue(severity, fmt.Sprintf("missing required section: %s", name)))
+			issues = append(issues, strictIssue(severity, fmt.Sprintf("missing required section: %s", name), hint))
 			continue
 		}
 		if strings.TrimSpace(section.Content) == "" {
-			issues = append(issues, strictIssue(severity, fmt.Sprintf("empty required section: %s", name)))
+			issues = append(issues, strictIssue(severity, fmt.Sprintf("empty required section: %s", name), hint))
 			continue
 		}
 	}
-	issues = append(issues, validateRequiredSectionOrder(orderedNames, rules.sectionOrder, severity)...)
+	issues = append(issues, validateRequiredSectionOrder(orderedNames, rules.sectionOrder, hint, severity)...)
 
-	if goal, ok := sectionMap["Goal"]; ok {
-		issues = append(issues, validateTextSubstance("Goal", goal.Content, severity)...)
-	}
-	if purpose, ok := sectionMap["Purpose"]; ok {
-		issues = append(issues, validateTextSubstance("Purpose", purpose.Content, severity)...)
+	// Text-section thin checks run over every declared STRICT text section, keyed
+	// by the canvas-declared MinWords. FREE sections are excluded by
+	// deriveStrictRules (they are not in sectionOrder).
+	for _, name := range rules.sectionOrder {
+		section, ok := sectionMap[name]
+		if !ok {
+			continue
+		}
+		if _, isText := minWords[name]; !isText {
+			continue
+		}
+		issues = append(issues, validateTextSubstance(name, section.Content, minWords[name], severity)...)
 	}
 
 	for sectionName, headers := range rules.tableHeaders {
@@ -131,23 +153,23 @@ func validateStrictDoc(defs []schema.SectionDef, body string, severity string) [
 		}
 		table, err := markdown.ParseTable(section.Content)
 		if err != nil {
-			issues = append(issues, strictIssue(severity, fmt.Sprintf("invalid required table: %s", sectionName)))
+			issues = append(issues, strictIssue(severity, fmt.Sprintf("invalid required table: %s", sectionName), hint))
 			continue
 		}
 		if !slices.Equal(table.Headers, headers) {
-			issues = append(issues, strictIssue(severity, fmt.Sprintf("wrong table columns in %s: expected %s", sectionName, strings.Join(headers, ", "))))
+			issues = append(issues, strictIssue(severity, fmt.Sprintf("wrong table columns in %s: expected %s", sectionName, strings.Join(headers, ", ")), hint))
 		}
 		if len(table.Rows) < rules.minRows[sectionName] {
-			issues = append(issues, strictIssue(severity, fmt.Sprintf("not enough rows in %s: need at least %d", sectionName, rules.minRows[sectionName])))
+			issues = append(issues, strictIssue(severity, fmt.Sprintf("not enough rows in %s: need at least %d", sectionName, rules.minRows[sectionName]), hint))
 		}
-		issues = append(issues, validateStrictTableCells(sectionName, table, rules.columnEnums, severity)...)
-		issues = append(issues, validateStrictTableSemantics(sectionName, table, rules.columnTypes[sectionName], rules.sectionOrder, severity)...)
+		issues = append(issues, validateStrictTableCells(sectionName, table, rules.columnEnums, hint, severity)...)
+		issues = append(issues, validateStrictTableSemantics(sectionName, table, rules.columnTypes[sectionName], rules.sectionOrder, hint, severity)...)
 	}
 
 	return issues
 }
 
-func validateRequiredSectionOrder(orderedNames []string, sectionOrder []string, severity string) []Issue {
+func validateRequiredSectionOrder(orderedNames []string, sectionOrder []string, hint, severity string) []Issue {
 	var issues []Issue
 	lastIndex := -1
 	lastName := ""
@@ -157,7 +179,7 @@ func validateRequiredSectionOrder(orderedNames []string, sectionOrder []string, 
 			continue
 		}
 		if index < lastIndex {
-			issues = append(issues, strictIssue(severity, fmt.Sprintf("component sections out of order: expected %s before %s", lastName, required)))
+			issues = append(issues, strictIssue(severity, fmt.Sprintf("sections out of order: expected %s before %s", lastName, required), hint))
 			continue
 		}
 		lastIndex = index
@@ -166,33 +188,48 @@ func validateRequiredSectionOrder(orderedNames []string, sectionOrder []string, 
 	return issues
 }
 
-func strictIssue(severity, message string) Issue {
+// strictHintFor derives the reviewer-ready hint from the actual STRICT section
+// set of a definition, so a prd/atomic doc never sees the component section
+// literal.
+func strictHintFor(defs []schema.SectionDef) string {
+	var names []string
+	for _, def := range defs {
+		if !def.Required || def.Free {
+			continue
+		}
+		names = append(names, def.Name)
+	}
+	if len(names) == 0 {
+		return "write reviewer-ready docs that match the canvas shape"
+	}
+	return "write reviewer-ready docs: " + strings.Join(names, ", ")
+}
+
+func strictIssue(severity, message, hint string) Issue {
 	return Issue{
 		Severity: severity,
 		Message:  message,
-		Hint:     "write reviewer-ready component docs: Parent Fit, Purpose, Foundational Flow, Business Flow, Governance, Contract, Change Safety, Derived Materials",
+		Hint:     hint,
 	}
 }
 
-func validateTextSubstance(sectionName, text, severity string) []Issue {
+func validateTextSubstance(sectionName, text string, minWords int, severity string) []Issue {
 	var issues []Issue
 	trimmed := strings.TrimSpace(text)
+	hint := "write reviewer-ready prose in " + sectionName
 	if placeholderPattern.MatchString(trimmed) {
-		issues = append(issues, strictIssue(severity, fmt.Sprintf("placeholder language in %s", sectionName)))
+		issues = append(issues, strictIssue(severity, fmt.Sprintf("placeholder language in %s", sectionName), hint))
 	}
 	if strings.Contains(trimmed, "N.A") && !strings.Contains(trimmed, "N.A - ") {
-		issues = append(issues, strictIssue(severity, fmt.Sprintf("invalid N.A in %s: use N.A - <reason>", sectionName)))
+		issues = append(issues, strictIssue(severity, fmt.Sprintf("invalid N.A in %s: use N.A - <reason>", sectionName), hint))
 	}
-	if sectionName == "Goal" && len(strings.Fields(trimmed)) < 4 {
-		issues = append(issues, strictIssue(severity, "Goal is too thin: write one clear sentence"))
-	}
-	if sectionName == "Purpose" && len(strings.Fields(trimmed)) < 12 {
-		issues = append(issues, strictIssue(severity, "Purpose is too thin: explain ownership and non-goals"))
+	if minWords > 0 && len(strings.Fields(trimmed)) < minWords {
+		issues = append(issues, strictIssue(severity, fmt.Sprintf("%s is too thin: write at least %d words", sectionName, minWords), hint))
 	}
 	return issues
 }
 
-func validateStrictTableCells(sectionName string, table *markdown.Table, columnEnums map[string]map[string][]string, severity string) []Issue {
+func validateStrictTableCells(sectionName string, table *markdown.Table, columnEnums map[string]map[string][]string, hint, severity string) []Issue {
 	var issues []Issue
 	for rowIndex, row := range table.Rows {
 		naCells := 0
@@ -200,24 +237,24 @@ func validateStrictTableCells(sectionName string, table *markdown.Table, columnE
 			value := strings.TrimSpace(row[header])
 			cell := fmt.Sprintf("%s row %d column %s", sectionName, rowIndex+1, header)
 			if value == "" {
-				issues = append(issues, strictIssue(severity, fmt.Sprintf("blank field in %s", cell)))
+				issues = append(issues, strictIssue(severity, fmt.Sprintf("blank field in %s", cell), hint))
 				continue
 			}
 			if isNAReason(value) {
 				naCells++
 			}
 			if placeholderPattern.MatchString(value) {
-				issues = append(issues, strictIssue(severity, fmt.Sprintf("placeholder language in %s", cell)))
+				issues = append(issues, strictIssue(severity, fmt.Sprintf("placeholder language in %s", cell), hint))
 			}
 			if strings.Contains(value, "N.A") && !strings.HasPrefix(value, "N.A - ") {
-				issues = append(issues, strictIssue(severity, fmt.Sprintf("invalid N.A in %s: use N.A - <reason>", cell)))
+				issues = append(issues, strictIssue(severity, fmt.Sprintf("invalid N.A in %s: use N.A - <reason>", cell), hint))
 			}
 			if allowed, ok := columnEnums[sectionName][header]; ok && !strictEnumAllowed(value, allowed) {
-				issues = append(issues, strictIssue(severity, fmt.Sprintf("invalid enum value in %s: expected one of %s or N.A - <reason>", cell, strings.Join(allowed, ", "))))
+				issues = append(issues, strictIssue(severity, fmt.Sprintf("invalid enum value in %s: expected one of %s or N.A - <reason>", cell, strings.Join(allowed, ", ")), hint))
 			}
 		}
 		if naCells == len(table.Headers) {
-			issues = append(issues, strictIssue(severity, fmt.Sprintf("row cannot be entirely N.A in %s row %d", sectionName, rowIndex+1)))
+			issues = append(issues, strictIssue(severity, fmt.Sprintf("row cannot be entirely N.A in %s row %d", sectionName, rowIndex+1), hint))
 		}
 	}
 	return issues
@@ -227,7 +264,7 @@ func validateStrictTableCells(sectionName string, table *markdown.Table, columnE
 // the definition (columnTypes) — not by hardcoded section/column names. Any
 // definition that types a column "reference" or "evidence" gets the same
 // grounding rules, so the semantics are generic over any canvas definition.
-func validateStrictTableSemantics(sectionName string, table *markdown.Table, columnTypes map[string]string, sectionOrder []string, severity string) []Issue {
+func validateStrictTableSemantics(sectionName string, table *markdown.Table, columnTypes map[string]string, sectionOrder []string, hint, severity string) []Issue {
 	var issues []Issue
 	repeated := map[string]string{}
 	groundedReferences := 0
@@ -246,21 +283,21 @@ func validateStrictTableSemantics(sectionName string, table *markdown.Table, col
 
 			if columnTypes[header] == "reference" {
 				if !isGroundedReference(value) {
-					issues = append(issues, strictIssue(severity, fmt.Sprintf("ungrounded reference in %s: use an entity id or N.A - <reason>", cell)))
+					issues = append(issues, strictIssue(severity, fmt.Sprintf("ungrounded reference in %s: use an entity id or N.A - <reason>", cell), hint))
 				} else if !isNAReason(value) {
 					groundedReferences++
 				}
 			}
 			if columnTypes[header] == "evidence" && !isGroundedEvidence(value) {
-				issues = append(issues, strictIssue(severity, fmt.Sprintf("ungrounded evidence in %s: name a command, file path, or entity id", cell)))
+				issues = append(issues, strictIssue(severity, fmt.Sprintf("ungrounded evidence in %s: name a command, file path, or entity id", cell), hint))
 			}
 			if sectionName == "Derived Materials" && header == "Must derive from" && !mentionsComponentSection(value, sectionOrder) {
-				issues = append(issues, strictIssue(severity, fmt.Sprintf("ungrounded derivation in %s: cite strict component sections", cell)))
+				issues = append(issues, strictIssue(severity, fmt.Sprintf("ungrounded derivation in %s: cite strict component sections", cell), hint))
 			}
 			if isSemanticDetailColumn(header) && !isNAReason(value) {
 				normalized := normalizeSemanticText(value)
 				if previous, ok := repeated[normalized]; ok {
-					issues = append(issues, strictIssue(severity, fmt.Sprintf("repeated boilerplate in %s: duplicates %s", cell, previous)))
+					issues = append(issues, strictIssue(severity, fmt.Sprintf("repeated boilerplate in %s: duplicates %s", cell, previous), hint))
 				} else if len(strings.Fields(normalized)) >= 4 {
 					repeated[normalized] = cell
 				}
@@ -269,7 +306,7 @@ func validateStrictTableSemantics(sectionName string, table *markdown.Table, col
 	}
 
 	if hasReferenceColumn && len(table.Rows) > 0 && groundedReferences == 0 {
-		issues = append(issues, strictIssue(severity, fmt.Sprintf("%s needs at least one grounded reference", sectionName)))
+		issues = append(issues, strictIssue(severity, fmt.Sprintf("%s needs at least one grounded reference", sectionName), hint))
 	}
 	return issues
 }

@@ -13,6 +13,10 @@ type SectionDef struct {
 	Columns     []ColumnDef `json:"columns,omitempty" yaml:"columns,omitempty"`
 	MinWords    int         `json:"min_words,omitempty" yaml:"min_words,omitempty"`
 	MinRows     int         `json:"min_rows,omitempty" yaml:"min_rows,omitempty"`
+	// Free marks a narrative section: its content is never shape-checked
+	// (skipped by canvas-shape, MinWords, typed-column, and discharge checks).
+	// Absent ⇒ STRICT (fully checked).
+	Free bool `json:"free,omitempty" yaml:"free,omitempty"`
 }
 
 // ColumnDef defines a typed column within a table section.
@@ -66,6 +70,18 @@ func DefinitionFor(entityType string) (Canvas, bool) {
 		return Canvas{}, false
 	}
 	return def, true
+}
+
+// IsChangeDoc reports whether a canvas is a change doc. It keys on the declared
+// status legal-set in the canvas frontmatter (Canvas.Status), NOT on any table
+// column named "Status". A fact canvas (system/container/component) may carry a
+// "Status" column without becoming a change doc.
+func IsChangeDoc(canvasID string) bool {
+	def, ok := DefinitionFor(canvasID)
+	if !ok {
+		return false
+	}
+	return len(def.Status) > 0
 }
 
 // ForType returns section definitions for an entity type, or nil if unknown.

@@ -3,11 +3,13 @@ package cmd
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/lagz0ne/c3-design/cli/internal/markdown"
+	"github.com/lagz0ne/c3-design/cli/internal/schema"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
@@ -42,10 +44,140 @@ func validateADRCoverageMode(s *store.Store, body string, severity string, inclu
 	if !includeMissing {
 		return issues
 	}
+	// Touch-nothing -> invalid. A change doc with an empty / all-N.A affected set
+	// changes nothing; there is nothing to discharge. Closes the old empty-
+	// `expected` early return that let toothless docs pass.
+	if len(affected) == 0 {
+		issues = append(issues, Issue{
+			Severity: severity,
+			Message:  "change doc touches nothing: the affected topology is empty or entirely N.A",
+			Hint:     "name at least one affected entity in the change-set, or this doc changes nothing",
+		})
+	}
+	// Force top-down completeness. A named component/container owes its
+	// higher-level rows (filled or N.A - reason).
+	issues = append(issues, topDownCompletenessIssues(s, body, severity)...)
 	expected := expectedADRCoverage(s, affected)
 	issues = append(issues, missingADRCoverageIssues(expected.refs, relatedRefs, "ref", severity)...)
 	issues = append(issues, missingADRCoverageIssues(expected.rules, relatedRules, "rule", severity)...)
 	return issues
+}
+
+// topDownCompletenessIssues enforces top-down completeness on the affected set:
+// a named component (or container) owes a row for every higher-level ancestor
+// (its container, its system) — present in the affected set, filled or N.A -
+// reason. The descent system->container->component is enforced by walking
+// ParentID up to 3 deep. The old UP-walk ancestor-presence check is subsumed by
+// this.
+func topDownCompletenessIssues(s *store.Store, body string, severity string) []Issue {
+	affected, _ := parseADRAffectedTopology(s, body, severity, adrSchemaHint())
+	// All ids named in the change-set's affected set, including N.A-filtered ones
+	// only matter as "present"; parse mentions directly so an N.A ancestor row
+	// still counts as covered.
+	mentioned := mentionedAffectedIDs(body)
+
+	var issues []Issue
+	seen := map[string]bool{}
+	for _, target := range affected {
+		entity, err := s.GetEntity(target.ID)
+		if err != nil {
+			continue
+		}
+		// Walk ParentID up to 3 deep; each ancestor must appear in the affected
+		// set (delta or N.A - reason).
+		current := entity
+		for depth := 0; depth < 3; depth++ {
+			if current.ParentID == "" {
+				break
+			}
+			parent, err := s.GetEntity(current.ParentID)
+			if err != nil {
+				break
+			}
+			key := target.ID + "->" + parent.ID
+			if !mentioned[parent.ID] && !seen[key] {
+				seen[key] = true
+				issues = append(issues, Issue{
+					Severity: severity,
+					Message:  fmt.Sprintf("top-down incomplete: change doc names %s but omits its higher-level %s %s", target.ID, parent.Type, parent.ID),
+					Hint:     fmt.Sprintf("add a row for %s (the delta, or N.A - <reason>) so the change-set descends top-down", parent.ID),
+				})
+			}
+			current = parent
+		}
+	}
+	return issues
+}
+
+// changeDocTouchesNothing reports whether every STRICT change-set table row in a
+// change doc is entirely N.A — i.e. the doc changes nothing. It reads the STRICT
+// (non-FREE, required table) sections from the canvas definition and inspects
+// only those. A doc with at least one non-N.A row in any STRICT table touches
+// something.
+func changeDocTouchesNothing(defs []schema.SectionDef, body string) bool {
+	rules := deriveStrictRules(defs)
+	sectionMap := map[string]markdown.Section{}
+	for _, section := range markdown.ParseSections(body) {
+		if section.Name != "" {
+			sectionMap[section.Name] = section
+		}
+	}
+	sawRow := false
+	for sectionName := range rules.tableHeaders {
+		section, ok := sectionMap[sectionName]
+		if !ok {
+			continue
+		}
+		table, err := markdown.ParseTable(strings.TrimSpace(section.Content))
+		if err != nil {
+			continue
+		}
+		for _, row := range table.Rows {
+			sawRow = true
+			naCells := 0
+			for _, header := range table.Headers {
+				// Canonical N.A. predicate: a cell counts as N.A. only when it
+				// carries an explicit "N.A - <reason>". A BLANK cell is NOT N.A.
+				// (it is undischarged), matching the strict-cell validator's
+				// isNAReason. This keeps changeDocTouchesNothing from disagreeing
+				// with the strict validator on the same cell.
+				if isNAReason(strings.TrimSpace(row[header])) {
+					naCells++
+				}
+			}
+			if naCells != len(table.Headers) {
+				// At least one non-N.A cell -> this row changes something.
+				return false
+			}
+		}
+	}
+	// touches nothing only if there were STRICT rows and all were entirely N.A.
+	return sawRow
+}
+
+// mentionedAffectedIDs collects every Entity id named in the Affected Topology
+// table — including rows whose other cells are N.A — so an ancestor row counts
+// as "covered" for top-down completeness regardless of whether it is a delta or
+// an N.A - reason row.
+func mentionedAffectedIDs(body string) map[string]bool {
+	mentioned := map[string]bool{}
+	for _, section := range markdown.ParseSections(body) {
+		if section.Name != "Affected Topology" {
+			continue
+		}
+		table, err := markdown.ParseTable(strings.TrimSpace(section.Content))
+		if err != nil {
+			return mentioned
+		}
+		for _, row := range table.Rows {
+			id := strings.TrimSpace(row["Entity"])
+			if id == "" || isNARow(id) {
+				continue
+			}
+			mentioned[id] = true
+		}
+	}
+	return mentioned
 }
 
 func parseADRAffectedTopology(s *store.Store, body string, severity string, schemaCommand string) ([]adrAffectedTarget, []Issue) {
@@ -408,4 +540,184 @@ func appendUniqueString(values []string, value string) []string {
 // Terminal-state ADRs are exempt from check validation; their content is frozen.
 func isADRTerminal(status string) bool {
 	return status == "implemented" || status == "provisioned"
+}
+
+// isChangeDocTerminal reports whether a change doc is in a terminal (frozen,
+// historical) state, keying on its DECLARED status. It generalizes
+// isADRTerminal from ADR-only to any change doc: terminal for the canonical
+// change-doc set {done, superseded} and for the migrated legacy ADR terminals
+// {implemented, provisioned}. A terminal change doc is skipped by the default
+// check; its content is frozen.
+func isChangeDocTerminal(entity *store.Entity) bool {
+	if entity == nil {
+		return false
+	}
+	switch entity.Status {
+	case "done", "superseded":
+		return true
+	default:
+		return isADRTerminal(entity.Status)
+	}
+}
+
+// autoDoneLatch is the one-way actualization latch (SETTLED — reverses "never
+// auto-set done"). For an `accepted` change doc it gathers every per-row After
+// cite from the STRICT change-set (the cite-typed columns of the non-FREE table
+// sections) and resolves each with the freshness/intactness machinery
+// (validateCitationColumnValue). The latch is two-phase, gated by `commit`:
+//
+//   - commit==false (plain `check`): READINESS ONLY. If at least one After cite is
+//     present and ALL resolve fresh, it returns flipped=true WITHOUT touching the
+//     status column — the caller reports readiness; it never mutates the DB or
+//     rewrites sealed markdown on a plain read.
+//   - commit==true (`check --fix`): it ACTUALIZES the flip accepted->done via the
+//     sanctioned SetEntityStatus writer (status is edit-proof) and returns
+//     flipped=true.
+//
+// Any stale/missing cite blocks the flip and is returned as unresolved. The latch
+// is purely mechanical: it never fires on a non-`accepted` doc, never flips
+// backward, and never judges whether the chosen After conditions were the right
+// success criteria.
+func autoDoneLatch(s *store.Store, entity *store.Entity, body string, commit bool) (bool, []Issue) {
+	if entity == nil || entity.Status != "accepted" {
+		return false, nil
+	}
+	if !schema.IsChangeDoc(entity.Type) {
+		return false, nil
+	}
+
+	def, ok := schema.DefinitionFor(entity.Type)
+	if !ok {
+		return false, nil
+	}
+
+	sectionMap := map[string]markdown.Section{}
+	for _, sec := range markdown.ParseSections(body) {
+		if sec.Name != "" {
+			sectionMap[sec.Name] = sec
+		}
+	}
+
+	opts := CheckOptions{Store: s}
+	var unresolved []Issue
+	afterCites := 0
+
+	for _, sd := range def.Sections {
+		if sd.Free || sd.ContentType != "table" {
+			continue
+		}
+		citeCols := map[string]bool{}
+		for _, col := range sd.Columns {
+			if col.Type == "cite" {
+				citeCols[col.Name] = true
+			}
+		}
+		if len(citeCols) == 0 {
+			continue
+		}
+		sec, exists := sectionMap[sd.Name]
+		if !exists {
+			continue
+		}
+		table, err := markdown.ParseTable(strings.TrimSpace(sec.Content))
+		if err != nil {
+			continue
+		}
+		for _, row := range table.Rows {
+			for col := range citeCols {
+				raw := strings.TrimSpace(row[col])
+				if raw == "" {
+					continue
+				}
+				afterCites++
+				unresolved = append(unresolved, validateCitationColumnValue(raw, entity, opts)...)
+			}
+		}
+	}
+
+	if afterCites == 0 || len(unresolved) > 0 {
+		return false, unresolved
+	}
+
+	// Ready to actualize. A plain `check` (commit==false) only REPORTS readiness:
+	// it never flips, never mutates the DB, never rewrites sealed markdown.
+	if !commit {
+		return true, nil
+	}
+
+	if err := s.SetEntityStatus(entity.ID, "done"); err != nil {
+		return false, []Issue{{
+			Severity: "error",
+			Entity:   entity.ID,
+			Message:  fmt.Sprintf("auto-done latch: failed to actualize %s to done: %v", entity.ID, err),
+		}}
+	}
+	entity.Status = "done"
+	return true, nil
+}
+
+// statusTransitions is the canonical legal-jump table for the status command.
+//
+// Change-doc canonical set {open, accepted, done, superseded}:
+//
+//	open      -> accepted | superseded
+//	accepted  -> done | superseded
+//	done      -> superseded
+//	superseded-> (terminal)
+//
+// Legacy ADR states are preserved so existing ADR transitions stay legal:
+//
+//	proposed    -> accepted | provisioned | superseded
+//	accepted    -> implemented (in addition to done/superseded)
+//	implemented -> superseded
+//	provisioned -> superseded
+//
+// `*->superseded` is reachable only via the supersede command.
+var statusTransitions = map[string][]string{
+	"open":        {"accepted", "superseded"},
+	"accepted":    {"done", "implemented", "superseded"},
+	"done":        {"superseded"},
+	"superseded":  {},
+	"proposed":    {"accepted", "provisioned", "superseded"},
+	"implemented": {"superseded"},
+	"provisioned": {"superseded"},
+}
+
+// legalNextStates returns the states reachable from `from` in one legal jump.
+// Unknown source states yield no legal next states.
+func legalNextStates(from string) []string {
+	return statusTransitions[from]
+}
+
+// statusTransitionLegal reports whether from->to is a legal one-step jump.
+// A no-op (from == to) is always legal.
+func statusTransitionLegal(from, to string) bool {
+	if from == to {
+		return true
+	}
+	return slices.Contains(legalNextStates(from), to)
+}
+
+// mapADRStatus folds a legacy ADR status onto the change-doc canonical set,
+// reporting whether the fold is lossy (a distinction collapsed). The lossy
+// signal is recorded for the migration sweep; this helper performs no
+// coercion of stored state on its own.
+//
+//	proposed    -> open        (clean)
+//	accepted    -> accepted    (clean)
+//	implemented -> done        (clean)
+//	provisioned -> done        (LOSSY: the design-only distinction is collapsed)
+func mapADRStatus(status string) (mapped string, lossy bool) {
+	switch status {
+	case "proposed":
+		return "open", false
+	case "accepted":
+		return "accepted", false
+	case "implemented":
+		return "done", false
+	case "provisioned":
+		return "done", true
+	default:
+		return status, false
+	}
 }

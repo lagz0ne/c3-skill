@@ -450,6 +450,111 @@ func TestCommandMutatesCanonical_RepairIsMutating(t *testing.T) {
 	}
 }
 
+// supersede and migrate rewrite store status (and migrate rewrites canvases), so
+// they must classify as mutating to get the rollback snapshot + coordinator gate.
+func TestCommandMutatesCanonical_SupersedeAndMigrateAreMutating(t *testing.T) {
+	for _, c := range []string{"supersede", "migrate"} {
+		if !commandMutatesCanonical(cmd.Options{Command: c}) {
+			t.Fatalf("%s must be classified as mutating", c)
+		}
+	}
+}
+
+// c3x supersede must be a wired command, not "unknown command", and must dispatch
+// to RunSupersede.
+func TestRun_SupersedeCommandDispatches(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	// Seed a terminal change doc (done) and a successor (open) into the store +
+	// canonical, so the dispatch path can flip + backlink.
+	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range []*store.Entity{
+		{ID: "adr-old", Type: "adr", Title: "Old decision", Slug: "old", Status: "done", Date: "20260101", Metadata: "{}"},
+		{ID: "adr-new", Type: "adr", Title: "New decision", Slug: "new", Status: "open", Date: "20260601", Metadata: "{}"},
+	} {
+		if err := s.InsertEntity(e); err != nil {
+			t.Fatalf("seed %s: %v", e.ID, err)
+		}
+		if err := content.WriteEntity(s, e.ID, "# "+e.Title+"\n\n## Context\n\nBody.\n"); err != nil {
+			t.Fatalf("seed body %s: %v", e.ID, err)
+		}
+	}
+	if err := cmd.RunSyncExport(cmd.ExportOptions{Store: s, OutputDir: c3Dir}, io.Discard); err != nil {
+		s.Close()
+		t.Fatal(err)
+	}
+	s.Close()
+
+	var buf bytes.Buffer
+	err = run([]string{"--c3-dir", c3Dir, "supersede", "adr-new", "adr-old"}, &buf)
+	if err != nil && strings.Contains(err.Error(), "unknown command") {
+		t.Fatalf("c3x supersede must be wired up, got: %v", err)
+	}
+	if err != nil {
+		t.Fatalf("supersede dispatch failed: %v\n%s", err, buf.String())
+	}
+
+	s2, err := store.Open(filepath.Join(c3Dir, "c3.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s2.Close()
+	old, err := s2.GetEntity("adr-old")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if old.Status != "superseded" {
+		t.Fatalf("supersede should flip adr-old to superseded, got %q", old.Status)
+	}
+}
+
+// c3x supersede without two args reports a usage error, not "unknown command".
+func TestRun_SupersedeMissingArgs(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	seedCanonicalReadme(t, c3Dir)
+	err := run([]string{"--c3-dir", c3Dir, "supersede", "adr-new"}, &bytes.Buffer{})
+	if err == nil {
+		t.Fatal("expected usage error for supersede with one arg")
+	}
+	if strings.Contains(err.Error(), "unknown command") {
+		t.Fatalf("supersede must be wired, got: %v", err)
+	}
+}
+
+// c3x migrate must be a wired command and dispatch to RunMigrate, sweeping the
+// fact 'active' statuses to empty (loud report).
+func TestRun_MigrateCommandDispatches(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	seedCanonicalReadme(t, c3Dir)
+
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "migrate"}, &buf)
+	if err != nil && strings.Contains(err.Error(), "unknown command") {
+		t.Fatalf("c3x migrate must be wired up, got: %v", err)
+	}
+	if err != nil {
+		t.Fatalf("migrate dispatch failed: %v\n%s", err, buf.String())
+	}
+	if !strings.Contains(buf.String(), "MIGRATION") {
+		t.Fatalf("migrate should emit a loud migration report, got:\n%s", buf.String())
+	}
+
+	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	e, err := s.GetEntity("c3-101")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if e.Status != "" {
+		t.Fatalf("migrate should clear fact c3-101 active status, got %q", e.Status)
+	}
+}
+
 func TestRun_Schema(t *testing.T) {
 	c3Dir := setupC3DB(t)
 	var buf bytes.Buffer

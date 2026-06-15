@@ -29,6 +29,7 @@ type canonicalDoc struct {
 	Goal          string
 	Boundary      string
 	Status        string
+	StatusSet     []string
 	Date          string
 	Body          string
 	C3Version     any
@@ -202,13 +203,16 @@ func renderCanonicalDoc(doc canonicalDoc, includeSeal bool) string {
 	if doc.Status != "" && doc.Status != "active" {
 		writeYAMLField(&b, "status", doc.Status)
 	}
+	if len(doc.StatusSet) > 0 {
+		writeYAMLField(&b, "status", doc.StatusSet)
+	}
 	if doc.Date != "" {
 		writeYAMLField(&b, "date", canonicalDateText(doc.Date))
 	}
 	if doc.Description != nil {
 		writeYAMLField(&b, "description", doc.Description)
 	}
-	for _, relType := range []string{"uses", "affects", "scope", "sources", "origin"} {
+	for _, relType := range []string{"uses", "affects", "scope", "sources", "origin", "supersedes", "amends"} {
 		if ids, ok := doc.Relationships[relType]; ok && len(ids) > 0 {
 			writeYAMLField(&b, relType, normalizeStringSlice(ids))
 		}
@@ -230,11 +234,13 @@ func renderCanonicalDoc(doc canonicalDoc, includeSeal bool) string {
 func canonicalDocFromParsedDoc(doc frontmatter.ParsedDoc) canonicalDoc {
 	fm := doc.Frontmatter
 	rels := map[string][]string{
-		"uses":    append([]string{}, fm.Refs...),
-		"affects": append([]string{}, fm.Affects...),
-		"scope":   append([]string{}, fm.Scope...),
-		"sources": append([]string{}, fm.Sources...),
-		"origin":  append([]string{}, fm.Origin...),
+		"uses":       append([]string{}, fm.Refs...),
+		"affects":    append([]string{}, fm.Affects...),
+		"scope":      append([]string{}, fm.Scope...),
+		"sources":    append([]string{}, fm.Sources...),
+		"origin":     append([]string{}, fm.Origin...),
+		"supersedes": append([]string{}, fm.Supersedes...),
+		"amends":     append([]string{}, fm.Amends...),
 	}
 	extra := map[string]any{}
 	for key, value := range fm.Extra {

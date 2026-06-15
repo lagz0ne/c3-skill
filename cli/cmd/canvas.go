@@ -78,7 +78,7 @@ func runCanvasRead(opts CanvasOptions, w io.Writer) error {
 	if err != nil {
 		// Fall back to the unified definition registry so EVERY entity type
 		// (component, container, ref, rule, ... not just canvas-registry ids) is
-		// canvas-readable — project override first, embedded otherwise. (slice 9)
+		// canvas-readable — project override first, embedded otherwise.
 		if def, ok := schema.DefinitionForDir(opts.C3Dir, opts.ID); ok {
 			canvas = def
 		} else {
@@ -154,6 +154,7 @@ func renderCanvasDoc(canvas schema.Canvas, includeSeal bool) string {
 		ID:          canvas.ID,
 		Type:        "canvas",
 		Description: canvas.Description,
+		StatusSet:   canvas.Status,
 		Body:        body,
 	}, includeSeal)
 }

@@ -48,6 +48,28 @@ func mustLoadBuiltInDefinitions() map[string]Canvas {
 	return defs
 }
 
+// BuiltInCanvasRaw returns the raw markdown of every embedded canvas, keyed by
+// id (filename without .md). Used to verify committed seals re-seal cleanly.
+func BuiltInCanvasRaw() map[string]string {
+	entries, err := fs.ReadDir(builtInCanvasFS, builtInCanvasDir)
+	if err != nil {
+		panic(fmt.Sprintf("read built-in canvases: %v", err))
+	}
+	out := make(map[string]string, len(entries))
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
+			continue
+		}
+		path := filepath.ToSlash(filepath.Join(builtInCanvasDir, entry.Name()))
+		data, err := builtInCanvasFS.ReadFile(path)
+		if err != nil {
+			panic(fmt.Sprintf("read built-in canvas %s: %v", entry.Name(), err))
+		}
+		out[strings.TrimSuffix(entry.Name(), ".md")] = string(data)
+	}
+	return out
+}
+
 func builtInDefinitionIDs() []string {
 	out := make([]string, 0, len(builtInDefinitions))
 	for id := range builtInDefinitions {

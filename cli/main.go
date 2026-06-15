@@ -555,6 +555,13 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 		err = cmd.RunDelete(cmd.DeleteOptions{C3Dir: c3Dir, ID: id, Store: s, DryRun: opts.DryRun}, w)
 	case "repair":
 		err = cmd.RunRepair(cmd.RepairOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: opts.Only}, w)
+	case "supersede":
+		if len(opts.Args) < 2 {
+			return fmt.Errorf("error: usage: c3x supersede <new-id> <old-id>\nhint: run 'c3x supersede --help' for usage")
+		}
+		err = cmd.RunSupersede(cmd.SupersedeOptions{Store: s, NewID: opts.Args[0], OldID: opts.Args[1]}, w)
+	case "migrate":
+		_, err = cmd.RunMigrate(cmd.MigrateOptions{Store: s, C3Dir: c3Dir}, w)
 	default:
 		return fmt.Errorf("error: unknown command '%s'\nhint: run 'c3x --help' to see available commands", opts.Command)
 	}
@@ -570,6 +577,10 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 
 func commandMutatesCanonical(opts cmd.Options) bool {
 	switch opts.Command {
+	case "supersede", "migrate":
+		// Both rewrite store status (flip/sweep) and, for migrate, on-disk canvases;
+		// they need the rollback snapshot + coordinator gate + canonical re-export.
+		return true
 	case "write", "add", "set", "wire", "delete", "repair", "template", "canvas":
 		if opts.Command == "template" && !(len(opts.Args) > 0 && (opts.Args[0] == "add" || opts.Args[0] == "write")) {
 			return false

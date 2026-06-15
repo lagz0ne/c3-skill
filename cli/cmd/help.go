@@ -398,6 +398,43 @@ Examples:
   c3x delete ref-jwt --dry-run`,
 	},
 	{
+		Name:     "supersede",
+		Args:     "<new-id> <old-id>",
+		OneLiner: "Mark a terminal change doc superseded by a successor",
+		Help: `Usage: c3x supersede <new-id> <old-id>
+
+Record that <new-id> supersedes a terminal (done/superseded) change doc <old-id>:
+flips <old-id> to superseded and writes the backlink <new-id> --supersedes--> <old-id>.
+
+This is a mechanical operation. It never judges whether <new-id> is a legitimate
+successor; it only enforces that:
+  - <old-id> is terminal (a still-open decision cannot be superseded — finish it first)
+  - the supersede would not form a cycle
+
+Examples:
+  c3x supersede adr-20260601-new adr-20260101-old`,
+	},
+	{
+		Name:     "migrate",
+		OneLiner: "Sweep legacy statuses onto the canonical set (loud, one-time)",
+		Help: `Usage: c3x migrate
+
+One-time SWEEP & CLEAR ALL migration over the store. For every entity it:
+  - CLEARS each fact's legacy 'active' status (facts have no status)
+  - MAPS each change doc's legacy status onto the canonical set
+    {open, accepted, done, superseded}, recording the lossy provisioned->done collapse
+  - GRANDFATHERS old terminal ADRs (implemented/provisioned) to 'done' with no retro check
+  - RECONCILES uncustomized materialized canvases to the current grammar (re-sealed);
+    a customized canvas is left intact and reported for manual reconcile
+  - RE-SEALS every entity
+
+Every step is itemized in a loud, non-silent report. An unmappable status FAILS loud
+and coerces nothing. migrate is the only path that may rewrite a terminal status.
+
+Examples:
+  c3x migrate`,
+	},
+	{
 		Name:     "marketplace",
 		Args:     "<subcommand>",
 		OneLiner: "Manage marketplace rule sources",

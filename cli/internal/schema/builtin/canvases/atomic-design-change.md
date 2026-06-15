@@ -1,8 +1,9 @@
 ---
 id: atomic-design-change
-c3-seal: 55db56c9945a1967ca8e971318337a4944598b7fdb0aa22dcb909d22295be567
+c3-seal: e34c5fdf5a01e3ecdfc0c3328f337c1d3a0657886ca109b262aaa5bd22846d77
 type: canvas
 description: Track design-system changes from atom through page with cite-backed impact.
+status: [open, accepted, done, superseded]
 ---
 
 domain: design
@@ -10,6 +11,7 @@ sections:
     - name: Goal
       content_type: text
       required: true
+      free: true
       purpose: Design-system change objective
     - name: Affected Units
       content_type: table

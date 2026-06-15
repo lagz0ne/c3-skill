@@ -1,8 +1,9 @@
 ---
 id: prd
-c3-seal: bad862bccd901408ddd4cd4cc32c2d6ca8681d647214c4bec774f1e4982525ce
+c3-seal: 4eb2041897b39cabef90751ff914a5f52b1f900eeeed94084c3ab671beaa27d5
 type: canvas
 description: Product requirements document canvas with cite-backed facts and story traces.
+status: [open, accepted, done, superseded]
 ---
 
 domain: product
@@ -10,6 +11,7 @@ sections:
     - name: Goal
       content_type: text
       required: true
+      free: true
       purpose: Product outcome
     - name: Requirements
       content_type: table

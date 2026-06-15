@@ -20,6 +20,10 @@ type Canvas struct {
 	Source      string       `json:"source,omitempty"`
 	Sections    []SectionDef `json:"sections"`
 	Reject      RejectRules  `json:"reject"`
+	// Status is the declared legal-set for a change doc, from the canvas
+	// frontmatter `status: [...]`. Empty for fact canvases. Its presence (not
+	// any column) is what makes a canvas a change doc.
+	Status []string `json:"status,omitempty"`
 }
 
 type CanvasDocument struct {
@@ -123,8 +127,30 @@ func ParseCanvasDocument(path, raw string) (Canvas, error) {
 	if strings.TrimSpace(fm.Description) == "" {
 		return Canvas{}, fmt.Errorf("invalid canvas %s: missing description", path)
 	}
-	if fm.Title != "" || fm.Goal != "" || fm.Status != "" || fm.Summary != "" {
-		return Canvas{}, fmt.Errorf("invalid canvas %s: frontmatter allows only id, type, description, and c3-seal", path)
+	if fm.Title != "" || fm.Goal != "" || fm.Summary != "" {
+		return Canvas{}, fmt.Errorf("invalid canvas %s: frontmatter allows only id, type, description, status, and c3-seal", path)
+	}
+	// A scalar `status:` on a canvas is malformed — a canvas declares a status
+	// legal-SET (a list), not a single value.
+	if fm.Status != "" {
+		return Canvas{}, fmt.Errorf("invalid canvas %s: status must be a list of states, e.g. status: [open, accepted, done, superseded]", path)
+	}
+	// A declared-but-empty or duplicate-state status list is malformed. A nil
+	// StatusSet means the key was absent (fact canvas), which is fine.
+	if fm.StatusSet != nil {
+		if len(fm.StatusSet) == 0 {
+			return Canvas{}, fmt.Errorf("invalid canvas %s: status declaration is empty; list at least one state", path)
+		}
+		seenState := map[string]bool{}
+		for _, state := range fm.StatusSet {
+			if strings.TrimSpace(state) == "" {
+				return Canvas{}, fmt.Errorf("invalid canvas %s: status declaration has an empty state", path)
+			}
+			if seenState[state] {
+				return Canvas{}, fmt.Errorf("invalid canvas %s: status declaration has duplicate state %q", path, state)
+			}
+			seenState[state] = true
+		}
 	}
 	for key := range fm.Extra {
 		return Canvas{}, fmt.Errorf("invalid canvas %s: unknown frontmatter field %q", path, key)
@@ -144,6 +170,7 @@ func ParseCanvasDocument(path, raw string) (Canvas, error) {
 			Bullets:   doc.RejectIf,
 			Workorder: doc.Workorder,
 		},
+		Status: fm.StatusSet,
 	}
 	if err := ValidateCanvas(canvas); err != nil {
 		return Canvas{}, fmt.Errorf("invalid canvas %s: %w", path, err)
@@ -162,6 +189,7 @@ func ValidateCanvas(canvas Canvas) error {
 		return fmt.Errorf("missing sections")
 	}
 	seen := map[string]bool{}
+	strictTableBlocks := 0
 	for _, section := range canvas.Sections {
 		if strings.TrimSpace(section.Name) == "" {
 			return fmt.Errorf("section missing name")
@@ -170,13 +198,22 @@ func ValidateCanvas(canvas Canvas) error {
 			return fmt.Errorf("duplicate section %q", section.Name)
 		}
 		seen[section.Name] = true
+		// FREE sections are narrative: their content is never shape-checked
+		// (content_type, columns, typed-column primitives are all skipped). Only
+		// the name/uniqueness guards above apply.
+		if section.Free {
+			continue
+		}
 		switch section.ContentType {
 		case "text", "table":
 		default:
 			return fmt.Errorf("section %q has unknown content_type %q", section.Name, section.ContentType)
 		}
-		if section.ContentType == "table" && len(section.Columns) == 0 {
-			return fmt.Errorf("table section %q missing columns", section.Name)
+		if section.ContentType == "table" {
+			if len(section.Columns) == 0 {
+				return fmt.Errorf("table section %q missing columns", section.Name)
+			}
+			strictTableBlocks++
 		}
 		for _, column := range section.Columns {
 			if strings.TrimSpace(column.Name) == "" {
@@ -186,6 +223,12 @@ func ValidateCanvas(canvas Canvas) error {
 				return fmt.Errorf("section %q column %q has unsupported type %q", section.Name, column.Name, column.Type)
 			}
 		}
+	}
+	// A change doc (declares a status set) must carry at least one STRICT
+	// change-set block — a non-FREE table section. Zero is invalid: a change doc
+	// with only FREE reasoning sections has nothing to typed-column check.
+	if len(canvas.Status) > 0 && strictTableBlocks == 0 {
+		return fmt.Errorf("change doc %q must declare a STRICT change-set block (a non-free table section)", canvas.ID)
 	}
 	return nil
 }
@@ -206,7 +249,7 @@ func IsCanvasPrimitive(columnType string, values []string) bool {
 // frozen) and falling back to the embedded definition (DefinitionFor). This is
 // the seam that makes definitions user-editable: an edit to the materialized
 // file changes what validation enforces, while a fresh project still works off
-// the embedded seed. (slice 8)
+// the embedded seed.
 func DefinitionForDir(c3Dir, entityType string) (Canvas, bool) {
 	if c3Dir != "" {
 		for _, id := range definitionLookupIDs(entityType) {

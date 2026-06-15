@@ -53,13 +53,19 @@ type Frontmatter struct {
 	Summary     string   `yaml:"summary,omitempty"`
 	Boundary    string   `yaml:"boundary,omitempty"`
 	Status      string   `yaml:"status,omitempty"`
-	Date        string   `yaml:"date,omitempty"`
+	// StatusSet holds a list-valued `status:` declaration (canvas legal-set).
+	// It is extracted before struct unmarshal so the scalar Status field keeps
+	// its single-value entity meaning. Not a YAML-tagged field.
+	StatusSet []string `yaml:"-"`
+	Date      string   `yaml:"date,omitempty"`
 	Affects     []string `yaml:"affects,omitempty"`
 	Refs        []string `yaml:"uses,omitempty"`
 	Scope       []string `yaml:"scope,omitempty"`
 	Description string   `yaml:"description,omitempty"`
 	Sources     []string `yaml:"sources,omitempty"`
 	Origin      []string `yaml:"origin,omitempty"`
+	Supersedes  []string `yaml:"supersedes,omitempty"`
+	Amends      []string `yaml:"amends,omitempty"`
 	// Extra holds any additional fields not in the known schema.
 	Extra map[string]interface{} `yaml:",inline"`
 }
@@ -103,6 +109,18 @@ func ParseFrontmatter(content string) (*Frontmatter, string) {
 	for k, v := range raw {
 		if v == nil {
 			delete(raw, k)
+		}
+	}
+
+	// A list-valued `status:` is a canvas legal-set declaration, not a scalar
+	// entity status. Extract it before the struct unmarshal (where Status is a
+	// string) so a list does not abort parsing.
+	var statusSet []string
+	if sv, ok := raw["status"]; ok {
+		switch sv.(type) {
+		case []interface{}, []string:
+			statusSet = toStringSlice(sv)
+			delete(raw, "status")
 		}
 	}
 
@@ -152,6 +170,7 @@ func ParseFrontmatter(content string) (*Frontmatter, string) {
 	if err := yaml.Unmarshal(cleaned, &fm); err != nil {
 		return nil, body
 	}
+	fm.StatusSet = statusSet
 
 	return &fm, body
 }
@@ -220,6 +239,8 @@ func DeriveRelationships(fm *Frontmatter) []string {
 		rels = append(rels, StripAnchor(src))
 	}
 	rels = append(rels, fm.Origin...)
+	rels = append(rels, fm.Supersedes...)
+	rels = append(rels, fm.Amends...)
 	if rels == nil {
 		rels = []string{}
 	}

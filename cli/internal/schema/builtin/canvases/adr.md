@@ -1,8 +1,9 @@
 ---
 id: adr
-c3-seal: 546cb6d2762419556cdc603a26b6fdb8d25e8087f77283a122a905bc5d55b1cc
+c3-seal: 24191efa19595a66467fd153e293995eec2d21edd2aad1af2987f57b8c7b9bb1
 type: canvas
 description: Decision work order with topology, governance, execution, and verification evidence.
+status: [open, accepted, done, superseded]
 ---
 
 domain: software
@@ -10,18 +11,21 @@ sections:
     - name: Goal
       content_type: text
       required: true
+      free: true
       purpose: Decision context and objective
       fill: State the exact change objective in one concrete paragraph. Name the system behavior or architecture decision being changed, not just the ticket title.
       failure: If this is vague, the ADR can pass mechanically but nobody can tell what decision it is actually authorizing.
     - name: Context
       content_type: text
       required: true
+      free: true
       purpose: Current behavior, user pain, constraints, and affected topology
       fill: Describe the current state, the problem or pressure forcing the change, the constraints, and the part of the topology involved.
       failure: If this is thin, later readers cannot tell whether the ADR solved the real problem or introduced drift against current architecture.
     - name: Decision
       content_type: text
       required: true
+      free: true
       purpose: Concrete selected approach and why it is the right fit
       fill: Write the chosen approach and why it wins over the realistic alternatives for this repo, branch, or architecture shape.
       failure: If this is hand-wavy, implementation can branch into multiple interpretations and the ADR stops being a work order.

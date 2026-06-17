@@ -301,39 +301,6 @@ func TestBuildExportContent_PreservesMetadataFields(t *testing.T) {
 	}
 }
 
-func captureExportTree(t *testing.T, root string) map[string]string {
-	t.Helper()
-	files := map[string]string{}
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return nil
-		}
-		rel, err := filepath.Rel(root, path)
-		if err != nil {
-			return err
-		}
-		if filepath.Base(path) == "c3.db" {
-			return nil
-		}
-		if !(strings.HasSuffix(rel, ".md") || rel == "code-map.yaml") {
-			return nil
-		}
-		data, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		files[rel] = string(data)
-		return nil
-	})
-	if err != nil {
-		t.Fatalf("capture export tree: %v", err)
-	}
-	return files
-}
-
 func TestEntityExportPath_ADRWithoutDate(t *testing.T) {
 	e := &store.Entity{ID: "adr-use-go", Type: "adr", Slug: "use-go"}
 	path := entityExportPath("/out", e, map[string]string{})

@@ -76,8 +76,23 @@ func DefinitionFor(entityType string) (Canvas, bool) {
 // status legal-set in the canvas frontmatter (Canvas.Status), NOT on any table
 // column named "Status". A fact canvas (system/container/component) may carry a
 // "Status" column without becoming a change doc.
+//
+// This built-in-only form is blind to project-declared canvases; prefer
+// IsChangeDocDir wherever the c3Dir is available so user-owned change-doc
+// canvases participate in the lifecycle.
 func IsChangeDoc(canvasID string) bool {
 	def, ok := DefinitionFor(canvasID)
+	if !ok {
+		return false
+	}
+	return len(def.Status) > 0
+}
+
+// IsChangeDocDir is the project-aware form of IsChangeDoc: it resolves the
+// canvas through DefinitionForDir, so a project-local canvas that declares a
+// status set is recognized as a change doc, falling back to the built-ins.
+func IsChangeDocDir(c3Dir, canvasID string) bool {
+	def, ok := DefinitionForDir(c3Dir, canvasID)
 	if !ok {
 		return false
 	}

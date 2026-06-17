@@ -415,6 +415,36 @@ Examples:
   c3x supersede adr-20260601-new adr-20260101-old`,
 	},
 	{
+		Name:     "change",
+		Args:     "<new|view|accept|apply|status|rebase> <id>",
+		OneLiner: "Author, review, and apply a change-unit (the only path that mutates a fact)",
+		Help: `Usage: c3x change <new|view|accept|apply|status|rebase> <change-unit-id>
+
+A change-unit = reasoning (the doc) + change material (patch files in its folder,
+.c3/changes/<id>/*.patch.md). Applying it is the ONLY legal mutation of a fact.
+
+Each patch is one primitive, scoped: a no-base patch CREATES a new fact (full
+content); a block patch (anchored by a cite handle) replaces / inserts / deletes
+one block, leaving every sibling block frozen; frontmatter and retire patches
+rename / re-edge / remove. The folder of *.patch.md files is the source of truth.
+
+  new     scaffold the change-unit's patch folder
+  view    the "files changed" panel: per-patch drift + state
+  status  per-patch state derived from seal state (pending/applied/drifted/new)
+  accept  record the one stored human judgment (status → accepted)
+  apply   the switcher: two gates (drift + canvas-valid), atomic all-or-nothing
+  rebase  emit the drift bundle for re-authoring drifted patches
+
+Apply runs two mechanical gates before any write — the anchor must be fresh
+(no drift) and the merged result must satisfy its canvas — and is atomic: one
+failing gate blocks every patch. --dry-run reports without writing.
+
+Examples:
+  c3x change view adr-20260601-auth
+  c3x change apply adr-20260601-auth
+  c3x change status adr-20260601-auth`,
+	},
+	{
 		Name:     "migrate",
 		OneLiner: "Sweep legacy statuses onto the canonical set (loud, one-time)",
 		Help: `Usage: c3x migrate

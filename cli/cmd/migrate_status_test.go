@@ -24,28 +24,6 @@ import (
 // ONLY path (besides status/supersede/auto-done) that may move the status column,
 // and the ONLY path that may rewrite a terminal status.
 
-// seedMigrationFact inserts a fact (non-change-doc) entity carrying the legacy
-// `active` status with a small body so re-seal has nodes to hash.
-func seedMigrationFact(t *testing.T, s *store.Store, id, status string) {
-	t.Helper()
-	e := &store.Entity{
-		ID:       id,
-		Type:     "component",
-		Title:    id,
-		Slug:     id,
-		Category: "feature",
-		ParentID: "c3-1",
-		Status:   status,
-		Metadata: "{}",
-	}
-	if err := s.InsertEntity(e); err != nil {
-		t.Fatalf("seed fact %s: %v", id, err)
-	}
-	if err := content.WriteEntity(s, id, "# "+id+"\n\n## Goal\n\nA fact body.\n"); err != nil {
-		t.Fatalf("seed fact body %s: %v", id, err)
-	}
-}
-
 // seedMigrationADR inserts an ADR change doc carrying a legacy status, with a body.
 func seedMigrationADR(t *testing.T, s *store.Store, id, status string) {
 	t.Helper()

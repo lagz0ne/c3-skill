@@ -73,11 +73,6 @@ func (s *Store) NodesForEntity(entityID string) ([]*Node, error) {
 		ORDER BY parent_id NULLS FIRST, seq`, entityID)
 }
 
-func (s *Store) DeleteNodesForEntity(entityID string) error {
-	_, err := s.db.Exec(`DELETE FROM nodes WHERE entity_id = ?`, entityID)
-	return err
-}
-
 // ReplaceEntityNodes atomically replaces all nodes for an entity.
 func (s *Store) ReplaceEntityNodes(entityID string, nodes []*Node) error {
 	tx, err := s.db.Begin()

@@ -109,11 +109,14 @@ func renderNode(b *strings.Builder, n *store.Node, children map[int64][]*store.N
 
 	case "code_block":
 		lang, code := parseCodeContent(n.Content)
-		b.WriteString("```")
+		fence := safeFence(code)
+		b.WriteString(fence)
 		b.WriteString(lang)
 		b.WriteString("\n")
 		b.WriteString(code)
-		b.WriteString("\n```\n\n")
+		b.WriteString("\n")
+		b.WriteString(fence)
+		b.WriteString("\n\n")
 
 	case "blockquote":
 		var inner strings.Builder
@@ -133,6 +136,30 @@ func renderNode(b *strings.Builder, n *store.Node, children map[int64][]*store.N
 			b.WriteString("\n\n")
 		}
 	}
+}
+
+// safeFence returns a backtick code fence long enough to wrap code that may
+// itself contain backtick fences. CommonMark closes a fence only on a backtick
+// run at least as long as the opener, so the fence must be longer than the
+// longest backtick run in the code. Fence-free code yields the standard three
+// backticks, so existing docs render identically and do not churn their seals.
+func safeFence(code string) string {
+	longest, run := 0, 0
+	for _, r := range code {
+		if r == '`' {
+			run++
+			if run > longest {
+				longest = run
+			}
+		} else {
+			run = 0
+		}
+	}
+	n := 3
+	if longest+1 > n {
+		n = longest + 1
+	}
+	return strings.Repeat("`", n)
 }
 
 // parseCodeContent splits `lang\ncode` (lang may be empty). Legacy rows

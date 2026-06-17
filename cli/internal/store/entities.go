@@ -129,7 +129,7 @@ func (s *Store) DeleteEntity(id string) error {
 }
 
 func (s *Store) AllEntities() ([]*Entity, error) {
-	return s.queryEntities(`SELECT `+entityColumns+` FROM entities ORDER BY type, id`)
+	return s.queryEntities(`SELECT ` + entityColumns + ` FROM entities ORDER BY type, id`)
 }
 
 func (s *Store) EntitiesByType(typ string) ([]*Entity, error) {
@@ -173,14 +173,6 @@ func scanEntity(row *sql.Row) (*Entity, error) {
 	}
 	e.ParentID = parentID.String
 	return &e, nil
-}
-
-// LegacyBody reads the body column from a pre-v8 database via raw SQL.
-// Returns empty string if the column doesn't exist.
-func (s *Store) LegacyBody(entityID string) string {
-	var body string
-	s.db.QueryRow(`SELECT body FROM entities WHERE id = ?`, entityID).Scan(&body)
-	return body
 }
 
 func scanEntityFromRows(rows *sql.Rows) (*Entity, error) {

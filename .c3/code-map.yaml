@@ -99,11 +99,14 @@ c3-118:
 c3-119:
   - cli/cmd/cache.go
   - cli/cmd/cache_test.go
+  - cli/cmd/change.go
+  - cli/cmd/change_test.go
   - cli/cmd/delete.go
   - cli/cmd/delete_test.go
   - cli/cmd/document_format.go
   - cli/cmd/export.go
   - cli/cmd/export_test.go
+  - cli/cmd/freeze.go
   - cli/cmd/git.go
   - cli/cmd/git_test.go
   - cli/cmd/import.go
@@ -116,6 +119,7 @@ c3-119:
   - cli/cmd/migrate_v2_test.go
   - cli/cmd/repair.go
   - cli/cmd/sync.go
+  - cli/internal/changeset/**
 c3-120:
   - cli/cmd/hash_cmd.go
   - cli/cmd/hash_cmd_test.go

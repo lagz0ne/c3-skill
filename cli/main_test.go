@@ -96,37 +96,63 @@ func TestRun_ConcurrentMutationsUseShortLivedCoordinator(t *testing.T) {
 	requireCoordinatorAvailable(t, c3Dir)
 	t.Setenv("C3X_COORDINATOR_IDLE_MS", "75")
 
+	// Export canonical first so both serialized mutations refresh from a
+	// consistent base (each mutating command rebuilds its cache from canonical).
+	s0, err := store.Open(filepath.Join(c3Dir, "c3.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := cmd.RunSyncExport(cmd.ExportOptions{Store: s0, OutputDir: c3Dir}, io.Discard); err != nil {
+		s0.Close()
+		t.Fatal(err)
+	}
+	s0.Close()
+
+	// Two independent change-units each create a fact (non-frozen, coordinated).
+	mkCreate := func(unit, ref string) {
+		dir := filepath.Join(c3Dir, "changes", unit)
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		body := "# " + ref + "\n\n## Goal\n\nConcurrent create goal spanning several words now.\n\n## Choice\n\nThe concrete approach chosen for this pattern here.\n\n## Why\n\nRationale why this choice beats the alternatives here.\n"
+		if err := os.WriteFile(filepath.Join(dir, "01.patch.md"), []byte("---\ntarget: "+ref+"\nscope: whole\ntype: ref\n---\n"+body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	mkCreate("adr-ca", "ref-conc-a")
+	mkCreate("adr-cb", "ref-conc-b")
+
 	var wg sync.WaitGroup
 	errs := make(chan error, 2)
-	runSet := func(value string) {
+	apply := func(unit string) {
 		defer wg.Done()
 		var buf bytes.Buffer
-		errs <- run([]string{"--c3-dir", c3Dir, "set", "c3-101", "goal", value}, &buf)
+		errs <- run([]string{"--c3-dir", c3Dir, "change", "apply", unit}, &buf)
 	}
 
 	wg.Add(2)
-	go runSet("Handle API authentication requests plus sessions.")
-	go runSet("Handle API authentication requests plus tokens.")
+	go apply("adr-ca")
+	go apply("adr-cb")
 	wg.Wait()
 	close(errs)
 
 	for err := range errs {
 		if err != nil {
-			t.Fatalf("concurrent set failed: %v", err)
+			t.Fatalf("concurrent change apply failed: %v", err)
 		}
 	}
 
+	// Both commands completed via the coordinator without error (checked above);
+	// the system is consistent and at least one create landed.
 	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer s.Close()
-	entity, err := s.GetEntity("c3-101")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(entity.Goal, "sessions") && !strings.Contains(entity.Goal, "tokens") {
-		t.Fatalf("goal was not updated by either concurrent mutation: %q", entity.Goal)
+	_, aErr := s.GetEntity("ref-conc-a")
+	_, bErr := s.GetEntity("ref-conc-b")
+	if aErr != nil && bErr != nil {
+		t.Fatalf("neither concurrent create landed: a=%v b=%v", aErr, bErr)
 	}
 }
 
@@ -138,10 +164,12 @@ func TestRun_CoordinatorForwardsPipedInput(t *testing.T) {
 	requireCoordinatorAvailable(t, c3Dir)
 	t.Setenv("C3X_COORDINATOR_IDLE_MS", "10")
 
-	body := richComponentBody("auth", "Handle auth with forwarded stdin.")
+	// add reads its body from stdin and is not a frozen-fact mutation, so it is a
+	// clean vehicle for exercising coordinator stdin forwarding.
+	body := "## Goal\n\nForwarded stdin ref goal spanning several words here now.\n\n## Choice\n\nThe concrete chosen approach for this pattern.\n\n## Why\n\nRationale why this choice beats the alternatives here.\n"
 	var buf bytes.Buffer
 	err := runWithIO(
-		[]string{"--c3-dir", c3Dir, "write", "c3-101"},
+		[]string{"--c3-dir", c3Dir, "add", "ref", "piped-x"},
 		strings.NewReader(body),
 		false,
 		&buf,
@@ -157,12 +185,12 @@ func TestRun_CoordinatorForwardsPipedInput(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer s.Close()
-	entity, err := s.GetEntity("c3-101")
+	entity, err := s.GetEntity("ref-piped-x")
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("piped add did not create the ref: %v", err)
 	}
-	if entity.Goal != "Handle auth with forwarded stdin." {
-		t.Fatalf("stdin write did not update goal: %q", entity.Goal)
+	if !strings.Contains(entity.Goal, "Forwarded stdin ref goal") {
+		t.Fatalf("stdin was not forwarded to add: goal = %q", entity.Goal)
 	}
 }
 
@@ -185,7 +213,8 @@ func requireCoordinatorAvailable(t *testing.T, c3Dir string) {
 
 func TestRun_WriteFromFile(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
-	body := richComponentBody("auth", "Handle auth via --file.")
+	// --file is exercised via add (not frozen) since write on a fact is refused.
+	body := "## Goal\n\nFiled ref goal spanning several words here now today.\n\n## Choice\n\nThe concrete approach chosen for this pattern here.\n\n## Why\n\nRationale why this choice beats the alternatives here.\n"
 	bodyPath := filepath.Join(t.TempDir(), "body.md")
 	if err := os.WriteFile(bodyPath, []byte(body), 0o644); err != nil {
 		t.Fatal(err)
@@ -193,7 +222,7 @@ func TestRun_WriteFromFile(t *testing.T) {
 
 	var buf bytes.Buffer
 	err := runWithIO(
-		[]string{"--c3-dir", c3Dir, "write", "c3-101", "--file", bodyPath},
+		[]string{"--c3-dir", c3Dir, "add", "ref", "filed-x", "--file", bodyPath},
 		strings.NewReader(""),
 		true,
 		&buf,
@@ -209,12 +238,12 @@ func TestRun_WriteFromFile(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer s.Close()
-	entity, err := s.GetEntity("c3-101")
+	entity, err := s.GetEntity("ref-filed-x")
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("--file add did not create the ref: %v", err)
 	}
-	if entity.Goal != "Handle auth via --file." {
-		t.Fatalf("goal = %q, want %q", entity.Goal, "Handle auth via --file.")
+	if !strings.Contains(entity.Goal, "Filed ref goal") {
+		t.Fatalf("--file body not applied: goal = %q", entity.Goal)
 	}
 }
 
@@ -336,10 +365,21 @@ func TestRun_MutationBypassesPreverify(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// A mutation (change apply, creating a fact) must still run despite the broken
+	// canonical c3-101 — mutations bypass the preverify-repair step.
+	dir := filepath.Join(c3Dir, "changes", "adr-preverify")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	body := "# ref-pv\n\n## Goal\n\nPreverify-bypass ref goal spanning several words now.\n\n## Choice\n\nThe concrete approach chosen here for the pattern.\n\n## Why\n\nRationale why this choice beats the alternatives here.\n"
+	if err := os.WriteFile(filepath.Join(dir, "01.patch.md"), []byte("---\ntarget: ref-pv\nscope: whole\ntype: ref\n---\n"+body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
 	var buf bytes.Buffer
-	err := run([]string{"--c3-dir", c3Dir, "set", "c3-0", "goal", "Updated despite drift"}, &buf)
+	err := run([]string{"--c3-dir", c3Dir, "change", "apply", "adr-preverify"}, &buf)
 	if err != nil {
-		t.Fatalf("mutation must bypass preverify, got: %v", err)
+		t.Fatalf("mutation must bypass preverify, got: %v\n%s", err, buf.String())
 	}
 }
 
@@ -555,6 +595,59 @@ func TestRun_MigrateCommandDispatches(t *testing.T) {
 	}
 }
 
+// c3x change apply must dispatch through run() and drive the full mutation path
+// (snapshot → apply → canonical export). A no-base create patch creates a fact.
+func TestRun_ChangeApplyDispatches(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := cmd.RunSyncExport(cmd.ExportOptions{Store: s, OutputDir: c3Dir}, io.Discard); err != nil {
+		s.Close()
+		t.Fatal(err)
+	}
+	s.Close()
+
+	unitID := "adr-20260616-newref"
+	dir := filepath.Join(c3Dir, "changes", unitID)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	body := "# ref-newx\n\n## Goal\n\nStandardize a brand new pattern across components here now.\n\n## Choice\n\nUse the chosen concrete approach for this new pattern.\n\n## Why\n\nRationale explaining why this choice beats the realistic alternatives here.\n"
+	if err := os.WriteFile(filepath.Join(dir, "01-create.patch.md"), []byte("---\ntarget: ref-newx\nscope: whole\ntype: ref\ntitle: New Ref\n---\n"+body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	if err := run([]string{"--c3-dir", c3Dir, "change", "apply", unitID}, &buf); err != nil {
+		t.Fatalf("change apply dispatch failed: %v\n%s", err, buf.String())
+	}
+	if !strings.Contains(buf.String(), "applied") {
+		t.Errorf("expected apply confirmation, got: %s", buf.String())
+	}
+	s2, err := store.Open(filepath.Join(c3Dir, "c3.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s2.Close()
+	if _, err := s2.GetEntity("ref-newx"); err != nil {
+		t.Errorf("created fact ref-newx not found after dispatch: %v", err)
+	}
+}
+
+func TestRun_ChangeUsageError(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	seedCanonicalReadme(t, c3Dir)
+	err := run([]string{"--c3-dir", c3Dir, "change", "bogus", "x"}, &bytes.Buffer{})
+	if err == nil {
+		t.Fatal("expected usage error for unknown change subcommand")
+	}
+	if strings.Contains(err.Error(), "unknown command") {
+		t.Fatalf("change must be wired, got: %v", err)
+	}
+}
+
 func TestRun_Schema(t *testing.T) {
 	c3Dir := setupC3DB(t)
 	var buf bytes.Buffer
@@ -736,25 +829,24 @@ func TestRun_MarketplaceShowExplicitJSONRejected(t *testing.T) {
 	}
 }
 
+// Facts are frozen: set/wire/delete on a fact are refused at the CLI; the change
+// is a change-unit. (set --section is still meaningful on a non-frozen change-doc.)
 func TestRun_Set(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
-	var buf bytes.Buffer
-	err := run([]string{"--c3-dir", c3Dir, "set", "c3-0", "goal", "Updated goal"}, &buf)
-	if err != nil {
-		t.Fatal(err)
+	err := run([]string{"--c3-dir", c3Dir, "set", "c3-0", "goal", "Updated goal"}, &bytes.Buffer{})
+	if err == nil {
+		t.Fatal("set on a fact must be refused (facts are frozen)")
 	}
-	data, err := os.ReadFile(filepath.Join(c3Dir, "README.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(string(data), "goal: Updated goal") {
-		t.Fatalf("expected canonical export to include updated goal, got:\n%s", string(data))
+	if !strings.Contains(err.Error(), "frozen") {
+		t.Fatalf("expected a frozen-fact refusal, got: %v", err)
 	}
 }
 
 func TestRun_SetRejectsSection(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
-	err := run([]string{"--c3-dir", c3Dir, "set", "c3-0", "--section", "Goal", "New goal"}, &bytes.Buffer{})
+	// adr is a change-doc (not frozen), so the dispatch guard passes and the
+	// command's own --section rejection fires.
+	err := run([]string{"--c3-dir", c3Dir, "set", "adr-20260226-use-go", "--section", "Goal", "New goal"}, &bytes.Buffer{})
 	if err == nil {
 		t.Fatal("expected set --section to be rejected")
 	}
@@ -765,40 +857,45 @@ func TestRun_SetRejectsSection(t *testing.T) {
 
 func TestRun_Wire(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
-	var buf bytes.Buffer
-	err := run([]string{"--c3-dir", c3Dir, "wire", "c3-101", "ref-jwt"}, &buf)
-	if err != nil {
-		t.Fatal(err)
+	err := run([]string{"--c3-dir", c3Dir, "wire", "c3-101", "ref-jwt"}, &bytes.Buffer{})
+	if err == nil {
+		t.Fatal("wire on a fact must be refused (facts are frozen)")
+	}
+	if !strings.Contains(err.Error(), "frozen") {
+		t.Fatalf("expected a frozen-fact refusal, got: %v", err)
 	}
 }
 
 func TestRun_WireRemoveFlag(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
-	var buf bytes.Buffer
-	// Wire first
-	run([]string{"--c3-dir", c3Dir, "wire", "c3-101", "ref-jwt"}, &buf)
-	buf.Reset()
-	err := run([]string{"--c3-dir", c3Dir, "wire", "--remove", "c3-101", "ref-jwt"}, &buf)
-	if err != nil {
-		t.Fatal(err)
+	err := run([]string{"--c3-dir", c3Dir, "wire", "--remove", "c3-101", "ref-jwt"}, &bytes.Buffer{})
+	if err == nil {
+		t.Fatal("wire --remove on a fact must be refused (facts are frozen)")
+	}
+	if !strings.Contains(err.Error(), "frozen") {
+		t.Fatalf("expected a frozen-fact refusal, got: %v", err)
 	}
 }
 
 func TestRun_WireThreeArgs(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
-	var buf bytes.Buffer
-	err := run([]string{"--c3-dir", c3Dir, "wire", "c3-101", "cite", "ref-jwt"}, &buf)
-	if err != nil {
-		t.Fatal(err)
+	err := run([]string{"--c3-dir", c3Dir, "wire", "c3-101", "cite", "ref-jwt"}, &bytes.Buffer{})
+	if err == nil {
+		t.Fatal("wire on a fact must be refused (facts are frozen)")
+	}
+	if !strings.Contains(err.Error(), "frozen") {
+		t.Fatalf("expected a frozen-fact refusal, got: %v", err)
 	}
 }
 
 func TestRun_Delete(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
-	var buf bytes.Buffer
-	err := run([]string{"--c3-dir", c3Dir, "delete", "ref-jwt", "--dry-run"}, &buf)
-	if err != nil {
-		t.Fatal(err)
+	err := run([]string{"--c3-dir", c3Dir, "delete", "ref-jwt", "--dry-run"}, &bytes.Buffer{})
+	if err == nil {
+		t.Fatal("delete of a fact must be refused (facts are frozen)")
+	}
+	if !strings.Contains(err.Error(), "frozen") {
+		t.Fatalf("expected a frozen-fact refusal, got: %v", err)
 	}
 }
 

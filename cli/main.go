@@ -432,6 +432,17 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 	projectDir := config.ProjectDir(c3Dir)
 	mutating := commandMutatesCanonical(opts)
 
+	// Facts are frozen: a direct fact-mutation command refuses at the CLI. The
+	// only legal mutation of an existing fact is a change-unit (c3x change apply).
+	switch opts.Command {
+	case "write", "set", "wire", "delete":
+		if len(opts.Args) >= 1 {
+			if gErr := cmd.GuardFactMutation(s, c3Dir, opts.Args[0]); gErr != nil {
+				return gErr
+			}
+		}
+	}
+
 	var err error
 	switch opts.Command {
 	case "list":
@@ -562,6 +573,38 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 		err = cmd.RunSupersede(cmd.SupersedeOptions{Store: s, NewID: opts.Args[0], OldID: opts.Args[1]}, w)
 	case "migrate":
 		_, err = cmd.RunMigrate(cmd.MigrateOptions{Store: s, C3Dir: c3Dir}, w)
+	case "change":
+		sub := ""
+		unitID := ""
+		if len(opts.Args) >= 1 {
+			sub = opts.Args[0]
+		}
+		if len(opts.Args) >= 2 {
+			unitID = opts.Args[1]
+		}
+		co := cmd.ChangeApplyOptions{Store: s, C3Dir: c3Dir, UnitID: unitID, DryRun: opts.DryRun}
+		switch sub {
+		case "apply", "view", "status", "new", "accept", "rebase":
+			if unitID == "" {
+				return fmt.Errorf("error: change %s requires a <change-unit-id> argument\nhint: c3x change %s <id>", sub, sub)
+			}
+		default:
+			return fmt.Errorf("error: usage: c3x change <new|view|accept|apply|status|rebase> <id>\nhint: run 'c3x change --help' for usage")
+		}
+		switch sub {
+		case "apply":
+			err = cmd.RunChangeApply(co, w)
+		case "view":
+			err = cmd.RunChangeView(co, w)
+		case "status":
+			err = cmd.RunChangeStatus(co, w)
+		case "new":
+			err = cmd.RunChangeNew(co, w)
+		case "accept":
+			err = cmd.RunChangeAccept(co, w)
+		case "rebase":
+			err = cmd.RunChangeRebase(co, w)
+		}
 	default:
 		return fmt.Errorf("error: unknown command '%s'\nhint: run 'c3x --help' to see available commands", opts.Command)
 	}
@@ -581,6 +624,17 @@ func commandMutatesCanonical(opts cmd.Options) bool {
 		// Both rewrite store status (flip/sweep) and, for migrate, on-disk canvases;
 		// they need the rollback snapshot + coordinator gate + canonical re-export.
 		return true
+	case "change":
+		if len(opts.Args) == 0 {
+			return false
+		}
+		switch opts.Args[0] {
+		case "apply":
+			return !opts.DryRun
+		case "accept":
+			return true
+		}
+		return false
 	case "write", "add", "set", "wire", "delete", "repair", "template", "canvas":
 		if opts.Command == "template" && !(len(opts.Args) > 0 && (opts.Args[0] == "add" || opts.Args[0] == "write")) {
 			return false

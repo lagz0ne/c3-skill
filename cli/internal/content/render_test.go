@@ -158,6 +158,50 @@ func TestRender_CodeBlockEmptyLangMarker(t *testing.T) {
 	}
 }
 
+func TestRender_CodeBlockContainingFence(t *testing.T) {
+	// A code block whose content itself contains a ``` fence must be wrapped in
+	// a longer fence so it round-trips: CommonMark closes a fence only on a fence
+	// of >= its own length. Three backticks here would be closed by the inner
+	// bare ``` and corrupt the block.
+	code := "# x\n\n```go\nfoo()\n```\n\nDone."
+	nodes := []*store.Node{
+		rootNode(1, "code_block", 0, 0, "markdown\n"+code),
+	}
+	want := "````markdown\n" + code + "\n````\n"
+	if got := RenderMarkdown(nodes); got != want {
+		t.Errorf("got:\n%q\nwant:\n%q", got, want)
+	}
+}
+
+func TestRender_CodeBlockFenceFreeStaysThreeBackticks(t *testing.T) {
+	// Non-breaking guarantee: fence-free code keeps the standard three backticks
+	// so existing docs do not churn their seals.
+	nodes := []*store.Node{
+		rootNode(1, "code_block", 0, 0, "go\nfunc main() {}"),
+	}
+	want := "```go\nfunc main() {}\n```\n"
+	if got := RenderMarkdown(nodes); got != want {
+		t.Errorf("got:\n%q\nwant:\n%q", got, want)
+	}
+}
+
+func TestRender_CodeBlockRoundTripsThroughParse(t *testing.T) {
+	// Render → Parse must recover the same code_block content when the body
+	// contains a nested fence.
+	code := "## Goal\n\n```bash\nls -la\n```\n\nend"
+	nodes := []*store.Node{
+		rootNode(1, "code_block", 0, 0, "markdown\n"+code),
+	}
+	rendered := RenderMarkdown(nodes)
+	tree := ParseMarkdown("e1", rendered)
+	if len(tree.Nodes) != 1 || tree.Nodes[0].Type != "code_block" {
+		t.Fatalf("expected one code_block after round-trip, got %d nodes: %+v", len(tree.Nodes), tree.Nodes)
+	}
+	if got := tree.Nodes[0].Content; got != "markdown\n"+code {
+		t.Errorf("round-trip lost content:\ngot:  %q\nwant: %q", got, "markdown\n"+code)
+	}
+}
+
 func TestRender_Blockquote(t *testing.T) {
 	nodes := []*store.Node{
 		rootNode(1, "blockquote", 0, 0, ""),

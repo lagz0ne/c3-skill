@@ -44,54 +44,57 @@ type evalReport struct {
 }
 
 var cases = []evalCase{
-	{
-		ID:       "lookup-owner-paraphrase",
-		Kind:     "paraphrase",
-		Query:    "which architecture unit owns a source path",
-		Expected: []string{"c3-114"},
-	},
-	{
-		ID:       "binary-no-toolchain-paraphrase",
-		Kind:     "paraphrase",
-		Query:    "users can run c3x without building from source",
-		Expected: []string{"ref-cross-compiled-binary"},
-	},
-	{
-		ID:       "intent-router-paraphrase",
-		Kind:     "paraphrase",
-		Query:    "send the user's request to the right workflow",
-		Expected: []string{"c3-201"},
-	},
-	{
-		ID:       "agent-output-paraphrase",
-		Kind:     "paraphrase",
-		Query:    "machine responses use one formatter in agent mode",
-		Expected: []string{"rule-output-via-helpers"},
-	},
-	{
-		ID:       "frontmatter-keyword",
-		Kind:     "keyword",
-		Query:    "yaml frontmatter markdown body",
-		Expected: []string{"ref-frontmatter-docs"},
-	},
-	{
-		ID:       "templates-keyword",
-		Kind:     "keyword",
-		Query:    "embedded doc templates",
-		Expected: []string{"ref-embedded-templates"},
-	},
-	{
-		ID:       "check-validation-keyword",
-		Kind:     "keyword",
-		Query:    "validate structural integrity docs refs rules",
-		Expected: []string{"c3-113"},
-	},
-	{
-		ID:       "cache-lifecycle-keyword",
-		Kind:     "keyword",
-		Query:    "import export sync repair cache",
-		Expected: []string{"c3-119"},
-	},
+	// --- original 8 ---
+	{ID: "lookup-owner-paraphrase", Kind: "paraphrase", Query: "which architecture unit owns a source path", Expected: []string{"c3-114"}},
+	{ID: "binary-no-toolchain-paraphrase", Kind: "paraphrase", Query: "users can run c3x without building from source", Expected: []string{"ref-cross-compiled-binary"}},
+	{ID: "intent-router-paraphrase", Kind: "paraphrase", Query: "send the user's request to the right workflow", Expected: []string{"c3-201"}},
+	{ID: "agent-output-paraphrase", Kind: "paraphrase", Query: "machine responses use one formatter in agent mode", Expected: []string{"rule-output-via-helpers"}},
+	{ID: "frontmatter-keyword", Kind: "keyword", Query: "yaml frontmatter markdown body", Expected: []string{"ref-frontmatter-docs"}},
+	{ID: "templates-keyword", Kind: "keyword", Query: "embedded doc templates", Expected: []string{"ref-embedded-templates"}},
+	{ID: "check-validation-keyword", Kind: "keyword", Query: "validate structural integrity docs refs rules", Expected: []string{"c3-113"}},
+	{ID: "cache-lifecycle-keyword", Kind: "keyword", Query: "import export sync repair cache", Expected: []string{"c3-119"}},
+
+	// --- CLI core libs (c3-101..110) ---
+	{ID: "frontmatter-getset-keyword", Kind: "keyword", Query: "get and set YAML frontmatter fields in .c3 markdown files", Expected: []string{"c3-101"}},
+	{ID: "walker-discover-entities-paraphrase", Kind: "paraphrase", Query: "recursively scan the docs folder to enumerate every container, component, ref, rule, and decision record", Expected: []string{"c3-102"}},
+	{ID: "codemap-glob-match-keyword", Kind: "keyword", Query: "parse code-map.yaml and match files to components and rules with glob patterns", Expected: []string{"c3-105"}},
+	{ID: "store-persistent-records-paraphrase", Kind: "paraphrase", Query: "durable database layer holding nodes, versions, hashes, and changelog rows for the CLI", Expected: []string{"c3-107"}},
+	{ID: "runtime-rollback-keyword", Kind: "keyword", Query: "dispatcher self-healing preflight that repairs seal drift and rolls back mutating commands on canonical export failure", Expected: []string{"c3-108"}},
+	{ID: "npm-wrapper-download-paraphrase", Kind: "paraphrase", Query: "node package that fetches the correct prebuilt executable for your platform, checks its signature, stores it, then launches it", Expected: []string{"c3-109", "ref-cross-compiled-binary"}},
+	{ID: "init-scaffold-paraphrase", Kind: "paraphrase", Query: "bootstrap a fresh architecture-docs folder for a brand-new project, creating the config file and a starter decision record", Expected: []string{"c3-110"}},
+
+	// --- CLI commands (c3-111..120) ---
+	{ID: "add-adr-rollback-keyword", Kind: "keyword", Query: "add adr rollback canonical export all-or-nothing partial entity", Expected: []string{"c3-111"}},
+	{ID: "create-entity-numbering-paraphrase", Kind: "paraphrase", Query: "command that allocates the next sequential id for a fresh container or rule and links it into its parent table", Expected: []string{"c3-111"}},
+	{ID: "topology-output-modes-keyword", Kind: "keyword", Query: "output full .c3 topology flat compact json", Expected: []string{"c3-112"}},
+	{ID: "print-doc-tree-paraphrase", Kind: "paraphrase", Query: "enumerate every documented node in the tree as plain text or machine form before running other checks", Expected: []string{"c3-112"}},
+	{ID: "codemap-scaffold-stubs-keyword", Kind: "keyword", Query: "scaffold update code-map.yaml empty stubs idempotent re-run", Expected: []string{"c3-115"}},
+	{ID: "bootstrap-mapping-paraphrase", Kind: "paraphrase", Query: "generate placeholder glob entries for each entity into the mapping file without clobbering existing patterns", Expected: []string{"c3-115"}},
+	{ID: "coverage-governance-keyword", Kind: "keyword", Query: "code-map coverage mapped excluded unmapped file counts ref rule governance percentages", Expected: []string{"c3-116"}},
+	{ID: "how-much-mapped-paraphrase", Kind: "paraphrase", Query: "tell me what fraction of the source tree is accounted for and how well refs and rules are attributed", Expected: []string{"c3-116"}},
+	{ID: "schema-sections-keyword", Kind: "keyword", Query: "schema command print section names required marker purpose text table columns", Expected: []string{"c3-117", "c3-113"}},
+	{ID: "read-write-status-paraphrase", Kind: "paraphrase", Query: "commands to load a canonical doc, save edits to it, stamp a field, and report its current condition", Expected: []string{"c3-117"}},
+	{ID: "impact-blast-radius-paraphrase", Kind: "paraphrase", Query: "figure out the downstream consequences and affected pieces when one part of the architecture changes", Expected: []string{"c3-118"}},
+	{ID: "query-graph-diff-impact-keyword", Kind: "keyword", Query: "query graph diff impact architecture change consequences", Expected: []string{"c3-118"}},
+	{ID: "prune-versions-keyword", Kind: "keyword", Query: "versions hash nodes prune marketplace command families", Expected: []string{"c3-120"}},
+	{ID: "snapshot-cleanup-paraphrase", Kind: "paraphrase", Query: "inspect past revisions, compute content fingerprints, and trim old snapshots, plus pulling shared skill packages", Expected: []string{"c3-120"}},
+
+	// --- Claude Skill (c3-201..218) ---
+	{ID: "migrate-version-cache-keyword", Kind: "keyword", Query: "C3 version upgrade and cache recovery without trusting c3.db as submitted truth", Expected: []string{"c3-215"}},
+	{ID: "rule-golden-antipattern-keyword", Kind: "keyword", Query: "enforceable coding rules with golden examples and anti-patterns", Expected: []string{"c3-217"}},
+	{ID: "audit-pass-warn-fail-keyword", Kind: "keyword", Query: "structural validation and semantic drift review producing PASS WARN FAIL output", Expected: []string{"c3-213"}},
+	{ID: "sweep-ripple-paraphrase", Kind: "paraphrase", Query: "trace how far a risky architecture edit will ripple through dependents before committing to it", Expected: []string{"c3-218"}},
+	{ID: "change-decision-record-paraphrase", Kind: "paraphrase", Query: "require a written decision record as the work order before touching architecture-affecting code, then verify", Expected: []string{"c3-214"}},
+	{ID: "onboard-bootstrap-paraphrase", Kind: "paraphrase", Query: "bring an existing codebase under C3 for the first time, bootstrap the docs, map out the structure, and leave it passing checks", Expected: []string{"c3-211"}},
+	{ID: "opindex-shared-contract-paraphrase", Kind: "paraphrase", Query: "the common template every per-operation workflow doc conforms to, the stages, gates, and final checks each one must spell out", Expected: []string{"c3-210"}},
+
+	// --- refs / rules ---
+	{ID: "thin-npm-model-blob-keyword", Kind: "keyword", Query: "per-platform fat skill zip vs thin npm download semantic model SHA256", Expected: []string{"ref-cross-compiled-binary"}},
+	{ID: "templates-in-binary-paraphrase", Kind: "paraphrase", Query: "new-doc skeletons ship compiled inside the executable so generating stubs needs no files on disk", Expected: []string{"ref-embedded-templates", "c3-103"}},
+	{ID: "metadata-header-body-paraphrase", Kind: "paraphrase", Query: "each architecture doc splits a machine-parseable header of identity fields from the human prose underneath", Expected: []string{"ref-frontmatter-docs", "c3-101"}},
+	{ID: "error-suggests-next-paraphrase", Kind: "paraphrase", Query: "a failed top-level command tells the user which recovery action to run next instead of a bare message", Expected: []string{"rule-dispatcher-error-hint"}},
+	{ID: "single-output-writer-keyword", Kind: "keyword", Query: "WriteTableOutput ResolveFormat never call json.Marshal directly TOON agent mode", Expected: []string{"rule-output-via-helpers", "c3-108"}},
+	{ID: "wrap-error-cause-keyword", Kind: "keyword", Query: "wrap returned error with %w preserve cause errors.Is unwrap chain not %v", Expected: []string{"rule-wrap-error-cause"}},
 }
 
 func main() {

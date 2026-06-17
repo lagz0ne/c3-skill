@@ -17,6 +17,7 @@ type ChangeApplyOptions struct {
 	C3Dir  string
 	UnitID string
 	DryRun bool
+	JSON   bool
 }
 
 // changeUnitDir is the folder holding a change-unit's patch files.
@@ -29,12 +30,17 @@ func changeUnitDir(c3Dir, unitID string) string {
 // (the merged result is valid for its canvas) — and the whole set is atomic:
 // a single failing gate blocks every patch.
 func RunChangeApply(opts ChangeApplyOptions, w io.Writer) error {
-	patches, err := changeset.ReadPatchDir(changeUnitDir(opts.C3Dir, opts.UnitID))
+	dir := changeUnitDir(opts.C3Dir, opts.UnitID)
+	patches, err := changeset.ReadPatchDir(dir)
 	if err != nil {
 		return fmt.Errorf("change apply: %s: %w", opts.UnitID, err)
 	}
-	if len(patches) == 0 {
-		fmt.Fprintf(w, "change apply: %s has no patches — nothing to do\n", opts.UnitID)
+	codemaps, err := changeset.ReadCodemapDir(dir)
+	if err != nil {
+		return fmt.Errorf("change apply: %s: %w", opts.UnitID, err)
+	}
+	if len(patches) == 0 && len(codemaps) == 0 {
+		fmt.Fprintf(w, "change apply: %s has no material — nothing to do\n", opts.UnitID)
 		return nil
 	}
 
@@ -49,6 +55,22 @@ func RunChangeApply(opts ChangeApplyOptions, w io.Writer) error {
 			rejects = append(rejects, err.Error())
 		}
 	}
+	// Preflight: every codemap carrier's target must already exist or be created by
+	// a patch in this same unit (read-your-writes makes the create visible at apply).
+	// Two carriers for one target would full-replace each other (last wins, silently)
+	// — reject that so the unit's external footprint is unambiguous.
+	created := createdTargets(patches)
+	carrierTarget := map[string]string{}
+	for _, c := range codemaps {
+		if prev, dup := carrierTarget[c.Target]; dup {
+			rejects = append(rejects, fmt.Sprintf("codemap %s and %s both target %s — one carrier per target (a carrier full-replaces the code-map)", prev, c.Source, c.Target))
+			continue
+		}
+		carrierTarget[c.Target] = c.Source
+		if _, err := opts.Store.GetEntity(c.Target); err != nil && !created[c.Target] {
+			rejects = append(rejects, fmt.Sprintf("codemap %s: target %s does not exist and is not created by this change-unit", c.Source, c.Target))
+		}
+	}
 	if len(rejects) > 0 {
 		for _, r := range rejects {
 			fmt.Fprintf(w, "REJECT %s\n", r)
@@ -60,40 +82,54 @@ func RunChangeApply(opts ChangeApplyOptions, w io.Writer) error {
 		for _, p := range patches {
 			fmt.Fprintf(w, "would apply %s → %s (%s)\n", p.Source, p.Target, p.Scope)
 		}
+		for _, c := range codemaps {
+			fmt.Fprintf(w, "would bind %s → %s codemap (%d glob(s))\n", c.Source, c.Target, len(c.Globs))
+		}
 		return nil
 	}
 
-	if err := changeset.Apply(opts.Store, patches); err != nil {
+	if err := changeset.Apply(opts.Store, patches, codemaps); err != nil {
 		return fmt.Errorf("change apply: %w", err)
 	}
 	for _, p := range patches {
 		fmt.Fprintf(w, "applied %s → %s (%s)\n", p.Source, p.Target, p.Scope)
 	}
+	for _, c := range codemaps {
+		fmt.Fprintf(w, "bound %s → %s codemap (%d glob(s))\n", c.Source, c.Target, len(c.Globs))
+	}
 	return nil
+}
+
+// createdTargets is the set of entity ids a patch set brings into existence (a
+// no-base whole create), so a codemap carrier may legally bind one before it
+// exists on disk.
+func createdTargets(patches []changeset.Patch) map[string]bool {
+	created := make(map[string]bool)
+	for _, p := range patches {
+		if p.Scope == changeset.ScopeWhole && p.Base == "" {
+			created[p.Target] = true
+		}
+	}
+	return created
 }
 
 // RunChangeView is the read-only review surface — the "files changed" panel for
 // a change-unit before it is flipped: per patch, drift status + state + scope.
 func RunChangeView(opts ChangeApplyOptions, w io.Writer) error {
-	patches, err := changeset.ReadPatchDir(changeUnitDir(opts.C3Dir, opts.UnitID))
+	dir := changeUnitDir(opts.C3Dir, opts.UnitID)
+	patches, err := changeset.ReadPatchDir(dir)
 	if err != nil {
 		return fmt.Errorf("change view: %s: %w", opts.UnitID, err)
 	}
-	fmt.Fprintf(w, "change-unit %s — %d patch(es)\n\n", opts.UnitID, len(patches))
-	apply, reject := 0, 0
-	for _, p := range patches {
-		st := changeset.PatchStateOf(opts.Store, p)
-		marker := "ok"
-		if drift := changeset.CheckDrift(opts.Store, p); drift != nil {
-			marker = "DRIFT"
-			reject++
-			fmt.Fprintf(w, "  %-6s %s → %s (%s) [%s]\n         %s\n", marker, p.Source, p.Target, p.Scope, st, drift.Error())
-			continue
-		}
-		apply++
-		fmt.Fprintf(w, "  %-6s %s → %s (%s) [%s]\n", marker, p.Source, p.Target, p.Scope, st)
+	codemaps, err := changeset.ReadCodemapDir(dir)
+	if err != nil {
+		return fmt.Errorf("change view: %s: %w", opts.UnitID, err)
 	}
-	fmt.Fprintf(w, "\nwould apply %d · would reject %d\n", apply, reject)
+	view := buildChangeUnitView(opts, patches, codemaps)
+	if opts.JSON || isAgentMode() {
+		return writeJSON(w, view)
+	}
+	renderChangeViewProse(w, view)
 	return nil
 }
 
@@ -141,20 +177,20 @@ func RunChangeRebase(opts ChangeApplyOptions, w io.Writer) error {
 // (pending / applied / drifted / new) — no stored status, no git. It is the
 // read-only projection of the apply gates on the current facts.
 func RunChangeStatus(opts ChangeApplyOptions, w io.Writer) error {
-	patches, err := changeset.ReadPatchDir(changeUnitDir(opts.C3Dir, opts.UnitID))
+	dir := changeUnitDir(opts.C3Dir, opts.UnitID)
+	patches, err := changeset.ReadPatchDir(dir)
 	if err != nil {
 		return fmt.Errorf("change status: %s: %w", opts.UnitID, err)
 	}
-	fmt.Fprintf(w, "change-unit %s — %d patch(es)\n", opts.UnitID, len(patches))
-	counts := map[changeset.PatchState]int{}
-	for _, p := range patches {
-		st := changeset.PatchStateOf(opts.Store, p)
-		counts[st]++
-		fmt.Fprintf(w, "  %-8s %s → %s (%s)\n", st, p.Source, p.Target, p.Scope)
+	codemaps, err := changeset.ReadCodemapDir(dir)
+	if err != nil {
+		return fmt.Errorf("change status: %s: %w", opts.UnitID, err)
 	}
-	fmt.Fprintf(w, "pending %d · applied %d · drifted %d · new %d\n",
-		counts[changeset.StatePending], counts[changeset.StateApplied],
-		counts[changeset.StateDrifted], counts[changeset.StateNew])
+	view := buildChangeUnitView(opts, patches, codemaps)
+	if opts.JSON || isAgentMode() {
+		return writeJSON(w, view)
+	}
+	renderChangeStatusProse(w, view)
 	return nil
 }
 

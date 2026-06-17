@@ -103,7 +103,10 @@ func runWithIO(argv []string, stdin io.Reader, stdinTerminal bool, w io.Writer, 
 		return runGit(opts, config.ProjectDir(c3Dir), c3Dir, w)
 	}
 
-	if opts.Command == "check" && !opts.Fix && len(opts.Rules) == 0 {
+	// Plain `check` (no --fix, no --rules, no --strict-codemap) takes the lightweight
+	// verify path. --strict-codemap must reach RunCheckV2, where the codemap
+	// introspection (and its gate) lives — otherwise the strict flag would be a no-op.
+	if opts.Command == "check" && !opts.Fix && len(opts.Rules) == 0 && !opts.StrictCodemap {
 		return cmd.RunVerify(cmd.VerifyOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: opts.Only}, w)
 	}
 
@@ -434,13 +437,8 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 
 	// Facts are frozen: a direct fact-mutation command refuses at the CLI. The
 	// only legal mutation of an existing fact is a change-unit (c3x change apply).
-	switch opts.Command {
-	case "write", "set", "wire", "delete":
-		if len(opts.Args) >= 1 {
-			if gErr := cmd.GuardFactMutation(s, c3Dir, opts.Args[0]); gErr != nil {
-				return gErr
-			}
-		}
+	if gErr := cmd.GuardCanonicalMutation(s, c3Dir, opts); gErr != nil {
+		return gErr
 	}
 
 	var err error
@@ -454,14 +452,15 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 			return fmt.Errorf("%w\nhint: run c3x check again after resolving", err)
 		}
 		err = cmd.RunCheckV2(cmd.CheckOptions{
-			Store:      s,
-			JSON:       opts.JSON,
-			ProjectDir: projectDir,
-			C3Dir:      c3Dir,
-			IncludeADR: opts.IncludeADR,
-			Fix:        opts.Fix,
-			Only:       opts.Only,
-			Rules:      opts.Rules,
+			Store:         s,
+			JSON:          opts.JSON,
+			ProjectDir:    projectDir,
+			C3Dir:         c3Dir,
+			IncludeADR:    opts.IncludeADR,
+			Fix:           opts.Fix,
+			Only:          opts.Only,
+			Rules:         opts.Rules,
+			StrictCodemap: opts.StrictCodemap,
 		}, w)
 	case "read":
 		entityID := ""
@@ -582,7 +581,7 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 		if len(opts.Args) >= 2 {
 			unitID = opts.Args[1]
 		}
-		co := cmd.ChangeApplyOptions{Store: s, C3Dir: c3Dir, UnitID: unitID, DryRun: opts.DryRun}
+		co := cmd.ChangeApplyOptions{Store: s, C3Dir: c3Dir, UnitID: unitID, DryRun: opts.DryRun, JSON: opts.JSON}
 		switch sub {
 		case "apply", "view", "status", "new", "accept", "rebase":
 			if unitID == "" {
@@ -686,23 +685,10 @@ func runSet(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader, std
 	if opts.Stdin {
 		return fmt.Errorf("error: c3x set no longer accepts --stdin batch mode\nhint: use 'c3x write <id>' for body or multiple 'c3x set <id> <field> <value>' for fields")
 	}
-	id := ""
-	value := ""
-	if len(opts.Args) >= 1 {
-		id = opts.Args[0]
-	}
-	if len(opts.Args) >= 2 {
-		value = opts.Args[1]
-	}
-	if opts.Field == "" && len(opts.Args) >= 2 {
-		opts.Field = opts.Args[1]
-		if len(opts.Args) >= 3 {
-			value = opts.Args[2]
-		}
-	}
+	id, field, value := cmd.ResolveSetArgs(opts)
 	return cmd.RunSet(cmd.SetOptions{
 		Store: s, C3Dir: c3Dir, ID: id,
-		Field: opts.Field,
+		Field: field,
 		Value: value, Append: opts.Append, Remove: opts.Remove,
 	}, w)
 }

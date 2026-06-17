@@ -21,7 +21,7 @@ func TestLine_AutoDoneNeverJudgesSuccessCriteria(t *testing.T) {
 	arbitrary := testCitationForEntity(t, s, "ref-error-handling")
 	entity, body := seedAcceptedPRD(t, s, arbitrary, arbitrary)
 
-	flipped, unresolved := autoDoneLatch(s, entity, body, true)
+	flipped, unresolved := autoDoneLatch(s, "", entity, body, true)
 	if !flipped {
 		t.Fatalf("LINE: the latch must flip on fresh-but-arbitrary After cites (mechanical only); unresolved=%+v", unresolved)
 	}

@@ -43,6 +43,10 @@ type CheckOptions struct {
 	Fix        bool
 	Only       []string
 	Rules      []string
+	// StrictCodemap promotes the change-unit codemap introspection (external binding
+	// verification) from WARN to error. Off by default: an unresolved external
+	// binding is reported, not gated.
+	StrictCodemap bool
 }
 
 // buildTitleMapStore creates a case-insensitive title/slug -> entity ID lookup.
@@ -294,21 +298,39 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 		// readiness and never mutates the DB or rewrites sealed markdown; only
 		// `check --fix` performs the flip. On a committed flip the doc is now
 		// terminal/frozen, so its discharge is not re-validated this pass.
-		if schema.IsChangeDoc(entity.Type) && entity.Status == "accepted" {
-			if ready, _ := autoDoneLatch(opts.Store, entity, body, opts.Fix); ready {
-				if opts.Fix {
+		if schema.IsChangeDocDir(opts.C3Dir, entity.Type) && entity.Status == "accepted" {
+			// External matching arm (double-V right side): verify the unit's affected
+			// code bindings still resolve. Runs BEFORE the latch so it reports even
+			// when the doc auto-dones this pass.
+			codemapIssues := codemapIntrospection(opts.Store, opts.ProjectDir, body, opts.StrictCodemap)
+			issues = append(issues, codemapIssues...)
+			// Under --strict-codemap an unresolved external binding is a GATE on done:
+			// the doc may not actualize accepted->done while a declared code binding does
+			// not resolve, exactly as an unresolved internal After-cite blocks it. Without
+			// --strict it is WARN-only and the flip proceeds.
+			strictBlocked := opts.StrictCodemap && hasErrorSeverity(codemapIssues)
+			if ready, _ := autoDoneLatch(opts.Store, opts.C3Dir, entity, body, opts.Fix && !strictBlocked); ready {
+				switch {
+				case strictBlocked:
+					issues = append(issues, Issue{
+						Severity: "warning",
+						Entity:   entity.ID,
+						Message:  fmt.Sprintf("%s is ready to auto-done but --strict-codemap blocks it until every declared code binding resolves", entity.ID),
+					})
+				case opts.Fix:
 					issues = append(issues, Issue{
 						Severity: "info",
 						Entity:   entity.ID,
 						Message:  fmt.Sprintf("auto-done: all After cites resolved fresh; %s actualized accepted->done", entity.ID),
 					})
 					continue
+				default:
+					issues = append(issues, Issue{
+						Severity: "info",
+						Entity:   entity.ID,
+						Message:  fmt.Sprintf("%s ready to auto-done: all After cites resolve fresh; run 'c3x check --fix' to actualize accepted->done", entity.ID),
+					})
 				}
-				issues = append(issues, Issue{
-					Severity: "info",
-					Entity:   entity.ID,
-					Message:  fmt.Sprintf("%s ready to auto-done: all After cites resolve fresh; run 'c3x check --fix' to actualize accepted->done", entity.ID),
-				})
 			}
 		}
 

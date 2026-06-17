@@ -35,6 +35,26 @@ func GuardFactMutation(s *store.Store, c3Dir, id string) error {
 	return nil
 }
 
+// GuardCanonicalMutation refuses direct edits to frozen facts. Codemap updates
+// are exempt because they are stored outside the sealed canonical document.
+func GuardCanonicalMutation(s *store.Store, c3Dir string, opts Options) error {
+	switch opts.Command {
+	case "write", "wire", "delete":
+		if len(opts.Args) >= 1 {
+			return GuardFactMutation(s, c3Dir, opts.Args[0])
+		}
+	case "set":
+		if len(opts.Args) >= 1 {
+			_, field, _ := ResolveSetArgs(opts)
+			if field == "codemap" {
+				return nil
+			}
+			return GuardFactMutation(s, c3Dir, opts.Args[0])
+		}
+	}
+	return nil
+}
+
 // frozenFactError names the only legal path to change a fact.
 func frozenFactError(id string) error {
 	return fmt.Errorf("error: %s is a fact — facts are frozen and change only through a change-unit\nhint: author patches in .c3/changes/<unit-id>/ then run 'c3x change apply <unit-id>'", id)

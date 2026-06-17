@@ -30,6 +30,24 @@ func RunSet(opts SetOptions, w io.Writer) error {
 	return runSetField(entity, opts, w)
 }
 
+// ResolveSetArgs normalizes set arguments the same way the command runner does.
+func ResolveSetArgs(opts Options) (id, field, value string) {
+	if len(opts.Args) >= 1 {
+		id = opts.Args[0]
+	}
+	if len(opts.Args) >= 2 {
+		value = opts.Args[1]
+	}
+	field = opts.Field
+	if field == "" && len(opts.Args) >= 2 {
+		field = opts.Args[1]
+		if len(opts.Args) >= 3 {
+			value = opts.Args[2]
+		}
+	}
+	return id, field, value
+}
+
 func runSetField(entity *store.Entity, opts SetOptions, w io.Writer) error {
 	// Codemap is a special field — stored in code_map table, not frontmatter.
 	if opts.Field == "codemap" {

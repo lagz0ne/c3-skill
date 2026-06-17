@@ -842,6 +842,54 @@ func TestRun_Set(t *testing.T) {
 	}
 }
 
+func TestRun_SetCodemapOnFrozenFact(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	var buf bytes.Buffer
+
+	err := runWithIO([]string{"--c3-dir", c3Dir, "set", "c3-101", "codemap", "src/auth/**"}, strings.NewReader(""), true, &buf, io.Discard, false)
+	if err != nil {
+		t.Fatalf("set codemap on a frozen fact should be allowed, got: %v", err)
+	}
+	if strings.Contains(buf.String(), "facts are frozen") {
+		t.Fatalf("codemap set should not emit frozen-fact refusal:\n%s", buf.String())
+	}
+
+	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	patterns, err := s.CodeMapFor("c3-101")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(patterns) != 1 || patterns[0] != "src/auth/**" {
+		t.Fatalf("codemap patterns = %v, want [src/auth/**]", patterns)
+	}
+}
+
+func TestRun_SetCodemapOnFrozenFactWithFieldFlag(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+
+	err := runWithIO([]string{"--c3-dir", c3Dir, "set", "c3-101", "src/ui/**", "--field", "codemap"}, strings.NewReader(""), true, &bytes.Buffer{}, io.Discard, false)
+	if err != nil {
+		t.Fatalf("set --field codemap on a frozen fact should be allowed, got: %v", err)
+	}
+
+	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	patterns, err := s.CodeMapFor("c3-101")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(patterns) != 1 || patterns[0] != "src/ui/**" {
+		t.Fatalf("codemap patterns = %v, want [src/ui/**]", patterns)
+	}
+}
+
 func TestRun_SetRejectsSection(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
 	// adr is a change-doc (not frozen), so the dispatch guard passes and the

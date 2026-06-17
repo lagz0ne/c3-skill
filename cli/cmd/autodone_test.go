@@ -59,7 +59,7 @@ func TestAutoDone_AllAfterCitesFreshFlipsAcceptedToDone(t *testing.T) {
 	entity, body := seedAcceptedPRD(t, s, h1, h2)
 
 	// The flip is gated behind --fix: drive the commit path.
-	flipped, unresolved := autoDoneLatch(s, entity, body, true)
+	flipped, unresolved := autoDoneLatch(s, "", entity, body, true)
 	if !flipped {
 		t.Fatalf("expected accepted doc with all-fresh After cites to auto-flip to done; unresolved=%+v", unresolved)
 	}
@@ -85,7 +85,7 @@ func TestAutoDone_PlainCheckDoesNotFlip(t *testing.T) {
 	entity, body := seedAcceptedPRD(t, s, h1, h2)
 
 	// Direct latch, no commit: ready==true but status NOT flipped.
-	ready, unresolved := autoDoneLatch(s, entity, body, false)
+	ready, unresolved := autoDoneLatch(s, "", entity, body, false)
 	if !ready {
 		t.Fatalf("plain (non-commit) latch should report readiness when all After cites resolve fresh; unresolved=%+v", unresolved)
 	}
@@ -132,7 +132,7 @@ func TestAutoDone_StaleAfterCiteDoesNotFlip(t *testing.T) {
 	h2 := staleHashHandle(t, testCitationForEntity(t, s, "c3-101"))
 	entity, body := seedAcceptedPRD(t, s, h1, h2)
 
-	flipped, unresolved := autoDoneLatch(s, entity, body, true)
+	flipped, unresolved := autoDoneLatch(s, "", entity, body, true)
 	if flipped {
 		t.Fatalf("a stale After cite must NOT flip the latch")
 	}
@@ -159,7 +159,7 @@ func TestAutoDone_OneWayLatchNeverFlipsBackward(t *testing.T) {
 	if err := s.InsertEntity(openEntity); err != nil {
 		t.Fatal(err)
 	}
-	if flipped, _ := autoDoneLatch(s, openEntity, acceptedPRDBody(h1, h2), true); flipped {
+	if flipped, _ := autoDoneLatch(s, "", openEntity, acceptedPRDBody(h1, h2), true); flipped {
 		t.Fatalf("an open doc must never be auto-advanced by the latch")
 	}
 	if got, _ := s.GetEntity(openEntity.ID); got.Status != "open" {
@@ -178,7 +178,7 @@ func TestAutoDone_OneWayLatchNeverFlipsBackward(t *testing.T) {
 		}
 	}
 	got, _ := s.GetEntity(doneEntity.ID)
-	if flipped, _ := autoDoneLatch(s, got, acceptedPRDBody(h1, h2), true); flipped {
+	if flipped, _ := autoDoneLatch(s, "", got, acceptedPRDBody(h1, h2), true); flipped {
 		t.Fatalf("a done (terminal) doc must never be re-flipped by the latch")
 	}
 	if after, _ := s.GetEntity(doneEntity.ID); after.Status != "done" {
@@ -198,7 +198,7 @@ func TestAutoDone_UsesSameFreshnessCheckAsItem5(t *testing.T) {
 	fresh := testCitationForEntity(t, s, "c3-101")
 	entity, body := seedAcceptedPRD(t, s, staleVer, fresh)
 
-	flipped, unresolved := autoDoneLatch(s, entity, body, true)
+	flipped, unresolved := autoDoneLatch(s, "", entity, body, true)
 	if flipped {
 		t.Fatalf("latch must agree with Item 5: a handle Item 5 flags stale must block the flip")
 	}
@@ -218,7 +218,7 @@ func TestAutoDone_DoesNotJudgeSuccessCriteria(t *testing.T) {
 	h := testCitationForEntity(t, s, "ref-error-handling")
 	entity, body := seedAcceptedPRD(t, s, h, h)
 
-	flipped, _ := autoDoneLatch(s, entity, body, true)
+	flipped, _ := autoDoneLatch(s, "", entity, body, true)
 	if !flipped {
 		t.Fatalf("latch must flip on fresh-but-arbitrary After cites; it never judges success criteria")
 	}

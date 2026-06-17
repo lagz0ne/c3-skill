@@ -578,15 +578,19 @@ func isChangeDocTerminal(entity *store.Entity) bool {
 // is purely mechanical: it never fires on a non-`accepted` doc, never flips
 // backward, and never judges whether the chosen After conditions were the right
 // success criteria.
-func autoDoneLatch(s *store.Store, entity *store.Entity, body string, commit bool) (bool, []Issue) {
+func autoDoneLatch(s *store.Store, c3Dir string, entity *store.Entity, body string, commit bool) (bool, []Issue) {
 	if entity == nil || entity.Status != "accepted" {
 		return false, nil
 	}
-	if !schema.IsChangeDoc(entity.Type) {
+	if !schema.IsChangeDocDir(c3Dir, entity.Type) {
 		return false, nil
 	}
 
-	def, ok := schema.DefinitionFor(entity.Type)
+	// Resolve the same canvas the rest of check uses (DefinitionForDir prefers a
+	// project-local .c3/canvases override): otherwise, for a user with a custom
+	// change-doc canvas, the latch would scan the BUILT-IN columns and resolve the
+	// wrong cite set. c3Dir == "" falls back to the built-in definition.
+	def, ok := schema.DefinitionForDir(c3Dir, entity.Type)
 	if !ok {
 		return false, nil
 	}

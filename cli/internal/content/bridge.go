@@ -1,72 +1,41 @@
 package content
 
 import (
-	"database/sql"
 	"fmt"
 	"strings"
 
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
-// WriteEntity parses markdown, stores nodes, creates a version, and updates the entity merkle.
+// WriteEntity parses markdown, then atomically replaces the entity's nodes,
+// snapshots a version, and reseals the entity merkle — all in one transaction.
+// When called inside a change apply it enlists in that open transaction, so a body
+// write commits (or rolls back) as one unit and never leaves a half-updated fact.
 func WriteEntity(s *store.Store, entityID, markdown string) error {
 	tree := ParseMarkdown(entityID, stripFrontmatter(markdown))
-
-	tx, err := s.DB().Begin()
-	if err != nil {
-		return fmt.Errorf("begin tx: %w", err)
-	}
-	defer tx.Rollback()
-
-	if _, err := tx.Exec(`DELETE FROM nodes WHERE entity_id = ?`, entityID); err != nil {
-		return fmt.Errorf("delete old nodes: %w", err)
-	}
-
-	stmt, err := tx.Prepare(store.NodeInsertSQL)
-	if err != nil {
-		return fmt.Errorf("prepare: %w", err)
-	}
-	defer stmt.Close()
-
-	realIDs := make([]int64, len(tree.Nodes))
-	for i, node := range tree.Nodes {
-		node.EntityID = entityID
-		if pi := tree.ParentIndex[i]; pi >= 0 {
-			node.ParentID = sql.NullInt64{Int64: realIDs[pi], Valid: true}
-		}
-		res, err := stmt.Exec(node.EntityID, node.ParentID, node.Type, node.Level, node.Seq, node.Content, node.Hash)
-		if err != nil {
-			return fmt.Errorf("insert node %d: %w", i, err)
-		}
-		id, _ := res.LastInsertId()
-		node.ID = id
-		realIDs[i] = id
-	}
-
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("commit nodes: %w", err)
-	}
-
 	merkle := collectMerkle(tree.Nodes)
 	rendered := RenderMarkdown(tree.Nodes)
 
-	ver, err := s.CreateVersion(entityID, rendered, merkle)
-	if err != nil {
-		return fmt.Errorf("create version: %w", err)
-	}
-
-	entity, err := s.GetEntity(entityID)
-	if err != nil {
-		return fmt.Errorf("get entity: %w", err)
-	}
-	entity.RootMerkle = merkle
-	entity.Version = ver.Version
-	syncGoalFromNodes(entity, tree)
-
-	if err := s.UpdateEntity(entity); err != nil {
-		return fmt.Errorf("update entity: %w", err)
-	}
-	return nil
+	return s.WithTx(func(ts *store.Store) error {
+		if err := ts.InsertNodeTree(entityID, tree.Nodes, tree.ParentIndex); err != nil {
+			return fmt.Errorf("write nodes: %w", err)
+		}
+		ver, err := ts.CreateVersion(entityID, rendered, merkle)
+		if err != nil {
+			return fmt.Errorf("create version: %w", err)
+		}
+		entity, err := ts.GetEntity(entityID)
+		if err != nil {
+			return fmt.Errorf("get entity: %w", err)
+		}
+		entity.RootMerkle = merkle
+		entity.Version = ver.Version
+		syncGoalFromNodes(entity, tree)
+		if err := ts.UpdateEntity(entity); err != nil {
+			return fmt.Errorf("update entity: %w", err)
+		}
+		return nil
+	})
 }
 
 // ReadEntity reads nodes from the DB and renders them to markdown.

@@ -77,20 +77,34 @@ func CheckDrift(s *store.Store, p Patch) error {
 	return fmt.Errorf("patch %s: malformed base handle %q", p.Source, p.Base)
 }
 
-// Apply checks every patch's anchor (drift) atomically, then applies them. A
-// single drifted anchor blocks the whole set — nothing is written.
-func Apply(s *store.Store, patches []Patch) error {
+// Apply checks every patch's anchor (drift), then writes the whole change-unit —
+// internal patches AND external codemap carriers — inside one transaction: a single
+// drifted anchor or a mid-apply failure (e.g. a landing-hash mismatch on patch N)
+// rolls back every prior patch's node, entity, edge, and seal write together with
+// every codemap write. The unit lands completely or not at all, never half-matched
+// between its internal facts and its external code bindings.
+//
+// Patches apply before codemaps so a carrier may target a fact created in the same
+// unit — the create is visible to SetCodeMap through read-your-writes in the tx.
+func Apply(s *store.Store, patches []Patch, codemaps []CodemapChange) error {
 	for _, p := range patches {
 		if err := CheckDrift(s, p); err != nil {
 			return err
 		}
 	}
-	for _, p := range patches {
-		if err := applyOne(s, p); err != nil {
-			return fmt.Errorf("apply %s: %w", p.Source, err)
+	return s.WithTx(func(ts *store.Store) error {
+		for _, p := range patches {
+			if err := applyOne(ts, p); err != nil {
+				return fmt.Errorf("apply %s: %w", p.Source, err)
+			}
 		}
-	}
-	return nil
+		for _, c := range codemaps {
+			if err := ts.SetCodeMap(c.Target, c.Globs); err != nil {
+				return fmt.Errorf("apply codemap %s → %s: %w", c.Source, c.Target, err)
+			}
+		}
+		return nil
+	})
 }
 
 func applyOne(s *store.Store, p Patch) error {
@@ -152,10 +166,15 @@ func applyUses(s *store.Store, p Patch) error {
 	if p.Uses == nil {
 		return nil
 	}
-	existing, _ := s.RelationshipsFrom(p.Target)
+	existing, err := s.RelationshipsFrom(p.Target)
+	if err != nil {
+		return fmt.Errorf("patch %s: read edges of %s: %w", p.Source, p.Target, err)
+	}
 	for _, r := range existing {
 		if r.RelType == "uses" {
-			_ = s.RemoveRelationship(r)
+			if err := s.RemoveRelationship(r); err != nil {
+				return fmt.Errorf("patch %s: drop edge %s→%s: %w", p.Source, p.Target, r.ToID, err)
+			}
 		}
 	}
 	for _, to := range p.Uses {
@@ -171,9 +190,14 @@ func applyUses(s *store.Store, p Patch) error {
 
 // applyRetire removes a fact and its outgoing edges.
 func applyRetire(s *store.Store, p Patch) error {
-	rels, _ := s.RelationshipsFrom(p.Target)
+	rels, err := s.RelationshipsFrom(p.Target)
+	if err != nil {
+		return fmt.Errorf("patch %s: read edges of %s: %w", p.Source, p.Target, err)
+	}
 	for _, r := range rels {
-		_ = s.RemoveRelationship(r)
+		if err := s.RemoveRelationship(r); err != nil {
+			return fmt.Errorf("patch %s: drop edge %s→%s: %w", p.Source, p.Target, r.ToID, err)
+		}
 	}
 	return s.DeleteEntity(p.Target)
 }
@@ -181,10 +205,18 @@ func applyRetire(s *store.Store, p Patch) error {
 // applyBlock replaces the single cited node's content, keeping its ID, type,
 // level, seq, and parent — so every sibling node (and its hash) stays frozen.
 func applyBlock(s *store.Store, p Patch) error {
-	_, nodeID, _, _, _ := ParseCiteHandle(p.Base) // validated by CheckDrift
+	_, nodeID, _, expected, _ := ParseCiteHandle(p.Base) // validated by CheckDrift
 	node, err := s.GetNode(nodeID)
 	if err != nil {
 		return err
+	}
+	// Re-anchor at write time against live (in-transaction) state. The drift
+	// preflight ran before the apply transaction opened, so it cannot see a sibling
+	// patch in THIS unit that already rewrote the same block; read-your-writes here
+	// catches that (and any concurrent mutation) deterministically instead of
+	// silently clobbering the earlier write.
+	if node.EntityID != p.Target || node.Hash != expected {
+		return fmt.Errorf("patch %s: base anchor for block %d of %s changed before apply; rebase", p.Source, nodeID, p.Target)
 	}
 	node.Content = p.Content
 	node.Hash = store.ComputeNodeHash(p.Content, node.Type)
@@ -196,6 +228,10 @@ func applyBlock(s *store.Store, p Patch) error {
 	if err := s.UpdateNode(node); err != nil {
 		return err
 	}
+	// A block edit reseals the entity merkle but intentionally does NOT bump
+	// entity.Version: block anchors drift by node hash, not version (see CheckDrift),
+	// and the latch/evidence checks gate on hash. Versioning is reserved for
+	// whole-body writes; a stale block is caught by its hash regardless of version.
 	return reseal(s, p.Target)
 }
 

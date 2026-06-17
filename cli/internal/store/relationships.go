@@ -12,7 +12,7 @@ type Relationship struct {
 // AddRelationship inserts a relationship, ignoring duplicates.
 // Only logs when a new row is actually inserted.
 func (s *Store) AddRelationship(r *Relationship) error {
-	res, err := s.db.Exec(`
+	res, err := s.exec.Exec(`
 		INSERT OR IGNORE INTO relationships (from_id, to_id, rel_type)
 		VALUES (?, ?, ?)`,
 		r.FromID, r.ToID, r.RelType,
@@ -29,7 +29,7 @@ func (s *Store) AddRelationship(r *Relationship) error {
 
 // RemoveRelationship deletes a specific relationship.
 func (s *Store) RemoveRelationship(r *Relationship) error {
-	_, err := s.db.Exec(`
+	_, err := s.exec.Exec(`
 		DELETE FROM relationships
 		WHERE from_id = ? AND to_id = ? AND rel_type = ?`,
 		r.FromID, r.ToID, r.RelType,
@@ -67,7 +67,7 @@ func (s *Store) RelationshipsByType(relType string) ([]*Relationship, error) {
 
 // queryRelationships executes a query and scans rows into Relationship slices.
 func (s *Store) queryRelationships(query string, args ...any) ([]*Relationship, error) {
-	rows, err := s.db.Query(query, args...)
+	rows, err := s.exec.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}

@@ -27,7 +27,7 @@ const entityColumns = `id, type, title, slug, category, parent_id, goal,
 	status, boundary, date, metadata, root_merkle, version, created_at, updated_at`
 
 func (s *Store) InsertEntity(e *Entity) error {
-	_, err := s.db.Exec(`
+	_, err := s.exec.Exec(`
 		INSERT INTO entities (id, type, title, slug, category, parent_id, goal,
 			status, boundary, date, metadata, root_merkle, version)
 		VALUES (?, ?, ?, ?, ?, NULLIF(?, ''), ?, ?, ?, ?, ?, ?, ?)`,
@@ -42,7 +42,7 @@ func (s *Store) InsertEntity(e *Entity) error {
 }
 
 func (s *Store) GetEntity(id string) (*Entity, error) {
-	row := s.db.QueryRow(`SELECT `+entityColumns+` FROM entities WHERE id = ?`, id)
+	row := s.exec.QueryRow(`SELECT `+entityColumns+` FROM entities WHERE id = ?`, id)
 	return scanEntity(row)
 }
 
@@ -58,7 +58,7 @@ func (s *Store) UpdateEntity(e *Entity) error {
 		return fmt.Errorf("update entity: get old: %w", err)
 	}
 
-	_, err = s.db.Exec(`
+	_, err = s.exec.Exec(`
 		UPDATE entities SET
 			type = ?, title = ?, slug = ?, category = ?,
 			parent_id = NULLIF(?, ''), goal = ?,
@@ -99,7 +99,7 @@ func (s *Store) SetEntityStatus(id, status string) error {
 	if err != nil {
 		return fmt.Errorf("set status: get old: %w", err)
 	}
-	if _, err := s.db.Exec(`
+	if _, err := s.exec.Exec(`
 		UPDATE entities SET status = ?, updated_at = datetime('now') WHERE id = ?`,
 		status, id,
 	); err != nil {
@@ -116,7 +116,7 @@ func logFieldChange(s *Store, entityID, field, oldVal, newVal string) {
 }
 
 func (s *Store) DeleteEntity(id string) error {
-	res, err := s.db.Exec(`DELETE FROM entities WHERE id = ?`, id)
+	res, err := s.exec.Exec(`DELETE FROM entities WHERE id = ?`, id)
 	if err != nil {
 		return fmt.Errorf("delete entity %s: %w", id, err)
 	}
@@ -141,7 +141,7 @@ func (s *Store) Children(parentID string) ([]*Entity, error) {
 }
 
 func (s *Store) queryEntities(query string, args ...any) ([]*Entity, error) {
-	rows, err := s.db.Query(query, args...)
+	rows, err := s.exec.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}

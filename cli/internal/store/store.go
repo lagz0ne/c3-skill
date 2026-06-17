@@ -8,11 +8,56 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+// dbExecutor is the read/write surface shared by *sql.DB and *sql.Tx. Data-layer
+// store methods issue every statement through this seam so the SAME method runs
+// either autocommitted (against the pool) or enlisted in a transaction (against a
+// *sql.Tx) with no signature change. It deliberately omits Begin: a missed
+// inner-Begin site fails to compile rather than deadlocking under MaxOpenConns(1).
+type dbExecutor interface {
+	Exec(query string, args ...any) (sql.Result, error)
+	Query(query string, args ...any) (*sql.Rows, error)
+	QueryRow(query string, args ...any) *sql.Row
+}
+
 // Store wraps an embedded SQLite database holding C3 entities,
 // relationships, code-map entries, and a mutation changelog.
 type Store struct {
 	db     *sql.DB
+	exec   dbExecutor // the pool by default; a *sql.Tx inside WithTx
 	dbPath string
+}
+
+// WithTx runs fn inside a single transaction: every store method fn calls on the
+// supplied *Store enlists in it, so the whole closure commits or rolls back as one
+// unit. Calls nest — if s is already transactional, fn reuses the open tx and the
+// outer WithTx owns the commit (SQLite has no real nested transactions). This is
+// the only mutation path that spans multiple writes atomically (change apply).
+func (s *Store) WithTx(fn func(*Store) error) error {
+	if _, already := s.exec.(*sql.Tx); already {
+		return fn(s) // reuse the open tx; the outermost WithTx commits
+	}
+	tx, err := s.db.Begin()
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	txStore := &Store{db: s.db, exec: tx, dbPath: s.dbPath}
+	// Roll back on panic before re-raising: otherwise a panicking closure leaks the
+	// open transaction and, under MaxOpenConns(1), permanently blocks the one pooled
+	// connection (every later query would hang on busy_timeout).
+	defer func() {
+		if p := recover(); p != nil {
+			_ = tx.Rollback()
+			panic(p)
+		}
+	}()
+	if err := fn(txStore); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit tx: %w", err)
+	}
+	return nil
 }
 
 // Open creates or opens a SQLite database at dbPath, runs schema
@@ -26,7 +71,7 @@ func Open(dbPath string) (*Store, error) {
 		return nil, fmt.Errorf("open db: %w", err)
 	}
 	db.SetMaxOpenConns(1) // serialize access within a single process
-	s := &Store{db: db, dbPath: dbPath}
+	s := &Store{db: db, exec: db, dbPath: dbPath}
 	if err := s.createSchema(); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("create schema: %w", err)

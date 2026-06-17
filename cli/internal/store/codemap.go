@@ -8,28 +8,27 @@ import (
 	"github.com/bmatcuk/doublestar/v4"
 )
 
-// SetCodeMap replaces all code-map globs for an entity.
+// SetCodeMap replaces all code-map globs for an entity. The clear+insert is one
+// unit: standalone it opens its own transaction; inside an apply it enlists in the
+// open one, so a change-unit's external bindings commit (or roll back) with its
+// internal patches.
 func (s *Store) SetCodeMap(entityID string, globs []string) error {
-	tx, err := s.db.Begin()
-	if err != nil {
-		return fmt.Errorf("set code map begin: %w", err)
-	}
-	defer tx.Rollback()
-
-	if _, err := tx.Exec(`DELETE FROM code_map WHERE entity_id = ?`, entityID); err != nil {
-		return fmt.Errorf("set code map clear: %w", err)
-	}
-	for _, g := range globs {
-		if _, err := tx.Exec(`INSERT INTO code_map (entity_id, pattern) VALUES (?, ?)`, entityID, g); err != nil {
-			return fmt.Errorf("set code map insert: %w", err)
+	return s.WithTx(func(ts *Store) error {
+		if _, err := ts.exec.Exec(`DELETE FROM code_map WHERE entity_id = ?`, entityID); err != nil {
+			return fmt.Errorf("set code map clear: %w", err)
 		}
-	}
-	return tx.Commit()
+		for _, g := range globs {
+			if _, err := ts.exec.Exec(`INSERT INTO code_map (entity_id, pattern) VALUES (?, ?)`, entityID, g); err != nil {
+				return fmt.Errorf("set code map insert: %w", err)
+			}
+		}
+		return nil
+	})
 }
 
 // CodeMapFor returns the glob patterns associated with an entity.
 func (s *Store) CodeMapFor(entityID string) ([]string, error) {
-	rows, err := s.db.Query(`SELECT pattern FROM code_map WHERE entity_id = ? ORDER BY pattern`, entityID)
+	rows, err := s.exec.Query(`SELECT pattern FROM code_map WHERE entity_id = ? ORDER BY pattern`, entityID)
 	if err != nil {
 		return nil, fmt.Errorf("code map for: %w", err)
 	}
@@ -87,7 +86,7 @@ func (s *Store) LookupByFile(filePath string) ([]string, error) {
 
 // AddExclude adds a global exclusion pattern.
 func (s *Store) AddExclude(glob string) error {
-	_, err := s.db.Exec(`INSERT OR IGNORE INTO code_map_excludes (pattern) VALUES (?)`, glob)
+	_, err := s.exec.Exec(`INSERT OR IGNORE INTO code_map_excludes (pattern) VALUES (?)`, glob)
 	if err != nil {
 		return fmt.Errorf("add exclude: %w", err)
 	}
@@ -96,7 +95,7 @@ func (s *Store) AddExclude(glob string) error {
 
 // Excludes returns all global exclusion patterns.
 func (s *Store) Excludes() ([]string, error) {
-	rows, err := s.db.Query(`SELECT pattern FROM code_map_excludes ORDER BY pattern`)
+	rows, err := s.exec.Query(`SELECT pattern FROM code_map_excludes ORDER BY pattern`)
 	if err != nil {
 		return nil, fmt.Errorf("excludes: %w", err)
 	}
@@ -115,7 +114,7 @@ func (s *Store) Excludes() ([]string, error) {
 
 // AllCodeMap returns the full mapping of entity IDs to their glob patterns.
 func (s *Store) AllCodeMap() (map[string][]string, error) {
-	rows, err := s.db.Query(`SELECT entity_id, pattern FROM code_map ORDER BY entity_id, pattern`)
+	rows, err := s.exec.Query(`SELECT entity_id, pattern FROM code_map ORDER BY entity_id, pattern`)
 	if err != nil {
 		return nil, fmt.Errorf("all code map: %w", err)
 	}

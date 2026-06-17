@@ -14,7 +14,7 @@ type ChangeEntry struct {
 
 // logChange records a mutation in the changelog table.
 func (s *Store) logChange(entityID, action, field, oldVal, newVal string) {
-	s.db.Exec(`
+	s.exec.Exec(`
 		INSERT INTO changelog (entity_id, action, field, old_value, new_value)
 		VALUES (?, ?, ?, ?, ?)`,
 		entityID, action, field, oldVal, newVal,
@@ -23,7 +23,7 @@ func (s *Store) logChange(entityID, action, field, oldVal, newVal string) {
 
 // UnmarkedChanges returns all changelog entries with an empty commit_hash.
 func (s *Store) UnmarkedChanges() ([]*ChangeEntry, error) {
-	rows, err := s.db.Query(`
+	rows, err := s.exec.Query(`
 		SELECT id, entity_id, action, field, old_value, new_value, timestamp, commit_hash
 		FROM changelog
 		WHERE commit_hash = ''
@@ -47,7 +47,7 @@ func (s *Store) UnmarkedChanges() ([]*ChangeEntry, error) {
 
 // MarkChangelog stamps all unmarked changelog entries with a commit hash.
 func (s *Store) MarkChangelog(commitHash string) error {
-	_, err := s.db.Exec(`
+	_, err := s.exec.Exec(`
 		UPDATE changelog SET commit_hash = ? WHERE commit_hash = ''`,
 		commitHash,
 	)

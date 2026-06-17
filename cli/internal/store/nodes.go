@@ -23,7 +23,7 @@ const NodeInsertSQL = `INSERT INTO nodes (entity_id, parent_id, type, level, seq
 		VALUES (?, ?, ?, ?, ?, ?, ?)`
 
 func (s *Store) InsertNode(n *Node) (int64, error) {
-	res, err := s.db.Exec(NodeInsertSQL,
+	res, err := s.exec.Exec(NodeInsertSQL,
 		n.EntityID, n.ParentID, n.Type, n.Level, n.Seq, n.Content, n.Hash,
 	)
 	if err != nil {
@@ -35,12 +35,12 @@ func (s *Store) InsertNode(n *Node) (int64, error) {
 }
 
 func (s *Store) GetNode(id int64) (*Node, error) {
-	row := s.db.QueryRow(`SELECT `+nodeColumns+` FROM nodes WHERE id = ?`, id)
+	row := s.exec.QueryRow(`SELECT `+nodeColumns+` FROM nodes WHERE id = ?`, id)
 	return scanNode(row)
 }
 
 func (s *Store) UpdateNode(n *Node) error {
-	_, err := s.db.Exec(`
+	_, err := s.exec.Exec(`
 		UPDATE nodes SET type = ?, level = ?, seq = ?, content = ?, hash = ?,
 			parent_id = ?
 		WHERE id = ?`,
@@ -54,7 +54,7 @@ func (s *Store) UpdateNode(n *Node) error {
 
 // DeleteNode removes a node. Children are cascade-deleted by FK.
 func (s *Store) DeleteNode(id int64) error {
-	res, err := s.db.Exec(`DELETE FROM nodes WHERE id = ?`, id)
+	res, err := s.exec.Exec(`DELETE FROM nodes WHERE id = ?`, id)
 	if err != nil {
 		return fmt.Errorf("delete node %d: %w", id, err)
 	}
@@ -73,35 +73,53 @@ func (s *Store) NodesForEntity(entityID string) ([]*Node, error) {
 		ORDER BY parent_id NULLS FIRST, seq`, entityID)
 }
 
-// ReplaceEntityNodes atomically replaces all nodes for an entity.
+// ReplaceEntityNodes atomically replaces all nodes for an entity, preserving each
+// node's existing ParentID. Standalone it opens its own transaction; inside an
+// apply it enlists in the open one.
 func (s *Store) ReplaceEntityNodes(entityID string, nodes []*Node) error {
-	tx, err := s.db.Begin()
-	if err != nil {
-		return fmt.Errorf("begin tx: %w", err)
-	}
-	defer tx.Rollback()
-
-	if _, err := tx.Exec(`DELETE FROM nodes WHERE entity_id = ?`, entityID); err != nil {
-		return fmt.Errorf("delete old nodes: %w", err)
-	}
-
-	stmt, err := tx.Prepare(NodeInsertSQL)
-	if err != nil {
-		return fmt.Errorf("prepare insert: %w", err)
-	}
-	defer stmt.Close()
-
-	for _, n := range nodes {
-		n.EntityID = entityID
-		res, err := stmt.Exec(n.EntityID, n.ParentID, n.Type, n.Level, n.Seq, n.Content, n.Hash)
-		if err != nil {
-			return fmt.Errorf("insert node seq %d: %w", n.Seq, err)
+	return s.WithTx(func(ts *Store) error {
+		if _, err := ts.exec.Exec(`DELETE FROM nodes WHERE entity_id = ?`, entityID); err != nil {
+			return fmt.Errorf("delete old nodes: %w", err)
 		}
-		id, _ := res.LastInsertId()
-		n.ID = id
-	}
+		for _, n := range nodes {
+			n.EntityID = entityID
+			res, err := ts.exec.Exec(NodeInsertSQL, n.EntityID, n.ParentID, n.Type, n.Level, n.Seq, n.Content, n.Hash)
+			if err != nil {
+				return fmt.Errorf("insert node seq %d: %w", n.Seq, err)
+			}
+			id, _ := res.LastInsertId()
+			n.ID = id
+		}
+		return nil
+	})
+}
 
-	return tx.Commit()
+// InsertNodeTree replaces an entity's nodes from a parsed tree, remapping each
+// node's tree-index parent (parentIndex[i] < 0 ⇒ root) to the real autoincrement
+// ID assigned on insert. Standalone it opens its own transaction; inside an apply
+// it enlists in the open one — so a created fact's body lands atomically with its
+// entity row, version, and seal.
+func (s *Store) InsertNodeTree(entityID string, nodes []*Node, parentIndex []int) error {
+	return s.WithTx(func(ts *Store) error {
+		if _, err := ts.exec.Exec(`DELETE FROM nodes WHERE entity_id = ?`, entityID); err != nil {
+			return fmt.Errorf("delete old nodes: %w", err)
+		}
+		realIDs := make([]int64, len(nodes))
+		for i, n := range nodes {
+			n.EntityID = entityID
+			if pi := parentIndex[i]; pi >= 0 {
+				n.ParentID = sql.NullInt64{Int64: realIDs[pi], Valid: true}
+			}
+			res, err := ts.exec.Exec(NodeInsertSQL, n.EntityID, n.ParentID, n.Type, n.Level, n.Seq, n.Content, n.Hash)
+			if err != nil {
+				return fmt.Errorf("insert node %d: %w", i, err)
+			}
+			id, _ := res.LastInsertId()
+			n.ID = id
+			realIDs[i] = id
+		}
+		return nil
+	})
 }
 
 func (s *Store) NodeChildren(parentID int64) ([]*Node, error) {
@@ -113,7 +131,7 @@ func (s *Store) NodeChildren(parentID int64) ([]*Node, error) {
 
 // queryNodes executes a query and scans all rows into Node slices.
 func (s *Store) queryNodes(query string, args ...any) ([]*Node, error) {
-	rows, err := s.db.Query(query, args...)
+	rows, err := s.exec.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}

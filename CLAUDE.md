@@ -131,7 +131,7 @@ c3-design/
 
 ## Build System
 
-**Do NOT run `bash scripts/build.sh` during releases.** CI owns the build — push to dev triggers `distribute.yml` which tests, cross-compiles, merges to main, and creates the GitHub Release automatically. Only run `build.sh` locally when debugging build issues.
+**Do NOT run `bash scripts/build.sh` during releases.** CI owns the build — pushing a `v*` tag triggers `distribute.yml`, which tests, cross-compiles the three supported platforms, and creates the GitHub Release automatically. Only run `build.sh` locally when debugging build issues.
 
 ```bash
 cd cli && go test ./...       # Run Go tests locally
@@ -139,16 +139,17 @@ cd cli && go test ./...       # Run Go tests locally
 
 ## CI/CD
 
-- **Push to dev** -> `distribute.yml` runs tests, builds binaries, creates PR to main, auto-merges, creates GitHub Release with tag
-- **Push to main** -> `release.yml` (fallback) checks `skills/c3/bin/VERSION`
-- New version -> GitHub Release with plugin zip
+- **Push a `v{VERSION}` tag** -> `distribute.yml` (Build & Distribute): tests, cross-compiles `linux/amd64`, `linux/arm64`, `darwin/arm64` (VERSION is derived from the tag name), assembles the plugin zip + binaries, and cuts the GitHub Release. This is the release trigger.
+- **Push to `main`** (a merge/`distribute dev` commit) -> `release.yml` checks `skills/c3/bin/VERSION` (fallback path).
+- The npm `@c3x/cli` publish (`Publish @c3x/cli` workflow) needs an `NPM_TOKEN` secret — it currently fails `ENEEDAUTH`, independent of the GitHub Release.
 
 ## Release Process
 
-1. Commit code changes to dev
-2. Bump version in 3 files: `VERSION`, `plugin.json`, `marketplace.json` (use `/release`)
-3. `git push origin dev` — CI handles everything from here
-4. Verify with `gh run watch` and `gh release view v{VERSION}`
+1. Commit changes to `dev` (merge the work branch onto `dev`)
+2. Add a `CHANGELOG.md` entry for the version
+3. Bump the version everywhere it appears: `skills/c3/bin/VERSION`, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, and the npm client `packages/cli/{package.json, package-lock.json, src/version.ts}`
+4. Push `dev`, then `git tag -a v{VERSION} && git push origin v{VERSION}` — the tag triggers the build + GitHub Release
+5. Verify with `gh run watch` and `gh release view v{VERSION}`
 
 ## Versioning
 
@@ -159,5 +160,8 @@ All version files must stay in sync:
 | `skills/c3/bin/VERSION` | Source of truth — CI, c3x.sh, and build.sh all read this |
 | `.claude-plugin/plugin.json` | Plugin metadata |
 | `.claude-plugin/marketplace.json` | Marketplace listing |
+| `packages/cli/package.json` | npm `@c3x/cli` thin-client version |
+| `packages/cli/package-lock.json` | npm lockfile (two `version` fields) |
+| `packages/cli/src/version.ts` | `C3X_VERSION` the npm wrapper pins + downloads |
 
-Use `/release` command to bump versions consistently.
+Use `/release` command to bump versions consistently. The `v{VERSION}` git tag must match `skills/c3/bin/VERSION` (CI derives the build version from the tag name).

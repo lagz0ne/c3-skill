@@ -71,10 +71,15 @@ Find components using pattern.
 
 ### Step 8: Update Citing Components
 
-Per component using pattern:
-1. `c3 lookup <file>` per code-map entry
-2. `c3 read <component-id>`
-3. Add to `## Related Rules`:
+A component is a frozen fact and its `uses`/cite edges are derived from its own body (`## Related Rules` / frontmatter `refs:`) at import — never created by `c3 wire`. So how you add a citation depends on whether the component already exists:
+
+- **Brand-new citer (being created now):** author `## Related Rules` directly in its body file, then `c3 add component <slug> --file body.md`. The edge appears at import — no `c3 wire`.
+- **Existing citer (frozen):** adding a citation is an edit to its frozen body, so it MUST ride as a change-unit patch on the `## Related Rules` block. Per component using pattern:
+  1. `c3 lookup <file>` per code-map entry
+  2. `c3 read <component-id> --section "Related Rules" --cite` — cite the block
+  3. Author `.c3/changes/<adr-id>/<seq>-<slug>.patch.md` adding the row, then `c3 change apply <adr-id>`
+
+The added row looks like:
 
 ```markdown
 ## Related Rules
@@ -84,17 +89,17 @@ Per component using pattern:
 | rule-structured-logging | Logging format enforcement |
 ```
 
-Only modify `## Related Rules`. Other changes → route to change.
+Only the `## Related Rules` block changes. Other changes → route to change as their own patch.
 
 ### Step 9: Adoption ADR
 
-ADRs cannot be created as `implemented` and cannot transition `proposed → implemented` directly. Two-step:
+ADR status set is `[open, accepted, done, superseded]`. You never `set` a terminal status — `accepted → done` is a one-way auto-done latch. Flow:
 
 ```bash
 c3 add adr rule-{slug}-adoption < adr-body.md
-c3 set adr-YYYYMMDD-rule-{slug}-adoption status accepted
-# rule doc is wired and the deliverable is in place
-c3 set adr-YYYYMMDD-rule-{slug}-adoption status implemented
+# land the deliverable: the new rule doc (created via `c3 add rule`) is in place
+c3 change accept adr-YYYYMMDD-rule-{slug}-adoption
+c3 check --fix   # auto-latches accepted → done once the After cites resolve fresh
 ```
 
 Final state:
@@ -102,11 +107,11 @@ Final state:
 ---
 id: adr-YYYYMMDD-rule-{slug}-adoption
 title: Adopt {Rule Title} as standard
-status: implemented
+status: done
 ---
 ```
 
-Rule adoption ADRs end in `status: implemented` — rule doc IS deliverable. After implemented, the ADR becomes historical and is exempt from `c3 check` validation.
+Rule adoption ADRs end in `status: done` — rule doc IS deliverable. `c3 change accept` flips it to `accepted`; the next `c3 check --fix` latches it to `done` when the per-row *After* cites resolve. You never type or `set` `done`. A terminal (`done`/`superseded`) ADR is historical and exempt from `c3 check` validation.
 
 ---
 
@@ -118,8 +123,10 @@ Flow: `Clarify → Find Citings → Check Compliance → Surface Impact → Exec
 2. **Find citings:** `c3 list` → rule entity → `relationships`. Depth: `c3 graph rule-{slug} --direction reverse`.
 3. **Check compliance:** `c3 lookup <file>` per code-map entry. Compare against `## Golden Example` + `## Not This`. Categorize: compliant / needs-update / breaking.
 4. **Surface impact:** `AskUserQuestion` — proceed/narrow/cancel (ASSUMPTION_MODE: skip)
-5. **Execute:** Update rule doc + create ADR. Non-compliant → TODO in ADR (no code changes).
+5. **Execute:** A rule is a frozen fact — `c3 write`/`c3 set`/`c3 wire` on an existing rule is refused ("… is a fact — facts are frozen and change only through a change-unit"). Route the edit through the change-unit: open the ADR as the change-unit, `c3 read rule-{slug} --section <name> --cite` for each section you touch, author a `<seq>-{slug}.patch.md` under `.c3/changes/<adr-id>/`, then `c3 change apply <adr-id>`. Non-compliant citers → TODO in the ADR (no code changes here).
 6. Code changes → route to change.
+
+> `c3 set rule-{slug} codemap '<glob>'` is the one exception — the code binding is not frozen and may be updated directly (or carried as a `.codemap.md` inside the change).
 
 ---
 
@@ -183,8 +190,8 @@ Ref entirely about enforcement, not rationale.
    - `## Not This` → keep
    - `## Why` → `origin:` if parent ref exists, else drop
 3. Set `origin: [ref-{old-slug}]` if old ref kept for rationale
-4. `c3 wire <component> rule-{slug}` per citer
-5. If deleting ref: `c3 wire <component> ref-{slug} --remove` per citer, then delete
+4. Re-edge each citer to the new rule. Citers are frozen facts whose edges come from their own `## Related Rules` body, so this is a change-unit patch per citer (one ADR for the batch): `c3 read <component-id> --section "Related Rules" --cite` → add the `rule-{slug}` row in a `<seq>-<slug>.patch.md` → `c3 change apply <adr-id>`. A brand-new citer would instead carry the row in its body at `c3 add` time.
+5. If deleting ref: drop the `ref-{slug}` row from each citer's `## Related Rules`/`## Related Refs` body the same way (change-unit patch, not `c3 wire --remove`), then delete the ref
 6. Move ref's file patterns to rule in code-map
 
 ### Step 3b: Split (dual-nature)
@@ -204,10 +211,10 @@ Ref has both rationale AND enforcement.
    - `## Not This` — code anti-patterns (not rejected alternatives)
    - Set `origin: [ref-{original-slug}]`
 
-3. **Rewire citations:**
-   - Need rationale → keep `ref-{slug}` in `uses:`
-   - Need enforcement → add `rule-{slug}` via `c3 wire`
-   - Most need both → keep ref, add rule
+3. **Rewire citations** (each citer is a frozen fact — edges come from its own body, so re-edging rides as a change-unit patch on its `## Related Rules`/`## Related Refs` block; a brand-new citer carries the rows in its body at `c3 add`):
+   - Need rationale → keep the `ref-{slug}` row
+   - Need enforcement → add a `rule-{slug}` row
+   - Most need both → keep ref row, add rule row
 
 4. **Update code-map:**
    - Ref keeps/narrows patterns
@@ -215,13 +222,13 @@ Ref has both rationale AND enforcement.
 
 ### Step 4: Adoption ADR
 
-One ADR per migration batch:
+One ADR per migration batch. ADR status set is `[open, accepted, done, superseded]`. Born `open` (a fresh ADR may show the unmigrated synonym `proposed`); after the migration lands, `c3 change accept <adr-id>` flips it to `accepted`, and the next `c3 check --fix` auto-latches `accepted → done`. You never `set` a terminal status. Final state:
 
 ```yaml
 ---
 id: adr-YYYYMMDD-migrate-refs-to-rules
 title: Migrate enforcement refs to coding rules
-status: implemented
+status: done
 affects: [ref-X, ref-Y, rule-A, rule-B]
 ---
 ```
@@ -241,7 +248,7 @@ Confirm: no orphan refs, all rules have golden examples, all citations intact.
 
 ## Adopt
 
-Flow: `Preview → Discover Overlap → Guided Merge → Write → Wire → ADR`
+Flow: `Preview → Discover Overlap → Guided Merge → Write → Wire Citers → ADR`
 
 Adopt marketplace rule into project `.c3/rules/` (if using marketplace plugin packs).
 
@@ -275,32 +282,31 @@ Required sections (Rule, Golden Example) cannot be skipped.
 
 ### Step 4: Write
 
-Write the adapted body sections to files first (Golden Example and Not This contain code fences → use `--file`), then apply:
+Adopting creates a brand-new local rule, so author its full body at creation. A rule is a frozen fact — once it exists, `c3 set`/`c3 write` on it is refused, so do NOT scaffold-then-patch. Assemble the adapted sections (Goal, Rule, Golden Example, Not This, Scope — code fences and all) into one body file and create the rule from it:
 
 ```bash
-c3 add rule <slug>
-c3 set rule-<slug> goal "<adapted goal>"
-echo "<adapted rule statement>" | c3 write rule-<slug> --section "Rule"
-c3 write rule-<slug> --section "Golden Example" --file golden.md
-c3 write rule-<slug> --section "Not This" --file not-this.md
+# body.md holds the full adapted doc: ## Goal, ## Rule, ## Golden Example, ## Not This, ...
+c3 add rule <slug> --file body.md
 ```
 
-### Step 5: Wire
+To revise the rule LATER (after it exists), route through a change-unit — see the Update flow.
 
-Per component from overlap search:
-```bash
-c3 wire <component-id> rule-<slug>
-```
+### Step 5: Wire Citers
+
+Citers are frozen facts and their edges come from their own `## Related Rules` body, not `c3 wire`. Per component from overlap search, add a `rule-<slug>` row to its `## Related Rules` block:
+
+- **Existing citer:** ride it as a change-unit patch — `c3 read <component-id> --section "Related Rules" --cite` → author `<seq>-<slug>.patch.md` adding the row → `c3 change apply <adr-id>`.
+- **Brand-new citer:** author the `## Related Rules` row in its body at `c3 add component <slug> --file body.md` time; the edge appears at import.
 
 ### Step 6: Adoption ADR
 
-ADRs cannot be created as `implemented` and cannot transition `proposed → implemented` directly. Two-step:
+ADR status set is `[open, accepted, done, superseded]`; `accepted → done` is a one-way auto-done latch you never `set`. Flow:
 
 ```bash
 c3 add adr adopt-rule-<slug> < adr-body.md
-c3 set adr-YYYYMMDD-adopt-rule-<slug> status accepted
-# rule wired and adapted from marketplace
-c3 set adr-YYYYMMDD-adopt-rule-<slug> status implemented
+# rule created and adapted from marketplace; deliverable in place
+c3 change accept adr-YYYYMMDD-adopt-rule-<slug>
+c3 check --fix   # auto-latches accepted → done once the After cites resolve fresh
 ```
 
 Body with rationale + adaptation notes → `c3 write adr-YYYYMMDD-adopt-rule-<slug> --file body.md`.

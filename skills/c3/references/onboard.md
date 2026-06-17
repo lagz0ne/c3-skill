@@ -216,8 +216,8 @@ c3 lookup 'src/**'
 |--------|---------|-----|
 | No system goal | Missing `goal:` in README.md | `c3 set <id> goal "<text>"` |
 | No `files:` | Missing code-map pattern | `c3 set <id> codemap '<glob>'` |
-| No `uses:` | Ref not wired | `c3 wire <component> <ref>` |
-| Ref has no `via:` | Uncited ref | Wire or delete |
+| No `uses:` | Ref not wired | Add the ref to the component's `## Related Refs` body — at create, or via a change-unit patch if the component already exists — then re-import (edges build at import) |
+| Ref has no `via:` | Uncited ref | Cite it from a component (`## Related Refs` in the citer's body, as above) or delete the ref |
 | `[provisioning]` | Design-only | Expected or implement |
 | `lookup` returns nothing | Bad/missing codemap | Fix patterns via `c3 set <id> codemap '<glob>'`; re-check with `lookup 'src/**'` |
 | Low coverage % | Many unmapped files | `_exclude` for tests/configs, map rest |
@@ -244,7 +244,7 @@ File lookup: `c3 lookup <file-or-glob>` maps files/directories to components + r
 **Typical flow:**
 
 1. Understand what exists: `c3 list` → topology + coverage, then `c3 lookup <file>` → which component owns it
-2. Make changes: `c3 add` / `c3 write` / `c3 set` / `c3 wire` to create and connect entities (use `--file <path>` for bodies with tables, mermaid, or code fences)
+2. Make changes: `c3 add` / `c3 write` / `c3 set` / `c3 wire` to create and connect NEW entities (use `--file <path>` for bodies with tables, mermaid, or code fences). Once an entity exists as a frozen fact, editing it goes through a change-unit, not these commands (`c3 set <id> codemap` stays direct).
 3. Validate: `c3 check` catches broken links, schema gaps, orphans
 4. Visualize: `c3 graph <container-or-component> --format mermaid` renders architecture as mermaid diagrams
 

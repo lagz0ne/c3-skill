@@ -42,22 +42,28 @@ at `.c3/canvases/<type>.md`; `c3 canvas` manages them and the user may edit them
 | Command | Purpose |
 |---------|---------|
 | `list` | Topology with counts + coverage (`--flat`, `--compact`) |
-| `check` | Validate docs against their canvas definitions (`--fix`, `--only`, `--include-adr`, `--only-touched`) |
+| `check` | Validate docs against their canvas definitions (`--fix`, `--only`, `--include-adr`, `--only-touched`). Also verifies an accepted unit's declared code bindings resolve (WARN; `--strict-codemap` to gate) |
 | `canvas <list\|read\|add\|write>` | Manage canvas definitions (the shape of each entity type); user-owned at `.c3/canvases/` |
 | `schema <type>` | Render the canvas definition for `<type>` (sections, columns, REJECT IF). Source of truth = `c3 canvas read <type>` |
-| `add <type> <slug>` | Create entity; body via stdin or `--file <path>` (`--container`, `--feature`). Valid types = `c3 canvas list` |
-| `write <id>` | Rewrite body or a section (`--section <name>`, `--file <path>`, stdin) |
-| `set <id> <field> <val>` | Update frontmatter field (goal, status, boundary, category, title, date, codemap patterns) |
-| `wire <src> <tgt>` | Link entities (`--remove` unlinks) |
-| `read <id>` | Entity content; agent truncates 1500 chars (`--full` bypasses) |
+| `add <type> <slug>` | **Create** entity; body via stdin or `--file <path>` (`--container`, `--feature`). Unguarded — the create path. Valid types = `c3 canvas list` |
+| `write <id>` | Rewrite body or a section (`--section <name>`, `--file <path>`, stdin). **Refused on a frozen fact** → use the change-unit flow. Direct only for change-docs (adr/prd) + canvas bodies |
+| `set <id> <field> <val>` | Update a frontmatter field (goal, status, boundary, category, title, date). **Refused on a frozen fact** → change-unit flow. **Exception: `set <id> codemap '<glob>'`** — the external code binding is verified, not frozen, so this one field is editable on a frozen fact (live code-map maintenance) |
+| `wire <src> <tgt>` | Link entities (`--remove` unlinks). **Refused when `<src>` is a frozen fact** → change-unit flow (frontmatter patch) |
+| `read <id>` | Entity content; agent truncates 1500 chars (`--full` bypasses). `--section <name> --cite` emits the patch base anchor |
 | `search <query>` | Natural-language or conceptual query -> candidate entities by semantic + keyword + graph signals |
 | `lookup <file-or-glob>` | File/glob -> component + refs |
-| `delete <id>` | Remove entity + clean refs (`--dry-run`) |
+| `delete <id>` | Remove entity + clean refs (`--dry-run`). **Refused on a frozen fact** → change-unit flow (`retire` patch) |
+| `change <new\|view\|status\|accept\|apply\|rebase>` | The change-unit flow — the **only** way to edit a frozen fact. Author patches (and optional `.codemap.md` carriers for code re-bindings) in `.c3/changes/<unit-id>/`, then `change apply` lands them atomically. `view`/`status` show both arms — internal patches + external code bindings (see `references/change.md`) |
 | `graph <id>` | Relationship graph (`--depth`, `--direction forward|reverse`, `--format mermaid`) |
 
 **Don't assume a fixed type set** — confirm any type's shape with `c3 schema <type>` (works for every entity type); `c3 canvas list` shows the document/definition canvases.
 
-**Authoring:** read the type's definition first (`c3 schema <type>`), author to it. Body with mermaid, code fences, or tables -> use `--file <path>`, not inline strings. Single-sentence text edits -> `echo "..." | c3 write <id> --section <name>`. Whole-body rewrite -> `c3 write <id> --file body.md`. Frontmatter fields -> `c3 set <id> <field> <value>`.
+**Authoring — two surfaces, one boundary.** Read the type's definition first (`c3 schema <type>`), author to it. Body with mermaid, code fences, or tables -> use `--file <path>`, not inline strings.
+
+- **FROZEN FACTS** — `system`, `container`, `component`, `ref`, `rule`, `recipe`, `pm-requirement`, `user-story` (every type whose canvas declares no `status:` set). **You cannot `write`/`set`/`wire`/`delete` an existing one.** Editing a fact happens ONLY through the change-unit flow: `c3 read <id> --section <name> --cite` -> `c3 change new <unit-id>` -> author `<seq>-<slug>.patch.md` -> `c3 change apply <unit-id>`. See `references/change.md`. (**Creating** a new fact is exempt — `c3 add <type> <slug>` is unguarded.)
+- **CHANGE-DOCS** (`adr`, `prd`, `atomic-design-change`) **and CANVAS bodies** — these declare `status:` / are user-owned, so they edit directly: single-sentence text -> `echo "..." | c3 write <id> --section <name>`; whole-body rewrite -> `c3 write <id> --file body.md`; frontmatter -> `c3 set <id> <field> <value>`.
+
+The guard keys on the FIRST arg only, and an unknown/typo'd type is treated as frozen. The exact refusal names the fix: *"<id> is a fact — facts are frozen and change only through a change-unit."*
 
 ---
 
@@ -68,7 +74,7 @@ at `.c3/canvases/<type>.md`; `c3 canvas` manages them and the user may edit them
 | adopt, init, scaffold, bootstrap, onboard, "create .c3" | **onboard** | `references/onboard.md` |
 | where, explain, how, diagram, trace, "show me", "what is", "what handles" | **query** | `references/query.md` |
 | audit, validate, "check docs", drift | **audit** | `references/audit.md` |
-| add, change, fix, implement, refactor, remove, provision, design | **change** | `references/change.md` |
+| add, change, fix, implement, refactor, remove, provision, design | **change** (the change-unit flow: ADR = unit; fact-edits ride as patches, land via `change apply`) | `references/change.md` |
 | pattern, convention, "create ref", "update ref", standardize | **ref** | `references/ref.md` |
 | "coding rule", "coding standard", "coding convention", "split ref into rule" | **rule** | `references/rule.md` |
 | marketplace, "browse rules", "adopt rule", "install rule from" | **rule** (Adopt) | `references/rule.md` |
@@ -109,34 +115,44 @@ First `AskUserQuestion` denial -> `ASSUMPTION_MODE = true` for session.
 
 **HARD RULE -- entity instances are CLI-only. NEVER Read/Glob/Edit/Write entity docs under `.c3/` (containers, components, refs, rules, adrs, recipes, document instances).** Mutate them only through the `c3` command handle below.
 
+**HARD RULE -- FACTS ARE FROZEN.** A *fact* = any entity whose canvas declares no `status:` set (`system`, `container`, `component`, `ref`, `rule`, `recipe`, `pm-requirement`, `user-story`). `c3 write`/`set`/`wire`/`delete` on an existing fact is **refused** — edit it ONLY by authoring patches in a change-unit and running `c3 change apply`. **Exempt (still direct):** `c3 add` (create), `c3 canvas write` (canvas bodies are user-owned), editing a *change-doc* (`adr`/`prd`/`atomic-design-change` — they declare `status:`), and **`c3 set <id> codemap`** (the external code binding is verified, not frozen — code churns, so the map is live-maintenance; deliberate re-bindings ride a change-unit as a `.codemap.md` carrier, see `references/change.md`). The guard checks the FIRST arg only; unknown types are treated as frozen.
+
 **Canvas DEFINITIONS at `.c3/canvases/<type>.md` are the exception — they are user-owned markdown.** Read them (`c3 canvas read <type>` / directly) and edit them (`c3 canvas write` or by hand); they are meant to be customized. `c3 check` validates instances against them.
 
 `.c3/c3.db` = disposable cache, not submitted state. Raw access to *instance* files bypasses the CLI contract -> stale/misleading. Instance access via the `c3` command handle:
 
 | Op | Commands |
 |----|----------|
-| Create | `add` |
-| Read | `read <id>`, `list`, `lookup`, `graph` |
-| Update | `write <id>`, `set`, `wire` (`--remove` unwires) |
-| Delete | `delete` |
+| Create (unguarded) | `add` |
+| Read | `read <id>` (`--cite` for a patch base), `list`, `lookup`, `graph` |
+| Edit a FROZEN FACT | `change new` → author patch → `change apply` (the ONLY path; `write`/`set`/`wire`/`delete` are refused on facts) |
+| Edit a change-doc / retire a fact | `write <id>`, `set`, `wire` (`--remove`) on `adr`/`prd` only; fact frontmatter/retire ride as patches via `change apply` |
 | Validate | `check` |
-| Definitions | `canvas <list\|read\|add\|write>`, `schema <type>` |
+| Definitions (user-owned) | `canvas <list\|read\|add\|write>`, `schema <type>` |
 
 Missing packaged CLI operation -> STOP, tell user. No file-tool workarounds.
 
 **Search strategy:** concept->entity via `c3 search "<question>"`; code->entity via `c3 lookup <file-or-glob>`; topology via `c3 list`; doc bodies via targeted `c3 read <id> --section <name>` or `c3 read <id> --full`.
 
-**`c3 check` after every mutation** (`add`, `write`, `set`, `wire`, `delete`, `canvas`). Errors = blockers.
+**Embeddings self-heal — no manual re-index after a change.** `change apply` does not touch embeddings; the next `c3 search` reconciles the changed fact incrementally. `c3 index` = full rebuild (maintenance only), never a correctness step.
+
+**`c3 check` after every mutation** — after `change apply` (the landing for any fact edit), after `add` (create), and after `canvas write`. Errors = blockers. (`change apply` runs drift + canvas gates first, but `check` is still the post-land confirmation.)
 
 **Read the definition before authoring or validating any entity.** Required sections / columns / reject rules come from `c3 schema <type>` (the project's canvas definition), never from memory or this skill's prose. If a user edited the definition, that edit is the contract.
 
-**ADR-first for changes:**
+**ADR-first — the ADR is the change-unit:**
 Every **change** starts `c3 add adr <slug>` before implementation.
 (Exception: **ref-add** creates ADR at completion -- `references/ref.md`.)
-ADR = work order, and ADR = the `adr` canvas. Start with `c3 schema adr` (or `c3 canvas read adr` for the owned source) BEFORE drafting any ADR body. The schema output leads with a **REJECT IF** block — read it first; the bullets ARE the rejection contract. Per-section `fill:` and `rejected when:` lines apply the same gate at section level. Same shape for any `c3 schema <type>` — REJECT IF first, fill the body to the contract, never draft freehand and reconcile later. Use `c3 read <adr> --full` and `help[]` to verify the body still matches the contract. ADR creation is all-or-nothing; thin sections fail at creation, `N.A - <reason>` for inapplicable rows. `list`/`check` exclude ADRs by default; `--include-adr` only when working on specific ADR. **Terminal-state ADRs (`status: implemented` and `status: provisioned`) are exempt from `c3 check` validation** — historical, content frozen. ADRs cannot be created as `implemented`; transition `proposed → accepted → implemented` (direct `proposed → implemented` is blocked). ADR content historical -- verify against current docs.
+ADR = work order, and the ADR **is the change-unit**: same id, folder `.c3/changes/<adr-id>/`. You author the ADR *freely* (`add adr` / `write` / `set` — it is a change-doc, not a frozen fact); any edit it makes to a frozen fact rides as a `<seq>-<slug>.patch.md` in that folder and lands when you run `c3 change apply <adr-id>`. Author the reasoning, carry the fact-edits as patches, land them together.
+
+Two distinct freezes — do not blur them:
+- **Frozen FACT** (structural): a fact's *body* can only change through a change-unit. Applies the moment the fact exists.
+- **Content-frozen change-doc** (historical): a *terminal-state* ADR is exempt from `c3 check` — its prose is a frozen record of a past decision.
+
+ADR schema discipline is unchanged: start with `c3 schema adr` (or `c3 canvas read adr`) BEFORE drafting any ADR body. The schema output leads with a **REJECT IF** block — read it first; the bullets ARE the rejection contract. Per-section `fill:` and `rejected when:` lines apply the same gate at section level. Same shape for any `c3 schema <type>` — REJECT IF first, fill the body to the contract, never draft freehand and reconcile later. Use `c3 read <adr> --full` and `help[]` to verify the body still matches the contract. ADR creation is all-or-nothing; thin sections fail at creation, `N.A - <reason>` for inapplicable rows. `list`/`check` exclude ADRs by default; `--include-adr` only when working on a specific ADR. Change-doc status set is `[open, accepted, done, superseded]` (`c3 add adr` stamps `proposed` at creation — the unmigrated synonym for `open`); `accepted` auto-latches to `done` when its After-cites resolve fresh. **Terminal-state change-docs (`status: done`, `status: superseded`) are exempt from `c3 check`** — historical, content-frozen. ADR content is historical — verify against current docs.
 
 **Stop if:**
-- No ADR for change -> `c3 add adr <slug>` NOW
+- No ADR for change -> `c3 add adr <slug>` NOW (the ADR is the change-unit; fact-edits ride in `.c3/changes/<adr-id>/`)
 - Guessing intent -> `AskUserQuestion` (skip if ASSUMPTION_MODE)
 - Jumping to component -> start Context down
 - Authoring/validating against remembered sections instead of `c3 schema <type>`
@@ -222,7 +238,7 @@ No `.c3/` or re-onboard. Scaffold (incl. materialize canvas definitions) -> disc
 `references/audit.md`
 
 ### change
-ADR first -> `c3 list` -> affected entities -> `c3 lookup` files -> fill ADR (to the `adr` canvas) -> approve -> execute -> `c3 check`. Provision gate: implement or `status: provisioned`.
+ADR first (= the change-unit) -> `c3 list` -> affected entities -> `c3 lookup` files -> fill ADR to the `adr` canvas. **Editing a frozen fact:** `c3 read <id> --section <name> --cite` -> `c3 change new <adr-id>` -> author patches -> `c3 change view`/`status`/`accept` -> `c3 change apply` (the only mutation) -> `c3 check`. **Creating** a fact stays direct (`c3 add`). Provision gate: implement or design-only.
 `references/change.md`
 
 ### ref

@@ -5,6 +5,24 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [11.0.0] - 2026-06-17
+
+Major release: the change-unit "double-V". A change-unit declares its footprint and matches it on two axes — internal architectural facts (frozen, edited only through patches) and external code bindings (verified, never frozen). **Breaking:** a fact's body now changes only through a change-unit.
+
+### Added
+
+- **Codemap external arm** — a fact's code binding is verified, not frozen. `c3x set <fact> codemap <glob>` is allowed on a frozen fact (live maintenance); a `.codemap.md` carrier in a change-unit declares a deliberate re-binding and applies atomically with the patches. `c3x check` runs an introspection over an accepted unit's affected entities: a declared glob that matches no files is a WARN, and `--strict-codemap` promotes it to an error that gates `accepted -> done`.
+- **Two-arm `change view` / `change status`** — both surfaces now show internal patches (drift / state) and external codemap carriers (applied? which globs resolve?) as structured TOON/JSON.
+
+### Changed
+
+- **`change apply` is fully transactional** — a change-unit's patches and codemap carriers commit or roll back as one unit (a `store.WithTx` seam over the single pooled connection). A drifted anchor, a mid-write landing-hash mismatch, two patches on the same block, or a carrier with a missing target rolls the whole unit back; no half-matched state between facts and bindings. Block edits now re-anchor at write time, not only in the preflight.
+- **Change-doc lifecycle is project-canvas-aware** — the auto-done latch and the codemap introspection resolve a doc's canvas via `DefinitionForDir` / `IsChangeDocDir`, so a project-local change-doc type (custom `.c3/canvases/<type>.md` with a status set) gets the same lifecycle as the built-ins.
+
+### Breaking
+
+- **Facts are frozen** — `write` / `set` / `wire` / `delete` are refused on an existing fact (`system`, `container`, `component`, `ref`, `rule`, `recipe`, `pm-requirement`, `user-story`). Edit a fact only by authoring patches in `.c3/changes/<unit-id>/` and running `c3x change apply`. Creating a new fact (`c3x add`), editing a change-doc, editing a canvas definition, and `set <id> codemap` remain direct.
+
 ## [10.0.1] - 2026-06-10
 
 Patch release for the v10 line. The v10.0.0 GitHub Release was already published before these fixes, so the fixed CLI, skill metadata, and npm wrapper now pin v10.0.1 instead of reusing the public v10.0.0 assets.

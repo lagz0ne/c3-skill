@@ -69,11 +69,6 @@ type semanticIndexedRow struct {
 	hash  string
 }
 
-// RebuildSemanticIndex embeds every entity into the local SQLite vector table.
-func (s *Store) RebuildSemanticIndex() error {
-	return s.RebuildSemanticIndexWithOptions(context.Background(), SemanticIndexOptions{AllowDownload: true})
-}
-
 // RebuildSemanticIndexWithOptions refreshes all semantic vectors. It computes
 // vectors before replacing the existing index so failed downloads/runs do not
 // erase a previously usable index.
@@ -261,45 +256,6 @@ func (s *Store) semanticIndexedRows() (map[string]semanticIndexedRow, error) {
 	return indexed, nil
 }
 
-// UpsertEntityEmbedding refreshes one entity's local semantic vector.
-func (s *Store) UpsertEntityEmbedding(entityID string) error {
-	return s.UpsertEntityEmbeddingWithOptions(context.Background(), entityID, SemanticIndexOptions{AllowDownload: true})
-}
-
-// UpsertEntityEmbeddingWithOptions refreshes one entity vector with explicit
-// download policy. Normal entity writes do not call this; search and index
-// commands refresh vectors on demand.
-func (s *Store) UpsertEntityEmbeddingWithOptions(ctx context.Context, entityID string, opts SemanticIndexOptions) error {
-	e, err := s.GetEntity(entityID)
-	if err != nil {
-		return err
-	}
-	text := s.semanticTextForEntity(e)
-	row, ok, err := semanticEmbeddingForText(ctx, e.ID, text, opts.AllowDownload)
-	if err != nil {
-		return err
-	}
-	if !ok {
-		_, err := s.db.Exec(`DELETE FROM entity_embeddings WHERE entity_id = ?`, e.ID)
-		return err
-	}
-	_, err = s.db.Exec(`
-		INSERT INTO entity_embeddings(entity_id, model, dims, text_hash, vector, updated_at)
-		VALUES (?, ?, ?, ?, ?, datetime('now'))
-		ON CONFLICT(entity_id) DO UPDATE SET
-			model = excluded.model,
-			dims = excluded.dims,
-			text_hash = excluded.text_hash,
-			vector = excluded.vector,
-			updated_at = excluded.updated_at`,
-		row.entityID, SemanticEmbeddingModel, semanticEmbeddingDims, row.hash, encodeFloat32Vector(row.vector),
-	)
-	if err != nil {
-		return fmt.Errorf("upsert semantic embedding %s: %w", e.ID, err)
-	}
-	return nil
-}
-
 func semanticEmbeddingForText(ctx context.Context, entityID, text string, allowDownload bool) (semanticEmbeddingRow, bool, error) {
 	vec, ok, err := embedSemanticText(ctx, text, allowDownload)
 	if err != nil {
@@ -357,12 +313,6 @@ func writeSemanticField(b *strings.Builder, label, text string) {
 	}
 	b.WriteString(text)
 	b.WriteByte('\n')
-}
-
-// SearchSemantic returns nearest local semantic vectors. Missing vectors or a
-// missing model cache are clean no-ops unless AllowDownload is requested.
-func (s *Store) SearchSemantic(query, entityType string, limit int) ([]SearchResult, error) {
-	return s.SearchSemanticWithOptions(context.Background(), query, entityType, limit, SemanticSearchOptions{})
 }
 
 // SearchSemanticWithOptions embeds a query with MiniLM and brute-force scans

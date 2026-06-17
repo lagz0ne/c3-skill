@@ -92,17 +92,21 @@ func RunSearch(opts SearchOptions, w io.Writer) error {
 		}
 	}
 
-	rows, err := collectSearchRows(opts.Store, opts.Query, entityType, limit)
+	// Over-fetch a candidate pool so reciprocal-rank fusion can lift a doc that is
+	// corroborated across signals even when it sits beyond the caller's limit on any
+	// single signal. The one hard truncation to limit happens after fusion.
+	pool := candidatePoolLimit(limit)
+	rows, err := collectSearchRows(opts.Store, opts.Query, entityType, pool)
 	if err != nil {
 		return err
 	}
-	rows, err = expandHybridRows(opts.Store, rows, opts.Query, entityType, limit)
+	rows, err = expandHybridRows(opts.Store, rows, opts.Query, entityType, pool)
 	if err != nil {
 		return err
 	}
 	var semanticRows []store.SearchResult
 	if semanticEnabled {
-		semanticRows, err = opts.Store.SearchSemanticWithOptions(context.Background(), opts.Query, entityType, semanticSearchLimit(limit), store.SemanticSearchOptions{
+		semanticRows, err = opts.Store.SearchSemanticWithOptions(context.Background(), opts.Query, entityType, pool, store.SemanticSearchOptions{
 			AllowDownload: true,
 		})
 		if err != nil {
@@ -127,13 +131,19 @@ func RunSearch(opts SearchOptions, w io.Writer) error {
 	}, format, nil)
 }
 
-func semanticSearchLimit(limit int) int {
+// candidatePoolLimit sizes the over-fetched candidate pool that feeds fusion. Each
+// retrieval signal returns up to this many rows so fusion sees docs corroborated
+// across signals before the single post-fusion truncation to the caller's limit.
+// Sized at ~2x the cutoff: deep enough to recover a corroborated doc that sits just
+// past the cutoff on a single signal, but not so deep that low-signal docs dilute the
+// pool and evict a true hit (search-eval peaks at this ratio; 4x measurably regressed).
+func candidatePoolLimit(limit int) int {
 	if limit <= 0 {
 		limit = 20
 	}
-	n := limit * 4
-	if n < 20 {
-		return 20
+	n := limit * 2
+	if n < 10 {
+		return 10
 	}
 	if n > 100 {
 		return 100

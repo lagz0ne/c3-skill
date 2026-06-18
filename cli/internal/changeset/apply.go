@@ -42,6 +42,29 @@ func ParseEntityHandle(h string) (entity string, version int, merkle string, ok 
 // CheckDrift reports whether a patch's anchor is still fresh. Drift is decided by
 // the cited node's HASH, not the entity version — so a sibling block's flip never
 // stales this anchor. A no-base (create) patch never drifts.
+// resolveCitedNode finds the block a cite handle anchors. The sha256 hash IS the
+// anchor — stable across node-id renumbering (a whole-body rewrite, insert, create,
+// or rebuild re-inserts nodes with fresh integer ids, but identical content keeps
+// its hash). The integer node id is only a fast-path hint: try it, but if it does
+// not seal to the cited hash for this entity, fall back to whichever node of the
+// entity does. Returns a drift-style error when nothing seals to the hash (the
+// cited content genuinely changed or is gone).
+func resolveCitedNode(s *store.Store, entityID string, nodeID int64, expectedHash string) (*store.Node, error) {
+	if node, err := s.GetNode(nodeID); err == nil && node.EntityID == entityID && node.Hash == expectedHash {
+		return node, nil
+	}
+	nodes, err := s.NodesForEntity(entityID)
+	if err != nil {
+		return nil, err
+	}
+	for _, n := range nodes {
+		if n.Hash == expectedHash {
+			return n, nil
+		}
+	}
+	return nil, fmt.Errorf("no block of %s seals to the cited hash", entityID)
+}
+
 func CheckDrift(s *store.Store, p Patch) error {
 	if p.Base == "" {
 		return nil // create — nothing to anchor
@@ -51,12 +74,8 @@ func CheckDrift(s *store.Store, p Patch) error {
 		if entity != p.Target {
 			return fmt.Errorf("patch %s: base anchors %s but target is %s", p.Source, entity, p.Target)
 		}
-		node, err := s.GetNode(nodeID)
-		if err != nil {
-			return fmt.Errorf("patch %s: drift — anchor block %d of %s not found; rebase", p.Source, nodeID, p.Target)
-		}
-		if node.EntityID != p.Target || node.Hash != expected {
-			return fmt.Errorf("patch %s: drift — anchor block %d of %s has changed; rebase", p.Source, nodeID, p.Target)
+		if _, err := resolveCitedNode(s, p.Target, nodeID, expected); err != nil {
+			return fmt.Errorf("patch %s: drift — %v; rebase", p.Source, err)
 		}
 		return nil
 	}
@@ -355,26 +374,23 @@ func normalizeTableRowContent(content string) string {
 }
 
 func applyBlock(s *store.Store, p Patch) error {
-	_, nodeID, _, expected, _ := ParseCiteHandle(p.Base) // validated by CheckDrift
-	node, err := s.GetNode(nodeID)
-	if err != nil {
-		return err
-	}
-	// Re-anchor at write time against live (in-transaction) state. The drift
+	_, nodeID, _, expected, _ := ParseCiteHandle(p.Base)
+	// Re-anchor at write time by HASH against live (in-transaction) state. The drift
 	// preflight ran before the apply transaction opened, so it cannot see a sibling
-	// patch in THIS unit that already rewrote the same block; read-your-writes here
-	// catches that (and any concurrent mutation) deterministically instead of
-	// silently clobbering the earlier write.
-	if node.EntityID != p.Target || node.Hash != expected {
-		return fmt.Errorf("patch %s: base anchor for block %d of %s changed before apply; rebase", p.Source, nodeID, p.Target)
+	// patch in THIS unit that already rewrote the same block; resolving by the cited
+	// hash here catches that (the hash would no longer be present) and survives node-id
+	// renumbering from an earlier sibling patch deterministically.
+	node, err := resolveCitedNode(s, p.Target, nodeID, expected)
+	if err != nil {
+		return fmt.Errorf("patch %s: base anchor of %s changed before apply; rebase (%v)", p.Source, p.Target, err)
 	}
 	// An EMPTY block body DELETES the cited node (and its children) — the model's
 	// "empty body deletes the block". This is how you drop a table row, a stale
 	// paragraph, or a whole section. Drift is already enforced (we anchored the node
 	// by hash above), so you only ever delete the block you cited.
 	if strings.TrimSpace(p.Content) == "" {
-		if err := s.DeleteNode(nodeID); err != nil {
-			return fmt.Errorf("patch %s: delete block %d of %s: %w", p.Source, nodeID, p.Target, err)
+		if err := s.DeleteNode(node.ID); err != nil {
+			return fmt.Errorf("patch %s: delete block %d of %s: %w", p.Source, node.ID, p.Target, err)
 		}
 		return reseal(s, p.Target)
 	}

@@ -133,6 +133,27 @@ func TestNormalizeTableRowContent(t *testing.T) {
 	}
 }
 
+// A block anchor survives node-id renumbering: the sha256 is the anchor, the
+// integer node id only a hint. A handle whose id no longer exists but whose hash
+// still seals a node resolves by hash and applies (no spurious "rebase").
+func TestApply_BlockAnchor_SurvivesNodeIDRenumber(t *testing.T) {
+	s := openMem(t)
+	seedFact(t, s, "c3-101", "# auth\n\n## Goal\n\nOriginal goal.\n")
+	handle, _ := blockHandle(t, s, "c3-101", "Original goal.")
+	// Keep the hash, corrupt the integer node id (simulating a renumber).
+	ns := strings.Index(handle, "#n") + 2
+	ne := strings.Index(handle, "@")
+	stale := handle[:ns] + "999999" + handle[ne:]
+
+	p := Patch{Target: "c3-101", Scope: ScopeBlock, Base: stale, Content: "Updated via hash anchor.", Source: "01.patch.md"}
+	if err := Apply(s, []Patch{p}, nil, nil); err != nil {
+		t.Fatalf("a stale node id with a matching hash must resolve by hash, got: %v", err)
+	}
+	if nodeHashOf(t, s, "c3-101", "Updated via hash anchor.") == "" {
+		t.Error("the block should have been updated via hash anchoring")
+	}
+}
+
 // An empty block body DELETES the cited node — "empty body deletes the block".
 func TestApply_BlockEmpty_DeletesNode(t *testing.T) {
 	s := openMem(t)

@@ -16,7 +16,7 @@ import (
 func MergedBody(s *store.Store, p Patch) (string, error) {
 	switch p.Scope {
 	case ScopeBlock:
-		_, nodeID, _, _, ok := ParseCiteHandle(p.Base)
+		_, hintID, _, expected, ok := ParseCiteHandle(p.Base)
 		if !ok {
 			return "", fmt.Errorf("patch %s: malformed base handle", p.Source)
 		}
@@ -24,6 +24,13 @@ func MergedBody(s *store.Store, p Patch) (string, error) {
 		if err != nil {
 			return "", err
 		}
+		// Anchor by hash (id is a hint) — same as CheckDrift/applyBlock, so the gate
+		// preview matches what apply will actually mutate even after renumbering.
+		target, err := resolveCitedNode(s, p.Target, hintID, expected)
+		if err != nil {
+			return "", fmt.Errorf("patch %s: %v", p.Source, err)
+		}
+		nodeID := target.ID
 		if strings.TrimSpace(p.Content) == "" {
 			// Deletion: drop the cited node and every descendant (DeleteNode cascades).
 			drop := map[int64]bool{nodeID: true}

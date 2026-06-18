@@ -384,9 +384,9 @@ Examples:
 	},
 	{
 		Name:     "change",
-		Args:     "<new|view|accept|apply|status|rebase|scaffold> <id>",
+		Args:     "<new|view|accept|apply|status|rebase|scaffold|inspect> <id>",
 		OneLiner: "Author, review, and apply a change-unit (the only path that mutates a fact)",
-		Help: `Usage: c3x change <new|view|accept|apply|status|rebase|scaffold> <change-unit-id>
+		Help: `Usage: c3x change <new|view|accept|apply|status|rebase|scaffold|inspect> <change-unit-id>
 
 A change-unit = reasoning (the doc) + change material (patch files in its folder,
 .c3/changes/<id>/*.patch.md). Applying it is the ONLY legal mutation of a fact.
@@ -400,9 +400,11 @@ rename / re-edge / remove. The folder of *.patch.md files is the source of truth
   view    the "files changed" panel: per-patch drift + state
   status  per-patch state derived from seal state (pending/applied/drifted/new)
   accept  record the one stored human judgment (status → accepted)
-  apply   the switcher: two gates (drift + canvas-valid), atomic all-or-nothing
+  apply   the switcher: drift + canvas + inspection gates, atomic all-or-nothing
   rebase  emit the drift bundle for re-authoring drifted patches
   scaffold stage a rung-climb: one empty insert patch per fact below its canvas bar
+  inspect show each touched fact's derivation obligations + code-map territory +
+          material hashes to stamp into a <seq>.inspect.md (the up-V the switch forces)
 
 Apply runs two mechanical gates before any write — the anchor must be fresh
 (no drift) and the merged result must satisfy its canvas — and is atomic: one

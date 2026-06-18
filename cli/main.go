@@ -525,12 +525,12 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 		}
 		co := cmd.ChangeApplyOptions{Store: s, C3Dir: c3Dir, UnitID: unitID, DryRun: opts.DryRun, JSON: opts.JSON}
 		switch sub {
-		case "apply", "view", "status", "new", "accept", "rebase", "scaffold":
+		case "apply", "view", "status", "new", "accept", "rebase", "scaffold", "inspect":
 			if unitID == "" {
 				return fmt.Errorf("error: change %s requires a <change-unit-id> argument\nhint: c3x change %s <id>", sub, sub)
 			}
 		default:
-			return fmt.Errorf("error: usage: c3x change <new|view|accept|apply|status|rebase|scaffold> <id>\nhint: run 'c3x change --help' for usage")
+			return fmt.Errorf("error: usage: c3x change <new|view|accept|apply|status|rebase|scaffold|inspect> <id>\nhint: run 'c3x change --help' for usage")
 		}
 		switch sub {
 		case "apply":
@@ -547,6 +547,8 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 			err = cmd.RunChangeAccept(co, w)
 		case "rebase":
 			err = cmd.RunChangeRebase(co, w)
+		case "inspect":
+			err = cmd.RunChangeInspect(co, w)
 		}
 	default:
 		return fmt.Errorf("error: unknown command '%s'\nhint: run 'c3x --help' to see available commands", opts.Command)

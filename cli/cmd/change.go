@@ -72,6 +72,18 @@ func RunChangeApply(opts ChangeApplyOptions, w io.Writer) error {
 			rejects = append(rejects, fmt.Sprintf("codemap %s: target %s does not exist and is not created by this change-unit", c.Source, c.Target))
 		}
 	}
+	// Up-V gate: every touched fact with derivation obligations needs a fresh,
+	// territory-grounded *.inspect.md. Computed from the unit's preview overlay —
+	// only run once the mechanical gates pass (the overlay replays the same apply,
+	// so a drift/canvas/target failure would just resurface there and mask itself).
+	if len(rejects) == 0 {
+		inspectRejects, err := inspectionGate(opts.Store, opts.C3Dir, opts.UnitID, patches, codemaps)
+		if err != nil {
+			return fmt.Errorf("change apply: inspection gate: %w", err)
+		}
+		rejects = append(rejects, inspectRejects...)
+	}
+
 	if len(rejects) > 0 {
 		for _, r := range rejects {
 			fmt.Fprintf(w, "REJECT %s\n", r)

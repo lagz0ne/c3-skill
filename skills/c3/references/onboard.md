@@ -2,7 +2,7 @@
 
 ## What onboarding is (v11)
 
-LLM-driven, one complete change-unit cycle. You **discuss** the architecture, **size the canvas to fit the project**, **author the whole architecture into the genesis ADR** as staged create-patches, then **flip** — `c3x change apply` materializes it atomically as frozen facts. `c3 init` already created the system `c3-0` and the genesis ADR `adr-00000000-c3-adoption`; that ADR is your resumable progress ledger (the staged patches persist, so onboarding is interruptible).
+LLM-driven, one complete change-unit cycle. You **discuss** the architecture, **size the canvas to fit the project**, **author the whole architecture into the genesis ADR** as staged create-patches, then **flip** — `c3x change apply` materializes it atomically as frozen facts. `c3 init` already created the system `c3-0` and the genesis ADR `adr-00000000-c3-adoption`; the staged create-patches persist on disk **until you flip**, so authoring is interruptible and resumable — the flip then **consumes** them (they're deleted), and the ADR's prose, not the patches, is the lasting record.
 
 **The order matters: canvas first, then facts.** Every fact is validated against its canvas at apply, so the canvas must already be the right shape before you author facts.
 
@@ -32,9 +32,9 @@ The genesis ADR is the spine. Stage 0/1/2 below are the discovery → detail →
 1. **Discuss** — the idea and the architectural separation: containers, where the seams fall. Conversation first.
 2. **Size the canvas** — keep or shape the rung-1 canvases to match the project (the lean seeds are the default; trim or enrich via `c3 canvas write`). This happens **before** authoring facts, because facts are validated against the canvas.
 3. **Author** — write the architecture into the genesis ADR `adr-00000000-c3-adoption`. The containers/components/refs/rules go in as **create-patches** in `.c3/changes/adr-00000000-c3-adoption/` (scope `whole`, no base, with `type:` and `parent:`); the ADR body carries the narrative. Interruptible — the staged patches persist.
-4. **Flip** — `c3x change apply adr-00000000-c3-adoption` materializes the whole architecture atomically as frozen facts (canvas-validated, all-or-nothing). Then `c3 change accept adr-00000000-c3-adoption` + `c3 check --fix` auto-dones the genesis ADR. Onboarding ends having completed one full change-unit cycle.
+4. **Flip** — `c3x change apply adr-00000000-c3-adoption` materializes the whole architecture atomically as frozen facts (canvas-validated, all-or-nothing). The genesis ADR's Affected Topology Evidence was authored as `N.A` (the facts didn't exist yet), so **after the flip refresh those cites with real handles** (`c3 read <id> --cite` per affected fact) — now the facts exist. Then `c3 change accept adr-00000000-c3-adoption` + `c3 check --fix` latches it `accepted → done` once those refreshed After-cites resolve. Onboarding ends having completed one full change-unit cycle.
 
-Direct `c3 add` remains valid and unguarded for creating a fact (a new fact is not frozen). Frame the genesis ADR as the demonstration **and** the record — the resumable ledger of how this architecture was created.
+Direct `c3 add` remains valid and unguarded for creating a fact (a new fact is not frozen). Frame the genesis ADR as the demonstration **and** the record of how this architecture was created (its prose survives the flip; the create-patches are consumed by it).
 
 ## Progress Checklist
 
@@ -53,7 +53,7 @@ Direct `c3 add` remains valid and unguarded for creating a fact (a new fact is n
 
 ### 0.1 Scaffold
 
-`c3 init` already scaffolded `.c3/` (config, README, canvases/, system `c3-0`, genesis ADR `adr-00000000-c3-adoption`). Author the genesis ADR — the inventory ledger — via `c3 write adr-00000000-c3-adoption --section <name> --file <path>` for any body with tables, mermaid, or code blocks; short single-sentence fields via `c3 set adr-00000000-c3-adoption <field> <value>` or `echo "..." | c3 write adr-00000000-c3-adoption --section <name>`. The ADR is a change-doc, not a frozen fact, so you author and revise it freely.
+`c3 init` already scaffolded `.c3/` (config, README, canvases/, system `c3-0`, genesis ADR `adr-00000000-c3-adoption`). The genesis ADR starts **bodyless**, so author the **whole body once** with `c3 write adr-00000000-c3-adoption --file <path>` first (`--section` can't create a section that doesn't exist yet — it edits existing ones). After the body exists, revise per section via `c3 write adr-00000000-c3-adoption --section <name> --file <path>` (for tables, mermaid, code blocks) or `echo "..." | c3 write adr-00000000-c3-adoption --section <name>` (short text); frontmatter fields via `c3 set adr-00000000-c3-adoption <field> <value>`. The ADR is a change-doc, not a frozen fact, so you author and revise it freely.
 
 ### 0.1b Size the canvas first
 
@@ -147,7 +147,7 @@ Include each as mermaid code block.
 
 ## Stage 1: Details
 
-**Route creation through the genesis ADR.** The container/component/ref/rule bodies below are authored as **create-patches** staged in `.c3/changes/adr-00000000-c3-adoption/` — one `<seq>-<slug>.patch.md` per fact: scope `whole`, **no base**, with `type:` and `parent:` in the frontmatter, and the body in the shapes shown below. Nothing materializes yet; the whole architecture lands in one flip at Stage 2. This keeps onboarding interruptible (the staged patches persist) and makes the genesis ADR the record of how the architecture was built. (The `--file` body shapes below are the canvas-correct content for each patch body; direct `c3 add` is still valid for one-off facts, but the genesis ADR is the demonstration and the ledger.)
+**Route creation through the genesis ADR.** The container/component/ref/rule bodies below are authored as **create-patches** staged in `.c3/changes/adr-00000000-c3-adoption/` — one `<seq>-<slug>.patch.md` per fact: scope `whole`, **no base**, with `type:` and `parent:` in the frontmatter, and the body in the shapes shown below. Nothing materializes yet; the whole architecture lands in one flip at Stage 2. This keeps onboarding interruptible (the staged patches persist until the flip consumes them) and makes the genesis ADR the record of how the architecture was built. (The `--file` body shapes below are the canvas-correct content for each patch body; direct `c3 add` is still valid for one-off facts, but the genesis ADR is the demonstration and the ledger.)
 
 The system `c3-0` already exists from `c3 init` — its body is the context doc you author directly (it is a fact created at init; author it before the flip, then it is frozen).
 
@@ -183,16 +183,16 @@ Author each component body to the **component canvas** (`c3 schema component` �
 required sections, not a remembered list). Any content with markdown tables, mermaid, or
 code fences MUST go through `--file <path>` — inline strings corrupt quoting.
 
-**Parent `Components` tables list the IDs the CLI *allocates*, never guesses.** A
-container's `Components` table names components that do not exist yet when you create the
-container, and the CLI numbers them on creation — foundation `c3-<N>01+`, features
-`c3-<N>10+`, in creation order. Guessing the wrong number (e.g. writing `c3-101` for what
-the CLI makes a feature `c3-110`) makes `check` flag an *unknown entity reference* and
-forces a re-patch of the now-frozen container — pure churn. Avoid it: **create the
-components first, then read their real ids with `c3 list` and fill the container's
-`Components` table from those** (in the genesis flow, the table is authored in the
-container's create-patch — fill it after you have settled each component's id, so the flip
-lands a container whose table already matches). One pass, no reconciliation.
+**In the genesis flow YOU choose the ids — a create-patch's `target:` IS the entity
+id.** There is no CLI auto-numbering here (that's `c3 add`'s behavior, a separate path):
+the flip materializes each create-patch as a fact with exactly the id you wrote. So pick the
+ids up front, following the convention — container `c3-1`, `c3-2`, …; that container's
+components `c3-101+` (foundation) / `c3-110+` (feature); refs/rules by slug (`ref-…`, `rule-…`).
+Because you authored them, you already know them: fill each container's `Components` table and
+c3-0's `Containers` table with those same ids directly — **no placeholders, no "create first
+then read", no second reconciliation patch.** (Prefer the numbered convention over slug ids
+like `web`/`api`: slug-as-id breaks the `c3-N` reference scheme and mangles on-disk filenames.)
+One pass, the flip lands every table already matching.
 
 Code-map patterns: `c3 set <id> codemap <pattern>`. Bracket paths (`[id]`, `[...slug]`) work automatically.
 

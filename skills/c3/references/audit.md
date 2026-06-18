@@ -67,7 +67,7 @@ All diagram IDs → verify exist in inventory. Stale reference → FAIL.
 ADRs = ephemeral work orders, hidden from default `c3` ops.
 Only audit when explicitly requested or with `c3 check --include-adr`.
 
-`status=accepted` + >30 days without `implemented` → WARN.
+`status=accepted` + >30 days without reaching `done` → WARN (a stuck change-unit — its After-cites never resolved at `c3 check --fix`).
 
 ## Phase 7: Ref & Rule Validation
 

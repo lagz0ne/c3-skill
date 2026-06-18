@@ -162,20 +162,56 @@ The scopes you will actually use:
 
 | Scope | What it does | Base | Body |
 |-------|--------------|------|------|
-| `block` | replace **one** cited block; **empty body deletes it** | required (block cite handle) | the new block content |
+| `block` | replace **one** cited block (EDIT an existing section); **empty body deletes it** | required (block cite handle) | the new block content |
+| `insert` | **append a NEW section** to a frozen fact — additive, existing sections stay frozen | entity handle (`entity@vN:sha256:MERKLE`) | the new section; MUST start with a heading (`## Name`), MUST NOT duplicate an existing section |
 | `whole` (no base) | **create** a new fact, born sealed | absent | the full body; `type:` required |
 | `frontmatter` | rename / move parent / re-edge `uses` | entity handle | frontmatter deltas |
 | `retire` | remove the fact + its edges | entity handle | — |
 
-**Editing an existing fact is always a `block` patch.** Two scopes are deliberately closed and you must not author them:
-- `whole` **with a base** (full-replace of a live fact) is **REJECTED** — an edit to a live fact must be block-anchored.
-- `insert` is **NOT implemented** — it parses but cannot apply. Express additions as block edits (replace the block whose content should grow) or create a new entity.
+**`block` EDITS an existing section; `insert` ADDS a new one.** When a section already exists and its content must change, replace it with a `block` patch. When the fact must *gain* a section it does not have — the move that lets a sealed fact grow as the rung rises (see §Climbing a rung) — use `insert`: it appends additively, leaving every existing section frozen, anchored to the entity handle from `c3 read <id> --cite`. The `insert` body must START WITH A SECTION HEADING and may not duplicate a section already on the fact.
 
-**Cite handles** (from `c3 read <id> --section <name> --cite`):
-- block anchor: `entity#nNODE@vVER:sha256:HASH` — anchors one node by its hash.
-- entity anchor (frontmatter / retire): `entity@vVER:sha256:ROOTMERKLE` — anchors the whole fact by its root merkle.
+One scope is deliberately closed and you must not author it:
+- `whole` **with a base** (full-replace of a live fact) is **REJECTED** — an edit to a live fact must be block-anchored.
+
+**Cite handles** (block anchors from `c3 read <id> --section <name> --cite`; the entity anchor from `c3 read <id> --cite`):
+- block anchor: `entity#nNODE@vVER:sha256:HASH` — anchors one node by its hash (`block` scope).
+- entity anchor (`insert` / frontmatter / retire): `entity@vVER:sha256:ROOTMERKLE` — anchors the whole fact by its root merkle.
 
 **The `result:` landing check.** When `result:` is set, the applied block must seal to exactly that hash or apply rejects *before that node is written* — so what lands is exactly what was reviewed. When omitted, the check is skipped and the edit simply lands on the first `apply` (drift + canvas gates still run). There is no "apply then read it back" loop — a no-`result:` apply prints no hash and has already mutated the block. To pin the hash deterministically: seed `result: sha256:0`, run `c3 change apply`, and copy the real hash from the rejection it prints (`landing mismatch — applied content seals to sha256:<HASH>`; the node is left untouched), then paste it in and re-apply. Or compute it directly as the `sha256` of the patch body exactly as authored (trailing newlines trimmed). Drift already guarantees you are editing the block you anchored; `result:` adds the content-exactness lock.
+
+## Climbing a rung
+
+The canvas is a **rung** — a complete contract for one complexity *level*, not a form you fill in over time. A fact is *always* complete to its current rung; completeness is never relaxed. What grows is the complexity **level**, and you grow it **deliberately** by climbing a rung: raise the canvas, then migrate every fact up to the new contract, completely. Integrity is why migration exists — a fact may not straddle two rungs, so the moment the bar rises, every fact below it must rise with it. Rung-1 is meant to be lean; do not over-engineer it with sections a later rung carries. Climb when the architecture earns it.
+
+The climb is a change-unit like any other — an ADR records *why* the project moved up a level, and `insert` patches carry each fact across. `change scaffold` stages those patches for you:
+
+```bash
+# 1. Raise the canvas — make an optional section required, or author a richer one.
+c3 canvas write <type>            # the deliberate decision to climb (user-owned)
+
+# 2. The bar moves; every fact below it now fails its canvas.
+c3 check                          # lights up exactly the facts missing the new required section(s)
+
+# 3. Stage the climb into the change-unit (same id as the ADR for the climb).
+c3 change scaffold <adr-id>
+#    → scans every fact, finds those below the canvas's current required bar,
+#      and writes one `insert` patch per fact with an EMPTY required-section
+#      template: the heading + the table's column headers, no rows.
+#    The emptiness is the gate — see step 5.
+
+# 4. Fill each template — author the real section content for every staged patch.
+#    This is the actual migration work; each fact climbs to the new contract, completely.
+
+# 5. Land it — gated, atomic.
+c3 change apply <adr-id>
+#    `apply` REFUSES to land an empty required section, so an unfilled template
+#    blocks the whole unit ("won't apply on error"). The climb cannot land until
+#    every fact genuinely carries the new section. All-or-nothing as always.
+
+c3 check                          # confirm the new rung holds across all facts
+```
+
+`change scaffold` does not author content — it stakes out *where* each fact is short of the raised bar and hands you empty, apply-refusing templates so the climb is impossible to fake. Fill them, then apply lands the whole rung at once.
 
 ## Phase 3a: Contract Cascade Gate — satisfied *by the patches*
 
@@ -320,7 +356,8 @@ c3 check
 
 - **Don't route new-entity creation through a change-unit.** A new fact is not frozen — `c3 add` it directly. Patches are for editing *existing* facts (and for creates only when you deliberately want them sealed in the unit).
 - **Don't route canvas-definition edits through a change-unit.** Canvases (`.c3/canvases/<type>.md`) are user-owned markdown, not facts — edit them via `c3 canvas write` or by hand (see `canvas.md`).
-- **Don't author `insert` or `whole`-with-base patches.** Insert is unimplemented; full-replace of a live fact is rejected. Fact edits are block patches.
+- **Don't author `whole`-with-base patches.** Full-replace of a live fact is rejected — an edit to a live section is a `block` patch; *adding* a new section is an `insert` patch (see §Climbing a rung).
+- **Don't use `insert` to edit an existing section** — `insert` only *appends* a section the fact lacks; changing a section that already exists is a `block` patch.
 - **Don't try to `write` / `set` / `delete` a fact directly** — it is refused. Author a patch.
 - **Don't expect a body edit to advance status.** Status moves only through `accept` / the auto-done latch / `supersede`.
 

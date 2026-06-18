@@ -12,6 +12,35 @@ The point: definitions are not baked into the tool. A team edits its definitions
 to fit how *they* want their architecture docs shaped — c3x facilitates the wiring
 (scaffold / validate / check); it does not dictate the shape.
 
+## A canvas is a rung (the ladder)
+
+A canvas is a **rung**: a complete contract for one complexity *level*. It starts at
+the complexity that fits the project **now** — `c3 init` seeds **lean** rung-1
+canvases — and is **raised deliberately** as the architecture earns it. Integrity is
+the invariant: a fact is *always* complete to its canvas's current bar, never thin or
+"filled in later." What grows is the level, not the completeness.
+
+**Raising a canvas is a climb, and it migrates the facts.** When you make a section
+required (or author a richer canvas with `c3 canvas write`), every existing fact that
+now sits *below* the new bar must be brought up to it — completely. That migration is
+the same change-unit mechanism, now with a name:
+
+```bash
+c3x change scaffold <unit-id>   # one insert-patch per below-bar fact, each with the
+                                #   missing required sections as EMPTY templates
+# ... fill every templated section with real content ...
+c3x change apply <unit-id>      # lands the climb atomically — REFUSES to apply while
+                                #   any templated section is still empty (canvas gate)
+```
+
+Scaffold stages the climb; apply lands it **only once filled** — the empty-section
+gate is what guarantees the climb is a real one, not a rename. Each rung is solid on
+its own and is **not** responsible for future rungs: size to now, climb when the
+architecture warrants it, never pre-author a higher rung's sections.
+
+Canvases stay **user-owned and editable** throughout — the ladder is a named mechanism
+over the same `canvas write` + change-unit moves, not a new authority over the shape.
+
 ## Commands
 
 ```bash

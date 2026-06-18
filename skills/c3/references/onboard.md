@@ -1,8 +1,20 @@
 # Onboard Reference
 
+## What onboarding is (v11)
+
+LLM-driven, one complete change-unit cycle. You **discuss** the architecture, **size the canvas to fit the project**, **author the whole architecture into the genesis ADR** as staged create-patches, then **flip** — `c3x change apply` materializes it atomically as frozen facts. `c3 init` already created the system `c3-0` and the genesis ADR `adr-00000000-c3-adoption`; that ADR is your resumable progress ledger (the staged patches persist, so onboarding is interruptible).
+
+**The order matters: canvas first, then facts.** Every fact is validated against its canvas at apply, so the canvas must already be the right shape before you author facts.
+
+### Laddering — integrity first, always complete
+
+A canvas is a **rung**: a complete contract for one complexity *level*. A fresh `c3 init` seeds **lean rung-1** canvases — the component canvas requires 6 sections (Goal, Parent Fit, Purpose, Governance, Contract, Derived Materials); the deeper Foundational Flow, Business Flow, and Change Safety are optional, a higher rung. What grows over a project's life is the **complexity level, not the completeness**: a fact is *always* complete to its canvas, never thin or "filled in later."
+
+Climbing a rung is deliberate: **raise the canvas** (make a section required, or author a richer one with `c3 canvas write`) and **migrate every affected fact up to it, completely**. Each rung is solid on its own and is **not** responsible for future rungs — don't pre-build sections a complex project would need later. Size to the project you have now; the lean seeds are the default. Trim or enrich a canvas only if this project warrants it. See `canvas.md` for the climb mechanism.
+
 ## Precondition
 
-`c3 list` returns entities → already onboarded. `AskUserQuestion`: re-onboard or cancel (skip if ASSUMPTION_MODE). Cancel → suggest audit/query.
+`c3 list` returns facts → already onboarded. `AskUserQuestion`: re-onboard or cancel (skip if ASSUMPTION_MODE). Cancel → suggest audit/query.
 
 ## Component Categories
 
@@ -13,15 +25,26 @@
 
 Foundation: infra others depend on. Feature: biz logic. Ref: conventions/shared utils. Rule: coding standards/constraints. Refs with concrete files (shared middleware, util libs) → code-map entries; pure-convention refs and rules → empty.
 
+## The v11 flow
+
+The genesis ADR is the spine. Stage 0/1/2 below are the discovery → detail → finalize scaffolding; what changes in v11 is that **creation routes through the genesis ADR's create-patches and one flip**, not only ad-hoc `c3 add`.
+
+1. **Discuss** — the idea and the architectural separation: containers, where the seams fall. Conversation first.
+2. **Size the canvas** — keep or shape the rung-1 canvases to match the project (the lean seeds are the default; trim or enrich via `c3 canvas write`). This happens **before** authoring facts, because facts are validated against the canvas.
+3. **Author** — write the architecture into the genesis ADR `adr-00000000-c3-adoption`. The containers/components/refs/rules go in as **create-patches** in `.c3/changes/adr-00000000-c3-adoption/` (scope `whole`, no base, with `type:` and `parent:`); the ADR body carries the narrative. Interruptible — the staged patches persist.
+4. **Flip** — `c3x change apply adr-00000000-c3-adoption` materializes the whole architecture atomically as frozen facts (canvas-validated, all-or-nothing). Then `c3 change accept adr-00000000-c3-adoption` + `c3 check --fix` auto-dones the genesis ADR. Onboarding ends having completed one full change-unit cycle.
+
+Direct `c3 add` remains valid and unguarded for creating a fact (a new fact is not frozen). Frame the genesis ADR as the demonstration **and** the record — the resumable ledger of how this architecture was created.
+
 ## Progress Checklist
 
 ```
-- [ ] Stage 0: inventory complete, ADR-000 tables filled
+- [ ] Stage 0: inventory complete, genesis ADR tables filled
 - [ ] Gate 0: proceed to Details
-- [ ] Stage 1: all container/component/ref docs created
+- [ ] Stage 1: rung-1 canvases sized; all container/component/ref create-patches authored in .c3/changes/adr-00000000-c3-adoption/
 - [ ] Gate 1: no new items discovered
-- [ ] Stage 2: code-map scaffolded + patterns filled, integrity + audit pass
-- [ ] Gate 2: ADR-000 marked implemented
+- [ ] Stage 2: flip applied (facts materialized), code-map filled, integrity + audit pass
+- [ ] Gate 2: genesis ADR accepted, then latched to `done` via `c3 check --fix`
 ```
 
 ---
@@ -30,11 +53,15 @@ Foundation: infra others depend on. Feature: biz logic. Ref: conventions/shared 
 
 ### 0.1 Scaffold
 
-Scaffold `.c3/` with config, README, refs/, rules/, adr/. Update ADR-000 via `c3 write <adr-000> --section <name> --file <path>` for any body with tables, mermaid, or code blocks; short single-sentence fields via `c3 set <adr-000> <field> <value>` or `echo "..." | c3 write <adr-000> --section <name>`.
+`c3 init` already scaffolded `.c3/` (config, README, canvases/, system `c3-0`, genesis ADR `adr-00000000-c3-adoption`). Author the genesis ADR — the inventory ledger — via `c3 write adr-00000000-c3-adoption --section <name> --file <path>` for any body with tables, mermaid, or code blocks; short single-sentence fields via `c3 set adr-00000000-c3-adoption <field> <value>` or `echo "..." | c3 write adr-00000000-c3-adoption --section <name>`. The ADR is a change-doc, not a frozen fact, so you author and revise it freely.
+
+### 0.1b Size the canvas first
+
+Before authoring any fact, **size the canvas to the project**. Read what each rung-1 canvas requires (`c3 schema component`, `c3 canvas list`) and keep, trim, or enrich it with `c3 canvas write <type> --file` — but only if this project warrants it; the lean seeds are the default. Do this now: facts are validated against the canvas at apply, so the shape must be right before facts exist. Don't pre-build higher-rung sections — climb later, deliberately (see `canvas.md`).
 
 ### 0.2 Context Discovery
 
-Capture in ADR-000:
+Capture in the genesis ADR:
 
 | Arg | Value |
 |-----|-------|
@@ -100,6 +127,10 @@ Include each as mermaid code block.
 
 ## Stage 1: Details
 
+**Route creation through the genesis ADR.** The container/component/ref/rule bodies below are authored as **create-patches** staged in `.c3/changes/adr-00000000-c3-adoption/` — one `<seq>-<slug>.patch.md` per fact: scope `whole`, **no base**, with `type:` and `parent:` in the frontmatter, and the body in the shapes shown below. Nothing materializes yet; the whole architecture lands in one flip at Stage 2. This keeps onboarding interruptible (the staged patches persist) and makes the genesis ADR the record of how the architecture was built. (The `--file` body shapes below are the canvas-correct content for each patch body; direct `c3 add` is still valid for one-off facts, but the genesis ADR is the demonstration and the ledger.)
+
+The system `c3-0` already exists from `c3 init` — its body is the context doc you author directly (it is a fact created at init; author it before the flip, then it is frozen).
+
 ### 1.1 Context Doc
 
 Short text fields: `echo "<goal>" | c3 write c3-0 --section Goal`. Whole body rewrite: `c3 write c3-0 --file content.md`.
@@ -157,15 +188,26 @@ Golden Example contains code fences -> `--file` is mandatory.
 - [ ] All component docs created
 - [ ] All refs documented
 - [ ] All rules documented
-- [ ] No new items (else update ADR-000, return Stage 0)
+- [ ] No new items (else update the genesis ADR, return Stage 0)
 
 ---
 
 ## Stage 2: Finalize
 
+### 2.0 Flip — materialize the architecture
+
+Land the whole architecture in one atomic, canvas-validated transaction:
+
+```bash
+c3x change view adr-00000000-c3-adoption    # preview every staged create-patch
+c3x change apply adr-00000000-c3-adoption   # all-or-nothing: the facts are now frozen
+```
+
+Apply is all-or-nothing — every fact validates against its canvas, or nothing lands. After the flip the containers/components/refs/rules exist as frozen facts; from here, editing any of them goes through a change-unit (see `change.md`), not `c3 add`/`c3 write`.
+
 ### 2.1 Code-Map
 
-Set glob patterns per component/ref/rule:
+Set glob patterns per component/ref/rule (`c3 set <id> codemap` is the one `set` allowed on a frozen fact — code churns, so the map is maintained live):
 ```bash
 c3 set <id> codemap '<glob>'
 c3 lookup 'src/**'   # spot-check mapping
@@ -182,20 +224,29 @@ c3 list              # coverage + counts
 
 | Check | Verify |
 |-------|--------|
-| Context ↔ Container | ADR-000 containers match README.md |
+| Context ↔ Container | genesis ADR containers match the materialized facts |
 | Container ↔ Component | Each component in container README has doc |
 | * ↔ Refs | Citations match Related Refs |
 
-### 2.4 Audit
+### 2.4 Audit + close the cycle
 
-Run audit. Pass → mark ADR-000 `implemented`.
+Run audit. Pass → close the genesis ADR through the canonical lifecycle (`[open, accepted, done, superseded]`):
+
+```bash
+c3 change accept adr-00000000-c3-adoption   # human judgment: → accepted
+c3 check --fix                              # auto-done latch: accepted → done when After-cites resolve
+```
+
+`done` is **earned, never typed**: the auto-done latch actualizes `accepted → done` at `c3 check --fix` once the genesis ADR's After-cites resolve fresh — proof the architecture actually landed. (There is no `implemented` status in v11; the canonical terminal state is `done`.)
 
 ### Gate 2
 
+- [ ] Flip applied — facts materialized (`change apply`)
 - [ ] Code-map scaffolded + patterns filled
 - [ ] Coverage % acceptable (or exclusions documented)
 - [ ] Integrity checks pass
 - [ ] Audit passes
+- [ ] Genesis ADR accepted, then latched to `done` via `c3 check --fix`
 
 Issues → Inventory (Gate 0) or Detail (Gate 1).
 
@@ -256,11 +307,13 @@ Run `c3 <command> --help` for detailed usage.
 
 ## Complexity Guide
 
-| Level | Signals | Aspect Doc |
-|-------|---------|------------|
-| trivial/simple | Single purpose | Skip aspects |
-| moderate | Multiple concerns | 2-3 key aspects |
-| complex | Orchestration | Full discovery + code-map |
-| critical | Distributed/compliance | + rationale each |
+Use this to choose the **rung** — how much canvas the project warrants now. Higher complexity earns the optional, deeper sections (Foundational Flow, Business Flow, Change Safety); lower complexity stays on the lean rung-1 seed. Size to where you are, and climb deliberately later (see laddering above, and `canvas.md`) — don't pre-author a higher rung's sections.
 
-Discover aspects from code, never assume from templates.
+| Level | Signals | Rung |
+|-------|---------|------|
+| trivial/simple | Single purpose | Lean rung-1 seed, deeper sections skipped |
+| moderate | Multiple concerns | Rung-1 + 2-3 deeper sections where they earn it |
+| complex | Orchestration | Raise the canvas; full discovery + code-map |
+| critical | Distributed/compliance | + rationale each, deeper sections required |
+
+Discover the right depth from code, never assume from templates.

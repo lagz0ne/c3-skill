@@ -10,6 +10,10 @@ import (
 
 var reNumber = regexp.MustCompile(`^-?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$`)
 
+// stringerType lets nested struct fields that render themselves (e.g. time.Time,
+// which implements fmt.Stringer) stay scalar instead of recursing into fields.
+var stringerType = reflect.TypeOf((*fmt.Stringer)(nil)).Elem()
+
 // NeedsQuoting returns true if the string value needs TOON quoting.
 func NeedsQuoting(s string) bool {
 	if s == "" || s[0] == ' ' || s[len(s)-1] == ' ' {
@@ -225,6 +229,19 @@ func marshalStructWithIndent(rv reflect.Value, indent string) (string, error) {
 				continue
 			}
 			fv = fv.Elem()
+		}
+
+		// Handle a nested struct field (incl. pointer-to-struct deref'd above) by
+		// recursing, so inner fields survive instead of collapsing to a %v dump.
+		// Structs that render themselves (Stringer, e.g. time.Time) stay scalar.
+		if fv.Kind() == reflect.Struct && !fv.Type().Implements(stringerType) {
+			fmt.Fprintf(&b, "%s%s:\n", indent, name)
+			nested, err := marshalStructWithIndent(fv, indent+"  ")
+			if err != nil {
+				return "", err
+			}
+			b.WriteString(nested)
+			continue
 		}
 
 		fmt.Fprintf(&b, "%s%s: %s\n", indent, name, marshalFieldValue(fv))

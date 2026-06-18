@@ -199,6 +199,35 @@ func TestMarshalObject_NestedStructSlice(t *testing.T) {
 	}
 }
 
+// TestMarshalObject_NestedStruct — a struct field that is itself a (non-slice)
+// struct must recurse into an indented block, not collapse to a Go %v dump.
+// Regression guard for `search`, whose result `context` is a nested struct.
+func TestMarshalObject_NestedStruct(t *testing.T) {
+	type ref struct {
+		ID   string `json:"id"`
+		Type string `json:"type"`
+	}
+	type ctx struct {
+		Component ref `json:"component"`
+	}
+	type row struct {
+		Title   string `json:"title"`
+		Context ctx    `json:"context"`
+	}
+	got, err := MarshalObject(row{Title: "auth", Context: ctx{Component: ref{ID: "c3-210", Type: "component"}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if contains(got, "{") || contains(got, "}") {
+		t.Errorf("nested struct collapsed to %%v dump:\n%s", got)
+	}
+	for _, want := range []string{"context:\n", "component:\n", "id: c3-210\n", "type: component\n"} {
+		if !contains(got, want) {
+			t.Errorf("missing %q in nested struct output:\n%s", want, got)
+		}
+	}
+}
+
 func TestMarshalObject_OmitsZeroValues(t *testing.T) {
 	type status struct {
 		Project  string   `json:"project"`

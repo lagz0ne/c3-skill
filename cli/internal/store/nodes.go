@@ -94,6 +94,44 @@ func (s *Store) ReplaceEntityNodes(entityID string, nodes []*Node) error {
 	})
 }
 
+// AppendNodeTree appends a parsed node subtree after an entity's existing nodes:
+// each snippet root (parentIndex[i] < 0) becomes a new root node sequenced after the
+// current last root, and the rest keep their snippet parent. Existing nodes are left
+// untouched (their content, hashes, and order are preserved — only new nodes are
+// added), so the entity reseals to a new merkle without drifting any prior block.
+// Standalone it opens its own transaction; inside an apply it enlists in the open one.
+func (s *Store) AppendNodeTree(entityID string, nodes []*Node, parentIndex []int) error {
+	return s.WithTx(func(ts *Store) error {
+		var maxRootSeq int
+		if err := ts.exec.QueryRow(
+			`SELECT COALESCE(MAX(seq), -1) FROM nodes WHERE entity_id = ? AND parent_id IS NULL`,
+			entityID,
+		).Scan(&maxRootSeq); err != nil {
+			return fmt.Errorf("append node tree: max root seq: %w", err)
+		}
+		realIDs := make([]int64, len(nodes))
+		rootCount := 0
+		for i, n := range nodes {
+			n.EntityID = entityID
+			if parentIndex[i] < 0 {
+				n.ParentID = sql.NullInt64{} // a new root node
+				n.Seq = maxRootSeq + 1 + rootCount
+				rootCount++
+			} else {
+				n.ParentID = sql.NullInt64{Int64: realIDs[parentIndex[i]], Valid: true}
+			}
+			res, err := ts.exec.Exec(NodeInsertSQL, n.EntityID, n.ParentID, n.Type, n.Level, n.Seq, n.Content, n.Hash)
+			if err != nil {
+				return fmt.Errorf("append node %d: %w", i, err)
+			}
+			id, _ := res.LastInsertId()
+			n.ID = id
+			realIDs[i] = id
+		}
+		return nil
+	})
+}
+
 // InsertNodeTree replaces an entity's nodes from a parsed tree, remapping each
 // node's tree-index parent (parentIndex[i] < 0 ⇒ root) to the real autoincrement
 // ID assigned on insert. Standalone it opens its own transaction; inside an apply

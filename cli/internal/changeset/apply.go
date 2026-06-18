@@ -111,6 +111,8 @@ func applyOne(s *store.Store, p Patch) error {
 	switch p.Scope {
 	case ScopeBlock:
 		return applyBlock(s, p)
+	case ScopeInsert:
+		return applyInsert(s, p)
 	case ScopeWhole:
 		return applyWhole(s, p)
 	case ScopeFrontmatter:
@@ -120,6 +122,96 @@ func applyOne(s *store.Store, p Patch) error {
 	default:
 		return fmt.Errorf("scope %q not yet implemented", p.Scope)
 	}
+}
+
+// rootHeadingNames returns the set of top-level section names (root `#`/`##` headings)
+// in a body — what `check` treats as its sections.
+func rootHeadingNames(body string) map[string]bool {
+	names := map[string]bool{}
+	t := content.ParseMarkdown("", body)
+	for i, n := range t.Nodes {
+		if n.Type == "heading" && t.ParentIndex[i] < 0 {
+			names[strings.TrimSpace(n.Content)] = true
+		}
+	}
+	return names
+}
+
+// ValidateInsertStructure enforces that an insert body is one-or-more NEW sections:
+// it must start with a root heading (otherwise the appended nodes diverge from the
+// text the canvas validates — a headingless body lands a stray root paragraph), and
+// no added section name may already exist on the fact (insert ADDS sections; editing
+// one is a block patch). Shared by the preflight canvas gate and the apply itself.
+func ValidateInsertStructure(currentBody, insertBody string) error {
+	tree := content.ParseMarkdown("", insertBody)
+	if len(tree.Nodes) == 0 {
+		return fmt.Errorf("insert body is empty")
+	}
+	if tree.Nodes[0].Type != "heading" || tree.ParentIndex[0] >= 0 {
+		return fmt.Errorf("insert body must start with a section heading (e.g. '## Name'); insert adds whole sections")
+	}
+	existing := rootHeadingNames(currentBody)
+	for i, n := range tree.Nodes {
+		if n.Type == "heading" && tree.ParentIndex[i] < 0 {
+			if name := strings.TrimSpace(n.Content); existing[name] {
+				return fmt.Errorf("section %q already exists — edit it with a block patch, not insert", name)
+			}
+		}
+	}
+	return nil
+}
+
+// applyInsert appends one or more new SECTIONS to a fact's body, anchored to the
+// entity's root merkle. Insert is ADDITIVE — it never rewrites an existing block, so
+// it cannot drift a sibling (existing node hashes are untouched; only new nodes are
+// appended and the entity reseals). Because the append always lands at the end, the
+// outcome is independent of the existing node order, so the (order-insensitive) entity
+// merkle is an adequate anchor here even though it does not seal order. This is the
+// climb's tool: when a canvas rung rises, a sealed fact gains the new required section.
+func applyInsert(s *store.Store, p Patch) error {
+	entity, _, expected, ok := ParseEntityHandle(p.Base)
+	if !ok {
+		return fmt.Errorf("patch %s: insert requires an entity base handle (entity@vN:sha256:MERKLE); get one with 'c3x read %s --cite'", p.Source, p.Target)
+	}
+	if entity != p.Target {
+		return fmt.Errorf("patch %s: base anchors %s but target is %s", p.Source, entity, p.Target)
+	}
+	e, err := s.GetEntity(p.Target)
+	if err != nil {
+		return fmt.Errorf("patch %s: insert target %s not found", p.Source, p.Target)
+	}
+	// Re-anchor at write time against live (in-tx) state — the preflight ran before the
+	// apply transaction, so a sibling patch in this unit that already resealed the fact
+	// would otherwise be silently appended onto a stale view.
+	if e.RootMerkle != expected {
+		return fmt.Errorf("patch %s: entity %s changed before apply; rebase", p.Source, p.Target)
+	}
+	current, err := content.ReadEntity(s, p.Target)
+	if err != nil {
+		return fmt.Errorf("patch %s: read %s: %w", p.Source, p.Target, err)
+	}
+	if err := ValidateInsertStructure(current, p.Content); err != nil {
+		return fmt.Errorf("patch %s: %w", p.Source, err)
+	}
+	tree := content.ParseMarkdown(p.Target, p.Content)
+	if err := s.AppendNodeTree(p.Target, tree.Nodes, tree.ParentIndex); err != nil {
+		return fmt.Errorf("patch %s: %w", p.Source, err)
+	}
+	if err := reseal(s, p.Target); err != nil {
+		return err
+	}
+	// Landing check (parity with block): a declared result must equal the resealed
+	// entity merkle, so what lands is exactly what was reviewed.
+	if want := normalizeHash(p.Result); want != "" {
+		sealed, err := s.GetEntity(p.Target)
+		if err != nil {
+			return err
+		}
+		if sealed.RootMerkle != want {
+			return fmt.Errorf("patch %s: landing mismatch — insert reseals %s to sha256:%s, expected sha256:%s", p.Source, p.Target, sealed.RootMerkle, want)
+		}
+	}
+	return nil
 }
 
 // applyWhole with no base creates a new fact (born sealed). A whole patch with a

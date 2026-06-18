@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/lagz0ne/c3-design/cli/internal/changeset"
+	"github.com/lagz0ne/c3-design/cli/internal/content"
 	"github.com/lagz0ne/c3-design/cli/internal/schema"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
@@ -211,6 +212,23 @@ func canvasGate(s *store.Store, c3Dir string, p changeset.Patch) error {
 			return fmt.Errorf("patch %s: target %s not found", p.Source, p.Target)
 		}
 		entityType, body = entity.Type, merged
+	case changeset.ScopeInsert:
+		// Insert appends a section: validate the post-append body so a duplicate or
+		// malformed section can't slip a fact below its canvas.
+		cur, err := content.ReadEntity(s, p.Target)
+		if err != nil {
+			return fmt.Errorf("patch %s: %w", p.Source, err)
+		}
+		// Structural gate (heading-first, no duplicate section) — caught in preflight so
+		// dry-run and review reject it before any write.
+		if err := changeset.ValidateInsertStructure(cur, p.Content); err != nil {
+			return fmt.Errorf("patch %s: %w", p.Source, err)
+		}
+		entity, err := s.GetEntity(p.Target)
+		if err != nil {
+			return fmt.Errorf("patch %s: target %s not found", p.Source, p.Target)
+		}
+		entityType, body = entity.Type, cur+"\n\n"+p.Content
 	case changeset.ScopeWhole:
 		if p.Base != "" {
 			return nil

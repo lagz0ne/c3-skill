@@ -194,6 +194,110 @@ func TestApply_Atomic_DuplicateBaseRejected(t *testing.T) {
 	}
 }
 
+func entityHandle(t *testing.T, s *store.Store, id string) string {
+	t.Helper()
+	e, err := s.GetEntity(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return fmt.Sprintf("%s@v%d:sha256:%s", e.ID, e.Version, e.RootMerkle)
+}
+
+// TestApply_Insert_AppendsSectionSiblingsFrozen is the climb's core property: an
+// insert adds a new section at the end, leaves every existing block hash-frozen, and
+// reseals the entity — so a fact can gain a section (e.g. when a canvas rung rises)
+// without drifting anything it already had.
+func TestApply_Insert_AppendsSectionSiblingsFrozen(t *testing.T) {
+	s := openMem(t)
+	seedFact(t, s, "c3-101", "# auth\n\n## Goal\n\nOriginal goal.\n\n## Detail\n\nDetail body.\n")
+	beforeGoal := nodeHashOf(t, s, "c3-101", "Original goal.")
+	beforeDetail := nodeHashOf(t, s, "c3-101", "Detail body.")
+	beforeMerkle := entityMerkle(t, s, "c3-101")
+
+	p := Patch{Target: "c3-101", Scope: ScopeInsert, Base: entityHandle(t, s, "c3-101"), Content: "## Contract\n\nTokens must be RS256.", Source: "01.patch.md"}
+	if err := Apply(s, []Patch{p}, nil); err != nil {
+		t.Fatalf("insert apply: %v", err)
+	}
+	body, _ := content.ReadEntity(s, "c3-101")
+	if nodeHashOf(t, s, "c3-101", "Tokens must be RS256.") == "" || !strings.Contains(body, "## Contract") {
+		t.Errorf("inserted section missing:\n%s", body)
+	}
+	if nodeHashOf(t, s, "c3-101", "Original goal.") != beforeGoal || nodeHashOf(t, s, "c3-101", "Detail body.") != beforeDetail {
+		t.Error("existing blocks must stay frozen across an insert")
+	}
+	if entityMerkle(t, s, "c3-101") == beforeMerkle {
+		t.Error("entity merkle must change after an insert (content was added)")
+	}
+	if i, j := strings.Index(body, "## Detail"), strings.Index(body, "## Contract"); i < 0 || j < i {
+		t.Errorf("inserted section must append at the end:\n%s", body)
+	}
+}
+
+func TestApply_Insert_StaleAnchorRebases(t *testing.T) {
+	s := openMem(t)
+	seedFact(t, s, "c3-101", "# auth\n\n## Goal\n\nGoal.\n")
+	h := entityHandle(t, s, "c3-101")
+	stale := strings.Replace(h, h[strings.LastIndex(h, ":")+1:], strings.Repeat("0", 64), 1)
+	p := Patch{Target: "c3-101", Scope: ScopeInsert, Base: stale, Content: "## X\n\nbody.", Source: "01.patch.md"}
+	if err := Apply(s, []Patch{p}, nil); err == nil {
+		t.Fatal("a stale entity anchor must reject the insert")
+	}
+	if nodeHashOf(t, s, "c3-101", "body.") != "" {
+		t.Error("a rejected insert must not modify the fact")
+	}
+}
+
+func TestApply_Insert_RollsBackWithFailedSibling(t *testing.T) {
+	s := openMem(t)
+	seedFact(t, s, "c3-101", "# auth\n\n## Goal\n\nGoal.\n")
+	beforeMerkle := entityMerkle(t, s, "c3-101")
+	ih := entityHandle(t, s, "c3-101")
+	bh, _ := blockHandle(t, s, "c3-101", "Goal.")
+	patches := []Patch{
+		{Target: "c3-101", Scope: ScopeInsert, Base: ih, Content: "## New\n\nbody.", Source: "01.patch.md"},
+		{Target: "c3-101", Scope: ScopeBlock, Base: bh, Content: "won't seal", Result: "sha256:" + strings.Repeat("d", 64), Source: "02.patch.md"},
+	}
+	if err := Apply(s, patches, nil); err == nil {
+		t.Fatal("the landing mismatch on patch 2 must fail the whole unit")
+	}
+	if nodeHashOf(t, s, "c3-101", "body.") != "" {
+		t.Error("the inserted section must roll back when a sibling patch fails")
+	}
+	if entityMerkle(t, s, "c3-101") != beforeMerkle {
+		t.Error("merkle must be unchanged after rollback")
+	}
+}
+
+func TestApply_Insert_RejectsHeadinglessBody(t *testing.T) {
+	s := openMem(t)
+	seedFact(t, s, "c3-101", "# auth\n\n## Goal\n\nGoal.\n")
+	p := Patch{Target: "c3-101", Scope: ScopeInsert, Base: entityHandle(t, s, "c3-101"), Content: "Just a loose paragraph, no heading.", Source: "01.patch.md"}
+	if err := Apply(s, []Patch{p}, nil); err == nil || !strings.Contains(err.Error(), "section heading") {
+		t.Fatalf("a headingless insert body must be rejected (it would land a stray root paragraph), got: %v", err)
+	}
+}
+
+func TestApply_Insert_RejectsDuplicateSection(t *testing.T) {
+	s := openMem(t)
+	seedFact(t, s, "c3-101", "# auth\n\n## Goal\n\nGoal.\n")
+	p := Patch{Target: "c3-101", Scope: ScopeInsert, Base: entityHandle(t, s, "c3-101"), Content: "## Goal\n\nDuplicate goal.", Source: "01.patch.md"}
+	if err := Apply(s, []Patch{p}, nil); err == nil || !strings.Contains(err.Error(), "already exists") {
+		t.Fatalf("inserting an existing section must be rejected, got: %v", err)
+	}
+}
+
+func TestApply_Insert_ResultLandingCheck(t *testing.T) {
+	s := openMem(t)
+	seedFact(t, s, "c3-101", "# auth\n\n## Goal\n\nGoal.\n")
+	p := Patch{Target: "c3-101", Scope: ScopeInsert, Base: entityHandle(t, s, "c3-101"), Content: "## Contract\n\nbody.", Result: "sha256:" + strings.Repeat("e", 64), Source: "01.patch.md"}
+	if err := Apply(s, []Patch{p}, nil); err == nil || !strings.Contains(err.Error(), "landing mismatch") {
+		t.Fatalf("a bogus result on an insert must fail the landing check, got: %v", err)
+	}
+	if nodeHashOf(t, s, "c3-101", "body.") != "" {
+		t.Error("a landing-mismatch insert must roll back")
+	}
+}
+
 // TestApply_CodemapCarrierAppliesInSameUnit proves a unit's internal patch and its
 // external codemap carrier both land in one apply.
 func TestApply_CodemapCarrierAppliesInSameUnit(t *testing.T) {

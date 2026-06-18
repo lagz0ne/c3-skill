@@ -71,27 +71,25 @@ Write 1-3 YES/NO compliance questions from `## How`. Can't write them → patter
 
 Find components using pattern.
 
-### Step 5: Update Citing Components
+### Step 5: Cite the ref from each using component
 
-A component is a frozen fact and its `uses`/cite edges are derived from its own body (`## Related Refs` / frontmatter `refs:`) at import — never created by `c3 wire`. So how you add a citation depends on whether the component already exists:
+A component's `uses` edges come from the **column its canvas marks `edge: uses`** — authoring that column **is** the citation (the displayed row and the graph edge are one thing, they can't diverge). The column is **canvas-configurable**, so don't memorize a section name: run `c3 schema component` and find the column tagged `→ edge: uses` (in a freshly-seeded project that's the `Governance` table's `Reference` column). If no column shows an `→ edge:` tag, the project predates the edge column — cite the legacy way (frontmatter `uses:` / the `Governance` reference row), and the edge builds at import. A citation must resolve — citing a non-existent entity is refused with a clear error. `c3 wire` is not the path for a frozen fact. Then:
 
-- **Brand-new citer (being created now):** author `## Related Refs` directly in its body file, then `c3 add component <slug> --file body.md`. The edge appears at import — no `c3 wire`.
-- **Existing citer (frozen):** adding a citation is an edit to its frozen body, so it MUST ride as a change-unit patch on the `## Related Refs` block. Per component using pattern:
-  1. `c3 lookup <file>` per code-map entry — loads constraint chain
-  2. `c3 read <component-id> --section "Related Refs" --cite` — cite the block
-  3. Author `.c3/changes/<adr-id>/<seq>-<slug>.patch.md` adding the row, then `c3 change apply <adr-id>`
+- **Brand-new citer (created now):** author the reference row into that section in the component's body file, then `c3 add component <slug> --file body.md`. The edge appears at import.
+- **Existing citer (frozen):** adding a citation edits the frozen body, so it rides as a change-unit patch on **that** section's block:
+  1. `c3 lookup <file>` per code-map entry — loads the constraint chain.
+  2. `c3 schema component` → find the reference section; `c3 read <component-id> --section <that-section> --cite` → cite the block.
+  3. Author `.c3/changes/<adr-id>/<seq>-<slug>.patch.md` adding the reference row, then `c3 change apply <adr-id>`.
 
-The added row looks like:
+Add the row in the shape `c3 schema component` shows for the reference section — for today's component canvas, the `Governance` row:
 
 ```markdown
-## Related Refs
-
-| Ref | How It Serves Goal |
-|-----|-------------------|
-| ref-error-handling | Uses error response format |
+| Reference | Type | Governs | Precedence | Notes |
+| --- | --- | --- | --- | --- |
+| ref-error-handling | ref | Error response shape | cited ref beats local prose | — |
 ```
 
-Only the `## Related Refs` block changes. Other changes → route to change as their own patch.
+Only that section's block changes. Other changes → route to change as their own patch.
 
 ### Step 6: Adoption ADR
 

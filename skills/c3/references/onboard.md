@@ -267,7 +267,7 @@ c3 list              # coverage + counts
 |-------|--------|
 | Context ↔ Container | genesis ADR containers match the materialized facts |
 | Container ↔ Component | Each component in container README has doc |
-| * ↔ Refs | Citations match Related Refs |
+| * ↔ Refs | Citations match the component reference column (Governance) |
 
 ### 2.4 Audit + close the cycle
 
@@ -308,8 +308,8 @@ c3 lookup 'src/**'
 |--------|---------|-----|
 | No system goal | Missing `goal:` in README.md | `c3 set <id> goal "<text>"` |
 | No `files:` | Missing code-map pattern | `c3 set <id> codemap '<glob>'` |
-| No `uses:` | Ref not wired | Add the ref to the component's `## Related Refs` body — at create, or via a change-unit patch if the component already exists — then re-import (edges build at import) |
-| Ref has no `via:` | Uncited ref | Cite it from a component (`## Related Refs` in the citer's body, as above) or delete the ref |
+| No `uses:` | Ref not wired | Add the ref to the component's reference column (`c3 schema component` — today `Governance`) — at create, or via a change-unit patch if the component already exists — then re-import (edges build at import) |
+| Ref has no `via:` | Uncited ref | Cite it from a component (reference column, as above) or delete the ref |
 | `[provisioning]` | Design-only | Expected or implement |
 | `lookup` returns nothing | Bad/missing codemap | Fix patterns via `c3 set <id> codemap '<glob>'`; re-check with `lookup 'src/**'` |
 | Low coverage % | Many unmapped files | `_exclude` for tests/configs, map rest |

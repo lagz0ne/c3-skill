@@ -59,7 +59,7 @@ at `.c3/canvases/<type>.md`; `c3 canvas` manages them and the user may edit them
 
 **Don't assume a fixed type set** — confirm any type's shape with `c3 schema <type>` (works for every entity type); `c3 canvas list` shows the document/definition canvases.
 
-**Authoring — two surfaces, one boundary.** Read the type's definition first (`c3 schema <type>`), author to it. Body with mermaid, code fences, or tables -> use `--file <path>`, not inline strings.
+**Authoring — two surfaces, one boundary.** Read the type's definition first (`c3 schema <type>`), author to it. A body round-trips embeddable content verbatim — mermaid/code fences, tables, images, raw HTML and `<iframe>`/embed blocks, dividers, indented code — so diagrams and embeds survive store→render. Author such bodies via `--file <path>`, not inline strings.
 
 - **FROZEN FACTS** — `system`, `container`, `component`, `ref`, `rule`, `recipe`, `pm-requirement`, `user-story` (every type whose canvas declares no `status:` set). **You cannot `write`/`set`/`wire`/`delete` an existing one.** Editing a fact happens ONLY through the change-unit flow: `c3 read <id> --section <name> --cite` -> `c3 change new <unit-id>` -> author `<seq>-<slug>.patch.md` -> `c3 change apply <unit-id>`. See `references/change.md`. (**Creating** a new fact is exempt — `c3 add <type> <slug>` is unguarded.)
 - **CHANGE-DOCS** (`adr`, `prd`, `atomic-design-change`) **and CANVAS bodies** — these declare `status:` / are user-owned, so they edit directly: single-sentence text -> `echo "..." | c3 write <id> --section <name>`; whole-body rewrite -> `c3 write <id> --file body.md`; frontmatter -> `c3 set <id> <field> <value>`.
@@ -209,6 +209,7 @@ Root selection > depth:
 - `--depth 1` default. `--depth 2` for cross-container only
 - `--direction forward` = impact. `--direction reverse` = dependents
 - Never graph `c3-0` -- one node, no signal
+- `--unit <adr-id>` = **contextual preview**: overlays that change-unit's staged-but-unapplied patches (the real apply path, rolled back) so you see the post-change graph before `change apply`. Output is marked preview; all modes (text/mermaid/reverse/json). Pairs with the change flow: wire/stage → `graph --unit` → apply
 
 ## File Structure
 ```

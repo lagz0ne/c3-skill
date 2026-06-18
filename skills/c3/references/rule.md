@@ -69,27 +69,25 @@ Write 1-3 YES/NO compliance questions from `## Rule` + `## Golden Example`. Can'
 
 Find components using pattern.
 
-### Step 8: Update Citing Components
+### Step 8: Cite the rule from each using component
 
-A component is a frozen fact and its `uses`/cite edges are derived from its own body (`## Related Rules` / frontmatter `refs:`) at import — never created by `c3 wire`. So how you add a citation depends on whether the component already exists:
+A component's `uses` edges come from the **column its canvas marks `edge: uses`** — authoring that column **is** the citation (display row and graph edge are one). It is **canvas-configurable**, so ask `c3 schema component` where it lives (find the column tagged `→ edge: uses`) rather than memorizing a section — in a freshly-seeded project that's the `Governance` table's `Reference` column, which carries `rule-*` and `ref-*` alike, distinguished by the `Type` column. If no column shows an `→ edge:` tag, the project predates the edge column — cite the legacy way (the `Governance` reference row / frontmatter `uses:`). A citation must resolve, and `c3 wire` is not the path for a frozen fact. Then:
 
-- **Brand-new citer (being created now):** author `## Related Rules` directly in its body file, then `c3 add component <slug> --file body.md`. The edge appears at import — no `c3 wire`.
-- **Existing citer (frozen):** adding a citation is an edit to its frozen body, so it MUST ride as a change-unit patch on the `## Related Rules` block. Per component using pattern:
-  1. `c3 lookup <file>` per code-map entry
-  2. `c3 read <component-id> --section "Related Rules" --cite` — cite the block
-  3. Author `.c3/changes/<adr-id>/<seq>-<slug>.patch.md` adding the row, then `c3 change apply <adr-id>`
+- **Brand-new citer (created now):** author the reference row into that section in the component's body file, then `c3 add component <slug> --file body.md`. The edge appears at import.
+- **Existing citer (frozen):** adding a citation edits the frozen body, so it rides as a change-unit patch on **that** section's block:
+  1. `c3 lookup <file>` per code-map entry.
+  2. `c3 schema component` → find the reference section; `c3 read <component-id> --section <that-section> --cite` → cite the block.
+  3. Author `.c3/changes/<adr-id>/<seq>-<slug>.patch.md` adding the reference row, then `c3 change apply <adr-id>`.
 
-The added row looks like:
+Add the row in the shape `c3 schema component` shows — for today's component canvas, the `Governance` row with `Type: rule`:
 
 ```markdown
-## Related Rules
-
-| Rule | Role |
-|------|------|
-| rule-structured-logging | Logging format enforcement |
+| Reference | Type | Governs | Precedence | Notes |
+| --- | --- | --- | --- | --- |
+| rule-structured-logging | rule | Logging format enforcement | rule is strict — must match golden example | — |
 ```
 
-Only the `## Related Rules` block changes. Other changes → route to change as their own patch.
+Only that section's block changes. Other changes → route to change as their own patch.
 
 ### Step 9: Adoption ADR
 
@@ -190,8 +188,8 @@ Ref entirely about enforcement, not rationale.
    - `## Not This` → keep
    - `## Why` → `origin:` if parent ref exists, else drop
 3. Set `origin: [ref-{old-slug}]` if old ref kept for rationale
-4. Re-edge each citer to the new rule. Citers are frozen facts whose edges come from their own `## Related Rules` body, so this is a change-unit patch per citer (one ADR for the batch): `c3 read <component-id> --section "Related Rules" --cite` → add the `rule-{slug}` row in a `<seq>-<slug>.patch.md` → `c3 change apply <adr-id>`. A brand-new citer would instead carry the row in its body at `c3 add` time.
-5. If deleting ref: drop the `ref-{slug}` row from each citer's `## Related Rules`/`## Related Refs` body the same way (change-unit patch, not `c3 wire --remove`), then delete the ref
+4. Re-edge each citer to the new rule. Citers are frozen facts whose edges come from their canvas's reference column (`c3 schema component` — today `Governance`/`Reference`), so this is a change-unit patch per citer (one ADR for the batch): `c3 read <component-id> --section Governance --cite` → add the `rule-{slug}` row in a `<seq>-<slug>.patch.md` → `c3 change apply <adr-id>`. A brand-new citer would instead carry the row in its body at `c3 add` time.
+5. If deleting ref: drop the `ref-{slug}` row from each citer's reference column the same way (change-unit patch, not `c3 wire --remove`), then delete the ref
 6. Move ref's file patterns to rule in code-map
 
 ### Step 3b: Split (dual-nature)
@@ -211,7 +209,7 @@ Ref has both rationale AND enforcement.
    - `## Not This` — code anti-patterns (not rejected alternatives)
    - Set `origin: [ref-{original-slug}]`
 
-3. **Rewire citations** (each citer is a frozen fact — edges come from its own body, so re-edging rides as a change-unit patch on its `## Related Rules`/`## Related Refs` block; a brand-new citer carries the rows in its body at `c3 add`):
+3. **Rewire citations** (each citer is a frozen fact — edges come from its canvas's reference column, so re-edging rides as a change-unit patch on that block — `c3 schema component`, today `Governance`; a brand-new citer carries the rows in its body at `c3 add`):
    - Need rationale → keep the `ref-{slug}` row
    - Need enforcement → add a `rule-{slug}` row
    - Most need both → keep ref row, add rule row
@@ -291,12 +289,12 @@ c3 add rule <slug> --file body.md
 
 To revise the rule LATER (after it exists), route through a change-unit — see the Update flow.
 
-### Step 5: Wire Citers
+### Step 5: Cite from each using component
 
-Citers are frozen facts and their edges come from their own `## Related Rules` body, not `c3 wire`. Per component from overlap search, add a `rule-<slug>` row to its `## Related Rules` block:
+Citers are frozen facts and their edges come from their canvas's reference column (`c3 schema component` — today `Governance`/`Reference`), not `c3 wire`. Per component from overlap search, add a `rule-<slug>` row to that column:
 
-- **Existing citer:** ride it as a change-unit patch — `c3 read <component-id> --section "Related Rules" --cite` → author `<seq>-<slug>.patch.md` adding the row → `c3 change apply <adr-id>`.
-- **Brand-new citer:** author the `## Related Rules` row in its body at `c3 add component <slug> --file body.md` time; the edge appears at import.
+- **Existing citer:** ride it as a change-unit patch — `c3 read <component-id> --section Governance --cite` → author `<seq>-<slug>.patch.md` adding the row → `c3 change apply <adr-id>`.
+- **Brand-new citer:** author the reference row in its body at `c3 add component <slug> --file body.md` time; the edge appears at import.
 
 ### Step 6: Adoption ADR
 

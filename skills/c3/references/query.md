@@ -152,7 +152,7 @@ src/auth/**/*.ts
 1. Identify target (c3-NNN, c3-N, or c3-0)
 2. Read upward: component → container → context
 3. Extract: explicit constraints (MUST/MUST NOT), boundaries, layer rules
-4. Collect cited refs/rules from Related Refs/Rules, read key constraints
+4. Collect cited refs/rules from the component's reference column (`c3 schema component` — today `Governance`), read key constraints
 
 ```
 **Constraint Chain for c3-NNN (Name)**

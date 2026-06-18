@@ -125,6 +125,9 @@ c3 change new <adr-id>
 # 4. Preview — two-arm "files changed" panel: internal patches (drift verdict) +
 #    external codemap carriers (applied? which globs resolve?).
 c3 change view <adr-id>
+#    Preview the GRAPH the unit would produce (staged edges included), without
+#    landing it: `c3 graph <id> --unit <adr-id>` runs the real apply in a
+#    rolled-back transaction — the contextual lens. wire/stage → graph --unit → apply.
 
 # 5. Per-item state — patches (pending / applied / drifted / new) + carriers.
 c3 change status <adr-id>
@@ -354,7 +357,7 @@ is the unit's full footprint — what it *derives* (declares) and how well it *m
 c3 check
 ```
 
-- Docs match code; Related Refs/Rules updated.
+- Docs match code; the component reference column (Governance) updated.
 - CLAUDE.md blocks updated: `<!-- c3-generated: c3-NNN -->` … `<!-- end-c3-generated -->`.
 - `c3 check --fix` actualizes the ADR `accepted → done` once all After-cites resolve fresh.
 

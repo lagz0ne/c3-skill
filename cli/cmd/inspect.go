@@ -185,6 +185,15 @@ func inspectionGate(s *store.Store, c3Dir, unitID string, patches []changeset.Pa
 			globs, _ := ts.CodeMapFor(target)
 			territory := resolveTerritory(projectDir, globs)
 
+			// Docs-ahead-of-code: the fact declares derivation obligations but no
+			// code-map resolves to real files yet (onboarding / docs-first). There is
+			// nothing to inspect, so DEFER — the inspection fires later, when the
+			// code-map binds real files and the fact is next changed. The hard gate is
+			// only for facts whose governed code actually exists.
+			if len(territory) == 0 {
+				continue
+			}
+
 			insp, ok := inspByTarget[target]
 			if !ok {
 				rejects = append(rejects, fmt.Sprintf("%s declares %d derivation obligation(s) but has no inspection — run 'c3x change inspect %s', author <seq>.inspect.md, then apply", target, len(obs), unitID))
@@ -192,10 +201,6 @@ func inspectionGate(s *store.Store, c3Dir, unitID string, patches []changeset.Pa
 			}
 			if fresh, why := insp.CoversFresh(matByTarget[target]); !fresh {
 				rejects = append(rejects, fmt.Sprintf("inspection for %s is stale: %s", target, why))
-				continue
-			}
-			if len(territory) == 0 {
-				rejects = append(rejects, fmt.Sprintf("%s declares code-derived obligations but its code-map resolves to no files — add a <seq>.codemap.md binding, or mark the rows N.A - <reason>", target))
 				continue
 			}
 			for _, r := range insp.Rows {

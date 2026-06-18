@@ -142,3 +142,43 @@ func TestInspectionGate_RefusesEvidenceOutsideTerritory(t *testing.T) {
 		t.Fatal("expected a reject: evidence cites nothing in territory")
 	}
 }
+
+// Docs-ahead-of-code: a fact with derivation obligations whose code-map resolves
+// to NO real files (onboarding / docs-first, the code doesn't exist yet) must NOT
+// be blocked. There is nothing to inspect, so the gate DEFERS — no inspection
+// required, no reject. (Regression for the onboarding dogfood finding #1.)
+func TestInspectionGate_DefersWhenNoCodeTerritory(t *testing.T) {
+	s, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { s.Close() })
+	projectDir := t.TempDir()
+	c3Dir := filepath.Join(projectDir, ".c3")
+	if err := os.MkdirAll(c3Dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.InsertEntity(&store.Entity{ID: "c3-101", Type: "component", Title: "task-store", Status: "active", Metadata: "{}"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := content.WriteEntity(s, "c3-101", componentWithObligation); err != nil {
+		t.Fatal(err)
+	}
+	unit := "adr-20260618-docs-first"
+	dir := filepath.Join(c3Dir, "changes", unit)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	// A code-map binding that resolves to no files yet (code not written).
+	carrier := "---\ntarget: c3-101\n---\nsrc/does-not-exist-yet/**\n"
+	if err := os.WriteFile(filepath.Join(dir, "01.codemap.md"), []byte(carrier), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	rejects, err := inspectionGate(s, c3Dir, unit, nil, readCarriers(t, c3Dir, unit))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rejects) != 0 {
+		t.Fatalf("docs-ahead-of-code (no resolved territory) must defer, not block; got: %v", rejects)
+	}
+}

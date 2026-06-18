@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/lagz0ne/c3-design/cli/internal/schema"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
@@ -28,8 +27,6 @@ func RunInitDB(c3Dir string, projectName string, w io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("error: materializing canvas definitions: %w", err)
 	}
-
-	today := time.Now().Format("20060102")
 
 	// Open store
 	dbPath := filepath.Join(c3Dir, "c3.db")
@@ -59,7 +56,9 @@ func RunInitDB(c3Dir string, projectName string, w io.Writer) error {
 		Title:    "C3 Architecture Documentation Adoption",
 		Slug:     "c3-adoption",
 		Status:   "proposed",
-		Date:     today,
+		// No Date: the genesis id is the adr-00000000 sentinel, so the exported file
+		// must be adr-00000000-c3-adoption.md (matching the id commands key off), not
+		// a date-stamped name that read/check can't resolve.
 		Metadata: "{}",
 	}); err != nil {
 		return fmt.Errorf("error: inserting ADR entity: %w", err)

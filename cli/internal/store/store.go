@@ -60,6 +60,25 @@ func (s *Store) WithTx(fn func(*Store) error) error {
 	return nil
 }
 
+// WithPreviewTx runs fn inside a transaction that is ALWAYS rolled back — a
+// read-only overlay. Writes are visible to fn via read-your-writes (so applying a
+// change-unit's staged patches inside it produces a previewed graph) but are never
+// committed. A nested WithTx reuses this tx, so the real apply path runs inside.
+func (s *Store) WithPreviewTx(fn func(*Store) error) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return fmt.Errorf("begin preview tx: %w", err)
+	}
+	txStore := &Store{db: s.db, exec: tx, dbPath: s.dbPath}
+	defer func() {
+		_ = tx.Rollback() // a preview never commits, even on success
+		if p := recover(); p != nil {
+			panic(p)
+		}
+	}()
+	return fn(txStore)
+}
+
 // Open creates or opens a SQLite database at dbPath, runs schema
 // migrations, and returns a ready-to-use Store.
 func Open(dbPath string) (*Store, error) {

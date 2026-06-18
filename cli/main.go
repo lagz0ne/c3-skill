@@ -555,7 +555,7 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 		err = cmd.RunGraph(cmd.GraphOptions{
 			Store: s, EntityID: entityID, Depth: opts.Depth,
 			Direction: opts.Direction, Format: opts.Format,
-			JSON: opts.JSON, C3Dir: c3Dir,
+			JSON: opts.JSON, C3Dir: c3Dir, Unit: opts.Unit,
 		}, w)
 	case "delete":
 		id := ""

@@ -28,6 +28,7 @@ type Options struct {
 	Continue      bool
 	Depth         int
 	Direction     string
+	Unit          string
 	Format        string
 	TypeFilter    string
 	Mark          bool
@@ -97,6 +98,11 @@ func ParseArgs(argv []string) Options {
 			if i+1 < len(argv) {
 				i++
 				opts.Section = argv[i]
+			}
+		case "--unit":
+			if i+1 < len(argv) {
+				i++
+				opts.Unit = argv[i]
 			}
 		case "--append":
 			opts.Append = true

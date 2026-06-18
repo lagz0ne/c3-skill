@@ -18,6 +18,7 @@ type GraphOptions struct {
 	Format    string // "" (text) or "mermaid"
 	JSON      bool
 	C3Dir     string
+	Unit      string // when set, preview the graph through this change-unit's staged patches
 }
 
 // graphNode is a single entity in the subgraph output.
@@ -35,6 +36,19 @@ type graphNode struct {
 
 // RunGraph emits a subgraph rooted at the given entity.
 func RunGraph(opts GraphOptions, w io.Writer) error {
+	// Contextual change-unit lens: preview the graph as it would be if the unit's
+	// staged patches were applied. Runs the real apply path in a rolled-back tx and
+	// fails loudly — it never silently falls back to applied state.
+	if opts.Unit != "" {
+		return WithUnitOverlay(opts.Store, opts.C3Dir, opts.Unit, func(ts *store.Store) error {
+			fmt.Fprintf(w, "context: unit %s (preview — staged, not applied)\n\n", opts.Unit)
+			previewOpts := opts
+			previewOpts.Store = ts
+			previewOpts.Unit = ""
+			return RunGraph(previewOpts, w)
+		})
+	}
+
 	if _, err := opts.Store.GetEntity(opts.EntityID); err != nil {
 		return fmt.Errorf("entity %q not found", opts.EntityID)
 	}

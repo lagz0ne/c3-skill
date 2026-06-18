@@ -20,7 +20,6 @@ type SearchOptions struct {
 	Hybrid     bool
 	JSON       bool
 	Limit      int
-	Type       string
 	TypeFilter string
 	Semantic   bool
 	NoSemantic bool
@@ -69,9 +68,6 @@ func RunSearch(opts SearchOptions, w io.Writer) error {
 		limit = 20
 	}
 	entityType := opts.TypeFilter
-	if entityType == "" {
-		entityType = opts.Type
-	}
 
 	semanticEnabled := !opts.NoSemantic
 	if semanticEnabled {

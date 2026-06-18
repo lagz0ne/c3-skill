@@ -302,7 +302,11 @@ Examples:
 	{
 		Name:     "index",
 		OneLiner: "Build local semantic embeddings",
+		Hidden:   true,
 		Help: `Usage: c3x index [--json]
+
+Maintenance only — never a correctness step. search self-heals the index on
+demand; you do not need to re-index after a change.
 
 Download the pinned all-MiniLM-L6-v2 ONNX model and matching onnxruntime shared
 library into the user cache if missing, then rebuild SQLite entity embeddings.
@@ -402,9 +406,9 @@ Examples:
 	},
 	{
 		Name:     "change",
-		Args:     "<new|view|accept|apply|status|rebase> <id>",
+		Args:     "<new|view|accept|apply|status|rebase|scaffold> <id>",
 		OneLiner: "Author, review, and apply a change-unit (the only path that mutates a fact)",
-		Help: `Usage: c3x change <new|view|accept|apply|status|rebase> <change-unit-id>
+		Help: `Usage: c3x change <new|view|accept|apply|status|rebase|scaffold> <change-unit-id>
 
 A change-unit = reasoning (the doc) + change material (patch files in its folder,
 .c3/changes/<id>/*.patch.md). Applying it is the ONLY legal mutation of a fact.
@@ -420,6 +424,7 @@ rename / re-edge / remove. The folder of *.patch.md files is the source of truth
   accept  record the one stored human judgment (status → accepted)
   apply   the switcher: two gates (drift + canvas-valid), atomic all-or-nothing
   rebase  emit the drift bundle for re-authoring drifted patches
+  scaffold stage a rung-climb: one empty insert patch per fact below its canvas bar
 
 Apply runs two mechanical gates before any write — the anchor must be fresh
 (no drift) and the merged result must satisfy its canvas — and is atomic: one

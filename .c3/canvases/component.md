@@ -1,6 +1,6 @@
 ---
 id: component
-c3-seal: f12c5aac95404b3e554bfd8058b495f1b1bb54db79c7c5add051cbd461de355c
+c3-seal: c2d2c803ae61e3ccc0784b17e14cfdc1bb203d842af1fabfd6e8d84fc01e9456
 type: canvas
 description: 'Component: an owned unit of behavior inside a container.'
 ---
@@ -29,7 +29,7 @@ sections:
       min_words: 12
     - name: Foundational Flow
       content_type: table
-      required: false
+      required: true
       purpose: Preconditions, inputs, state, and shared dependencies
       columns:
         - name: Aspect
@@ -41,7 +41,7 @@ sections:
       min_rows: 4
     - name: Business Flow
       content_type: table
-      required: false
+      required: true
       purpose: Business outcome, primary path, alternates, and failure behavior
       columns:
         - name: Aspect
@@ -98,7 +98,7 @@ sections:
       min_rows: 2
     - name: Change Safety
       content_type: table
-      required: false
+      required: true
       purpose: Risks, triggers, detection, and verification required before done
       columns:
         - name: Risk

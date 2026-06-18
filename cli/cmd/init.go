@@ -58,7 +58,7 @@ func RunInitDB(c3Dir string, projectName string, w io.Writer) error {
 		Type:     "adr",
 		Title:    "C3 Architecture Documentation Adoption",
 		Slug:     "c3-adoption",
-		Status:   "in-progress",
+		Status:   "proposed",
 		Date:     today,
 		Metadata: "{}",
 	}); err != nil {

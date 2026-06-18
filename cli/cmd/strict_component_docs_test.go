@@ -98,7 +98,7 @@ Thin goal only.
 	if err == nil {
 		t.Fatal("expected strict component validation failure")
 	}
-	requireAll(t, err.Error(), "Parent Fit", "Foundational Flow", "Derived Materials")
+	requireAll(t, err.Error(), "Parent Fit", "Governance", "Derived Materials")
 }
 
 func TestStrictComponentDocs_AllowsEnrichedComponentOnWrite(t *testing.T) {
@@ -166,11 +166,14 @@ func TestStrictComponentDocs_AllowsNAReasonForEnums(t *testing.T) {
 }
 
 func TestStrictComponentDocs_RejectsUngroundedReferenceAndEvidence(t *testing.T) {
-	body := strings.Replace(strictComponentBody("auth", "Provide reviewer-ready authentication behavior documentation."), "| Preconditions | API request reaches authentication boundary with credentials available for validation. | ref-jwt |", "| Preconditions | API request reaches authentication boundary with credentials available for validation. | auth policy |", 1)
+	// Governance is a still-required rung-1 section with a Reference column (the deep
+	// Foundational/Business Flow tables are now a higher rung), so ground the reference
+	// check there.
+	body := strings.Replace(strictComponentBody("auth", "Provide reviewer-ready authentication behavior documentation."), "| ref-jwt | ref | Token format and validation expectations. |", "| auth policy | ref | Token format and validation expectations. |", 1)
 	body = strings.Replace(body, "| credentials | IN | Accept credential material for validation only. | API request boundary | ref-jwt |", "| credentials | IN | Accept credential material for validation only. | API request boundary | covered by auth tests |", 1)
 
 	issues := validateStrictComponentDoc(body, "error")
-	if !hasIssue(issues, "ungrounded reference in Foundational Flow row 1 column Reference") {
+	if !hasIssue(issues, "ungrounded reference in Governance row 1 column Reference") {
 		t.Fatalf("expected ungrounded reference issue, got %#v", issues)
 	}
 	if !hasIssue(issues, "ungrounded evidence in Contract row 1 column Evidence") {

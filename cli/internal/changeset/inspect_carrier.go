@@ -25,8 +25,8 @@ const InspectCarrierSuffix = ".inspect.md"
 // If a covered file changes after the attestation, its hash no longer matches and
 // the inspection is stale.
 type CoveredSource struct {
-	Source string `yaml:"source"`
-	Hash   string `yaml:"hash"`
+	Source string `yaml:"source" json:"source"`
+	Hash   string `yaml:"hash" json:"hash"`
 }
 
 // InspectionRow is one inspected obligation: a Derived Materials / Required

@@ -20,8 +20,24 @@ import (
 // body: a non-N.A Derived Materials row or Change Safety Required Verification.
 // These are what the switch forces the agent to inspect against the code.
 type obligation struct {
-	Section string
-	Detail  string
+	Section string `json:"section"`
+	Detail  string `json:"detail"`
+}
+
+// inspectTarget is one touched fact's inspection brief: its obligations, the
+// resolved code-map territory to inspect them in, and the material hashes to stamp
+// into a *.inspect.md `covers`.
+type inspectTarget struct {
+	Target      string                    `json:"target"`
+	Obligations []obligation              `json:"obligations"`
+	Territory   []string                  `json:"territory"`
+	Covers      []changeset.CoveredSource `json:"covers"`
+}
+
+// inspectOutput is the structured `change inspect` response.
+type inspectOutput struct {
+	Unit    string          `json:"unit"`
+	Inspect []inspectTarget `json:"inspect"`
 }
 
 // factObligations returns the inspect-worthy obligations in a fact body: Derived
@@ -228,13 +244,7 @@ func RunChangeInspect(opts ChangeApplyOptions, w io.Writer) error {
 	}
 	sort.Strings(targets)
 
-	type targetReport struct {
-		Target      string         `json:"target"`
-		Obligations []obligation   `json:"obligations"`
-		Territory   []string       `json:"territory"`
-		Covers      []changeset.CoveredSource `json:"covers"`
-	}
-	var reports []targetReport
+	var reports []inspectTarget
 	overlayErr := WithUnitOverlay(opts.Store, opts.C3Dir, opts.UnitID, func(ts *store.Store) error {
 		for _, target := range targets {
 			body, err := content.ReadEntity(ts, target)
@@ -255,7 +265,7 @@ func RunChangeInspect(opts ChangeApplyOptions, w io.Writer) error {
 			for _, src := range srcs {
 				covers = append(covers, changeset.CoveredSource{Source: src, Hash: matByTarget[target][src]})
 			}
-			reports = append(reports, targetReport{
+			reports = append(reports, inspectTarget{
 				Target: target, Obligations: obs,
 				Territory: resolveTerritory(projectDir, globs), Covers: covers,
 			})
@@ -267,7 +277,7 @@ func RunChangeInspect(opts ChangeApplyOptions, w io.Writer) error {
 	}
 
 	if opts.JSON {
-		return writeJSON(w, map[string]any{"unit": opts.UnitID, "inspect": reports})
+		return writeJSON(w, inspectOutput{Unit: opts.UnitID, Inspect: reports})
 	}
 	if len(reports) == 0 {
 		fmt.Fprintf(w, "change inspect: %s touches no fact with derivation obligations — no inspection required\n", opts.UnitID)

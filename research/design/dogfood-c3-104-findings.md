@@ -34,7 +34,10 @@ the deliverable; two are fixed, the rest are open.
    c3-104 retire** (the other 3 patches — two frontmatter re-edges + the retire — passed preflight).
    Needs focused debugging; editing a table row is a common, core need.
 
-## Status of the c3-104 retire
+## Status of the c3-104 retire — DONE (`da7aeae`)
+Retired end-to-end (lean ADR + 4 patches: retire c3-104, re-edge c3-111/c3-113 uses→c3-106, delete the c3-1 README row). Required three mechanism fixes (`baedf0a`): empty-block-deletes-node (was unimplemented), MergedBody mirrors applyBlock, and the inspection gate triggers only on contract changes (not frontmatter re-edges). New edge cases noted: a retire cascades to ALL referencers (recipe-validation-system's sources auto-dropped c3-104), and a retire ADR self-cites the retired entity so its auto-done latch can't fire.
+
+## (original blocker analysis)
 Staged and dry-run only (nothing applied; c3-design facts untouched, then cleaned up). The lean
 ADR + the 2 re-edge patches + the retire patch are correct and pass preflight; only the parent-
 README table-row block patch (finding #5) blocks it. Resume by resolving #5, then re-author the

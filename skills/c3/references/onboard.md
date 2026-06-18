@@ -105,6 +105,26 @@ Project-wide coding standards/constraints:
 
 Common: naming conventions, forbidden patterns, lint rules, security constraints. Look for repeated review feedback, linter configs, "always/never" statements.
 
+### 0.6b Recipe Discovery — cross-container flows
+
+A **recipe** captures an end-to-end operation that **no single component owns** — it
+crosses containers and hands off between components. A component's own `Business Flow`
+is its *local* slice; the recipe is the *whole* path. Whenever a feature spans the
+frontend→backend→integration→database seam, trace it as a recipe.
+
+| SLUG | TITLE | GOAL (the path it traces) |
+|------|-------|---------------------------|
+
+```bash
+# body: ## Goal naming the ordered hand-offs (which component/container owns each step)
+c3 add recipe <slug> --file body.md
+```
+
+Look for the multi-step operations the system is *for*: e.g. reservation→pick→pack→ship,
+receiving→putaway, return-processing, cycle-count→adjustment. At least the two or three
+most important cross-container operations earn a recipe — it is the artifact that makes
+the architecture's behavior legible across the container boundaries.
+
 ### 0.7 Overview Diagram
 
 Per container:
@@ -135,6 +155,14 @@ The system `c3-0` already exists from `c3 init` — its body is the context doc 
 
 Short text fields: `echo "<goal>" | c3 write c3-0 --section Goal`. Whole body rewrite: `c3 write c3-0 --file content.md`.
 
+**c3-0's `Containers` table is a parent table too — fill it from real ids, not placeholders.**
+c3-0 is born bodyless, so it stays directly writable until you author its body (the creation
+window); editing it after closes. So author c3-0's body **once the containers exist**, writing
+their real ids (`c3-1`, `c3-2`, …) straight into the `Containers` table. Authoring c3-0 first
+with placeholder rows (`N.A - initial`) just forces a re-patch of a now-frozen c3-0 later —
+the same churn the container `Components` tables avoid (§1.2). Order: containers → components →
+then c3-0's full body with the real topology.
+
 ### 1.2 Container Docs
 
 **Create container** (body in a file — tables and mermaid require `--file`):
@@ -151,7 +179,20 @@ c3 add component <slug> --container c3-N --file body.md
 # Feature (10+): add --feature flag
 c3 add component <slug> --container c3-N --feature --file body.md
 ```
-Body should contain `## Goal` plus `## Dependencies` table. Any content with markdown tables, mermaid, or code fences MUST go through `--file <path>` — inline strings corrupt quoting.
+Author each component body to the **component canvas** (`c3 schema component` — its
+required sections, not a remembered list). Any content with markdown tables, mermaid, or
+code fences MUST go through `--file <path>` — inline strings corrupt quoting.
+
+**Parent `Components` tables list the IDs the CLI *allocates*, never guesses.** A
+container's `Components` table names components that do not exist yet when you create the
+container, and the CLI numbers them on creation — foundation `c3-<N>01+`, features
+`c3-<N>10+`, in creation order. Guessing the wrong number (e.g. writing `c3-101` for what
+the CLI makes a feature `c3-110`) makes `check` flag an *unknown entity reference* and
+forces a re-patch of the now-frozen container — pure churn. Avoid it: **create the
+components first, then read their real ids with `c3 list` and fill the container's
+`Components` table from those** (in the genesis flow, the table is authored in the
+container's create-patch — fill it after you have settled each component's id, so the flip
+lands a container whose table already matches). One pass, no reconciliation.
 
 Code-map patterns: `c3 set <id> codemap <pattern>`. Bracket paths (`[id]`, `[...slug]`) work automatically.
 

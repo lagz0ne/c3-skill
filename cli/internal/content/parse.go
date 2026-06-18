@@ -123,8 +123,17 @@ func mapNodeType(n ast.Node, source []byte) (string, bool) {
 		return "list_item", true
 	case ast.KindFencedCodeBlock:
 		return "code_block", true
+	case ast.KindCodeBlock:
+		// Indented code block — captured as code (rendered back as a fence so the
+		// content is preserved even though the indented form is normalized).
+		return "code_block", true
 	case ast.KindBlockquote:
 		return "blockquote", true
+	case ast.KindThematicBreak:
+		return "thematic_break", true
+	case ast.KindHTMLBlock:
+		// Raw HTML / embeds (<div>, <iframe>, <img>, …) — preserved verbatim.
+		return "html_block", true
 	}
 
 	// Extension types
@@ -168,6 +177,10 @@ func extractContent(n ast.Node, source []byte, nodeType string) string {
 	switch nodeType {
 	case "code_block":
 		return extractCodeBlock(n, source)
+	case "html_block":
+		return extractRawLines(n, source)
+	case "thematic_break":
+		return ""
 	case "table_header", "table_row":
 		return extractTableRow(n, source)
 	case "checklist_item":
@@ -199,6 +212,18 @@ func extractCodeBlock(n ast.Node, source []byte) string {
 		code.Write(line.Value(source))
 	}
 	return lang + "\n" + strings.TrimRight(code.String(), "\n")
+}
+
+// extractRawLines returns a block's source lines verbatim (used for HTML blocks /
+// embeds, which must round-trip byte-for-byte).
+func extractRawLines(n ast.Node, source []byte) string {
+	var b strings.Builder
+	lines := n.Lines()
+	for i := range lines.Len() {
+		line := lines.At(i)
+		b.Write(line.Value(source))
+	}
+	return strings.TrimRight(b.String(), "\n")
 }
 
 // extractTableRow gets pipe-separated cell text.

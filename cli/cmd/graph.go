@@ -41,7 +41,19 @@ func RunGraph(opts GraphOptions, w io.Writer) error {
 	// fails loudly — it never silently falls back to applied state.
 	if opts.Unit != "" {
 		return WithUnitOverlay(opts.Store, opts.C3Dir, opts.Unit, func(ts *store.Store) error {
-			fmt.Fprintf(w, "context: unit %s (preview — staged, not applied)\n\n", opts.Unit)
+			// Mark the preview without corrupting the body. Machine output (JSON/
+			// TOON, incl. agent mode) takes priority in the render below, so it must
+			// get NO stdout prefix; a human mermaid render gets a `%%` comment; plain
+			// human text gets a header line.
+			switch {
+			case opts.JSON:
+				// no prefix — the --unit flag is the explicit signal; a stray prefix
+				// would make the machine output unparseable.
+			case opts.Format == "mermaid":
+				fmt.Fprintf(w, "%%%% preview: unit %s — staged, not applied\n", opts.Unit)
+			default:
+				fmt.Fprintf(w, "context: unit %s (preview — staged, not applied)\n\n", opts.Unit)
+			}
 			previewOpts := opts
 			previewOpts.Store = ts
 			previewOpts.Unit = ""

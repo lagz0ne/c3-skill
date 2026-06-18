@@ -4,13 +4,15 @@ import (
 	"testing"
 
 	"github.com/lagz0ne/c3-design/cli/internal/schema"
+	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
-// TestDeclaredEdges_GovernanceCitationWiresUses — authoring a ref in the live
-// component canvas's Governance reference column declares a `uses` edge; a
-// container cited as policy in the same column is filtered out by targets
-// [ref, rule] (a component does not "use" its container).
-func TestDeclaredEdges_GovernanceCitationWiresUses(t *testing.T) {
+// TestDeclaredEdges_ExtractsCandidatesWithTargets — DeclaredEdges is pure
+// extraction: every id in the Governance reference column becomes a candidate
+// `uses` edge carrying the column's target restriction. (Type filtering — e.g.
+// dropping the container cited as policy — happens in the sync, which has the
+// store; see TestSync below.) A custom-typed id is extracted too, not dropped.
+func TestDeclaredEdges_ExtractsCandidatesWithTargets(t *testing.T) {
 	def, ok := schema.DefinitionFor("component")
 	if !ok {
 		t.Fatal("component canvas should be embedded")
@@ -19,25 +21,62 @@ func TestDeclaredEdges_GovernanceCitationWiresUses(t *testing.T) {
 		"| Reference | Type | Governs | Precedence | Notes |\n" +
 		"| --- | --- | --- | --- | --- |\n" +
 		"| ref-jwt | ref | auth | x | y |\n" +
-		"| rule-logging | rule | logs | x | y |\n" +
-		"| c3-1 | policy | container | x | y |\n"
+		"| c3-1 | policy | container | x | y |\n" +
+		"| decision-log-api | spec | custom type | x | y |\n"
 
-	edges := DeclaredEdges("c3-101", def, body)
-	got := map[string]string{}
-	for _, e := range edges {
-		got[e.To] = e.Rel
+	got := map[string]DeclaredEdge{}
+	for _, e := range DeclaredEdges("c3-101", def, body) {
+		got[e.To] = e
 	}
-	if got["ref-jwt"] != "uses" {
-		t.Errorf("expected uses edge to ref-jwt, got %+v", edges)
+	for _, id := range []string{"ref-jwt", "c3-1", "decision-log-api"} {
+		e, ok := got[id]
+		if !ok {
+			t.Fatalf("expected %s extracted as a candidate, got %+v", id, got)
+		}
+		if e.Rel != "uses" {
+			t.Errorf("%s: rel should be uses, got %q", id, e.Rel)
+		}
+		if len(e.Targets) != 2 {
+			t.Errorf("%s: should carry the column targets [ref rule], got %v", id, e.Targets)
+		}
 	}
-	if got["rule-logging"] != "uses" {
-		t.Errorf("expected uses edge to rule-logging, got %+v", edges)
+}
+
+// TestSyncCanvasOwnedRelationships_FiltersByActualType — the sync wires only
+// citations whose ACTUAL stored type matches the column's targets: ref-jwt (ref)
+// wires; c3-1 (container, cited as policy) does not.
+func TestSyncCanvasOwnedRelationships_FiltersByActualType(t *testing.T) {
+	s := testStore(t)
+	for _, e := range []*store.Entity{
+		{ID: "c3-101", Type: "component", Title: "comp", Status: "active", Metadata: "{}"},
+		{ID: "c3-1", Type: "container", Title: "ctr", Status: "active", Metadata: "{}"},
+		{ID: "ref-jwt", Type: "ref", Title: "ref", Status: "active", Metadata: "{}"},
+	} {
+		if err := s.InsertEntity(e); err != nil {
+			t.Fatalf("seed %s: %v", e.ID, err)
+		}
 	}
-	if _, wired := got["c3-1"]; wired {
-		t.Errorf("c3-1 (container, policy) must NOT wire a uses edge (targets [ref,rule]), got %+v", edges)
+	def, _ := schema.DefinitionFor("component")
+	body := "## Governance\n\n" +
+		"| Reference | Type | Governs | Precedence | Notes |\n" +
+		"| --- | --- | --- | --- | --- |\n" +
+		"| ref-jwt | ref | auth | x | y |\n" +
+		"| c3-1 | policy | container | x | y |\n"
+	if err := SyncCanvasOwnedRelationships(s, "c3-101", def, body); err != nil {
+		t.Fatalf("sync: %v", err)
 	}
-	if len(edges) != 2 {
-		t.Errorf("expected exactly 2 edges (ref + rule), got %d: %+v", len(edges), edges)
+	rels, _ := s.RelationshipsFrom("c3-101")
+	to := map[string]bool{}
+	for _, r := range rels {
+		if r.RelType == "uses" {
+			to[r.ToID] = true
+		}
+	}
+	if !to["ref-jwt"] {
+		t.Error("ref-jwt (type ref) must wire a uses edge")
+	}
+	if to["c3-1"] {
+		t.Error("c3-1 (type container) must NOT wire a uses edge under targets [ref,rule]")
 	}
 }
 

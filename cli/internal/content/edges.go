@@ -10,50 +10,31 @@ import (
 )
 
 // DeclaredEdge is one graph relationship a fact's body declares through a canvas
-// edge-column: From cites To via Rel, sourced from Section.Column.
+// edge-column: From cites To via Rel, sourced from Section.Column. Targets carries
+// the column's allowed target types so the sync can filter by the target's ACTUAL
+// stored type (not a guess from the id).
 type DeclaredEdge struct {
 	From    string
 	To      string
 	Rel     string
 	Section string
 	Column  string
+	Targets []string
 }
 
-// entityIDRE matches the entity-id shapes a citation cell may carry.
-var entityIDRE = regexp.MustCompile(`\b(?:c3-\d+|(?:ref|rule|recipe|prd|adr|user-story|pm-requirement)-[a-z0-9][a-z0-9-]*)\b`)
+// entityIDRE matches entity-id shapes a citation cell may carry: c3-N facts and
+// any `<type>-<slug>` kebab id — so custom / project-defined entity types
+// (e.g. `decision-log-...`) are extracted, not silently dropped.
+var entityIDRE = regexp.MustCompile(`\bc3-\d+\b|\b[a-z][a-z0-9]*(?:-[a-z0-9]+)+\b`)
 
-// entityTypeFromID infers an entity's type from its id prefix. The c3-N facts
-// (system / container / component) share one prefix, so they return "c3".
-func entityTypeFromID(id string) string {
-	for _, p := range []struct{ prefix, typ string }{
-		{"pm-requirement-", "pm-requirement"}, {"user-story-", "user-story"},
-		{"ref-", "ref"}, {"rule-", "rule"}, {"recipe-", "recipe"},
-		{"adr-", "adr"}, {"prd-", "prd"},
-	} {
-		if strings.HasPrefix(id, p.prefix) {
-			return p.typ
-		}
-	}
-	if strings.HasPrefix(id, "c3-") {
-		return "c3"
-	}
-	return ""
-}
-
-// targetAllowed reports whether id may be cited by an edge column restricted to
-// the given target types. Empty targets means any type. Done by id-prefix so it
-// stays a pure, store-free check (no import-ordering hazard); the c3-N facts are
-// allowed when any c3 fact type is listed.
-func targetAllowed(id string, targets []string) bool {
+// typeInTargets reports whether an entity's actual stored type satisfies a column's
+// target restriction. Empty targets means any type.
+func typeInTargets(typ string, targets []string) bool {
 	if len(targets) == 0 {
 		return true
 	}
-	t := entityTypeFromID(id)
-	for _, allowed := range targets {
-		if t == allowed {
-			return true
-		}
-		if t == "c3" && (allowed == "system" || allowed == "container" || allowed == "component") {
+	for _, t := range targets {
+		if t == typ {
 			return true
 		}
 	}
@@ -62,10 +43,10 @@ func targetAllowed(id string, targets []string) bool {
 
 // DeclaredEdges extracts the relationships a fact's body declares through its
 // canvas edge-columns (columns whose `edge:` is set). Each entity id in such a
-// cell materializes an edge of that relationship type. Blank cells and "N.A -
+// cell is a candidate edge of that relationship type. Blank cells and "N.A -
 // <reason>" cells wire nothing, and a self-citation is dropped. This is pure
-// extraction — existence and target-type validation belong to `check`, so a
-// citer imported before its target never spuriously fails here.
+// extraction — existence and target-TYPE filtering happen in the sync (which has
+// the store), so a citer imported before its target never spuriously fails here.
 func DeclaredEdges(entityID string, def schema.Canvas, body string) []DeclaredEdge {
 	var edges []DeclaredEdge
 	for _, sec := range def.Sections {
@@ -89,10 +70,10 @@ func DeclaredEdges(entityID string, def schema.Canvas, body string) []DeclaredEd
 					continue
 				}
 				for _, target := range entityIDRE.FindAllString(cell, -1) {
-					if target == entityID || !targetAllowed(target, col.Targets) {
+					if target == entityID {
 						continue
 					}
-					edges = append(edges, DeclaredEdge{From: entityID, To: target, Rel: col.Edge, Section: sec.Name, Column: col.Name})
+					edges = append(edges, DeclaredEdge{From: entityID, To: target, Rel: col.Edge, Section: sec.Name, Column: col.Name, Targets: col.Targets})
 				}
 			}
 		}
@@ -149,8 +130,15 @@ func SyncCanvasOwnedRelationships(s *store.Store, entityID string, def schema.Ca
 		// created in the same unit/import already exists by the time we sync, so a
 		// failure here is a genuine orphan citation — reported cleanly, not as a raw
 		// FK constraint error.
-		if _, err := s.GetEntity(e.To); err != nil {
+		te, err := s.GetEntity(e.To)
+		if err != nil {
 			return &OrphanCitationError{From: e.From, To: e.To, Section: e.Section, Column: e.Column}
+		}
+		// Filter by the target's ACTUAL type: a column restricted to e.g. [ref,rule]
+		// wires those, while a container/adr cited in the same column (valid display
+		// — a policy or decision reference) wires no edge.
+		if !typeInTargets(te.Type, e.Targets) {
+			continue
 		}
 		if err := s.AddRelationship(&store.Relationship{FromID: e.From, ToID: e.To, RelType: e.Rel}); err != nil {
 			return err

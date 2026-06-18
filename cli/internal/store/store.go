@@ -65,6 +65,12 @@ func (s *Store) WithTx(fn func(*Store) error) error {
 // change-unit's staged patches inside it produces a previewed graph) but are never
 // committed. A nested WithTx reuses this tx, so the real apply path runs inside.
 func (s *Store) WithPreviewTx(fn func(*Store) error) error {
+	if _, already := s.exec.(*sql.Tx); already {
+		// Under MaxOpenConns(1) a nested Begin would wait forever on the only
+		// connection. A preview must roll back, so it can't reuse an outer tx that
+		// will commit — nesting is a programming error, refused loudly.
+		return fmt.Errorf("preview tx cannot run inside an open transaction")
+	}
 	tx, err := s.db.Begin()
 	if err != nil {
 		return fmt.Errorf("begin preview tx: %w", err)

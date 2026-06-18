@@ -99,8 +99,50 @@ Not name-matching. A column carries `type:` (how to parse the cell) and an `edge
 
 ## Status
 
-- **Phase A started:** `ColumnDef.Edge`/`Targets` added (`internal/schema/schema.go`);
-  the unambiguous-writer rule enforced at canvas parse (`internal/schema/canvas.go`
-  `ValidateCanvas`); tests in `internal/schema/canvas_edge_test.go`; full `go test ./...`
-  green. Next: `DeclaredEdges` + `syncCanvasOwnedRelationships` + the first red test
-  (`add --file` Governance→edge), then wire it into add/import.
+**Core goal achieved — both halves functional, tested, committed, dogfood-safe:**
+
+- **Phase A (done, `2a28a77`):** `ColumnDef.Edge`/`Targets` + ≤1-writer rule; `content.DeclaredEdges`
+  + `SyncCanvasOwnedRelationships` (the one seam) wired into `add` + `import`; seed
+  `Governance.Reference` marked `edge: uses` (targets ref/rule). Authoring the column wires a
+  real `uses` edge; survives rebuild; existing projects (no edge-column) untouched.
+- **Phase B core (done, `2a28a77`):** `changeset.Apply` threads an in-tx `syncEdges` hook;
+  `change apply` re-derives body-owned edges atomically.
+- **Phase C (done, `2747377`):** orphan citation → clean `X cites Y in Section.Column which does
+  not exist`. display==edge is structural (the column IS the edge).
+- **Phase D core (done, `1842e5a`):** `store.WithPreviewTx` (rolled-back tx); `WithUnitOverlay`
+  applies a unit's patches via the *real* `changeset.Apply` in preview (with the edge sync) and
+  rolls back; `graph <id> --unit <adr>` previews staged edges under a "preview — staged, not
+  applied" header (all modes: text / mermaid / reverse / json); missing unit fails loud.
+
+**Remaining (polish / extension, not blocking the stated goal):**
+- `c3 wire` front door (resolve column from canvas; frozen → `--unit` stages a block patch) —
+  today you author the column directly or via a change-unit block patch.
+- `change use <id>` active-unit (so `--unit` need not repeat); lens-aware `read`/`lookup`/`list`
+  overlay; staged/applied delta markers on json/mermaid; block `read --cite` under overlay;
+  `search` overlay (needs tx-safe store reads first).
+- `c3 migrate citations` for adopting an `edge:` column in an existing project (c3-design is
+  already consistent, so unaffected).
+- Finalize the skill citation text to the new model (the column IS the edge) + teach `graph --unit`.
+
+## Codex post-implementation review — disposition
+
+Codex (read-only, high effort) reviewed the implementation. **Fixed:**
+- **#2 (high) machine-output corruption** — `graph --unit`'s `context:` header broke JSON/TOON
+  (incl. agent mode) and mermaid. Now: JSON/TOON get no prefix, mermaid gets a `%%` comment,
+  human text gets the header.
+- **#3/#4 (high/med) targets + custom types** — prefix-guessing collapsed all `c3-*` to one
+  type and dropped custom `<type>-<slug>` ids. Now id extraction is general and target-type
+  filtering uses the **actual stored type** in the sync (container-cited-as-policy correctly
+  wires nothing; custom types extract).
+- **#8 (med) preview-tx nesting** — `WithPreviewTx` now refuses to run inside an open tx
+  (would deadlock under `MaxOpenConns(1)`).
+
+**Deferred (noted, low reachability today):**
+- **#1 (high) overlay preflight** — the overlay runs `changeset.Apply` (drift + apply errors)
+  but not the full `RunChangeApply` preflight (canvas gate, codemap dup/target). A preview of
+  an *invalid* unit is therefore optimistic. The common case (valid staged unit) previews
+  correctly. Fix = extract the preflight and run it in `WithUnitOverlay`.
+- **#5 `edge: via` double-wire**, **#6 frontmatter-`uses`-patch vs body-owned edge**,
+  **#7 `write` desync** — all latent: no seed canvas declares `edge: via`; the skill cites via
+  the column (not frontmatter `uses` patches); `write` is refused on frozen edge-owning facts
+  (components). Fix when a non-frozen edge-owning type or a custom `edge:` rel appears.

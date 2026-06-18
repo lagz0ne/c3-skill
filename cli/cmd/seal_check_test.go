@@ -101,6 +101,41 @@ func hasSealWarn(issues []Issue, entityID string) bool {
 // TestRunCheck_WarnsOnFactHandEditedSinceSeal — a fact whose on-disk content no
 // longer matches its committed c3-seal (hand-edited after sealing) surfaces a
 // seal-mismatch WARN from `c3x check`.
+// TestFilterCanvasPaths — canvas paths are dropped from a broken-seal list (the
+// fix that keeps the seal list consistent with the canvas-excluded sync diff).
+func TestFilterCanvasPaths(t *testing.T) {
+	in := []string{"canvases/adr.md", "c3-1-api/c3-101.md", "canvases/component.md", "refs/ref-x.md"}
+	out := filterCanvasPaths(in)
+	if len(out) != 2 {
+		t.Fatalf("expected 2 non-canvas paths, got %v", out)
+	}
+	for _, p := range out {
+		if isCanvasCanonicalPath(p) {
+			t.Errorf("filterCanvasPaths left a canvas path: %s", p)
+		}
+	}
+}
+
+// TestCheckFactSeals_SkipsCanvases — the fact-seal-on-disk check ignores canvases
+// (user-owned definitions), so a canvas with a mismatched seal is not flagged.
+func TestCheckFactSeals_SkipsCanvases(t *testing.T) {
+	c3Dir := exportFixtureToDisk(t)
+	canvasDir := filepath.Join(c3Dir, "canvases")
+	if err := os.MkdirAll(canvasDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	// A canvas with a deliberately wrong seal must NOT surface as a fact-seal mismatch.
+	bad := "---\nid: component\nc3-seal: " + strings.Repeat("0", 64) + "\ntype: canvas\ndescription: 'Component definition'\n---\n\ndomain: software\nsections: []\n"
+	if err := os.WriteFile(filepath.Join(canvasDir, "component.md"), []byte(bad), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for _, i := range checkFactSealsOnDisk(c3Dir) {
+		if i.Entity == "component" {
+			t.Fatalf("a canvas seal mismatch must be skipped by the fact-seal check, got: %+v", i)
+		}
+	}
+}
+
 func TestRunCheck_WarnsOnFactHandEditedSinceSeal(t *testing.T) {
 	c3Dir := exportFixtureToDisk(t)
 	compPath := filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md")

@@ -116,6 +116,10 @@ func reportBrokenSeals(c3Dir string, includeADR bool, only []string, w io.Writer
 	if !includeADR {
 		broken = filterADRPaths(broken)
 	}
+	// Canvases are user-owned definitions, excluded from the canonical-sync diff;
+	// exclude them from the broken-seal list too (consistent with RunSyncCheck) so a
+	// fresh init does not report BROKEN_SEAL on seed canvases the sync path never checks.
+	broken = filterCanvasPaths(broken)
 	if len(only) > 0 {
 		broken = filterPathsByTargets(broken, only)
 	}

@@ -98,6 +98,12 @@ func RunSyncCheck(opts ExportOptions, w io.Writer) error {
 	expected = filterRetiredADRTemplatesSnapshot(expected)
 	actual = filterCanvasSnapshot(actual)
 	expected = filterCanvasSnapshot(expected)
+	// Canvases are user-owned definitions, excluded from the canonical-sync diff above;
+	// exclude them from the broken-seal list too so the two stay consistent. (Without
+	// this, a fresh init reports BROKEN_SEAL on the seed canvases whose seal the diff
+	// path never checks.) Canvas integrity is governed by structural validation + the
+	// embedded-seal test, not canonical-markdown sync.
+	broken = filterCanvasPaths(broken)
 	if len(opts.Only) > 0 {
 		actual = filterSnapshotByTargets(actual, opts.Only)
 		expected = filterSnapshotByTargets(expected, opts.Only)
@@ -215,6 +221,19 @@ func filterRetiredADRTemplatesSnapshot(files map[string]string) map[string]strin
 
 func isRetiredADRTemplatesCanonicalPath(path string) bool {
 	return strings.HasPrefix(filepath.ToSlash(path), "adr-templates/") && strings.HasSuffix(path, ".md")
+}
+
+// filterCanvasPaths drops canvas paths from a broken-seal path list — the path-list
+// analogue of filterCanvasSnapshot, keeping the seal list consistent with the diff.
+func filterCanvasPaths(paths []string) []string {
+	filtered := paths[:0]
+	for _, path := range paths {
+		if isCanvasCanonicalPath(path) {
+			continue
+		}
+		filtered = append(filtered, path)
+	}
+	return filtered
 }
 
 func filterCanvasSnapshot(files map[string]string) map[string]string {

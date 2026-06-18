@@ -687,6 +687,13 @@ func checkFactSealsOnDisk(c3Dir string) []Issue {
 		if doc.Frontmatter == nil {
 			continue
 		}
+		// Canvases are user-owned definitions, not facts; their seals are governed by
+		// structural validation + the embedded-seal test, not this fact-seal-on-disk
+		// check (which otherwise flags a benign renderCanvasDoc-vs-verify seal format
+		// difference on status-bearing seed canvases at fresh init).
+		if doc.Frontmatter.Type == "canvas" {
+			continue
+		}
 		actual, expected := verifyParsedDocSeal(doc)
 		if actual == "" || expected == "" {
 			continue

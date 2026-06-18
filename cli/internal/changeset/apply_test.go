@@ -96,6 +96,25 @@ func TestApply_BlockFlip_SiblingsFrozen(t *testing.T) {
 	}
 }
 
+// A frontmatter patch can now edit a frozen fact's boundary / category / date —
+// parity with `set`, which the change-unit path previously could not reach.
+func TestApply_Frontmatter_SetsAttributes(t *testing.T) {
+	s := openMem(t)
+	seedFact(t, s, "c3-101", "# auth\n\n## Goal\n\nGoal.\n")
+	base := entityHandle(t, s, "c3-101")
+
+	p := Patch{Target: "c3-101", Scope: ScopeFrontmatter, Base: base,
+		Boundary: "owns auth only", Category: "feature", Date: "2026-06-18", Source: "01.patch.md"}
+	if err := Apply(s, []Patch{p}, nil, nil); err != nil {
+		t.Fatalf("apply: %v", err)
+	}
+
+	e, _ := s.GetEntity("c3-101")
+	if e.Boundary != "owns auth only" || e.Category != "feature" || e.Date != "2026-06-18" {
+		t.Errorf("frontmatter patch did not set attributes: boundary=%q category=%q date=%q", e.Boundary, e.Category, e.Date)
+	}
+}
+
 func TestApply_Drift_RejectsWholeSet(t *testing.T) {
 	s := openMem(t)
 	seedFact(t, s, "c3-101", "# auth\n\n## Goal\n\nOriginal goal.\n")

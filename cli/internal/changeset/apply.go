@@ -266,6 +266,15 @@ func applyFrontmatter(s *store.Store, p Patch) error {
 	if p.Parent != "" {
 		entity.ParentID = p.Parent
 	}
+	if p.Boundary != "" {
+		entity.Boundary = p.Boundary
+	}
+	if p.Category != "" {
+		entity.Category = p.Category
+	}
+	if p.Date != "" {
+		entity.Date = p.Date
+	}
 	if err := s.UpdateEntity(entity); err != nil {
 		return err
 	}

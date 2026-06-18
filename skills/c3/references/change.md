@@ -156,7 +156,7 @@ target: <entity-id>
 scope: block | whole | frontmatter | retire
 base: <cite-handle>        # required for every scope except no-base whole; absent ⇒ create
 result: sha256:<hash>      # landing check (optional but recommended) — see below
-# type / parent / title / uses — create + frontmatter metadata
+# type / parent / title / uses / boundary / category / date — create + frontmatter metadata
 ---
 <body>
 ```
@@ -168,7 +168,7 @@ The scopes you will actually use:
 | `block` | replace **one** cited block (EDIT an existing section); **empty body deletes it** | required (block cite handle) | the new block content |
 | `insert` | **append a NEW section** to a frozen fact — additive, existing sections stay frozen | entity handle (`entity@vN:sha256:MERKLE`) | the new section; MUST start with a heading (`## Name`), MUST NOT duplicate an existing section |
 | `whole` (no base) | **create** a new fact, born sealed | absent | the full body; `type:` required |
-| `frontmatter` | rename / move parent / re-edge `uses` | entity handle | frontmatter deltas |
+| `frontmatter` | rename (`title`) / move (`parent`) / re-edge (`uses`) / set `boundary`, `category`, `date` — parity with `set` | entity handle | frontmatter deltas |
 | `retire` | remove the fact + its edges | entity handle | — |
 
 **`block` EDITS an existing section; `insert` ADDS a new one.** When a section already exists and its content must change, replace it with a `block` patch. When the fact must *gain* a section it does not have — the move that lets a sealed fact grow as the rung rises (see §Climbing a rung) — use `insert`: it appends additively, leaving every existing section frozen, anchored to the entity handle from `c3 read <id> --cite`. The `insert` body must START WITH A SECTION HEADING and may not duplicate a section already on the fact.

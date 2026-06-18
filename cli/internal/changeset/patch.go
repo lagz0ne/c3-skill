@@ -40,10 +40,13 @@ type Patch struct {
 	Source   string // originating file name, for diagnostics
 
 	// Metadata payload — used by whole (create) and frontmatter scopes.
-	Type   string   // create: the new fact's canvas type
-	Parent string   // create / frontmatter: parent entity id
-	Title  string   // create / frontmatter: title
-	Uses   []string // frontmatter: re-edge — the new `uses` (ref) target set
+	Type     string   // create: the new fact's canvas type
+	Parent   string   // create / frontmatter: parent entity id
+	Title    string   // create / frontmatter: title
+	Uses     []string // frontmatter: re-edge — the new `uses` (ref) target set
+	Boundary string   // frontmatter: boundary attribute (parity with `set`)
+	Category string   // frontmatter: category attribute (parity with `set`)
+	Date     string   // frontmatter: date attribute (parity with `set`)
 }
 
 type patchMeta struct {
@@ -56,6 +59,9 @@ type patchMeta struct {
 	Parent   string   `yaml:"parent"`
 	Title    string   `yaml:"title"`
 	Uses     []string `yaml:"uses"`
+	Boundary string   `yaml:"boundary"`
+	Category string   `yaml:"category"`
+	Date     string   `yaml:"date"`
 }
 
 // ParsePatch reads one patch file (YAML frontmatter + body) into a Patch.
@@ -103,6 +109,9 @@ func ParsePatch(source, raw string) (Patch, error) {
 		Parent:   strings.TrimSpace(m.Parent),
 		Title:    strings.TrimSpace(m.Title),
 		Uses:     m.Uses,
+		Boundary: strings.TrimSpace(m.Boundary),
+		Category: strings.TrimSpace(m.Category),
+		Date:     strings.TrimSpace(m.Date),
 	}, nil
 }
 

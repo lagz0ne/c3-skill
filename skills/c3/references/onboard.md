@@ -2,7 +2,7 @@
 
 ## What onboarding is (v11)
 
-LLM-driven, one complete change-unit cycle. You **discuss** the architecture, **size the canvas to fit the project**, **author the whole architecture into the genesis ADR** as staged create-patches, then **flip** — `c3x change apply` materializes it atomically as frozen facts. `c3 init` already created the system `c3-0` and the genesis ADR `adr-00000000-c3-adoption`; the staged create-patches persist on disk **until you flip**, so authoring is interruptible and resumable — the flip then **consumes** them (they're deleted), and the ADR's prose, not the patches, is the lasting record.
+LLM-driven, one complete change-unit cycle. You **discuss** the architecture, **size the canvas to fit the project**, **author the whole architecture into the genesis ADR** as staged create-patches, then **flip** — `c3x change apply` materializes it atomically as frozen facts. `c3 init` already created the system `c3-0` and the genesis ADR `adr-00000000-c3-adoption`; the staged create-patches **persist on disk** (apply does not delete them — `check` exempts `.c3/changes/`), so authoring is interruptible and resumable. After the flip the ADR's prose is the durable narrative; remove `.c3/changes/adr-00000000-c3-adoption/` once applied if you want to clear the staging.
 
 **The order matters: canvas first, then facts.** Every fact is validated against its canvas at apply, so the canvas must already be the right shape before you author facts.
 
@@ -34,7 +34,7 @@ The genesis ADR is the spine. Stage 0/1/2 below are the discovery → detail →
 3. **Author** — write the architecture into the genesis ADR `adr-00000000-c3-adoption`. The containers/components/refs/rules go in as **create-patches** in `.c3/changes/adr-00000000-c3-adoption/` (scope `whole`, no base, with `type:` and `parent:`); the ADR body carries the narrative. Interruptible — the staged patches persist.
 4. **Flip** — `c3x change apply adr-00000000-c3-adoption` materializes the whole architecture atomically as frozen facts (canvas-validated, all-or-nothing). The genesis ADR's Affected Topology Evidence was authored as `N.A` (the facts didn't exist yet), so **after the flip refresh those cites with real handles** (`c3 read <id> --cite` per affected fact) — now the facts exist. Then `c3 change accept adr-00000000-c3-adoption` + `c3 check --fix` latches it `accepted → done` once those refreshed After-cites resolve. Onboarding ends having completed one full change-unit cycle.
 
-Direct `c3 add` remains valid and unguarded for creating a fact (a new fact is not frozen). Frame the genesis ADR as the demonstration **and** the record of how this architecture was created (its prose survives the flip; the create-patches are consumed by it).
+Direct `c3 add` remains valid and unguarded for creating a fact (a new fact is not frozen). Frame the genesis ADR as the demonstration **and** the record of how this architecture was created (the ADR prose is the durable narrative; the create-patches stay staged on disk after the flip until you clear them).
 
 ## Progress Checklist
 
@@ -147,7 +147,7 @@ Include each as mermaid code block.
 
 ## Stage 1: Details
 
-**Route creation through the genesis ADR.** The container/component/ref/rule bodies below are authored as **create-patches** staged in `.c3/changes/adr-00000000-c3-adoption/` — one `<seq>-<slug>.patch.md` per fact: scope `whole`, **no base**, with `type:` and `parent:` in the frontmatter, and the body in the shapes shown below. Nothing materializes yet; the whole architecture lands in one flip at Stage 2. This keeps onboarding interruptible (the staged patches persist until the flip consumes them) and makes the genesis ADR the record of how the architecture was built. (The `--file` body shapes below are the canvas-correct content for each patch body; direct `c3 add` is still valid for one-off facts, but the genesis ADR is the demonstration and the ledger.)
+**Route creation through the genesis ADR.** The container/component/ref/rule bodies below are authored as **create-patches** staged in `.c3/changes/adr-00000000-c3-adoption/` — one `<seq>-<slug>.patch.md` per fact: scope `whole`, **no base**, with `type:` and `parent:` in the frontmatter, and the body in the shapes shown below. Nothing materializes yet; the whole architecture lands in one flip at Stage 2. This keeps onboarding interruptible (the staged patches persist on disk) and makes the genesis ADR the record of how the architecture was built. (The `--file` body shapes below are the canvas-correct content for each patch body; direct `c3 add` is still valid for one-off facts, but the genesis ADR is the demonstration and the ledger.)
 
 The system `c3-0` already exists from `c3 init` — its body is the context doc you author directly (it is a fact created at init; author it before the flip, then it is frozen).
 

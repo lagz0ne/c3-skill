@@ -4,7 +4,7 @@
   "description": "Thin CLI client for c3x — architecture documentation tool",
   "type": "module",
   "bin": {
-    "c3x": "./dist/cli.mjs"
+    "c3x": "dist/cli.mjs"
   },
   "files": [
     "dist/"

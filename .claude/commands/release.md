@@ -129,17 +129,19 @@ After updates, show:
 1. Version change: `X.Y.Z` → `A.B.C`
 2. Files modified
 3. Changelog entry preview
-4. Remind user to commit and push to **dev** (CI handles the rest):
+4. Remind user to commit and merge to **main** (CI handles the rest):
    ```bash
    git add skills/c3/bin/VERSION .claude-plugin/plugin.json .claude-plugin/marketplace.json CHANGELOG.md README.md
    git commit -m "chore: release vA.B.C"
-   git push origin dev
+   git push origin HEAD
    ```
 
-**What CI does automatically on push to dev:**
-- Runs `go test ./...`
-- Cross-compiles Go CLI for 4 targets (linux/darwin × amd64/arm64)
-- Merges dev → main (with binaries force-added — they're gitignored on dev)
-- Detects new VERSION → creates git tag `vA.B.C` + GitHub Release with plugin zip
+After the release commit lands on **main**, `.github/workflows/release.yml`:
+- Verifies the version surfaces match (`skills/c3/bin/VERSION`, npm package metadata, and the npm wrapper pin)
+- Runs Go and npm tests
+- Cross-compiles thin Go CLI assets and per-platform fat skill zips for the supported release matrix
+- Uploads semantic model assets and checksums to the GitHub Release
+- Creates tag `vA.B.C` and the GitHub Release if the tag does not already exist
+- Publishes `@c3x/cli` through npm trusted publishing with GitHub OIDC
 
 **Do NOT manually create git tags** — CI owns that.

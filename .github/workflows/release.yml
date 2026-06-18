@@ -4,44 +4,239 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      force:
+        description: Rebuild and re-upload release assets even if the tag already exists.
+        type: boolean
+        default: false
+      publish_npm:
+        description: Publish @c3x/cli if npm does not already have this version.
+        type: boolean
+        default: true
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  release:
+  plan:
     runs-on: ubuntu-latest
-    # Only release from distribute PRs, direct version bumps, or manual dispatch
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      contains(github.event.head_commit.message, 'distribute dev') ||
-      contains(github.event.head_commit.message, 'Merge pull request')
+    outputs:
+      version: ${{ steps.plan.outputs.version }}
+      tag: ${{ steps.plan.outputs.tag }}
+      npm_version: ${{ steps.plan.outputs.npm_version }}
+      should_release: ${{ steps.plan.outputs.should_release }}
+      should_publish_npm: ${{ steps.plan.outputs.should_publish_npm }}
     steps:
-      - name: Checkout main
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Check version for release
-        id: version
-        run: |
-          CURRENT_VERSION=$(cat skills/c3/bin/VERSION | tr -d '[:space:]')
-          echo "Current version: $CURRENT_VERSION"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
 
-          if git rev-parse "v$CURRENT_VERSION" >/dev/null 2>&1; then
-            echo "Tag v$CURRENT_VERSION already exists, skipping release"
-            echo "should_release=false" >> $GITHUB_OUTPUT
-          else
-            echo "New version detected: $CURRENT_VERSION"
-            echo "should_release=true" >> $GITHUB_OUTPUT
-            echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+      - name: Plan release
+        id: plan
+        env:
+          FORCE_RELEASE: ${{ github.event_name == 'workflow_dispatch' && inputs.force == true }}
+          PUBLISH_NPM: ${{ github.event_name != 'workflow_dispatch' || inputs.publish_npm == true }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          VERSION="$(tr -d '[:space:]' < skills/c3/bin/VERSION)"
+          PACKAGE_VERSION="$(node -p "require('./packages/cli/package.json').version")"
+          PINNED_VERSION="$(node -e "const fs = require('fs'); const text = fs.readFileSync('packages/cli/src/version.ts', 'utf8'); const match = text.match(/C3X_VERSION\\s*=\\s*['\\\"]([^'\\\"]+)/); if (!match) process.exit(2); process.stdout.write(match[1]);")"
+
+          if [ -z "$VERSION" ]; then
+            echo "skills/c3/bin/VERSION is empty" >&2
+            exit 1
+          fi
+          if [ "$VERSION" != "$PACKAGE_VERSION" ] || [ "$VERSION" != "$PINNED_VERSION" ]; then
+            echo "Version mismatch: VERSION=$VERSION package.json=$PACKAGE_VERSION src/version.ts=$PINNED_VERSION" >&2
+            exit 1
           fi
 
-      - name: Generate changelog
-        if: steps.version.outputs.should_release == 'true'
+          TAG="v$VERSION"
+          git fetch --tags --force
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            TAG_EXISTS=true
+          else
+            TAG_EXISTS=false
+          fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            RELEASE_EXISTS=true
+          else
+            RELEASE_EXISTS=false
+          fi
+
+          NPM_VERSION="$(npm view @c3x/cli version 2>/dev/null || true)"
+          if [ -z "$NPM_VERSION" ]; then
+            NPM_VERSION="0.0.0"
+          fi
+
+          SHOULD_RELEASE=false
+          if [ "$FORCE_RELEASE" = "true" ] || [ "$TAG_EXISTS" = "false" ] || [ "$RELEASE_EXISTS" = "false" ]; then
+            SHOULD_RELEASE=true
+          fi
+
+          SHOULD_PUBLISH_NPM=false
+          if [ "$PUBLISH_NPM" = "true" ] && [ "$PACKAGE_VERSION" != "$NPM_VERSION" ]; then
+            SHOULD_PUBLISH_NPM=true
+          fi
+
+          {
+            echo "version=$VERSION"
+            echo "tag=$TAG"
+            echo "npm_version=$NPM_VERSION"
+            echo "should_release=$SHOULD_RELEASE"
+            echo "should_publish_npm=$SHOULD_PUBLISH_NPM"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## Release Plan"
+            echo ""
+            echo "- Version: $VERSION"
+            echo "- Tag: $TAG"
+            echo "- Tag exists: $TAG_EXISTS"
+            echo "- GitHub Release exists: $RELEASE_EXISTS"
+            echo "- npm latest: $NPM_VERSION"
+            echo "- Build GitHub Release: $SHOULD_RELEASE"
+            echo "- Publish npm: $SHOULD_PUBLISH_NPM"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  test:
+    needs: plan
+    if: >-
+      needs.plan.outputs.should_release == 'true' ||
+      needs.plan.outputs.should_publish_npm == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: cli/go.mod
+          cache-dependency-path: cli/go.sum
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: packages/cli/package-lock.json
+
+      - name: Go tests
+        working-directory: cli
         run: |
-          VERSION=${{ steps.version.outputs.version }}
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          go build ./...
+          go build -tags embedmodel ./...
+          go test ./...
+
+      - name: npm manager tests
+        working-directory: packages/cli
+        run: |
+          npm ci
+          npm test
+
+  model-assets:
+    needs: plan
+    if: needs.plan.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: cli/go.mod
+          cache-dependency-path: cli/go.sum
+
+      - name: Download pinned MiniLM assets
+        working-directory: cli
+        run: go run ./tools/semantic-assets --release-dir ../dist/model
+
+      - name: Upload semantic assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: semantic-assets
+          path: dist/model/*
+
+  build:
+    needs: [plan, test]
+    if: needs.plan.outputs.should_release == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            os: linux
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            os: linux
+            arch: arm64
+          - runner: macos-14
+            os: darwin
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: cli/go.mod
+          cache-dependency-path: cli/go.sum
+
+      - name: Build thin npm assets and fat skill binaries
+        run: |
+          bash scripts/build.sh \
+            --version "${{ needs.plan.outputs.version }}" \
+            --variant both \
+            --os "${{ matrix.os }}" \
+            --arch "${{ matrix.arch }}" \
+            --out-dir dist/c3x
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: c3x-${{ matrix.os }}-${{ matrix.arch }}
+          path: dist/c3x/**/*
+
+  github-release:
+    needs: [plan, build, model-assets]
+    if: needs.plan.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/artifacts
+
+      - name: Generate changelog
+        run: |
+          set -euo pipefail
+          VERSION="${{ needs.plan.outputs.version }}"
+          TAG="${{ needs.plan.outputs.tag }}"
+          LAST_TAG="$(git tag --list 'v*' --sort=-v:refname | grep -vx "$TAG" | head -n1 || true)"
 
           awk -v version="$VERSION" '
             $0 ~ "^## \\[" version "\\]" { in_section=1; print; next }
@@ -51,9 +246,9 @@ jobs:
 
           if ! grep -q '[^[:space:]]' changelog.md; then
             if [ -z "$LAST_TAG" ]; then
-              COMMITS=$(git log --pretty=format:"- %s" --no-merges)
+              COMMITS="$(git log --pretty=format:"- %s" --no-merges)"
             else
-              COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s" --no-merges)
+              COMMITS="$(git log "${LAST_TAG}..HEAD" --pretty=format:"- %s" --no-merges)"
             fi
 
             {
@@ -67,39 +262,99 @@ jobs:
           echo "" >> changelog.md
           echo "---" >> changelog.md
           echo "" >> changelog.md
-          echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG:-initial}...v${VERSION}" >> changelog.md
+          if [ -n "$LAST_TAG" ]; then
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG}...${TAG}" >> changelog.md
+          else
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/commits/${TAG}" >> changelog.md
+          fi
 
-      - name: Prepare release assets
-        if: steps.version.outputs.should_release == 'true'
+      - name: Assemble release assets
         run: |
-          VERSION=${{ steps.version.outputs.version }}
+          set -euo pipefail
+          VERSION="${{ needs.plan.outputs.version }}"
           mkdir -p dist/release
+          find dist/artifacts -type f -path '*/thin/c3x-*' -exec cp {} dist/release/ \;
+          find dist/artifacts/semantic-assets -type f -exec cp {} dist/release/ \;
 
-          zip -r "dist/release/c3-skill-v${VERSION}.zip" \
-            .claude-plugin/ \
-            skills/ \
-            -x "*.DS_Store"
+          fat_count=0
+          while IFS= read -r fat; do
+            fat_count=$((fat_count + 1))
+            platform="$(basename "$fat" | sed -E "s/^c3x-${VERSION}-//; s/-fat$//")"
+            work="/tmp/c3-skill-$platform"
+            rm -rf "$work"
+            mkdir -p "$work"
+            cp -R .claude-plugin skills "$work/"
+            rm -f "$work/skills/c3/bin/c3x-"*
+            cp "$fat" "$work/skills/c3/bin/c3x-${VERSION}-${platform}"
+            chmod +x "$work/skills/c3/bin/c3x-${VERSION}-${platform}"
+            (cd "$work" && zip -r "c3-skill-${platform}-v${VERSION}.zip" .claude-plugin/ skills/ -x "*.DS_Store")
+            cp "$work/c3-skill-${platform}-v${VERSION}.zip" dist/release/
+          done < <(find dist/artifacts -type f -path '*/fat/c3x-*-fat' ! -name '*.sha256' | sort)
 
-          ls -la dist/release/
+          if [ "$fat_count" -eq 0 ]; then
+            echo "No fat skill binaries found" >&2
+            exit 1
+          fi
 
-      - name: Create GitHub Release
-        if: steps.version.outputs.should_release == 'true'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: C3 v${{ steps.version.outputs.version }}
-          body_path: changelog.md
-          files: dist/release/*
-          draft: false
-          prerelease: false
+          (cd dist/release && sha256sum * > SHA256SUMS)
+          ls -la dist/release
+
+      - name: Publish GitHub Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="${{ needs.plan.outputs.tag }}"
+          VERSION="${{ needs.plan.outputs.version }}"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/release/* --clobber
+          else
+            target_args=()
+            if ! git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+              target_args=(--target "$GITHUB_SHA")
+            fi
+            gh release create "$TAG" dist/release/* \
+              "${target_args[@]}" \
+              --title "C3 v${VERSION}" \
+              --notes-file changelog.md
+          fi
 
       - name: Summary
-        if: steps.version.outputs.should_release == 'true'
         run: |
-          echo "## Release Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Version**: v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Tag**: v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Go CLI**: binaries bundled in plugin" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Release Summary"
+            echo ""
+            echo "- Version: v${{ needs.plan.outputs.version }}"
+            echo "- Tag: ${{ needs.plan.outputs.tag }}"
+            echo "- Assets: thin binaries, semantic assets, per-platform fat skill zips, checksums"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  publish-npm:
+    needs: [plan, test, github-release]
+    if: >-
+      always() &&
+      needs.plan.outputs.should_publish_npm == 'true' &&
+      needs.test.result == 'success' &&
+      (needs.github-release.result == 'success' || needs.github-release.result == 'skipped')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
+          cache: npm
+          cache-dependency-path: packages/cli/package-lock.json
+
+      - name: Publish @c3x/cli
+        working-directory: packages/cli
+        run: |
+          npm ci
+          npm publish --access public

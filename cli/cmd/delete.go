@@ -5,6 +5,8 @@ import (
 	"io"
 	"strings"
 
+	"github.com/lagz0ne/c3-design/cli/internal/content"
+	"github.com/lagz0ne/c3-design/cli/internal/markdown"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
@@ -109,4 +111,38 @@ func RunDelete(opts DeleteOptions, w io.Writer) error {
 	}
 
 	return nil
+}
+
+// removeTableRowStore removes rows from a section's table where matchCol==matchVal.
+// Idempotent: a missing section/table is a no-op. Used by delete to strip a
+// removed entity's rows from the bodies that cited it.
+func removeTableRowStore(s *store.Store, entity *store.Entity, sectionName, matchCol, matchVal string) error {
+	body, err := content.ReadEntity(s, entity.ID)
+	if err != nil || body == "" {
+		return nil
+	}
+
+	table, err := markdown.ExtractTableFromSection(body, sectionName)
+	if err != nil || table == nil {
+		return nil // section/table not found — idempotent
+	}
+
+	var filtered []map[string]string
+	for _, r := range table.Rows {
+		if r[matchCol] != matchVal {
+			filtered = append(filtered, r)
+		}
+	}
+
+	if filtered == nil {
+		filtered = []map[string]string{}
+	}
+	table.Rows = filtered
+
+	newBody, err := markdown.SetTableInSection(body, sectionName, table)
+	if err != nil {
+		return err
+	}
+
+	return content.WriteEntity(s, entity.ID, newBody)
 }

@@ -486,8 +486,6 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 		err = runAdd(opts, s, c3Dir, stdin, stdinTerminal, w)
 	case "set":
 		err = runSet(opts, s, c3Dir, stdin, stdinTerminal, w)
-	case "wire":
-		err = runWire(opts, s, w)
 	case "lookup":
 		if len(opts.Args) < 1 {
 			return fmt.Errorf("error: lookup requires a <file-path> argument\nhint: run 'c3x lookup --help' for usage")
@@ -626,7 +624,7 @@ func commandMutatesCanonical(opts cmd.Options) bool {
 			return true
 		}
 		return false
-	case "write", "add", "set", "wire", "delete", "repair", "canvas":
+	case "write", "add", "set", "delete", "repair", "canvas":
 		if opts.Command == "canvas" && !(len(opts.Args) > 0 && (opts.Args[0] == "add" || opts.Args[0] == "write")) {
 			return false
 		}
@@ -690,36 +688,6 @@ func commandAcceptsFile(cmd string) bool {
 	return false
 }
 
-func runWire(opts cmd.Options, s *store.Store, w io.Writer) error {
-	if len(opts.Args) < 2 {
-		return fmt.Errorf("error: usage: c3x wire <source> <target> [target2 ...]\nhint: c3x wire c3-101 ref-jwt ref-error-handling")
-	}
-
-	source := opts.Args[0]
-	var targets []string
-	relation := ""
-
-	// Check if second arg is a relation type
-	if len(opts.Args) >= 3 && opts.Args[1] == "cite" {
-		relation = opts.Args[1]
-		targets = opts.Args[2:]
-	} else {
-		targets = opts.Args[1:]
-	}
-
-	for _, target := range targets {
-		if opts.Remove {
-			if err := cmd.RunUnwire(s, source, relation, target, w); err != nil {
-				return err
-			}
-		} else {
-			if err := cmd.RunWire(s, source, relation, target, w); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
 
 func runNoArgs(opts cmd.Options, w io.Writer) error {
 	cwd, err := os.Getwd()

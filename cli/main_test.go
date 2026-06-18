@@ -903,39 +903,6 @@ func TestRun_SetRejectsSection(t *testing.T) {
 	}
 }
 
-func TestRun_Wire(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	err := run([]string{"--c3-dir", c3Dir, "wire", "c3-101", "ref-jwt"}, &bytes.Buffer{})
-	if err == nil {
-		t.Fatal("wire on a fact must be refused (facts are frozen)")
-	}
-	if !strings.Contains(err.Error(), "frozen") {
-		t.Fatalf("expected a frozen-fact refusal, got: %v", err)
-	}
-}
-
-func TestRun_WireRemoveFlag(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	err := run([]string{"--c3-dir", c3Dir, "wire", "--remove", "c3-101", "ref-jwt"}, &bytes.Buffer{})
-	if err == nil {
-		t.Fatal("wire --remove on a fact must be refused (facts are frozen)")
-	}
-	if !strings.Contains(err.Error(), "frozen") {
-		t.Fatalf("expected a frozen-fact refusal, got: %v", err)
-	}
-}
-
-func TestRun_WireThreeArgs(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	err := run([]string{"--c3-dir", c3Dir, "wire", "c3-101", "cite", "ref-jwt"}, &bytes.Buffer{})
-	if err == nil {
-		t.Fatal("wire on a fact must be refused (facts are frozen)")
-	}
-	if !strings.Contains(err.Error(), "frozen") {
-		t.Fatalf("expected a frozen-fact refusal, got: %v", err)
-	}
-}
-
 func TestRun_Delete(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
 	err := run([]string{"--c3-dir", c3Dir, "delete", "ref-jwt", "--dry-run"}, &bytes.Buffer{})

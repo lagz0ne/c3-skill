@@ -336,7 +336,7 @@ File lookup: `c3 lookup <file-or-glob>` maps files/directories to components + r
 **Typical flow:**
 
 1. Understand what exists: `c3 list` → topology + coverage, then `c3 lookup <file>` → which component owns it
-2. Make changes: `c3 add` / `c3 write` / `c3 set` / `c3 wire` to create and connect NEW entities (use `--file <path>` for bodies with tables, mermaid, or code fences). Once an entity exists as a frozen fact, editing it goes through a change-unit, not these commands (`c3 set <id> codemap` stays direct).
+2. Make changes: `c3 add` to create NEW entities — connect them by authoring the edge-marked column in the body (citations wire at import), use `--file <path>` for bodies with tables, mermaid, or code fences. Once an entity exists as a frozen fact, editing it goes through a change-unit, not `write`/`set`/`delete` (`c3 set <id> codemap` stays direct).
 3. Validate: `c3 check` catches broken links, schema gaps, orphans
 4. Visualize: `c3 graph <container-or-component> --format mermaid` renders architecture as mermaid diagrams
 

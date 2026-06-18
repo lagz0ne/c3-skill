@@ -8,7 +8,7 @@ Spawn parallel subagents via the Task tool for analysis and multi-file work.
 
 ## The one rule that reshapes everything
 
-**A fact is frozen.** A fact = any entity whose canvas declares no `status:` — `system`, `container`, `component`, `ref`, `rule`, `recipe`, `pm-requirement`, `user-story`. The CLI **refuses** `write` / `set` / `wire` / `delete` when the first argument is an existing fact:
+**A fact is frozen.** A fact = any entity whose canvas declares no `status:` — `system`, `container`, `component`, `ref`, `rule`, `recipe`, `pm-requirement`, `user-story`. The CLI **refuses** `write` / `set` / `delete` when the first argument is an existing fact:
 
 ```
 error: <id> is a fact — facts are frozen and change only through a change-unit
@@ -127,7 +127,7 @@ c3 change new <adr-id>
 c3 change view <adr-id>
 #    Preview the GRAPH the unit would produce (staged edges included), without
 #    landing it: `c3 graph <id> --unit <adr-id>` runs the real apply in a
-#    rolled-back transaction — the contextual lens. wire/stage → graph --unit → apply.
+#    rolled-back transaction — the contextual lens. cite/stage → graph --unit → apply.
 
 # 5. Per-item state — patches (pending / applied / drifted / new) + carriers.
 c3 change status <adr-id>

@@ -129,7 +129,7 @@ Options:
 	{
 		Name:     "add",
 		Args:     "<type> <slug>",
-		OneLiner: "Create entity (auto-numbering + wiring)",
+		OneLiner: "Create entity (auto-numbering; edges from body)",
 		Help: `Usage: c3x add <type> <slug> [options]
 
 Types come from c3x canvas list, including built-ins and project-defined document types.
@@ -188,37 +188,15 @@ Special field "codemap" updates code-map patterns (comma-separated):
   Remove:   c3x set c3-101 codemap "src/old/**" --remove
   Clear:    c3x set c3-101 codemap ""
 
-Note: set does NOT sync relationships. Use wire for relationship changes,
-or write with full frontmatter for bulk updates including relationship sync.
-Use 'c3x write <id> --section <name>' for section body updates.
+Note: set does NOT sync relationships. Citations come from the body — a column
+the canvas marks as an edge (see 'c3x schema <type>'); author it at add, or
+ride a change-unit patch for a frozen fact. Use 'c3x write <id> --section <name>'
+for section body updates.
 
 Examples:
   c3x set c3-101 goal "Handle JWT auth"
   c3x set c3-101 codemap "src/auth/**,src/auth.go"
   c3x set c3-101 codemap "src/new/**" --append`,
-	},
-	{
-		Name:     "wire",
-		Args:     "<src> <tgt> [tgt2 ...]",
-		OneLiner: "Link component to ref(s) (--remove to unlink)",
-		Help: `Usage: c3x wire <source> <target> [target2 ...]
-       c3x wire <source> cite <target> [target2 ...]
-       c3x wire --remove <source> <target> [target2 ...]
-
-Creates or removes cite relationships (updated atomically per target):
-  1. source uses[] += target
-  2. component source "Governance" table += row
-  3. non-component docs use "Compliance Refs" / "Compliance Rules" tables when present
-
-Supports multiple targets in a single call for batch wiring.
-
-"cite" is optional (it's the only supported relation type).
-
-Examples:
-  c3x wire c3-101 ref-jwt                            # single target
-  c3x wire c3-101 ref-jwt ref-error-handling          # multiple targets
-  c3x wire c3-101 cite ref-jwt ref-error-handling     # explicit cite
-  c3x wire --remove c3-101 ref-jwt                    # remove link`,
 	},
 	{
 		Name:     "schema",
@@ -537,9 +515,8 @@ Workflows:
     c3x lookup src/auth.ts  # map code to owning component + refs
 
   Normal change flow:
-    c3x schema component > auth.md
-    c3x add component auth --container c3-1 --file auth.md
-    c3x wire c3-101 cite ref-jwt
+    c3x schema component > auth.md   # author the cite in the edge-marked column (e.g. Governance)
+    c3x add component auth --container c3-1 --file auth.md   # the cite edge wires at import
     c3x check
 
   After branch switch, selective merge, or conflict resolution:
@@ -547,9 +524,8 @@ Workflows:
     c3x repair             # rebuild cache and reseal if check reports seal drift
 
   Add a component to an existing container:
-    c3x schema component > auth.md
+    c3x schema component > auth.md   # cite refs/rules in the edge-marked column
     c3x add component auth --container c3-1 --file auth.md
-    c3x wire c3-101 cite ref-jwt
     c3x check
 
   Add a new domain (container + first component):
@@ -567,7 +543,8 @@ Workflows:
   Document a cross-cutting concern:
     c3x schema ref > rate-limiting.md
     c3x add ref rate-limiting --file rate-limiting.md
-    c3x wire c3-101 cite ref-rate-limiting
+    # cite it from a component: author the row in its edge-marked column —
+    # at add for a new component, or a change-unit patch for a frozen one
     c3x check
 
   Record an architectural decision:

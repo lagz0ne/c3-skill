@@ -48,7 +48,6 @@ at `.c3/canvases/<type>.md`; `c3 canvas` manages them and the user may edit them
 | `add <type> <slug>` | **Create** entity; body via stdin or `--file <path>` (`--container`, `--feature`). Unguarded — the create path. Valid types = `c3 canvas list` |
 | `write <id>` | Rewrite body or a section (`--section <name>`, `--file <path>`, stdin). **Refused on a frozen fact** → use the change-unit flow. Direct only for change-docs (adr/prd) + canvas bodies |
 | `set <id> <field> <val>` | Update a frontmatter field (goal, status, boundary, category, title, date). **Refused on a frozen fact** → change-unit flow. **Exception: `set <id> codemap '<glob>'`** — the external code binding is verified, not frozen, so this one field is editable on a frozen fact (live code-map maintenance) |
-| `wire <src> <tgt>` | Link entities (`--remove` unlinks). **Refused when `<src>` is a frozen fact** → change-unit flow (frontmatter patch) |
 | `read <id>` | Entity content; agent truncates 1500 chars (`--full` bypasses). `--section <name> --cite` emits the patch base anchor |
 | `search <query>` | Natural-language or conceptual query -> candidate entities by semantic + keyword + graph signals |
 | `lookup <file-or-glob>` | File/glob -> component + refs |
@@ -61,7 +60,7 @@ at `.c3/canvases/<type>.md`; `c3 canvas` manages them and the user may edit them
 
 **Authoring — two surfaces, one boundary.** Read the type's definition first (`c3 schema <type>`), author to it. A body round-trips embeddable content verbatim — mermaid/code fences, tables, images, raw HTML and `<iframe>`/embed blocks, dividers, indented code — so diagrams and embeds survive store→render. Author such bodies via `--file <path>`, not inline strings.
 
-- **FROZEN FACTS** — `system`, `container`, `component`, `ref`, `rule`, `recipe`, `pm-requirement`, `user-story` (every type whose canvas declares no `status:` set). **You cannot `write`/`set`/`wire`/`delete` an existing one.** Editing a fact happens ONLY through the change-unit flow: `c3 read <id> --section <name> --cite` -> `c3 change new <unit-id>` -> author `<seq>-<slug>.patch.md` -> `c3 change apply <unit-id>`. See `references/change.md`. (**Creating** a new fact is exempt — `c3 add <type> <slug>` is unguarded.)
+- **FROZEN FACTS** — `system`, `container`, `component`, `ref`, `rule`, `recipe`, `pm-requirement`, `user-story` (every type whose canvas declares no `status:` set). **You cannot `write`/`set`/`delete` an existing one.** Editing a fact happens ONLY through the change-unit flow: `c3 read <id> --section <name> --cite` -> `c3 change new <unit-id>` -> author `<seq>-<slug>.patch.md` -> `c3 change apply <unit-id>`. See `references/change.md`. (**Creating** a new fact is exempt — `c3 add <type> <slug>` is unguarded.)
 - **CHANGE-DOCS** (`adr`, `prd`, `atomic-design-change`) **and CANVAS bodies** — these declare `status:` / are user-owned, so they edit directly: single-sentence text -> `echo "..." | c3 write <id> --section <name>`; whole-body rewrite -> `c3 write <id> --file body.md`; frontmatter -> `c3 set <id> <field> <value>`.
 
 The guard keys on the FIRST arg only, and an unknown/typo'd type is treated as frozen. The exact refusal names the fix: *"<id> is a fact — facts are frozen and change only through a change-unit."*
@@ -116,7 +115,7 @@ First `AskUserQuestion` denial -> `ASSUMPTION_MODE = true` for session.
 
 **HARD RULE -- entity instances are CLI-only. NEVER Read/Glob/Edit/Write entity docs under `.c3/` (containers, components, refs, rules, adrs, recipes, document instances).** Mutate them only through the `c3` command handle below.
 
-**HARD RULE -- FACTS ARE FROZEN.** A *fact* = any entity whose canvas declares no `status:` set (`system`, `container`, `component`, `ref`, `rule`, `recipe`, `pm-requirement`, `user-story`). `c3 write`/`set`/`wire`/`delete` on an existing fact is **refused** — edit it ONLY by authoring patches in a change-unit and running `c3 change apply`. **Exempt (still direct):** `c3 add` (create), `c3 canvas write` (canvas bodies are user-owned), editing a *change-doc* (`adr`/`prd`/`atomic-design-change` — they declare `status:`), and **`c3 set <id> codemap`** (the external code binding is verified, not frozen — code churns, so the map is live-maintenance; deliberate re-bindings ride a change-unit as a `.codemap.md` carrier, see `references/change.md`). The guard checks the FIRST arg only; unknown types are treated as frozen.
+**HARD RULE -- FACTS ARE FROZEN.** A *fact* = any entity whose canvas declares no `status:` set (`system`, `container`, `component`, `ref`, `rule`, `recipe`, `pm-requirement`, `user-story`). `c3 write`/`set`/`delete` on an existing fact is **refused** — edit it ONLY by authoring patches in a change-unit and running `c3 change apply`. **Exempt (still direct):** `c3 add` (create), `c3 canvas write` (canvas bodies are user-owned), editing a *change-doc* (`adr`/`prd`/`atomic-design-change` — they declare `status:`), and **`c3 set <id> codemap`** (the external code binding is verified, not frozen — code churns, so the map is live-maintenance; deliberate re-bindings ride a change-unit as a `.codemap.md` carrier, see `references/change.md`). The guard checks the FIRST arg only; unknown types are treated as frozen.
 
 **HARD RULE -- A FACT IS ALWAYS COMPLETE TO ITS RUNG.** The canvas is a **rung**: a complete contract for one complexity *level*, not a target to fill in over time. A fresh init's canvas is deliberately lean (rung-1) — every required section is present, but the deeper sections a complex project needs are a *higher* rung, not a hole. Completeness is never relaxed: a fact is always complete to its current rung, never thin or partial. What grows is the complexity **level**, and you grow it by **climbing a rung** — raise the canvas (make an optional section required, or author a richer one via `c3 canvas write`), then **migrate** every affected fact up to the new contract, completely. Migration is the mechanism of climbing: integrity forbids facts straddling two rungs. Each rung stands on its own and is not responsible for future rungs — solve now completely, do not over-engineer rung-1 with sections a later rung would carry; climb when the architecture earns it. The climb flow (`change scaffold` → fill → gated `change apply`) is in `references/change.md` §Climbing a rung.
 
@@ -128,8 +127,8 @@ First `AskUserQuestion` denial -> `ASSUMPTION_MODE = true` for session.
 |----|----------|
 | Create (unguarded) | `add` |
 | Read | `read <id>` (`--cite` for a patch base), `list`, `lookup`, `graph` |
-| Edit a FROZEN FACT | `change new` → author patch → `change apply` (the ONLY path; `write`/`set`/`wire`/`delete` are refused on facts) |
-| Edit a change-doc / retire a fact | `write <id>`, `set`, `wire` (`--remove`) on `adr`/`prd` only; fact frontmatter/retire ride as patches via `change apply` |
+| Edit a FROZEN FACT | `change new` → author patch → `change apply` (the ONLY path; `write`/`set`/`delete` are refused on facts) |
+| Edit a change-doc / retire a fact | `write <id>`, `set` on `adr`/`prd` only; fact frontmatter/retire ride as patches via `change apply` |
 | Validate | `check` |
 | Definitions (user-owned) | `canvas <list\|read\|add\|write>`, `schema <type>` |
 
@@ -209,7 +208,7 @@ Root selection > depth:
 - `--depth 1` default. `--depth 2` for cross-container only
 - `--direction forward` = impact. `--direction reverse` = dependents
 - Never graph `c3-0` -- one node, no signal
-- `--unit <adr-id>` = **contextual preview**: overlays that change-unit's staged-but-unapplied patches (the real apply path, rolled back) so you see the post-change graph before `change apply`. Output is marked preview; all modes (text/mermaid/reverse/json). Pairs with the change flow: wire/stage → `graph --unit` → apply
+- `--unit <adr-id>` = **contextual preview**: overlays that change-unit's staged-but-unapplied patches (the real apply path, rolled back) so you see the post-change graph before `change apply`. Output is marked preview; all modes (text/mermaid/reverse/json). Pairs with the change flow: cite/stage → `graph --unit` → apply
 
 ## File Structure
 ```

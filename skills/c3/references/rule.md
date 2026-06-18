@@ -71,7 +71,7 @@ Find components using pattern.
 
 ### Step 8: Cite the rule from each using component
 
-A component's `uses` edges come from the **column its canvas marks `edge: uses`** — authoring that column **is** the citation (display row and graph edge are one). It is **canvas-configurable**, so ask `c3 schema component` where it lives (find the column tagged `→ edge: uses`) rather than memorizing a section — in a freshly-seeded project that's the `Governance` table's `Reference` column, which carries `rule-*` and `ref-*` alike, distinguished by the `Type` column. If no column shows an `→ edge:` tag, the project predates the edge column — cite the legacy way (the `Governance` reference row / frontmatter `uses:`). A citation must resolve, and `c3 wire` is not the path for a frozen fact. Then:
+A component's `uses` edges come from the **column its canvas marks `edge: uses`** — authoring that column **is** the citation (display row and graph edge are one). It is **canvas-configurable**, so ask `c3 schema component` where it lives (find the column tagged `→ edge: uses`) rather than memorizing a section — in a freshly-seeded project that's the `Governance` table's `Reference` column, which carries `rule-*` and `ref-*` alike, distinguished by the `Type` column. If no column shows an `→ edge:` tag, the project predates the edge column — cite the legacy way (the `Governance` reference row / frontmatter `uses:`). A citation must resolve. Then:
 
 - **Brand-new citer (created now):** author the reference row into that section in the component's body file, then `c3 add component <slug> --file body.md`. The edge appears at import.
 - **Existing citer (frozen):** adding a citation edits the frozen body, so it rides as a change-unit patch on **that** section's block:
@@ -121,7 +121,7 @@ Flow: `Clarify → Find Citings → Check Compliance → Surface Impact → Exec
 2. **Find citings:** `c3 list` → rule entity → `relationships`. Depth: `c3 graph rule-{slug} --direction reverse`.
 3. **Check compliance:** `c3 lookup <file>` per code-map entry. Compare against `## Golden Example` + `## Not This`. Categorize: compliant / needs-update / breaking.
 4. **Surface impact:** `AskUserQuestion` — proceed/narrow/cancel (ASSUMPTION_MODE: skip)
-5. **Execute:** A rule is a frozen fact — `c3 write`/`c3 set`/`c3 wire` on an existing rule is refused ("… is a fact — facts are frozen and change only through a change-unit"). Route the edit through the change-unit: open the ADR as the change-unit, `c3 read rule-{slug} --section <name> --cite` for each section you touch, author a `<seq>-{slug}.patch.md` under `.c3/changes/<adr-id>/`, then `c3 change apply <adr-id>`. Non-compliant citers → TODO in the ADR (no code changes here).
+5. **Execute:** A rule is a frozen fact — `c3 write`/`c3 set` on an existing rule is refused ("… is a fact — facts are frozen and change only through a change-unit"). Route the edit through the change-unit: open the ADR as the change-unit, `c3 read rule-{slug} --section <name> --cite` for each section you touch, author a `<seq>-{slug}.patch.md` under `.c3/changes/<adr-id>/`, then `c3 change apply <adr-id>`. Non-compliant citers → TODO in the ADR (no code changes here).
 6. Code changes → route to change.
 
 > `c3 set rule-{slug} codemap '<glob>'` is the one exception — the code binding is not frozen and may be updated directly (or carried as a `.codemap.md` inside the change).
@@ -189,7 +189,7 @@ Ref entirely about enforcement, not rationale.
    - `## Why` → `origin:` if parent ref exists, else drop
 3. Set `origin: [ref-{old-slug}]` if old ref kept for rationale
 4. Re-edge each citer to the new rule. Citers are frozen facts whose edges come from their canvas's reference column (`c3 schema component` — today `Governance`/`Reference`), so this is a change-unit patch per citer (one ADR for the batch): `c3 read <component-id> --section Governance --cite` → add the `rule-{slug}` row in a `<seq>-<slug>.patch.md` → `c3 change apply <adr-id>`. A brand-new citer would instead carry the row in its body at `c3 add` time.
-5. If deleting ref: drop the `ref-{slug}` row from each citer's reference column the same way (change-unit patch, not `c3 wire --remove`), then delete the ref
+5. If deleting ref: drop the `ref-{slug}` row from each citer's reference column the same way (change-unit patch), then delete the ref
 6. Move ref's file patterns to rule in code-map
 
 ### Step 3b: Split (dual-nature)
@@ -246,7 +246,7 @@ Confirm: no orphan refs, all rules have golden examples, all citations intact.
 
 ## Adopt
 
-Flow: `Preview → Discover Overlap → Guided Merge → Write → Wire Citers → ADR`
+Flow: `Preview → Discover Overlap → Guided Merge → Write → Cite from Citers → ADR`
 
 Adopt marketplace rule into project `.c3/rules/` (if using marketplace plugin packs).
 
@@ -291,7 +291,7 @@ To revise the rule LATER (after it exists), route through a change-unit — see 
 
 ### Step 5: Cite from each using component
 
-Citers are frozen facts and their edges come from their canvas's reference column (`c3 schema component` — today `Governance`/`Reference`), not `c3 wire`. Per component from overlap search, add a `rule-<slug>` row to that column:
+Citers are frozen facts and their edges come from their canvas's reference column (`c3 schema component` — today `Governance`/`Reference`). Per component from overlap search, add a `rule-<slug>` row to that column:
 
 - **Existing citer:** ride it as a change-unit patch — `c3 read <component-id> --section Governance --cite` → author `<seq>-<slug>.patch.md` adding the row → `c3 change apply <adr-id>`.
 - **Brand-new citer:** author the reference row in its body at `c3 add component <slug> --file body.md` time; the edge appears at import.

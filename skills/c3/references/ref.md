@@ -73,7 +73,7 @@ Find components using pattern.
 
 ### Step 5: Cite the ref from each using component
 
-A component's `uses` edges come from the **column its canvas marks `edge: uses`** — authoring that column **is** the citation (the displayed row and the graph edge are one thing, they can't diverge). The column is **canvas-configurable**, so don't memorize a section name: run `c3 schema component` and find the column tagged `→ edge: uses` (in a freshly-seeded project that's the `Governance` table's `Reference` column). If no column shows an `→ edge:` tag, the project predates the edge column — cite the legacy way (frontmatter `uses:` / the `Governance` reference row), and the edge builds at import. A citation must resolve — citing a non-existent entity is refused with a clear error. `c3 wire` is not the path for a frozen fact. Then:
+A component's `uses` edges come from the **column its canvas marks `edge: uses`** — authoring that column **is** the citation (the displayed row and the graph edge are one thing, they can't diverge). The column is **canvas-configurable**, so don't memorize a section name: run `c3 schema component` and find the column tagged `→ edge: uses` (in a freshly-seeded project that's the `Governance` table's `Reference` column). If no column shows an `→ edge:` tag, the project predates the edge column — cite the legacy way (frontmatter `uses:` / the `Governance` reference row), and the edge builds at import. A citation must resolve — citing a non-existent entity is refused with a clear error. Then:
 
 - **Brand-new citer (created now):** author the reference row into that section in the component's body file, then `c3 add component <slug> --file body.md`. The edge appears at import.
 - **Existing citer (frozen):** adding a citation edits the frozen body, so it rides as a change-unit patch on **that** section's block:
@@ -97,7 +97,7 @@ Canonical flow — never type or `set` a terminal status; the latch does it:
 
 ```bash
 c3 add adr ref-{slug}-adoption < adr-body.md
-# wire the ref / land the deliverable so the ADR's per-row After cites resolve fresh
+# land the ref / deliverable so the ADR's per-row After cites resolve fresh
 c3 change accept adr-YYYYMMDD-ref-{slug}-adoption
 c3 check --fix   # auto-latches accepted → done once every After cite resolves
 ```
@@ -123,7 +123,7 @@ Flow: `Clarify → Find Citings → Check Compliance → Surface Impact → Exec
 2. **Find citings:** `c3 list` → ref entity → `relationships`. Depth: `c3 graph ref-{slug} --direction reverse`.
 3. **Check compliance:** `c3 lookup <file>` per code-map entry. Categorize: compliant / needs-update / breaking.
 4. **Surface impact:** `AskUserQuestion` — proceed/narrow/cancel (ASSUMPTION_MODE: skip)
-5. **Execute:** A ref is a frozen fact — `c3 write`/`c3 set`/`c3 wire` on an existing ref is refused ("…is a fact — facts are frozen and change only through a change-unit"). Create the ADR as the change-unit, then route the ref edit through it: `c3 read ref-{slug} --section <name> --cite` → author `.c3/changes/<adr-id>/<seq>-<slug>.patch.md` → `c3 change apply <adr-id>`. Non-compliant → TODO in ADR (no code changes).
+5. **Execute:** A ref is a frozen fact — `c3 write`/`c3 set` on an existing ref is refused ("…is a fact — facts are frozen and change only through a change-unit"). Create the ADR as the change-unit, then route the ref edit through it: `c3 read ref-{slug} --section <name> --cite` → author `.c3/changes/<adr-id>/<seq>-<slug>.patch.md` → `c3 change apply <adr-id>`. Non-compliant → TODO in ADR (no code changes).
 6. Code changes → route to change.
 
 ---

@@ -59,9 +59,9 @@ func TestGuardCanonicalMutation_RefusesFrozenFactNonCodemapSet(t *testing.T) {
 
 // The creation window: a frozen-TYPE fact that was never authored (no body nodes
 // AND Version 0 — e.g. the init-seeded system c3-0) accepts its FIRST body `write`;
-// once it carries a body the freeze engages. The window is write-only — set/wire/
+// once it carries a body the freeze engages. The window is write-only — set/
 // delete stay frozen even while the body is empty, since they touch frontmatter /
-// edges / existence, which can be authored independently of the body.
+// existence, which can be authored independently of the body.
 func TestGuardCanonicalMutation_CreationWindow(t *testing.T) {
 	s := createDBFixture(t)
 	c3Dir := t.TempDir()
@@ -76,10 +76,9 @@ func TestGuardCanonicalMutation_CreationWindow(t *testing.T) {
 		t.Fatalf("first write to a bodyless fact must be allowed (creation window), got: %v", err)
 	}
 
-	// set / wire / delete stay frozen even in the window (write-only carve-out).
+	// set / delete stay frozen even in the window (write-only carve-out).
 	frozenCases := map[string][]string{
 		"set":    {"c3-9", "goal", "x"},
-		"wire":   {"c3-9", "c3-1"},
 		"delete": {"c3-9"},
 	}
 	for command, args := range frozenCases {

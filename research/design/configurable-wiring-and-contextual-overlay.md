@@ -113,6 +113,14 @@ Not name-matching. A column carries `type:` (how to parse the cell) and an `edge
   applies a unit's patches via the *real* `changeset.Apply` in preview (with the edge sync) and
   rolls back; `graph <id> --unit <adr>` previews staged edges under a "preview — staged, not
   applied" header (all modes: text / mermaid / reverse / json); missing unit fails loud.
+- **Embeddable bodies (done, `9251c48`):** parse/render round-trip preserves mermaid/code,
+  tables, images, raw HTML + `<iframe>`/embed blocks, dividers, indented code (previously dropped).
+- **Honesty finalization (done, `f3b4643`+`f05db90`):** agent-mode TOON now renders nested
+  struct/map slices as proper indented blocks (was a `%v` dump for graph nodes/edges, check/
+  lookup/read help, marketplace, schema sections/columns); `schema` text tags an edge column
+  `→ edge: <rel> (targets: …)` so "run schema, find the edge column" is real. Skill rewritten
+  to the column-IS-edge model (with a legacy fallback when no `→ edge:` tag is present),
+  `graph --unit`, and embeddable bodies.
 
 **Remaining (polish / extension, not blocking the stated goal):**
 - `c3 wire` front door (resolve column from canvas; frozen → `--unit` stages a block patch) —
@@ -120,9 +128,9 @@ Not name-matching. A column carries `type:` (how to parse the cell) and an `edge
 - `change use <id>` active-unit (so `--unit` need not repeat); lens-aware `read`/`lookup`/`list`
   overlay; staged/applied delta markers on json/mermaid; block `read --cite` under overlay;
   `search` overlay (needs tx-safe store reads first).
-- `c3 migrate citations` for adopting an `edge:` column in an existing project (c3-design is
-  already consistent, so unaffected).
-- Finalize the skill citation text to the new model (the column IS the edge) + teach `graph --unit`.
+- `c3 migrate citations` + **c3-design's own canvas adopting the `edge:` column** (dogfood):
+  c3-design is still on the legacy frontmatter-`uses:` path, so `schema component` here shows no
+  `→ edge:` tag. Adopting means a deliberate reseal — a product decision to confirm, not a silent change.
 
 ## Codex post-implementation review — disposition
 

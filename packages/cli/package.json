@@ -3,6 +3,11 @@
   "version": "11.1.1",
   "description": "Thin CLI client for c3x — architecture documentation tool",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lagz0ne/c3-skill.git",
+    "directory": "packages/cli"
+  },
   "bin": {
     "c3x": "dist/cli.mjs"
   },

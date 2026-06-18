@@ -166,7 +166,7 @@ The scopes you will actually use:
 | Scope | What it does | Base | Body |
 |-------|--------------|------|------|
 | `block` | replace **one** cited block (EDIT an existing section); **empty body deletes it** | required (block cite handle) | the new block content |
-| `insert` | **append a NEW section** to a frozen fact — additive, existing sections stay frozen | entity handle (`entity@vN:sha256:MERKLE`) | the new section; MUST start with a heading (`## Name`), MUST NOT duplicate an existing section |
+| `insert` | **add** to a frozen fact: a NEW section (additive; existing sections stay frozen) OR a new table **row** | section → entity handle (`entity@vN:sha256:MERKLE`); row → the block cite of the row to insert *after* | the new section (starts `## Name`, no duplicate) or the new row |
 | `whole` (no base) | **create** a new fact, born sealed | absent | the full body; `type:` required |
 | `frontmatter` | rename (`title`) / move (`parent`) / re-edge (`uses`) / set `boundary`, `category`, `date` — parity with `set` | entity handle | frontmatter deltas |
 | `retire` | remove the fact + its edges | entity handle | — |

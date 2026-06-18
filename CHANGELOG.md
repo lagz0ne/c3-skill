@@ -5,6 +5,25 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [11.1.0] - 2026-06-18
+
+Minor release: **laddered complexity**. The canvas is a *rung* — a complete contract for a complexity level. A fact is always complete to its current rung; complexity grows by *climbing* rungs (raise the canvas, then migrate facts up to it), never by relaxing completeness. Each rung is solid on its own and not responsible for future rungs.
+
+### Added
+
+- **`insert` patch scope** — a sealed fact can gain a new section. Anchored to the entity merkle, it appends sections additively: existing blocks keep their hashes (siblings stay frozen), only new nodes are added and the entity reseals. The body must start with a section heading, may not duplicate an existing section, and a declared `result:` is enforced. This is the mechanism that lets a fact climb to a richer canvas.
+- **`c3x change scaffold <unit-id>`** — stages a rung-climb: it finds every fact below its canvas's current required bar and writes one `insert` patch per fact with **empty** section templates. The empties are deliberate — the canvas gate at `change apply` rejects an empty required section, so the migration cannot land until each is filled. Re-running never clobbers an already-filled patch (deterministic per-fact name + exclusive create). The climb flow: raise the canvas → `c3x check` lights up the facts below the bar → `change scaffold` → fill → gated atomic `change apply`.
+
+### Changed
+
+- **Lean rung-1 seed canvases** — a fresh `c3x init` starts on a lighter component canvas (6 required sections; Foundational Flow, Business Flow, Change Safety are a higher rung you climb when the architecture earns it). Existing projects are unaffected. The c3-design repo itself materializes the rich 9-section canvas as its earned rung-N.
+- **Skill re-spirited around laddering** — onboarding is framed around the genesis ADR (`adr-00000000-c3-adoption`) as a resumable progress ledger that you author then *flip* (`change apply`) into frozen facts; the `insert`/`scaffold`/climb flow is taught; the legacy `implemented` status is removed from the onboarding and audit guidance.
+
+### Fixed
+
+- **Fresh-init `check` no longer reports `BROKEN_SEAL` on seed canvases** — user-owned canvases are already excluded from the canonical-sync diff; the seal surfaces (broken-seal list, fact-seal-on-disk) now exclude them consistently. Facts are still fully seal-checked.
+- **The genesis ADR is born `proposed`** (a canonical status) instead of the invalid `in-progress`, and its template teaches the `change accept` → `check --fix` auto-done close.
+
 ## [11.0.0] - 2026-06-17
 
 Major release: the change-unit "double-V". A change-unit declares its footprint and matches it on two axes — internal architectural facts (frozen, edited only through patches) and external code bindings (verified, never frozen). **Breaking:** a fact's body now changes only through a change-unit.

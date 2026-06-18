@@ -38,6 +38,7 @@ is the deliverable. Ranked by severity.
     Evidence rewrite.
 
 ## C. Table editing via patch is finicky + undocumented (explains the c3-104 retire blocker)
+**Status: #4 + #5 FIXED (`691c14f`); #6 partially (cites resilient, patch bases still id-bound).**
 4. **ADR Affected Topology Evidence (`cite`) cannot cite a table-row block** — the required
    `"exact snippet"` contains `|` pipes that break the ADR's own table; escaping makes it "not
    exact." Only text-block sections (no pipes) are citable. (= my c3-104 finding #4.)

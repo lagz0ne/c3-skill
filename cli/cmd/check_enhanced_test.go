@@ -914,7 +914,7 @@ func TestValidateADREvidence_RejectsWrongEntityAndStaleHash(t *testing.T) {
 	hashStart := strings.Index(staleHash, ":sha256:") + len(":sha256:")
 	staleHash = staleHash[:hashStart] + strings.Repeat("0", 64) + staleHash[hashStart+64:]
 	issues = validateADREvidence(s, "Affected Topology", "c3-1", staleHash, "warning", false)
-	if len(issues) != 1 || !strings.Contains(issues[0].Message, "stale node hash or snippet") {
+	if len(issues) != 1 || !strings.Contains(issues[0].Message, "stale cite") {
 		t.Fatalf("expected stale-hash issue, got %+v", issues)
 	}
 }
@@ -933,5 +933,25 @@ func TestValidateADREvidence_AllowsMovedNodeIDWhenHashMatches(t *testing.T) {
 	issues := validateADREvidence(s, "Affected Topology", "c3-1", movedNode, "warning", false)
 	if len(issues) != 0 {
 		t.Fatalf("citation with moved node id but matching hash/snippet should pass, got %+v", issues)
+	}
+}
+
+// A handle WITHOUT the trailing "snippet" must validate by hash alone — so a
+// table-row block (whose snippet would contain `|` and break the table cell) can
+// be cited. The sha256 is the anchor; the snippet is optional context.
+func TestValidateADREvidence_AllowsSnippetlessCite(t *testing.T) {
+	s := createRichDBFixture(t)
+	full := testCitationForEntity(t, s, "c3-1")
+	// Drop the trailing ` "snippet"`, keeping just entity#nN@vV:sha256:HASH.
+	handleOnly := full
+	if i := strings.Index(full, ` "`); i >= 0 {
+		handleOnly = full[:i]
+	}
+	if strings.Contains(handleOnly, `"`) {
+		t.Fatalf("handleOnly still has a snippet: %q", handleOnly)
+	}
+	issues := validateADREvidence(s, "Affected Topology", "c3-1", handleOnly, "warning", false)
+	if len(issues) != 0 {
+		t.Fatalf("a snippet-less cite with a matching hash should pass, got %+v", issues)
 	}
 }

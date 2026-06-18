@@ -324,6 +324,36 @@ func applyRetire(s *store.Store, p Patch) error {
 
 // applyBlock replaces the single cited node's content, keeping its ID, type,
 // level, seq, and parent — so every sibling node (and its hash) stays frozen.
+// normalizeTableRowContent coerces a table-row patch body into the bare
+// pipe-joined cell form a table_row node stores ("a | b | c"): it takes the first
+// data line, strips outer pipes, trims each cell, and skips a markdown separator
+// row. So "| a | b |", " a | b ", and a header+separator+row block all reduce to
+// the stored shape, and an author can paste a natural markdown row.
+func normalizeTableRowContent(content string) string {
+	for _, line := range strings.Split(content, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		cells := strings.Split(strings.Trim(line, "|"), "|")
+		isSep := true
+		for _, c := range cells {
+			if strings.Trim(strings.TrimSpace(c), "-: ") != "" {
+				isSep = false
+				break
+			}
+		}
+		if isSep {
+			continue // a "--- | ---" separator line
+		}
+		for i := range cells {
+			cells[i] = strings.TrimSpace(cells[i])
+		}
+		return strings.Join(cells, " | ")
+	}
+	return strings.TrimSpace(content)
+}
+
 func applyBlock(s *store.Store, p Patch) error {
 	_, nodeID, _, expected, _ := ParseCiteHandle(p.Base) // validated by CheckDrift
 	node, err := s.GetNode(nodeID)
@@ -337,6 +367,12 @@ func applyBlock(s *store.Store, p Patch) error {
 	// silently clobbering the earlier write.
 	if node.EntityID != p.Target || node.Hash != expected {
 		return fmt.Errorf("patch %s: base anchor for block %d of %s changed before apply; rebase", p.Source, nodeID, p.Target)
+	}
+	// A table_row/table_header node stores bare cells joined by " | " (no outer
+	// pipes). Accept the natural "| a | b |" markdown-row form an author would write,
+	// so editing one table row doesn't require knowing the internal storage shape.
+	if node.Type == "table_row" || node.Type == "table_header" {
+		p.Content = normalizeTableRowContent(p.Content)
 	}
 	node.Content = p.Content
 	node.Hash = store.ComputeNodeHash(p.Content, node.Type)

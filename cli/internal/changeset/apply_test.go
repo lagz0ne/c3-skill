@@ -115,6 +115,24 @@ func TestApply_Frontmatter_SetsAttributes(t *testing.T) {
 	}
 }
 
+// A table-row block patch accepts the natural markdown forms an author writes and
+// reduces them to the bare " | "-joined cells a table_row node stores.
+func TestNormalizeTableRowContent(t *testing.T) {
+	cases := map[string]string{
+		"| a | b | c |":          "a | b | c", // outer pipes stripped
+		"a | b | c":              "a | b | c", // already bare
+		"  |  a |  b  | ":        "a | b",      // extra whitespace trimmed
+		"| x |":                  "x",          // single cell
+		"\n| a | b |\n":          "a | b",       // leading/trailing newlines
+		"| h1 | h2 |\n| --- | --- |": "h1 | h2", // separator line skipped
+	}
+	for in, want := range cases {
+		if got := normalizeTableRowContent(in); got != want {
+			t.Errorf("normalizeTableRowContent(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
 func TestApply_Drift_RejectsWholeSet(t *testing.T) {
 	s := openMem(t)
 	seedFact(t, s, "c3-101", "# auth\n\n## Goal\n\nOriginal goal.\n")

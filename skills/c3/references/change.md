@@ -173,6 +173,8 @@ The scopes you will actually use:
 
 **`block` EDITS an existing section; `insert` ADDS a new one.** When a section already exists and its content must change, replace it with a `block` patch. When the fact must *gain* a section it does not have — the move that lets a sealed fact grow as the rung rises (see §Climbing a rung) — use `insert`: it appends additively, leaving every existing section frozen, anchored to the entity handle from `c3 read <id> --cite`. The `insert` body must START WITH A SECTION HEADING and may not duplicate a section already on the fact.
 
+**Editing one table row.** Cite the specific row (`c3 read <id> --section <name> --cite` lists per-node handles), then `block`-patch it: the body is **just that row** — paste it as natural markdown (`| a | b | c |`, outer pipes optional) and it's normalized to the stored cells; an **empty body deletes the row**. You do NOT re-supply the whole table or the header/separator. (To add a row, that's a body change to the table block — cite the table and replace it, or `insert` if it's a new section.)
+
 One scope is deliberately closed and you must not author it:
 - `whole` **with a base** (full-replace of a live fact) is **REJECTED** — an edit to a live fact must be block-anchored.
 

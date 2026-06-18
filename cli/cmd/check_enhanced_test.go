@@ -91,9 +91,11 @@ func TestRunCheck_IncludeADRUsesDefaultTemplateSections(t *testing.T) {
 		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
 	}
 
+	// Affected Topology is part of the lean ADR core (still required), so a check
+	// against the default canvas reports it missing — proving default sections are used.
 	found := false
 	for _, issue := range result.Issues {
-		if issue.Entity == "adr-20260226-use-go" && strings.Contains(issue.Message, "missing required section: Underlay C3 Changes") {
+		if issue.Entity == "adr-20260226-use-go" && strings.Contains(issue.Message, "missing required section: Affected Topology") {
 			found = true
 			break
 		}

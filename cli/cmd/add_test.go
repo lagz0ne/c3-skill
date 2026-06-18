@@ -286,15 +286,21 @@ func TestRunAdd_AdrRequiresCompleteBody(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected incomplete ADR creation to fail")
 	}
+	// The lean ADR core (rung-1): only Goal, Context, Decision, Affected Topology,
+	// Verification are required. The work-order sections (Compliance Refs/Rules,
+	// Work Breakdown, Underlay, Enforcement, Alternatives, Risks) are optional —
+	// they climb in for weightier decisions.
 	requireAll(t, err.Error(),
 		"missing required section: Context",
 		"missing required section: Decision",
 		"missing required section: Affected Topology",
-		"missing required section: Compliance Refs",
-		"missing required section: Compliance Rules",
-		"missing required section: Underlay C3 Changes",
-		"ADR creation is all-or-nothing",
+		"missing required section: Verification",
 	)
+	for _, optional := range []string{"Compliance Refs", "Compliance Rules", "Work Breakdown", "Underlay C3 Changes", "Enforcement Surfaces", "Alternatives Considered", "Risks"} {
+		if strings.Contains(err.Error(), "missing required section: "+optional) {
+			t.Errorf("optional work-order section %q must not be required at creation (lean ADR core)", optional)
+		}
+	}
 	adrs, listErr := s.EntitiesByType("adr")
 	if listErr != nil {
 		t.Fatal(listErr)

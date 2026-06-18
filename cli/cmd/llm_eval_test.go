@@ -139,32 +139,37 @@ func TestEval_SchemaShowsEvidenceGroundingRequirement(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestEval_ADRSchemaReflectsCreationReality(t *testing.T) {
-	// RED: Every ADR section that validateADRCreationBody demands
-	// should be marked Required: true in the schema registry.
+	// The schema must not lie about what creation demands. validateADRCreationBody
+	// skips non-required sections, so schema-Required ⟺ creation-required by
+	// construction. Guard the laddered split: the lean rung-1 core is required, the
+	// work-order sections are optional (they climb in for weightier decisions).
 	adrSections := schema.ForType("adr")
 	if adrSections == nil {
 		t.Fatal("adr schema should exist")
 	}
-
+	core := map[string]bool{"Goal": true, "Context": true, "Decision": true, "Affected Topology": true, "Verification": true}
 	for _, sec := range adrSections {
-		if !sec.Required {
-			t.Errorf("ADR section %q is Required:false in schema but required at creation time — schema lies to LLMs", sec.Name)
+		if core[sec.Name] && !sec.Required {
+			t.Errorf("ADR core section %q must be Required:true (the lean rung-1 core)", sec.Name)
+		}
+		if !core[sec.Name] && sec.Required {
+			t.Errorf("ADR work-order section %q must be Required:false (optional — climbs for weighty decisions)", sec.Name)
 		}
 	}
 }
 
-func TestEval_ADRSchemaShowsAllOrNothing(t *testing.T) {
-	// RED: Schema output should make the all-or-nothing rule visible.
-	// Currently only Goal shows "(required)" — the other 8 sections show nothing,
-	// yet creation demands ALL of them. Schema must warn about this.
+func TestEval_ADRSchemaShowsLeanCore(t *testing.T) {
+	// Schema output must make the laddered model visible: the lean required core vs
+	// the optional work-order sections — so an LLM authors a small ADR with just the
+	// core and does not assume every section is mandatory.
 	var buf bytes.Buffer
 	if err := RunSchema("adr", false, &buf); err != nil {
 		t.Fatal(err)
 	}
 	out := buf.String()
 
-	if !containsAny(out, "all-or-nothing", "all sections required at creation") {
-		t.Error("ADR schema output should explicitly mention all-or-nothing creation requirement")
+	if !containsAny(out, "Required core", "optional") {
+		t.Error("ADR schema output should make the lean-core / optional-work-order model visible")
 	}
 }
 
@@ -245,13 +250,14 @@ func TestEval_Baseline_EveryIssueHasHint(t *testing.T) {
 }
 
 func TestEval_Baseline_ADRErrorsBatched(t *testing.T) {
-	// GREEN: ADR with only Goal → should report ALL missing sections at once
+	// GREEN: ADR with only Goal → reports the missing lean-core sections at once
+	// (Context, Decision, Affected Topology, Verification — the work-order sections
+	// are optional and not reported).
 	body := "## Goal\nAdopt OAuth.\n"
 	issues := validateADRCreationBody(body)
 
-	// Should get errors for Context, Decision, Work Breakdown, etc.
-	if len(issues) < 8 {
-		t.Errorf("expected 8+ issues for ADR with only Goal, got %d", len(issues))
+	if len(issues) < 4 {
+		t.Errorf("expected the 4 missing lean-core sections for an ADR with only Goal, got %d", len(issues))
 	}
 }
 

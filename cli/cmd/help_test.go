@@ -101,7 +101,7 @@ func TestShowHelp_GlobalHasNoDeadEndAddFlags(t *testing.T) {
 }
 
 func TestShowHelp_StructuredOutputDefaultsToTOON(t *testing.T) {
-	for _, command := range []string{"list", "codemap", "marketplace"} {
+	for _, command := range []string{"list", "codemap"} {
 		t.Run(command, func(t *testing.T) {
 			var buf bytes.Buffer
 			ShowHelp(command, &buf)

@@ -84,11 +84,6 @@ func runWithIO(argv []string, stdin io.Reader, stdinTerminal bool, w io.Writer, 
 		return nil
 	}
 
-	// marketplace is special — uses ~/.c3/marketplace/, no .c3/ needed
-	if opts.Command == "marketplace" {
-		return runMarketplace(opts, w)
-	}
-
 	// All other commands need a .c3/ directory
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -288,47 +283,6 @@ func hasCanonicalDocs(c3Dir string) bool {
 	return err == nil && len(matches) > 0
 }
 
-// runMarketplace handles the marketplace subcommands.
-func runMarketplace(opts cmd.Options, w io.Writer) error {
-	subCmd := ""
-	if len(opts.Args) >= 1 {
-		subCmd = opts.Args[0]
-	}
-	mOpts := cmd.MarketplaceOptions{
-		JSON:         opts.JSON,
-		JSONExplicit: opts.JSONExplicit,
-		Tag:          opts.Tag,
-	}
-	if len(opts.Args) >= 2 {
-		switch subCmd {
-		case "add":
-			mOpts.URL = opts.Args[1]
-		case "show":
-			mOpts.RuleID = opts.Args[1]
-		case "remove", "update":
-			mOpts.SourceName = opts.Args[1]
-		}
-	}
-	if opts.Source != "" {
-		mOpts.SourceName = opts.Source
-	}
-
-	switch subCmd {
-	case "add":
-		return cmd.RunMarketplaceAdd(mOpts, w)
-	case "list":
-		return cmd.RunMarketplaceList(mOpts, w)
-	case "show":
-		return cmd.RunMarketplaceShow(mOpts, w)
-	case "update":
-		return cmd.RunMarketplaceUpdate(mOpts, w)
-	case "remove":
-		return cmd.RunMarketplaceRemove(mOpts, w)
-	default:
-		cmd.ShowHelp("marketplace", w)
-		return nil
-	}
-}
 
 func runThroughCoordinator(argv []string, stdin io.Reader, stdinTerminal bool, c3Dir string, w io.Writer, stderr io.Writer) error {
 	if os.Getenv("C3X_COORDINATOR") == "0" {

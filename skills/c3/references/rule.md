@@ -14,7 +14,7 @@ Hard rule: enforceable at code level + has golden example → create rule, not r
 | "who uses rule-X" | **Usage** |
 | "migrate refs to rules", "split ref into rule" | **Migrate** |
 | "remove/deprecate rule-X" | **change** (needs ADR) |
-| "adopt rule-X", "marketplace adopt" | **Adopt** |
+| "adopt rule-X", "adapt an external rule" | **Adopt** |
 
 ---
 
@@ -246,21 +246,19 @@ Confirm: no orphan refs, all rules have golden examples, all citations intact.
 
 ## Adopt
 
-Flow: `Preview → Discover Overlap → Guided Merge → Write → Cite from Citers → ADR`
+Flow: `Source → Discover Overlap → Guided Merge → Write → Cite from Citers → ADR`
 
-Adopt marketplace rule into project `.c3/rules/` (if using marketplace plugin packs).
+Adopt an **external rule** — a pattern from a doc, another repo, or a standard you
+want to codify — into the project as a local `.c3/rules/` rule.
 
-### Step 1: Preview
+### Step 1: Source
 
-```bash
-c3 marketplace show <rule-id>
-```
-
-Display full rule content. If `--source` needed, `AskUserQuestion` (ASSUMPTION_MODE: pick first match).
+Obtain the source rule's text (paste, a file, or another repo) and read it in full
+so you can map its sections (Goal, Rule, Golden Example, Not This, Scope).
 
 ### Step 2: Discover Overlap (2-5 Grep calls)
 
-Search project for patterns overlapping marketplace rule:
+Search project for patterns overlapping the source rule:
 - Existing rules/refs covering similar ground (`c3 list`; for body text use targeted `c3 read` output)
 - Code matching `## Golden Example`
 - Anti-patterns matching `## Not This`
@@ -272,7 +270,7 @@ Significant overlap found → present to user before merge.
 Per section (Goal, Rule, Golden Example, Not This, Scope):
 
 `AskUserQuestion` with options (ASSUMPTION_MODE: adopt as-is):
-- **Adopt as-is** — marketplace version verbatim
+- **Adopt as-is** — source version verbatim
 - **Adapt** — rewrite for project conventions, tech stack, naming
 - **Skip** — omit (only optional sections: Scope, Override)
 
@@ -302,14 +300,14 @@ ADR status set is `[open, accepted, done, superseded]`; `accepted → done` is a
 
 ```bash
 c3 add adr adopt-rule-<slug> < adr-body.md
-# rule created and adapted from marketplace; deliverable in place
+# rule created and adapted from the source; deliverable in place
 c3 change accept adr-YYYYMMDD-adopt-rule-<slug>
 c3 check --fix   # auto-latches accepted → done once the After cites resolve fresh
 ```
 
 Body with rationale + adaptation notes → `c3 write adr-YYYYMMDD-adopt-rule-<slug> --file body.md`.
 
-Body: note source marketplace and adaptations.
+Body: note the source and adaptations.
 
 ---
 
@@ -323,4 +321,4 @@ Body: note source marketplace and adaptations.
 | Rule for one-off pattern | Rules for repeated standards only |
 | Confuse rule with ref | Rule = enforcement, Ref = rationale (Separation Test) |
 | Adopt without checking overlap | Always discover existing patterns first |
-| Adopt and keep marketplace default verbatim | Adapt to project conventions |
+| Adopt and keep the source default verbatim | Adapt to project conventions |

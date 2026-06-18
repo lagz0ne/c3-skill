@@ -77,7 +77,7 @@ The guard keys on the FIRST arg only, and an unknown/typo'd type is treated as f
 | add, change, fix, implement, refactor, remove, provision, design | **change** (the change-unit flow: ADR = unit; fact-edits ride as patches, land via `change apply`) | `references/change.md` |
 | pattern, convention, "create ref", "update ref", standardize | **ref** | `references/ref.md` |
 | "coding rule", "coding standard", "coding convention", "split ref into rule" | **rule** | `references/rule.md` |
-| marketplace, "browse rules", "adopt rule", "install rule from" | **rule** (Adopt) | `references/rule.md` |
+| "adopt rule", "adapt an external rule", "codify a standard" | **rule** (Adopt) | `references/rule.md` |
 | "edit the canvas", "change the shape", "what sections does X have", "add a doc type", "customize the ADR/component definition", "add prd/user-story" | **canvas** | `references/canvas.md` |
 | impact, "what breaks", assess, sweep, "is this safe" | **sweep** | `references/sweep.md` |
 | recipe, "trace end-to-end", "cross-cutting flow" | **query**(read) / **change**(create) | `references/query.md` / `references/change.md` |

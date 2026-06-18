@@ -673,14 +673,6 @@ func TestRun_LookupMissingArg(t *testing.T) {
 	}
 }
 
-func TestRun_MarketplaceHelp(t *testing.T) {
-	var buf bytes.Buffer
-	err := run([]string{"marketplace"}, &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func TestRun_GitInstall(t *testing.T) {
 	c3Dir := setupC3DB(t)
 	projectDir := filepath.Dir(c3Dir)
@@ -818,18 +810,7 @@ func TestRun_AgentModeExplicitJSONStillReturnsTOON(t *testing.T) {
 	}
 }
 
-func TestRun_MarketplaceShowExplicitJSONRejected(t *testing.T) {
-	var buf bytes.Buffer
-	err := run([]string{"marketplace", "show", "rule-output-via-helpers", "--json"}, &buf)
-	if err == nil {
-		t.Fatal("expected marketplace show --json to be rejected")
-	}
-	if !strings.Contains(err.Error(), "marketplace show no longer supports --json") {
-		t.Fatalf("expected explicit-json rejection, got: %v", err)
-	}
-}
-
-// Facts are frozen: set/wire/delete on a fact are refused at the CLI; the change
+// Facts are frozen: set/delete on a fact are refused at the CLI; the change
 // is a change-unit. (set --section is still meaningful on a non-frozen change-doc.)
 func TestRun_Set(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
@@ -936,14 +917,6 @@ func TestRun_Lookup(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
 	var buf bytes.Buffer
 	err := run([]string{"--c3-dir", c3Dir, "lookup", "src/main.go"}, &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestRun_MarketplaceList(t *testing.T) {
-	var buf bytes.Buffer
-	err := run([]string{"marketplace", "list"}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}

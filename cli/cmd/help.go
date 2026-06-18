@@ -433,32 +433,6 @@ and coerces nothing. migrate is the only path that may rewrite a terminal status
 Examples:
   c3x migrate`,
 	},
-	{
-		Name:     "marketplace",
-		Args:     "<subcommand>",
-		OneLiner: "Manage marketplace rule sources",
-		Hidden:   true,
-		Help: `Usage: c3x marketplace <subcommand> [options]
-
-Subcommands:
-  add <github-url>          Clone marketplace repo, register as source
-  list [--source] [--tag]   List available rules across sources
-  show <rule-id>            Preview a rule's content
-  update [<source-name>]    Pull latest from registered sources
-  remove <source-name>      Unregister source + delete cache
-
-Options:
-  --source <name>   Filter by source name
-  --tag <tag>       Filter rules by tag
-  --json            Explicit JSON compatibility for list only; marketplace show does not support JSON
-
-Examples:
-  c3x marketplace add https://github.com/org/go-patterns
-  c3x marketplace list --tag reliability
-  c3x marketplace show rule-error-handling
-  c3x marketplace update
-  c3x marketplace remove go-patterns`,
-	},
 }
 
 // buildGlobalHelp generates the global help text from the command registry.

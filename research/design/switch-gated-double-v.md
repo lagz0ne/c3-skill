@@ -97,6 +97,14 @@ globs); and leaves a record a human or a later second-agent pass can audit. Edit
 was ignorable; drift-tracking was invisible; this is neither. A higher-assurance second-attestation
 (independent reviewer agent) is a later opt-in policy, not v1.
 
+**The LLM may lie — and that is fine; that is where the human in the loop matters** (maintainer's
+call). The tool enforces that a fresh, territory-grounded inspection *record exists* before the
+switch; it does **not** adjudicate the record's truth. The human judges truth — at `change accept`
+(the one stored human judgment), reviewing the obligations + territory + the agent's attestation
+that `change view`/`change inspect` surfaces. So the division is: **tool guarantees the record;
+human reviews the claim.** The gate's value is converting silent, invisible drift into a loud,
+grounded, reviewable artifact at the moment of the flip.
+
 ## Relationship to the `uses` fork (#42)
 **Orthogonal.** This gates *changes to* the relationship model but cannot decide the ontology
 (governance-citation vs component-dependency). #42 stays a separate decision.
@@ -110,3 +118,22 @@ was ignorable; drift-tracking was invisible; this is neither. A higher-assurance
 5. Evidence: reuse `isGroundedEvidence` floor + territory-aware inspection checks.
 6. Help/dispatch; agent output stays `writeJSON` (TOON in `C3X_MODE=agent`).
 7. Verify: focused change tests, `go test ./...`, local `c3local check`.
+
+## Status — v1 shipped
+**Built, tested, dogfooded (commits `cb82540`, `867bca0`, `8838000`):**
+- `changeset/inspect_carrier.go` — `*.inspect.md` parser + `CoversFresh` freshness (anchored to
+  the doc material hash, never code). Unit-tested (valid / rejects / fresh-stale / hash).
+- `cmd/inspect.go` — `inspectionGate` (obligations from overlay → require fresh + grounded +
+  territory-citing attestation; coverage-gap repair) + `RunChangeInspect` surface. Wired into
+  `RunChangeApply` after the mechanical gates; `change inspect` dispatched + helped.
+- Integration tests: gate **refuses without inspection**, **passes when grounded**, **refuses
+  stale**, **refuses evidence outside territory** (anti-rubber-stamp).
+- Dogfooded: `change inspect` on real `c3-104` computed its 3 obligations (Derived Materials +
+  2 Change Safety), resolved territory, stamped material hashes — clean TOON.
+
+**Deferred / follow-ups:**
+- `change view`/`status`/`rebase` consolidation (#40) — fold the inspection coverage into the
+  unified view (v1 ships `change inspect` as a sibling surface).
+- `marshalMap` struct-value `%v` gap (latent; structs avoid it).
+- Optional second-reviewer (independent agent) attestation policy.
+- Dogfood the gate end-to-end on the c3-104/c3-120 self-doc drift (author the real change-units).

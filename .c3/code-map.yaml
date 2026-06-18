@@ -5,9 +5,6 @@ c3-102:
   - cli/internal/walker/**
 c3-103:
   - cli/internal/templates/**
-c3-104:
-  - cli/cmd/wire.go
-  - cli/cmd/wire_test.go
 c3-105:
   - cli/internal/codemap/**
 c3-106:

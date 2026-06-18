@@ -1,7 +1,7 @@
 ---
 id: c3-1
 c3-version: 4
-c3-seal: 6a910182877336db67681b7103c62a6a75438d6a0629f4cbbae58d239de28ca0
+c3-seal: 1909414d047ccd58c3d077228fe6de0348dc43b4ed6b2f49d42812b0c98fd824
 title: Go CLI
 type: container
 boundary: process
@@ -35,7 +35,6 @@ Provide all c3x commands as a single cross-compiled binary that reads and writes
 | c3-101 | frontmatter | foundation | active | Parses YAML frontmatter from all .c3/ markdown files |
 | c3-102 | walker | foundation | active | Discovers and traverses the .c3/ entity tree |
 | c3-103 | templates | foundation | active | Provides embedded scaffolding templates for new docs |
-| c3-104 | wiring | foundation | active | Tracks citations between entities |
 | c3-105 | codemap-lib | foundation | active | Parses, matches, and validates code-map.yaml patterns |
 | c3-106 | content-lib | foundation | active | Parses, renders, and bridges structured markdown content |
 | c3-107 | store-lib | foundation | active | Persists entities, relationships, changelog, codemap, hashes, nodes, and versions |

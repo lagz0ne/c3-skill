@@ -1,7 +1,7 @@
 ---
 id: c3-111
 c3-version: 4
-c3-seal: 0dfea1e6263344d87672463270ce0b2eb5474001b2dde6b408419ceacb543c06
+c3-seal: 8fe11cdd847f389488b86e35d1245972e39b07280e93dd432e6874d0cf9c9294
 title: add-cmd
 type: component
 category: feature
@@ -12,7 +12,7 @@ uses:
     - c3-101
     - c3-102
     - c3-103
-    - c3-104
+    - c3-106
 ---
 
 # add-cmd

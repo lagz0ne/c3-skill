@@ -1,7 +1,7 @@
 ---
 id: c3-113
 c3-version: 4
-c3-seal: 539a2ac1b7138a3896cb718923306534f35bf5b8b69cf5e3db3c37eb9ccb9b3e
+c3-seal: fc9ebb778ef2474f76e7f5cfe3e26930fa4c28d3961418f648c1776827a4abb0
 title: check-cmd
 type: component
 category: feature
@@ -11,7 +11,7 @@ summary: Reports PASS/WARN/FAIL for each entity; includes schema definitions, st
 uses:
     - c3-101
     - c3-102
-    - c3-104
+    - c3-106
 ---
 
 # check-cmd

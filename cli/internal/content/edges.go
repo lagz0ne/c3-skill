@@ -145,9 +145,26 @@ func SyncCanvasOwnedRelationships(s *store.Store, entityID string, def schema.Ca
 			continue
 		}
 		seen[key] = true
+		// A citation must resolve. The apply/import ordering guarantees a target
+		// created in the same unit/import already exists by the time we sync, so a
+		// failure here is a genuine orphan citation — reported cleanly, not as a raw
+		// FK constraint error.
+		if _, err := s.GetEntity(e.To); err != nil {
+			return &OrphanCitationError{From: e.From, To: e.To, Section: e.Section, Column: e.Column}
+		}
 		if err := s.AddRelationship(&store.Relationship{FromID: e.From, ToID: e.To, RelType: e.Rel}); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// OrphanCitationError is returned when a body edge-column cites an entity that
+// does not exist.
+type OrphanCitationError struct {
+	From, To, Section, Column string
+}
+
+func (e *OrphanCitationError) Error() string {
+	return e.From + " cites " + e.To + " in " + e.Section + "." + e.Column + " which does not exist"
 }

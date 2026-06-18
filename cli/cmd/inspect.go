@@ -165,6 +165,21 @@ func inspectionGate(s *store.Store, c3Dir, unitID string, patches []changeset.Pa
 	}
 	projectDir := config.ProjectDir(c3Dir)
 
+	// A fact needs the up-V only when its CONTRACT changes: a body-changing patch
+	// (block/insert/whole) or a code-map rebind. A frontmatter re-edge (uses/rename)
+	// or a retire does not change the contract the code derives from, so it doesn't
+	// trigger an inspection.
+	contractTouched := map[string]bool{}
+	for _, p := range patches {
+		switch p.Scope {
+		case changeset.ScopeBlock, changeset.ScopeInsert, changeset.ScopeWhole:
+			contractTouched[p.Target] = true
+		}
+	}
+	for _, c := range codemaps {
+		contractTouched[c.Target] = true
+	}
+
 	targets := make([]string, 0, len(matByTarget))
 	for t := range matByTarget {
 		targets = append(targets, t)
@@ -174,6 +189,9 @@ func inspectionGate(s *store.Store, c3Dir, unitID string, patches []changeset.Pa
 	var rejects []string
 	overlayErr := WithUnitOverlay(s, c3Dir, unitID, func(ts *store.Store) error {
 		for _, target := range targets {
+			if !contractTouched[target] {
+				continue // touched only by a frontmatter re-edge / retire ⇒ no contract change
+			}
 			body, err := content.ReadEntity(ts, target)
 			if err != nil {
 				continue // a retired/absent fact has nothing to inspect

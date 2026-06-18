@@ -133,6 +133,24 @@ func TestNormalizeTableRowContent(t *testing.T) {
 	}
 }
 
+// An empty block body DELETES the cited node — "empty body deletes the block".
+func TestApply_BlockEmpty_DeletesNode(t *testing.T) {
+	s := openMem(t)
+	seedFact(t, s, "c3-101", "# auth\n\n## Goal\n\nKeep this goal.\n\n## Detail\n\nDelete this detail.\n")
+	handle, _ := blockHandle(t, s, "c3-101", "Delete this detail.")
+
+	p := Patch{Target: "c3-101", Scope: ScopeBlock, Base: handle, Content: "", Source: "01.patch.md"}
+	if err := Apply(s, []Patch{p}, nil, nil); err != nil {
+		t.Fatalf("apply: %v", err)
+	}
+	if nodeHashOf(t, s, "c3-101", "Delete this detail.") != "" {
+		t.Error("an empty block patch must DELETE the cited node, not blank it")
+	}
+	if nodeHashOf(t, s, "c3-101", "Keep this goal.") == "" {
+		t.Error("a sibling block must remain after deleting another")
+	}
+}
+
 func TestApply_Drift_RejectsWholeSet(t *testing.T) {
 	s := openMem(t)
 	seedFact(t, s, "c3-101", "# auth\n\n## Goal\n\nOriginal goal.\n")

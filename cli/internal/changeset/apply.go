@@ -368,6 +368,16 @@ func applyBlock(s *store.Store, p Patch) error {
 	if node.EntityID != p.Target || node.Hash != expected {
 		return fmt.Errorf("patch %s: base anchor for block %d of %s changed before apply; rebase", p.Source, nodeID, p.Target)
 	}
+	// An EMPTY block body DELETES the cited node (and its children) — the model's
+	// "empty body deletes the block". This is how you drop a table row, a stale
+	// paragraph, or a whole section. Drift is already enforced (we anchored the node
+	// by hash above), so you only ever delete the block you cited.
+	if strings.TrimSpace(p.Content) == "" {
+		if err := s.DeleteNode(nodeID); err != nil {
+			return fmt.Errorf("patch %s: delete block %d of %s: %w", p.Source, nodeID, p.Target, err)
+		}
+		return reseal(s, p.Target)
+	}
 	// A table_row/table_header node stores bare cells joined by " | " (no outer
 	// pipes). Accept the natural "| a | b |" markdown-row form an author would write,
 	// so editing one table row doesn't require knowing the internal storage shape.

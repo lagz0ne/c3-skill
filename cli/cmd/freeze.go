@@ -35,11 +35,55 @@ func GuardFactMutation(s *store.Store, c3Dir, id string) error {
 	return nil
 }
 
-// GuardCanonicalMutation refuses direct edits to frozen facts. Codemap updates
-// are exempt because they are stored outside the sealed canonical document.
+// inCreationWindow reports whether id is a frozen-TYPE fact that has never been
+// authored: zero body nodes AND never versioned (Version 0). Such a fact has no
+// sealed body to protect, so its FIRST body authoring (a `write`) is allowed; the
+// moment it carries a body it is frozen like any other fact. The init-seeded system
+// context doc c3-0 is the canonical case — without this it is born frozen-and-empty
+// with no authorable path at all (write/set refused, no citable anchor to insert).
+//
+// Deliberately narrow, because the freeze protects authored content and must not be
+// bypassable:
+//   - Empty RootMerkle ALONE is not "never authored": a legacy migration or a
+//     frontmatter-only import can leave RootMerkle empty while frontmatter/edges
+//     were authored. So we additionally require Version 0 and zero body nodes.
+//   - Only `write` (body authoring) opens the window. `set`/`wire`/`delete` stay
+//     frozen even on a bodyless fact — they touch frontmatter / edges / existence,
+//     which may be authored independently of the body.
+//   - Once a body exists (nodes > 0) or the fact has been versioned, the window is
+//     shut; a fact re-emptied by an internal repair path (Version already > 0) does
+//     not re-open it.
+func inCreationWindow(s *store.Store, c3Dir, id string) bool {
+	e, err := s.GetEntity(id)
+	if err != nil {
+		return false
+	}
+	if !FactIsFrozen(c3Dir, e.Type) {
+		return false // not a fact — the normal create/edit path applies
+	}
+	if e.Version != 0 {
+		return false // already versioned → authored, frozen
+	}
+	nodes, err := s.NodesForEntity(id)
+	if err != nil || len(nodes) > 0 {
+		return false // has a body → frozen
+	}
+	return true
+}
+
+// GuardCanonicalMutation refuses direct edits to frozen facts. Two carve-outs:
+// codemap updates (stored outside the sealed canonical document) and the creation
+// window — the first `write` that authors a never-authored fact's body.
 func GuardCanonicalMutation(s *store.Store, c3Dir string, opts Options) error {
 	switch opts.Command {
-	case "write", "wire", "delete":
+	case "write":
+		if len(opts.Args) >= 1 {
+			if inCreationWindow(s, c3Dir, opts.Args[0]) {
+				return nil
+			}
+			return GuardFactMutation(s, c3Dir, opts.Args[0])
+		}
+	case "wire", "delete":
 		if len(opts.Args) >= 1 {
 			return GuardFactMutation(s, c3Dir, opts.Args[0])
 		}

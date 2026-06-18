@@ -41,16 +41,16 @@ func RunGraph(opts GraphOptions, w io.Writer) error {
 	// fails loudly — it never silently falls back to applied state.
 	if opts.Unit != "" {
 		return WithUnitOverlay(opts.Store, opts.C3Dir, opts.Unit, func(ts *store.Store) error {
-			// Mark the preview without corrupting the body. Machine output (JSON/
-			// TOON, incl. agent mode) takes priority in the render below, so it must
-			// get NO stdout prefix; a human mermaid render gets a `%%` comment; plain
+			// Mark the preview without corrupting the body. An explicit mermaid render
+			// (which wins over agent JSON below) gets a `%%` comment; machine output
+			// (JSON/TOON) must get NO stdout prefix or it becomes unparseable; plain
 			// human text gets a header line.
 			switch {
+			case opts.Format == "mermaid":
+				fmt.Fprintf(w, "%%%% preview: unit %s — staged, not applied\n", opts.Unit)
 			case opts.JSON:
 				// no prefix — the --unit flag is the explicit signal; a stray prefix
 				// would make the machine output unparseable.
-			case opts.Format == "mermaid":
-				fmt.Fprintf(w, "%%%% preview: unit %s — staged, not applied\n", opts.Unit)
 			default:
 				fmt.Fprintf(w, "context: unit %s (preview — staged, not applied)\n\n", opts.Unit)
 			}
@@ -71,17 +71,21 @@ func RunGraph(opts GraphOptions, w io.Writer) error {
 
 	entities := collectSubgraphStore(opts.Store, opts.EntityID, opts.Depth, opts.Direction)
 
-	if opts.JSON {
-		if err := graphJSONStore(entities, opts.Store, w); err != nil {
-			return err
-		}
-		return nil
-	}
+	// An explicit `--format mermaid` is a deliberate render choice and WINS over the
+	// agent-mode JSON default (agent mode sets opts.JSON, but the skill tells agents to
+	// paste mermaid per container — they must be able to get it). A bare `graph` in
+	// agent mode still emits TOON.
 	if opts.Format == "mermaid" {
 		if err := graphMermaidStore(entities, opts.Store, w); err != nil {
 			return err
 		}
 		writeAgentHints(w, cascadeHintsForID(opts.Store, opts.EntityID))
+		return nil
+	}
+	if opts.JSON {
+		if err := graphJSONStore(entities, opts.Store, w); err != nil {
+			return err
+		}
 		return nil
 	}
 	if err := graphTextStore(entities, opts.Store, w); err != nil {

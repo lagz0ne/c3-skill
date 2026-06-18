@@ -5,6 +5,19 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [11.1.1] - 2026-06-18
+
+Patch release: **onboarding & climb hardening**, driven by a blindbox skill-eval loop that grows a project from a lean rung through a full multi-container climb. The eval surfaced two defects that no prose change could fix, plus several skill gaps.
+
+### Fixed
+
+- **The system context doc `c3-0` was unfillable on a fresh `c3x init`.** It was born a frozen fact with an empty body, so every authoring path was refused or broken (`write`/`set` refused, no citable anchor for an `insert`, `change scaffold` emitted a malformed empty base handle, a `whole`-no-base apply hung). Facts with no authored content yet are now in a *creation window* — the first `write` authors the body, and the freeze engages once it has content. Narrowed to `write` only (gated on zero body nodes **and** version 0) so it cannot become a freeze bypass for an already-authored fact.
+- **A laddered climb produced `sections out of order` check failures by construction.** The seed `component` canvas interleaved its higher-rung optional sections among the required ones, but `change scaffold` → `insert` only appends sections at the body's end. The seed now orders the higher-rung sections (Foundational Flow, Business Flow, Change Safety) last, so the append-only climb is canvas-valid by construction.
+
+### Changed
+
+- **Skill — onboarding & change guidance.** Added recipe discovery for cross-container flows (the operation that no single component owns); parent `Components`/`Containers` tables are authored from real allocated ids (create children, read `c3x list`, then fill the table — avoids the genesis id-churn re-patch); the climb guidance notes that added sections append (order them last); and the contract-cascade gate is realigned to the live component canvas vocabulary (Goal / Parent Fit / Governance / Contract / Derived Materials).
+
 ## [11.1.0] - 2026-06-18
 
 Minor release: **laddered complexity**. The canvas is a *rung* — a complete contract for a complexity level. A fact is always complete to its current rung; complexity grows by *climbing* rungs (raise the canvas, then migrate facts up to it), never by relaxing completeness. Each rung is solid on its own and not responsible for future rungs.

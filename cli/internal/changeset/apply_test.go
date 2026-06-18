@@ -133,6 +133,37 @@ func TestNormalizeTableRowContent(t *testing.T) {
 	}
 }
 
+// Insert with a BLOCK base adds a row after the cited row — "insert a block
+// relative to a neighbor" — the parent-delta primitive (add a child to a table).
+func TestApply_InsertRow_AddsTableRowAfterAnchor(t *testing.T) {
+	s := openMem(t)
+	seedFact(t, s, "c3-101", "# c\n\n## Components\n\n| ID | Name |\n| --- | --- |\n| c3-101 | one |\n| c3-102 | two |\n")
+	e, _ := s.GetEntity("c3-101")
+	nodes, _ := s.NodesForEntity("c3-101")
+	var handle string
+	for _, n := range nodes {
+		if n.Type == "table_row" && strings.Contains(n.Content, "c3-101") {
+			handle = fmt.Sprintf("c3-101#n%d@v%d:sha256:%s", n.ID, e.Version, n.Hash)
+		}
+	}
+	if handle == "" {
+		t.Fatal("no table_row anchor found")
+	}
+
+	p := Patch{Target: "c3-101", Scope: ScopeInsert, Base: handle, Content: "| c3-110 | three |", Source: "01.patch.md"}
+	if err := Apply(s, []Patch{p}, nil, nil); err != nil {
+		t.Fatalf("row insert: %v", err)
+	}
+	merged, _ := content.ReadEntity(s, "c3-101")
+	added, two := strings.Index(merged, "c3-110 | three"), strings.Index(merged, "c3-102 | two")
+	if added < 0 {
+		t.Fatalf("inserted row not present:\n%s", merged)
+	}
+	if two < 0 || added > two {
+		t.Errorf("row must be inserted after the anchor and before the next row:\n%s", merged)
+	}
+}
+
 // A block anchor survives node-id renumbering: the sha256 is the anchor, the
 // integer node id only a hint. A handle whose id no longer exists but whose hash
 // still seals a node resolves by hash and applies (no spurious "rebase").

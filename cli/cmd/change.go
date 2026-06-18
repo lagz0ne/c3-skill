@@ -227,8 +227,21 @@ func canvasGate(s *store.Store, c3Dir string, p changeset.Patch) error {
 		}
 		entityType, body = entity.Type, merged
 	case changeset.ScopeInsert:
-		// Insert appends a section: validate the post-append body so a duplicate or
-		// malformed section can't slip a fact below its canvas.
+		entity, err := s.GetEntity(p.Target)
+		if err != nil {
+			return fmt.Errorf("patch %s: target %s not found", p.Source, p.Target)
+		}
+		// Block-base insert (a row after a cited neighbor): validate the spliced body.
+		if _, _, _, _, isBlock := changeset.ParseCiteHandle(p.Base); isBlock {
+			merged, err := changeset.MergedBody(s, p)
+			if err != nil {
+				return fmt.Errorf("patch %s: %w", p.Source, err)
+			}
+			entityType, body = entity.Type, merged
+			break
+		}
+		// Entity-base insert appends a section: validate the post-append body so a
+		// duplicate or malformed section can't slip a fact below its canvas.
 		cur, err := content.ReadEntity(s, p.Target)
 		if err != nil {
 			return fmt.Errorf("patch %s: %w", p.Source, err)
@@ -237,10 +250,6 @@ func canvasGate(s *store.Store, c3Dir string, p changeset.Patch) error {
 		// dry-run and review reject it before any write.
 		if err := changeset.ValidateInsertStructure(cur, p.Content); err != nil {
 			return fmt.Errorf("patch %s: %w", p.Source, err)
-		}
-		entity, err := s.GetEntity(p.Target)
-		if err != nil {
-			return fmt.Errorf("patch %s: target %s not found", p.Source, p.Target)
 		}
 		entityType, body = entity.Type, cur+"\n\n"+p.Content
 	case changeset.ScopeWhole:

@@ -207,6 +207,29 @@ func ValidateInsertStructure(currentBody, insertBody string) error {
 // merkle is an adequate anchor here even though it does not seal order. This is the
 // climb's tool: when a canvas rung rises, a sealed fact gains the new required section.
 func applyInsert(s *store.Store, p Patch) error {
+	// Block-base insert: add a block immediately AFTER a cited neighbor node — the
+	// insert scope's "insert a block relative to a neighbor". This is how you ADD a
+	// table row (e.g. a new component in a parent's Components table): cite the row to
+	// insert after, body = the new row. Anchored by hash (renumber-proof).
+	if be, nodeID, _, expected, ok := ParseCiteHandle(p.Base); ok {
+		if be != p.Target {
+			return fmt.Errorf("patch %s: base anchors %s but target is %s", p.Source, be, p.Target)
+		}
+		after, err := resolveCitedNode(s, p.Target, nodeID, expected)
+		if err != nil {
+			return fmt.Errorf("patch %s: insert anchor of %s changed before apply; rebase (%v)", p.Source, p.Target, err)
+		}
+		body := p.Content
+		if after.Type == "table_row" || after.Type == "table_header" {
+			body = normalizeTableRowContent(body)
+		}
+		n := &store.Node{Type: after.Type, Level: after.Level, Content: body}
+		n.Hash = store.ComputeNodeHash(body, n.Type)
+		if _, err := s.InsertNodeAfter(after.ID, n); err != nil {
+			return fmt.Errorf("patch %s: %w", p.Source, err)
+		}
+		return reseal(s, p.Target)
+	}
 	entity, _, expected, ok := ParseEntityHandle(p.Base)
 	if !ok {
 		return fmt.Errorf("patch %s: insert requires an entity base handle (entity@vN:sha256:MERKLE); get one with 'c3x read %s --cite'", p.Source, p.Target)

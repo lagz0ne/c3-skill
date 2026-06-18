@@ -67,6 +67,35 @@ func MergedBody(s *store.Store, p Patch) (string, error) {
 			merged[i] = &cp
 		}
 		return content.RenderMarkdown(merged), nil
+	case ScopeInsert:
+		// Block-base insert (e.g. a new table row after a cited row): render the body
+		// with the new node spliced in after the anchor, mirroring applyInsert.
+		_, hintID, _, expected, ok := ParseCiteHandle(p.Base)
+		if !ok {
+			return "", fmt.Errorf("patch %s: MergedBody insert here needs a block base", p.Source)
+		}
+		nodes, err := s.NodesForEntity(p.Target)
+		if err != nil {
+			return "", err
+		}
+		after, err := resolveCitedNode(s, p.Target, hintID, expected)
+		if err != nil {
+			return "", fmt.Errorf("patch %s: %v", p.Source, err)
+		}
+		body := p.Content
+		if after.Type == "table_row" || after.Type == "table_header" {
+			body = normalizeTableRowContent(body)
+		}
+		newNode := &store.Node{EntityID: p.Target, ParentID: after.ParentID, Type: after.Type, Level: after.Level, Content: body}
+		var merged []*store.Node
+		for _, n := range nodes {
+			cp := *n
+			merged = append(merged, &cp)
+			if n.ID == after.ID {
+				merged = append(merged, newNode)
+			}
+		}
+		return content.RenderMarkdown(merged), nil
 	default:
 		return "", fmt.Errorf("MergedBody: scope %q not yet supported", p.Scope)
 	}

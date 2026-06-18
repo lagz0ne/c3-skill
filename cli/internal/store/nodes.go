@@ -132,6 +132,42 @@ func (s *Store) AppendNodeTree(entityID string, nodes []*Node, parentIndex []int
 	})
 }
 
+// InsertNodeAfter inserts n as a sibling immediately after node afterID: same
+// parent, seq = after.seq + 1, with later siblings shifted down by one to open the
+// slot. Every other node keeps its content + hash, so only the new node changes the
+// entity's merkle. Used to ADD a block to a fact — a table row after a neighbor row —
+// without disturbing any existing block. Enlists in an open tx.
+func (s *Store) InsertNodeAfter(afterID int64, n *Node) (int64, error) {
+	var newID int64
+	err := s.WithTx(func(ts *Store) error {
+		after, err := ts.GetNode(afterID)
+		if err != nil {
+			return fmt.Errorf("insert-after: anchor node %d: %w", afterID, err)
+		}
+		if after.ParentID.Valid {
+			_, err = ts.exec.Exec(`UPDATE nodes SET seq = seq + 1 WHERE entity_id = ? AND parent_id = ? AND seq > ?`,
+				after.EntityID, after.ParentID.Int64, after.Seq)
+		} else {
+			_, err = ts.exec.Exec(`UPDATE nodes SET seq = seq + 1 WHERE entity_id = ? AND parent_id IS NULL AND seq > ?`,
+				after.EntityID, after.Seq)
+		}
+		if err != nil {
+			return fmt.Errorf("insert-after: shift siblings: %w", err)
+		}
+		n.EntityID = after.EntityID
+		n.ParentID = after.ParentID
+		n.Seq = after.Seq + 1
+		res, err := ts.exec.Exec(NodeInsertSQL, n.EntityID, n.ParentID, n.Type, n.Level, n.Seq, n.Content, n.Hash)
+		if err != nil {
+			return fmt.Errorf("insert-after: %w", err)
+		}
+		newID, _ = res.LastInsertId()
+		n.ID = newID
+		return nil
+	})
+	return newID, err
+}
+
 // InsertNodeTree replaces an entity's nodes from a parsed tree, remapping each
 // node's tree-index parent (parentIndex[i] < 0 ⇒ root) to the real autoincrement
 // ID assigned on insert. Standalone it opens its own transaction; inside an apply

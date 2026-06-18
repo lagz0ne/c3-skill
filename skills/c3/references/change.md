@@ -60,7 +60,7 @@ Draft `adr-body.md` to the canvas, then create it all at once:
 c3 add adr <slug> --file adr-body.md
 ```
 
-Slug = change intent (`add-rate-limiting`, `migrate-to-postgres`). `c3 add adr` is all-or-nothing — no thin ADR with incremental fill later; thin sections fail at creation, `N.A - <reason>` for inapplicable rows. Any section with tables, mermaid, or code fences MUST be authored via `--file`.
+Slug = change intent (`add-rate-limiting`, `migrate-to-postgres`). The adr canvas is **laddered**: `c3 add adr` requires only the lean core (Goal, Context, Decision, Affected Topology, Verification) — enough for a small change; the work-order sections (Compliance Refs/Rules, Work Breakdown, Underlay C3 Changes, Enforcement Surfaces, Alternatives, Risks) are optional, climbing in for weightier decisions. No thin ADR — any section you include must be substantive (thin sections fail; `N.A - <reason>` for inapplicable rows). Any section with tables, mermaid, or code fences MUST be authored via `--file`.
 
 From a diff, capture rationale into the draft first, then reshape to the canvas:
 ```bash

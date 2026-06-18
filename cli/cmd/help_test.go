@@ -97,13 +97,6 @@ func TestShowHelp_AddHasNoDeadEndFlags(t *testing.T) {
 	requireAll(t, output, "--file <path>", "c3x schema component > component.md", "c3x add adr config-change --file adr.md")
 }
 
-func TestShowHelp_TemplateIsRetired(t *testing.T) {
-	var buf bytes.Buffer
-	ShowHelp("template", &buf)
-
-	requireAll(t, buf.String(), "ADR templates have been retired", "c3x canvas read adr")
-}
-
 func TestShowHelp_GlobalHasNoDeadEndAddFlags(t *testing.T) {
 	var buf bytes.Buffer
 	ShowHelp("", &buf)

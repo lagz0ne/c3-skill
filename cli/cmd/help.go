@@ -150,20 +150,6 @@ Examples:
   c3x add adr config-change --file adr.md`,
 	},
 	{
-		Name:     "template",
-		Args:     "<list|read|add|write>",
-		OneLiner: "Retired; use canvas",
-		Hidden:   true,
-		Help: `Usage: c3x canvas <list|read|add|write>
-
-ADR templates have been retired. ADR is the adr canvas definition.
-
-Examples:
-  c3x canvas read adr
-  c3x canvas write adr --file adr-canvas.md
-  c3x schema adr`,
-	},
-	{
 		Name:     "canvas",
 		Args:     "<list|read|add|write>",
 		OneLiner: "Manage generic canvas definitions",

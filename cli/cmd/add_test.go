@@ -183,7 +183,7 @@ func TestRunAddFormatted_AdrUsesProjectCanvas(t *testing.T) {
 	var buf bytes.Buffer
 
 	body := "## Decision Note\n\nUse the project ADR canvas for this decision.\n"
-	err := RunAddFormattedWithTemplate("adr", "small-decision", s, "", false, "", c3Dir, strings.NewReader(body), &buf, FormatTOON)
+	err := RunAddFormattedInDir("adr", "small-decision", s, "", false, c3Dir, strings.NewReader(body), &buf, FormatTOON)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -214,7 +214,7 @@ func TestRunAddFormatted_ProjectCanvasValidationUsesCanvasSchema(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err := RunAddFormattedWithTemplate("adr", "small-decision", s, "", false, "", c3Dir, strings.NewReader("## Other\n\nNope.\n"), &bytes.Buffer{}, FormatTOON)
+	err := RunAddFormattedInDir("adr", "small-decision", s, "", false, c3Dir, strings.NewReader("## Other\n\nNope.\n"), &bytes.Buffer{}, FormatTOON)
 	if err == nil {
 		t.Fatal("expected project canvas validation to fail")
 	}
@@ -232,7 +232,7 @@ func TestBDD_CanvasDefinedEntityAddWriteCheckUsesCanvasContract(t *testing.T) {
 		testCitationForEntity(t, s, "ref-jwt"),
 	)
 	var buf bytes.Buffer
-	if err := RunAddFormattedWithTemplate("research-note", "api-latency", s, "", false, "", c3Dir, strings.NewReader(valid), &buf, FormatTOON); err != nil {
+	if err := RunAddFormattedInDir("research-note", "api-latency", s, "", false, c3Dir, strings.NewReader(valid), &buf, FormatTOON); err != nil {
 		t.Fatal(err)
 	}
 	requireAll(t, buf.String(), "id: research-note-api-latency", "type: research-note", "Findings", "Decision Pressure")

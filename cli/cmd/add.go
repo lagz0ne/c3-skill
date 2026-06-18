@@ -33,10 +33,10 @@ func RunAdd(entityType, slug string, s *store.Store, container string, feature b
 
 // RunAddDryRun validates entity content without creating the entity.
 func RunAddDryRun(entityType, slug string, s *store.Store, container string, feature bool, body io.Reader, w io.Writer) error {
-	return RunAddDryRunWithTemplate(entityType, slug, s, container, feature, "", "", body, w)
+	return RunAddDryRunInDir(entityType, slug, s, container, feature, "", body, w)
 }
 
-func RunAddDryRunWithTemplate(entityType, slug string, s *store.Store, container string, feature bool, templateID, c3Dir string, body io.Reader, w io.Writer) error {
+func RunAddDryRunInDir(entityType, slug string, s *store.Store, container string, feature bool, c3Dir string, body io.Reader, w io.Writer) error {
 	if entityType == "" || slug == "" {
 		return fmt.Errorf("error: usage: c3x add <type> <slug> < body.md\nhint: types: container, component, ref, rule, adr, recipe")
 	}
@@ -47,7 +47,7 @@ func RunAddDryRunWithTemplate(entityType, slug string, s *store.Store, container
 	if err != nil {
 		return err
 	}
-	def, err := resolveDefinitionForAdd(entityType, templateID, c3Dir)
+	def, err := resolveDefinitionForAdd(entityType, c3Dir)
 	if err != nil {
 		return err
 	}
@@ -68,10 +68,10 @@ func RunAddDryRunWithTemplate(entityType, slug string, s *store.Store, container
 
 // RunAddFormatted creates a new C3 entity and writes either human or structured output.
 func RunAddFormatted(entityType, slug string, s *store.Store, container string, feature bool, body io.Reader, w io.Writer, format OutputFormat) error {
-	return RunAddFormattedWithTemplate(entityType, slug, s, container, feature, "", "", body, w, format)
+	return RunAddFormattedInDir(entityType, slug, s, container, feature, "", body, w, format)
 }
 
-func RunAddFormattedWithTemplate(entityType, slug string, s *store.Store, container string, feature bool, templateID, c3Dir string, body io.Reader, w io.Writer, format OutputFormat) error {
+func RunAddFormattedInDir(entityType, slug string, s *store.Store, container string, feature bool, c3Dir string, body io.Reader, w io.Writer, format OutputFormat) error {
 	if entityType == "" || slug == "" {
 		return fmt.Errorf("error: usage: c3x add <type> <slug> < body.md\nhint: types: container, component, ref, rule, adr, recipe")
 	}
@@ -86,7 +86,7 @@ func RunAddFormattedWithTemplate(entityType, slug string, s *store.Store, contai
 		return err
 	}
 
-	def, err := resolveDefinitionForAdd(entityType, templateID, c3Dir)
+	def, err := resolveDefinitionForAdd(entityType, c3Dir)
 	if err != nil {
 		return err
 	}
@@ -239,10 +239,7 @@ func adrSchemaHint() string {
 	return adrSchemaCommand()
 }
 
-func resolveDefinitionForAdd(entityType, templateID, c3Dir string) (schema.Canvas, error) {
-	if templateID != "" {
-		return schema.Canvas{}, fmt.Errorf("error: --template has been retired\nhint: use c3x canvas read adr or c3x schema adr")
-	}
+func resolveDefinitionForAdd(entityType, c3Dir string) (schema.Canvas, error) {
 	def, ok := schema.DefinitionForDir(c3Dir, entityType)
 	if !ok {
 		return schema.Canvas{}, fmt.Errorf("error: unknown entity type '%s'\nhint: run c3x canvas list", entityType)

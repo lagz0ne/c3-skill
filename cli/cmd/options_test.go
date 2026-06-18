@@ -66,11 +66,6 @@ func TestParseArgs(t *testing.T) {
 			want: Options{Command: "check", Only: []string{"c3-101", "refs/ref-jwt.md"}},
 		},
 		{
-			name: "schema adr template flag",
-			argv: []string{"schema", "adr", "--template", "small-change"},
-			want: Options{Command: "schema", Args: []string{"adr"}, Template: "small-change"},
-		},
-		{
 			name: "read cite flag",
 			argv: []string{"read", "c3-101", "--section", "Goal", "--cite"},
 			want: Options{Command: "read", Args: []string{"c3-101"}, Section: "Goal", Cite: true},
@@ -109,9 +104,6 @@ func TestParseArgs(t *testing.T) {
 			}
 			if got.Continue != tt.want.Continue {
 				t.Errorf("Continue = %v, want %v", got.Continue, tt.want.Continue)
-			}
-			if got.Template != tt.want.Template {
-				t.Errorf("Template = %q, want %q", got.Template, tt.want.Template)
 			}
 			if got.Section != tt.want.Section {
 				t.Errorf("Section = %q, want %q", got.Section, tt.want.Section)

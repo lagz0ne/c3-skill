@@ -20,7 +20,6 @@ type SchemaOptions struct {
 	EntityType string
 	JSON       bool
 	C3Dir      string
-	Template   string
 }
 
 // RunSchema outputs the section schema for a given entity type.
@@ -30,9 +29,6 @@ func RunSchema(entityType string, jsonOutput bool, w io.Writer) error {
 
 func RunSchemaWithOptions(opts SchemaOptions, w io.Writer) error {
 	entityType := opts.EntityType
-	if opts.Template != "" {
-		return fmt.Errorf("error: --template has been retired\nhint: use c3x canvas read adr or c3x schema adr")
-	}
 	def, ok := schema.DefinitionForDir(opts.C3Dir, entityType)
 	if !ok {
 		return fmt.Errorf("unknown entity type: %q", entityType)

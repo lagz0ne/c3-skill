@@ -523,17 +523,7 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 		if len(opts.Args) >= 1 {
 			entityType = opts.Args[0]
 		}
-		err = cmd.RunSchemaWithOptions(cmd.SchemaOptions{EntityType: entityType, JSON: opts.JSON, C3Dir: c3Dir, Template: opts.Template}, w)
-	case "template":
-		sub := "list"
-		id := ""
-		if len(opts.Args) >= 1 {
-			sub = opts.Args[0]
-		}
-		if len(opts.Args) >= 2 {
-			id = opts.Args[1]
-		}
-		err = cmd.RunTemplate(cmd.TemplateOptions{C3Dir: c3Dir, JSON: opts.JSONExplicit, Sub: sub, ID: id, Body: stdin, StdinTerminal: stdinTerminal}, w)
+		err = cmd.RunSchemaWithOptions(cmd.SchemaOptions{EntityType: entityType, JSON: opts.JSON, C3Dir: c3Dir}, w)
 	case "canvas":
 		sub := "list"
 		id := ""
@@ -636,10 +626,7 @@ func commandMutatesCanonical(opts cmd.Options) bool {
 			return true
 		}
 		return false
-	case "write", "add", "set", "wire", "delete", "repair", "template", "canvas":
-		if opts.Command == "template" && !(len(opts.Args) > 0 && (opts.Args[0] == "add" || opts.Args[0] == "write")) {
-			return false
-		}
+	case "write", "add", "set", "wire", "delete", "repair", "canvas":
 		if opts.Command == "canvas" && !(len(opts.Args) > 0 && (opts.Args[0] == "add" || opts.Args[0] == "write")) {
 			return false
 		}
@@ -670,14 +657,14 @@ func runAdd(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader, std
 	}
 
 	if opts.DryRun {
-		return cmd.RunAddDryRunWithTemplate(entityType, slug, s, opts.Container, opts.Feature, opts.Template, c3Dir, stdin, w)
+		return cmd.RunAddDryRunInDir(entityType, slug, s, opts.Container, opts.Feature, c3Dir, stdin, w)
 	}
 
 	format := cmd.FormatHuman
 	if opts.JSON {
 		format = cmd.ResolveFormat(opts.JSONExplicit, os.Getenv("C3X_MODE") == "agent")
 	}
-	return cmd.RunAddFormattedWithTemplate(entityType, slug, s, opts.Container, opts.Feature, opts.Template, c3Dir, stdin, w, format)
+	return cmd.RunAddFormattedInDir(entityType, slug, s, opts.Container, opts.Feature, c3Dir, stdin, w, format)
 }
 
 func runSet(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader, stdinTerminal bool, w io.Writer) error {
@@ -697,7 +684,7 @@ func runSet(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader, std
 
 func commandAcceptsFile(cmd string) bool {
 	switch cmd {
-	case "write", "add", "set", "template", "canvas":
+	case "write", "add", "set", "canvas":
 		return true
 	}
 	return false

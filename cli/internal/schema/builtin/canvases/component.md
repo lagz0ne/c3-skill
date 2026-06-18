@@ -1,6 +1,6 @@
 ---
 id: component
-c3-seal: 547cca9e5c308ea24116f62290f8f06dc9fb5662b96d294c11b92f7e5b841709
+c3-seal: c00049adca2867b7fe539ff217f87fac5494f898c26f13b056be26a0b38a5a6a
 type: canvas
 description: 'Component: an owned unit of behavior inside a container.'
 ---
@@ -34,6 +34,10 @@ sections:
       columns:
         - name: Reference
           type: reference
+          edge: uses
+          targets:
+            - ref
+            - rule
         - name: Type
           type: enum
           values:

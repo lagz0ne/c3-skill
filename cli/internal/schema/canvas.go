@@ -190,6 +190,7 @@ func ValidateCanvas(canvas Canvas) error {
 	}
 	seen := map[string]bool{}
 	strictTableBlocks := 0
+	edgeWriters := map[string]string{} // relationship type -> "section.column" that owns it
 	for _, section := range canvas.Sections {
 		if strings.TrimSpace(section.Name) == "" {
 			return fmt.Errorf("section missing name")
@@ -221,6 +222,14 @@ func ValidateCanvas(canvas Canvas) error {
 			}
 			if !IsCanvasPrimitive(column.Type, column.Values) {
 				return fmt.Errorf("section %q column %q has unsupported type %q", section.Name, column.Name, column.Type)
+			}
+			if edge := strings.TrimSpace(column.Edge); edge != "" {
+				// One unambiguous writer per relationship type, so `c3 wire` knows
+				// exactly which column a citation of that edge lands in.
+				if prior, dup := edgeWriters[edge]; dup {
+					return fmt.Errorf("section %q column %q declares edge %q already owned by %s — a canvas may declare at most one writer per relationship", section.Name, column.Name, edge, prior)
+				}
+				edgeWriters[edge] = section.Name + "." + column.Name
 			}
 		}
 	}

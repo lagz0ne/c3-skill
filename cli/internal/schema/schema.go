@@ -24,6 +24,17 @@ type ColumnDef struct {
 	Name   string   `json:"name" yaml:"name"`
 	Type   string   `json:"type" yaml:"type"`
 	Values []string `json:"values,omitempty" yaml:"values,omitempty"`
+	// Edge, when set, makes this column the source of truth for a graph
+	// relationship: each cited entity id in the cell materializes an edge of this
+	// relationship type (e.g. "uses"). `Type` says how to parse the cell; `Edge`
+	// says what relationship to wire. A canvas may declare at most one column per
+	// relationship type, so `c3 wire` has one unambiguous place a citation lands.
+	// Columns with no `Edge` (e.g. a Contract Evidence column) cite entities for
+	// resolution but wire no relationship.
+	Edge string `json:"edge,omitempty" yaml:"edge,omitempty"`
+	// Targets restricts which entity types this edge column may cite (e.g.
+	// [ref, rule]); empty means any type.
+	Targets []string `json:"targets,omitempty" yaml:"targets,omitempty"`
 }
 
 // RejectRules is the rejection contract surfaced before drafting an entity body.

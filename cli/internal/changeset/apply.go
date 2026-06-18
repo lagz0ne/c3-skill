@@ -86,21 +86,40 @@ func CheckDrift(s *store.Store, p Patch) error {
 //
 // Patches apply before codemaps so a carrier may target a fact created in the same
 // unit — the create is visible to SetCodeMap through read-your-writes in the tx.
-func Apply(s *store.Store, patches []Patch, codemaps []CodemapChange) error {
+// syncEdges, when non-nil, re-derives an entity's canvas-owned (body-column)
+// relationships after its body changed — called inside the same transaction so
+// the edge update lands atomically with the body patch (and so a preview overlay,
+// which runs this exact Apply path, sees the staged edge). nil skips it.
+func Apply(s *store.Store, patches []Patch, codemaps []CodemapChange, syncEdges func(ts *store.Store, entityID string) error) error {
 	for _, p := range patches {
 		if err := CheckDrift(s, p); err != nil {
 			return err
 		}
 	}
 	return s.WithTx(func(ts *store.Store) error {
+		touched := make([]string, 0, len(patches))
+		seen := map[string]bool{}
 		for _, p := range patches {
 			if err := applyOne(ts, p); err != nil {
 				return fmt.Errorf("apply %s: %w", p.Source, err)
+			}
+			if !seen[p.Target] {
+				seen[p.Target] = true
+				touched = append(touched, p.Target)
 			}
 		}
 		for _, c := range codemaps {
 			if err := ts.SetCodeMap(c.Target, c.Globs); err != nil {
 				return fmt.Errorf("apply codemap %s → %s: %w", c.Source, c.Target, err)
+			}
+		}
+		// Re-sync body-owned edges after all body writes exist (so a unit that
+		// creates a target and a citer in one go resolves), inside the tx.
+		if syncEdges != nil {
+			for _, id := range touched {
+				if err := syncEdges(ts, id); err != nil {
+					return fmt.Errorf("apply: wiring edges for %s: %w", id, err)
+				}
 			}
 		}
 		return nil

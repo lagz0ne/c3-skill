@@ -89,7 +89,24 @@ func RunChangeApply(opts ChangeApplyOptions, w io.Writer) error {
 		return nil
 	}
 
-	if err := changeset.Apply(opts.Store, patches, codemaps); err != nil {
+	// After a patch changes a body, re-derive that fact's canvas-owned (body
+	// edge-column) relationships from the new body, in the same transaction.
+	syncEdges := func(ts *store.Store, entityID string) error {
+		e, err := ts.GetEntity(entityID)
+		if err != nil {
+			return nil // retired or absent — nothing to re-wire
+		}
+		def, ok := schema.DefinitionForDir(opts.C3Dir, e.Type)
+		if !ok || len(content.CanvasOwnedRelTypes(def)) == 0 {
+			return nil
+		}
+		body, err := content.ReadEntity(ts, entityID)
+		if err != nil {
+			return err
+		}
+		return content.SyncCanvasOwnedRelationships(ts, entityID, def, body)
+	}
+	if err := changeset.Apply(opts.Store, patches, codemaps, syncEdges); err != nil {
 		return fmt.Errorf("change apply: %w", err)
 	}
 	for _, p := range patches {

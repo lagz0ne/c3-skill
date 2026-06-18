@@ -252,6 +252,15 @@ func importDocsToStore(s *store.Store, c3Dir string, result *walker.WalkResult) 
 			continue
 		}
 
+		// A canvas may own some relationship types through body edge-columns; those
+		// are derived from the body (below), so skip their legacy frontmatter source
+		// here to keep the body the single source of truth.
+		def, hasDef := schema.DefinitionForDir(c3Dir, fm.Type)
+		owned := map[string]bool{}
+		if hasDef {
+			owned = content.CanvasOwnedRelTypes(def)
+		}
+
 		for _, rel := range []struct {
 			targets []string
 			relType string
@@ -265,6 +274,9 @@ func importDocsToStore(s *store.Store, c3Dir string, result *walker.WalkResult) 
 			{fm.Supersedes, "supersedes", false},
 			{fm.Amends, "amends", false},
 		} {
+			if owned[rel.relType] {
+				continue
+			}
 			for _, target := range rel.targets {
 				if rel.strip {
 					target = frontmatter.StripAnchor(target)
@@ -272,6 +284,11 @@ func importDocsToStore(s *store.Store, c3Dir string, result *walker.WalkResult) 
 				if err := addRelSafe(s, fm.ID, target, rel.relType); err != nil {
 					return err
 				}
+			}
+		}
+		if hasDef {
+			if err := content.SyncCanvasOwnedRelationships(s, fm.ID, def, doc.Body); err != nil {
+				return fmt.Errorf("error: wiring canvas edges for %s: %w", fm.ID, err)
 			}
 		}
 		if viaVal, ok := fm.Extra["via"]; ok {

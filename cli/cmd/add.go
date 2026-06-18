@@ -117,6 +117,13 @@ func RunAddFormattedWithTemplate(entityType, slug string, s *store.Store, contai
 		return fmt.Errorf("error: writing content: %w", err)
 	}
 
+	// Wire the edges the body declares through its canvas edge-columns (the
+	// citation column IS the citation). No-op for canvases with no edge-column.
+	if err := content.SyncCanvasOwnedRelationships(s, entity.ID, def, bodyContent); err != nil {
+		s.DeleteEntity(entity.ID)
+		return fmt.Errorf("error: wiring canvas edges: %w", err)
+	}
+
 	result := AddResult{ID: entity.ID, Type: entityType}
 	if sections := sectionsForEntityAddResult(def); sections != nil {
 		for _, sec := range sections {

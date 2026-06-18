@@ -77,10 +77,17 @@ func RunSchemaWithOptions(opts SchemaOptions, w io.Writer) error {
 			fmt.Fprintf(w, "    rejected when: %s\n", s.Failure)
 		}
 		for _, col := range s.Columns {
+			edge := ""
+			if col.Edge != "" {
+				edge = fmt.Sprintf("  → edge: %s", col.Edge)
+				if len(col.Targets) > 0 {
+					edge += fmt.Sprintf(" (targets: %s)", strings.Join(col.Targets, ", "))
+				}
+			}
 			if len(col.Values) > 0 {
-				fmt.Fprintf(w, "    - %s (%s) values: %s\n", col.Name, col.Type, strings.Join(col.Values, ", "))
+				fmt.Fprintf(w, "    - %s (%s) values: %s%s\n", col.Name, col.Type, strings.Join(col.Values, ", "), edge)
 			} else {
-				fmt.Fprintf(w, "    - %s (%s)\n", col.Name, col.Type)
+				fmt.Fprintf(w, "    - %s (%s)%s\n", col.Name, col.Type, edge)
 			}
 		}
 	}
@@ -95,6 +102,7 @@ func RunSchemaWithOptions(opts SchemaOptions, w io.Writer) error {
 		fmt.Fprintln(w, "  - Empty cells: use N.A - <reason> (not N/A, n/a, or bare N.A)")
 		fmt.Fprintln(w, "  - Evidence columns: must be grounded — name a command, file path, or entity id")
 		fmt.Fprintln(w, "  - Reference columns: must cite an entity id (c3-*, ref-*, rule-*) or N.A - <reason>")
+		fmt.Fprintln(w, "  - A column marked `→ edge: <rel>` IS the citation: authoring its cell materializes that graph edge (no separate c3 wire)")
 	}
 
 	return nil

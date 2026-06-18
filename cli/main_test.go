@@ -798,7 +798,7 @@ func TestRun_AgentModeExplicitJSONStillReturnsTOON(t *testing.T) {
 		{name: "read", argv: []string{"--c3-dir", c3Dir, "read", "c3-101", "--json"}, want: "id: c3-101"},
 		{name: "lookup", argv: []string{"--c3-dir", c3Dir, "lookup", "src/auth/login.ts", "--json"}, want: "file: src/auth/login.ts"},
 		{name: "schema", argv: []string{"--c3-dir", c3Dir, "schema", "component", "--json"}, want: "type: component"},
-		{name: "graph", argv: []string{"--c3-dir", c3Dir, "graph", "c3-101", "--json"}, want: "nodes:"},
+		{name: "graph", argv: []string{"--c3-dir", c3Dir, "graph", "c3-101", "--json"}, want: "nodes["},
 		{name: "search", argv: []string{"--c3-dir", c3Dir, "search", "auth", "--no-semantic", "--json"}, want: "query: auth"},
 	}
 	for _, tc := range cases {

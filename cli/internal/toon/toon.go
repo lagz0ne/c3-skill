@@ -152,37 +152,11 @@ func MarshalAny(v any) (string, error) {
 	case reflect.Slice, reflect.Array:
 		var b strings.Builder
 		fmt.Fprintf(&b, "items[%d]:\n", rv.Len())
-		for i := 0; i < rv.Len(); i++ {
-			elem := rv.Index(i)
-			if elem.Kind() == reflect.Interface && !elem.IsNil() {
-				elem = elem.Elem()
-			}
-			if elem.Kind() == reflect.Ptr {
-				if elem.IsNil() {
-					fmt.Fprintf(&b, "  - null\n")
-					continue
-				}
-				elem = elem.Elem()
-			}
-			switch elem.Kind() {
-			case reflect.Struct:
-				b.WriteString("  -\n")
-				out, err := marshalStructWithIndent(elem, "    ")
-				if err != nil {
-					return "", err
-				}
-				b.WriteString(out)
-			case reflect.Map:
-				b.WriteString("  -\n")
-				out, err := marshalMap(elem, "    ")
-				if err != nil {
-					return "", err
-				}
-				b.WriteString(out)
-			default:
-				fmt.Fprintf(&b, "  - %s\n", marshalFieldValue(elem))
-			}
+		out, err := marshalSliceElements(rv, "  ")
+		if err != nil {
+			return "", err
 		}
+		b.WriteString(out)
 		return b.String(), nil
 	default:
 		return MarshalValue(v) + "\n", nil
@@ -228,6 +202,19 @@ func marshalStructWithIndent(rv reflect.Value, indent string) (string, error) {
 			continue
 		}
 
+		// Handle slices whose elements are structs/maps — render as a nested
+		// indented block so the inner fields survive. Scalar slices fall through
+		// to the flat comma-joined form below.
+		if fv.Kind() == reflect.Slice && isStructLikeSlice(fv.Type()) {
+			fmt.Fprintf(&b, "%s%s[%d]:\n", indent, name, fv.Len())
+			nested, err := marshalSliceElements(fv, indent+"  ")
+			if err != nil {
+				return "", err
+			}
+			b.WriteString(nested)
+			continue
+		}
+
 		// Handle pointer fields
 		if fv.Kind() == reflect.Ptr {
 			if fv.IsNil() {
@@ -255,6 +242,58 @@ func marshalMap(rv reflect.Value, indent string) (string, error) {
 	for _, k := range keys {
 		v := rv.MapIndex(k)
 		fmt.Fprintf(&b, "%s%s: %s\n", indent, k.String(), marshalFieldValue(v))
+	}
+	return b.String(), nil
+}
+
+// isStructLikeSlice reports whether a slice's elements are structs or maps
+// (deref'ing one pointer level) — i.e. values that need a nested block rather
+// than the flat comma-joined scalar form.
+func isStructLikeSlice(t reflect.Type) bool {
+	if t.Kind() != reflect.Slice {
+		return false
+	}
+	et := t.Elem()
+	if et.Kind() == reflect.Ptr {
+		et = et.Elem()
+	}
+	return et.Kind() == reflect.Struct || et.Kind() == reflect.Map
+}
+
+// marshalSliceElements renders each element of a struct/map slice as an indented
+// "-" block. Shared by MarshalAny (top-level slices) and nested struct fields.
+func marshalSliceElements(rv reflect.Value, indent string) (string, error) {
+	var b strings.Builder
+	for i := 0; i < rv.Len(); i++ {
+		elem := rv.Index(i)
+		if elem.Kind() == reflect.Interface && !elem.IsNil() {
+			elem = elem.Elem()
+		}
+		if elem.Kind() == reflect.Ptr {
+			if elem.IsNil() {
+				fmt.Fprintf(&b, "%s- null\n", indent)
+				continue
+			}
+			elem = elem.Elem()
+		}
+		switch elem.Kind() {
+		case reflect.Struct:
+			fmt.Fprintf(&b, "%s-\n", indent)
+			out, err := marshalStructWithIndent(elem, indent+"  ")
+			if err != nil {
+				return "", err
+			}
+			b.WriteString(out)
+		case reflect.Map:
+			fmt.Fprintf(&b, "%s-\n", indent)
+			out, err := marshalMap(elem, indent+"  ")
+			if err != nil {
+				return "", err
+			}
+			b.WriteString(out)
+		default:
+			fmt.Fprintf(&b, "%s- %s\n", indent, marshalFieldValue(elem))
+		}
 	}
 	return b.String(), nil
 }

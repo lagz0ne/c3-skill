@@ -26,7 +26,7 @@ func TestRunLookup_AgentTOONIncludesCascadeHints(t *testing.T) {
 	}
 
 	requireAll(t, buf.String(),
-		"help:",
+		"help[",
 		"c3x read c3-101",
 		"c3x read c3-1",
 		"c3x graph c3-1 --format mermaid",
@@ -44,7 +44,7 @@ func TestRunRead_ComponentAgentTOONIncludesCascadeHints(t *testing.T) {
 	}
 
 	requireAll(t, buf.String(),
-		"help:",
+		"help[",
 		"c3x read c3-1",
 		"Parent Delta",
 	)
@@ -128,7 +128,7 @@ func TestRunCheck_AgentTOONIncludesCascadeReviewHint(t *testing.T) {
 	}
 
 	requireAll(t, buf.String(),
-		"help:",
+		"help[",
 		"cascade review",
 		"c3x check --only <id>",
 		"Parent Delta",

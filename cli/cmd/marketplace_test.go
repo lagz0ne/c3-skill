@@ -217,8 +217,15 @@ func TestRunMarketplaceList_AgentModeUsesTOON(t *testing.T) {
 	if strings.HasPrefix(out, "{") || strings.Contains(out, "No marketplace sources") {
 		t.Fatalf("agent marketplace list should emit TOON structured output, got:\n%s", out)
 	}
-	if !strings.Contains(out, "sources:") || !strings.Contains(out, "rule-error-wrapping") {
-		t.Fatalf("agent marketplace list output missing expected TOON content:\n%s", out)
+	// Nested struct slices must render as proper indented TOON blocks, not a Go
+	// %v dump — both the sources list and each source's nested rules list.
+	for _, want := range []string{"sources[1]:", "rules[1]:", "rule-error-wrapping"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("agent marketplace list output missing expected TOON content %q:\n%s", want, out)
+		}
+	}
+	if strings.Contains(out, "{rule-error-wrapping") || strings.Contains(out, "} {") {
+		t.Fatalf("nested slice collapsed to a Go struct dump:\n%s", out)
 	}
 }
 

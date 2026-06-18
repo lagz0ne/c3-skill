@@ -278,6 +278,28 @@ func TestEval_Baseline_PlaceholderDetection(t *testing.T) {
 	}
 }
 
+// Placeholder detection must catch markers (TBD, "TODO:") without false-positiving
+// on the natural words (later/optional/maybe) or the domain term "TODO" — a TODO
+// app legitimately says "TODO".
+func TestPlaceholderPattern_MarkersNotNaturalWords(t *testing.T) {
+	for _, slop := range []string{"TBD", "value is TBD here", "TODO: fill this", "FIXME", "see above", "as needed"} {
+		if !placeholderPattern.MatchString(slop) {
+			t.Errorf("should flag placeholder marker: %q", slop)
+		}
+	}
+	for _, ok := range []string{
+		"single-user TODO app with task CRUD",
+		"a TODO list feature",
+		"deferred to a later rung",
+		"this field is optional",
+		"maybe revisit during migration",
+	} {
+		if placeholderPattern.MatchString(ok) {
+			t.Errorf("should NOT flag natural prose / domain term: %q", ok)
+		}
+	}
+}
+
 func TestEval_Baseline_NADotFormatDetection(t *testing.T) {
 	// GREEN: "N.A" without reason should be detected in table cells
 	body := strings.Replace(

@@ -94,7 +94,7 @@ func RunSchemaWithOptions(opts SchemaOptions, w io.Writer) error {
 		fmt.Fprintln(w)
 		fmt.Fprintln(w, "Component rules:")
 		fmt.Fprintln(w, "  - Sections must appear in the order shown above")
-		fmt.Fprintln(w, "  - No placeholder words: TBD, TODO, maybe, optional, later, \"if applicable\"")
+		fmt.Fprintln(w, "  - No placeholder markers: TBD, FIXME, \"TODO:\", \"if applicable\", \"see above\", \"as needed\" (the bare words later/optional/maybe and a plain \"TODO\" domain term are fine)")
 		fmt.Fprintln(w, "  - Empty cells: use N.A - <reason> (not N/A, n/a, or bare N.A)")
 		fmt.Fprintln(w, "  - Evidence columns: must be grounded — name a command, file path, or entity id")
 		fmt.Fprintln(w, "  - Reference columns: must cite an entity id (c3-*, ref-*, rule-*) or N.A - <reason>")

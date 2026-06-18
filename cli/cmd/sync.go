@@ -143,7 +143,11 @@ func snapshotCanonicalTree(root string, verifySeals bool) (map[string]string, []
 			rel, relErr := filepath.Rel(root, path)
 			if relErr == nil {
 				rel = filepath.ToSlash(rel)
-				if rel == "_index" {
+				// `_index` is generated; `changes/` holds transient staged change-unit
+				// files (*.patch.md etc.) that are NOT canonical sealed docs — walking
+				// them flags a spurious BROKEN_SEAL (they carry no seal) and pollutes
+				// the canonical tree. Both are excluded from the seal walk.
+				if rel == "_index" || rel == "changes" {
 					return filepath.SkipDir
 				}
 			}

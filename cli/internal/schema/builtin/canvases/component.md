@@ -1,6 +1,6 @@
 ---
 id: component
-c3-seal: f12c5aac95404b3e554bfd8058b495f1b1bb54db79c7c5add051cbd461de355c
+c3-seal: 547cca9e5c308ea24116f62290f8f06dc9fb5662b96d294c11b92f7e5b841709
 type: canvas
 description: 'Component: an owned unit of behavior inside a container.'
 ---
@@ -27,30 +27,6 @@ sections:
       required: true
       purpose: Concrete ownership and non-goals
       min_words: 12
-    - name: Foundational Flow
-      content_type: table
-      required: false
-      purpose: Preconditions, inputs, state, and shared dependencies
-      columns:
-        - name: Aspect
-          type: text
-        - name: Detail
-          type: text
-        - name: Reference
-          type: reference
-      min_rows: 4
-    - name: Business Flow
-      content_type: table
-      required: false
-      purpose: Business outcome, primary path, alternates, and failure behavior
-      columns:
-        - name: Aspect
-          type: text
-        - name: Detail
-          type: text
-        - name: Reference
-          type: reference
-      min_rows: 4
     - name: Governance
       content_type: table
       required: true
@@ -96,20 +72,6 @@ sections:
         - name: Evidence
           type: evidence
       min_rows: 2
-    - name: Change Safety
-      content_type: table
-      required: false
-      purpose: Risks, triggers, detection, and verification required before done
-      columns:
-        - name: Risk
-          type: text
-        - name: Trigger
-          type: text
-        - name: Detection
-          type: text
-        - name: Required Verification
-          type: evidence
-      min_rows: 2
     - name: Derived Materials
       content_type: table
       required: true
@@ -124,5 +86,43 @@ sections:
         - name: Evidence
           type: evidence
       min_rows: 1
+    - name: Foundational Flow
+      content_type: table
+      required: false
+      purpose: Preconditions, inputs, state, and shared dependencies
+      columns:
+        - name: Aspect
+          type: text
+        - name: Detail
+          type: text
+        - name: Reference
+          type: reference
+      min_rows: 4
+    - name: Business Flow
+      content_type: table
+      required: false
+      purpose: Business outcome, primary path, alternates, and failure behavior
+      columns:
+        - name: Aspect
+          type: text
+        - name: Detail
+          type: text
+        - name: Reference
+          type: reference
+      min_rows: 4
+    - name: Change Safety
+      content_type: table
+      required: false
+      purpose: Risks, triggers, detection, and verification required before done
+      columns:
+        - name: Risk
+          type: text
+        - name: Trigger
+          type: text
+        - name: Detection
+          type: text
+        - name: Required Verification
+          type: evidence
+      min_rows: 2
 reject_if: []
 workorder: ""

@@ -185,8 +185,18 @@ The canvas is a **rung** — a complete contract for one complexity *level*, not
 
 The climb is a change-unit like any other — an ADR records *why* the project moved up a level, and `insert` patches carry each fact across. `change scaffold` stages those patches for you:
 
+**Order the new sections LAST in the canvas.** `insert` (the climb's mechanism)
+*appends* each new section at the **end** of a fact's body. So a climb only stays
+check-clean if the newly-required sections sit **after** every already-present
+section in the canvas's order — higher-rung sections are deeper, so they belong last.
+If you raise the canvas with a new required section placed *before* existing ones,
+the appended body order won't match the canvas order and `check` fails with
+`sections out of order`. The seed canvases already order their higher-rung sections
+last; preserve that when you author a richer canvas.
+
 ```bash
 # 1. Raise the canvas — make an optional section required, or author a richer one.
+#    Keep the newly-required sections ordered LAST (insert appends; see above).
 c3 canvas write <type>            # the deliberate decision to climb (user-owned)
 
 # 2. The bar moves; every fact below it now fails its canvas.
@@ -219,8 +229,8 @@ Every fact delta must have a parent-delta decision **before apply**. A component
 
 | Layer | Question | Verdict | Evidence |
 |-------|----------|---------|----------|
-| Component | Did Goal, Dependencies, Related Refs/Rules, Code References, or Container Connection change? | YES/NO | the patch / block |
-| Container | Did Components, Responsibilities, Goal Contribution, or boundary change? | YES/NO | the patch, or no-delta reason |
+| Component | Did Goal, Parent Fit, Governance, Contract, or Derived Materials change? | YES/NO | the patch / block |
+| Container | Did the Components table, Responsibilities, or a member's Goal Contribution change? | YES/NO | the patch, or no-delta reason |
 | Context | Did project/container topology change? | YES/NO | the patch, or no-delta reason |
 | Refs/Rules | Did shared constraints change? | YES/NO | the patch, or no-delta reason |
 

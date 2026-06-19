@@ -249,6 +249,15 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 		return entities[i].ID < entities[j].ID
 	})
 
+	// `check --fix` heals membership by construction: reconcile every parent's table
+	// from its children's parent: edges, so a disconnect left by any path (a direct
+	// `c3 add`, a hand-edit) is repaired, not merely reported below.
+	if opts.Fix {
+		if err := healMembership(opts.Store, opts.C3Dir); err != nil {
+			return err
+		}
+	}
+
 	if len(opts.Rules) > 0 {
 		ruleCiters, err := resolveRuleCiters(opts.Store, opts.Rules)
 		if err != nil {

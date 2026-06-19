@@ -179,13 +179,14 @@ The scopes you will actually use:
 - **Add a row** — `insert` patch with the row you want to insert *after* as the base, body = the new row (`| a | b | c |`), for an **author-owned** table. (Both block and insert anchor by the cited block's hash, so they survive node-id renumbering.)
 
 **Membership tables are NOT author-owned — the tool maintains them.** A parent's
-`Components` / `Containers` table is synthesized from its children's `parent:` edge.
-Declare a child's `parent:` (in its `whole` create, or a `frontmatter` patch) and
-apply writes the parent's row in the **same atomic unit**: identity columns (id,
-name, category, status) from the child, the descriptive column defaulted from the
-child's Goal. You never insert, re-cite, or hand-remove a membership row; a
-reparent/retire heals the parent it leaves. Refine a row's descriptive cell later
-with a block patch — the refinement is preserved across maintenance.
+`Components` / `Containers` table is synthesized from its children's `parent:` edge,
+on **every** path that sets parentage: a `whole` create-patch or `frontmatter` patch
+(written at the apply flip), and a direct `c3 add --container` (written at add time).
+The row carries identity columns (id, name, category, status, boundary) from the
+child and a descriptive column defaulted from the child's Goal. You never insert,
+re-cite, or hand-remove a membership row; a reparent/retire heals the parent it
+leaves, and `c3 check --fix` heals any table left stale by an older doc. Refine a
+row's descriptive cell later with a block patch — the refinement is preserved.
 
 One scope is deliberately closed and you must not author it:
 - `whole` **with a base** (full-replace of a live fact) is **REJECTED** — an edit to a live fact must be block-anchored.

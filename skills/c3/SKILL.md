@@ -191,7 +191,7 @@ Change affects interface -> check consumers first.
 
 **Result:** Refs + rules + parent + graph = full constraint set. All honored.
 
-**New component:** set its `parent:` — the container's `Components` row is synthesized at apply (the tool owns membership). The Parent Delta decision is now only: does the parent's `Responsibilities` (or the member's `Goal Contribution` framing) change?
+**New component:** set its parent (`c3 add --container c3-N`, or `parent:` in a create-patch) — the container's `Components` row is synthesized by the tool on either path (it owns membership; never hand-edit the row). The Parent Delta decision is now only: does the parent's `Responsibilities` (or the member's `Goal Contribution` framing) change?
 
 **Navigation:** Context -> Container -> Component
 

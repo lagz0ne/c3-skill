@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/lagz0ne/c3-design/cli/internal/changeset"
 	"github.com/lagz0ne/c3-design/cli/internal/content"
@@ -77,6 +78,27 @@ func membershipReconciler(c3Dir string) func(ts *store.Store, parentID string) e
 func isToolMaintainedTable(entityType, sectionName string) bool {
 	section, _ := changeset.MembershipSection(entityType)
 	return section != "" && section == sectionName
+}
+
+// healMembership reconciles every parent's membership table from its children's
+// parent: edges — the universal repair. `check --fix` calls it so a disconnect left
+// by any path (a direct `c3 add`, a hand-edit, a pre-reconciler doc) is healed, not
+// just reported. Idempotent and order-stable, so it is safe to run on every --fix.
+func healMembership(s *store.Store, c3Dir string) error {
+	ents, err := s.AllEntities()
+	if err != nil {
+		return err
+	}
+	sort.Slice(ents, func(i, j int) bool { return ents[i].ID < ents[j].ID })
+	recon := membershipReconciler(c3Dir)
+	for _, e := range ents {
+		if section, _ := changeset.MembershipSection(e.Type); section != "" {
+			if err := recon(s, e.ID); err != nil {
+				return fmt.Errorf("heal membership %s: %w", e.ID, err)
+			}
+		}
+	}
+	return nil
 }
 
 // applyHooks bundles the in-transaction apply hooks (edge sync + membership

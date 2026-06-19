@@ -124,6 +124,17 @@ func RunAddFormattedInDir(entityType, slug string, s *store.Store, container str
 		return fmt.Errorf("error: wiring canvas edges: %w", err)
 	}
 
+	// Synthesize the new child's row into its parent's membership table — the
+	// direct `c3 add` path maintains membership too, so the parent can't be left
+	// disconnected. Integrity is the tool's, not the author's; it holds on every
+	// path that changes parentage, not only the change-apply saga.
+	if entity.ParentID != "" {
+		if err := membershipReconciler(c3Dir)(s, entity.ParentID); err != nil {
+			s.DeleteEntity(entity.ID)
+			return fmt.Errorf("error: maintaining %s membership: %w", entity.ParentID, err)
+		}
+	}
+
 	result := AddResult{ID: entity.ID, Type: entityType}
 	if sections := sectionsForEntityAddResult(def); sections != nil {
 		for _, sec := range sections {

@@ -58,8 +58,9 @@ func RunChangeApply(opts ChangeApplyOptions, w io.Writer) error {
 		}
 	}
 	// Preflight: a retire may not strand the graph — refuse a destruction whose
-	// orphaned children or dangling citers this unit does not also resolve.
-	rejects = append(rejects, retireGate(opts.Store, patches)...)
+	// orphaned children or dangling citers this unit does not also resolve. Checked on
+	// the post-apply overlay, so a re-point + retire in the same unit is allowed.
+	rejects = append(rejects, retireGate(opts.Store, opts.C3Dir, patches, codemaps)...)
 	// Preflight: every codemap carrier's target must already exist or be created by
 	// a patch in this same unit (read-your-writes makes the create visible at apply).
 	// Two carriers for one target would full-replace each other (last wins, silently)

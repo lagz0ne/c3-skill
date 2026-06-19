@@ -5,61 +5,108 @@ import (
 	"sort"
 
 	"github.com/lagz0ne/c3-design/cli/internal/changeset"
+	"github.com/lagz0ne/c3-design/cli/internal/content"
+	"github.com/lagz0ne/c3-design/cli/internal/markdown"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
-// retireGate refuses a retire whose consequences would leave the frozen graph
-// dangling — integrity is the tool's, so the saga cannot commit a destruction it
-// hasn't fully resolved. A fact may not be retired while it still has:
-//   - live children (they would be orphaned), unless this same unit also retires
-//     them or reparents them away (a frontmatter parent: change); or
-//   - live citers (their citations would dangle), unless this same unit also
-//     retires the citer.
-//
-// The membership row drop is automatic (the reconcile on the retired child's old
-// parent), so it is never the author's concern — only these author-owned references
-// are gated. Resolve them in the same atomic unit, then the retire lands.
-func retireGate(s *store.Store, patches []changeset.Patch) []string {
+// retireGate refuses a retire whose committed result would strand the graph — a child
+// orphaned (its parent gone) or a citer left dangling (its body still names a retired
+// fact). It checks the POST-APPLY state by replaying the whole unit in a preview
+// transaction, so the unit's OWN reparents and re-cites count: retiring a fact AND
+// re-pointing its children/citers away in the same unit is allowed; retiring it and
+// leaving them stranded is refused. (A pre-apply check on the current graph would
+// wrongly block the legitimate re-point-then-retire flow.) Integrity is the tool's:
+// the destruction lands all-or-nothing only when nothing is left dangling.
+func retireGate(s *store.Store, c3Dir string, patches []changeset.Patch, codemaps []changeset.CodemapChange) []string {
 	retired := map[string]bool{}
-	reparented := map[string]string{} // child -> new parent, from frontmatter patches in this unit
 	for _, p := range patches {
-		switch p.Scope {
-		case changeset.ScopeRetire:
+		if p.Scope == changeset.ScopeRetire {
 			retired[p.Target] = true
-		case changeset.ScopeFrontmatter:
-			if p.Parent != "" {
-				reparented[p.Target] = p.Parent
-			}
 		}
 	}
 	if len(retired) == 0 {
 		return nil
 	}
 
-	var rejects []string
+	// The children of, and citers to, each retired fact — re-examined after the unit
+	// applies, where any reparent/re-cite in this same unit has landed.
+	childOf := map[string]string{} // child id -> the retired parent it had
+	suspects := map[string]bool{}
 	for id := range retired {
-		// Children this unit neither retires nor reparents away ⇒ orphans.
-		children, _ := s.Children(id)
-		for _, c := range children {
-			if retired[c.ID] {
-				continue
-			}
-			if np, ok := reparented[c.ID]; ok && np != id {
-				continue // moved to a live parent in this same unit
-			}
-			rejects = append(rejects, fmt.Sprintf("retire %s would orphan child %s — retire or reparent %s in this unit", id, c.ID, c.ID))
+		kids, _ := s.Children(id)
+		for _, k := range kids {
+			childOf[k.ID] = id
+			suspects[k.ID] = true
 		}
-		// Citers this unit does not also retire ⇒ dangling citations.
 		citers, _ := s.RelationshipsTo(id)
-		seen := map[string]bool{}
 		for _, r := range citers {
-			if retired[r.FromID] || seen[r.FromID] {
+			suspects[r.FromID] = true
+		}
+	}
+
+	rejectSet := map[string]bool{}
+	_ = s.WithPreviewTx(func(ts *store.Store) error {
+		if err := changeset.Apply(ts, patches, codemaps, applyHooks(c3Dir)); err != nil {
+			// The unit doesn't apply for some OTHER reason — a different gate reports it;
+			// don't double-report here.
+			return nil
+		}
+		for sid := range suspects {
+			e, err := ts.GetEntity(sid)
+			if err != nil {
+				continue // the suspect was itself retired in this unit — fine
+			}
+			// Orphan: a child of a retired fact now has no live parent — retiring the
+			// parent NULLs the child's parent_id (ON DELETE SET NULL) — and it was not
+			// reparented to a live one in this unit.
+			if oldParent, wasChild := childOf[sid]; wasChild {
+				if e.ParentID == "" {
+					rejectSet[fmt.Sprintf("retire would orphan child %s (parent %s retired) — reparent or retire %s in this unit", sid, oldParent, sid)] = true
+				} else if _, perr := ts.GetEntity(e.ParentID); perr != nil {
+					rejectSet[fmt.Sprintf("retire would orphan child %s (parent %s gone) — reparent or retire %s in this unit", sid, e.ParentID, sid)] = true
+				}
+			}
+			// Dangle: body still cites a retired fact (this unit did not re-point it).
+			body, err := content.ReadEntity(ts, sid)
+			if err != nil {
 				continue
 			}
-			seen[r.FromID] = true
-			rejects = append(rejects, fmt.Sprintf("retire %s: %s still cites it (%s) — drop that citation in this unit before retiring", id, r.FromID, r.RelType))
+			for rid := range retired {
+				if bodyReferencesID(body, rid) {
+					rejectSet[fmt.Sprintf("retire of %s would dangle %s's citation — drop or re-point it in this unit", rid, sid)] = true
+				}
+			}
 		}
+		return nil
+	})
+
+	rejects := make([]string, 0, len(rejectSet))
+	for r := range rejectSet {
+		rejects = append(rejects, r)
 	}
 	sort.Strings(rejects)
 	return rejects
+}
+
+// bodyReferencesID reports whether any table cell in the body names id as a reference
+// token (id alone, or comma/space/pipe separated) — how a reference/edge column cites
+// a fact. Used to detect a citation left dangling by a retire.
+func bodyReferencesID(body, id string) bool {
+	for _, sec := range markdown.ParseSections(body) {
+		tbl, err := markdown.ParseTable(sec.Content)
+		if err != nil || tbl == nil {
+			continue
+		}
+		for _, row := range tbl.Rows {
+			for _, cell := range row {
+				for _, tok := range referenceTokens(cell) {
+					if tok == id {
+						return true
+					}
+				}
+			}
+		}
+	}
+	return false
 }

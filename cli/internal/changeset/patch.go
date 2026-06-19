@@ -20,11 +20,12 @@ const (
 	ScopeInsert      Scope = "insert"      // insert a block relative to a neighbor
 	ScopeFrontmatter Scope = "frontmatter" // rename / move / re-edge (metadata + graph)
 	ScopeRetire      Scope = "retire"      // remove the fact (+ edge cleanup)
+	ScopeCanvas      Scope = "canvas"      // morph a fact-TYPE's shape (the canvas is the target)
 )
 
 var validScopes = map[Scope]bool{
 	ScopeWhole: true, ScopeBlock: true, ScopeInsert: true,
-	ScopeFrontmatter: true, ScopeRetire: true,
+	ScopeFrontmatter: true, ScopeRetire: true, ScopeCanvas: true,
 }
 
 // Patch is one change-material unit, parsed from a patch file. base optional is

@@ -400,15 +400,17 @@ rename / re-edge / remove. The folder of *.patch.md files is the source of truth
   view    the "files changed" panel: per-patch drift + state
   status  per-patch state derived from seal state (pending/applied/drifted/new)
   accept  record the one stored human judgment (status → accepted)
-  apply   the switcher: drift + canvas + inspection gates, atomic all-or-nothing
+  apply   the switcher: drift + canvas + retire + inspection gates, atomic all-or-nothing
   rebase  emit the drift bundle for re-authoring drifted patches
   scaffold stage a rung-climb: one empty insert patch per fact below its canvas bar
   inspect show each touched fact's derivation obligations + code-map territory +
           material hashes to stamp into a <seq>.inspect.md (the up-V the switch forces)
 
-Apply runs two mechanical gates before any write — the anchor must be fresh
-(no drift) and the merged result must satisfy its canvas — and is atomic: one
-failing gate blocks every patch. --dry-run reports without writing.
+Apply runs four mechanical gates before any write — drift (every anchor fresh),
+canvas (the merged body stays valid), retire (no destruction strands a child or
+citer), inspection (a code-bound fact's change is attested against its territory)
+— and is atomic: one failing gate blocks every patch. --dry-run reports without
+writing.
 
 Examples:
   c3x change view adr-20260601-auth

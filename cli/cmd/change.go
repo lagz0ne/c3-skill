@@ -27,9 +27,10 @@ func changeUnitDir(c3Dir, unitID string) string {
 }
 
 // RunChangeApply applies a change-unit's patch folder to its target facts: it is
-// the switcher. Two gates run before any write — drift (anchors fresh) and canvas
-// (the merged result is valid for its canvas) — and the whole set is atomic:
-// a single failing gate blocks every patch.
+// the switcher. Four gates run before any write — drift (anchors fresh), canvas
+// (the merged result is valid for its canvas), retire (no destruction strands a
+// child or citer), and inspection (a code-bound fact's change is attested) — and
+// the whole set is atomic: a single failing gate blocks every patch.
 func RunChangeApply(opts ChangeApplyOptions, w io.Writer) error {
 	dir := changeUnitDir(opts.C3Dir, opts.UnitID)
 	patches, err := changeset.ReadPatchDir(dir)

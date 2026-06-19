@@ -870,8 +870,19 @@ func validateColumn(col schema.ColumnDef, table *markdown.Table, entity *store.E
 			if val == "" || isNAReason(val) {
 				continue
 			}
+			// Grounded if any token resolves to a real entity — ANY id shape,
+			// builtin or custom-type. An edge column wires by resolution, so a
+			// hardcoded builtin-id pattern would falsely flag a cite to a custom-
+			// canvas fact (a requirement/objective/design-token id) as ungrounded.
+			grounded := false
+			for _, tok := range referenceTokens(val) {
+				if _, err := opts.Store.GetEntity(tok); err == nil {
+					grounded = true
+					break
+				}
+			}
 			refs := entityRefPattern.FindAllString(val, -1)
-			if len(refs) == 0 {
+			if !grounded && len(refs) == 0 {
 				issues = append(issues, Issue{
 					Severity: "warning",
 					Entity:   entity.ID,
@@ -1062,4 +1073,21 @@ func validateCitationColumnValue(raw string, entity *store.Entity, opts CheckOpt
 		Message:  fmt.Sprintf("citation to %s has stale node hash or snippet", citedEntity),
 		Hint:     fmt.Sprintf("refresh the handle with c3x read %s --cite", citedEntity),
 	}}
+}
+
+// referenceTokens splits a reference-cell value into candidate entity-id tokens —
+// reference columns name ids (one, or comma/space/pipe separated), so each is
+// resolved directly, making grounding work for any id shape (builtin or custom-type).
+func referenceTokens(val string) []string {
+	raw := strings.FieldsFunc(val, func(r rune) bool {
+		return r == ' ' || r == '\t' || r == ',' || r == '|' || r == ';' || r == '\n'
+	})
+	var out []string
+	for _, f := range raw {
+		f = strings.Trim(f, "`\"'()[]")
+		if f != "" {
+			out = append(out, f)
+		}
+	}
+	return out
 }

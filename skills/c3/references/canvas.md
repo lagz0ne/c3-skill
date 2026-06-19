@@ -23,6 +23,26 @@ path synthesizes it from the children's `parent:` edges (`c3 add`, `change apply
 `check --fix`). Set a child's `parent:`, the row appears; the column is a *consequence*
 of the shape, never hand-authored truth. (Mechanics: change.md.)
 
+## Define your own fact-type — and wire it
+
+C3 is a general knowledge-graph tool, not only an architecture one. When the project
+needs a doc kind the builtins don't cover — a `test-case`, a `design-token`, a
+`pm-objective` — **define its canvas** and the type is first-class (authored, frozen,
+checked, graphed like any other): `c3 canvas add <id> < schema.md`, where the schema is
+a `type: canvas` doc with `domain:`, `sections:` (each `name` / `content_type: text|table`
+/ `required` / `purpose`, and for tables `columns:` with a `type:`), and `reject_if:`.
+Copy a builtin for the exact shape — `c3 canvas read user-story`.
+
+**Wiring is a column.** A table column becomes a graph edge when its `type:` is
+`reference` (with `edge: <rel>` + `targets: <type>,…`) or `edge<typeA|typeB>`: put a
+cited fact's id in the cell, and `c3 check` materializes an edge of that relationship
+and verifies the citation resolves — to **any** fact, builtin or your own custom type.
+This is how a `test-case` **verifies** a `requirement`, a `ui-component` **uses** a
+`design-token`, a `story` **serves** an `objective`. Dense wiring turns separate docs
+into one traceable graph; `c3 graph <id> --direction reverse` shows who cites a fact —
+its coverage. A cell that names no resolvable fact reads "ungrounded"; `N.A - <reason>`
+is the explicit "no link, on purpose."
+
 ## A canvas is a rung — why you raise it
 
 A canvas is a **rung**: a complete contract for one complexity *level*, sized to the
@@ -41,6 +61,10 @@ refuses while any required section is still empty) — the steps are change.md's
 - **"Make our components carry a `## Threat Model`"** → `c3 canvas read component`,
   add the section, `c3 canvas write component`, then `c3 check`. The section is now
   required and check enforces it across every existing component (a rung climb).
+- **"Track test coverage"** → `c3 canvas add test-case` with a `verifies` column
+  (`type: reference, edge: verifies, targets: requirement`); author cases that put the
+  requirement id in that column; `c3 graph <req-id> --direction reverse` then shows every
+  covering case — and an untested requirement shows none (a custom fact-type + wiring).
 
 ## Anti-goals
 

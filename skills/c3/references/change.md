@@ -18,6 +18,8 @@ Spawn parallel subagents (Task tool) for analysis and multi-file authoring; they
 # 1. Draft the reasoning. `c3 schema adr` LEADS with REJECT-IF; honor it.
 c3 schema adr
 c3 add adr <slug> --file adr-body.md     # slug = intent (add-rate-limiting). Tables/mermaid/code ⇒ --file.
+#   Author --file bodies OUTSIDE .c3/ (e.g. /tmp or repo root) — .c3/ is a managed tree that
+#   regenerates and silently drops stray scratch files between commands.
 
 # 2. Anchor each fact-edit: cite the block you will replace.
 c3 read <id> --section <name> --cite     # → one handle per citable block: <id>#nNODE@vVER:sha256:HASH

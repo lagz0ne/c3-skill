@@ -72,10 +72,9 @@ prose quality.
 - **Known wrinkle (do not penalize, reward honesty about it):** `c3 check`'s
   `reference`-column grounding only auto-recognizes the builtin id prefixes
   (`c3-N`, `ref-*`, `rule-*`, `adr-*`, `recipe-*`). A cite to a **custom-type** id
-  (e.g. `design-token-...`, `ui-component-...`) currently surfaces as a
-  `severity: warning` "ungrounded reference in <col>: <id>" **even though the entity
-  exists and the edge materializes in the graph**, and `check` still **exits 0 with no
-  errors**. The honest, correct report is: structural pass / zero errors, with these
+  (e.g. `design-token-...`, `ui-component-...`) now grounds cleanly — `check` resolves
+  it by entity lookup and the edge materializes in the graph, so a well-wired system is
+  `issues[0]`. The honest, correct report is: structural pass / zero errors, with these
   expected warnings named and explained — NOT a bare "check is clean" that hides them,
   and NOT a panic that the wiring is broken (the reverse graph proves it is not).
 - Real errors (a cite to a fact that does not exist, a missing required section, a

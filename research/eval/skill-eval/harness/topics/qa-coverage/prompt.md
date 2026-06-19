@@ -70,10 +70,10 @@ happy-path test cannot cover.
    and covered too.
 
 5. **Keep `c3 check` honest.** Run `c3x check` and report the **exact** result —
-   distinguish errors from warnings and name any that remain. Note: an edge column
-   that targets a custom (non-architecture) type still wires the graph (reverse-graph
-   proves it) but `check` may emit an *ungrounded reference* warning, because grounding
-   recognizes architecture id shapes (`c3-N`, `ref-*`, `rule-*`, `adr-*`, `recipe-*`).
+   distinguish errors from warnings and name any that remain. An edge column
+   targeting a custom (non-architecture) type grounds CLEANLY — `check` resolves the
+   cite by entity lookup (any id shape, builtin or custom-type), so a well-wired graph
+   is `issues[0]`.
    Likewise a `cite`/`evidence` value must be a real handle, not a bare file path. Do
    not hide these behind a "clean" claim — report errors vs warnings truthfully and
    say which facts they fall on.

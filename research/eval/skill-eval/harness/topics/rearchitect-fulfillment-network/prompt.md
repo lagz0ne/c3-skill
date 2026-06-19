@@ -38,11 +38,15 @@ the centers become a pure **execution plane** that does it. This re-architecture
   re-home any cross-cutting concern to the plane that now owns it.
 - Add the planning-plane container and its components, with a cross-plane recipe
   (forecast → allocation → wave → execution) that no single component owns.
-- **Concurrency:** while the re-architecture is in flight, a *separate* feature —
-  **returns/RMA** (a returned item flows back into inventory) — is also being authored
-  as its own change-unit. The two units touch overlapping facts; expect drift and
-  resolve the conflict (re-author the drifted patch against the moved fact) rather than
-  abandoning either unit.
+- **Concurrency (force a real conflict):** while the re-architecture is in flight, a
+  *separate* feature — **returns/RMA** (a returned item flows back into inventory) — is
+  also being authored as its own change-unit. The two units must **edit the SAME BLOCK
+  of at least one shared fact** (e.g. both revise the inventory component's `## Goal`, or
+  the same row of its Contract table) — so applying one unit drifts the other's cited
+  anchor. (Touching *different* blocks of the same fact does NOT conflict — block anchors
+  are per-node by hash; a real conflict needs an overlapping block edit.) Resolve it by
+  re-authoring the drifted patch against the moved block (`change rebase` shows the 3-way),
+  not by abandoning a unit or dodging the overlap.
 
 ## Throughout — governance and gardening
 As generations land, add the **refs** (rationale: e.g. why event-ordering is the

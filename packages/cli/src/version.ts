@@ -1,2 +1,2 @@
-export const C3X_VERSION = '11.1.1'
+export const C3X_VERSION = '11.2.0'
 export const SEMANTIC_MODEL_REVISION = '1110a243fdf4706b3f48f1d95db1a4f5529b4d41'

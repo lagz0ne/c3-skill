@@ -131,11 +131,12 @@ Hybrid search fuses three signals:
 c3x search "how do users sign in and get permissions" --no-semantic
 ```
 
-**Relationships and removal:**
+**Citations and removal:** a component cites refs/rules in its body — the Governance
+table column *is* the edge, re-derived on `write`. Frozen facts are re-edged through a
+change-unit (a `frontmatter` patch). A `retire` is refused if it would orphan a child
+or leave a citation dangling, so the graph never strands.
 ```bash
-c3x wire c3-101 ref-jwt ref-error-handling   # cite one or more refs/rules
-c3x wire c3-101 ref-jwt --remove             # unlink
-c3x delete ref-obsolete --dry-run
+c3x delete ref-obsolete --dry-run            # preview removing a fact
 ```
 
 **Validate:**
@@ -180,16 +181,6 @@ User rule:
 Every canonical doc carries a `c3-seal` hash. `c3x check` verifies those seals and confirms the current `.c3/` tree matches canonical output.
 
 Code-map entries link entities to source files via glob patterns. `c3x lookup` resolves any file to its architecture context; `c3x check` reports coverage as part of validation.
-
-### Marketplace
-
-Share and adopt curated rule collections:
-
-```bash
-c3x marketplace add https://github.com/org/go-patterns
-c3x marketplace list --tag errors
-c3x marketplace show rule-error-wrapping
-```
 
 ## Daily workflow
 

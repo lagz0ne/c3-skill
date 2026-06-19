@@ -1,96 +1,54 @@
 # Sweep Reference
 
-Impact assessment. Advisory only — no changes.
+Pre-flight for a change-unit. Given a proposed change to a frozen fact, predict two
+things before any patch is authored: the **blast radius** (who depends on it) and
+**whether the tool will let the change land** (the destruction gate). Advisory only —
+sweep authors nothing.
 
-Flow: `Discover Candidates → Impact Topology → Per-Entity Assessment → Synthesize`
+Discovery and the causal chain belong to **query.md** — start there to find the target
+and trace owner → mutation → dependent. Sweep takes a known target and works the
+reverse graph.
 
-Spawn subagents via Task tool for parallel per-entity assessment.
-
-## Progress
-
-- [ ] Topology loaded
-- [ ] Affected entities identified
-- [ ] Per-entity assessment complete
-- [ ] Constraint chain checked
-- [ ] Synthesis delivered
-
----
-
-## Step 1: Discover Candidates
-
-For natural-language impact questions ("what breaks if...", "what is affected by...",
-"is this safe?"), start with conceptual search:
-
-```bash
-c3 search "<impact question>"
-```
-
-Read the best matching refs, components, recipes, or ADRs, then expand to graph/list
-only after the primary affected entity is known. Use `c3 list` first only when the
-user asks for topology-wide inventory or search misses.
-
-Known entity/ref/component -> start with the entity graph:
+## The reverse graph is the spine
 
 ```bash
 c3 graph <id> --direction reverse --depth 1
 ```
 
-For property-style impact questions, do not stop at the first owner:
+Reverse = who points *at* the changed fact (live children, citers). Each edge is a
+**candidate** consequence, not a settled one: confirm a dependent is actually affected
+with `c3 read <dependent-id>` before naming it — never mark every neighbor affected by
+default. For ref/rule impact, graph the ref/rule itself to surface all citers.
 
-- **Config/scope/prefix/env changes:** run reverse graph on the config/scope ref
-  and on the behavior ref it feeds. Enumerate concrete dependent ids and name the
-  result as blast radius/scope of impact.
-- **Transport/auth changes that feed sync or delivery:** trace credential
-  generation, broker/enforcement, and client/runtime consumption. Name the
-  coupling and the shared subject/permission/token that carries the impact.
-- **Partial failure or bulk operation safety:** trace the mutation boundary,
-  transaction/audit/storage contract, and observation/query surface. Name
-  atomicity, consistency, idempotency, or partial-success boundary when those
-  properties are what the user is really asking about.
+## Will the destruction gate let it land?
 
-## Step 2: Impact Topology
+If the change **removes or retires** a fact, the reverse graph *is* the refusal
+prediction. `change apply` runs a `retire` gate that **REFUSES** the unit while the
+retired fact still has, in the frozen graph:
+
+- **live children** → they would be ORPHANED, *unless this same unit retires them too
+  or reparents them away (a `frontmatter` patch to a live parent)*; and
+- **live citers** → their citations would DANGLE, *unless this same unit drops that
+  citation (or retires the citer)*.
+
+So the sweep deliverable for a removal is the **list of consequences the unit must
+also carry**: every orphaned child to reparent/retire, every dangling citer to rewire.
+Membership rows are never on that list — a parent's membership table is synthesized
+from `parent:` edges, so the row drop is automatic.
+
+## Bridge to the saga
+
+The change lands as patches in `.c3/changes/<unit-id>/`, applied all-or-nothing. Once
+those patches are staged, preview the post-change graph *before* `apply`:
 
 ```bash
-c3 list
+c3 graph <id> --unit <adr-id> --direction reverse
 ```
 
-Use topology to confirm containers/components/refs after search identifies candidates.
+This renders the graph as it *would* be with the unit's staged patches applied —
+confirm the orphans/dangles you predicted are healed before committing.
 
-## Step 3: Affected Entities
-
-From proposed change, identify:
-- Containers, components, refs, ADRs
-- Match by: title, relationships, code-map entries, ref scopes
-
-## Step 4: Per-Entity Assessment
-
-Subagents for parallelism when multiple containers affected.
-
-**Container:** `c3 read <container-id>` → change affect responsibilities? → identify affected components.
-
-**Component:**
-1. `c3 read <component-id>`
-2. Per code-map file: `c3 lookup <file>` — loads constraint chain before inspecting code
-3. Check code against constraints
-4. Change modify behavior, API, dependencies?
-5. Check applicable refs. Identify downstream dependents.
-
-**Ref:** `c3 read <ref-id>` → proposed change comply or violate? → note severity + override requirements.
-
-**Rule:** `c3 read <rule-id>` → proposed change violate golden pattern? Note severity + remediation.
-
-## Step 5: Constraint Chain
-
-Per affected component, trace upward:
-- Component constraints → container → context → cited refs + rules
-
-Flag any proposed violation.
-
-## Step 6: Synthesize
-
-**Impact Graph:** Include `c3 graph <target-entity> --direction reverse --format mermaid` as mermaid code block atop report (reverse direction = who depends on the changed entity). Graph from most specific affected entity (component > container). For ref/rule impact, graph ref/rule itself to show all citers.
-
-**Direct vs transitive:** a reverse-graph edge is a candidate, not a conclusion. Assign concrete behavior to a dependent only after `c3 read` of that dependent. In the Affected Entities table, `Impact` distinguishes `direct` (cites or consumes the changed entity) from `transitive` (reached through another dependent) — never mark every graph neighbor as affected by default.
+## Deliverable
 
 ```
 **C3 Impact Assessment**
@@ -100,14 +58,9 @@ Flag any proposed violation.
 ## Affected Entities
 | Entity | Type | Impact | Reason |
 |--------|------|--------|--------|
-| c3-N | container | direct | [why] |
+| c3-N | container | direct | [why — confirmed via c3 read] |
 
-## Constraint Chain
-| Source | Constraint | Status |
-|--------|-----------|--------|
-| c3-0 | [rule] | compliant/violated |
-
-## File Changes Required
+## File Changes Required (patches in .c3/changes/<unit-id>/, land all-or-nothing)
 | File | Change | Component |
 |------|--------|-----------|
 | src/path/file.ts | [mod] | c3-NNN |
@@ -118,13 +71,12 @@ Flag any proposed violation.
 ## Verification
 | Check | How |
 |-------|-----|
+| destruction gate: does retire/apply succeed or refuse? | reverse graph clean, or every orphan/dangle healed in the unit |
 | [owner entity/file updated] | [c3 lookup / read to confirm] |
-| [config/permission/runtime value] | [command or observable to confirm] |
-| [sync/notification observable] | [subject/channel/log to assert] |
+| [runtime value or observable] | [command or observable to confirm] |
 | [failure-mode probe] | [what to break + expected degradation] |
-
-## Recommended Approach
-1. [Step respecting constraints]
 ```
 
-An assessment without the Verification table is advice, not an assessment — every sweep ends with checks someone can actually run.
+`Impact` distinguishes `direct` (cites or consumes the changed fact) from `transitive`
+(reached through another dependent). An assessment without the Verification table —
+including the destruction-gate row — is advice, not a pre-flight.

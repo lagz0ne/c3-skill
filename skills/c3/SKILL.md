@@ -14,7 +14,7 @@ description: >
 
 C3 is your architecture's own vocabulary, frozen into shared truth, that work edits only through reviewed change-units.
 
-1. **Shape the model, freeze the facts.** Build the **canvas** (the sections + typed columns each entity carries *here*), onboard the **facts** the work needs, draft the first work — then flip the gate and the facts **freeze**: shared truth, never hand-edited again.
+1. **Shape the model, freeze the facts.** Descend the domain top-down — draft the **facts** the work needs and wire them as you go; the lean **canvas** (sections + typed columns each entity carries *here*) is already in place, taking a custom fact-type only where the domain needs one. Then flip the gate and the facts **freeze**: shared truth, never hand-edited again.
 2. **Change-units drive progress.** Work advances by **change-units** — an ADR plus its patch folder, one atomic saga: declare intent, the tool keeps the result integral (membership, citations, gates), flip it all-or-nothing. Frozen facts change *only* through this merge.
 3. **The canvas grows with the need.** When work outgrows the model, **raise the canvas** (climb a rung) and migrate every fact up — completeness is never relaxed.
 

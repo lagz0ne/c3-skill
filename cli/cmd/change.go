@@ -103,7 +103,7 @@ func RunChangeApply(opts ChangeApplyOptions, w io.Writer) error {
 
 	// After a patch changes a body, re-derive that fact's canvas-owned (body
 	// edge-column) relationships from the new body, in the same transaction.
-	if err := changeset.Apply(opts.Store, patches, codemaps, canvasEdgeSyncer(opts.C3Dir)); err != nil {
+	if err := changeset.Apply(opts.Store, patches, codemaps, applyHooks(opts.C3Dir)); err != nil {
 		return fmt.Errorf("change apply: %w", err)
 	}
 	for _, p := range patches {

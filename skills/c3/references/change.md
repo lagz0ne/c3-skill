@@ -176,7 +176,16 @@ The scopes you will actually use:
 **Editing table rows.** Cite the specific row (`c3 read <id> --section <name> --cite` lists per-node handles), then:
 - **Edit a row** — `block` patch it: the body is **just that row** as natural markdown (`| a | b | c |`, outer pipes optional; normalized to the stored cells). Don't re-supply the table or header/separator.
 - **Delete a row** — `block` patch with an **empty body**.
-- **Add a row** — `insert` patch with the row you want to insert *after* as the base, body = the new row (`| a | b | c |`). This is the parent-delta primitive: cite the last component in a parent's `Components` table, insert the new child's row after it. (Both block and insert anchor by the cited block's hash, so they survive node-id renumbering.)
+- **Add a row** — `insert` patch with the row you want to insert *after* as the base, body = the new row (`| a | b | c |`), for an **author-owned** table. (Both block and insert anchor by the cited block's hash, so they survive node-id renumbering.)
+
+**Membership tables are NOT author-owned — the tool maintains them.** A parent's
+`Components` / `Containers` table is synthesized from its children's `parent:` edge.
+Declare a child's `parent:` (in its `whole` create, or a `frontmatter` patch) and
+apply writes the parent's row in the **same atomic unit**: identity columns (id,
+name, category, status) from the child, the descriptive column defaulted from the
+child's Goal. You never insert, re-cite, or hand-remove a membership row; a
+reparent/retire heals the parent it leaves. Refine a row's descriptive cell later
+with a block patch — the refinement is preserved across maintenance.
 
 One scope is deliberately closed and you must not author it:
 - `whole` **with a base** (full-replace of a live fact) is **REJECTED** — an edit to a live fact must be block-anchored.
@@ -233,17 +242,23 @@ c3 check                          # confirm the new rung holds across all facts
 
 ## Phase 3a: Contract Cascade Gate — satisfied *by the patches*
 
-Every fact delta must have a parent-delta decision **before apply**. A component edit that needs a container update means **two patches** (or one create + one block edit), authored together.
+Every fact delta must have a parent-delta decision **before apply**. *Membership* (a
+child's row in its parent's table) is maintained by the tool from `parent:` — never a
+decision. What remains a decision is the parent's **framing**: when a component edit
+also changes the parent's `Responsibilities` or a member's `Goal Contribution`, that
+is a second patch, authored together.
 
 | Layer | Question | Verdict | Evidence |
 |-------|----------|---------|----------|
 | Component | Did Goal, Parent Fit, Governance, Contract, or Derived Materials change? | YES/NO | the patch / block |
-| Container | Did the Components table, Responsibilities, or a member's Goal Contribution change? | YES/NO | the patch, or no-delta reason |
+| Container | Did **Responsibilities** or a member's **Goal Contribution** framing change? (membership rows are tool-maintained) | YES/NO | the patch, or no-delta reason |
 | Context | Did project/container topology change? | YES/NO | the patch, or no-delta reason |
 | Refs/Rules | Did shared constraints change? | YES/NO | the patch, or no-delta reason |
 
 Rules:
-- New component (a create patch / `add`) → the parent container's `## Components` block needs its own **patch** before the change-unit is complete.
+- New / moved / retired component → set its `parent:`; the parent's `## Components`
+  **row is synthesized by apply** — no membership patch. Author a parent patch only
+  if its **Responsibilities** or the member's **Goal Contribution** framing changes.
 - Component goal/dependency/interface change → parent `Goal Contribution` + `Responsibilities` MUST be reviewed.
 - `NO` requires evidence. A blank parent delta = STOP.
 - The ADR records `Parent Delta: updated` (name the patch) or `Parent Delta: none` (with evidence).

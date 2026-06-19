@@ -155,13 +155,13 @@ The system `c3-0` already exists from `c3 init` — its body is the context doc 
 
 Short text fields: `echo "<goal>" | c3 write c3-0 --section Goal`. Whole body rewrite: `c3 write c3-0 --file content.md`.
 
-**c3-0's `Containers` table is a parent table too — fill it from real ids, not placeholders.**
+**c3-0's `Containers` table is tool-maintained — author it as a header, not rows.**
 c3-0 is born bodyless, so it stays directly writable until you author its body (the creation
-window); editing it after closes. So author c3-0's body **once the containers exist**, writing
-their real ids (`c3-1`, `c3-2`, …) straight into the `Containers` table. Authoring c3-0 first
-with placeholder rows (`N.A - initial`) just forces a re-patch of a now-frozen c3-0 later —
-the same churn the container `Components` tables avoid (§1.2). Order: containers → components →
-then c3-0's full body with the real topology.
+window); editing it after closes. Author c3-0's body with the `## Containers` **header row only**
+(its canvas columns from `c3 schema system`; no data rows) — the flip fills it from each
+container's `parent: c3-0`. Same for each container's `## Components` table. No placeholders, no
+ordering churn, no re-patch: declare the parent edges and every membership table materializes
+itself at apply.
 
 ### 1.2 Container Docs
 
@@ -188,11 +188,11 @@ id.** There is no CLI auto-numbering here (that's `c3 add`'s behavior, a separat
 the flip materializes each create-patch as a fact with exactly the id you wrote. So pick the
 ids up front, following the convention — container `c3-1`, `c3-2`, …; that container's
 components `c3-101+` (foundation) / `c3-110+` (feature); refs/rules by slug (`ref-…`, `rule-…`).
-Because you authored them, you already know them: fill each container's `Components` table and
-c3-0's `Containers` table with those same ids directly — **no placeholders, no "create first
-then read", no second reconciliation patch.** (Prefer the numbered convention over slug ids
-like `web`/`api`: slug-as-id breaks the `c3-N` reference scheme and mangles on-disk filenames.)
-One pass, the flip lands every table already matching.
+Set each fact's `parent:` and leave its parent's membership table a **header only** — the flip
+synthesizes every `Components` / `Containers` row from the `parent:` edges, in the same pass.
+**No placeholders, no "create then read", no membership patch.** (Prefer the numbered convention
+over slug ids like `web`/`api`: slug-as-id breaks the `c3-N` reference scheme and mangles on-disk
+filenames.)
 
 Code-map patterns: `c3 set <id> codemap <pattern>`. Bracket paths (`[id]`, `[...slug]`) work automatically.
 

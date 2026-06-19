@@ -31,6 +31,64 @@ func canvasEdgeSyncer(c3Dir string) func(ts *store.Store, entityID string) error
 	}
 }
 
+// membershipReconciler returns the in-transaction hook that rebuilds a parent's
+// membership table from its children (changeset.ReconcileMembershipBody), then
+// canvas-validates the parent's new body. A violation fails the apply tx — so the
+// committed result is always both membership-consistent AND canvas-valid. The
+// integrity is the tool's: the author declares a child's parent:, the tool
+// synthesizes the parent row; no row bookkeeping, no way to disconnect.
+func membershipReconciler(c3Dir string) func(ts *store.Store, parentID string) error {
+	return func(ts *store.Store, parentID string) error {
+		e, err := ts.GetEntity(parentID)
+		if err != nil {
+			return nil // retired or absent — nothing to maintain
+		}
+		section, childType := changeset.MembershipSection(e.Type)
+		if section == "" {
+			return nil // this type owns no membership table
+		}
+		changed, err := changeset.ReconcileMembershipBody(ts, parentID, section, childType)
+		if err != nil {
+			return err
+		}
+		if !changed {
+			return nil
+		}
+		def, ok := schema.DefinitionForDir(c3Dir, e.Type)
+		if !ok {
+			return nil
+		}
+		body, err := content.ReadEntity(ts, parentID)
+		if err != nil {
+			return err
+		}
+		if issues := validateBodyContentWithDefinition(body, e.Type, def.Sections); len(issues) > 0 {
+			return fmt.Errorf("membership table of %s is canvas-invalid after maintenance: %s", parentID, formatValidationError(parentID, issues))
+		}
+		return nil
+	}
+}
+
+// isToolMaintainedTable reports whether a required table section is owned by the
+// membership reconciler (a parent's Containers/Components table) rather than the
+// author. Such a table may be header-only at author time — the tool fills its data
+// rows from the children's parent: edges — so the "empty required table" rule does
+// not apply to it (the header row is still required, as the reconciler fills into it).
+func isToolMaintainedTable(entityType, sectionName string) bool {
+	section, _ := changeset.MembershipSection(entityType)
+	return section != "" && section == sectionName
+}
+
+// applyHooks bundles the in-transaction apply hooks (edge sync + membership
+// reconcile) so `change apply` and the preview overlay run an identical,
+// deterministic saga.
+func applyHooks(c3Dir string) *changeset.ApplyHooks {
+	return &changeset.ApplyHooks{
+		SyncEdges:           canvasEdgeSyncer(c3Dir),
+		ReconcileMembership: membershipReconciler(c3Dir),
+	}
+}
+
 // WithUnitOverlay evaluates fn against the store as it WOULD be if change-unit
 // unitID's staged patches were applied — a preview that is always rolled back. It
 // runs the exact same changeset.Apply path as a real apply (so the preview cannot
@@ -49,9 +107,8 @@ func WithUnitOverlay(s *store.Store, c3Dir, unitID string, fn func(*store.Store)
 	if len(patches) == 0 && len(codemaps) == 0 {
 		return fmt.Errorf("overlay %s: unit has no staged material", unitID)
 	}
-	sync := canvasEdgeSyncer(c3Dir)
 	return s.WithPreviewTx(func(ts *store.Store) error {
-		if err := changeset.Apply(ts, patches, codemaps, sync); err != nil {
+		if err := changeset.Apply(ts, patches, codemaps, applyHooks(c3Dir)); err != nil {
 			return fmt.Errorf("overlay %s: %w", unitID, err)
 		}
 		return fn(ts)

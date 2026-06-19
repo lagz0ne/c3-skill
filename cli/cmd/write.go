@@ -302,6 +302,9 @@ func validateBodyContentWithDefinition(body, entityType string, schemaSections [
 			continue
 		}
 		if len(table.Rows) == 0 {
+			if isToolMaintainedTable(entityType, sec.Name) {
+				continue // membership table — the reconciler fills its rows from parent: edges
+			}
 			issues = append(issues, Issue{
 				Severity: "error",
 				Message:  fmt.Sprintf("empty required table: %s (headers only, no data rows)", sec.Name),

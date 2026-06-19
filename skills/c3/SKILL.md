@@ -191,7 +191,7 @@ Change affects interface -> check consumers first.
 
 **Result:** Refs + rules + parent + graph = full constraint set. All honored.
 
-**New component:** Top-down. Container `Components` + `Responsibilities` first, then component. Not done until parent has Parent Delta decision.
+**New component:** set its `parent:` — the container's `Components` row is synthesized at apply (the tool owns membership). The Parent Delta decision is now only: does the parent's `Responsibilities` (or the member's `Goal Contribution` framing) change?
 
 **Navigation:** Context -> Container -> Component
 

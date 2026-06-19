@@ -3,6 +3,7 @@ package changeset
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -109,7 +110,7 @@ func CheckDrift(s *store.Store, p Patch) error {
 // relationships after its body changed — called inside the same transaction so
 // the edge update lands atomically with the body patch (and so a preview overlay,
 // which runs this exact Apply path, sees the staged edge). nil skips it.
-func Apply(s *store.Store, patches []Patch, codemaps []CodemapChange, syncEdges func(ts *store.Store, entityID string) error) error {
+func Apply(s *store.Store, patches []Patch, codemaps []CodemapChange, hooks *ApplyHooks) error {
 	for _, p := range patches {
 		if err := CheckDrift(s, p); err != nil {
 			return err
@@ -118,7 +119,19 @@ func Apply(s *store.Store, patches []Patch, codemaps []CodemapChange, syncEdges 
 	return s.WithTx(func(ts *store.Store) error {
 		touched := make([]string, 0, len(patches))
 		seen := map[string]bool{}
+		// affected: every parent whose child-set this unit may have changed. Each is
+		// reconciled into a consistent membership table before commit, so the frozen
+		// result is membership-consistent BY CONSTRUCTION — the integrity is the tool's,
+		// not the author's.
+		affected := map[string]bool{}
 		for _, p := range patches {
+			// Pre-capture the parent a reparent/retire LEAVES, before applyOne overwrites
+			// ParentID / deletes the child — else its row would linger as an orphan.
+			if (p.Scope == ScopeFrontmatter && p.Parent != "") || p.Scope == ScopeRetire {
+				if e, err := ts.GetEntity(p.Target); err == nil && e.ParentID != "" {
+					affected[e.ParentID] = true
+				}
+			}
 			if err := applyOne(ts, p); err != nil {
 				return fmt.Errorf("apply %s: %w", p.Source, err)
 			}
@@ -132,12 +145,34 @@ func Apply(s *store.Store, patches []Patch, codemaps []CodemapChange, syncEdges 
 				return fmt.Errorf("apply codemap %s → %s: %w", c.Source, c.Target, err)
 			}
 		}
+		// The new/maintained parent of every touched entity (and every touched entity
+		// itself — a touched container may have just gained children).
+		for _, id := range touched {
+			affected[id] = true
+			if e, err := ts.GetEntity(id); err == nil && e.ParentID != "" {
+				affected[e.ParentID] = true
+			}
+		}
 		// Re-sync body-owned edges after all body writes exist (so a unit that
 		// creates a target and a citer in one go resolves), inside the tx.
-		if syncEdges != nil {
+		if hooks != nil && hooks.SyncEdges != nil {
 			for _, id := range touched {
-				if err := syncEdges(ts, id); err != nil {
+				if err := hooks.SyncEdges(ts, id); err != nil {
 					return fmt.Errorf("apply: wiring edges for %s: %w", id, err)
+				}
+			}
+		}
+		// Reconcile each affected parent's membership table — in sorted order so the
+		// saga is deterministic (same unit + base ⇒ same frozen seals).
+		if hooks != nil && hooks.ReconcileMembership != nil {
+			parents := make([]string, 0, len(affected))
+			for id := range affected {
+				parents = append(parents, id)
+			}
+			sort.Strings(parents)
+			for _, id := range parents {
+				if err := hooks.ReconcileMembership(ts, id); err != nil {
+					return fmt.Errorf("apply: reconciling membership of %s: %w", id, err)
 				}
 			}
 		}

@@ -376,6 +376,9 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 					continue
 				}
 				if len(table.Rows) == 0 {
+					if isToolMaintainedTable(entity.Type, schemaDef.Name) {
+						continue // membership table — the reconciler owns its rows
+					}
 					issues = append(issues, Issue{
 						Severity: "warning",
 						Entity:   entity.ID,

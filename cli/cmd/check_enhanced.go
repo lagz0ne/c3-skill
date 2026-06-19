@@ -849,7 +849,7 @@ func validateColumn(col schema.ColumnDef, table *markdown.Table, entity *store.E
 	case "entity_id":
 		for _, row := range table.Rows {
 			val := strings.TrimSpace(row[col.Name])
-			if val == "" {
+			if val == "" || isNAReason(val) {
 				continue
 			}
 			if _, err := opts.Store.GetEntity(val); err != nil {
@@ -881,28 +881,27 @@ func validateColumn(col schema.ColumnDef, table *markdown.Table, entity *store.E
 					break
 				}
 			}
-			refs := entityRefPattern.FindAllString(val, -1)
-			if !grounded && len(refs) == 0 {
+			// Ground by RESOLUTION, never by an id-SHAPE pattern. The column type
+			// already declares "this cell holds a reference"; the store is the sole
+			// authority on which ids exist — for any id, builtin or custom-canvas. A
+			// shape regex can only hardcode a closed set of prefixes, so it must
+			// false-flag the open set of custom types: a cite it cannot match (a
+			// requirement/design-token id) or one whose tail merely CONTAINS a builtin
+			// prefix (`a11y-rule-foo`). Resolution has neither failure mode.
+			if !grounded {
+				msg := fmt.Sprintf("ungrounded reference in %s: %s", col.Name, val)
+				for _, tok := range referenceTokens(val) {
+					if suggested := suggestByTitle(tok, titleMap); suggested != "" {
+						msg += fmt.Sprintf(" (did you mean %s?)", suggested)
+						break
+					}
+				}
 				issues = append(issues, Issue{
 					Severity: "warning",
 					Entity:   entity.ID,
-					Message:  fmt.Sprintf("ungrounded reference in %s: %s", col.Name, val),
+					Message:  msg,
 					Hint:     "use an entity id or N.A - <reason>",
 				})
-				continue
-			}
-			for _, ref := range refs {
-				if _, err := opts.Store.GetEntity(ref); err != nil {
-					msg := fmt.Sprintf("unknown entity reference: %s", ref)
-					if suggested := suggestByTitle(ref, titleMap); suggested != "" {
-						msg = fmt.Sprintf("unknown entity reference: %s (did you mean %s?)", ref, suggested)
-					}
-					issues = append(issues, Issue{
-						Severity: "warning",
-						Entity:   entity.ID,
-						Message:  msg,
-					})
-				}
 			}
 		}
 	case "evidence":

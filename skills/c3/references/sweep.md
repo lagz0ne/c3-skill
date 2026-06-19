@@ -34,7 +34,7 @@ retired fact still has, in the frozen graph:
 So the sweep deliverable for a removal is the **list of consequences the unit must
 also carry**: every orphaned child to reparent/retire, every dangling citer to rewire.
 Membership rows are never on that list — a parent's membership table is synthesized
-from `parent:` edges, so the row drop is automatic.
+from `parent:` links, so the row drop is automatic.
 
 ## Bridge to the saga
 

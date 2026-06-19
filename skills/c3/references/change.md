@@ -76,7 +76,7 @@ result: sha256:<hash>      # optional landing check (block) — see below
 
 **Cite handles** (from `c3 read <id> --cite`): a **block** anchor `entity#nNODE@vVER:sha256:HASH` pins one node by its hash (`block` scope); the **entity** anchor `entity@vVER:sha256:ROOTMERKLE` pins the whole fact (`insert` / `frontmatter` / `retire`).
 
-**Membership rows are NOT yours — set `parent:`, the row appears** (SKILL.md §Membership). A parent's `Components`/`Containers` table is synthesized from children's `parent:` edges on every parentage path. Never insert, re-cite, or hand-remove a membership row; a reparent/retire heals the parent it leaves. Author a parent patch only when its **Responsibilities** or a member's **Goal Contribution** *framing* changes — that is a second patch, authored together (the parent-delta decision: record `Parent Delta: updated` and name the patch, or `Parent Delta: none` with evidence).
+**Membership rows are NOT yours — set `parent:`, the row appears** (SKILL.md §Membership). A parent's `Components`/`Containers` table is synthesized from children's `parent:` links on every parentage path. Never insert, re-cite, or hand-remove a membership row; a reparent/retire heals the parent it leaves. Author a parent patch only when its **Responsibilities** or a member's **Goal Contribution** *framing* changes — that is a second patch, authored together (the parent-delta decision: record `Parent Delta: updated` and name the patch, or `Parent Delta: none` with evidence).
 
 **`whole` *with* a base is REJECTED** — full-replace of a live fact must be block-anchored. Don't author it.
 
@@ -129,7 +129,7 @@ The gate (`apply`'s fourth gate) refuses unless, for every contract-touched fact
 3. **Retire safety (destruction gate)** — a `retire` is refused if it would **orphan a live child** or **dangle a live citer**, *unless this same unit* also retires/reparents the child and drops the citer's citation. (The membership-row drop is automatic.) Resolve the consequences in the unit; the destruction lands all-or-nothing. (`sweep.md` predicts this before you author.)
 4. **Inspection (up-V)** — every contract-touched fact with obligations needs a fresh, territory-grounded `*.inspect.md` (above). Computed from the unit's preview overlay, so it runs only once gates 1–3 pass.
 
-A landing-hash mismatch on a later patch, two patches editing the same block, or a missing codemap target rolls back **every** earlier write — node, edge, seal, and codemap — together. Fix the cause and re-run. `--dry-run` reports the writes without performing them.
+A landing-hash mismatch on a later patch, two patches editing the same block, or a missing codemap target rolls back **every** earlier write — node, wiring edge, membership, seal, and codemap — together. Fix the cause and re-run. `--dry-run` reports the writes without performing them.
 
 **Conflict → rebase loop** when apply rejects with drift/conflict. Re-author the patch against the moved frozen state; apply re-runs every gate, so a stale resolution still can't land:
 

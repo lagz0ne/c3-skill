@@ -19,7 +19,7 @@ owned source) are the same contract from two angles.
 
 **Membership is part of the shape, and the tool fills it.** A parent fact-type carries
 a membership table, but no author ever writes a row into it: every parentage-changing
-path synthesizes it from the children's `parent:` edges (`c3 add`, `change apply`,
+path synthesizes it from the children's `parent:` links (`c3 add`, `change apply`,
 `check --fix`). Set a child's `parent:`, the row appears; the column is a *consequence*
 of the shape, never hand-authored truth. (Mechanics: change.md.)
 

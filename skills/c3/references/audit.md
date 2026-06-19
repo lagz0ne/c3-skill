@@ -33,7 +33,7 @@ Run `c3 check` and read its output. Do not hand-walk membership tables against d
 
 Two structural facts the tool guarantees, so audit must never flag them as gaps:
 
-- **Membership is synthesized**, not authored — every parent's membership rows are derived from children's `parent:` edges on `add` and `check --fix`. Never report "missing membership row"; a real disconnect is a missing-parent error, which `check` already raises.
+- **Membership is synthesized**, not authored — every parent's membership rows are derived from children's `parent:` links on `add` and `check --fix`. Never report "missing membership row"; a real disconnect is a missing-parent error, which `check` already raises.
 - **The retire gate holds the graph closed** — a retire that would orphan a live child or dangle a live citer is refused unless the same change-unit heals it (change.md). So a clean `check` means no removal left a dangling reference behind.
 
 ## Layer 3 — Semantic

@@ -347,7 +347,29 @@ stage_session_auth() {
       install -m 600 "$claude_src" "$auth_root/claude/.credentials.json"
       bwrap_args+=(--dir /work/home/.codex)
       bwrap_args+=(--bind "$auth_root/claude" /work/home/.claude)
-      auth_source="temporary_session_copy:claude_credentials_json"
+      # claude-code is "logged in" only when it also finds the account config
+      # (~/.claude.json with oauthAccount) — the .credentials.json tokens alone
+      # read as "Not logged in". Stage it minus the project history (the bulk +
+      # the only sensitive part) so the sandbox sees the account, not the history.
+      local claude_cfg="${CLAUDE_HOST_CONFIG:-$HOME/.claude.json}"
+      if [[ -f "$claude_cfg" ]]; then
+        # account config, minus project history; stage in both the legacy HOME
+        # location and inside CLAUDE_CONFIG_DIR so either resolution path finds it.
+        jq 'del(.projects)' "$claude_cfg" > "$auth_root/claude.json" 2>/dev/null \
+          || install -m 600 "$claude_cfg" "$auth_root/claude.json"
+        chmod 600 "$auth_root/claude.json"
+        install -m 600 "$auth_root/claude.json" "$auth_root/claude/.claude.json"
+        bwrap_args+=(--bind "$auth_root/claude.json" /work/home/.claude.json)
+      fi
+      # The `claude --print` headless path authenticates from CLAUDE_CODE_OAUTH_TOKEN;
+      # feed it the live OAuth access token so a fresh sandbox is logged in without
+      # the interactive credentials handshake.
+      local claude_token
+      claude_token="$(jq -r '.claudeAiOauth.accessToken // empty' "$claude_src" 2>/dev/null)"
+      if [[ -n "$claude_token" ]]; then
+        bwrap_args+=(--setenv CLAUDE_CODE_OAUTH_TOKEN "$claude_token")
+      fi
+      auth_source="temporary_session_copy:claude_credentials_json+account+oauth_token"
       ;;
     kilo)
       local kilo_auth_src="${KILO_HOST_AUTH:-$HOME/.local/share/kilo/auth.json}"
@@ -430,9 +452,11 @@ case "$agent" in
     else
       claude_bin="$(readlink -f "$claude_cmd")"
       bwrap_args+=(--dir /opt/claude --ro-bind "$claude_bin" /opt/claude/claude)
+      # NOTE: do NOT pass --bare. --bare only accepts an ANTHROPIC_API_KEY and
+      # rejects the OAuth/subscription token (CLAUDE_CODE_OAUTH_TOKEN) we stage,
+      # surfacing as "Not logged in". Plain --print honors the OAuth token.
       agent_cmd=(/opt/claude/claude
         --print
-        --bare
         --safe-mode
         --no-session-persistence
         --permission-mode bypassPermissions

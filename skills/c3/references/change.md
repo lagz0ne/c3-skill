@@ -169,7 +169,7 @@ The scopes you will actually use:
 | `insert` | **add** to a frozen fact: a NEW section (additive; existing sections stay frozen) OR a new table **row** | section → entity handle (`entity@vN:sha256:MERKLE`); row → the block cite of the row to insert *after* | the new section (starts `## Name`, no duplicate) or the new row |
 | `whole` (no base) | **create** a new fact, born sealed | absent | the full body; `type:` required |
 | `frontmatter` | rename (`title`) / move (`parent`) / re-edge (`uses`) / set `boundary`, `category`, `date` — parity with `set` | entity handle | frontmatter deltas |
-| `retire` | remove the fact + its edges | entity handle | — |
+| `retire` | remove the fact + its edges (refused if it would orphan a child or dangle a citer — handle them in the same unit) | entity handle | — |
 
 **`block` EDITS an existing section; `insert` ADDS a new one.** When a section already exists and its content must change, replace it with a `block` patch. When the fact must *gain* a section it does not have — the move that lets a sealed fact grow as the rung rises (see §Climbing a rung) — use `insert`: it appends additively, leaving every existing section frozen, anchored to the entity handle from `c3 read <id> --cite`. The `insert` body must START WITH A SECTION HEADING and may not duplicate a section already on the fact.
 
@@ -298,20 +298,24 @@ Rules:
 - Ref wins. Code disagrees with ref → ref is right; an override needs the ADR's documented `## Override` process.
 - Conflicts → specificity wins (component ref > container ref > context ref).
 
-## The two apply gates (and how to recover)
+## The apply gates (and how to recover)
 
-`c3 change apply <adr-id>` runs a **preflight over ALL patches before any write**. Two mechanical gates:
+`c3 change apply <adr-id>` runs a **preflight over ALL patches before any write**. Mechanical gates:
 
-1. **Drift** — every cited anchor must still be fresh. A block patch checks the cited node's **hash** (not the entity version — a sibling block flipping does not stale you); a frontmatter/retire patch checks the entity's root merkle.
+1. **Drift / conflict** — every cited anchor must still be fresh. A block patch checks the cited node's **hash** (not the entity version — a sibling block flipping does not stale you); a frontmatter/retire patch checks the entity's root merkle. A patch whose anchor is **gone** is a *conflict*: the frozen block moved under you (see the conflict loop below).
 2. **Canvas** — the merged body (block edit) or new body (create) must stay valid for its canvas.
+3. **Retire safety** — a `retire` may not strand the graph: it is refused if it would **orphan a live child** or **dangle a live citer**, unless this same unit also retires/reparents the child and drops the citer's citation. (The membership row drop is automatic — the tool owns it.) Resolve the consequences in the unit; the saga lands the whole destruction all-or-nothing.
 
 **Apply is all-or-nothing, fully transactional.** The preflight rejects on any gate failure before a single write; and the write phase itself runs inside one transaction. So even a failure that only surfaces mid-write — a landing-hash mismatch on a later patch, two patches editing the same block, or a codemap carrier whose target is missing — rolls back every earlier patch's node, edge, and seal **and** every codemap write together. The unit lands completely or not at all; you never inspect a half-applied state. Fix the cause and re-run.
 
-**Drift → rebase loop** when apply rejects with drift:
+**Conflict → re-author loop** when apply rejects with drift/conflict. A conflict is
+resolved by re-authoring the patch against the moved frozen state — the tool shows the
+3-way; you merge your intent onto the live block; apply re-runs every gate, so a stale
+resolution still can't land:
 ```bash
-c3 change rebase <adr-id>      # emits, per drifted patch: the anchor it expected vs. live
-c3 read <id> --section <name> --cite   # re-read the moved block → fresh handle
-#   re-author the patch's base: (and result:) with the fresh handle/hash
+c3 change rebase <adr-id>      # per conflict: BASE (what you anchored to) + YOURS (your change) + the re-anchor move
+c3 read <id> --section <name> --cite   # re-read the moved block → fresh handle (CURRENT)
+#   re-author the patch's base: (and body, and result:) against current — your change merged onto the live block
 c3 change apply <adr-id>       # retry
 ```
 

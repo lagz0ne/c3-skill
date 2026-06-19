@@ -56,6 +56,9 @@ func RunChangeApply(opts ChangeApplyOptions, w io.Writer) error {
 			rejects = append(rejects, err.Error())
 		}
 	}
+	// Preflight: a retire may not strand the graph — refuse a destruction whose
+	// orphaned children or dangling citers this unit does not also resolve.
+	rejects = append(rejects, retireGate(opts.Store, patches)...)
 	// Preflight: every codemap carrier's target must already exist or be created by
 	// a patch in this same unit (read-your-writes makes the create visible at apply).
 	// Two carriers for one target would full-replace each other (last wins, silently)
@@ -179,11 +182,11 @@ func RunChangeRebase(opts ChangeApplyOptions, w io.Writer) error {
 	for _, p := range patches {
 		if drift := changeset.CheckDrift(opts.Store, p); drift != nil {
 			drifted++
-			fmt.Fprintf(w, "rebase %s → %s\n  expected: %s\n  reason:   %s\n", p.Source, p.Target, p.Base, drift.Error())
+			renderConflict(w, opts.Store, p, drift.Error())
 		}
 	}
 	if drifted == 0 {
-		fmt.Fprintf(w, "change-unit %s: no drift — nothing to rebase\n", opts.UnitID)
+		fmt.Fprintf(w, "change-unit %s: no conflicts — nothing to rebase\n", opts.UnitID)
 	}
 	return nil
 }

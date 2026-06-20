@@ -45,6 +45,25 @@ The `code:` field is the binding: it is what `c3 lookup <file>` resolves against
 pipeline) the default per-glob resolve check. The frozen fact body is the claim; the spec is the
 **mutable lens** — re-aim it freely (code moved dirs), it is never frozen.
 
+## Loop — one verdict over many facts
+When a claim spans a group, `loop` fans a sub-pipeline over each item (binding `$item`) and rolls
+the per-item verdicts into one — **holds iff all hold**, and the evidence names each item's
+verdict, so a single drift says *which* member fell. A container asserting its components all
+resolve:
+```yaml
+fact: c3-1
+claim: "the Go CLI container's components each resolve to real code (roll-up)"
+pipeline:
+  - loop:
+      over: { facts: "c3-1[0-9][0-9]" }   # each component id (over accepts any gather:
+        # facts id-glob, files glob, literal list)
+      do:
+        - gather: { code: "$item" }        # the item fact's declared globs → files
+        - eval:   { exists: true }
+```
+Use a per-fact spec for the detail (and the lookup binding); a `loop` spec on the parent for a
+single roll-up line.
+
 ## Run it
 ```bash
 c3 eval                 # every spec → verdict array (holds / drift / needs-judgement, stamped)

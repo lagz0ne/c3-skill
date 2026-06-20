@@ -229,18 +229,47 @@ Examples:
 	{
 		Name:     "eval",
 		Args:     "[fact-id]",
-		OneLiner: "Run conformance pipelines — a fact's claim vs its external",
+		OneLiner: "Check a fact's claim against its external (conformance)",
 		Help: `Usage: c3x eval [fact-id] [--json]
 
-Run .c3/eval/<fact>.yaml conformance pipelines and report a one-off verdict per
-fact (holds / drift / needs-judgement), each stamped with the external state it
-measured. A pipeline composes five ops: gather (raw read | mechanical command),
-filter, transform, eval (exists/equals/all_equal/contains_all/contains/count/
-judgement), and loop. A check you run on CI cadence — never an apply gate.
+Check a frozen fact's claim against the uncontrolled external it governs and
+report a one-off verdict — holds / drift / needs-judgement — stamped with the
+external state measured. A check you run on CI cadence, never an apply gate:
+c3x eval always exits success; the verdict is the signal.
+
+Specs live in .c3/eval/<fact-id>.yaml. The simplest is just a code binding:
+
+  fact: c3-102
+  code: [ cli/internal/store/** ]     # also what 'lookup' resolves a file against
+  # no pipeline => default check: every glob must resolve to >=1 file
+
+A pipeline composes five ops (gather/filter/transform/eval; loop fans them out):
+
+  gather     acquire values — file (raw read) | command (mechanical, sh -c at repo
+             root) | files (glob) | facts (id-glob) | code (a fact's globs) |
+             literal | each (several, concatenated)
+  filter     keep values matching   contains | matches
+  transform  reshape each value     trim | first | lines
+  eval       assert -> verdict      exists | equals | all_equal | contains_all |
+             contains | count "<op> N" | judgement (surfaces; never auto-scored)
+  loop       run a sub-pipeline per item of 'over', binding $item
+
+Loop example — one roll-up verdict over a container's components:
+
+  pipeline:
+    - loop:
+        over: { facts: "c3-1[0-9][0-9]" }   # each CLI component id
+        do:
+          - gather: { code: "$item" }        # its declared globs -> files
+          - eval:   { exists: true }          # all resolve
+
+Options:
+  --json   Structured output for CI (TOON in agent mode)
 
 Examples:
   c3x eval                 # every spec
-  c3x eval c3-203          # one fact's spec`,
+  c3x eval c3-203          # one fact's spec
+  c3x eval --json          # machine output`,
 	},
 	{
 		Name:     "search",

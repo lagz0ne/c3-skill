@@ -46,12 +46,41 @@ morph gate, and it is proven.
 ## The deep eval ("go further — 10 turns, diversity, depth")
 New topic: `research/eval/skill-eval/harness/topics/evolve-scheduling-platform/`
 - 10 diverse, deep turns (onboard / change / climb / custom-canvas / **morph** /
-  retire+reparent / conflict / recipe / governance / **re-root morph**) — deeper and more
-  diverse than grow-todo-app, and the only topic that exercises the **non-additive morph**
-  (turns 5, 10).
-- Turns 5/10 depend on the evolve-unit wiring above. Until wired they expose the gap
-  (unguarded `canvas write` + late cleanup, instances transiently invalid). Re-run after
-  wiring to confirm the morph turns go clean and atomic.
+  retire+reparent / conflict / recipe / **governance-morph+drift** / **re-root morph**) —
+  deeper and more diverse than grow-todo-app; the only topic that exercises the
+  **non-additive morph** (now turns **5, 9, 10**).
+- Turns 5/9/10 are the morph turns. The evolve-unit is now **wired** (11.2.0), so they
+  should land clean via the gated `canvas`-scope morph. The rubric (§The evolve-unit — the
+  trigger and its output) scores whether the agent took the obvious gated path (canvas-scope
+  patch + migrations in one unit) vs the unguarded `canvas write` + late cleanup (partial
+  credit). Principle (user, 2026-06-19): the request that triggers an evolution must be
+  obvious and connect to its output — a clear target shape makes the morph straightforward.
+
+## The eval-depth model (added later 2026-06-19 — "harder scenarios + invariants")
+`check`-clean is necessary, not sufficient — it validates structure, not coherence. So the
+eval now scores on **named, falsifiable invariants** beyond `check`, applied across four
+topics (the evolution flagship + the three wiring topics):
+- Each topic's `prompt.md` carries an **Invariants** section (agent-facing: the property);
+  its `rubric-notes.md` carries a **falsifier table** (reviewer-facing: what to find in
+  `.c3/` to fail it) + a **Reviewer runbook** (the real `c3` commands — `graph`, `read`,
+  `canvas read`, `change status`, `grep .c3/` — that surface each falsifier). By-eye but
+  systematic; NOT judge automation (that axis was explicitly deferred).
+- `evolve-scheduling-platform` (6): CONCURRENCY / NOSTRADDLE / ISOLATION / NOSTRAND /
+  GOVERNANCE-LIVE / REROOT-COHERENCE. Plus an **emergent adversarial drift** (not injected —
+  the harness builds clean): turn-4 rule names the policy `scope` column → turn-5 morph
+  removes `scope` → a deep agent heals the stale rule in the morph unit (affected facts
+  include *referrers*, not just *instances*); survival to turn 10 fails GOVERNANCE-LIVE.
+- `design-system` (5): COMPONENT-WIRED / NO-HARDCODE / TOKEN-USED / SEMANTIC-RESOLVES /
+  FLOW-SEQUENCES. `qa-coverage` (6): REQ-COVERED / RISK-COVERED / TEST-DOUBLE-WIRED /
+  EDGE-IS-REAL / PLAN-GOVERNS / CLIMB-COMPLETE. `product-spec` (5): STORY-LADDERS /
+  OBJECTIVE-WORKED / PIVOT-REWIRED / CLIMB-COMPLETE / RELEASE-SPANS.
+- The wiring-topic invariants are a **different shape** than the evolution ones:
+  graph-completeness ("the graph makes the holes visible" — orphan token, untested risk,
+  dead objective), proven by `graph <target> --direction reverse`, not evolution-coherence.
+- **Not yet validated by a run** — when validated (the user holds run timing; non-deterministic
+  runs were judged unhelpful for now), confirm the invariants DISCRIMINATE (strong vs weak runs
+  land on different sides of each falsifier); adjust before relying on them. The morph turns can
+  now land clean — the evolve-unit is wired (11.2.0), so a clean morph is achievable, not blocked.
 
 ## Eval infra
 - Harness: `research/eval/skill-eval/harness/bin/run-blindbox.sh --agent <claude|codex>

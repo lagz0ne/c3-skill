@@ -7,6 +7,35 @@ the spec under pressure, and kept `c3 check` honest. This topic deliberately
 exercises the two features the architecture topics barely touch — **custom
 canvases** and **typed edge wiring** — so weight those heavily.
 
+## Invariants — the scoring spine (with falsifiers)
+
+`check`-clean is necessary, not sufficient: it proves citations resolve, not that the
+ladder is **complete** or that the pivot re-wired instead of deleting. These are the bar.
+The falsifier is what a reviewer finds in the finished workspace `.c3/` to fail the run.
+
+| Invariant | Falsifier (find this → broken) |
+| --- | --- |
+| **INV-STORY-LADDERS** | A story missing a ladder edge (serves / refines / satisfies), or citing a retired/nonexistent fact. |
+| **INV-OBJECTIVE-WORKED** | `graph <live objective> --direction reverse` is empty — a dead objective with no work under it. |
+| **INV-PIVOT-REWIRED** | An epic/story still serving the retired objective; OR the retired objective deleted/dangling instead of superseded (terminal). |
+| **INV-CLIMB-COMPLETE** | A post-climb story with no `satisfies` edge; OR the edge present from the very first cut (no climb + migration shown). |
+| **INV-RELEASE-SPANS** | A release/roadmap recipe citing ≤1 epic — it spans nothing. |
+| **INV-KR-TYPED** | After the grading morph: an objective still carrying prose key-results (not migrated to the typed Target/Actual/Status/Confidence table), OR a cosmetic morph — every objective's Status is a uniform placeholder, so the reshape carried no grading. The morph gate keeps `check` clean either way. |
+| **INV-SUPERSEDE-LINKED** | A superseded objective with `status: superseded` but `graph <retired-objective> --direction reverse` shows NO `supersedes` edge from its successor — the agent hand-flipped status (a frontmatter patch) instead of `c3 supersede`, so the pivot's provenance is gone. `check` passes (status is a legal value). |
+
+## Reviewer runbook — how to surface each falsifier
+Run against `<run>.workspace/` with the HEAD binary (`C3X_MODE=agent /tmp/c3x-score --c3-dir .c3 <cmd>`).
+
+| Invariant | Commands → what to look for |
+| --- | --- |
+| **INV-STORY-LADDERS** | `read <each story>` → serves/refines/satisfies filled; `graph <story>` → three edges to live facts. |
+| **INV-OBJECTIVE-WORKED** | `graph <each live objective> --direction reverse` → ≥1 epic/story. |
+| **INV-PIVOT-REWIRED** | `read <retired objective>` → status superseded/terminal; `graph <retired objective> --direction reverse` → empty (all re-pointed); the successor id appears in the re-pointed facts. |
+| **INV-CLIMB-COMPLETE** | `change view`/`change status <climb-adr>` → the `satisfies` edge added in a climb unit; `read <each story>` → satisfies present. |
+| **INV-RELEASE-SPANS** | `graph <release-recipe>` → edges to ≥2 epics. |
+| **INV-KR-TYPED** | `canvas read objective` → the KR section is the typed table; `read <each live objective>` → typed KRs with a real Status each, none left prose; `change status <morph-adr>` → reshape + migration in ONE unit. |
+| **INV-SUPERSEDE-LINKED** | `read <retired objective>` → status superseded; `graph <retired objective> --direction reverse` → a `supersedes` edge from the successor; if absent, it was a bare status flip. |
+
 ## Must-have evidence
 
 - **Local C3 command evidence**, not bare/global `c3x` (the

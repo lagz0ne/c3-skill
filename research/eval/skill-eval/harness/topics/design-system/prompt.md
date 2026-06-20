@@ -103,6 +103,23 @@ You decide the exact shape (raise one canvas vs. add a sibling type) — but the
 the new edge (semantic → primitive), and the migration of component cites must all be
 real and visible.
 
+### 2b. Evolve the model — type the token format
+
+The flat `Value` column is mis-modeled: it holds a hex color, an `8px` dimension, a font
+stack, a `200ms` duration — different *formats* jammed into one free-text field, so nothing
+can validate that a color token holds a color or transform a value per platform. Apply this
+pressure as its own visible step:
+
+> **Typed formats.** Tooling (codegen, linting, platform export) needs the token's format to
+> be machine-readable, not guessed from the string.
+
+**Morph** the token canvas: reshape the free-text `Value` into a typed `Format` enum
+(`color` / `dimension` / `duration` / `font` / `shadow`) plus the `Value`, and **migrate
+every existing token** to the new shape **in the same unit**. This is a non-additive reshape
+(a morph, not a climb): it restructures the column, and no token may straddle the old
+free-text and the new typed shape. If a `reject_if` or an a11y rule named the old `Value`
+column, re-author it in the same unit too.
+
 ### 3. Wire a dense traceability graph and verify it
 
 The point of the edge columns is coverage. After the climb:
@@ -130,6 +147,28 @@ named. Resolve real problems (a cite to a non-existent fact, a missing required
 section). If a warning is structural noise you choose not to chase (e.g. the seeded
 top-level context), say so explicitly rather than implying silence. Do not claim
 "clean" if the tool printed warnings — name them and explain.
+
+## Invariants — your graph must make these holes visible
+
+These hold beyond `c3 check`. `check` proves every citation resolves; it does NOT prove
+the graph is complete — that no token is orphaned, no component hardcodes a value, no
+semantic token resolves to nothing. State each so a reviewer can verify it from the
+graph, and close every hole.
+
+- **INV-COMPONENT-WIRED** — every UI component cites ≥1 token (`uses`) AND the a11y rule
+  it `follows`. No component is a bare leaf.
+- **INV-NO-HARDCODE** — no component carries a raw value (hex, px, font) where a token
+  cite belongs. Every concrete value traces to a token.
+- **INV-TOKEN-USED** — every (semantic) token is consumed by ≥1 component. A token
+  defined and cited by nobody is an orphan, and an orphan is a failure.
+- **INV-SEMANTIC-RESOLVES** — after the theming climb, every semantic token cites the
+  primitive(s) it resolves to **per theme**, and no component still cites a raw
+  primitive. The migration left nothing on the old wiring.
+- **INV-FLOW-SEQUENCES** — every flow sequences real components via **ordered edges**,
+  not component names as text.
+- **INV-FORMAT-TYPED** — after the format morph, every token carries the typed `Format` +
+  `Value`; none is left on the old free-text `Value`, and the `Format` matches the value (a
+  `color` token holds a color, not `8px`).
 
 ## Constraints
 

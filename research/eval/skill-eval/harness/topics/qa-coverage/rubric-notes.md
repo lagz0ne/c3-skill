@@ -7,6 +7,34 @@ dense, traceable QA graph — not as an architecture-diagram generator. This top
 deliberately exercises the two features the architecture topics barely touch:
 **custom canvases** and **typed-citation wiring**.
 
+## Invariants — the scoring spine (with falsifiers)
+
+`check`-clean is necessary, not sufficient: it proves citations resolve, not that
+coverage is **complete** or that a cite actually formed a graph edge. These are the bar.
+The falsifier is what a reviewer finds in the finished workspace `.c3/` to fail the run.
+
+| Invariant | Falsifier (find this → broken) |
+| --- | --- |
+| **INV-REQ-COVERED** | `graph <requirement> --direction reverse` shows no test-case — an untested requirement. |
+| **INV-RISK-COVERED** | `graph <risk> --direction reverse` is empty — an uncovered risk. |
+| **INV-TEST-DOUBLE-WIRED** | A test-case with fewer than both edges populated (verifies-requirement and covers-risk), or a `N.A`/blank in either. |
+| **INV-EDGE-IS-REAL** | A test-case that *names* a target, yet `graph <target> --direction reverse` doesn't list it — it used `entity_id`/text, not a `reference` edge, so no graph edge formed. |
+| **INV-EDGE-TARGETED** | A `verifies` cell holding a *risk* id (or `covers` holding a requirement id, or `governs` holding a test-case id): the id resolves so `check` is `issues[0]`, but `graph <that-target> --direction reverse` does NOT list the case — the edge was silently dropped on a target-type mismatch (the column is a `reference`, so INV-EDGE-IS-REAL passes it). |
+| **INV-PLAN-GOVERNS** | A test-plan whose `governs` edges are empty — it governs nothing. |
+| **INV-CLIMB-COMPLETE** | A test-case still below the raised bar (no Negative Cases / Evidence), or a new-sub-flow requirement whose reverse graph is empty. |
+
+## Reviewer runbook — how to surface each falsifier
+Run against `<run>.workspace/` with the HEAD binary (`C3X_MODE=agent /tmp/c3x-score --c3-dir .c3 <cmd>`).
+
+| Invariant | Commands → what to look for |
+| --- | --- |
+| **INV-REQ-COVERED / INV-RISK-COVERED** | `graph <each requirement/risk> --direction reverse` → ≥1 test-case pointing back. |
+| **INV-TEST-DOUBLE-WIRED** | `read <each test-case>` → both edge columns carry real ids. |
+| **INV-EDGE-IS-REAL** | `canvas read test-case` → the Traceability columns are `reference`/`edge`, not `entity_id`; cross-check a named target's reverse graph actually lists the case. |
+| **INV-EDGE-TARGETED** | `canvas read test-case` → the Traceability columns declare `targets:`; then for each test-case `read` the `verifies`/`covers` cell and `graph <cited-id> --direction reverse` — if the case is absent while the cell is non-blank, the id was a wrong-type target and the edge was dropped. |
+| **INV-PLAN-GOVERNS** | `graph <test-plan>` → `governs` edges to the in-scope requirements/risks. |
+| **INV-CLIMB-COMPLETE** | `canvas read test-case` → Negative Cases/Evidence required; `read <each test-case>` → present; `graph <new-subflow req> --direction reverse` → covered. |
+
 ## Must-have evidence
 
 - **Local C3 command evidence**, not bare/global `c3x` (commands run through

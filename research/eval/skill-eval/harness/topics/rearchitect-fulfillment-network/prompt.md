@@ -22,10 +22,12 @@ The business opens more centers. New pressures the docs must make reviewable:
 - **Inter-center transfer reconciliation** — a transfer must never double-count or
   lose stock in flight.
 - **Carrier integration and procurement** — inbound supply and outbound carriers.
-This is a real rise in complexity *level*: climb the relevant canvas (add the required
-section(s) the new invariants need — e.g. a cross-center flow / safety contract) and
-**migrate every affected fact up to the new rung, completely**. Add the new containers
-(network coordination, procurement, carrier) and their components.
+This is a real rise in complexity *level*, and the climb has a clear output: raise the
+component canvas to require a **Cross-Center Contract** section — where a component makes
+reviewable which center owns the authoritative on-hand and how an in-flight transfer never
+double-counts or loses stock — then **migrate every affected component up to it, completely**
+(no fact straddles two rungs). Add the new containers (network coordination, procurement,
+carrier) and their components.
 
 ## Generation 3 — planning/execution split (re-architecture: retire + reparent + a conflicting change)
 Scale forces a control-plane / data-plane split. Introduce a **planning plane**
@@ -69,6 +71,23 @@ keep `c3 check` clean after each generation.
    coordination, procurement, carrier, and finance/returns surfaces; deep component
    trees; cross-plane and cross-center recipes; governing refs and rules.
 7. Run verification after each generation and report the exact result.
+
+## Invariants — your graph must make these hold (beyond `c3 check`)
+
+`check` validates structure, not coherence — it cannot see whether the re-architecture
+actually divided responsibilities, wired its recipes, or bound its rules. These must hold
+and be reviewable from the `.c3/` graph:
+
+- **INV-PLANE-PURE** — after the planning/execution split, every responsibility sits on the
+  plane that owns it: no execution-plane component still *decides* (forecast / allocate /
+  plan a wave), no planning-plane component *does* (pick / pack / ship). The split is
+  semantic, not just a reparent of boxes.
+- **INV-RECIPE-WIRED** — every cross-plane recipe's handoffs are real **edge cites to the
+  receiving components** (so `c3 graph <recipe>` shows the component chain), not component
+  names written as prose.
+- **INV-RULE-GOVERNS** — every enforceable rule you author is **cited by ≥1 component it
+  governs**, via a real edge, and lands on the *right* one (the transfer-idempotency rule is
+  cited from the inter-center transfer component, not some unrelated surface).
 
 ## Constraints
 - Use local C3 only: `C3X_MODE=agent bash /opt/c3/skills/c3/bin/c3x.sh`.

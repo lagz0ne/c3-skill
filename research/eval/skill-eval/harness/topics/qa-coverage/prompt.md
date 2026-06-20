@@ -78,6 +78,30 @@ happy-path test cannot cover.
    not hide these behind a "clean" claim — report errors vs warnings truthfully and
    say which facts they fall on.
 
+## Invariants — your graph must make the holes visible
+
+These hold beyond `c3 check`. `check` proves every citation resolves; it does NOT prove
+coverage is complete — that no requirement or risk is untested, that a "wired" test
+actually formed a graph edge. State each so a reviewer can verify it from the graph, and
+close every hole.
+
+- **INV-REQ-COVERED** — every requirement has ≥1 verifying test-case.
+- **INV-RISK-COVERED** — every risk has ≥1 covering test-case. An uncovered risk is the
+  hole this topic exists to expose.
+- **INV-TEST-DOUBLE-WIRED** — every test-case fills BOTH edges (verifies → requirement
+  AND covers → risk) with real ids, never blank or `N.A`.
+- **INV-EDGE-IS-REAL** — wiring uses `reference`/edge columns (which form a graph edge),
+  not `entity_id` (which resolves in `check` but forms no edge). Coverage that survives
+  only in `check` but vanishes in the reverse graph is not coverage.
+- **INV-EDGE-TARGETED** — every populated edge cell names a fact whose *actual type* matches
+  the column's declared `targets:` — a `verifies` cell holds a **requirement**, a `covers`
+  cell holds a **risk**. A right-column/wrong-type id resolves in `check` but is silently
+  dropped, forming no edge — so it must not be swapped between the two Traceability columns.
+- **INV-PLAN-GOVERNS** — the test-plan wires (governs) to the requirements/risks in its
+  scope — a cross-cutting fact owned by no single test-case.
+- **INV-CLIMB-COMPLETE** — after the sub-flow climb, every test-case is migrated to the
+  raised shape AND the new sub-flow's own requirements/risks are added and covered.
+
 ## Constraints
 
 - Use local C3 only: `C3X_MODE=agent bash /opt/c3/skills/c3/bin/c3x.sh`.

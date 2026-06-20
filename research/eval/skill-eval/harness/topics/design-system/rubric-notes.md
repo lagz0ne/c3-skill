@@ -6,6 +6,33 @@ with edge columns**, and **wiring a dense, every-citation-resolves traceability
 graph** — then growing it under a real pressure. Score on the evidence below, not on
 prose quality.
 
+## Invariants — the scoring spine (with falsifiers)
+
+`check`-clean is necessary, not sufficient: it proves citations resolve, not that the
+graph is **complete**. These are the bar. The falsifier is what a reviewer finds in the
+finished workspace `.c3/` to fail the run.
+
+| Invariant | Falsifier (find this → broken) |
+| --- | --- |
+| **INV-COMPONENT-WIRED** | A UI component with an empty `uses` (token) or `follows` (a11y rule) edge column. |
+| **INV-NO-HARDCODE** | A raw value (hex / px / font literal) in a component section where a token cite belongs — the component hardcodes instead of citing. |
+| **INV-TOKEN-USED** | `graph <semantic-token> --direction reverse` is empty for a defined token — an orphan nobody consumes. |
+| **INV-SEMANTIC-RESOLVES** | After the climb: a semantic token with no per-theme primitive edge, OR a component still wired to a raw primitive (migration incomplete). |
+| **INV-FLOW-SEQUENCES** | A flow whose steps are prose component *names*, not edge cites; `graph <flow>` shows no component edges. |
+| **INV-FORMAT-TYPED** | After the morph: a token still on the old free-text `Value` (not migrated to typed `Format` + `Value`), OR a `Format` that contradicts its value (a token typed `color` holding `8px`) — a mechanical retype that didn't actually sort formats. The morph gate keeps `check` clean. |
+
+## Reviewer runbook — how to surface each falsifier
+Run against `<run>.workspace/` with the HEAD binary (`C3X_MODE=agent /tmp/c3x-score --c3-dir .c3 <cmd>`); `grep` over `.c3/` catches hardcoded literals.
+
+| Invariant | Commands → what to look for |
+| --- | --- |
+| **INV-COMPONENT-WIRED** | `read <each ui-component>` → `uses` + `follows` filled with real ids; `graph <component>` shows both edges. |
+| **INV-NO-HARDCODE** | `grep -rnE '#[0-9a-fA-F]{3,6}' .c3/` (hex; also scan for px/font literals) → a raw value in a *component* body where a token cite belongs (a token's own value section is fine; a component's is not). |
+| **INV-TOKEN-USED** | `graph <each semantic token> --direction reverse` → ≥1 consuming component; empty = orphan. |
+| **INV-SEMANTIC-RESOLVES** | `read <each semantic token>` → per-theme primitive edges; `grep` component cites for primitive ids → none should remain after migration. |
+| **INV-FLOW-SEQUENCES** | `read <flow>` + `graph <flow>` → ordered component edges, not text names. |
+| **INV-FORMAT-TYPED** | `canvas read <token-type>` → the typed `Format` column; `read <each token>` → Format present and consistent with the value; `change status <morph-adr>` → reshape + migration in ONE unit. |
+
 ## Must-have evidence
 
 ### A. Custom canvases — NOT the builtins

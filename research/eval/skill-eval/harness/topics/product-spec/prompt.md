@@ -65,11 +65,23 @@ surviving strategy — exercise retire/supersede + re-wire, not silent deletion.
    carry the new wiring. Make the retire and the climb visible as their own
    steps, not one late cleanup.
 
-4. **Add one cross-cutting recipe** — a release / roadmap doc that spans several
+4. **Evolve the model — grade the OKRs.** The spec defines an objective as an OKR
+   with *measurable* key results, yet the lean `objective` canvas holds them as
+   prose, recording no target-vs-actual — so nothing can be graded. The quarter
+   closes and leadership must grade each objective. **Morph** the `objective`
+   canvas: reshape the prose key-results into a typed table — `Target`, `Actual`,
+   `Status` (on-track / at-risk / missed), `Confidence` — and **migrate every live
+   objective** (including the Q3 successor) to the new shape **in the same unit**.
+   This is a non-additive reshape (a morph, not a climb): it restructures the KR
+   section, it does not just add a column, and no objective may straddle the old
+   and new shapes. It is also what *justifies* the pivot — an objective graded
+   *missed* is why leadership re-strategized.
+
+5. **Add one cross-cutting recipe** — a release / roadmap doc that spans several
    epics (cites the epics shipping together). Define a custom canvas for it too
    if a built-in does not fit.
 
-5. **Wire densely and keep it traceable.** Author facts of your custom types via
+6. **Wire densely and keep it traceable.** Author facts of your custom types via
    `c3 add <type> <slug> --file` (read the canvas you defined with
    `c3 schema <type>` first) or via a change-unit. Then prove coverage:
    `c3 graph <objective-id> --direction reverse` should show real epics and
@@ -77,10 +89,35 @@ surviving strategy — exercise retire/supersede + re-wire, not silent deletion.
    objective**. No orphan stories; no childless objectives (except the retired
    one, which should be terminal/superseded, not dangling).
 
-6. **Keep `c3 check` clean.** Every citation must resolve to a real fact. Run
+7. **Keep `c3 check` clean.** Every citation must resolve to a real fact. Run
    `c3 check` after the lean cut, after the pivot/migration, and at the end.
    Report the exact final result; if anything is unresolved, name it rather than
    hiding it.
+
+## Invariants — your graph must make the holes visible
+
+These hold beyond `c3 check`. `check` proves every citation resolves; it does NOT prove
+the ladder is complete — that no story serves nothing, no live objective sits without
+work, that the pivot re-wired rather than deleted. State each so a reviewer can verify it
+from the graph, and close every hole.
+
+- **INV-STORY-LADDERS** — every story serves → an objective, refines → an epic, and
+  (after the climb) satisfies → a requirement; all populated, all pointing at live facts.
+- **INV-OBJECTIVE-WORKED** — every live objective has ≥1 epic/story laddering up to it.
+  No dead objective.
+- **INV-PIVOT-REWIRED** — after the Q3 pivot the retired objective is superseded
+  (terminal), not deleted or left dangling, and every epic/story that laddered to it is
+  re-pointed onto the successor.
+- **INV-CLIMB-COMPLETE** — the `satisfies → requirement` edge was absent at rung-1 and
+  added in the climb; every existing story was migrated to carry it.
+- **INV-RELEASE-SPANS** — the release/roadmap recipe cites several epics shipping
+  together — a fact that spans the hierarchy, not one chain.
+- **INV-KR-TYPED** — after the grading morph, every live objective carries the typed
+  key-result table (Target / Actual / Status / Confidence); none is left with prose KRs,
+  and the values are real — every objective has a genuine Status, not a uniform placeholder.
+- **INV-SUPERSEDE-LINKED** — the superseded objective carries its successor's `supersedes`
+  backlink (use `c3 supersede`, which writes it), not a hand-flipped `superseded` status
+  with no link — the pivot's provenance (what replaced what) must be traceable.
 
 ## Constraints
 

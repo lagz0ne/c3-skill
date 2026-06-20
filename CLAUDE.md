@@ -37,7 +37,7 @@ CLI: `c3local <command>` after the alias above; see `skills/c3/SKILL.md` for the
 - Use `AskUserQuestionTool` where possible — it yields a better-grounded answer.
 - Start with brainstorming to pin the intention; align the concept in prose before offering implementation menus.
 - Once understood, write the plan, then implement in parallel using subagents.
-- Before claiming work is done: run `/noslop` to strip AI slop, then run the local C3 flow (`c3local check` + the audit guidance in `skills/c3/SKILL.md`) to verify docs match code.
+- Before claiming work is done: run `/noslop` to strip AI slop, then run the local C3 flow (`c3local check` for doc integrity + `c3local eval` for fact↔code conformance) to verify docs match code.
 - Delegate to `/release` when done; confirm scope with the user. Patch by default.
 
 ---
@@ -65,9 +65,8 @@ c3-design/
 ├── cli/                      # Go CLI source
 │   ├── main.go
 │   ├── cmd/                  # Command implementations
-│   └── internal/             # Core libraries (schema, store, changeset,
-│       │                     #   codemap, frontmatter, index, walker, …)
-│       └── templates/        # Embedded doc templates
+│   └── internal/             # Core libraries (content, store, schema, changeset,
+│                             #   walker, codemap (glob match), eval, frontmatter, …)
 ├── packages/cli/             # npm @c3x/cli thin client (downloads the binary)
 ├── skills/c3/                # Unified skill (auto-discovered)
 │   ├── SKILL.md              # Skill definition + intent router
@@ -77,7 +76,7 @@ c3-design/
 │   │   └── c3x-{version}-{os}-{arch} # Cross-compiled binaries (gitignored; local
 │   │                                 #   builds accumulate here, only the matching
 │   │                                 #   platform/version is used)
-│   └── references/           # Operation-specific guidance (8 files)
+│   └── references/           # Operation-specific guidance (9 files)
 │       ├── onboard.md
 │       ├── query.md
 │       ├── audit.md
@@ -85,7 +84,8 @@ c3-design/
 │       ├── canvas.md
 │       ├── ref.md
 │       ├── rule.md
-│       └── sweep.md
+│       ├── sweep.md
+│       └── eval.md           # conformance: a fact's claim vs the external it governs
 └── scripts/
     └── build.sh              # Cross-compile Go CLI (debug-only; CI owns the build)
 ```

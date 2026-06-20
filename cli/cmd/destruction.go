@@ -18,7 +18,7 @@ import (
 // leaving them stranded is refused. (A pre-apply check on the current graph would
 // wrongly block the legitimate re-point-then-retire flow.) Integrity is the tool's:
 // the destruction lands all-or-nothing only when nothing is left dangling.
-func retireGate(s *store.Store, c3Dir string, patches []changeset.Patch, codemaps []changeset.CodemapChange) []string {
+func retireGate(s *store.Store, c3Dir string, patches []changeset.Patch) []string {
 	retired := map[string]bool{}
 	for _, p := range patches {
 		if p.Scope == changeset.ScopeRetire {
@@ -47,7 +47,7 @@ func retireGate(s *store.Store, c3Dir string, patches []changeset.Patch, codemap
 
 	rejectSet := map[string]bool{}
 	_ = s.WithPreviewTx(func(ts *store.Store) error {
-		if err := changeset.Apply(ts, patches, codemaps, applyHooks(c3Dir)); err != nil {
+		if err := changeset.Apply(ts, patches, applyHooks(c3Dir)); err != nil {
 			// The unit doesn't apply for some OTHER reason — a different gate reports it;
 			// don't double-report here.
 			return nil

@@ -157,7 +157,7 @@ func TestApply_MembershipSynthesizedFromParentEdgeAlone(t *testing.T) {
 	base := fmt.Sprintf("c3-1@v%d:sha256:%s", e1.Version, e1.RootMerkle)
 
 	p := Patch{Target: "c3-1", Scope: ScopeFrontmatter, Base: base, Parent: "c3-0", Source: "01.patch.md"}
-	if err := Apply(s, []Patch{p}, nil, reconcileHook()); err != nil {
+	if err := Apply(s, []Patch{p}, reconcileHook()); err != nil {
 		t.Fatalf("apply: %v", err)
 	}
 	body, _ := content.ReadEntity(s, "c3-0")
@@ -187,7 +187,7 @@ func TestApply_ReparentHealsOldAndNewParent(t *testing.T) {
 	e1, _ := s.GetEntity("c3-1")
 	base := fmt.Sprintf("c3-1@v%d:sha256:%s", e1.Version, e1.RootMerkle)
 	p := Patch{Target: "c3-1", Scope: ScopeFrontmatter, Base: base, Parent: "c3-0b", Source: "01.patch.md"}
-	if err := Apply(s, []Patch{p}, nil, reconcileHook()); err != nil {
+	if err := Apply(s, []Patch{p}, reconcileHook()); err != nil {
 		t.Fatalf("apply: %v", err)
 	}
 	oldBody, _ := content.ReadEntity(s, "c3-0a")

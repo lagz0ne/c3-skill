@@ -106,8 +106,8 @@ func cascadeHintsForID(s *store.Store, id string) []HelpHint {
 
 func lookupMissHints(filePath string) []HelpHint {
 	return []HelpHint{
-		{Command: "c3x codemap", Description: "coverage gap: map or explicitly exclude the surfaced path"},
-		{Command: fmt.Sprintf("c3x lookup %q", filePath), Description: "rerun after codemap update"},
+		{Command: "c3x eval", Description: "coverage gap: no eval spec's code globs map this path — add the binding in .c3/eval/<fact>.yaml"},
+		{Command: fmt.Sprintf("c3x lookup %q", filePath), Description: "rerun after updating the eval spec's code globs"},
 		{Command: "ADR Parent Delta", Description: "uncharted files need explicit ownership evidence before done"},
 	}
 }

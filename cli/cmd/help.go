@@ -176,17 +176,10 @@ Examples:
 	{
 		Name:     "set",
 		Args:     "<id> <field> <value>",
-		OneLiner: "Update frontmatter field or codemap patterns",
+		OneLiner: "Update a frontmatter field",
 		Help: `Usage: c3x set <id> <field> <value>
-       c3x set <id> codemap "<patterns>" [--append|--remove]
 
 Frontmatter fields: goal, summary, status, boundary, category, title, date, description
-
-Special field "codemap" updates code-map patterns (comma-separated):
-  Replace:  c3x set c3-101 codemap "src/auth/**,src/auth.go"
-  Append:   c3x set c3-101 codemap "src/utils.go" --append
-  Remove:   c3x set c3-101 codemap "src/old/**" --remove
-  Clear:    c3x set c3-101 codemap ""
 
 Note: set does NOT sync relationships. Citations come from the body — a column
 the canvas marks as an edge (see 'c3x schema <type>'); author it at add, or
@@ -194,9 +187,7 @@ ride a change-unit patch for a frozen fact. Use 'c3x write <id> --section <name>
 for section body updates.
 
 Examples:
-  c3x set c3-101 goal "Handle JWT auth"
-  c3x set c3-101 codemap "src/auth/**,src/auth.go"
-  c3x set c3-101 codemap "src/new/**" --append`,
+  c3x set c3-101 goal "Handle JWT auth"`,
 	},
 	{
 		Name:     "schema",
@@ -205,7 +196,7 @@ Examples:
 		Help: `Usage: c3x schema <type> [--json]
 
 Show known sections for an entity type.
-Types come from c3x canvas list (system, container, component, ref, rule, adr, recipe, and project-defined document types).
+Types come from c3x canvas list (system, container, component, ref, rule, adr, and project-defined document types).
 
 Output includes:
   - REJECT IF: leading rejection contract for adr, ref, rule (read these BEFORE drafting)
@@ -221,34 +212,35 @@ Examples:
   c3x schema adr`,
 	},
 	{
-		Name:     "codemap",
-		OneLiner: "Scaffold code-map entries for all components, refs + rules",
-		Hidden:   true,
-		Help: `Usage: c3x codemap [--json]
-
-Scaffold or update code-map entries in the store for every component, ref,
-and rule in the C3 graph. Existing entries (patterns already set) are preserved.
-New entries are added with empty pattern lists for you to fill in.
-
-Default structured output is TOON and lists added and existing IDs;
-set HUMAN=1 for legacy human-readable text or --json for explicit JSON outside agent mode.
-
-Example: c3x codemap`,
-	},
-	{
 		Name:     "lookup",
 		Args:     "<file-path>",
 		OneLiner: "Map file to component(s) + refs",
 		Help: `Usage: c3x lookup <file-or-glob> [--json]
 
-Map a file path (or glob pattern) to owning component(s) from the code-map.
-Shows component goal, summary, and cited refs with their goals.
-Glob arguments expand against the project and show a file map.
+Map a file path (or glob pattern) to owning fact(s) via the eval-spec code
+bindings (.c3/eval/<fact>.yaml 'code:'). Shows the fact's goal and cited refs
+with their goals. Glob arguments expand against the project and show a file map.
 Bracket paths ([id], [...slug]) for Next.js/SvelteKit routes work automatically.
 
 Examples:
   c3x lookup src/auth/login.ts
   c3x lookup 'src/auth/**/*.ts'`,
+	},
+	{
+		Name:     "eval",
+		Args:     "[fact-id]",
+		OneLiner: "Run conformance pipelines — a fact's claim vs its external",
+		Help: `Usage: c3x eval [fact-id] [--json]
+
+Run .c3/eval/<fact>.yaml conformance pipelines and report a one-off verdict per
+fact (holds / drift / needs-judgement), each stamped with the external state it
+measured. A pipeline composes five ops: gather (raw read | mechanical command),
+filter, transform, eval (exists/equals/all_equal/contains_all/contains/count/
+judgement), and loop. A check you run on CI cadence — never an apply gate.
+
+Examples:
+  c3x eval                 # every spec
+  c3x eval c3-203          # one fact's spec`,
 	},
 	{
 		Name:     "search",
@@ -258,7 +250,7 @@ Examples:
 
 Search entity metadata and indexed markdown content. By default, results fuse
 local semantic similarity, keyword/BM25 matches, and graph relationships, then
-decorate hits with governing refs/rules and code-map paths.
+decorate hits with governing refs/rules.
 
 Search auto-builds or refreshes the local semantic index on first use and reuses
 fresh vectors on repeat runs. If the semantic model is unavailable, search falls
@@ -300,8 +292,8 @@ Examples:
 		OneLiner: "Subgraph from entity (LLM-friendly output)",
 		Help: `Usage: c3x graph <entity-id> [--depth N] [--direction forward|reverse] [--format mermaid] [--json]
 
-Emit a subgraph rooted at the given entity. Shows typed neighbors,
-file paths from code-map, and relationship edges.
+Emit a subgraph rooted at the given entity. Shows typed neighbors
+and relationship edges.
 
 Options:
   --depth N              BFS traversal depth (default: 1)
@@ -355,7 +347,6 @@ Cleanup:
   - Removes Governance table rows citing this entity
   - Removes Compliance Refs / Compliance Rules rows citing this entity
   - Removes row from parent container's Components table
-  - Removes code-map.yaml entry
   - Deletes the entity file
 
 Options:
@@ -384,9 +375,9 @@ Examples:
 	},
 	{
 		Name:     "change",
-		Args:     "<new|view|accept|apply|status|rebase|scaffold|inspect> <id>",
+		Args:     "<new|view|accept|apply|status|rebase|scaffold> <id>",
 		OneLiner: "Author, review, and apply a change-unit (the only path that mutates a fact)",
-		Help: `Usage: c3x change <new|view|accept|apply|status|rebase|scaffold|inspect> <change-unit-id>
+		Help: `Usage: c3x change <new|view|accept|apply|status|rebase|scaffold> <change-unit-id>
 
 A change-unit = reasoning (the doc) + change material (patch files in its folder,
 .c3/changes/<id>/*.patch.md). Applying it is the ONLY legal mutation of a fact.
@@ -400,17 +391,14 @@ rename / re-edge / remove. The folder of *.patch.md files is the source of truth
   view    the "files changed" panel: per-patch drift + state
   status  per-patch state derived from seal state (pending/applied/drifted/new)
   accept  record the one stored human judgment (status → accepted)
-  apply   the switcher: drift + canvas + retire + inspection gates, atomic all-or-nothing
+  apply   the switcher: drift + canvas + morph + retire gates, atomic all-or-nothing
   rebase  emit the drift bundle for re-authoring drifted patches
   scaffold stage a rung-climb: one empty insert patch per fact below its canvas bar
-  inspect show each touched fact's derivation obligations + code-map territory +
-          material hashes to stamp into a <seq>.inspect.md (the up-V the switch forces)
 
 Apply runs four mechanical gates before any write — drift (every anchor fresh),
-canvas (the merged body stays valid), retire (no destruction strands a child or
-citer), inspection (a code-bound fact's change is attested against its territory)
-— and is atomic: one failing gate blocks every patch. --dry-run reports without
-writing.
+canvas (the merged body stays valid), morph (a reshaped fact-type leaves no
+instance invalid), retire (no destruction strands a child or citer) — and is
+atomic: one failing gate blocks every patch. --dry-run reports without writing.
 
 Examples:
   c3x change view adr-20260601-auth
@@ -474,7 +462,7 @@ Commands:
 	}
 
 	b.WriteString(`
-Entity Types: container, component, ref, rule, adr, recipe (context created by init)
+Entity Types: container, component, ref, rule, adr (context created by init)
 
 Global Options:
   --json                     Explicit JSON compatibility outside agent mode; agent/default structured output is TOON

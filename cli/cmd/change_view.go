@@ -3,16 +3,15 @@ package cmd
 import (
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
 
 	"github.com/lagz0ne/c3-design/cli/internal/changeset"
+	"github.com/lagz0ne/c3-design/cli/internal/schema"
 )
 
-// The two-arm projection of a change-unit. A unit declares material on two axes and
-// matches it on each: INTERNAL facts (patches — frozen, drift-gated) and EXTERNAL
-// code bindings (codemap carriers — verified, not frozen). The view shows both the
-// declared material (derive) and its current match state.
+// The projection of a change-unit's internal facts: each patch is a frozen,
+// drift-gated declaration. The view shows the declared material and its current
+// match state. (A fact's external code binding lives in its .c3/eval/<fact>.yaml
+// spec, not in the change-unit.)
 
 // changePatchArm is one internal declaration and its match state.
 type changePatchArm struct {
@@ -23,59 +22,56 @@ type changePatchArm struct {
 	Drift  string `json:"drift,omitempty"` // drift reason, when the anchor is stale
 }
 
-// changeCodemapArm is one external declaration and its match state.
-type changeCodemapArm struct {
-	Source     string   `json:"source"`
-	Target     string   `json:"target"`
-	Globs      []string `json:"globs"`
-	Applied    bool     `json:"applied"`              // the live code-map already equals the declared globs
-	Unresolved []string `json:"unresolved,omitempty"` // declared globs that match no files on disk
-}
-
-// changeUnitView is the structured two-arm surface for `change view` / `change status`.
+// changeUnitView is the structured surface for `change view` / `change status`.
 type changeUnitView struct {
-	Unit     string             `json:"unit"`
-	Patches  []changePatchArm   `json:"patches"`
-	Codemaps []changeCodemapArm `json:"codemaps,omitempty"`
+	Unit    string           `json:"unit"`
+	Patches []changePatchArm `json:"patches"`
 }
 
-// buildChangeUnitView computes both arms: each patch's seal state + drift, and each
-// codemap carrier's applied state + which declared globs currently resolve.
-func buildChangeUnitView(opts ChangeApplyOptions, patches []changeset.Patch, codemaps []changeset.CodemapChange) changeUnitView {
+// buildChangeUnitView computes each patch's seal state + drift.
+func buildChangeUnitView(opts ChangeApplyOptions, patches []changeset.Patch) changeUnitView {
 	view := changeUnitView{Unit: opts.UnitID}
 	for _, p := range patches {
 		arm := changePatchArm{
 			Source: p.Source,
 			Target: p.Target,
 			Scope:  string(p.Scope),
-			State:  string(changeset.PatchStateOf(opts.Store, p)),
 		}
-		if drift := changeset.CheckDrift(opts.Store, p); drift != nil {
-			arm.Drift = drift.Error()
-		}
-		view.Patches = append(view.Patches, arm)
-	}
-
-	projectDir := filepath.Dir(opts.C3Dir)
-	fsys := os.DirFS(projectDir)
-	for _, c := range codemaps {
-		arm := changeCodemapArm{Source: c.Source, Target: c.Target, Globs: c.Globs}
-		live, _ := opts.Store.CodeMapFor(c.Target)
-		arm.Applied = sameStringSet(live, c.Globs)
-		for _, g := range c.Globs {
-			if !codemapGlobResolves(fsys, projectDir, g) {
-				arm.Unresolved = append(arm.Unresolved, g)
+		// A canvas morph targets a fact-TYPE, not a seal-tracked entity, so the
+		// store-based state machine can't see it (it would read every morph as "new").
+		// Derive its state from the file side: applied once the live canvas matches the
+		// morphed shape, else new.
+		if p.Scope == changeset.ScopeCanvas {
+			arm.State = canvasPatchState(opts.C3Dir, p)
+		} else {
+			arm.State = string(changeset.PatchStateOf(opts.Store, p))
+			if drift := changeset.CheckDrift(opts.Store, p); drift != nil {
+				arm.Drift = drift.Error()
 			}
 		}
-		view.Codemaps = append(view.Codemaps, arm)
+		view.Patches = append(view.Patches, arm)
 	}
 	return view
 }
 
-// renderChangeViewProse is the human "files changed" panel: drift detail per patch,
-// unresolved globs per carrier.
+// canvasPatchState reports whether a canvas morph has landed, by comparing the live
+// on-disk canvas shape for the target type to the patch's new shape. Applied once they
+// match, else new — so `change status` reflects a morph the same way it does a fact edit.
+func canvasPatchState(c3Dir string, p changeset.Patch) string {
+	morphed, err := schema.ParseCanvasDocument("canvases/"+p.Target+".md", p.Content)
+	if err != nil {
+		return string(changeset.StateNew) // an unparseable morph can't have landed
+	}
+	live, ok := schema.DefinitionForDir(c3Dir, p.Target)
+	if ok && canvasBodyYAML(live) == canvasBodyYAML(morphed) {
+		return string(changeset.StateApplied)
+	}
+	return string(changeset.StateNew)
+}
+
+// renderChangeViewProse is the human "files changed" panel: drift detail per patch.
 func renderChangeViewProse(w io.Writer, view changeUnitView) {
-	fmt.Fprintf(w, "change-unit %s — %d patch(es), %d codemap carrier(s)\n", view.Unit, len(view.Patches), len(view.Codemaps))
+	fmt.Fprintf(w, "change-unit %s — %d patch(es)\n", view.Unit, len(view.Patches))
 	if len(view.Patches) > 0 {
 		fmt.Fprintf(w, "\ninternal (facts):\n")
 		apply, reject := 0, 0
@@ -90,56 +86,17 @@ func renderChangeViewProse(w io.Writer, view changeUnitView) {
 		}
 		fmt.Fprintf(w, "  would apply %d · would reject %d\n", apply, reject)
 	}
-	if len(view.Codemaps) > 0 {
-		fmt.Fprintf(w, "\nexternal (code bindings):\n")
-		for _, c := range view.Codemaps {
-			state := "pending"
-			if c.Applied {
-				state = "applied"
-			}
-			fmt.Fprintf(w, "  %-8s %s → %s (%d glob(s))\n", state, c.Source, c.Target, len(c.Globs))
-			for _, u := range c.Unresolved {
-				fmt.Fprintf(w, "         UNRESOLVED %q matches no files\n", u)
-			}
-		}
-	}
 }
 
-// renderChangeStatusProse is the state projection: per-item state plus the counts.
+// renderChangeStatusProse is the state projection: per-patch state plus the counts.
 func renderChangeStatusProse(w io.Writer, view changeUnitView) {
-	fmt.Fprintf(w, "change-unit %s — %d patch(es), %d codemap carrier(s)\n", view.Unit, len(view.Patches), len(view.Codemaps))
+	fmt.Fprintf(w, "change-unit %s — %d patch(es)\n", view.Unit, len(view.Patches))
 	counts := map[string]int{}
 	for _, p := range view.Patches {
 		counts[p.State]++
 		fmt.Fprintf(w, "  %-8s %s → %s (%s)\n", p.State, p.Source, p.Target, p.Scope)
 	}
-	for _, c := range view.Codemaps {
-		state := "pending"
-		if c.Applied {
-			state = "applied"
-		}
-		counts[state]++
-		fmt.Fprintf(w, "  %-8s %s → %s codemap (%d glob(s))\n", state, c.Source, c.Target, len(c.Globs))
-	}
 	fmt.Fprintf(w, "pending %d · applied %d · drifted %d · new %d\n",
 		counts[string(changeset.StatePending)], counts[string(changeset.StateApplied)],
 		counts[string(changeset.StateDrifted)], counts[string(changeset.StateNew)])
-}
-
-// sameStringSet reports whether two glob slices hold the same multiset of values.
-func sameStringSet(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	seen := make(map[string]int, len(a))
-	for _, x := range a {
-		seen[x]++
-	}
-	for _, x := range b {
-		seen[x]--
-		if seen[x] < 0 {
-			return false
-		}
-	}
-	return true
 }

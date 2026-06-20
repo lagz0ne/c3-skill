@@ -402,11 +402,16 @@ func TestBDD_ReadOnlyLookupSkipsCanonicalPreverifyWhenCacheExists(t *testing.T) 
 		s.Close()
 		t.Fatal(err)
 	}
-	if err := s.SetCodeMap("c3-101", []string{"src/api/handlers/latency.go"}); err != nil {
-		s.Close()
+	s.Close()
+
+	// The fact→code binding lives in the eval spec; lookup resolves through it.
+	if err := os.MkdirAll(filepath.Join(c3Dir, "eval"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	s.Close()
+	if err := os.WriteFile(filepath.Join(c3Dir, "eval", "c3-101.yaml"),
+		[]byte("fact: c3-101\ncode:\n  - src/api/handlers/latency.go\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
 
 	c101Path := filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md")
 	broken := "---\nid: c3-101\nc3-seal: deadbeef\ntitle: auth\ntype: component\ncategory: foundation\nparent: c3-1\n---\n\n# auth\n\n## Goal\n\nThin.\n"
@@ -464,7 +469,7 @@ func TestBDD_RunSearchHybridJSONDispatch(t *testing.T) {
 	if len(out.Results) == 0 || out.Results[0].ID != "research-note-20260605-api-latency" {
 		t.Fatalf("unexpected search result: %+v", out.Results)
 	}
-	if out.Results[0].Context.Component.ID != "c3-101" || out.Results[0].Context.Path != "src/api/handlers/latency.go" {
+	if out.Results[0].Context.Component.ID != "c3-101" {
 		t.Fatalf("hybrid context missing: %+v", out.Results[0].Context)
 	}
 }
@@ -771,15 +776,14 @@ func TestRun_AgentModeExplicitJSONStillReturnsTOON(t *testing.T) {
 	t.Setenv("C3X_MODE", "agent")
 	c3Dir := setupRichC3DB(t)
 
-	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
-	if err != nil {
+	// The fact→code binding lives in the eval spec; lookup resolves through it.
+	if err := os.MkdirAll(filepath.Join(c3Dir, "eval"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.SetCodeMap("c3-101", []string{"src/auth/login.ts"}); err != nil {
-		s.Close()
+	if err := os.WriteFile(filepath.Join(c3Dir, "eval", "c3-101.yaml"),
+		[]byte("fact: c3-101\ncode:\n  - src/auth/login.ts\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	s.Close()
 
 	cases := []struct {
 		name string
@@ -823,54 +827,6 @@ func TestRun_Set(t *testing.T) {
 	}
 }
 
-func TestRun_SetCodemapOnFrozenFact(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	var buf bytes.Buffer
-
-	err := runWithIO([]string{"--c3-dir", c3Dir, "set", "c3-101", "codemap", "src/auth/**"}, strings.NewReader(""), true, &buf, io.Discard, false)
-	if err != nil {
-		t.Fatalf("set codemap on a frozen fact should be allowed, got: %v", err)
-	}
-	if strings.Contains(buf.String(), "facts are frozen") {
-		t.Fatalf("codemap set should not emit frozen-fact refusal:\n%s", buf.String())
-	}
-
-	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer s.Close()
-	patterns, err := s.CodeMapFor("c3-101")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(patterns) != 1 || patterns[0] != "src/auth/**" {
-		t.Fatalf("codemap patterns = %v, want [src/auth/**]", patterns)
-	}
-}
-
-func TestRun_SetCodemapOnFrozenFactWithFieldFlag(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-
-	err := runWithIO([]string{"--c3-dir", c3Dir, "set", "c3-101", "src/ui/**", "--field", "codemap"}, strings.NewReader(""), true, &bytes.Buffer{}, io.Discard, false)
-	if err != nil {
-		t.Fatalf("set --field codemap on a frozen fact should be allowed, got: %v", err)
-	}
-
-	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer s.Close()
-	patterns, err := s.CodeMapFor("c3-101")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(patterns) != 1 || patterns[0] != "src/ui/**" {
-		t.Fatalf("codemap patterns = %v, want [src/ui/**]", patterns)
-	}
-}
-
 func TestRun_SetRejectsSection(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
 	// adr is a change-doc (not frozen), so the dispatch guard passes and the
@@ -899,15 +855,6 @@ func TestRun_Graph(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
 	var buf bytes.Buffer
 	err := run([]string{"--c3-dir", c3Dir, "graph", "c3-0"}, &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestRun_Codemap(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	var buf bytes.Buffer
-	err := run([]string{"--c3-dir", c3Dir, "codemap"}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1049,9 +996,6 @@ func seedMainHybridSearchFixture(t *testing.T, s *store.Store) {
 		if err := s.AddRelationship(rel); err != nil {
 			t.Fatal(err)
 		}
-	}
-	if err := s.SetCodeMap("c3-101", []string{"src/api/handlers/latency.go"}); err != nil {
-		t.Fatal(err)
 	}
 	body := "## Summary\n\nCheckout API p95 increased from 180 ms to 420 ms after the connection-pool change. Span evidence points to DB pool wait.\n"
 	if err := content.WriteEntity(s, "research-note-20260605-api-latency", body); err != nil {

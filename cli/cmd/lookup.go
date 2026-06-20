@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/bmatcuk/doublestar/v4"
 	"github.com/lagz0ne/c3-design/cli/internal/codemap"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
@@ -81,19 +82,37 @@ func buildMatchFromStore(entity *store.Entity, s *store.Store) LookupMatch {
 	return match
 }
 
-// RunLookup maps a file path (or glob pattern) to owning components and their refs.
-func RunLookup(opts LookupOptions, w io.Writer) error {
-	if codemap.IsGlobPattern(opts.FilePath) {
-		return runGlobLookup(opts, w)
+// factsForFile returns the fact ids whose eval-spec code globs match file, sorted.
+// It is the resolution behind `lookup`: the fact→code binding lives in the eval
+// specs (.c3/eval/<fact>.yaml `code:`), so a file maps to a fact iff one of that
+// fact's globs matches it (the same doublestar match the bindings are built from).
+func factsForFile(bindings codemap.CodeMap, file string) []string {
+	var ids []string
+	for fact, globs := range bindings {
+		for _, g := range globs {
+			if matched, _ := doublestar.Match(g, file); matched {
+				ids = append(ids, fact)
+				break
+			}
+		}
 	}
-	return runSingleLookup(opts, w)
+	sort.Strings(ids)
+	return ids
 }
 
-func runSingleLookup(opts LookupOptions, w io.Writer) error {
-	ids, err := opts.Store.LookupByFile(opts.FilePath)
-	if err != nil {
-		return fmt.Errorf("lookup error: %w", err)
+// RunLookup maps a file path (or glob pattern) to owning facts and their refs,
+// resolving through the eval-spec code bindings (replaces the code-map).
+func RunLookup(opts LookupOptions, w io.Writer) error {
+	specs, _ := LoadEvalSpecs(opts.C3Dir)
+	bindings := EvalBindings(specs)
+	if codemap.IsGlobPattern(opts.FilePath) {
+		return runGlobLookup(opts, bindings, w)
 	}
+	return runSingleLookup(opts, bindings, w)
+}
+
+func runSingleLookup(opts LookupOptions, bindings codemap.CodeMap, w io.Writer) error {
+	ids := factsForFile(bindings, opts.FilePath)
 	result := LookupResult{
 		File:    opts.FilePath,
 		Matches: []LookupMatch{},
@@ -124,7 +143,7 @@ func runSingleLookup(opts LookupOptions, w io.Writer) error {
 	return nil
 }
 
-func runGlobLookup(opts LookupOptions, w io.Writer) error {
+func runGlobLookup(opts LookupOptions, bindings codemap.CodeMap, w io.Writer) error {
 	matched, err := codemap.GlobFiles(os.DirFS(opts.ProjectDir), opts.FilePath)
 	if err != nil {
 		return fmt.Errorf("glob error: %w", err)
@@ -140,7 +159,7 @@ func runGlobLookup(opts LookupOptions, w io.Writer) error {
 
 	seen := make(map[string]bool)
 	for _, file := range matched {
-		ids, _ := opts.Store.LookupByFile(file)
+		ids := factsForFile(bindings, file)
 		result.FileMap[file] = ids
 		for _, id := range ids {
 			if seen[id] {

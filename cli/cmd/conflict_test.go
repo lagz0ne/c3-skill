@@ -19,7 +19,7 @@ func TestRenderConflict_RecoversBaseFromHistory(t *testing.T) {
 	// Move the cited block so its hash is gone from the live fact but still recoverable
 	// from the version it was authored against.
 	edit := changeset.Patch{Target: "ref-jwt", Scope: changeset.ScopeBlock, Base: handle, Content: "Superseding rationale now in place here.", Source: "edit.patch.md"}
-	if err := changeset.Apply(s, []changeset.Patch{edit}, nil, nil); err != nil {
+	if err := changeset.Apply(s, []changeset.Patch{edit}, nil); err != nil {
 		t.Fatal(err)
 	}
 

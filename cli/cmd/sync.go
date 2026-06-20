@@ -60,7 +60,7 @@ func RunSyncExport(opts ExportOptions, w io.Writer) error {
 			return fmt.Errorf("sync export: write %s: %w", rel, err)
 		}
 	}
-	fmt.Fprintf(w, "Exported %d entities to %s\n", len(after)-boolToInt(hasCodeMap(after)), opts.OutputDir)
+	fmt.Fprintf(w, "Exported %d entities to %s\n", len(after), opts.OutputDir)
 	fmt.Fprintf(w, "Synced canonical markdown to %s\n", opts.OutputDir)
 	return nil
 }
@@ -158,7 +158,7 @@ func snapshotCanonicalTree(root string, verifySeals bool) (map[string]string, []
 			return err
 		}
 		rel = filepath.ToSlash(rel)
-		if rel == "code-map.yaml" || strings.HasSuffix(rel, ".md") {
+		if strings.HasSuffix(rel, ".md") {
 			data, err := os.ReadFile(path)
 			if err != nil {
 				return err
@@ -350,16 +350,4 @@ func diffSnapshots(actual, expected map[string]string) SyncCheckResult {
 
 func (r SyncCheckResult) empty() bool {
 	return len(r.BrokenSeal) == 0 && len(r.OnlyInActual) == 0 && len(r.OnlyInExpected) == 0 && len(r.ContentMismatch) == 0
-}
-
-func hasCodeMap(files map[string]string) bool {
-	_, ok := files["code-map.yaml"]
-	return ok
-}
-
-func boolToInt(v bool) int {
-	if v {
-		return 1
-	}
-	return 0
 }

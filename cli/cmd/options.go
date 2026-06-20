@@ -22,7 +22,6 @@ type Options struct {
 	Version       bool
 	IncludeADR    bool
 	Fix           bool
-	StrictCodemap bool
 	Remove        bool
 	DryRun        bool
 	Continue      bool
@@ -109,8 +108,6 @@ func ParseArgs(argv []string) Options {
 			opts.IncludeCode = true
 		case "--fix":
 			opts.Fix = true
-		case "--strict-codemap":
-			opts.StrictCodemap = true
 		case "--remove":
 			opts.Remove = true
 		case "--dry-run":

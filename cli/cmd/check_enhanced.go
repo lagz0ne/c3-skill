@@ -43,10 +43,6 @@ type CheckOptions struct {
 	Fix        bool
 	Only       []string
 	Rules      []string
-	// StrictCodemap promotes the change-unit codemap introspection (external binding
-	// verification) from WARN to error. Off by default: an unresolved external
-	// binding is reported, not gated.
-	StrictCodemap bool
 }
 
 // buildTitleMapStore creates a case-insensitive title/slug -> entity ID lookup.
@@ -122,7 +118,6 @@ func hintFor(message string) string {
 		substr string
 		hint   string
 	}{
-		{"code-map parse error", "check code-map entries with 'c3x list'"},
 		{"missing required section", ""},
 		{"empty required section", ""},
 		{"empty required table", "add at least one data row below the table headers"},
@@ -178,26 +173,6 @@ func formatCounts(errors, warnings int) string {
 		parts = append(parts, fmt.Sprintf("%d %s", warnings, noun))
 	}
 	return strings.Join(parts, ", ")
-}
-
-func checkRecipeSourcesStore(s *store.Store) []Issue {
-	var issues []Issue
-	recipes, _ := s.EntitiesByType("recipe")
-	for _, r := range recipes {
-		rels, _ := s.RelationshipsFrom(r.ID)
-		for _, rel := range rels {
-			if rel.RelType == "sources" {
-				if _, err := s.GetEntity(rel.ToID); err != nil {
-					issues = append(issues, Issue{
-						Severity: "warning",
-						Entity:   r.ID,
-						Message:  fmt.Sprintf("recipe references nonexistent entity: %s", rel.ToID),
-					})
-				}
-			}
-		}
-	}
-	return issues
 }
 
 func checkProjectCanvases(c3Dir string) []Issue {
@@ -308,38 +283,20 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 		// `check --fix` performs the flip. On a committed flip the doc is now
 		// terminal/frozen, so its discharge is not re-validated this pass.
 		if schema.IsChangeDocDir(opts.C3Dir, entity.Type) && entity.Status == "accepted" {
-			// External matching arm (double-V right side): verify the unit's affected
-			// code bindings still resolve. Runs BEFORE the latch so it reports even
-			// when the doc auto-dones this pass.
-			codemapIssues := codemapIntrospection(opts.Store, opts.ProjectDir, body, opts.StrictCodemap)
-			issues = append(issues, codemapIssues...)
-			// Under --strict-codemap an unresolved external binding is a GATE on done:
-			// the doc may not actualize accepted->done while a declared code binding does
-			// not resolve, exactly as an unresolved internal After-cite blocks it. Without
-			// --strict it is WARN-only and the flip proceeds.
-			strictBlocked := opts.StrictCodemap && hasErrorSeverity(codemapIssues)
-			if ready, _ := autoDoneLatch(opts.Store, opts.C3Dir, entity, body, opts.Fix && !strictBlocked); ready {
-				switch {
-				case strictBlocked:
-					issues = append(issues, Issue{
-						Severity: "warning",
-						Entity:   entity.ID,
-						Message:  fmt.Sprintf("%s is ready to auto-done but --strict-codemap blocks it until every declared code binding resolves", entity.ID),
-					})
-				case opts.Fix:
+			if ready, _ := autoDoneLatch(opts.Store, opts.C3Dir, entity, body, opts.Fix); ready {
+				if opts.Fix {
 					issues = append(issues, Issue{
 						Severity: "info",
 						Entity:   entity.ID,
 						Message:  fmt.Sprintf("auto-done: all After cites resolved fresh; %s actualized accepted->done", entity.ID),
 					})
 					continue
-				default:
-					issues = append(issues, Issue{
-						Severity: "info",
-						Entity:   entity.ID,
-						Message:  fmt.Sprintf("%s ready to auto-done: all After cites resolve fresh; run 'c3x check --fix' to actualize accepted->done", entity.ID),
-					})
 				}
+				issues = append(issues, Issue{
+					Severity: "info",
+					Entity:   entity.ID,
+					Message:  fmt.Sprintf("%s ready to auto-done: all After cites resolve fresh; run 'c3x check --fix' to actualize accepted->done", entity.ID),
+				})
 			}
 		}
 
@@ -488,52 +445,12 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 		}
 	}
 
-	// Code-map validation
-	allCodeMap, err := opts.Store.AllCodeMap()
-	if err == nil && len(allCodeMap) > 0 && opts.ProjectDir != "" {
-		for entityID, patterns := range allCodeMap {
-			entity, err := opts.Store.GetEntity(entityID)
-			if err != nil {
-				if len(opts.Only) > 0 {
-					continue
-				}
-				issues = append(issues, Issue{
-					Severity: "warning",
-					Entity:   entityID,
-					Message:  fmt.Sprintf("code-map entity %s not found in store", entityID),
-				})
-				continue
-			}
-			if !targetMatcher.matches(entity) {
-				continue
-			}
-			if entity.Type != "component" && entity.Type != "ref" && entity.Type != "rule" {
-				issues = append(issues, Issue{
-					Severity: "warning",
-					Entity:   entityID,
-					Message:  fmt.Sprintf("code-map: %s is not a component or ref", entityID),
-				})
-			}
-			for _, p := range patterns {
-				if p == "" {
-					issues = append(issues, Issue{
-						Severity: "warning",
-						Entity:   entityID,
-						Message:  "empty path in code-map",
-					})
-				}
-			}
-		}
-	}
-
 	if len(opts.Only) == 0 {
 		issues = append(issues, checkProjectCanvases(opts.C3Dir)...)
-		issues = append(issues, checkRecipeSourcesStore(opts.Store)...)
 		issues = append(issues, checkLayerDisconnectsStore(opts.Store)...)
 		issues = append(issues, checkFactSealsOnDisk(opts.C3Dir)...)
 	} else {
 		issues = append(issues, checkProjectCanvasesForTargets(opts.C3Dir, opts.Only)...)
-		issues = append(issues, filterIssuesByTargets(opts.Store, targetMatcher, checkRecipeSourcesStore(opts.Store))...)
 		issues = append(issues, filterIssuesByTargets(opts.Store, targetMatcher, checkLayerDisconnectsStore(opts.Store))...)
 		issues = append(issues, filterIssuesByTargets(opts.Store, targetMatcher, checkFactSealsOnDisk(opts.C3Dir))...)
 	}

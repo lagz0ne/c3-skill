@@ -71,9 +71,8 @@ func inCreationWindow(s *store.Store, c3Dir, id string) bool {
 	return true
 }
 
-// GuardCanonicalMutation refuses direct edits to frozen facts. Two carve-outs:
-// codemap updates (stored outside the sealed canonical document) and the creation
-// window — the first `write` that authors a never-authored fact's body.
+// GuardCanonicalMutation refuses direct edits to frozen facts. One carve-out: the
+// creation window — the first `write` that authors a never-authored fact's body.
 func GuardCanonicalMutation(s *store.Store, c3Dir string, opts Options) error {
 	switch opts.Command {
 	case "write":
@@ -89,10 +88,6 @@ func GuardCanonicalMutation(s *store.Store, c3Dir string, opts Options) error {
 		}
 	case "set":
 		if len(opts.Args) >= 1 {
-			_, field, _ := ResolveSetArgs(opts)
-			if field == "codemap" {
-				return nil
-			}
 			return GuardFactMutation(s, c3Dir, opts.Args[0])
 		}
 	}

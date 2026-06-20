@@ -188,22 +188,6 @@ func TestRunGraph_MermaidRefEdges(t *testing.T) {
 	}
 }
 
-func TestRunGraph_WithCodeMap(t *testing.T) {
-	s := createDBFixture(t)
-	s.SetCodeMap("c3-101", []string{"src/auth/**"})
-
-	var buf bytes.Buffer
-	err := RunGraph(GraphOptions{Store: s, EntityID: "c3-101", Depth: 0}, &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	output := buf.String()
-	if !strings.Contains(output, "files: src/auth/**") {
-		t.Errorf("should show files from code-map, got:\n%s", output)
-	}
-}
-
 func TestRunGraph_UnknownEntity(t *testing.T) {
 	s := createDBFixture(t)
 	var buf bytes.Buffer

@@ -19,8 +19,8 @@ type dbExecutor interface {
 	QueryRow(query string, args ...any) *sql.Row
 }
 
-// Store wraps an embedded SQLite database holding C3 entities,
-// relationships, code-map entries, and a mutation changelog.
+// Store wraps an embedded SQLite database holding C3 entities and
+// relationships.
 type Store struct {
 	db     *sql.DB
 	exec   dbExecutor // the pool by default; a *sql.Tx inside WithTx
@@ -151,16 +151,6 @@ CREATE TABLE IF NOT EXISTS relationships (
 );
 CREATE INDEX IF NOT EXISTS idx_relationships_to ON relationships(to_id);
 
-CREATE TABLE IF NOT EXISTS code_map (
-	entity_id TEXT NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
-	pattern   TEXT NOT NULL,
-	PRIMARY KEY (entity_id, pattern)
-);
-
-CREATE TABLE IF NOT EXISTS code_map_excludes (
-	pattern TEXT PRIMARY KEY
-);
-
 CREATE TABLE IF NOT EXISTS entity_embeddings (
 	entity_id TEXT PRIMARY KEY REFERENCES entities(id) ON DELETE CASCADE,
 	model     TEXT NOT NULL,
@@ -237,17 +227,6 @@ CREATE TABLE IF NOT EXISTS versions (
 	commit_hash TEXT NOT NULL DEFAULT '',
 	created_at  TEXT NOT NULL DEFAULT (datetime('now')),
 	PRIMARY KEY (entity_id, version)
-);
-
-CREATE TABLE IF NOT EXISTS changelog (
-	id          INTEGER PRIMARY KEY AUTOINCREMENT,
-	entity_id   TEXT NOT NULL,
-	action      TEXT NOT NULL,
-	field       TEXT NOT NULL DEFAULT '',
-	old_value   TEXT NOT NULL DEFAULT '',
-	new_value   TEXT NOT NULL DEFAULT '',
-	timestamp   TEXT NOT NULL DEFAULT (datetime('now')),
-	commit_hash TEXT NOT NULL DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS store_meta (

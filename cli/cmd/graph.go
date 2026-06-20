@@ -31,7 +31,6 @@ type graphNode struct {
 	Refs     []string `json:"refs,omitempty"`
 	CitedBy  []string `json:"cited_by,omitempty"`
 	Affects  []string `json:"affects,omitempty"`
-	Files    []string `json:"files,omitempty"`
 }
 
 // RunGraph emits a subgraph rooted at the given entity.
@@ -251,13 +250,6 @@ func graphTextStore(entities []*store.Entity, s *store.Store, w io.Writer) error
 			sort.Strings(affectsIDs)
 			fmt.Fprintf(w, "  affects: %s\n", strings.Join(affectsIDs, ", "))
 		}
-
-		// Files from code-map
-		if files, _ := s.CodeMapFor(e.ID); len(files) > 0 {
-			sorted := append([]string(nil), files...)
-			sort.Strings(sorted)
-			fmt.Fprintf(w, "  files: %s\n", strings.Join(sorted, ", "))
-		}
 	}
 	return nil
 }
@@ -308,11 +300,6 @@ func graphJSONStore(entities []*store.Entity, s *store.Store, w io.Writer) error
 					node.CitedBy = append(node.CitedBy, c.ID)
 				}
 			}
-		}
-
-		if files, _ := s.CodeMapFor(e.ID); len(files) > 0 {
-			node.Files = append([]string(nil), files...)
-			sort.Strings(node.Files)
 		}
 
 		nodes = append(nodes, node)

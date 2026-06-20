@@ -97,20 +97,17 @@ func CheckDrift(s *store.Store, p Patch) error {
 	return fmt.Errorf("patch %s: malformed base handle %q", p.Source, p.Base)
 }
 
-// Apply checks every patch's anchor (drift), then writes the whole change-unit —
-// internal patches AND external codemap carriers — inside one transaction: a single
-// drifted anchor or a mid-apply failure (e.g. a landing-hash mismatch on patch N)
-// rolls back every prior patch's node, entity, edge, and seal write together with
-// every codemap write. The unit lands completely or not at all, never half-matched
-// between its internal facts and its external code bindings.
+// Apply checks every patch's anchor (drift), then writes the whole change-unit's
+// internal patches inside one transaction: a single drifted anchor or a mid-apply
+// failure (e.g. a landing-hash mismatch on patch N) rolls back every prior patch's
+// node, entity, edge, and seal write together. The unit lands completely or not at
+// all.
 //
-// Patches apply before codemaps so a carrier may target a fact created in the same
-// unit — the create is visible to SetCodeMap through read-your-writes in the tx.
 // syncEdges, when non-nil, re-derives an entity's canvas-owned (body-column)
 // relationships after its body changed — called inside the same transaction so
 // the edge update lands atomically with the body patch (and so a preview overlay,
 // which runs this exact Apply path, sees the staged edge). nil skips it.
-func Apply(s *store.Store, patches []Patch, codemaps []CodemapChange, hooks *ApplyHooks) error {
+func Apply(s *store.Store, patches []Patch, hooks *ApplyHooks) error {
 	for _, p := range patches {
 		if err := CheckDrift(s, p); err != nil {
 			return err
@@ -138,11 +135,6 @@ func Apply(s *store.Store, patches []Patch, codemaps []CodemapChange, hooks *App
 			if !seen[p.Target] {
 				seen[p.Target] = true
 				touched = append(touched, p.Target)
-			}
-		}
-		for _, c := range codemaps {
-			if err := ts.SetCodeMap(c.Target, c.Globs); err != nil {
-				return fmt.Errorf("apply codemap %s → %s: %w", c.Source, c.Target, err)
 			}
 		}
 		// The new/maintained parent of every touched entity (and every touched entity
@@ -489,6 +481,28 @@ func reseal(s *store.Store, entityID string) error {
 	if err != nil {
 		return err
 	}
+	// Re-derive the denormalized goal from the (possibly just-patched) Goal
+	// section, so a block edit to ## Goal can never leave frontmatter goal: stale
+	// (the whole-patch path already syncs goal via content.WriteEntity).
+	if goal, ok := goalFromNodes(nodes); ok {
+		entity.Goal = goal
+	}
 	entity.RootMerkle = store.ComputeRootMerkle(hashes)
 	return s.UpdateEntity(entity)
+}
+
+// goalFromNodes returns the paragraph text under the "Goal" heading, mirroring
+// content.syncGoalFromNodes over stored nodes.
+func goalFromNodes(nodes []*store.Node) (string, bool) {
+	for _, h := range nodes {
+		if h.Type == "heading" && h.Content == "Goal" {
+			for _, n := range nodes {
+				if n.Type == "paragraph" && n.ParentID.Valid && n.ParentID.Int64 == h.ID {
+					return n.Content, true
+				}
+			}
+			return "", false
+		}
+	}
+	return "", false
 }

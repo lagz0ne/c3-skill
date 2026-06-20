@@ -89,8 +89,11 @@ func ParsePatch(source, raw string) (Patch, error) {
 	}
 	base := strings.TrimSpace(m.Base)
 	// Integrity by construction: a no-base patch is a create (new target). Any
-	// edit to an existing fact must anchor, so only whole-scope may omit the base.
-	if base == "" && scope != ScopeWhole {
+	// edit to an existing FACT must anchor, so only whole-scope may omit the base.
+	// A canvas-scope patch re-authors a fact-TYPE's shape (not a fact), so it too
+	// may omit the base — the morph gate refuses it unless every instance comes
+	// with it, and the unit's instance-migration patches drift-protect the shape.
+	if base == "" && scope != ScopeWhole && scope != ScopeCanvas {
 		return Patch{}, fmt.Errorf("patch %s: scope %q requires a base anchor", source, scope)
 	}
 

@@ -541,7 +541,6 @@ func TestHintFor(t *testing.T) {
 		{"unknown entity reference: c3-999", "verify the ID with 'c3x list'; check for typos"},
 		{"unknown ref reference: ref-missing", "use a ref-* ID (e.g., ref-jwt); verify with 'c3x list'"},
 		{"file does not exist: src/foo.ts", "create the file or fix the path"},
-		{"code-map parse error: yaml: unmarshal error", "check code-map entries with 'c3x list'"},
 		{"layer disconnect: child component c3-110 has parent c3-1 but is missing from c3-1 Components table", "open a change doc (c3 add adr) that amends the parent table top-down; rebuild only proves storage, not layer integration"},
 		{"something unknown", ""},
 	}
@@ -550,30 +549,6 @@ func TestHintFor(t *testing.T) {
 		if got != tt.expected {
 			t.Errorf("hintFor(%q) = %q, want %q", tt.message, got, tt.expected)
 		}
-	}
-}
-
-func TestRunCheck_RecipeInvalidSources(t *testing.T) {
-	s := createRichDBFixture(t)
-	s.InsertEntity(&store.Entity{
-		ID: "recipe-auth", Type: "recipe", Title: "Auth Flow", Slug: "auth",
-		Status: "active", Metadata: "{}",
-	})
-	content.WriteEntity(s, "recipe-auth", "# Auth Flow\n\n## Goal\n\nTrace auth.\n")
-	// Add valid source
-	s.AddRelationship(&store.Relationship{FromID: "recipe-auth", ToID: "c3-0", RelType: "sources"})
-	// Add invalid source — entity doesn't exist, but relationship can't be created with FK
-	// So we test by checking that existing valid sources don't produce warnings
-
-	var buf bytes.Buffer
-	opts := CheckOptions{Store: s, JSON: false}
-	if err := RunCheckV2(opts, &buf); err != nil {
-		t.Fatal(err)
-	}
-
-	output := buf.String()
-	if strings.Contains(output, "recipe references nonexistent") {
-		t.Errorf("valid sources should not be flagged, got: %s", output)
 	}
 }
 

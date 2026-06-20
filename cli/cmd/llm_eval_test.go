@@ -20,7 +20,6 @@ import (
 	"testing"
 
 	"github.com/lagz0ne/c3-design/cli/internal/schema"
-	"github.com/lagz0ne/c3-design/cli/internal/templates"
 )
 
 // ---------------------------------------------------------------------------
@@ -346,57 +345,6 @@ func TestEval_NASlashFormatDetection(t *testing.T) {
 // SECTION 6: Embedded Template Quality
 // The templates in cli/internal/templates/ should be usable as scaffolds.
 // Test that they contain all required sections and correct table structures.
-// ---------------------------------------------------------------------------
-
-func TestEval_EmbeddedTemplateHasAllRequiredSections(t *testing.T) {
-	types := map[string]string{
-		"component": "component.md",
-		"container": "container.md",
-		"ref":       "ref.md",
-		"rule":      "rule.md",
-		"adr":       "adr.md",
-		"recipe":    "recipe.md",
-	}
-
-	for entityType, filename := range types {
-		t.Run(entityType, func(t *testing.T) {
-			content, err := templates.Read(filename)
-			if err != nil {
-				t.Fatalf("failed to read template %s: %v", filename, err)
-			}
-
-			schemaSections := schema.ForType(entityType)
-			for _, sec := range schemaSections {
-				if sec.Required {
-					if !strings.Contains(content, "## "+sec.Name) {
-						t.Errorf("template %s missing required section ## %s", filename, sec.Name)
-					}
-				}
-			}
-		})
-	}
-}
-
-func TestEval_EmbeddedADRScaffoldHasTableHeaders(t *testing.T) {
-	// ADR scaffold tables should have correct column headers matching schema.
-	content, err := templates.Read("adr.md")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	adrSections := schema.ForType("adr")
-	for _, sec := range adrSections {
-		if sec.ContentType != "table" || len(sec.Columns) == 0 {
-			continue
-		}
-		for _, col := range sec.Columns {
-			if !strings.Contains(content, col.Name) {
-				t.Errorf("ADR scaffold missing column %q in section %s", col.Name, sec.Name)
-			}
-		}
-	}
-}
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------

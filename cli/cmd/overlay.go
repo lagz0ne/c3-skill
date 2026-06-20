@@ -122,15 +122,15 @@ func WithUnitOverlay(s *store.Store, c3Dir, unitID string, fn func(*store.Store)
 	if err != nil {
 		return fmt.Errorf("overlay %s: %w", unitID, err)
 	}
-	codemaps, err := changeset.ReadCodemapDir(dir)
-	if err != nil {
-		return fmt.Errorf("overlay %s: %w", unitID, err)
-	}
-	if len(patches) == 0 && len(codemaps) == 0 {
+	if len(patches) == 0 {
 		return fmt.Errorf("overlay %s: unit has no staged material", unitID)
 	}
+	// The store overlay replays only the fact patches: a canvas-scope patch reshapes
+	// a fact-TYPE on the file side and is validated by the morph gate, not here. (It
+	// has no applyOne case, so feeding it to changeset.Apply would error.)
+	_, factPatches, _ := parseMorphs(patches)
 	return s.WithPreviewTx(func(ts *store.Store) error {
-		if err := changeset.Apply(ts, patches, codemaps, applyHooks(c3Dir)); err != nil {
+		if err := changeset.Apply(ts, factPatches, applyHooks(c3Dir)); err != nil {
 			return fmt.Errorf("overlay %s: %w", unitID, err)
 		}
 		return fn(ts)

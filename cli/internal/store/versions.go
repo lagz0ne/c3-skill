@@ -1,7 +1,6 @@
 package store
 
 import (
-	"database/sql"
 	"fmt"
 )
 
@@ -55,73 +54,4 @@ func (s *Store) GetVersion(entityID string, version int) (*Version, error) {
 		return nil, err
 	}
 	return &v, nil
-}
-
-// ListVersions returns all versions for an entity, newest first.
-// Content is omitted (empty string) to avoid loading large blobs.
-func (s *Store) ListVersions(entityID string) ([]*Version, error) {
-	rows, err := s.exec.Query(`
-		SELECT entity_id, version, '', root_merkle, commit_hash, created_at
-		FROM versions WHERE entity_id = ?
-		ORDER BY version DESC`,
-		entityID,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("list versions: %w", err)
-	}
-	defer rows.Close()
-
-	var result []*Version
-	for rows.Next() {
-		var v Version
-		if err := rows.Scan(&v.EntityID, &v.Version, &v.Content, &v.RootMerkle, &v.CommitHash, &v.CreatedAt); err != nil {
-			return nil, err
-		}
-		result = append(result, &v)
-	}
-	return result, rows.Err()
-}
-
-// LatestVersion returns the most recent version number for an entity, or 0 if none.
-func (s *Store) LatestVersion(entityID string) (int, error) {
-	var v int
-	err := s.exec.QueryRow(`
-		SELECT COALESCE(MAX(version), 0) FROM versions WHERE entity_id = ?`,
-		entityID,
-	).Scan(&v)
-	return v, err
-}
-
-// PruneVersions deletes versions older than keepLast for an entity.
-// Versions with a non-empty commit_hash are always kept.
-func (s *Store) PruneVersions(entityID string, keepLast int) (int64, error) {
-	res, err := s.exec.Exec(`
-		DELETE FROM versions
-		WHERE entity_id = ?
-		  AND commit_hash = ''
-		  AND version <= (
-			SELECT COALESCE(MAX(version), 0) - ? FROM versions WHERE entity_id = ?
-		  )`,
-		entityID, keepLast, entityID,
-	)
-	if err != nil {
-		return 0, fmt.Errorf("prune versions: %w", err)
-	}
-	return res.RowsAffected()
-}
-
-// MarkVersion stamps a version with a git commit hash.
-func (s *Store) MarkVersion(entityID string, version int, commitHash string) error {
-	res, err := s.exec.Exec(`
-		UPDATE versions SET commit_hash = ? WHERE entity_id = ? AND version = ?`,
-		commitHash, entityID, version,
-	)
-	if err != nil {
-		return fmt.Errorf("mark version: %w", err)
-	}
-	n, _ := res.RowsAffected()
-	if n == 0 {
-		return sql.ErrNoRows
-	}
-	return nil
 }

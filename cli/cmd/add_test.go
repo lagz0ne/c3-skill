@@ -431,23 +431,6 @@ func TestRunAdd_AdrRequiresWhyColumnsUnlessNATopology(t *testing.T) {
 	)
 }
 
-func TestRunAdd_RecipeWithBody(t *testing.T) {
-	s, _ := createDBFixtureWithC3Dir(t)
-	var buf bytes.Buffer
-
-	body := "## Goal\nEnd-to-end auth flow.\n"
-
-	err := RunAdd("recipe", "auth-flow", s, "", false, strings.NewReader(body), &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	entity, _ := s.GetEntity("recipe-auth-flow")
-	if entity == nil {
-		t.Fatal("recipe should exist")
-	}
-}
-
 func TestRunAdd_NilReaderFails(t *testing.T) {
 	s, _ := createDBFixtureWithC3Dir(t)
 	var buf bytes.Buffer

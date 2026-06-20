@@ -98,10 +98,8 @@ func runWithIO(argv []string, stdin io.Reader, stdinTerminal bool, w io.Writer, 
 		return runGit(opts, config.ProjectDir(c3Dir), c3Dir, w)
 	}
 
-	// Plain `check` (no --fix, no --rules, no --strict-codemap) takes the lightweight
-	// verify path. --strict-codemap must reach RunCheckV2, where the codemap
-	// introspection (and its gate) lives — otherwise the strict flag would be a no-op.
-	if opts.Command == "check" && !opts.Fix && len(opts.Rules) == 0 && !opts.StrictCodemap {
+	// Plain `check` (no --fix, no --rules) takes the lightweight verify path.
+	if opts.Command == "check" && !opts.Fix && len(opts.Rules) == 0 {
 		return cmd.RunVerify(cmd.VerifyOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: opts.Only}, w)
 	}
 
@@ -260,9 +258,6 @@ func hasCanonicalDocs(c3Dir string) bool {
 	if fileExists(filepath.Join(c3Dir, "README.md")) {
 		return true
 	}
-	if fileExists(filepath.Join(c3Dir, "code-map.yaml")) {
-		return true
-	}
 	matches, err := filepath.Glob(filepath.Join(c3Dir, "adr", "*.md"))
 	if err == nil && len(matches) > 0 {
 		return true
@@ -275,14 +270,9 @@ func hasCanonicalDocs(c3Dir string) bool {
 	if err == nil && len(matches) > 0 {
 		return true
 	}
-	matches, err = filepath.Glob(filepath.Join(c3Dir, "recipes", "*.md"))
-	if err == nil && len(matches) > 0 {
-		return true
-	}
 	matches, err = filepath.Glob(filepath.Join(c3Dir, "c3-*", "README.md"))
 	return err == nil && len(matches) > 0
 }
-
 
 func runThroughCoordinator(argv []string, stdin io.Reader, stdinTerminal bool, c3Dir string, w io.Writer, stderr io.Writer) error {
 	if os.Getenv("C3X_COORDINATOR") == "0" {
@@ -406,15 +396,14 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 			return fmt.Errorf("%w\nhint: run c3x check again after resolving", err)
 		}
 		err = cmd.RunCheckV2(cmd.CheckOptions{
-			Store:         s,
-			JSON:          opts.JSON,
-			ProjectDir:    projectDir,
-			C3Dir:         c3Dir,
-			IncludeADR:    opts.IncludeADR,
-			Fix:           opts.Fix,
-			Only:          opts.Only,
-			Rules:         opts.Rules,
-			StrictCodemap: opts.StrictCodemap,
+			Store:      s,
+			JSON:       opts.JSON,
+			ProjectDir: projectDir,
+			C3Dir:      c3Dir,
+			IncludeADR: opts.IncludeADR,
+			Fix:        opts.Fix,
+			Only:       opts.Only,
+			Rules:      opts.Rules,
 		}, w)
 	case "read":
 		entityID := ""
@@ -468,8 +457,18 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 		}, w)
 	case "index":
 		err = cmd.RunSemanticIndex(cmd.SemanticIndexOptions{Store: s, JSON: opts.JSON}, w)
-	case "codemap":
-		err = cmd.RunCodemap(cmd.CodemapOptions{Store: s, JSON: opts.JSON}, w)
+	case "eval":
+		only := ""
+		if len(opts.Args) >= 1 {
+			only = opts.Args[0]
+		}
+		err = cmd.RunEval(cmd.EvalOptions{
+			Store:      s,
+			ProjectDir: projectDir,
+			C3Dir:      c3Dir,
+			JSON:       opts.JSON,
+			Only:       only,
+		}, w)
 	case "schema":
 		entityType := ""
 		if len(opts.Args) >= 1 {
@@ -525,12 +524,12 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 		}
 		co := cmd.ChangeApplyOptions{Store: s, C3Dir: c3Dir, UnitID: unitID, DryRun: opts.DryRun, JSON: opts.JSON}
 		switch sub {
-		case "apply", "view", "status", "new", "accept", "rebase", "scaffold", "inspect":
+		case "apply", "view", "status", "new", "accept", "rebase", "scaffold":
 			if unitID == "" {
 				return fmt.Errorf("error: change %s requires a <change-unit-id> argument\nhint: c3x change %s <id>", sub, sub)
 			}
 		default:
-			return fmt.Errorf("error: usage: c3x change <new|view|accept|apply|status|rebase|scaffold|inspect> <id>\nhint: run 'c3x change --help' for usage")
+			return fmt.Errorf("error: usage: c3x change <new|view|accept|apply|status|rebase|scaffold> <id>\nhint: run 'c3x change --help' for usage")
 		}
 		switch sub {
 		case "apply":
@@ -547,8 +546,6 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 			err = cmd.RunChangeAccept(co, w)
 		case "rebase":
 			err = cmd.RunChangeRebase(co, w)
-		case "inspect":
-			err = cmd.RunChangeInspect(co, w)
 		}
 	default:
 		return fmt.Errorf("error: unknown command '%s'\nhint: run 'c3x --help' to see available commands", opts.Command)
@@ -643,7 +640,6 @@ func commandAcceptsFile(cmd string) bool {
 	}
 	return false
 }
-
 
 func runNoArgs(opts cmd.Options, w io.Writer) error {
 	cwd, err := os.Getwd()

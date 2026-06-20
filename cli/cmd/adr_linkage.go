@@ -478,8 +478,6 @@ func citationType(s *store.Store, id string) string {
 		return "rule"
 	case strings.HasPrefix(id, "adr-"):
 		return "adr"
-	case strings.HasPrefix(id, "recipe-"):
-		return "recipe"
 	default:
 		return ""
 	}

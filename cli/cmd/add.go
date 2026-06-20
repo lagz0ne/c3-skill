@@ -38,7 +38,7 @@ func RunAddDryRun(entityType, slug string, s *store.Store, container string, fea
 
 func RunAddDryRunInDir(entityType, slug string, s *store.Store, container string, feature bool, c3Dir string, body io.Reader, w io.Writer) error {
 	if entityType == "" || slug == "" {
-		return fmt.Errorf("error: usage: c3x add <type> <slug> < body.md\nhint: types: container, component, ref, rule, adr, recipe")
+		return fmt.Errorf("error: usage: c3x add <type> <slug> < body.md\nhint: types: container, component, ref, rule, adr")
 	}
 	if !validSlug.MatchString(slug) {
 		return fmt.Errorf("error: invalid slug '%s'\nhint: use kebab-case (e.g. auth-provider, rate-limiting)", slug)
@@ -73,7 +73,7 @@ func RunAddFormatted(entityType, slug string, s *store.Store, container string, 
 
 func RunAddFormattedInDir(entityType, slug string, s *store.Store, container string, feature bool, c3Dir string, body io.Reader, w io.Writer, format OutputFormat) error {
 	if entityType == "" || slug == "" {
-		return fmt.Errorf("error: usage: c3x add <type> <slug> < body.md\nhint: types: container, component, ref, rule, adr, recipe")
+		return fmt.Errorf("error: usage: c3x add <type> <slug> < body.md\nhint: types: container, component, ref, rule, adr")
 	}
 
 	if !validSlug.MatchString(slug) {
@@ -283,8 +283,6 @@ func buildEntity(entityType, slug string, s *store.Store, container string, feat
 		return buildRule(slug, s)
 	case "adr":
 		return buildAdr(slug, s)
-	case "recipe":
-		return buildRecipe(slug, s)
 	default:
 		return buildGenericDocument(entityType, slug, s)
 	}
@@ -366,16 +364,6 @@ func buildAdr(slug string, s *store.Store) (*store.Entity, error) {
 	return &store.Entity{
 		ID: adrID, Type: "adr", Title: slug, Slug: slug,
 		Status: "proposed", Date: now.Format("2006-01-02"), Metadata: "{}",
-	}, nil
-}
-
-func buildRecipe(slug string, s *store.Store) (*store.Entity, error) {
-	id := "recipe-" + slug
-	if _, err := s.GetEntity(id); err == nil {
-		return nil, fmt.Errorf("error: %s already exists", id)
-	}
-	return &store.Entity{
-		ID: id, Type: "recipe", Title: slug, Slug: slug, Status: "active", Metadata: "{}",
 	}, nil
 }
 

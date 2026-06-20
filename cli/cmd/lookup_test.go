@@ -11,7 +11,9 @@ import (
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
-// createLookupFixture creates a DB fixture with goal/summary and code-map.
+// createLookupFixture creates a DB fixture with goal/summary and a .c3/eval dir for
+// fact→code bindings. The fact→code binding lives in .c3/eval/<fact>.yaml `code:`,
+// which is what `lookup` resolves through (replacing the code-map).
 func createLookupFixture(t *testing.T) (*store.Store, string) {
 	t.Helper()
 	s := createDBFixture(t)
@@ -22,15 +24,34 @@ func createLookupFixture(t *testing.T) (*store.Store, string) {
 	s.UpdateEntity(entity)
 
 	projectDir := t.TempDir()
-	return s, projectDir
+	c3Dir := filepath.Join(projectDir, ".c3")
+	if err := os.MkdirAll(filepath.Join(c3Dir, "eval"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	return s, c3Dir
+}
+
+// bindCode writes a .c3/eval/<fact>.yaml carrying the fact's code globs — the
+// binding `lookup` resolves a file against.
+func bindCode(t *testing.T, c3Dir, fact string, globs ...string) {
+	t.Helper()
+	var b strings.Builder
+	b.WriteString("fact: " + fact + "\ncode:\n")
+	for _, g := range globs {
+		b.WriteString("  - " + g + "\n")
+	}
+	path := filepath.Join(c3Dir, "eval", fact+".yaml")
+	if err := os.WriteFile(path, []byte(b.String()), 0o644); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestRunLookup_ExactMatch(t *testing.T) {
-	s, _ := createLookupFixture(t)
-	s.SetCodeMap("c3-101", []string{"src/auth/login.ts"})
+	s, c3Dir := createLookupFixture(t)
+	bindCode(t, c3Dir, "c3-101", "src/auth/login.ts")
 
 	var buf bytes.Buffer
-	err := RunLookup(LookupOptions{Store: s, FilePath: "src/auth/login.ts"}, &buf)
+	err := RunLookup(LookupOptions{Store: s, FilePath: "src/auth/login.ts", C3Dir: c3Dir}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,11 +72,11 @@ func TestRunLookup_ExactMatch(t *testing.T) {
 }
 
 func TestRunLookup_GlobStar(t *testing.T) {
-	s, _ := createLookupFixture(t)
-	s.SetCodeMap("c3-101", []string{"src/auth/*.ts"})
+	s, c3Dir := createLookupFixture(t)
+	bindCode(t, c3Dir, "c3-101", "src/auth/*.ts")
 
 	var buf bytes.Buffer
-	err := RunLookup(LookupOptions{Store: s, FilePath: "src/auth/login.ts"}, &buf)
+	err := RunLookup(LookupOptions{Store: s, FilePath: "src/auth/login.ts", C3Dir: c3Dir}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -66,11 +87,11 @@ func TestRunLookup_GlobStar(t *testing.T) {
 }
 
 func TestRunLookup_DoubleStar(t *testing.T) {
-	s, _ := createLookupFixture(t)
-	s.SetCodeMap("c3-101", []string{"src/auth/**/*.ts"})
+	s, c3Dir := createLookupFixture(t)
+	bindCode(t, c3Dir, "c3-101", "src/auth/**/*.ts")
 
 	var buf bytes.Buffer
-	err := RunLookup(LookupOptions{Store: s, FilePath: "src/auth/handlers/login.ts"}, &buf)
+	err := RunLookup(LookupOptions{Store: s, FilePath: "src/auth/handlers/login.ts", C3Dir: c3Dir}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,11 +102,11 @@ func TestRunLookup_DoubleStar(t *testing.T) {
 }
 
 func TestRunLookup_NoMatch(t *testing.T) {
-	s, _ := createLookupFixture(t)
-	s.SetCodeMap("c3-101", []string{"src/auth/*.ts"})
+	s, c3Dir := createLookupFixture(t)
+	bindCode(t, c3Dir, "c3-101", "src/auth/*.ts")
 
 	var buf bytes.Buffer
-	err := RunLookup(LookupOptions{Store: s, FilePath: "src/payments/stripe.go"}, &buf)
+	err := RunLookup(LookupOptions{Store: s, FilePath: "src/payments/stripe.go", C3Dir: c3Dir}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -95,28 +116,28 @@ func TestRunLookup_NoMatch(t *testing.T) {
 	}
 }
 
-func TestRunLookup_NoCodeMap(t *testing.T) {
-	s, _ := createLookupFixture(t)
-	// No code-map entries
+func TestRunLookup_NoBinding(t *testing.T) {
+	s, c3Dir := createLookupFixture(t)
+	// No eval bindings.
 
 	var buf bytes.Buffer
-	err := RunLookup(LookupOptions{Store: s, FilePath: "src/auth/login.ts"}, &buf)
+	err := RunLookup(LookupOptions{Store: s, FilePath: "src/auth/login.ts", C3Dir: c3Dir}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if !strings.Contains(buf.String(), "no component mapping found") {
-		t.Errorf("missing code-map should produce no-match, got:\n%s", buf.String())
+		t.Errorf("missing binding should produce no-match, got:\n%s", buf.String())
 	}
 }
 
 func TestRunLookup_MultipleComponents(t *testing.T) {
-	s, _ := createLookupFixture(t)
-	s.SetCodeMap("c3-101", []string{"src/auth/**/*.ts"})
-	s.SetCodeMap("c3-110", []string{"src/auth/*.ts"})
+	s, c3Dir := createLookupFixture(t)
+	bindCode(t, c3Dir, "c3-101", "src/auth/**/*.ts")
+	bindCode(t, c3Dir, "c3-110", "src/auth/*.ts")
 
 	var buf bytes.Buffer
-	err := RunLookup(LookupOptions{Store: s, FilePath: "src/auth/login.ts"}, &buf)
+	err := RunLookup(LookupOptions{Store: s, FilePath: "src/auth/login.ts", C3Dir: c3Dir}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -131,11 +152,11 @@ func TestRunLookup_MultipleComponents(t *testing.T) {
 }
 
 func TestRunLookup_JSON(t *testing.T) {
-	s, _ := createLookupFixture(t)
-	s.SetCodeMap("c3-101", []string{"src/auth/*.ts"})
+	s, c3Dir := createLookupFixture(t)
+	bindCode(t, c3Dir, "c3-101", "src/auth/*.ts")
 
 	var buf bytes.Buffer
-	err := RunLookup(LookupOptions{Store: s, FilePath: "src/auth/login.ts", JSON: true}, &buf)
+	err := RunLookup(LookupOptions{Store: s, FilePath: "src/auth/login.ts", JSON: true, C3Dir: c3Dir}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -165,8 +186,9 @@ func TestRunLookup_JSON(t *testing.T) {
 }
 
 func TestRunLookup_GlobInput_MultipleFiles(t *testing.T) {
-	s, projectDir := createLookupFixture(t)
-	s.SetCodeMap("c3-101", []string{"src/auth/*.ts"})
+	s, c3Dir := createLookupFixture(t)
+	bindCode(t, c3Dir, "c3-101", "src/auth/*.ts")
+	projectDir := filepath.Dir(c3Dir)
 
 	// Create actual source files for glob expansion
 	os.MkdirAll(filepath.Join(projectDir, "src", "auth"), 0755)
@@ -178,6 +200,7 @@ func TestRunLookup_GlobInput_MultipleFiles(t *testing.T) {
 		Store:      s,
 		FilePath:   "src/auth/*.ts",
 		ProjectDir: projectDir,
+		C3Dir:      c3Dir,
 	}, &buf)
 	if err != nil {
 		t.Fatal(err)
@@ -196,11 +219,11 @@ func TestRunLookup_GlobInput_MultipleFiles(t *testing.T) {
 }
 
 func TestRunLookup_JSONNoMatch(t *testing.T) {
-	s, _ := createLookupFixture(t)
-	s.SetCodeMap("c3-101", []string{"src/auth/*.ts"})
+	s, c3Dir := createLookupFixture(t)
+	bindCode(t, c3Dir, "c3-101", "src/auth/*.ts")
 
 	var buf bytes.Buffer
-	err := RunLookup(LookupOptions{Store: s, FilePath: "src/other/file.ts", JSON: true}, &buf)
+	err := RunLookup(LookupOptions{Store: s, FilePath: "src/other/file.ts", JSON: true, C3Dir: c3Dir}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -228,13 +251,19 @@ func TestRunLookup_WithRulesInOutput(t *testing.T) {
 	entity.Goal = "Authentication component"
 	s.UpdateEntity(entity)
 
-	// Set code map so lookup can find c3-101
-	s.SetCodeMap("c3-101", []string{"src/auth/**"})
+	// Bind code so lookup can find c3-101
+	projectDir := t.TempDir()
+	c3Dir := filepath.Join(projectDir, ".c3")
+	if err := os.MkdirAll(filepath.Join(c3Dir, "eval"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	bindCode(t, c3Dir, "c3-101", "src/auth/**")
 
 	var buf bytes.Buffer
 	err := RunLookup(LookupOptions{
 		Store:    s,
 		FilePath: "src/auth/login.ts",
+		C3Dir:    c3Dir,
 	}, &buf)
 	if err != nil {
 		t.Fatal(err)
@@ -265,5 +294,25 @@ func TestLookupSeparatesRulesFromRefs(t *testing.T) {
 	}
 	if len(match.Rules) != 1 || match.Rules[0].ID != "rule-logging" {
 		t.Errorf("Rules = %v, want [rule-logging]", match.Rules)
+	}
+}
+
+// factsForFile is the resolution behind lookup: a file maps to a fact iff one of
+// the fact's eval-spec code globs matches it, and the result is sorted.
+func TestFactsForFile(t *testing.T) {
+	bindings := map[string][]string{
+		"c3-101": {"src/auth/**/*.ts"},
+		"c3-110": {"src/auth/*.ts", "src/shared/**"},
+		"c3-200": {"src/payments/**"},
+	}
+	got := factsForFile(bindings, "src/auth/login.ts")
+	if len(got) != 2 || got[0] != "c3-101" || got[1] != "c3-110" {
+		t.Errorf("factsForFile = %v, want sorted [c3-101 c3-110]", got)
+	}
+	if got := factsForFile(bindings, "src/payments/stripe.go"); len(got) != 1 || got[0] != "c3-200" {
+		t.Errorf("factsForFile = %v, want [c3-200]", got)
+	}
+	if got := factsForFile(bindings, "src/other/x.go"); len(got) != 0 {
+		t.Errorf("factsForFile = %v, want []", got)
 	}
 }

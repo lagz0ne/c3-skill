@@ -27,7 +27,7 @@ func TestShowHelp_Global(t *testing.T) {
 			t.Errorf("global help should hide %s command", cmd)
 		}
 	}
-	if strings.Contains(output, ".c3/recipes/recipe-auth-flow.md") {
+	if strings.Contains(output, ".c3/refs/ref-auth-flow.md") {
 		t.Error("global help should not teach direct .c3 file edits")
 	}
 }
@@ -101,7 +101,7 @@ func TestShowHelp_GlobalHasNoDeadEndAddFlags(t *testing.T) {
 }
 
 func TestShowHelp_StructuredOutputDefaultsToTOON(t *testing.T) {
-	for _, command := range []string{"list", "codemap"} {
+	for _, command := range []string{"list"} {
 		t.Run(command, func(t *testing.T) {
 			var buf bytes.Buffer
 			ShowHelp(command, &buf)
@@ -126,7 +126,7 @@ func TestShowCapabilities(t *testing.T) {
 	if !strings.Contains(output, "c3x list") {
 		t.Error("capabilities should list the list command")
 	}
-	// Hidden commands (init, marketplace, git, codemap) should be excluded
+	// Hidden commands (init, marketplace, git) should be excluded
 	if strings.Contains(output, "c3x init") {
 		t.Error("capabilities should not include hidden commands")
 	}

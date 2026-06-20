@@ -6,9 +6,7 @@ import (
 	"testing"
 
 	"github.com/lagz0ne/c3-design/cli/internal/content"
-	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
-	"github.com/lagz0ne/c3-design/cli/internal/walker"
 )
 
 // createFixture sets up a .c3/ directory with common test data.
@@ -147,22 +145,6 @@ Need fast CLI.
 `)
 
 	return c3Dir
-}
-
-// loadDocs walks a .c3/ directory and returns parsed docs.
-func loadDocs(t *testing.T, c3Dir string) []frontmatter.ParsedDoc {
-	t.Helper()
-	docs, err := walker.WalkC3Docs(c3Dir)
-	if err != nil {
-		t.Fatalf("WalkC3Docs failed: %v", err)
-	}
-	return docs
-}
-
-// loadGraph builds a C3Graph from a .c3/ directory.
-func loadGraph(t *testing.T, c3Dir string) *walker.C3Graph {
-	t.Helper()
-	return walker.BuildGraph(loadDocs(t, c3Dir))
 }
 
 // containsStr2 checks if a string slice contains a value.

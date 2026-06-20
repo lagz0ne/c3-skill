@@ -413,15 +413,6 @@ func enrichFromComponent(s *store.Store, row *SearchResultRow, componentID strin
 		}
 		assignSearchContext(row, rel, target)
 	}
-
-	patterns, err := s.CodeMapFor(componentID)
-	if err != nil {
-		return fmt.Errorf("search code-map %s: %w", componentID, err)
-	}
-	if path := bestCodeMapPath(patterns); path != "" {
-		row.Context.Path = path
-		addMatchSource(row, "code-map:"+path)
-	}
 	return nil
 }
 
@@ -441,18 +432,6 @@ func assignSearchContext(row *SearchResultRow, rel *store.Relationship, target *
 			row.Context.Rule = ref
 		}
 	}
-}
-
-func bestCodeMapPath(patterns []string) string {
-	for _, pattern := range patterns {
-		if !strings.ContainsAny(pattern, "*?[") {
-			return pattern
-		}
-	}
-	if len(patterns) == 0 {
-		return ""
-	}
-	return patterns[0]
 }
 
 func cleanSnippet(snippet string) string {

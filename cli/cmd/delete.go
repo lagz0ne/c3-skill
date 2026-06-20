@@ -90,13 +90,7 @@ func RunDelete(opts DeleteOptions, w io.Writer) error {
 		}
 	}
 
-	// Remove code-map entries (cascaded by FK, but log it)
-	codeMapGlobs, _ := opts.Store.CodeMapFor(id)
-	if len(codeMapGlobs) > 0 {
-		fmt.Fprintf(w, "%sRemove %s from code-map\n", prefix, id)
-	}
-
-	// Delete the entity (cascades relationships and code-map via FK)
+	// Delete the entity (cascades relationships via FK)
 	fmt.Fprintf(w, "%sDelete %s (%s)\n", prefix, id, entity.Type)
 	if !opts.DryRun {
 		if err := opts.Store.DeleteEntity(id); err != nil {

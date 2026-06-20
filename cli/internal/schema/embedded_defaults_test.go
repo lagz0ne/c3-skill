@@ -34,7 +34,6 @@ func TestBuiltInDefinitionsLoadFromEmbeddedCanvasDocuments(t *testing.T) {
 		"container",
 		"pm-requirement",
 		"prd",
-		"recipe",
 		"ref",
 		"rule",
 		"system",

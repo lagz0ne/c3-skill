@@ -16,12 +16,12 @@ func requireAll(t *testing.T, out string, wants ...string) {
 }
 
 func TestRunLookup_AgentTOONIncludesCascadeHints(t *testing.T) {
-	s, _ := createLookupFixture(t)
-	s.SetCodeMap("c3-101", []string{"src/auth/login.ts"})
+	s, c3Dir := createLookupFixture(t)
+	bindCode(t, c3Dir, "c3-101", "src/auth/login.ts")
 	t.Setenv("C3X_MODE", "agent")
 
 	var buf bytes.Buffer
-	if err := RunLookup(LookupOptions{Store: s, FilePath: "src/auth/login.ts", JSON: true}, &buf); err != nil {
+	if err := RunLookup(LookupOptions{Store: s, FilePath: "src/auth/login.ts", JSON: true, C3Dir: c3Dir}, &buf); err != nil {
 		t.Fatal(err)
 	}
 

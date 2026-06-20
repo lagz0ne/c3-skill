@@ -25,17 +25,17 @@ func TestRetireGate_OrphanRefusedUnlessHandledInUnit(t *testing.T) {
 	retireParent := changeset.Patch{Target: "c3-1", Scope: changeset.ScopeRetire, Source: "01.patch.md"}
 
 	// retire the parent alone → orphans the child.
-	if r := retireGate(s, c3Dir, []changeset.Patch{retireParent}, nil); len(r) == 0 || !strings.Contains(joined(r), "orphan") {
+	if r := retireGate(s, c3Dir, []changeset.Patch{retireParent}); len(r) == 0 || !strings.Contains(joined(r), "orphan") {
 		t.Fatalf("retiring a parent with a live child must be refused, got: %v", r)
 	}
 	// retire the parent AND reparent the child away in the same unit → allowed.
 	reparent := changeset.Patch{Target: "c3-101", Scope: changeset.ScopeFrontmatter, Parent: "c3-2", Source: "02.patch.md"}
-	if r := retireGate(s, c3Dir, []changeset.Patch{retireParent, reparent}, nil); len(r) != 0 {
+	if r := retireGate(s, c3Dir, []changeset.Patch{retireParent, reparent}); len(r) != 0 {
 		t.Errorf("retire + reparent-the-child in the SAME unit must be allowed, got: %v", r)
 	}
 	// retire both parent and child → allowed.
 	retireChild := changeset.Patch{Target: "c3-101", Scope: changeset.ScopeRetire, Source: "03.patch.md"}
-	if r := retireGate(s, c3Dir, []changeset.Patch{retireParent, retireChild}, nil); len(r) != 0 {
+	if r := retireGate(s, c3Dir, []changeset.Patch{retireParent, retireChild}); len(r) != 0 {
 		t.Errorf("retire parent + child together must be allowed, got: %v", r)
 	}
 }
@@ -57,13 +57,13 @@ func TestRetireGate_DangleRefusedUnlessRecitedInUnit(t *testing.T) {
 	retire := changeset.Patch{Target: "ref-jwt", Scope: changeset.ScopeRetire, Source: "01.patch.md"}
 
 	// retire the ref alone → the citer's body still names it → dangle.
-	if r := retireGate(s, c3Dir, []changeset.Patch{retire}, nil); len(r) == 0 || !strings.Contains(joined(r), "dangle") {
+	if r := retireGate(s, c3Dir, []changeset.Patch{retire}); len(r) == 0 || !strings.Contains(joined(r), "dangle") {
 		t.Fatalf("retiring a cited ref must be refused, got: %v", r)
 	}
 	// retire the ref AND re-cite the citer to ref-new in the same unit → allowed.
 	handle := blockRowHandle(t, s, "c3-101", "ref-jwt")
 	recite := changeset.Patch{Target: "c3-101", Scope: changeset.ScopeBlock, Base: handle, Content: "| ref-new | uses |", Source: "02.patch.md"}
-	if r := retireGate(s, c3Dir, []changeset.Patch{retire, recite}, nil); len(r) != 0 {
+	if r := retireGate(s, c3Dir, []changeset.Patch{retire, recite}); len(r) != 0 {
 		t.Errorf("retire + re-cite-the-citer in the SAME unit must be allowed, got: %v", r)
 	}
 }

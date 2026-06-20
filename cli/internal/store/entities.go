@@ -37,7 +37,6 @@ func (s *Store) InsertEntity(e *Entity) error {
 	if err != nil {
 		return fmt.Errorf("insert entity %s: %w", e.ID, err)
 	}
-	s.logChange(e.ID, "add", "", "", "")
 	return nil
 }
 
@@ -53,7 +52,7 @@ func (s *Store) GetEntity(id string) (*Entity, error) {
 // migration). This makes the omission-demotion bug structurally impossible: no body
 // write/import/repair can un-freeze a terminal doc (status is edit-proof).
 func (s *Store) UpdateEntity(e *Entity) error {
-	old, err := s.GetEntity(e.ID)
+	_, err := s.GetEntity(e.ID)
 	if err != nil {
 		return fmt.Errorf("update entity: get old: %w", err)
 	}
@@ -76,17 +75,6 @@ func (s *Store) UpdateEntity(e *Entity) error {
 		return fmt.Errorf("update entity %s: %w", e.ID, err)
 	}
 
-	logFieldChange(s, e.ID, "title", old.Title, e.Title)
-	logFieldChange(s, e.ID, "type", old.Type, e.Type)
-	logFieldChange(s, e.ID, "slug", old.Slug, e.Slug)
-	logFieldChange(s, e.ID, "category", old.Category, e.Category)
-	logFieldChange(s, e.ID, "parent_id", old.ParentID, e.ParentID)
-	logFieldChange(s, e.ID, "goal", old.Goal, e.Goal)
-	logFieldChange(s, e.ID, "boundary", old.Boundary, e.Boundary)
-	logFieldChange(s, e.ID, "date", old.Date, e.Date)
-	logFieldChange(s, e.ID, "metadata", old.Metadata, e.Metadata)
-	logFieldChange(s, e.ID, "root_merkle", old.RootMerkle, e.RootMerkle)
-
 	return nil
 }
 
@@ -95,7 +83,7 @@ func (s *Store) UpdateEntity(e *Entity) error {
 // latch, and migration. Because UpdateEntity is status-edit-proof, this is the sole
 // way status changes, keeping terminal docs immutable from body paths.
 func (s *Store) SetEntityStatus(id, status string) error {
-	old, err := s.GetEntity(id)
+	_, err := s.GetEntity(id)
 	if err != nil {
 		return fmt.Errorf("set status: get old: %w", err)
 	}
@@ -105,14 +93,7 @@ func (s *Store) SetEntityStatus(id, status string) error {
 	); err != nil {
 		return fmt.Errorf("set status %s=%s: %w", id, status, err)
 	}
-	logFieldChange(s, id, "status", old.Status, status)
 	return nil
-}
-
-func logFieldChange(s *Store, entityID, field, oldVal, newVal string) {
-	if oldVal != newVal {
-		s.logChange(entityID, "update", field, oldVal, newVal)
-	}
 }
 
 func (s *Store) DeleteEntity(id string) error {
@@ -124,7 +105,6 @@ func (s *Store) DeleteEntity(id string) error {
 	if n == 0 {
 		return fmt.Errorf("entity %s not found", id)
 	}
-	s.logChange(id, "delete", "", "", "")
 	return nil
 }
 

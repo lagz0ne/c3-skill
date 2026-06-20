@@ -78,7 +78,7 @@ func TestApply_BlockFlip_SiblingsFrozen(t *testing.T) {
 	beforeMerkle := entityMerkle(t, s, "c3-101")
 
 	p := Patch{Target: "c3-101", Scope: ScopeBlock, Base: handle, Content: "Updated goal text.", Source: "01.patch.md"}
-	if err := Apply(s, []Patch{p}, nil, nil); err != nil {
+	if err := Apply(s, []Patch{p}, nil); err != nil {
 		t.Fatalf("apply: %v", err)
 	}
 
@@ -96,6 +96,25 @@ func TestApply_BlockFlip_SiblingsFrozen(t *testing.T) {
 	}
 }
 
+// A block edit to the ## Goal section must re-sync the denormalized frontmatter
+// goal: — otherwise lookup/read/list show a stale goal (the goal-desync bug).
+func TestApply_BlockGoal_SyncsFrontmatterGoal(t *testing.T) {
+	s := openMem(t)
+	seedFact(t, s, "c3-101", "# auth\n\n## Goal\n\nOriginal goal.\n\n## Detail\n\nDetail body.\n")
+	if e, _ := s.GetEntity("c3-101"); e.Goal != "Original goal." {
+		t.Fatalf("seed goal: got %q", e.Goal)
+	}
+	handle, _ := blockHandle(t, s, "c3-101", "Original goal.")
+	p := Patch{Target: "c3-101", Scope: ScopeBlock, Base: handle, Content: "Reworded goal.", Source: "01.patch.md"}
+	if err := Apply(s, []Patch{p}, nil); err != nil {
+		t.Fatalf("apply: %v", err)
+	}
+	e, _ := s.GetEntity("c3-101")
+	if e.Goal != "Reworded goal." {
+		t.Errorf("frontmatter goal must re-sync from the patched ## Goal section: got %q, want %q", e.Goal, "Reworded goal.")
+	}
+}
+
 // A frontmatter patch can now edit a frozen fact's boundary / category / date —
 // parity with `set`, which the change-unit path previously could not reach.
 func TestApply_Frontmatter_SetsAttributes(t *testing.T) {
@@ -105,7 +124,7 @@ func TestApply_Frontmatter_SetsAttributes(t *testing.T) {
 
 	p := Patch{Target: "c3-101", Scope: ScopeFrontmatter, Base: base,
 		Boundary: "owns auth only", Category: "feature", Date: "2026-06-18", Source: "01.patch.md"}
-	if err := Apply(s, []Patch{p}, nil, nil); err != nil {
+	if err := Apply(s, []Patch{p}, nil); err != nil {
 		t.Fatalf("apply: %v", err)
 	}
 
@@ -119,12 +138,12 @@ func TestApply_Frontmatter_SetsAttributes(t *testing.T) {
 // reduces them to the bare " | "-joined cells a table_row node stores.
 func TestNormalizeTableRowContent(t *testing.T) {
 	cases := map[string]string{
-		"| a | b | c |":          "a | b | c", // outer pipes stripped
-		"a | b | c":              "a | b | c", // already bare
-		"  |  a |  b  | ":        "a | b",      // extra whitespace trimmed
-		"| x |":                  "x",          // single cell
-		"\n| a | b |\n":          "a | b",       // leading/trailing newlines
-		"| h1 | h2 |\n| --- | --- |": "h1 | h2", // separator line skipped
+		"| a | b | c |":              "a | b | c", // outer pipes stripped
+		"a | b | c":                  "a | b | c", // already bare
+		"  |  a |  b  | ":            "a | b",     // extra whitespace trimmed
+		"| x |":                      "x",         // single cell
+		"\n| a | b |\n":              "a | b",     // leading/trailing newlines
+		"| h1 | h2 |\n| --- | --- |": "h1 | h2",   // separator line skipped
 	}
 	for in, want := range cases {
 		if got := normalizeTableRowContent(in); got != want {
@@ -151,7 +170,7 @@ func TestApply_InsertRow_AddsTableRowAfterAnchor(t *testing.T) {
 	}
 
 	p := Patch{Target: "c3-101", Scope: ScopeInsert, Base: handle, Content: "| c3-110 | three |", Source: "01.patch.md"}
-	if err := Apply(s, []Patch{p}, nil, nil); err != nil {
+	if err := Apply(s, []Patch{p}, nil); err != nil {
 		t.Fatalf("row insert: %v", err)
 	}
 	merged, _ := content.ReadEntity(s, "c3-101")
@@ -177,7 +196,7 @@ func TestApply_BlockAnchor_SurvivesNodeIDRenumber(t *testing.T) {
 	stale := handle[:ns] + "999999" + handle[ne:]
 
 	p := Patch{Target: "c3-101", Scope: ScopeBlock, Base: stale, Content: "Updated via hash anchor.", Source: "01.patch.md"}
-	if err := Apply(s, []Patch{p}, nil, nil); err != nil {
+	if err := Apply(s, []Patch{p}, nil); err != nil {
 		t.Fatalf("a stale node id with a matching hash must resolve by hash, got: %v", err)
 	}
 	if nodeHashOf(t, s, "c3-101", "Updated via hash anchor.") == "" {
@@ -192,7 +211,7 @@ func TestApply_BlockEmpty_DeletesNode(t *testing.T) {
 	handle, _ := blockHandle(t, s, "c3-101", "Delete this detail.")
 
 	p := Patch{Target: "c3-101", Scope: ScopeBlock, Base: handle, Content: "", Source: "01.patch.md"}
-	if err := Apply(s, []Patch{p}, nil, nil); err != nil {
+	if err := Apply(s, []Patch{p}, nil); err != nil {
 		t.Fatalf("apply: %v", err)
 	}
 	if nodeHashOf(t, s, "c3-101", "Delete this detail.") != "" {
@@ -210,7 +229,7 @@ func TestApply_Drift_RejectsWholeSet(t *testing.T) {
 	stale := strings.Replace(handle, liveHash, strings.Repeat("0", 64), 1)
 
 	p := Patch{Target: "c3-101", Scope: ScopeBlock, Base: stale, Content: "Should not land.", Source: "01.patch.md"}
-	if err := Apply(s, []Patch{p}, nil, nil); err == nil {
+	if err := Apply(s, []Patch{p}, nil); err == nil {
 		t.Fatal("a drifted anchor must reject the apply")
 	}
 	if nodeHashOf(t, s, "c3-101", "Should not land.") != "" {
@@ -242,7 +261,7 @@ func TestApply_Atomic_MidApplyLandingMismatchRollsBack(t *testing.T) {
 		// check inside applyBlock, AFTER patch 1 has written.
 		{Target: "c3-110", Scope: ScopeBlock, Base: usersHandle, Content: "New users goal.", Result: "sha256:" + strings.Repeat("b", 64), Source: "02.patch.md"},
 	}
-	err := Apply(s, patches, nil, nil)
+	err := Apply(s, patches, nil)
 	if err == nil {
 		t.Fatal("a landing-hash mismatch on patch 2 must fail the apply")
 	}
@@ -280,7 +299,7 @@ func TestApply_Atomic_DuplicateBaseRejected(t *testing.T) {
 		{Target: "c3-101", Scope: ScopeBlock, Base: handle, Content: "First rewrite.", Source: "01.patch.md"},
 		{Target: "c3-101", Scope: ScopeBlock, Base: handle, Content: "Second rewrite.", Source: "02.patch.md"},
 	}
-	err := Apply(s, patches, nil, nil)
+	err := Apply(s, patches, nil)
 	if err == nil {
 		t.Fatal("two patches citing the same base must not both apply")
 	}
@@ -322,7 +341,7 @@ func TestApply_Insert_AppendsSectionSiblingsFrozen(t *testing.T) {
 	beforeMerkle := entityMerkle(t, s, "c3-101")
 
 	p := Patch{Target: "c3-101", Scope: ScopeInsert, Base: entityHandle(t, s, "c3-101"), Content: "## Contract\n\nTokens must be RS256.", Source: "01.patch.md"}
-	if err := Apply(s, []Patch{p}, nil, nil); err != nil {
+	if err := Apply(s, []Patch{p}, nil); err != nil {
 		t.Fatalf("insert apply: %v", err)
 	}
 	body, _ := content.ReadEntity(s, "c3-101")
@@ -346,7 +365,7 @@ func TestApply_Insert_StaleAnchorRebases(t *testing.T) {
 	h := entityHandle(t, s, "c3-101")
 	stale := strings.Replace(h, h[strings.LastIndex(h, ":")+1:], strings.Repeat("0", 64), 1)
 	p := Patch{Target: "c3-101", Scope: ScopeInsert, Base: stale, Content: "## X\n\nbody.", Source: "01.patch.md"}
-	if err := Apply(s, []Patch{p}, nil, nil); err == nil {
+	if err := Apply(s, []Patch{p}, nil); err == nil {
 		t.Fatal("a stale entity anchor must reject the insert")
 	}
 	if nodeHashOf(t, s, "c3-101", "body.") != "" {
@@ -364,7 +383,7 @@ func TestApply_Insert_RollsBackWithFailedSibling(t *testing.T) {
 		{Target: "c3-101", Scope: ScopeInsert, Base: ih, Content: "## New\n\nbody.", Source: "01.patch.md"},
 		{Target: "c3-101", Scope: ScopeBlock, Base: bh, Content: "won't seal", Result: "sha256:" + strings.Repeat("d", 64), Source: "02.patch.md"},
 	}
-	if err := Apply(s, patches, nil, nil); err == nil {
+	if err := Apply(s, patches, nil); err == nil {
 		t.Fatal("the landing mismatch on patch 2 must fail the whole unit")
 	}
 	if nodeHashOf(t, s, "c3-101", "body.") != "" {
@@ -379,7 +398,7 @@ func TestApply_Insert_RejectsHeadinglessBody(t *testing.T) {
 	s := openMem(t)
 	seedFact(t, s, "c3-101", "# auth\n\n## Goal\n\nGoal.\n")
 	p := Patch{Target: "c3-101", Scope: ScopeInsert, Base: entityHandle(t, s, "c3-101"), Content: "Just a loose paragraph, no heading.", Source: "01.patch.md"}
-	if err := Apply(s, []Patch{p}, nil, nil); err == nil || !strings.Contains(err.Error(), "section heading") {
+	if err := Apply(s, []Patch{p}, nil); err == nil || !strings.Contains(err.Error(), "section heading") {
 		t.Fatalf("a headingless insert body must be rejected (it would land a stray root paragraph), got: %v", err)
 	}
 }
@@ -388,7 +407,7 @@ func TestApply_Insert_RejectsDuplicateSection(t *testing.T) {
 	s := openMem(t)
 	seedFact(t, s, "c3-101", "# auth\n\n## Goal\n\nGoal.\n")
 	p := Patch{Target: "c3-101", Scope: ScopeInsert, Base: entityHandle(t, s, "c3-101"), Content: "## Goal\n\nDuplicate goal.", Source: "01.patch.md"}
-	if err := Apply(s, []Patch{p}, nil, nil); err == nil || !strings.Contains(err.Error(), "already exists") {
+	if err := Apply(s, []Patch{p}, nil); err == nil || !strings.Contains(err.Error(), "already exists") {
 		t.Fatalf("inserting an existing section must be rejected, got: %v", err)
 	}
 }
@@ -397,56 +416,11 @@ func TestApply_Insert_ResultLandingCheck(t *testing.T) {
 	s := openMem(t)
 	seedFact(t, s, "c3-101", "# auth\n\n## Goal\n\nGoal.\n")
 	p := Patch{Target: "c3-101", Scope: ScopeInsert, Base: entityHandle(t, s, "c3-101"), Content: "## Contract\n\nbody.", Result: "sha256:" + strings.Repeat("e", 64), Source: "01.patch.md"}
-	if err := Apply(s, []Patch{p}, nil, nil); err == nil || !strings.Contains(err.Error(), "landing mismatch") {
+	if err := Apply(s, []Patch{p}, nil); err == nil || !strings.Contains(err.Error(), "landing mismatch") {
 		t.Fatalf("a bogus result on an insert must fail the landing check, got: %v", err)
 	}
 	if nodeHashOf(t, s, "c3-101", "body.") != "" {
 		t.Error("a landing-mismatch insert must roll back")
-	}
-}
-
-// TestApply_CodemapCarrierAppliesInSameUnit proves a unit's internal patch and its
-// external codemap carrier both land in one apply.
-func TestApply_CodemapCarrierAppliesInSameUnit(t *testing.T) {
-	s := openMem(t)
-	seedFact(t, s, "c3-101", "# auth\n\n## Goal\n\nAuth goal.\n")
-	handle, _ := blockHandle(t, s, "c3-101", "Auth goal.")
-
-	patches := []Patch{{Target: "c3-101", Scope: ScopeBlock, Base: handle, Content: "New auth goal.", Source: "01.patch.md"}}
-	codemaps := []CodemapChange{{Target: "c3-101", Globs: []string{"src/auth/**"}, Source: "01.codemap.md"}}
-	if err := Apply(s, patches, codemaps, nil); err != nil {
-		t.Fatalf("apply: %v", err)
-	}
-	if nodeHashOf(t, s, "c3-101", "New auth goal.") == "" {
-		t.Error("the patch did not apply")
-	}
-	patterns, _ := s.CodeMapFor("c3-101")
-	if len(patterns) != 1 || patterns[0] != "src/auth/**" {
-		t.Errorf("codemap = %v, want [src/auth/**]", patterns)
-	}
-}
-
-// TestApply_PatchRollsBackWhenCodemapFails is the cross-arm integrity proof: an
-// internal fact write (patch) and an external binding write (codemap) are one unit.
-// The patch applies, then the codemap carrier fails (FK — its target does not
-// exist). The whole transaction rolls back, so the internal fact is NOT left
-// changed while its external binding never landed.
-func TestApply_PatchRollsBackWhenCodemapFails(t *testing.T) {
-	s := openMem(t)
-	seedFact(t, s, "c3-101", "# auth\n\n## Goal\n\nAuth goal.\n")
-	handle, _ := blockHandle(t, s, "c3-101", "Auth goal.")
-	beforeMerkle := entityMerkle(t, s, "c3-101")
-
-	patches := []Patch{{Target: "c3-101", Scope: ScopeBlock, Base: handle, Content: "New auth goal.", Source: "01.patch.md"}}
-	codemaps := []CodemapChange{{Target: "c3-999-missing", Globs: []string{"src/x/**"}, Source: "01.codemap.md"}}
-	if err := Apply(s, patches, codemaps, nil); err == nil {
-		t.Fatal("a codemap carrier with a missing target must fail the apply")
-	}
-	if nodeHashOf(t, s, "c3-101", "New auth goal.") != "" {
-		t.Error("atomic: the patch must roll back when a later codemap write fails")
-	}
-	if entityMerkle(t, s, "c3-101") != beforeMerkle {
-		t.Error("atomic: the entity seal must be unchanged after the cross-arm rollback")
 	}
 }
 
@@ -462,7 +436,7 @@ func TestApply_Atomic_OneDriftedBlocksAll(t *testing.T) {
 		{Target: "c3-101", Scope: ScopeBlock, Base: freshHandle, Content: "New auth goal.", Source: "01.patch.md"},
 		{Target: "c3-110", Scope: ScopeBlock, Base: staleUsers, Content: "New users goal.", Source: "02.patch.md"},
 	}
-	if err := Apply(s, patches, nil, nil); err == nil {
+	if err := Apply(s, patches, nil); err == nil {
 		t.Fatal("one drifted patch must block the whole set")
 	}
 	// The fresh target must NOT have been written (atomic).

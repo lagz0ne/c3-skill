@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lagz0ne/c3-design/cli/internal/codemap"
 	"github.com/lagz0ne/c3-design/cli/internal/content"
 	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
 	"github.com/lagz0ne/c3-design/cli/internal/schema"
@@ -31,8 +30,6 @@ func docTypeToStoreType(dt frontmatter.DocType) string {
 		return "adr"
 	case frontmatter.DocRule:
 		return "rule"
-	case frontmatter.DocRecipe:
-		return "recipe"
 	default:
 		return ""
 	}
@@ -317,42 +314,6 @@ func importDocsToStore(s *store.Store, c3Dir string, result *walker.WalkResult) 
 		}
 	}
 
-	cmPath := filepath.Join(c3Dir, "code-map.yaml")
-	cm, err := codemap.ParseCodeMap(cmPath)
-	if err == nil {
-		for id, globs := range cm {
-			if id == "_exclude" {
-				for _, pattern := range globs {
-					if pattern != "" {
-						if err := s.AddExclude(pattern); err != nil {
-							return fmt.Errorf("error: adding exclude %q: %w", pattern, err)
-						}
-					}
-				}
-				continue
-			}
-			var nonEmpty []string
-			for _, g := range globs {
-				if g != "" {
-					nonEmpty = append(nonEmpty, g)
-				}
-			}
-			if len(nonEmpty) == 0 {
-				continue
-			}
-			if _, err := s.GetEntity(id); err != nil {
-				continue
-			}
-			if err := s.SetCodeMap(id, nonEmpty); err != nil {
-				return fmt.Errorf("error: setting code map for %s: %w", id, err)
-			}
-		}
-	}
-
-	// Rebuild should establish a clean baseline.
-	if _, err := s.DB().Exec(`DELETE FROM changelog`); err != nil {
-		return fmt.Errorf("error: clearing changelog: %w", err)
-	}
 	_ = entityCount
 	return nil
 }

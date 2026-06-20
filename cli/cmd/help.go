@@ -90,14 +90,15 @@ Use c3x canvas list to inspect available entity definitions.`,
 	},
 	{
 		Name:     "check",
-		OneLiner: "Validate docs, schema, code refs, consistency",
+		OneLiner: "Validate docs, schema, citations, consistency",
 		Help: `Usage: c3x check [--json] [--include-adr] [--fix] [--only <id>] [--only-touched [--since <ref>]] [--rule <rule-id>]
 
 Layered validation (ADRs excluded by default; use --include-adr to validate them):
   Canonical seal + cache integrity
   Broken links, orphans, duplicates, missing parents
   Required sections empty/missing per schema
-  Code refs exist on disk, entity IDs in graph, cite consistency
+  Entity IDs in graph, cite consistency
+(Fact-vs-code conformance is not here — that is a separate 'c3x eval' run.)
 
 Options:
   --fix              Auto-fix entity/ref references that match by title (e.g., "API" → c3-1)

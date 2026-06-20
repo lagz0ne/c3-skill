@@ -8,7 +8,7 @@ here, not re-taught.
 ## A canvas is the shape of a fact-type
 
 A **canvas** is your project's vocabulary made enforceable: for one fact-type
-(`system`, `container`, `component`, `ref`, `rule`, `recipe`, the change-docs, or any
+(`system`, `container`, `component`, `ref`, `rule`, the change-docs, or any
 type you define), it declares the sections each fact carries and each table's typed
 columns. The shape is **data, not code**: `c3 init` seeds lean canvases, materializes
 them to `.c3/canvases/<type>.md`, and from then on **you own them**. `c3 check`

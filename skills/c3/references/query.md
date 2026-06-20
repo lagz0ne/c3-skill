@@ -14,8 +14,6 @@ Reads are free and side-effect-free — favor them. Reach for `c3 list` / `c3 ch
 
 For natural-language questions reach for `search` **before** `list`-and-title-matching — search ranks by meaning. `match_sources` tells you *why* a hit ranked: `semantic` = meaning matched despite different wording; `content_fts` / `entity_fts` = keyword; `graph:*` = relationship context. Use `c3 list` only for inventory/coverage **after** candidates are known.
 
-**Recipes are candidates too.** If `search` surfaces a `recipe`, read it first and serve its sources as a ready-made narrative trace.
-
 ## Navigate the layers
 
 Start from the best candidate, then move through Context → Container → Component as the answer demands ownership, boundaries, or implementation:
@@ -23,7 +21,7 @@ Start from the best candidate, then move through Context → Container → Compo
 1. `c3 read <id>` (`--full` for the whole body) when the snippet isn't enough.
 2. `c3 lookup <file>` on **every** file path before you open source — it returns the owning component plus the refs/rules governing that file (those are its constraints). Directory-level: `c3 lookup 'src/auth/**'`.
 3. `c3 graph <id> --format mermaid` for relationships — include the mermaid as a code block. Root it on the matched container/component, never `c3-0`.
-4. Then explore code: glob/grep the symbols and paths the code-map surfaced.
+4. Then explore code: glob/grep the symbols and paths the `lookup` bindings surfaced.
 
 ## Two rules every answer obeys
 

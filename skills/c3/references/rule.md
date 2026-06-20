@@ -16,7 +16,7 @@ c3 schema rule > body.md     # the contract to draft against
 c3 add rule structured-logging --file body.md
 ```
 
-`c3 add` is the unguarded create path. After it lands, `c3 write` / `c3 set` on the rule are **refused** (see the frozen-fact contract in SKILL.md) — so `origin:`, `scope:`, and every field go **in the body file**, never a follow-up `set`. The lone exception is `c3 set rule-<slug> codemap '<glob>'`: the code binding is verified, not frozen, and may be set directly.
+`c3 add` is the unguarded create path. After it lands, `c3 write` / `c3 set` on the rule are **refused** (see the frozen-fact contract in SKILL.md) — so `origin:`, `scope:`, and every field go **in the body file**, never a follow-up `set`. The rule's code binding lives outside the fact entirely, in `.c3/eval/rule-<slug>.yaml` (a `code:` glob) — a plain editable file, re-aimed freely and checked by `c3 eval` (`references/eval.md`).
 
 **Cite the rule from each component it governs.** A citation is a row in the component's edge column — for a freshly-seeded project that's the `Governance` table, `Reference` column (the one tagged `edge: uses`), with `Type: rule`. Ask `c3 schema component` where that column lives rather than memorizing it. A brand-new citer carries the row in its body at `c3 add` time; an existing citer is a frozen fact, so the citation rides a change-unit patch — that whole flow (cite the block, author the patch, apply) is owned by `references/change.md`.
 

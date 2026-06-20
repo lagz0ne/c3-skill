@@ -1,6 +1,6 @@
 # Onboard Reference
 
-Onboarding is **Act 1**: walk the domain, draft the facts, freeze them. You don't configure a canvas and then fill it — `c3 init` already seeded the **lean rung-1** canvas and created the system `c3-0` plus the genesis ADR `adr-00000000-c3-adoption`. You **descend the abstraction** — system → containers → components → the refs, rules, and recipes that govern them — drafting each fact into the genesis ADR and **wiring it as you go**. The canvas is already in place; it grows a custom type only when the domain needs one. Then you **flip once**: every fact materializes atomically, canvas-validated, all-or-nothing — and the architecture is **frozen shared truth**, changed only through a future change-unit.
+Onboarding is **Act 1**: walk the domain, draft the facts, freeze them. You don't configure a canvas and then fill it — `c3 init` already seeded the **lean rung-1** canvas and created the system `c3-0` plus the genesis ADR `adr-00000000-c3-adoption`. You **descend the abstraction** — system → containers → components → the refs and rules that govern them — drafting each fact into the genesis ADR and **wiring it as you go**. The canvas is already in place; it grows a custom type only when the domain needs one. Then you **flip once**: every fact materializes atomically, canvas-validated, all-or-nothing — and the architecture is **frozen shared truth**, changed only through a future change-unit.
 
 **Precondition.** `c3 list` returns facts → already onboarded; offer re-onboard or redirect to audit/query.
 
@@ -19,13 +19,12 @@ Conversation first — discuss the idea and where the seams fall. Then walk **to
 | **Component** | a unit inside a container | Foundation `c3-N01`–`c3-N09` (others depend on it) / Feature `c3-N10`+ (business logic) |
 | **Ref** | a rationale-bearing convention — "would this change if we swapped the underlying tech?" | `ref-<slug>` |
 | **Rule** | an enforceable standard — "a coding standard or constraint, not a pattern choice?" | `rule-<slug>` |
-| **Recipe** | an end-to-end flow **no single component owns** — it crosses containers | `recipe-<slug>` |
 
-A component that can name a concrete file is Foundation or Feature; a pure convention with no file is a ref. Trace the two or three cross-container operations the system is *for* (e.g. receiving→putaway, reservation→pick→pack→ship) as recipes — that is what makes behavior legible across container boundaries. Use `AskUserQuestion` for gaps.
+A component that can name a concrete file is Foundation or Feature; a pure convention with no file is a ref. Use `AskUserQuestion` for gaps.
 
-**Wire as you descend.** A component **uses** a ref; a rule **governs** a component; a recipe steps through components — each citation *is* a graph edge (edge columns → `canvas.md`; citing → `ref.md`/`rule.md`). The graph forms **with** the facts, not after them — by the time you reach the leaves the topology is already connected.
+**Wire as you descend.** A component **uses** a ref; a rule **governs** a component — each citation *is* a graph edge (edge columns → `canvas.md`; citing → `ref.md`/`rule.md`). The graph forms **with** the facts, not after them — by the time you reach the leaves the topology is already connected.
 
-**The canvas grows to the domain — you never pre-configure it.** The lean seed carries system/container/component/ref/rule/recipe; keep it. When the domain surfaces a fact-type the seed doesn't carry — a QA, PM, or design doc-type — define its canvas **in the flow** (`c3 canvas write <type> --file`), then draft its facts like any other. Don't pre-build deeper sections a complex project would only need later (the rung model → `canvas.md`). Read what any type requires with `c3 schema <type>`.
+**The canvas grows to the domain — you never pre-configure it.** The lean seed carries system/container/component/ref/rule; keep it. When the domain surfaces a fact-type the seed doesn't carry — a QA, PM, or design doc-type — define its canvas **in the flow** (`c3 canvas write <type> --file`), then draft its facts like any other. Don't pre-build deeper sections a complex project would only need later (the rung model → `canvas.md`). Read what any type requires with `c3 schema <type>`.
 
 ### 2. Each fact is a create-patch
 
@@ -48,7 +47,7 @@ c3 change apply adr-00000000-c3-adoption   # materialize all-or-nothing; facts a
 
 One atomic, canvas-validated transaction: every fact validates or nothing lands. After the flip the facts are **frozen** — editing any of them now rides a change-unit (`change.md`), never `c3 add`/`c3 write`/`c3 set`/`c3 delete`.
 
-**One field survives the freeze:** `c3 set <id> codemap '<glob>'`. Code churns independently of the design, so its mapping is verified live, not frozen — set it per component/ref/rule after the flip and spot-check with `c3 lookup 'src/**'`.
+**Bind each fact to its code, outside the freeze.** Code churns independently of the design, so the fact→code binding lives in a plain editable file, not a frozen fact. After the flip, author an eval-spec per component/ref/rule at `.c3/eval/<fact>.yaml` — a `code:` glob binding (and an optional pipeline for a behavioural claim) — then run `c3 eval` to verify each claim against its code. `c3 lookup 'src/**'` resolves through those same `code:` bindings (`references/eval.md`).
 
 ### 4. Close the change-unit
 
@@ -56,27 +55,25 @@ The genesis ADR's Affected Topology cites were authored as `N.A` — the facts d
 
 ```bash
 c3 read <id> --cite                        # refresh each After-cite with the real handle
-c3 change inspect adr-00000000-c3-adoption # surface derivation obligations
-# author <seq>.inspect.md per the inspect output
 c3 change accept adr-00000000-c3-adoption  # the one stored human judgment → accepted
 c3 check --fix                             # latches accepted → done when After-cites resolve fresh
 ```
 
-`done` is **earned, never typed** — the latch actualizes `accepted → done` only once the refreshed After-cites resolve, proof the architecture actually landed. The gate stack `apply` runs (drift + canvas + retire + inspection) and the ADR status set live in SKILL.md and `change.md`; cite them, don't re-derive them here. Onboarding ends having completed one full change-unit cycle.
+`done` is **earned, never typed** — the latch actualizes `accepted → done` only once the refreshed After-cites resolve, proof the architecture actually landed. The gate stack `apply` runs (drift + canvas + morph + retire) and the ADR status set live in SKILL.md and `change.md`; cite them, don't re-derive them here. Onboarding ends having completed one full change-unit cycle.
 
 ---
 
 ## The one gate list
 
 ```
-- [ ] Topology walked top-down: system, containers, components (with category), refs, rules, recipes — wired as drafted
+- [ ] Topology walked top-down: system, containers, components (with category), refs, rules — wired as drafted
 - [ ] Canvas left lean (seed kept; a custom type defined only where the domain needed one, not pre-built deep)
 - [ ] Every fact a create-patch in .c3/changes/adr-00000000-c3-adoption/ (parent: set, membership headers only)
 - [ ] Flip applied — facts materialized and frozen (change apply)
-- [ ] Code-map set per component/ref/rule; c3 lookup 'src/**' resolves
+- [ ] Eval-spec authored per component/ref/rule (.c3/eval/<fact>.yaml, code: binding); c3 eval run; c3 lookup 'src/**' resolves
 - [ ] c3 check passes; coverage acceptable (or exclusions documented)
 - [ ] Audit passes (audit.md)
-- [ ] Genesis ADR: After-cites refreshed → inspected → accepted → latched done (check --fix)
+- [ ] Genesis ADR: After-cites refreshed → accepted → latched done (check --fix)
 ```
 
 A failed gate sends you back to the walk (1), not forward.

@@ -1,47 +1,52 @@
 ---
 id: rule-wrap-error-cause
-c3-seal: d1b598183f616c01a0937ebdd31914bb3e5b511af892b366556c5ef08501e5aa
+c3-seal: ead93f50204476c4b808c40f99cdf87b2a69ef64ee5f83f6db380b53b6f7bcee
 title: wrap-error-cause
 type: rule
-goal: Every returned error in the Go CLI preserves its cause and context so failures stay traceable across the dispatcher, store, and command layers.
+goal: 'Preserve the failure chain: an error that crosses a function boundary should say what this layer was doing and still carry the underlying cause.'
 ---
 
 # wrap-error-cause
 
 ## Goal
 
-Every returned error in the Go CLI preserves its cause and context so failures stay traceable across the dispatcher, store, and command layers.
+Preserve the failure chain: an error that crosses a function boundary should say what this layer was doing and still carry the underlying cause.
 
 ## Rule
 
-All returned errors must wrap the cause with `fmt.Errorf("<context>: %w", err)` — never drop the cause or format a returned error with `%v`.
+When a function returns an error it received from a lower layer, it wraps that error with context using `fmt.Errorf("<what this layer was doing>: %w", err)`. The `%w` verb (not `%v` or `%s`) is required so the original error stays unwrapped-reachable for `errors.Is` / `errors.As` and so the full chain is visible. The context names the operation and, where it helps, the subject (the file, entity, or stage) — e.g. `apply %s: %w`, `read inspect %s: %w`. A sentinel returned unchanged needs no wrap; a freshly constructed leaf error (no cause to carry) is the exception.
 
 ## Golden Example
 
-```go
-// cli/main.go — dispatcher wrapping a cache-refresh failure
-if err := cmd.EnsureLocalCache(c3Dir, opts.IncludeADR, opts.Only, io.Discard); err != nil {
-    return fmt.Errorf("error: refresh cache before %q: %w", opts.Command, err) // REQUIRED: %w preserves the cause
+```````go
+func LoadEvalSpecs(c3Dir string) ([]eval.Spec, error) {
+	entries, err := os.ReadDir(filepath.Join(c3Dir, "eval"))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("read eval dir: %w", err)
+	}
+	var specs []eval.Spec
+	for _, ent := range entries {
+		b, err := os.ReadFile(filepath.Join(c3Dir, "eval", ent.Name()))
+		if err != nil {
+			return nil, fmt.Errorf("read %s: %w", ent.Name(), err)
+		}
+		var sp eval.Spec
+		if err := yaml.Unmarshal(b, &sp); err != nil {
+			return nil, fmt.Errorf("parse %s: %w", ent.Name(), err)
+		}
+		specs = append(specs, sp)
+	}
+	return specs, nil
 }
 ```
+````
 
 ## Not This
 
 | Anti-Pattern | Correct | Why Wrong Here |
 | --- | --- | --- |
-| return fmt.Errorf("failed: %v", err) | return fmt.Errorf("failed: %w", err) | %v flattens the cause, so callers lose errors.Is/errors.As and the unwrap chain. |
-| return err at a layer boundary | return fmt.Errorf("<context>: %w", err) | A bare return drops the context needed to locate where the failure crossed layers. |
-
-## Scope
-
-**Applies to:**
-
-- All Go components in the c3-1 container that return errors across function or layer boundaries.
-
-**Does NOT apply to:**
-
-- Test helpers asserting on sentinel errors with `errors.Is`.
-
-## Override
-
-Deviate only when returning a sentinel error meant for `errors.Is` matching; document the sentinel at its definition.
+| return fmt.Errorf("read inspect %s: %v", name, err) | return fmt.Errorf("read inspect %s: %w", name, err) | %v flattens the cause to text, so errors.Is/errors.As can no longer reach the underlying error. |
+| return err straight up through several layers | return fmt.Errorf("apply %s: %w", p.Source, err) | An unwrapped bubble loses which stage and which file failed — the saga error becomes an opaque leaf with no context. |

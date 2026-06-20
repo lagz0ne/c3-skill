@@ -1,11 +1,9 @@
 ---
-id: ref-frontmatter-docs
-c3-seal: 5ec5d290948009c467723bd212d951aa625d3b25240d6bf86dcc361866a8e605
-title: Frontmatter Docs Pattern
+target: ref-frontmatter-docs
+scope: whole
 type: ref
-goal: Standardize every `.c3/` document as YAML frontmatter plus canvas-shaped markdown sections.
+title: Frontmatter Docs Pattern
 ---
-
 # Frontmatter Docs Pattern
 
 ## Goal

@@ -1,0 +1,45 @@
+---
+target: c3-203
+scope: whole
+type: component
+parent: c3-2
+title: cli-wrapper
+---
+# cli-wrapper
+
+## Goal
+
+Detect the host platform, select the version-pinned packaged binary, build it from source only when absent, and exec it with the agent's arguments.
+
+## Parent Fit
+
+| Field | Value |
+| --- | --- |
+| Parent | c3-2 |
+| Role | The skill's invocation layer: the shell shim every C3 command in this skill runs through. |
+| Boundary | Owns platform detection, binary selection, the absent-only source-build fallback, and the exec; runs no architecture logic and teaches no operation. |
+| Collaboration | skill-definition names this wrapper as the CLI handle; the binary it execs is the Go CLI container; the version it reads is the same release line the npm client pins. |
+
+## Purpose
+
+Carry bin/c3x.sh and bin/VERSION: read VERSION, lowercase the OS and normalize the arch (x86_64 to amd64, aarch64/arm64 to arm64), reject any platform outside linux amd64/arm64 and darwin arm64 with a hint, compute the `c3x-${VERSION}-${OS}-${ARCH}` asset name, exec the bundled binary when present, otherwise build it from cli/ with `go build` (embedmodel tag, version ldflag) when Go and go.mod exist, and export C3X_VERSION for the child. Non-goals: implementing any C3 command (the binary), downloading binaries over the network (the npm client does that), or shaping `.c3/` content.
+
+## Governance
+
+| Reference | Type | Governs | Precedence | Notes |
+| --- | --- | --- | --- | --- |
+| ref-cross-compiled-binary | ref | The per-platform asset name and supported OS/arch matrix the wrapper resolves to before exec | Wrapper selects only an asset the build matrix produces | c3x.sh maps uname to amd64/arm64, gates on linux amd64/arm64 and darwin arm64, and builds `c3x-${VERSION}-${OS}-${ARCH}`. |
+
+## Contract
+
+| Surface | Direction | Contract | Boundary | Evidence |
+| --- | --- | --- | --- | --- |
+| c3x.sh entrypoint | IN | Invoked with C3 args; resolves VERSION + platform to one asset name and execs the matching bundled binary | Rebuilds only when the asset is absent; never re-downloads | skills/c3/bin/c3x.sh asset_name / `[ -f "$bin" ]` exec branch |
+| binary exec | OUT | The selected binary runs with C3X_VERSION exported and the original argv forwarded; unsupported platform or a missing binary with no Go toolchain exits non-zero with a hint | Forwards argv unchanged; adds no behavior of its own | skills/c3/bin/c3x.sh `exec "$bin" "$@"`; unsupported-platform and not-found error exits |
+
+## Derived Materials
+
+| Material | Must derive from | Allowed variance | Evidence |
+| --- | --- | --- | --- |
+| skills/c3/bin/c3x.sh | Contract | Build flags and detection details may vary while platform-gated selection and exec hold | skills/c3/bin/c3x.sh selects c3x-{VERSION}-{os}-{arch}; `c3x check` runs on a supported platform |
+| skills/c3/bin/VERSION | Goal | The pinned version string changes each release | skills/c3/bin/VERSION matches the `v{VERSION}` release tag and `C3X_VERSION` |

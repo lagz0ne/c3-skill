@@ -1,0 +1,6 @@
+fact: c3-101
+claim: "c3-101 is implemented at its declared code surface"
+code:
+  - cli/internal/content/**
+  - cli/internal/frontmatter/**
+  - cli/internal/markdown/**

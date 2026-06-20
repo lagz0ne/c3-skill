@@ -1,11 +1,9 @@
 ---
-id: rule-dispatcher-error-hint
-c3-seal: 47d8ec4bcd3c546ba7657e0689b3d9ccabd2c39352132ba19cf65687d033253c
-title: dispatcher-error-hint
+target: rule-dispatcher-error-hint
+scope: whole
 type: rule
-goal: 'Make every user-facing CLI failure recoverable: a wrong invocation should tell the user what to do next, not just that something was wrong.'
+title: dispatcher-error-hint
 ---
-
 # dispatcher-error-hint
 
 ## Goal
@@ -34,5 +32,5 @@ default:
 
 | Anti-Pattern | Correct | Why Wrong Here |
 | --- | --- | --- |
-| return fmt.Errorf("invalid command") | return fmt.Errorf("error: unknown command '%s'\nhint: run 'c3x --help' to see available commands", opts.Command) | A bare failure tells the user nothing about how to recover; the dispatcher is the one place that knows the valid next step. |
-| Printing the hint with fmt.Fprintln(os.Stderr, ...) inside the handler | Return it in the error string; main already prints the error to stderr and exits 1 | Side-channel printing splits the message from the non-zero exit and bypasses the testable error return. |
+| `return fmt.Errorf("invalid command")` | `return fmt.Errorf("error: unknown command '%s'\nhint: run 'c3x --help' to see available commands", opts.Command)` | A bare failure tells the user nothing about how to recover; the dispatcher is the one place that knows the valid next step. |
+| Printing the hint with `fmt.Fprintln(os.Stderr, ...)` inside the handler | Return it in the error string; `main` already prints the error to stderr and exits 1 | Side-channel printing splits the message from the non-zero exit and bypasses the testable error return. |

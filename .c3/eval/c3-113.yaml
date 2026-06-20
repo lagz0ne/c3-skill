@@ -1,0 +1,11 @@
+fact: c3-113
+claim: "c3-113 is implemented at its declared code surface"
+code:
+  - cli/cmd/delete.go
+  - cli/cmd/document_format.go
+  - cli/cmd/export.go
+  - cli/cmd/git.go
+  - cli/cmd/import.go
+  - cli/cmd/migrate_status.go
+  - cli/cmd/repair.go
+  - cli/cmd/sync.go

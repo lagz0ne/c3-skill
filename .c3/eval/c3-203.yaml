@@ -1,0 +1,9 @@
+fact: c3-203
+claim: "cli-wrapper gates linux/amd64, linux/arm64, darwin/arm64"
+code:
+  - skills/c3/bin/VERSION
+  - skills/c3/bin/c3x.sh
+pipeline:
+  - gather: { file: skills/c3/bin/c3x.sh }
+  - eval:
+      contains_all: ["linux/amd64", "linux/arm64", "darwin/arm64"]

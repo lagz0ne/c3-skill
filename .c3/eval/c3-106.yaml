@@ -1,0 +1,4 @@
+fact: c3-106
+claim: "c3-106 is implemented at its declared code surface"
+code:
+  - cli/internal/codemap/**

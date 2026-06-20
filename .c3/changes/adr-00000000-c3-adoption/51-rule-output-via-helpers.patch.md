@@ -1,11 +1,9 @@
 ---
-id: rule-output-via-helpers
-c3-seal: eb7b1eff71106e4cb249f548f67e8538c83c35143d140eb942e892a6c0bdc6cf
-title: output-via-helpers
+target: rule-output-via-helpers
+scope: whole
 type: rule
-goal: 'Keep machine output uniform: one place decides TOON vs JSON and honors agent mode, so every command speaks the same serialization.'
+title: output-via-helpers
 ---
-
 # output-via-helpers
 
 ## Goal
@@ -45,5 +43,5 @@ func WriteObjectOutput(w io.Writer, data any, format OutputFormat, hints []HelpH
 
 | Anti-Pattern | Correct | Why Wrong Here |
 | --- | --- | --- |
-| fmt.Fprintf(w, "%s: %s\n", row.ID, row.Name) to emit a result set | WriteTableOutput(w, "items", rows, fields, format, hints) | A bespoke format ignores the TOON/JSON switch and agent mode, so two commands drift into two machine formats. |
-| json.NewEncoder(w).Encode(data) directly in a handler | Route through WriteObjectOutput / writeJSON, which apply agent-mode TOON | Encoding inline bypasses agent-mode TOON and the help-hint attachment the helpers centralize. |
+| `fmt.Fprintf(w, "%s: %s\n", row.ID, row.Name)` to emit a result set | `WriteTableOutput(w, "items", rows, fields, format, hints)` | A bespoke format ignores the TOON/JSON switch and agent mode, so two commands drift into two machine formats. |
+| `json.NewEncoder(w).Encode(data)` directly in a handler | Route through `WriteObjectOutput` / `writeJSON`, which apply agent-mode TOON | Encoding inline bypasses agent-mode TOON and the help-hint attachment the helpers centralize. |

@@ -1,11 +1,9 @@
 ---
-id: ref-cross-compiled-binary
-c3-seal: d3ef0600a734750458802bad4799cd6419377523aef6ee243deb42cab7d58432
-title: Cross-Compiled Binary Distribution
+target: ref-cross-compiled-binary
+scope: whole
 type: ref
-goal: Ship c3x as standalone per-platform binaries with no runtime dependency.
+title: Cross-Compiled Binary Distribution
 ---
-
 # Cross-Compiled Binary Distribution
 
 ## Goal

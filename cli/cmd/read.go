@@ -56,7 +56,7 @@ func RunRead(opts ReadOptions, w io.Writer) error {
 
 	entity, err := opts.Store.GetEntity(opts.ID)
 	if err != nil {
-		return fmt.Errorf("error: entity %q not found", opts.ID)
+		return fmt.Errorf("error: entity %q not found\nhint: run c3x search %q or c3x list --flat to find the current id", opts.ID, opts.ID)
 	}
 
 	// Read body from node tree.
@@ -157,7 +157,7 @@ func RunRead(opts ReadOptions, w io.Writer) error {
 
 func entityCitation(entity *store.Entity) (string, error) {
 	if entity.Version <= 0 || entity.RootMerkle == "" {
-		return "", fmt.Errorf("error: %s has no versioned content hash for citation", entity.ID)
+		return "", fmt.Errorf("error: %s has no versioned content hash for citation\nhint: run c3x repair, then rerun c3x read %s --cite", entity.ID, entity.ID)
 	}
 	return fmt.Sprintf("%s@v%d:sha256:%s", entity.ID, entity.Version, entity.RootMerkle), nil
 }
@@ -168,16 +168,16 @@ func sectionCitations(s *store.Store, entity *store.Entity, sectionName string) 
 		return nil, fmt.Errorf("error: read nodes for %s citations: %w", entity.ID, err)
 	}
 	if entity.Version <= 0 {
-		return nil, fmt.Errorf("error: %s has no versioned content for citation", entity.ID)
+		return nil, fmt.Errorf("error: %s has no versioned content for citation\nhint: run c3x repair, then rerun c3x read %s --section %q --cite", entity.ID, entity.ID, sectionName)
 	}
 	heading := sectionHeading(nodes, sectionName)
 	if heading == nil {
-		return nil, fmt.Errorf("error: section %q not found in node tree for %s", sectionName, entity.ID)
+		return nil, fmt.Errorf("error: section %q not found in node tree for %s\nhint: run c3x read %s --full to inspect available sections", sectionName, entity.ID, entity.ID)
 	}
 	citations := make([]string, 0)
 	collectSectionCitations(nodes, entity, heading.ID, &citations)
 	if len(citations) == 0 {
-		return nil, fmt.Errorf("error: section %q in %s has no citable body nodes", sectionName, entity.ID)
+		return nil, fmt.Errorf("error: section %q in %s has no citable body nodes\nhint: add body content to that section, then rerun c3x repair and c3x read %s --section %q --cite", sectionName, entity.ID, entity.ID, sectionName)
 	}
 	return citations, nil
 }

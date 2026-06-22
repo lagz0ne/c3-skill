@@ -74,22 +74,6 @@ func TestUpdateEntity(t *testing.T) {
 	if got.Goal != "Route and rate-limit" {
 		t.Errorf("Goal = %q, want %q", got.Goal, "Route and rate-limit")
 	}
-
-	// Check changelog has entries for the changed fields.
-	changes, err := s.UnmarkedChanges()
-	if err != nil {
-		t.Fatalf("unmarked changes: %v", err)
-	}
-	// Filter for update actions on api-gateway.
-	var updates []*ChangeEntry
-	for _, c := range changes {
-		if c.EntityID == "api-gateway" && c.Action == "update" {
-			updates = append(updates, c)
-		}
-	}
-	if len(updates) != 2 {
-		t.Errorf("expected 2 update changelog entries, got %d", len(updates))
-	}
 }
 
 func TestDeleteEntity(t *testing.T) {

@@ -1,0 +1,44 @@
+---
+target: c3-101
+scope: whole
+type: component
+parent: c3-1
+title: doc-model
+---
+# doc-model
+
+## Goal
+
+Turn a `.c3/` markdown file into structured frontmatter and a node tree, and bridge those documents to and from the store's nodes.
+
+## Parent Fit
+
+| Field | Value |
+| --- | --- |
+| Parent | c3-1 |
+| Role | The document layer: it reads and writes the markdown that every fact is stored as, and maps it onto store nodes. |
+| Boundary | Owns YAML frontmatter parsing, markdown section/table parsing, and the document-to-node bridge; it never opens the database itself — it calls the store through a passed handle. |
+| Collaboration | schema supplies the canvas whose edge-columns this layer reads when syncing relationships; store persists the node trees and versions this layer produces; check and changeset call WriteEntity/ReadEntity to round-trip bodies. |
+
+## Purpose
+
+Parse YAML frontmatter into typed fields and classify a document's type; split a markdown body into sections and parse and rewrite its tables; parse a body into a parent-ordered node tree, hash and seal it, and render nodes back to markdown; and sync the edges a fact's body declares through its canvas edge-columns. Non-goals: persisting nodes (store), defining or validating canvas shape (schema), or walking the directory tree (walker).
+
+## Governance
+
+| Reference | Type | Governs | Precedence | Notes |
+| --- | --- | --- | --- | --- |
+| ref-frontmatter-docs | ref | The frontmatter-plus-canvas-markdown shape this layer reads and writes for every fact | Convention is the parsing contract | Known frontmatter fields map to typed struct fields; unknown ones fold into an inline Extra map. |
+
+## Contract
+
+| Surface | Direction | Contract | Boundary | Evidence |
+| --- | --- | --- | --- | --- |
+| ParseFrontmatter / ParseSections / ParseTable | IN | Callers pass raw markdown; the layer returns typed frontmatter, named sections, and parsed tables, or signals an unparseable file rather than guessing | Returns nil frontmatter on a missing id or malformed YAML; never panics on bad input | frontmatter_test.go, markdown_test.go, content/parse_test.go |
+| WriteEntity / ReadEntity / RenderMarkdown | OUT | WriteEntity parses a body, inserts the node tree, snapshots a version, and reseals the entity merkle in one store transaction; ReadEntity renders stored nodes back to markdown that round-trips | Mutations enlist in the passed store transaction and commit or roll back as one unit, never leaving a half-updated fact | content/bridge_test.go, content/render_test.go round-trips |
+
+## Derived Materials
+
+| Material | Must derive from | Allowed variance | Evidence |
+| --- | --- | --- | --- |
+| cli/internal/{frontmatter,markdown,content}/**.go | Contract | Parser internals (AST mapping, node-hash layout, table-cell escaping) may vary as long as documents round-trip | go test ./internal/frontmatter/... ./internal/markdown/... ./internal/content/... |

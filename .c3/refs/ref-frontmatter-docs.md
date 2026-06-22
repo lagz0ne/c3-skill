@@ -1,52 +1,25 @@
 ---
 id: ref-frontmatter-docs
-c3-version: 4
-c3-seal: f5cc83f74d91d7e3676b7dca33492f96150c2930e28ce14d1777be59fb1c35e0
+c3-seal: 5ec5d290948009c467723bd212d951aa625d3b25240d6bf86dcc361866a8e605
 title: Frontmatter Docs Pattern
 type: ref
-goal: Every `.c3/` doc uses YAML frontmatter for machine-readable metadata and a Markdown body for human-readable content.
-via:
-    - c3-101
-    - c3-103
+goal: Standardize every `.c3/` document as YAML frontmatter plus canvas-shaped markdown sections.
 ---
 
 # Frontmatter Docs Pattern
 
 ## Goal
 
-Every `.c3/` doc uses YAML frontmatter for machine-readable metadata and a Markdown body for human-readable content.
+Standardize every `.c3/` document as YAML frontmatter plus canvas-shaped markdown sections.
 
 ## Choice
 
-All `.c3/` architecture docs use YAML frontmatter (between `---` delimiters) followed by a Markdown body.
+Each fact is a markdown file whose frontmatter carries identity and structured fields (id, type, title, parent, seal) and whose body carries the canvas's required sections.
 
 ## Why
 
-- **Machine-readable identity**: `id`, `type`, `parent`, `goal` fields enable CLI traversal without parsing prose
-- **Human-readable content**: Markdown body allows rich documentation with tables and diagrams
-- **Separation of concerns**: Metadata (frontmatter) vs content (body) are independent
+A single representation that is human-diffable, git-friendly, and machine-parseable — the frontmatter gives stable structured fields without a separate schema file, and the body stays readable to a person reviewing a diff.
 
 ## How
 
-```markdown
----
-id: c3-NNN
-c3-version: 4
-title: My Component
-type: component
-category: foundation
-parent: c3-N
-goal: One-line goal statement
-summary: Brief summary
----
-
-# My Component
-
-## Goal
-
-One-line goal statement.
-```
-
-## Not This
-
-Do not put structural metadata (id, type, parent) in the markdown body — it won't be parseable by the CLI.
+The doc-model component parses frontmatter and markdown into a node tree; the store seals that tree with a content merkle; check validates the required sections per canvas.

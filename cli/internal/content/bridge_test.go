@@ -128,12 +128,9 @@ func TestWriteEntity_SecondWrite(t *testing.T) {
 		t.Fatalf("second write: %v", err)
 	}
 
-	v, err := s.LatestVersion("test-1")
-	if err != nil {
-		t.Fatalf("LatestVersion: %v", err)
-	}
-	if v != 2 {
-		t.Errorf("expected version 2 after two writes, got %d", v)
+	// Second write should have created version 2.
+	if _, err := s.GetVersion("test-1", 2); err != nil {
+		t.Fatalf("expected version 2 after two writes: %v", err)
 	}
 
 	// Nodes should reflect second write only

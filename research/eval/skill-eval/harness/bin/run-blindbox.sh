@@ -157,6 +157,109 @@ slugify() {
   printf '%s' "$1" | sed -E 's#^kilo/##; s#[^A-Za-z0-9._-]+#-#g; s#[-._]+$##'
 }
 
+sha_file() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | awk '{print $1}'
+  else
+    shasum -a 256 "$1" | awk '{print $1}'
+  fi
+}
+
+expect_sha() {
+  local label="$1"
+  local actual="$2"
+  local expected="$3"
+  if [[ -z "$expected" ]]; then
+    return 0
+  fi
+  if [[ "$actual" != "$expected" ]]; then
+    echo "Hash mismatch for $label: expected $expected, got $actual" >&2
+    exit 2
+  fi
+}
+
+resolve_local_c3_binary() {
+  local version_file="$repo_root/skills/c3/bin/VERSION"
+  local wrapper="$repo_root/skills/c3/bin/c3x.sh"
+  if [[ ! -f "$version_file" ]]; then
+    echo "Missing local C3 VERSION: $version_file" >&2
+    exit 2
+  fi
+  if [[ ! -f "$wrapper" ]]; then
+    echo "Missing local C3 wrapper: $wrapper" >&2
+    exit 2
+  fi
+
+  local version os arch
+  version="$(tr -d '[:space:]' < "$version_file")"
+  os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+  arch="$(uname -m)"
+  case "$arch" in
+    x86_64) arch="amd64" ;;
+    aarch64|arm64) arch="arm64" ;;
+  esac
+  case "$os/$arch" in
+    linux/amd64|linux/arm64|darwin/arm64) ;;
+    *)
+      echo "Unsupported local C3 platform: $os/$arch" >&2
+      exit 2
+      ;;
+  esac
+
+  local binary="$repo_root/skills/c3/bin/c3x-${version}-${os}-${arch}"
+  if [[ ! -x "$binary" ]]; then
+    echo "Missing executable local C3 binary: $binary" >&2
+    exit 2
+  fi
+
+  C3_LOCAL_VERSION="$version"
+  C3_LOCAL_PLATFORM="$os/$arch"
+  C3_LOCAL_BINARY="$binary"
+  C3_LOCAL_BINARY_SANDBOX="/opt/c3/skills/c3/bin/$(basename "$binary")"
+}
+
+write_provenance() {
+  local file="$1"
+  local prompt_sha version_sha wrapper_sha binary_sha
+  prompt_sha="$(sha_file "$prompt_archive")"
+  version_sha="$(sha_file "$repo_root/skills/c3/bin/VERSION")"
+  wrapper_sha="$(sha_file "$repo_root/skills/c3/bin/c3x.sh")"
+  binary_sha="$(sha_file "$C3_LOCAL_BINARY")"
+
+  expect_sha "prompt_archive" "$prompt_sha" "${C3_EXPECT_PROMPT_SHA256:-}"
+  expect_sha "selected_binary" "$binary_sha" "${C3_EXPECT_SELECTED_BINARY_SHA256:-}"
+
+  {
+    printf 'prompt_archive=%s\n' "$prompt_archive"
+    printf 'prompt_sha256=%s\n' "$prompt_sha"
+    printf 'prompt_source_list=%s\n' "$prompt_source_list"
+    printf 'prompt_source_count=%s\n' "$(wc -l < "$prompt_source_list" | tr -d '[:space:]')"
+    printf 'local_c3_version=%s\n' "$C3_LOCAL_VERSION"
+    printf 'local_c3_platform=%s\n' "$C3_LOCAL_PLATFORM"
+    printf 'version_sha256=%s\n' "$version_sha"
+    printf 'wrapper_sha256=%s\n' "$wrapper_sha"
+    printf 'selected_binary=%s\n' "$C3_LOCAL_BINARY"
+    printf 'selected_binary_sandbox=%s\n' "$C3_LOCAL_BINARY_SANDBOX"
+    printf 'selected_binary_sha256=%s\n' "$binary_sha"
+    printf 'repo_head=%s\n' "$(git -C "$repo_root" rev-parse HEAD 2>/dev/null || printf 'unknown')"
+    if [[ -n "$(git -C "$repo_root" status --porcelain 2>/dev/null)" ]]; then
+      printf 'repo_dirty=yes\n'
+    else
+      printf 'repo_dirty=no\n'
+    fi
+    printf 'global_c3_guard=/opt/c3/guard/bin/c3x\n'
+    printf 'path_has_usr_local_bin=no\n'
+    while IFS=$'\t' read -r source_label source_path; do
+      [[ -n "$source_label" && -n "$source_path" ]] || continue
+      source_sha="$(sha_file "$source_path")"
+      if [[ "$source_label" == "skills/c3/SKILL.md" ]]; then
+        expect_sha "$source_label" "$source_sha" "${C3_EXPECT_SKILL_MD_SHA256:-}"
+      fi
+      printf 'source_sha256[%s]=%s\n' "$source_label" "$source_sha"
+    done < "$prompt_source_list"
+  } > "$file"
+}
+
 kilo_free_models() {
   local refresh_arg=()
   [[ "$refresh_models" -eq 1 ]] && refresh_arg=(--refresh)
@@ -244,11 +347,6 @@ if [[ "$run_timeout" -gt 0 ]]; then
   run_prefix=(timeout "${run_timeout}s")
 fi
 
-prompt_file="$(mktemp)"
-auth_root=""
-trap 'rm -f "$prompt_file"; [[ -z "$auth_root" ]] || rm -rf "$auth_root"' EXIT
-"$harness_root/bin/build-agent-prompt.sh" "$topic" > "$prompt_file"
-
 if [[ -z "$label" ]]; then
   label="$timestamp-$agent-$topic"
 fi
@@ -258,6 +356,27 @@ stdout_file="$run_dir/$label.stdout.txt"
 stderr_file="$run_dir/$label.stderr.txt"
 meta_file="$run_dir/$label.meta.txt"
 workspace_dir="$run_dir/$label.workspace"
+prompt_file="$(mktemp)"
+prompt_source_list="$run_dir/$label.prompt.sources.tsv"
+prompt_archive="$run_dir/$label.prompt.md"
+provenance_file="$run_dir/$label.provenance.txt"
+auth_root=""
+guard_root="$(mktemp -d)"
+trap 'rm -f "$prompt_file"; [[ -z "$auth_root" ]] || rm -rf "$auth_root"; rm -rf "$guard_root"' EXIT
+
+mkdir -p "$guard_root/bin"
+cat > "$guard_root/bin/c3x" <<'SH'
+#!/usr/bin/env bash
+echo "Do not use bare c3x in this sandbox. Use: C3X_MODE=agent bash /opt/c3/skills/c3/bin/c3x.sh <command>" >&2
+exit 127
+SH
+chmod 755 "$guard_root/bin/c3x"
+
+rm -f "$prompt_source_list"
+C3_PROMPT_SOURCE_LIST="$prompt_source_list" "$harness_root/bin/build-agent-prompt.sh" "$topic" > "$prompt_file"
+cp "$prompt_file" "$prompt_archive"
+resolve_local_c3_binary
+write_provenance "$provenance_file"
 
 seed_workspace() {
   rm -rf "$workspace_dir"
@@ -300,6 +419,7 @@ bwrap_args=(
   --bind "$run_dir" /runs
   --ro-bind "$prompt_file" /prompt.md
   --ro-bind "$repo_root/skills/c3" /opt/c3/skills/c3
+  --ro-bind "$guard_root" /opt/c3/guard
   --chdir /work/project
   --setenv HOME /work/home
   --setenv USER blindbox
@@ -310,7 +430,7 @@ bwrap_args=(
   --setenv CODEX_HOME /work/home/.codex
   --setenv CLAUDE_CONFIG_DIR /work/home/.claude
   --setenv CLAUDE_CODE_SAFE_MODE 1
-  --setenv PATH /opt/node/bin:/opt/claude:/opt/kilo:/usr/local/bin:/usr/bin:/bin
+  --setenv PATH /opt/node/bin:/opt/claude:/opt/kilo:/opt/c3/guard/bin:/usr/bin:/bin
   --setenv NO_COLOR 1
 )
 
@@ -347,7 +467,29 @@ stage_session_auth() {
       install -m 600 "$claude_src" "$auth_root/claude/.credentials.json"
       bwrap_args+=(--dir /work/home/.codex)
       bwrap_args+=(--bind "$auth_root/claude" /work/home/.claude)
-      auth_source="temporary_session_copy:claude_credentials_json"
+      # claude-code is "logged in" only when it also finds the account config
+      # (~/.claude.json with oauthAccount) — the .credentials.json tokens alone
+      # read as "Not logged in". Stage it minus the project history (the bulk +
+      # the only sensitive part) so the sandbox sees the account, not the history.
+      local claude_cfg="${CLAUDE_HOST_CONFIG:-$HOME/.claude.json}"
+      if [[ -f "$claude_cfg" ]]; then
+        # account config, minus project history; stage in both the legacy HOME
+        # location and inside CLAUDE_CONFIG_DIR so either resolution path finds it.
+        jq 'del(.projects)' "$claude_cfg" > "$auth_root/claude.json" 2>/dev/null \
+          || install -m 600 "$claude_cfg" "$auth_root/claude.json"
+        chmod 600 "$auth_root/claude.json"
+        install -m 600 "$auth_root/claude.json" "$auth_root/claude/.claude.json"
+        bwrap_args+=(--bind "$auth_root/claude.json" /work/home/.claude.json)
+      fi
+      # The `claude --print` headless path authenticates from CLAUDE_CODE_OAUTH_TOKEN;
+      # feed it the live OAuth access token so a fresh sandbox is logged in without
+      # the interactive credentials handshake.
+      local claude_token
+      claude_token="$(jq -r '.claudeAiOauth.accessToken // empty' "$claude_src" 2>/dev/null)"
+      if [[ -n "$claude_token" ]]; then
+        bwrap_args+=(--setenv CLAUDE_CODE_OAUTH_TOKEN "$claude_token")
+      fi
+      auth_source="temporary_session_copy:claude_credentials_json+account+oauth_token"
       ;;
     kilo)
       local kilo_auth_src="${KILO_HOST_AUTH:-$HOME/.local/share/kilo/auth.json}"
@@ -430,9 +572,11 @@ case "$agent" in
     else
       claude_bin="$(readlink -f "$claude_cmd")"
       bwrap_args+=(--dir /opt/claude --ro-bind "$claude_bin" /opt/claude/claude)
+      # NOTE: do NOT pass --bare. --bare only accepts an ANTHROPIC_API_KEY and
+      # rejects the OAuth/subscription token (CLAUDE_CODE_OAUTH_TOKEN) we stage,
+      # surfacing as "Not logged in". Plain --print honors the OAuth token.
       agent_cmd=(/opt/claude/claude
         --print
-        --bare
         --safe-mode
         --no-session-persistence
         --permission-mode bypassPermissions
@@ -488,6 +632,8 @@ esac
   printf 'final=%s\n' "$final_file"
   printf 'stdout=%s\n' "$stdout_file"
   printf 'stderr=%s\n' "$stderr_file"
+  printf 'prompt_archive=%s\n' "$prompt_archive"
+  printf 'provenance=%s\n' "$provenance_file"
   printf 'mounted_repo_root=no\n'
   printf 'mounted_global_home=no\n'
   printf 'auth_source=%s\n' "$auth_source"
@@ -495,6 +641,7 @@ esac
   if [[ "$agent" == "kilo" ]]; then
     printf 'kilo_agent=%s\n' "$kilo_agent"
   fi
+  sed -n '1,$p' "$provenance_file"
 } > "$meta_file"
 
 if [[ "$dry_run" -eq 1 ]]; then

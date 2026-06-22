@@ -96,6 +96,132 @@ func TestApply_BlockFlip_SiblingsFrozen(t *testing.T) {
 	}
 }
 
+// A block edit to the ## Goal section must re-sync the denormalized frontmatter
+// goal: — otherwise lookup/read/list show a stale goal (the goal-desync bug).
+func TestApply_BlockGoal_SyncsFrontmatterGoal(t *testing.T) {
+	s := openMem(t)
+	seedFact(t, s, "c3-101", "# auth\n\n## Goal\n\nOriginal goal.\n\n## Detail\n\nDetail body.\n")
+	if e, _ := s.GetEntity("c3-101"); e.Goal != "Original goal." {
+		t.Fatalf("seed goal: got %q", e.Goal)
+	}
+	handle, _ := blockHandle(t, s, "c3-101", "Original goal.")
+	p := Patch{Target: "c3-101", Scope: ScopeBlock, Base: handle, Content: "Reworded goal.", Source: "01.patch.md"}
+	if err := Apply(s, []Patch{p}, nil); err != nil {
+		t.Fatalf("apply: %v", err)
+	}
+	e, _ := s.GetEntity("c3-101")
+	if e.Goal != "Reworded goal." {
+		t.Errorf("frontmatter goal must re-sync from the patched ## Goal section: got %q, want %q", e.Goal, "Reworded goal.")
+	}
+}
+
+// A frontmatter patch can now edit a frozen fact's boundary / category / date —
+// parity with `set`, which the change-unit path previously could not reach.
+func TestApply_Frontmatter_SetsAttributes(t *testing.T) {
+	s := openMem(t)
+	seedFact(t, s, "c3-101", "# auth\n\n## Goal\n\nGoal.\n")
+	base := entityHandle(t, s, "c3-101")
+
+	p := Patch{Target: "c3-101", Scope: ScopeFrontmatter, Base: base,
+		Boundary: "owns auth only", Category: "feature", Date: "2026-06-18", Source: "01.patch.md"}
+	if err := Apply(s, []Patch{p}, nil); err != nil {
+		t.Fatalf("apply: %v", err)
+	}
+
+	e, _ := s.GetEntity("c3-101")
+	if e.Boundary != "owns auth only" || e.Category != "feature" || e.Date != "2026-06-18" {
+		t.Errorf("frontmatter patch did not set attributes: boundary=%q category=%q date=%q", e.Boundary, e.Category, e.Date)
+	}
+}
+
+// A table-row block patch accepts the natural markdown forms an author writes and
+// reduces them to the bare " | "-joined cells a table_row node stores.
+func TestNormalizeTableRowContent(t *testing.T) {
+	cases := map[string]string{
+		"| a | b | c |":              "a | b | c", // outer pipes stripped
+		"a | b | c":                  "a | b | c", // already bare
+		"  |  a |  b  | ":            "a | b",     // extra whitespace trimmed
+		"| x |":                      "x",         // single cell
+		"\n| a | b |\n":              "a | b",     // leading/trailing newlines
+		"| h1 | h2 |\n| --- | --- |": "h1 | h2",   // separator line skipped
+	}
+	for in, want := range cases {
+		if got := normalizeTableRowContent(in); got != want {
+			t.Errorf("normalizeTableRowContent(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+// Insert with a BLOCK base adds a row after the cited row — "insert a block
+// relative to a neighbor" — the parent-delta primitive (add a child to a table).
+func TestApply_InsertRow_AddsTableRowAfterAnchor(t *testing.T) {
+	s := openMem(t)
+	seedFact(t, s, "c3-101", "# c\n\n## Components\n\n| ID | Name |\n| --- | --- |\n| c3-101 | one |\n| c3-102 | two |\n")
+	e, _ := s.GetEntity("c3-101")
+	nodes, _ := s.NodesForEntity("c3-101")
+	var handle string
+	for _, n := range nodes {
+		if n.Type == "table_row" && strings.Contains(n.Content, "c3-101") {
+			handle = fmt.Sprintf("c3-101#n%d@v%d:sha256:%s", n.ID, e.Version, n.Hash)
+		}
+	}
+	if handle == "" {
+		t.Fatal("no table_row anchor found")
+	}
+
+	p := Patch{Target: "c3-101", Scope: ScopeInsert, Base: handle, Content: "| c3-110 | three |", Source: "01.patch.md"}
+	if err := Apply(s, []Patch{p}, nil); err != nil {
+		t.Fatalf("row insert: %v", err)
+	}
+	merged, _ := content.ReadEntity(s, "c3-101")
+	added, two := strings.Index(merged, "c3-110 | three"), strings.Index(merged, "c3-102 | two")
+	if added < 0 {
+		t.Fatalf("inserted row not present:\n%s", merged)
+	}
+	if two < 0 || added > two {
+		t.Errorf("row must be inserted after the anchor and before the next row:\n%s", merged)
+	}
+}
+
+// A block anchor survives node-id renumbering: the sha256 is the anchor, the
+// integer node id only a hint. A handle whose id no longer exists but whose hash
+// still seals a node resolves by hash and applies (no spurious "rebase").
+func TestApply_BlockAnchor_SurvivesNodeIDRenumber(t *testing.T) {
+	s := openMem(t)
+	seedFact(t, s, "c3-101", "# auth\n\n## Goal\n\nOriginal goal.\n")
+	handle, _ := blockHandle(t, s, "c3-101", "Original goal.")
+	// Keep the hash, corrupt the integer node id (simulating a renumber).
+	ns := strings.Index(handle, "#n") + 2
+	ne := strings.Index(handle, "@")
+	stale := handle[:ns] + "999999" + handle[ne:]
+
+	p := Patch{Target: "c3-101", Scope: ScopeBlock, Base: stale, Content: "Updated via hash anchor.", Source: "01.patch.md"}
+	if err := Apply(s, []Patch{p}, nil); err != nil {
+		t.Fatalf("a stale node id with a matching hash must resolve by hash, got: %v", err)
+	}
+	if nodeHashOf(t, s, "c3-101", "Updated via hash anchor.") == "" {
+		t.Error("the block should have been updated via hash anchoring")
+	}
+}
+
+// An empty block body DELETES the cited node — "empty body deletes the block".
+func TestApply_BlockEmpty_DeletesNode(t *testing.T) {
+	s := openMem(t)
+	seedFact(t, s, "c3-101", "# auth\n\n## Goal\n\nKeep this goal.\n\n## Detail\n\nDelete this detail.\n")
+	handle, _ := blockHandle(t, s, "c3-101", "Delete this detail.")
+
+	p := Patch{Target: "c3-101", Scope: ScopeBlock, Base: handle, Content: "", Source: "01.patch.md"}
+	if err := Apply(s, []Patch{p}, nil); err != nil {
+		t.Fatalf("apply: %v", err)
+	}
+	if nodeHashOf(t, s, "c3-101", "Delete this detail.") != "" {
+		t.Error("an empty block patch must DELETE the cited node, not blank it")
+	}
+	if nodeHashOf(t, s, "c3-101", "Keep this goal.") == "" {
+		t.Error("a sibling block must remain after deleting another")
+	}
+}
+
 func TestApply_Drift_RejectsWholeSet(t *testing.T) {
 	s := openMem(t)
 	seedFact(t, s, "c3-101", "# auth\n\n## Goal\n\nOriginal goal.\n")
@@ -295,51 +421,6 @@ func TestApply_Insert_ResultLandingCheck(t *testing.T) {
 	}
 	if nodeHashOf(t, s, "c3-101", "body.") != "" {
 		t.Error("a landing-mismatch insert must roll back")
-	}
-}
-
-// TestApply_CodemapCarrierAppliesInSameUnit proves a unit's internal patch and its
-// external codemap carrier both land in one apply.
-func TestApply_CodemapCarrierAppliesInSameUnit(t *testing.T) {
-	s := openMem(t)
-	seedFact(t, s, "c3-101", "# auth\n\n## Goal\n\nAuth goal.\n")
-	handle, _ := blockHandle(t, s, "c3-101", "Auth goal.")
-
-	patches := []Patch{{Target: "c3-101", Scope: ScopeBlock, Base: handle, Content: "New auth goal.", Source: "01.patch.md"}}
-	codemaps := []CodemapChange{{Target: "c3-101", Globs: []string{"src/auth/**"}, Source: "01.codemap.md"}}
-	if err := Apply(s, patches, codemaps); err != nil {
-		t.Fatalf("apply: %v", err)
-	}
-	if nodeHashOf(t, s, "c3-101", "New auth goal.") == "" {
-		t.Error("the patch did not apply")
-	}
-	patterns, _ := s.CodeMapFor("c3-101")
-	if len(patterns) != 1 || patterns[0] != "src/auth/**" {
-		t.Errorf("codemap = %v, want [src/auth/**]", patterns)
-	}
-}
-
-// TestApply_PatchRollsBackWhenCodemapFails is the cross-arm integrity proof: an
-// internal fact write (patch) and an external binding write (codemap) are one unit.
-// The patch applies, then the codemap carrier fails (FK — its target does not
-// exist). The whole transaction rolls back, so the internal fact is NOT left
-// changed while its external binding never landed.
-func TestApply_PatchRollsBackWhenCodemapFails(t *testing.T) {
-	s := openMem(t)
-	seedFact(t, s, "c3-101", "# auth\n\n## Goal\n\nAuth goal.\n")
-	handle, _ := blockHandle(t, s, "c3-101", "Auth goal.")
-	beforeMerkle := entityMerkle(t, s, "c3-101")
-
-	patches := []Patch{{Target: "c3-101", Scope: ScopeBlock, Base: handle, Content: "New auth goal.", Source: "01.patch.md"}}
-	codemaps := []CodemapChange{{Target: "c3-999-missing", Globs: []string{"src/x/**"}, Source: "01.codemap.md"}}
-	if err := Apply(s, patches, codemaps); err == nil {
-		t.Fatal("a codemap carrier with a missing target must fail the apply")
-	}
-	if nodeHashOf(t, s, "c3-101", "New auth goal.") != "" {
-		t.Error("atomic: the patch must roll back when a later codemap write fails")
-	}
-	if entityMerkle(t, s, "c3-101") != beforeMerkle {
-		t.Error("atomic: the entity seal must be unchanged after the cross-arm rollback")
 	}
 }
 

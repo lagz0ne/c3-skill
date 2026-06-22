@@ -353,6 +353,33 @@ func TestRun_CheckJSONIncludesIssues(t *testing.T) {
 	}
 }
 
+func TestRun_AgentModeCheckBrokenSealUsesStructuredOutput(t *testing.T) {
+	t.Setenv("C3X_MODE", "agent")
+	c3Dir := setupRichC3DB(t)
+	seedCanonicalReadme(t, c3Dir)
+
+	c101Path := filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md")
+	broken := "---\nid: c3-101\nc3-seal: deadbeef\ntitle: auth\ntype: component\ncategory: foundation\nparent: c3-1\n---\n\n# auth\n\n## Goal\n\nThin.\n"
+	if err := os.WriteFile(c101Path, []byte(broken), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "check", "--json"}, &buf)
+	if err == nil {
+		t.Fatal("expected check --json to fail on broken seal")
+	}
+	out := buf.String()
+	for _, raw := range []string{"BROKEN_SEAL ", "Refreshed local C3 cache", "Rebuilt local C3 cache"} {
+		if strings.Contains(out, raw) {
+			t.Fatalf("agent check --json must not emit raw prose %q:\n%s", raw, out)
+		}
+	}
+	if !strings.Contains(out, "broken_seal") {
+		t.Fatalf("agent check --json should emit structured broken seal data:\n%s", out)
+	}
+}
+
 // Mutations must not be gated by canonical preverify failures, per ADR
 // mutation-preverify-repair-bypass — the mutation itself may be the fix.
 func TestRun_MutationBypassesPreverify(t *testing.T) {
@@ -402,11 +429,16 @@ func TestBDD_ReadOnlyLookupSkipsCanonicalPreverifyWhenCacheExists(t *testing.T) 
 		s.Close()
 		t.Fatal(err)
 	}
-	if err := s.SetCodeMap("c3-101", []string{"src/api/handlers/latency.go"}); err != nil {
-		s.Close()
+	s.Close()
+
+	// The fact→code binding lives in the eval spec; lookup resolves through it.
+	if err := os.MkdirAll(filepath.Join(c3Dir, "eval"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	s.Close()
+	if err := os.WriteFile(filepath.Join(c3Dir, "eval", "c3-101.yaml"),
+		[]byte("fact: c3-101\ncode:\n  - src/api/handlers/latency.go\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
 
 	c101Path := filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md")
 	broken := "---\nid: c3-101\nc3-seal: deadbeef\ntitle: auth\ntype: component\ncategory: foundation\nparent: c3-1\n---\n\n# auth\n\n## Goal\n\nThin.\n"
@@ -464,7 +496,7 @@ func TestBDD_RunSearchHybridJSONDispatch(t *testing.T) {
 	if len(out.Results) == 0 || out.Results[0].ID != "research-note-20260605-api-latency" {
 		t.Fatalf("unexpected search result: %+v", out.Results)
 	}
-	if out.Results[0].Context.Component.ID != "c3-101" || out.Results[0].Context.Path != "src/api/handlers/latency.go" {
+	if out.Results[0].Context.Component.ID != "c3-101" {
 		t.Fatalf("hybrid context missing: %+v", out.Results[0].Context)
 	}
 }
@@ -481,12 +513,33 @@ func TestRun_RepairCommandExists(t *testing.T) {
 	}
 }
 
+func TestRun_AgentModeRepairOmitsProse(t *testing.T) {
+	t.Setenv("C3X_MODE", "agent")
+	c3Dir := setupRichC3DB(t)
+	seedCanonicalReadme(t, c3Dir)
+
+	var buf bytes.Buffer
+	_ = run([]string{"--c3-dir", c3Dir, "repair", "--json"}, &buf)
+	out := buf.String()
+	for _, raw := range []string{"Rebuilt local C3 cache", "Resealed canonical", "OK: canonical", "DIFFERS "} {
+		if strings.Contains(out, raw) {
+			t.Fatalf("agent repair --json must not emit raw prose %q:\n%s", raw, out)
+		}
+	}
+}
+
 // repair rewrites canonical files and the cache, so it must classify as mutating
 // (gives it the rollback snapshot + coordinator gate). Otherwise a failed
 // repair can leave .c3/ partially rewritten with no way back.
 func TestCommandMutatesCanonical_RepairIsMutating(t *testing.T) {
 	if !commandMutatesCanonical(cmd.Options{Command: "repair"}) {
 		t.Fatal("repair must be classified as mutating: it rewrites canonical files")
+	}
+}
+
+func TestCommandMutatesCanonical_EvalIsReadOnly(t *testing.T) {
+	if commandMutatesCanonical(cmd.Options{Command: "eval"}) {
+		t.Fatal("eval must remain read-only: eval verdicts are evidence, not apply gates")
 	}
 }
 
@@ -673,14 +726,6 @@ func TestRun_LookupMissingArg(t *testing.T) {
 	}
 }
 
-func TestRun_MarketplaceHelp(t *testing.T) {
-	var buf bytes.Buffer
-	err := run([]string{"marketplace"}, &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func TestRun_GitInstall(t *testing.T) {
 	c3Dir := setupC3DB(t)
 	projectDir := filepath.Dir(c3Dir)
@@ -779,15 +824,14 @@ func TestRun_AgentModeExplicitJSONStillReturnsTOON(t *testing.T) {
 	t.Setenv("C3X_MODE", "agent")
 	c3Dir := setupRichC3DB(t)
 
-	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
-	if err != nil {
+	// The fact→code binding lives in the eval spec; lookup resolves through it.
+	if err := os.MkdirAll(filepath.Join(c3Dir, "eval"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.SetCodeMap("c3-101", []string{"src/auth/login.ts"}); err != nil {
-		s.Close()
+	if err := os.WriteFile(filepath.Join(c3Dir, "eval", "c3-101.yaml"),
+		[]byte("fact: c3-101\ncode:\n  - src/auth/login.ts\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	s.Close()
 
 	cases := []struct {
 		name string
@@ -798,7 +842,7 @@ func TestRun_AgentModeExplicitJSONStillReturnsTOON(t *testing.T) {
 		{name: "read", argv: []string{"--c3-dir", c3Dir, "read", "c3-101", "--json"}, want: "id: c3-101"},
 		{name: "lookup", argv: []string{"--c3-dir", c3Dir, "lookup", "src/auth/login.ts", "--json"}, want: "file: src/auth/login.ts"},
 		{name: "schema", argv: []string{"--c3-dir", c3Dir, "schema", "component", "--json"}, want: "type: component"},
-		{name: "graph", argv: []string{"--c3-dir", c3Dir, "graph", "c3-101", "--json"}, want: "nodes:"},
+		{name: "graph", argv: []string{"--c3-dir", c3Dir, "graph", "c3-101", "--json"}, want: "nodes["},
 		{name: "search", argv: []string{"--c3-dir", c3Dir, "search", "auth", "--no-semantic", "--json"}, want: "query: auth"},
 	}
 	for _, tc := range cases {
@@ -818,18 +862,7 @@ func TestRun_AgentModeExplicitJSONStillReturnsTOON(t *testing.T) {
 	}
 }
 
-func TestRun_MarketplaceShowExplicitJSONRejected(t *testing.T) {
-	var buf bytes.Buffer
-	err := run([]string{"marketplace", "show", "rule-output-via-helpers", "--json"}, &buf)
-	if err == nil {
-		t.Fatal("expected marketplace show --json to be rejected")
-	}
-	if !strings.Contains(err.Error(), "marketplace show no longer supports --json") {
-		t.Fatalf("expected explicit-json rejection, got: %v", err)
-	}
-}
-
-// Facts are frozen: set/wire/delete on a fact are refused at the CLI; the change
+// Facts are frozen: set/delete on a fact are refused at the CLI; the change
 // is a change-unit. (set --section is still meaningful on a non-frozen change-doc.)
 func TestRun_Set(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
@@ -839,54 +872,6 @@ func TestRun_Set(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "frozen") {
 		t.Fatalf("expected a frozen-fact refusal, got: %v", err)
-	}
-}
-
-func TestRun_SetCodemapOnFrozenFact(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	var buf bytes.Buffer
-
-	err := runWithIO([]string{"--c3-dir", c3Dir, "set", "c3-101", "codemap", "src/auth/**"}, strings.NewReader(""), true, &buf, io.Discard, false)
-	if err != nil {
-		t.Fatalf("set codemap on a frozen fact should be allowed, got: %v", err)
-	}
-	if strings.Contains(buf.String(), "facts are frozen") {
-		t.Fatalf("codemap set should not emit frozen-fact refusal:\n%s", buf.String())
-	}
-
-	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer s.Close()
-	patterns, err := s.CodeMapFor("c3-101")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(patterns) != 1 || patterns[0] != "src/auth/**" {
-		t.Fatalf("codemap patterns = %v, want [src/auth/**]", patterns)
-	}
-}
-
-func TestRun_SetCodemapOnFrozenFactWithFieldFlag(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-
-	err := runWithIO([]string{"--c3-dir", c3Dir, "set", "c3-101", "src/ui/**", "--field", "codemap"}, strings.NewReader(""), true, &bytes.Buffer{}, io.Discard, false)
-	if err != nil {
-		t.Fatalf("set --field codemap on a frozen fact should be allowed, got: %v", err)
-	}
-
-	s, err := store.Open(filepath.Join(c3Dir, "c3.db"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer s.Close()
-	patterns, err := s.CodeMapFor("c3-101")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(patterns) != 1 || patterns[0] != "src/ui/**" {
-		t.Fatalf("codemap patterns = %v, want [src/ui/**]", patterns)
 	}
 }
 
@@ -900,39 +885,6 @@ func TestRun_SetRejectsSection(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "no longer accepts --section") {
 		t.Fatalf("expected section-rejection error, got: %v", err)
-	}
-}
-
-func TestRun_Wire(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	err := run([]string{"--c3-dir", c3Dir, "wire", "c3-101", "ref-jwt"}, &bytes.Buffer{})
-	if err == nil {
-		t.Fatal("wire on a fact must be refused (facts are frozen)")
-	}
-	if !strings.Contains(err.Error(), "frozen") {
-		t.Fatalf("expected a frozen-fact refusal, got: %v", err)
-	}
-}
-
-func TestRun_WireRemoveFlag(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	err := run([]string{"--c3-dir", c3Dir, "wire", "--remove", "c3-101", "ref-jwt"}, &bytes.Buffer{})
-	if err == nil {
-		t.Fatal("wire --remove on a fact must be refused (facts are frozen)")
-	}
-	if !strings.Contains(err.Error(), "frozen") {
-		t.Fatalf("expected a frozen-fact refusal, got: %v", err)
-	}
-}
-
-func TestRun_WireThreeArgs(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	err := run([]string{"--c3-dir", c3Dir, "wire", "c3-101", "cite", "ref-jwt"}, &bytes.Buffer{})
-	if err == nil {
-		t.Fatal("wire on a fact must be refused (facts are frozen)")
-	}
-	if !strings.Contains(err.Error(), "frozen") {
-		t.Fatalf("expected a frozen-fact refusal, got: %v", err)
 	}
 }
 
@@ -956,27 +908,10 @@ func TestRun_Graph(t *testing.T) {
 	}
 }
 
-func TestRun_Codemap(t *testing.T) {
-	c3Dir := setupRichC3DB(t)
-	var buf bytes.Buffer
-	err := run([]string{"--c3-dir", c3Dir, "codemap"}, &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func TestRun_Lookup(t *testing.T) {
 	c3Dir := setupRichC3DB(t)
 	var buf bytes.Buffer
 	err := run([]string{"--c3-dir", c3Dir, "lookup", "src/main.go"}, &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestRun_MarketplaceList(t *testing.T) {
-	var buf bytes.Buffer
-	err := run([]string{"marketplace", "list"}, &buf)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1109,9 +1044,6 @@ func seedMainHybridSearchFixture(t *testing.T, s *store.Store) {
 		if err := s.AddRelationship(rel); err != nil {
 			t.Fatal(err)
 		}
-	}
-	if err := s.SetCodeMap("c3-101", []string{"src/api/handlers/latency.go"}); err != nil {
-		t.Fatal(err)
 	}
 	body := "## Summary\n\nCheckout API p95 increased from 180 ms to 420 ms after the connection-pool change. Span evidence points to DB pool wait.\n"
 	if err := content.WriteEntity(s, "research-note-20260605-api-latency", body); err != nil {

@@ -1,0 +1,44 @@
+---
+target: c3-202
+scope: whole
+type: component
+parent: c3-2
+title: operation-references
+---
+# operation-references
+
+## Goal
+
+Provide the per-operation guides SKILL.md routes to — one reference per op that teaches how to run that operation against the frozen facts.
+
+## Parent Fit
+
+| Field | Value |
+| --- | --- |
+| Parent | c3-2 |
+| Role | The skill's procedure layer: the eight operation playbooks the router dispatches an agent into. |
+| Boundary | Owns each operation's step-by-step procedure and gate list; does not restate the shared contract or classify intent — those belong to skill-definition. |
+| Collaboration | skill-definition routes intent here and owns the contract each file cites back to; the procedures drive the CLI that cli-wrapper invokes. |
+
+## Purpose
+
+Carry references/*.md — onboard, query, audit, change, ref, rule, canvas, and sweep — each the playbook for one classified op: onboard walks the act-1 descent and flip, query reads the frozen facts (search / lookup / read / graph), audit checks the three intactness layers, change drives the change-unit gate stack and morphing, ref and rule author and cite their fact types, canvas teaches the rung and shape, and sweep predicts blast radius. Non-goals: classifying which op applies (skill-definition's router), executing the commands (the packaged CLI), or selecting the binary (cli-wrapper).
+
+## Governance
+
+| Reference | Type | Governs | Precedence | Notes |
+| --- | --- | --- | --- | --- |
+| ref-frontmatter-docs | ref | How each operation reads and authors the frontmatter-bearing fact documents it operates on | Convention frames the per-op procedure | The create-patch and authoring steps (onboard.md, ref.md, change.md) assume `target:`/`type:`/`parent:` frontmatter on every fact. |
+
+## Contract
+
+| Surface | Direction | Contract | Boundary | Evidence |
+| --- | --- | --- | --- | --- |
+| operation playbooks | IN | The router hands off a classified op; the matching references/<op>.md is loaded and its procedure followed | One file per op, no procedure duplicated across files | skills/c3/references/{onboard,query,audit,change,ref,rule,canvas,sweep}.md |
+| gate lists | OUT | Each reference ends in an actionable procedure or gate checklist and cites the shared contract rather than re-deriving it | Defers freeze / membership / status rules to SKILL.md | onboard.md §The one gate list; audit.md §Output verdict |
+
+## Derived Materials
+
+| Material | Must derive from | Allowed variance | Evidence |
+| --- | --- | --- | --- |
+| skills/c3/references/*.md | Purpose | A reference's structure may vary while it covers exactly one op and cites the shared contract | Every op in SKILL.md's intent table has a matching references/ file |

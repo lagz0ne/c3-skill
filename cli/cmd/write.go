@@ -29,7 +29,7 @@ func RunWrite(opts WriteOptions, w io.Writer) error {
 
 	existing, err := opts.Store.GetEntity(opts.ID)
 	if err != nil {
-		return fmt.Errorf("error: entity %q not found", opts.ID)
+		return fmt.Errorf("error: entity %q not found\nhint: run c3x search %q or c3x list --flat to find the current id", opts.ID, opts.ID)
 	}
 
 	if opts.Section != "" {
@@ -210,7 +210,7 @@ func formatValidationError(id string, issues []Issue) error {
 			fmt.Fprintf(&sb, "    hint: %s\n", issue.Hint)
 		}
 	}
-	return fmt.Errorf("error: content validation failed for %s\n%s", id, sb.String())
+	return fmt.Errorf("error: content validation failed for %s\nhint: fix the listed issue(s), then rerun c3x write %s\n%s", id, id, sb.String())
 }
 
 // validateBodyContent checks required schema sections against a markdown body string.
@@ -302,6 +302,9 @@ func validateBodyContentWithDefinition(body, entityType string, schemaSections [
 			continue
 		}
 		if len(table.Rows) == 0 {
+			if isToolMaintainedTable(entityType, sec.Name) {
+				continue // membership table — the reconciler fills its rows from parent: edges
+			}
 			issues = append(issues, Issue{
 				Severity: "error",
 				Message:  fmt.Sprintf("empty required table: %s (headers only, no data rows)", sec.Name),
@@ -367,7 +370,7 @@ func splitMarkdownTableCells(line string) []string {
 
 func resolveDefinitionForEntity(entity *store.Entity, c3Dir string) (schema.Canvas, error) {
 	if entity == nil {
-		return schema.Canvas{}, fmt.Errorf("error: missing entity")
+		return schema.Canvas{}, fmt.Errorf("error: missing entity\nhint: rerun c3x check to refresh the local cache; if this persists, report an internal C3 bug")
 	}
 	def, ok := schema.DefinitionForDir(c3Dir, entity.Type)
 	if !ok {
@@ -446,7 +449,7 @@ func syncRelationships(s *store.Store, entityID string, fm *frontmatter.Frontmat
 		}
 	}
 	if len(errs) > 0 {
-		return fmt.Errorf("%s", strings.Join(errs, "; "))
+		return fmt.Errorf("error: relationship sync for %s failed: %s\nhint: inspect the cited ids in frontmatter, fix missing or invalid references, then rerun c3x write %s", entityID, strings.Join(errs, "; "), entityID)
 	}
 	return nil
 }

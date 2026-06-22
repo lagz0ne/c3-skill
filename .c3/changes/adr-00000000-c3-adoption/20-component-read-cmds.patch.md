@@ -1,0 +1,45 @@
+---
+target: c3-110
+scope: whole
+type: component
+parent: c3-1
+title: read-cmds
+---
+# read-cmds
+
+## Goal
+
+Answer questions about the architecture graph without changing it: read a fact, list the topology, map a file to its owners, walk the graph, search the corpus, and validate structural integrity.
+
+## Parent Fit
+
+| Field | Value |
+| --- | --- |
+| Parent | c3-1 |
+| Role | The non-mutating query surface of the CLI — every command here only reads the store and reports, never writes. |
+| Boundary | Owns rendering facts for a human or an agent (text, JSON, TOON, mermaid); it never opens a write transaction and defers all persistence to the store. |
+| Collaboration | The store answers every entity/relationship/code-map lookup; doc-model reconstructs the body each read renders; search leans on the store's FTS and semantic index. |
+
+## Purpose
+
+Serve the read side of C3: `read` emits one fact's body and citable handles, `list` prints the container/component topology, `lookup` maps a file or glob to owning components and their refs, `graph` walks a subgraph as text/JSON/mermaid (optionally previewed through a change-unit overlay), `search` fuses content/entity FTS with graph expansion and the semantic index, `semantic_index` rebuilds the local ONNX vectors, and `check` validates every doc against its canvas plus seal, layer, and citation integrity. Non-goals: creating or editing facts (author-cmds), applying a change-unit (change-cmds), or deciding canvas shape (schema).
+
+## Governance
+
+| Reference | Type | Governs | Precedence | Notes |
+| --- | --- | --- | --- | --- |
+| rule-output-via-helpers | rule | Every structured result here serializes through the shared format helpers so list/search/graph speak one machine format | Serialization is centralized, never hand-rolled per command | `list`/`search`/`graph` route JSON/TOON through WriteTableOutput / WriteObjectOutput / writeJSON; agent mode defaults to compact TOON. |
+
+## Contract
+
+| Surface | Direction | Contract | Boundary | Evidence |
+| --- | --- | --- | --- | --- |
+| read / lookup / graph | IN | Callers pass an entity id, file path, glob, or query; the command resolves it against the store and a missing target returns a hinted error, never a partial write | Read-only: no command in this group mutates the store or its files | cli/cmd/read.go RunRead; cli/cmd/lookup.go RunLookup |
+| list / search / check | OUT | Returns the topology, ranked hits, or validation issues rendered for the active mode; `check` exits non-zero on any error-severity issue while still reporting it | Honors agent-mode format selection and attaches help hints only in agent mode | cli/cmd/check_enhanced.go RunCheckV2; cli/cmd/search.go RunSearch |
+
+## Derived Materials
+
+| Material | Must derive from | Allowed variance | Evidence |
+| --- | --- | --- | --- |
+| cli/cmd/{read,list,lookup,graph}.go | Contract | Output formatting and traversal order may vary as long as the commands stay read-only | go test ./cmd/... |
+| cli/cmd/{search,semantic_index,check_enhanced,strict_component_docs}.go | Purpose | Fusion weights, candidate-pool sizing, and the order of strict checks may vary on a measured win | go test ./cmd/... |

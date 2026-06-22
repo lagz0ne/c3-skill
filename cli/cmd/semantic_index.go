@@ -25,7 +25,7 @@ type SemanticIndexOutput struct {
 // RunSemanticIndex downloads local ONNX assets if needed and rebuilds vectors.
 func RunSemanticIndex(opts SemanticIndexOptions, w io.Writer) error {
 	if opts.Store == nil {
-		return fmt.Errorf("error: semantic index store is required")
+		return fmt.Errorf("error: semantic index store is required\nhint: run c3x check to rebuild the local cache, then rerun c3x semantic-index")
 	}
 	if err := opts.Store.RebuildSemanticIndexWithOptions(context.Background(), store.SemanticIndexOptions{AllowDownload: true}); err != nil {
 		return err
@@ -46,8 +46,15 @@ func RunSemanticIndex(opts SemanticIndexOptions, w io.Writer) error {
 	}
 	format := ResolveFormat(opts.JSON, isAgentMode())
 	if format != FormatHuman {
-		return WriteObjectOutput(w, out, format, nil)
+		return WriteObjectOutput(w, out, format, semanticIndexHelpHints())
 	}
 	_, err = fmt.Fprintf(w, "Indexed %d entities with %s (%d dims)\nCache: %s\n", out.Count, out.Model, out.Dims, out.CacheDir)
 	return err
+}
+
+func semanticIndexHelpHints() []HelpHint {
+	return []HelpHint{
+		{Command: "c3x search <query>", Description: "use the rebuilt semantic index for concept search"},
+		{Command: "c3x index", Description: "rebuild the semantic index after large doc changes or model asset updates"},
+	}
 }

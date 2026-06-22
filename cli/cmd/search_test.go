@@ -117,15 +117,11 @@ func TestBDD_SearchHybridReturnsFTSAndGraphContext(t *testing.T) {
 	requireStringSliceContains(t, top.MatchSources, "graph:affects:c3-101")
 	requireStringSliceContains(t, top.MatchSources, "graph:uses:ref-latency-budget")
 	requireStringSliceContains(t, top.MatchSources, "graph:uses:rule-trace-context")
-	requireStringSliceContains(t, top.MatchSources, "code-map:src/api/handlers/latency.go")
 	if !strings.Contains(top.Snippet, "p95") || !strings.Contains(top.Snippet, "pool wait") {
 		t.Fatalf("snippet should mention p95 and pool wait, got %q", top.Snippet)
 	}
 	if top.Context.Component.ID != "c3-101" || top.Context.Ref.ID != "ref-latency-budget" || top.Context.Rule.ID != "rule-trace-context" {
 		t.Fatalf("context missing component/ref/rule: %+v", top.Context)
-	}
-	if top.Context.Path != "src/api/handlers/latency.go" {
-		t.Fatalf("context path = %q", top.Context.Path)
 	}
 
 	buf.Reset()
@@ -149,13 +145,36 @@ func TestBDD_SearchHybridReturnsFTSAndGraphContext(t *testing.T) {
 	requireStringSliceContains(t, out.Results[0].MatchSources, "graph:uses:rule-trace-context")
 }
 
+func TestRunSearch_AgentTOONIncludesHelpHints(t *testing.T) {
+	s := createDBFixture(t)
+	seedHybridSearchFixture(t, s)
+	t.Setenv("C3X_MODE", "agent")
+
+	var buf bytes.Buffer
+	if err := RunSearch(SearchOptions{
+		Store:      s,
+		Query:      "pool wait",
+		NoSemantic: true,
+		JSON:       true,
+		Limit:      3,
+	}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	requireAll(t, buf.String(),
+		"help[",
+		"c3x read <id>",
+		"c3x graph <id>",
+	)
+}
+
 func TestSearch_HyphenatedNaturalLanguageQueryDoesNotReachFTSSyntax(t *testing.T) {
 	s := createDBFixture(t)
 	mustInsertEntity(t, s, &store.Entity{
-		ID: "recipe-realtime-sync", Type: "recipe", Title: "Realtime Sync", Slug: "realtime-sync",
+		ID: "ref-realtime-sync", Type: "ref", Title: "Realtime Sync", Slug: "realtime-sync",
 		Goal: "Real time sync keeps websocket clients current without polling.", Status: "active", Metadata: "{}",
 	})
-	if err := content.WriteEntity(s, "recipe-realtime-sync", `# Realtime Sync
+	if err := content.WriteEntity(s, "ref-realtime-sync", `# Realtime Sync
 
 ## Goal
 
@@ -183,8 +202,8 @@ Real time sync keeps websocket clients current without polling.
 	if len(out.Results) == 0 {
 		t.Fatalf("expected result for hyphenated natural-language query, got none: %s", buf.String())
 	}
-	if out.Results[0].ID != "recipe-realtime-sync" {
-		t.Fatalf("top result = %q, want recipe-realtime-sync; results: %+v", out.Results[0].ID, out.Results)
+	if out.Results[0].ID != "ref-realtime-sync" {
+		t.Fatalf("top result = %q, want ref-realtime-sync; results: %+v", out.Results[0].ID, out.Results)
 	}
 }
 
@@ -314,9 +333,6 @@ func seedHybridSearchFixture(t *testing.T, s *store.Store) {
 		if err := s.AddRelationship(rel); err != nil {
 			t.Fatal(err)
 		}
-	}
-	if err := s.SetCodeMap("c3-101", []string{"src/api/**/*.go", "src/api/handlers/latency.go"}); err != nil {
-		t.Fatal(err)
 	}
 
 	body := `# API Latency Investigation

@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lagz0ne/c3-design/cli/internal/codemap"
 	"github.com/lagz0ne/c3-design/cli/internal/content"
 	"github.com/lagz0ne/c3-design/cli/internal/frontmatter"
 	"github.com/lagz0ne/c3-design/cli/internal/schema"
@@ -31,8 +30,6 @@ func docTypeToStoreType(dt frontmatter.DocType) string {
 		return "adr"
 	case frontmatter.DocRule:
 		return "rule"
-	case frontmatter.DocRecipe:
-		return "recipe"
 	default:
 		return ""
 	}
@@ -61,7 +58,7 @@ func addRelSafe(s *store.Store, fromID, toID, relType string) error {
 		RelType: relType,
 	})
 	if err != nil {
-		return fmt.Errorf("relationship %s->%s (%s): %v", fromID, toID, relType, err)
+		return fmt.Errorf("error: relationship %s->%s (%s): %w", fromID, toID, relType, err)
 	}
 	return nil
 }
@@ -82,7 +79,7 @@ func RunImport(opts ImportOptions, w io.Writer) error {
 		return fmt.Errorf("error: walking %s: %w", c3Dir, err)
 	}
 	if len(result.Docs) == 0 {
-		return fmt.Errorf("error: no documents found in %s", c3Dir)
+		return fmt.Errorf("error: no documents found in %s\nhint: run c3x init to create .c3/, or pass --c3-dir to the existing C3 directory", c3Dir)
 	}
 	for _, warn := range result.Warnings {
 		fmt.Fprintf(w, "warning: skipping %s (failed to parse frontmatter)\n", warn.Path)
@@ -252,6 +249,15 @@ func importDocsToStore(s *store.Store, c3Dir string, result *walker.WalkResult) 
 			continue
 		}
 
+		// A canvas may own some relationship types through body edge-columns; those
+		// are derived from the body (below), so skip their legacy frontmatter source
+		// here to keep the body the single source of truth.
+		def, hasDef := schema.DefinitionForDir(c3Dir, fm.Type)
+		owned := map[string]bool{}
+		if hasDef {
+			owned = content.CanvasOwnedRelTypes(def)
+		}
+
 		for _, rel := range []struct {
 			targets []string
 			relType string
@@ -265,6 +271,9 @@ func importDocsToStore(s *store.Store, c3Dir string, result *walker.WalkResult) 
 			{fm.Supersedes, "supersedes", false},
 			{fm.Amends, "amends", false},
 		} {
+			if owned[rel.relType] {
+				continue
+			}
 			for _, target := range rel.targets {
 				if rel.strip {
 					target = frontmatter.StripAnchor(target)
@@ -272,6 +281,11 @@ func importDocsToStore(s *store.Store, c3Dir string, result *walker.WalkResult) 
 				if err := addRelSafe(s, fm.ID, target, rel.relType); err != nil {
 					return err
 				}
+			}
+		}
+		if hasDef {
+			if err := content.SyncCanvasOwnedRelationships(s, fm.ID, def, doc.Body); err != nil {
+				return fmt.Errorf("error: wiring canvas edges for %s: %w", fm.ID, err)
 			}
 		}
 		if viaVal, ok := fm.Extra["via"]; ok {
@@ -300,42 +314,6 @@ func importDocsToStore(s *store.Store, c3Dir string, result *walker.WalkResult) 
 		}
 	}
 
-	cmPath := filepath.Join(c3Dir, "code-map.yaml")
-	cm, err := codemap.ParseCodeMap(cmPath)
-	if err == nil {
-		for id, globs := range cm {
-			if id == "_exclude" {
-				for _, pattern := range globs {
-					if pattern != "" {
-						if err := s.AddExclude(pattern); err != nil {
-							return fmt.Errorf("error: adding exclude %q: %w", pattern, err)
-						}
-					}
-				}
-				continue
-			}
-			var nonEmpty []string
-			for _, g := range globs {
-				if g != "" {
-					nonEmpty = append(nonEmpty, g)
-				}
-			}
-			if len(nonEmpty) == 0 {
-				continue
-			}
-			if _, err := s.GetEntity(id); err != nil {
-				continue
-			}
-			if err := s.SetCodeMap(id, nonEmpty); err != nil {
-				return fmt.Errorf("error: setting code map for %s: %w", id, err)
-			}
-		}
-	}
-
-	// Rebuild should establish a clean baseline.
-	if _, err := s.DB().Exec(`DELETE FROM changelog`); err != nil {
-		return fmt.Errorf("error: clearing changelog: %w", err)
-	}
 	_ = entityCount
 	return nil
 }

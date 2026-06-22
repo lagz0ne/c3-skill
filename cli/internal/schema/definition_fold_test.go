@@ -13,7 +13,7 @@ import (
 // ParseCanvasDocument requires to have a description).
 func TestDefinitionFor_CarriesMetadata(t *testing.T) {
 	for _, et := range []string{
-		"context", "container", "component", "ref", "rule", "recipe", "adr",
+		"context", "container", "component", "ref", "rule", "adr",
 		"prd", "user-story", "atomic-design-change", "pm-requirement",
 	} {
 		def, ok := DefinitionFor(et)

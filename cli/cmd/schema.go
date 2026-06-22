@@ -20,7 +20,6 @@ type SchemaOptions struct {
 	EntityType string
 	JSON       bool
 	C3Dir      string
-	Template   string
 }
 
 // RunSchema outputs the section schema for a given entity type.
@@ -30,12 +29,9 @@ func RunSchema(entityType string, jsonOutput bool, w io.Writer) error {
 
 func RunSchemaWithOptions(opts SchemaOptions, w io.Writer) error {
 	entityType := opts.EntityType
-	if opts.Template != "" {
-		return fmt.Errorf("error: --template has been retired\nhint: use c3x canvas read adr or c3x schema adr")
-	}
 	def, ok := schema.DefinitionForDir(opts.C3Dir, entityType)
 	if !ok {
-		return fmt.Errorf("unknown entity type: %q", entityType)
+		return fmt.Errorf("error: unknown entity type: %q\nhint: run c3x canvas list to see available entity types", entityType)
 	}
 	sections := def.Sections
 
@@ -77,10 +73,17 @@ func RunSchemaWithOptions(opts SchemaOptions, w io.Writer) error {
 			fmt.Fprintf(w, "    rejected when: %s\n", s.Failure)
 		}
 		for _, col := range s.Columns {
+			edge := ""
+			if col.Edge != "" {
+				edge = fmt.Sprintf("  → edge: %s", col.Edge)
+				if len(col.Targets) > 0 {
+					edge += fmt.Sprintf(" (targets: %s)", strings.Join(col.Targets, ", "))
+				}
+			}
 			if len(col.Values) > 0 {
-				fmt.Fprintf(w, "    - %s (%s) values: %s\n", col.Name, col.Type, strings.Join(col.Values, ", "))
+				fmt.Fprintf(w, "    - %s (%s) values: %s%s\n", col.Name, col.Type, strings.Join(col.Values, ", "), edge)
 			} else {
-				fmt.Fprintf(w, "    - %s (%s)\n", col.Name, col.Type)
+				fmt.Fprintf(w, "    - %s (%s)%s\n", col.Name, col.Type, edge)
 			}
 		}
 	}
@@ -91,10 +94,11 @@ func RunSchemaWithOptions(opts SchemaOptions, w io.Writer) error {
 		fmt.Fprintln(w)
 		fmt.Fprintln(w, "Component rules:")
 		fmt.Fprintln(w, "  - Sections must appear in the order shown above")
-		fmt.Fprintln(w, "  - No placeholder words: TBD, TODO, maybe, optional, later, \"if applicable\"")
+		fmt.Fprintln(w, "  - No placeholder markers: TBD, FIXME, \"TODO:\", \"if applicable\", \"see above\", \"as needed\" (the bare words later/optional/maybe and a plain \"TODO\" domain term are fine)")
 		fmt.Fprintln(w, "  - Empty cells: use N.A - <reason> (not N/A, n/a, or bare N.A)")
 		fmt.Fprintln(w, "  - Evidence columns: must be grounded — name a command, file path, or entity id")
 		fmt.Fprintln(w, "  - Reference columns: must cite an entity id (c3-*, ref-*, rule-*) or N.A - <reason>")
+		fmt.Fprintln(w, "  - A column marked `→ edge: <rel>` IS the citation: authoring its cell materializes that graph edge (no separate c3 wire)")
 	}
 
 	return nil

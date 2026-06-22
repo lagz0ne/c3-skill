@@ -33,12 +33,12 @@ func RunAdd(entityType, slug string, s *store.Store, container string, feature b
 
 // RunAddDryRun validates entity content without creating the entity.
 func RunAddDryRun(entityType, slug string, s *store.Store, container string, feature bool, body io.Reader, w io.Writer) error {
-	return RunAddDryRunWithTemplate(entityType, slug, s, container, feature, "", "", body, w)
+	return RunAddDryRunInDir(entityType, slug, s, container, feature, "", body, w)
 }
 
-func RunAddDryRunWithTemplate(entityType, slug string, s *store.Store, container string, feature bool, templateID, c3Dir string, body io.Reader, w io.Writer) error {
+func RunAddDryRunInDir(entityType, slug string, s *store.Store, container string, feature bool, c3Dir string, body io.Reader, w io.Writer) error {
 	if entityType == "" || slug == "" {
-		return fmt.Errorf("error: usage: c3x add <type> <slug> < body.md\nhint: types: container, component, ref, rule, adr, recipe")
+		return fmt.Errorf("error: usage: c3x add <type> <slug> < body.md\nhint: types: container, component, ref, rule, adr")
 	}
 	if !validSlug.MatchString(slug) {
 		return fmt.Errorf("error: invalid slug '%s'\nhint: use kebab-case (e.g. auth-provider, rate-limiting)", slug)
@@ -47,7 +47,7 @@ func RunAddDryRunWithTemplate(entityType, slug string, s *store.Store, container
 	if err != nil {
 		return err
 	}
-	def, err := resolveDefinitionForAdd(entityType, templateID, c3Dir)
+	def, err := resolveDefinitionForAdd(entityType, c3Dir)
 	if err != nil {
 		return err
 	}
@@ -68,12 +68,12 @@ func RunAddDryRunWithTemplate(entityType, slug string, s *store.Store, container
 
 // RunAddFormatted creates a new C3 entity and writes either human or structured output.
 func RunAddFormatted(entityType, slug string, s *store.Store, container string, feature bool, body io.Reader, w io.Writer, format OutputFormat) error {
-	return RunAddFormattedWithTemplate(entityType, slug, s, container, feature, "", "", body, w, format)
+	return RunAddFormattedInDir(entityType, slug, s, container, feature, "", body, w, format)
 }
 
-func RunAddFormattedWithTemplate(entityType, slug string, s *store.Store, container string, feature bool, templateID, c3Dir string, body io.Reader, w io.Writer, format OutputFormat) error {
+func RunAddFormattedInDir(entityType, slug string, s *store.Store, container string, feature bool, c3Dir string, body io.Reader, w io.Writer, format OutputFormat) error {
 	if entityType == "" || slug == "" {
-		return fmt.Errorf("error: usage: c3x add <type> <slug> < body.md\nhint: types: container, component, ref, rule, adr, recipe")
+		return fmt.Errorf("error: usage: c3x add <type> <slug> < body.md\nhint: types: container, component, ref, rule, adr")
 	}
 
 	if !validSlug.MatchString(slug) {
@@ -86,7 +86,7 @@ func RunAddFormattedWithTemplate(entityType, slug string, s *store.Store, contai
 		return err
 	}
 
-	def, err := resolveDefinitionForAdd(entityType, templateID, c3Dir)
+	def, err := resolveDefinitionForAdd(entityType, c3Dir)
 	if err != nil {
 		return err
 	}
@@ -115,6 +115,24 @@ func RunAddFormattedWithTemplate(entityType, slug string, s *store.Store, contai
 		// Compensate: remove the entity we just inserted
 		s.DeleteEntity(entity.ID)
 		return fmt.Errorf("error: writing content: %w", err)
+	}
+
+	// Wire the edges the body declares through its canvas edge-columns (the
+	// citation column IS the citation). No-op for canvases with no edge-column.
+	if err := content.SyncCanvasOwnedRelationships(s, entity.ID, def, bodyContent); err != nil {
+		s.DeleteEntity(entity.ID)
+		return fmt.Errorf("error: wiring canvas edges: %w", err)
+	}
+
+	// Synthesize the new child's row into its parent's membership table — the
+	// direct `c3 add` path maintains membership too, so the parent can't be left
+	// disconnected. Integrity is the tool's, not the author's; it holds on every
+	// path that changes parentage, not only the change-apply saga.
+	if entity.ParentID != "" {
+		if err := membershipReconciler(c3Dir)(s, entity.ParentID); err != nil {
+			s.DeleteEntity(entity.ID)
+			return fmt.Errorf("error: maintaining %s membership: %w", entity.ParentID, err)
+		}
 	}
 
 	result := AddResult{ID: entity.ID, Type: entityType}
@@ -232,10 +250,7 @@ func adrSchemaHint() string {
 	return adrSchemaCommand()
 }
 
-func resolveDefinitionForAdd(entityType, templateID, c3Dir string) (schema.Canvas, error) {
-	if templateID != "" {
-		return schema.Canvas{}, fmt.Errorf("error: --template has been retired\nhint: use c3x canvas read adr or c3x schema adr")
-	}
+func resolveDefinitionForAdd(entityType, c3Dir string) (schema.Canvas, error) {
 	def, ok := schema.DefinitionForDir(c3Dir, entityType)
 	if !ok {
 		return schema.Canvas{}, fmt.Errorf("error: unknown entity type '%s'\nhint: run c3x canvas list", entityType)
@@ -268,8 +283,6 @@ func buildEntity(entityType, slug string, s *store.Store, container string, feat
 		return buildRule(slug, s)
 	case "adr":
 		return buildAdr(slug, s)
-	case "recipe":
-		return buildRecipe(slug, s)
 	default:
 		return buildGenericDocument(entityType, slug, s)
 	}
@@ -278,7 +291,7 @@ func buildEntity(entityType, slug string, s *store.Store, container string, feat
 func buildGenericDocument(entityType, slug string, s *store.Store) (*store.Entity, error) {
 	id := entityType + "-" + slug
 	if _, err := s.GetEntity(id); err == nil {
-		return nil, fmt.Errorf("error: %s already exists", id)
+		return nil, fmt.Errorf("error: %s already exists\nhint: choose a unique slug, or inspect the existing fact with c3x read %s", id, id)
 	}
 	return &store.Entity{
 		ID: id, Type: entityType, Title: slug, Slug: slug, Status: "active", Metadata: "{}",
@@ -306,7 +319,7 @@ func buildComponent(slug string, s *store.Store, containerArg string, feature bo
 	}
 	containerNum, _ := strconv.Atoi(containerMatch[1])
 	if _, err := s.GetEntity(containerArg); err != nil {
-		return nil, fmt.Errorf("error: container '%s' not found", containerArg)
+		return nil, fmt.Errorf("error: container '%s' not found\nhint: run c3x list --flat to choose an existing container", containerArg)
 	}
 	componentID, err := nextComponentID(s, containerNum, feature)
 	if err != nil {
@@ -325,7 +338,7 @@ func buildComponent(slug string, s *store.Store, containerArg string, feature bo
 func buildRef(slug string, s *store.Store) (*store.Entity, error) {
 	id := "ref-" + slug
 	if _, err := s.GetEntity(id); err == nil {
-		return nil, fmt.Errorf("error: %s already exists", id)
+		return nil, fmt.Errorf("error: %s already exists\nhint: choose a unique slug, or inspect the existing ref with c3x read %s", id, id)
 	}
 	return &store.Entity{
 		ID: id, Type: "ref", Title: slug, Slug: slug, Status: "active", Metadata: "{}",
@@ -335,7 +348,7 @@ func buildRef(slug string, s *store.Store) (*store.Entity, error) {
 func buildRule(slug string, s *store.Store) (*store.Entity, error) {
 	id := "rule-" + slug
 	if _, err := s.GetEntity(id); err == nil {
-		return nil, fmt.Errorf("error: %s already exists", id)
+		return nil, fmt.Errorf("error: %s already exists\nhint: choose a unique slug, or inspect the existing rule with c3x read %s", id, id)
 	}
 	return &store.Entity{
 		ID: id, Type: "rule", Title: slug, Slug: slug, Status: "active", Metadata: "{}",
@@ -346,21 +359,11 @@ func buildAdr(slug string, s *store.Store) (*store.Entity, error) {
 	now := time.Now()
 	adrID := fmt.Sprintf("adr-%s-%s", now.Format("20060102"), slug)
 	if _, err := s.GetEntity(adrID); err == nil {
-		return nil, fmt.Errorf("error: %s already exists", adrID)
+		return nil, fmt.Errorf("error: %s already exists\nhint: choose a unique slug, or inspect the existing ADR with c3x read %s", adrID, adrID)
 	}
 	return &store.Entity{
 		ID: adrID, Type: "adr", Title: slug, Slug: slug,
 		Status: "proposed", Date: now.Format("2006-01-02"), Metadata: "{}",
-	}, nil
-}
-
-func buildRecipe(slug string, s *store.Store) (*store.Entity, error) {
-	id := "recipe-" + slug
-	if _, err := s.GetEntity(id); err == nil {
-		return nil, fmt.Errorf("error: %s already exists", id)
-	}
-	return &store.Entity{
-		ID: id, Type: "recipe", Title: slug, Slug: slug, Status: "active", Metadata: "{}",
 	}, nil
 }
 
@@ -427,7 +430,7 @@ func nextComponentID(s *store.Store, containerNum int, feature bool) (string, er
 	}
 	next := max + 1
 	if next > 9 {
-		return "", fmt.Errorf("container c3-%d has no more foundation slots (01-09 full)", containerNum)
+		return "", fmt.Errorf("error: container c3-%d has no more foundation slots (01-09 full)\nhint: create a non-foundation component slot or add a new container for this responsibility", containerNum)
 	}
 	return fmt.Sprintf("c3-%d%02d", containerNum, next), nil
 }

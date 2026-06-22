@@ -90,61 +90,6 @@ func TestRunChangeApply_S1_BlockEdit(t *testing.T) {
 	}
 }
 
-// Codemap carrier — a .codemap.md binds external code through change apply. This
-// also covers the carrier-only unit (no .patch.md): it must apply, not silently do
-// nothing.
-func TestRunChangeApply_Codemap_Binds(t *testing.T) {
-	s, c3Dir := openStoreC3(t)
-	seedRef(t, s, "ref-jwt", "Standardize token verification.", "Use RS256 JWTs.", "Asymmetric rationale.")
-
-	writePatch(t, c3Dir, "adr-1", "01.codemap.md",
-		"---\ntarget: ref-jwt\n---\ncli/internal/auth/**\n")
-
-	var buf strings.Builder
-	if err := RunChangeApply(ChangeApplyOptions{Store: s, C3Dir: c3Dir, UnitID: "adr-1"}, &buf); err != nil {
-		t.Fatalf("apply: %v\noutput: %s", err, buf.String())
-	}
-	if !strings.Contains(buf.String(), "bound 01.codemap.md") {
-		t.Errorf("expected a bound-codemap report, got: %s", buf.String())
-	}
-	patterns, _ := s.CodeMapFor("ref-jwt")
-	if len(patterns) != 1 || patterns[0] != "cli/internal/auth/**" {
-		t.Errorf("codemap = %v, want [cli/internal/auth/**]", patterns)
-	}
-}
-
-// A codemap carrier whose target neither exists nor is created by the unit is
-// rejected at preflight with a clear message (not a raw FK error at apply).
-func TestRunChangeApply_Codemap_RejectsMissingTarget(t *testing.T) {
-	s, c3Dir := openStoreC3(t)
-	writePatch(t, c3Dir, "adr-1", "01.codemap.md", "---\ntarget: c3-nope\n---\nsrc/**\n")
-
-	var buf strings.Builder
-	if err := RunChangeApply(ChangeApplyOptions{Store: s, C3Dir: c3Dir, UnitID: "adr-1"}, &buf); err == nil {
-		t.Fatalf("expected a missing-target reject; output: %s", buf.String())
-	}
-	if !strings.Contains(buf.String(), "does not exist") {
-		t.Errorf("expected a clear missing-target reject, got: %s", buf.String())
-	}
-}
-
-// Two codemap carriers targeting the same entity would full-replace each other
-// (last wins, silently) — the unit must reject so its external footprint is clear.
-func TestRunChangeApply_Codemap_RejectsDuplicateTarget(t *testing.T) {
-	s, c3Dir := openStoreC3(t)
-	seedRef(t, s, "ref-jwt", "Standardize tokens.", "RS256.", "Asymmetric.")
-	writePatch(t, c3Dir, "adr-1", "01.codemap.md", "---\ntarget: ref-jwt\n---\ncli/a/**\n")
-	writePatch(t, c3Dir, "adr-1", "02.codemap.md", "---\ntarget: ref-jwt\n---\ncli/b/**\n")
-
-	var buf strings.Builder
-	if err := RunChangeApply(ChangeApplyOptions{Store: s, C3Dir: c3Dir, UnitID: "adr-1"}, &buf); err == nil {
-		t.Fatalf("two carriers for one target must be rejected; output: %s", buf.String())
-	}
-	if !strings.Contains(buf.String(), "both target") {
-		t.Errorf("expected a duplicate-target reject, got: %s", buf.String())
-	}
-}
-
 // S3 — a drifted anchor rejects the whole unit; nothing changes.
 func TestRunChangeApply_S3_DriftRejects(t *testing.T) {
 	s, c3Dir := openStoreC3(t)

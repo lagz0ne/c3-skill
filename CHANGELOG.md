@@ -5,6 +5,80 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [11.3.0] - 2026-06-22
+
+Minor release: **eval becomes the alignment spine.** C3 now treats `.c3/eval/*.yaml` as the
+fact-to-code binding and conformance layer that replaces the old codemap surface, and the repo was
+dogfooded through a fresh C3 re-onboard plus a round-2 skill/binary alignment OKR that reached
+17/17 ratified claims with zero drift and zero unresolved judgement.
+
+### Added
+
+- **C3 eval replaces codemap.** Eval specs now own file/code bindings, `c3x lookup` resolves through
+  those specs, roll-up specs cover container-level code ownership, and the eval engine records
+  deterministic verdicts over gathered external state instead of treating code-map metadata as a
+  frozen fact field.
+- **Fresh c3-design re-onboard.** The repo was re-onboarded from scratch into the current C3 model,
+  adding first-class facts for the eval engine, command-support layer, and developer tooling
+  surfaces (`search-eval` and `semantic-assets`) plus an `eval-determinism` ref that governs
+  conformance checks.
+- **Round-2 skill/binary alignment proof.** The alignment matrix is ratified at 17/17 claim coverage;
+  `c3local check` is green and `c3local eval` reports 26 holds, 0 drift, and 0 unresolved
+  `needs_judgement`.
+- **Blindbox provenance controls.** The skill-eval blindbox runner now records prompt/source,
+  wrapper, VERSION, and selected-binary hashes, removes `/usr/local/bin` from the sandbox path, and
+  fails dry-runs when expected skill or binary hashes do not match.
+- **False-green falsifiers.** The deterministic skill-eval scorer now rejects known wrong-but-term
+  complete answers and fake evidence-command dumps instead of accepting score-only narration.
+
+### Changed
+
+- **Richer eval teaching and repair loops.** The skill and CLI help now route eval questions through
+  the eval reference, teach loop specs and lookup-over-eval-bindings, and keep eval verdicts as
+  one-off evidence rather than apply gates.
+- **Agent-facing command output is more complete.** Structured read/check/eval/search/canvas and
+  semantic-index paths carry actionable `help[]` hints, and check/repair sync output stays TOON in
+  agent mode.
+
+### Fixed
+
+- **`rule-dispatcher-error-hint` is deterministic.** The former `needs_judgement` eval row now runs
+  `TestUserFacingErrorHints`, a Go AST check that fails any non-wrapped command/main `fmt.Errorf`
+  literal without an actionable `hint:`.
+- **Eval false greens from empty or failed gathers.** Declared code bindings are checked as
+  preconditions, vanished code surfaces drift instead of passing vacuously, and command gather
+  failures no longer satisfy `count == 0`.
+- **Stale command guidance.** Help hints no longer point agents at removed commands such as `wire`
+  or `diff`, and user-facing command errors now include next repair steps.
+
+## [11.2.0] - 2026-06-19
+
+Minor release: **integrity is the tool's, enforced at the change-apply saga.** The change-unit is the in-progress working copy; `change apply` is a deterministic, all-or-nothing merge that the tool keeps integral — the author declares intent and merges, and cross-fact consistency is *synthesized*, not hand-maintained. Plus a switch-gated up-V on the same flip, and a leaner CLI surface.
+
+### Added
+
+- **Membership by construction.** A parent's `Components` / `Containers` table is now synthesized from its children's `parent:` edge — never hand-authored. It is maintained on every path that sets parentage: a `whole` / `frontmatter` create-patch (at the apply flip), a direct `c3 add --container` (at add time), and `c3 check --fix` (a universal heal). Identity columns (id, name, category, status, boundary) come from the child; the descriptive column defaults from its Goal and is preserved when refined. A reparent or retire heals the parent it leaves. The layer-disconnect class is now impossible by construction, not merely caught — and membership tables may be header-only, since the tool fills the rows.
+- **Switch-gated double-V — the inspection gate.** `change apply` refuses to flip a fact carrying derivation obligations unless a fresh, territory-grounded `*.inspect.md` attests the code was inspected against the post-change doc. `c3 change inspect` shows, per touched fact, its obligations, the resolved code-map territory, and the material hashes to stamp. Self-attestation is an audit gate, not a truth oracle — the human judges at `change accept`; it defers for docs-ahead-of-code (no territory bound yet).
+- **Destruction gate.** A saga `retire` is refused if it would orphan a live child or dangle a live citer, unless the same unit also retires/reparents the child and drops the citation — the destruction lands all-or-nothing. The membership row drop stays automatic.
+- **Conflict resolution.** A drifted patch (its cited block moved under it) is surfaced as a conflict by `change rebase`: the 3-way — BASE (recovered from version history), YOURS, and the re-anchor move — so you re-author it against the live fact. Apply re-runs every gate, so a stale resolution can't land.
+- **Evolve the model — the morph (evolve-unit).** A fact-type's canvas can be reshaped *non-additively* (split a column, retype it to an enum, restructure a section) through a new `canvas`-scope patch in a change-unit. The **morph gate** lands the reshape only if every existing instance is valid against the new shape once the unit's own migration patches apply — so the canvas file and its facts flip together in one transaction (a failed migration rolls the canvas back), never reshape-now-fix-later. A canvas migrated up to a reshaped type in the same unit is validated against the *new* shape, not the stale one. Climb (additive) and morph (non-additive) are the two ways the model grows. See `references/change.md` §Morphing the model.
+- **Laddered ADR canvas.** A lean rung-1 core (Goal / Context / Decision / Affected Topology / Verification) with the work-order sections optional, so a small change isn't forced through a heavy template.
+- **Smoother table editing.** Edit / delete / add a table row by citing just the row; cite snippets are optional; `frontmatter` patches gained `boundary` / `category` / `date` (parity with `set`).
+- **Embeddable body content.** Bodies preserve HTML / embeds, rule blocks, and indented code through the parse → render round-trip.
+
+### Changed
+
+- **Leaner CLI surface.** Removed the dead `template` command (and `--template` flag), the legacy `wire` command, and carved out the `marketplace` subsystem; `index` is hidden from the public surface. The skill operations — query / audit / change / ref / sweep — are unchanged.
+- **References ground by resolution, not id-shape.** A `reference`/edge cell grounds when its token **resolves** against the store (or is `N.A - <reason>`) — the column's declared type already says it is a reference, so grounding no longer matches a closed id-shape regex. A cite to a custom fact-type id (`policy-…`, `design-token-…`) now grounds cleanly, and a built-in prefix appearing *inside* a custom id (e.g. `rule-` within `a11y-rule-foo`) no longer false-matches.
+- **Every skill surface rewritten to the one-model / three-act story.** Build the model + freeze the facts → change-units drive progress → the canvas grows *and evolves*. Onboarding is now an **emergent-canvas walkthrough** — descend the abstraction and wire the graph; the lean seed canvas is already in place and grows a custom fact-type only where the domain needs one — rather than a fixed up-front setup. "Edge" is reserved for **wiring** (`uses` / citations / `edge<>`); parentage is membership, **not** a graph edge.
+
+### Fixed
+
+- **Block cites anchor by hash, not node id.** A whole-body rewrite or insert renumbers node ids, but identical content keeps its hash — so a cite survives renumbering instead of spuriously drifting.
+- **`graph --format mermaid` is honored in agent mode.** An explicit mermaid render now wins over the agent-mode JSON default (a bare `graph` still emits TOON).
+- **Check false positives.** Narrowed the placeholder denylist (no more flagging `TODO:` / `later` in prose); staged `.patch.md` files no longer trip the BROKEN_SEAL check; the inspection gate defers for docs-ahead-of-code.
+- **Genesis ADR file name matches its id;** TOON output renders nested structs and maps cleanly.
+
 ## [11.1.1] - 2026-06-18
 
 Patch release: **onboarding & climb hardening**, driven by a blindbox skill-eval loop that grows a project from a lean rung through a full multi-container climb. The eval surfaced two defects that no prose change could fix, plus several skill gaps.

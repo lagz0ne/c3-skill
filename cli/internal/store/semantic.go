@@ -294,11 +294,6 @@ func (s *Store) semanticTextForEntity(e *Entity) string {
 			writeSemanticField(&b, n.Type, n.Content)
 		}
 	}
-	if patterns, err := s.CodeMapFor(e.ID); err == nil {
-		for _, pattern := range patterns {
-			writeSemanticField(&b, "code path", pattern)
-		}
-	}
 	return b.String()
 }
 

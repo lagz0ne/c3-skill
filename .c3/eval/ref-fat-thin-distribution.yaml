@@ -1,0 +1,13 @@
+fact: ref-fat-thin-distribution
+claim: "All distribution surfaces pin one version — CLAUDE.md's version files stay in sync"
+pipeline:
+  - gather:
+      each:
+        - { file: skills/c3/bin/VERSION }
+        - { command: "jq -r .version .claude-plugin/plugin.json" }
+        - { command: "jq -r .plugins[0].version .claude-plugin/marketplace.json" }
+        - { command: "jq -r .version packages/cli/package.json" }
+        - { command: "jq -r .version packages/cli/package-lock.json" }
+        - { command: "grep -oE '[0-9]+\\.[0-9]+\\.[0-9]+' packages/cli/src/version.ts | head -1" }
+  - transform: { trim: true }
+  - eval: { all_equal: true }

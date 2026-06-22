@@ -273,35 +273,8 @@ func TestRunList_JSON(t *testing.T) {
 	}
 }
 
-func TestListTopology_WithRecipes(t *testing.T) {
-	s := createRichDBFixture(t)
-	s.InsertEntity(&store.Entity{
-		ID: "recipe-auth", Type: "recipe", Title: "Auth Flow",
-		Slug: "auth", Goal: "Auth flow recipe", Status: "active", Metadata: "{}",
-	})
-	s.AddRelationship(&store.Relationship{FromID: "recipe-auth", ToID: "c3-101", RelType: "sources"})
-
-	var buf bytes.Buffer
-	err := RunList(ListOptions{Store: s, Compact: false}, &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	output := buf.String()
-	if !strings.Contains(output, "Recipes:") {
-		t.Error("should show Recipes section")
-	}
-	if !strings.Contains(output, "recipe-auth") {
-		t.Error("should list recipe-auth")
-	}
-	if !strings.Contains(output, "sources:") {
-		t.Error("should show sources for recipe")
-	}
-}
-
 func TestListTopology_Compact(t *testing.T) {
 	s := createRichDBFixture(t)
-	s.SetCodeMap("c3-101", []string{"src/auth/**"})
 
 	var buf bytes.Buffer
 	err := RunList(ListOptions{Store: s, Compact: true}, &buf)
@@ -310,30 +283,8 @@ func TestListTopology_Compact(t *testing.T) {
 	}
 
 	output := buf.String()
-	if strings.Contains(output, "files:") {
-		t.Error("compact mode should not show files")
-	}
 	if strings.Contains(output, "uses:") {
 		t.Error("compact mode should not show uses")
-	}
-}
-
-func TestListTopology_WithCodeMap(t *testing.T) {
-	s := createRichDBFixture(t)
-	s.SetCodeMap("c3-101", []string{"src/auth/**"})
-
-	var buf bytes.Buffer
-	err := RunList(ListOptions{Store: s, Compact: false}, &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	output := buf.String()
-	if !strings.Contains(output, "files:") {
-		t.Error("non-compact should show files")
-	}
-	if !strings.Contains(output, "src/auth/**") {
-		t.Error("should show code-map pattern")
 	}
 }
 
@@ -416,30 +367,6 @@ func TestRunList_TOONOutput(t *testing.T) {
 	}
 }
 
-func TestRunListStructuredAgentCompactIncludesRecipeDiscoveryFields(t *testing.T) {
-	t.Setenv("C3X_MODE", "agent")
-	s := createRichDBFixture(t)
-	s.InsertEntity(&store.Entity{
-		ID: "recipe-auth", Type: "recipe", Title: "Auth Flow",
-		Slug: "auth", Goal: "Auth flow recipe", Status: "active",
-		Metadata: `{"description":"Trace login and token validation."}`,
-	})
-	s.AddRelationship(&store.Relationship{FromID: "recipe-auth", ToID: "c3-101", RelType: "sources"})
-	var buf bytes.Buffer
-
-	if err := RunList(ListOptions{Store: s, JSON: true, JSONExplicit: false}, &buf); err != nil {
-		t.Fatal(err)
-	}
-
-	out := buf.String()
-	if !strings.Contains(out, "description") || !strings.Contains(out, "Trace login and token validation.") {
-		t.Errorf("agent compact recipe row should include description, got:\n%s", out)
-	}
-	if !strings.Contains(out, "sources") || !strings.Contains(out, "c3-101") {
-		t.Errorf("agent compact recipe row should include sources, got:\n%s", out)
-	}
-}
-
 func TestRunList_HelpHintsInAgentMode(t *testing.T) {
 	t.Setenv("C3X_MODE", "agent")
 	s := createRichDBFixture(t)
@@ -470,32 +397,5 @@ func TestRunList_AgentModeOverridesJSONExplicit(t *testing.T) {
 	}
 	if strings.HasPrefix(out, "{") || strings.HasPrefix(out, "[") {
 		t.Errorf("agent mode should not return JSON, got:\n%s", out)
-	}
-}
-
-func TestListTopology_RecipesCompact(t *testing.T) {
-	s := createRichDBFixture(t)
-	s.InsertEntity(&store.Entity{
-		ID: "recipe-auth", Type: "recipe", Title: "Auth Flow",
-		Slug: "auth", Goal: "Auth flow recipe", Status: "active",
-		Metadata: `{"description":"Trace login and token validation."}`,
-	})
-	s.AddRelationship(&store.Relationship{FromID: "recipe-auth", ToID: "c3-101", RelType: "sources"})
-
-	var buf bytes.Buffer
-	err := RunList(ListOptions{Store: s, Compact: true}, &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	output := buf.String()
-	if !strings.Contains(output, "recipe-auth") {
-		t.Error("compact should still list recipe-auth")
-	}
-	if !strings.Contains(output, "description: Trace login and token validation.") {
-		t.Errorf("compact should show recipe description, got:\n%s", output)
-	}
-	if !strings.Contains(output, "sources: c3-101") {
-		t.Errorf("compact should show recipe sources, got:\n%s", output)
 	}
 }

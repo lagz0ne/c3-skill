@@ -26,10 +26,14 @@ type RepairOptions struct {
 }
 
 func RunVerify(opts VerifyOptions, w io.Writer) error {
-	if err := reportBrokenSeals(opts.C3Dir, opts.IncludeADR, opts.Only, w); err != nil {
+	if err := reportBrokenSeals(opts.C3Dir, opts.IncludeADR, opts.Only, opts.JSON, w); err != nil {
 		return err
 	}
-	if err := EnsureLocalCache(opts.C3Dir, opts.IncludeADR, opts.Only, w); err != nil {
+	cacheOut := w
+	if opts.JSON {
+		cacheOut = io.Discard
+	}
+	if err := EnsureLocalCache(opts.C3Dir, opts.IncludeADR, opts.Only, cacheOut); err != nil {
 		return err
 	}
 	return runVerificationSuite(opts.C3Dir, opts.JSON, opts.IncludeADR, opts.Only, w)
@@ -47,8 +51,10 @@ func RunRepair(opts RepairOptions, w io.Writer) error {
 	if err := RunSyncExport(ExportOptions{Store: s, OutputDir: opts.C3Dir, JSON: opts.JSON}, io.Discard); err != nil {
 		return err
 	}
-	fmt.Fprintf(w, "Rebuilt local C3 cache from canonical .c3/\n")
-	fmt.Fprintf(w, "Resealed canonical .c3/ tree\n")
+	if !opts.JSON {
+		fmt.Fprintf(w, "Rebuilt local C3 cache from canonical .c3/\n")
+		fmt.Fprintf(w, "Resealed canonical .c3/ tree\n")
+	}
 	return runVerificationSuite(opts.C3Dir, opts.JSON, opts.IncludeADR, opts.Only, w)
 }
 
@@ -108,7 +114,7 @@ func runVerificationSuite(c3Dir string, json bool, includeADR bool, only []strin
 	return RunSyncCheck(ExportOptions{Store: s, OutputDir: c3Dir, JSON: json, IncludeADR: includeADR, Only: only}, w)
 }
 
-func reportBrokenSeals(c3Dir string, includeADR bool, only []string, w io.Writer) error {
+func reportBrokenSeals(c3Dir string, includeADR bool, only []string, json bool, w io.Writer) error {
 	_, broken, err := snapshotCanonicalTree(c3Dir, true)
 	if err != nil {
 		return fmt.Errorf("verify: read canonical tree: %w", err)
@@ -125,6 +131,13 @@ func reportBrokenSeals(c3Dir string, includeADR bool, only []string, w io.Writer
 	}
 	if len(broken) == 0 {
 		return nil
+	}
+	if json {
+		result := SyncCheckResult{OK: false, BrokenSeal: broken}
+		if err := WriteObjectOutput(w, result, ResolveFormat(json, isAgentMode()), syncCheckHelpHints(result)); err != nil {
+			return err
+		}
+		return fmt.Errorf("verify failed: canonical markdown has broken seals\nhint: resolve the .c3/ text, then run 'c3x repair'")
 	}
 	for _, path := range broken {
 		fmt.Fprintf(w, "BROKEN_SEAL %s\n", path)

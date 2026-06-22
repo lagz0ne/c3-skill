@@ -183,7 +183,7 @@ func TestRunAddFormatted_AdrUsesProjectCanvas(t *testing.T) {
 	var buf bytes.Buffer
 
 	body := "## Decision Note\n\nUse the project ADR canvas for this decision.\n"
-	err := RunAddFormattedWithTemplate("adr", "small-decision", s, "", false, "", c3Dir, strings.NewReader(body), &buf, FormatTOON)
+	err := RunAddFormattedInDir("adr", "small-decision", s, "", false, c3Dir, strings.NewReader(body), &buf, FormatTOON)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -214,7 +214,7 @@ func TestRunAddFormatted_ProjectCanvasValidationUsesCanvasSchema(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err := RunAddFormattedWithTemplate("adr", "small-decision", s, "", false, "", c3Dir, strings.NewReader("## Other\n\nNope.\n"), &bytes.Buffer{}, FormatTOON)
+	err := RunAddFormattedInDir("adr", "small-decision", s, "", false, c3Dir, strings.NewReader("## Other\n\nNope.\n"), &bytes.Buffer{}, FormatTOON)
 	if err == nil {
 		t.Fatal("expected project canvas validation to fail")
 	}
@@ -232,7 +232,7 @@ func TestBDD_CanvasDefinedEntityAddWriteCheckUsesCanvasContract(t *testing.T) {
 		testCitationForEntity(t, s, "ref-jwt"),
 	)
 	var buf bytes.Buffer
-	if err := RunAddFormattedWithTemplate("research-note", "api-latency", s, "", false, "", c3Dir, strings.NewReader(valid), &buf, FormatTOON); err != nil {
+	if err := RunAddFormattedInDir("research-note", "api-latency", s, "", false, c3Dir, strings.NewReader(valid), &buf, FormatTOON); err != nil {
 		t.Fatal(err)
 	}
 	requireAll(t, buf.String(), "id: research-note-api-latency", "type: research-note", "Findings", "Decision Pressure")
@@ -286,15 +286,21 @@ func TestRunAdd_AdrRequiresCompleteBody(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected incomplete ADR creation to fail")
 	}
+	// The lean ADR core (rung-1): only Goal, Context, Decision, Affected Topology,
+	// Verification are required. The work-order sections (Compliance Refs/Rules,
+	// Work Breakdown, Underlay, Enforcement, Alternatives, Risks) are optional —
+	// they climb in for weightier decisions.
 	requireAll(t, err.Error(),
 		"missing required section: Context",
 		"missing required section: Decision",
 		"missing required section: Affected Topology",
-		"missing required section: Compliance Refs",
-		"missing required section: Compliance Rules",
-		"missing required section: Underlay C3 Changes",
-		"ADR creation is all-or-nothing",
+		"missing required section: Verification",
 	)
+	for _, optional := range []string{"Compliance Refs", "Compliance Rules", "Work Breakdown", "Underlay C3 Changes", "Enforcement Surfaces", "Alternatives Considered", "Risks"} {
+		if strings.Contains(err.Error(), "missing required section: "+optional) {
+			t.Errorf("optional work-order section %q must not be required at creation (lean ADR core)", optional)
+		}
+	}
 	adrs, listErr := s.EntitiesByType("adr")
 	if listErr != nil {
 		t.Fatal(listErr)
@@ -423,23 +429,6 @@ func TestRunAdd_AdrRequiresWhyColumnsUnlessNATopology(t *testing.T) {
 		"Affected Topology row for c3-1 must explain why it is affected",
 		"Compliance Refs row for ref-jwt must explain why compliance/review is required",
 	)
-}
-
-func TestRunAdd_RecipeWithBody(t *testing.T) {
-	s, _ := createDBFixtureWithC3Dir(t)
-	var buf bytes.Buffer
-
-	body := "## Goal\nEnd-to-end auth flow.\n"
-
-	err := RunAdd("recipe", "auth-flow", s, "", false, strings.NewReader(body), &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	entity, _ := s.GetEntity("recipe-auth-flow")
-	if entity == nil {
-		t.Fatal("recipe should exist")
-	}
 }
 
 func TestRunAdd_NilReaderFails(t *testing.T) {
@@ -572,6 +561,9 @@ func TestRunAdd_RefDuplicate(t *testing.T) {
 	if !strings.Contains(err.Error(), "already exists") {
 		t.Errorf("error = %v", err)
 	}
+	if !strings.Contains(err.Error(), "hint:") || !strings.Contains(err.Error(), "c3x read ref-jwt") {
+		t.Errorf("duplicate error should include actionable hint, got: %v", err)
+	}
 }
 
 func TestRunAdd_ComponentMissingContainer(t *testing.T) {
@@ -585,6 +577,23 @@ func TestRunAdd_ComponentMissingContainer(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "--container") {
 		t.Errorf("error = %v", err)
+	}
+}
+
+func TestRunAdd_ComponentUnknownContainerIncludesHint(t *testing.T) {
+	s, _ := createDBFixtureWithC3Dir(t)
+	var buf bytes.Buffer
+
+	body := strictComponentBody("test", "Documents test component behavior before creation.")
+	err := RunAdd("component", "test", s, "c3-99", false, strings.NewReader(body), &buf)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !strings.Contains(err.Error(), "container 'c3-99' not found") {
+		t.Errorf("error = %v", err)
+	}
+	if !strings.Contains(err.Error(), "hint:") || !strings.Contains(err.Error(), "c3x list --flat") {
+		t.Errorf("missing-container error should include actionable hint, got: %v", err)
 	}
 }
 

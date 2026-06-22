@@ -1,8 +1,8 @@
 ---
 id: adr
-c3-seal: 24191efa19595a66467fd153e293995eec2d21edd2aad1af2987f57b8c7b9bb1
+c3-seal: ae29add672f943d9032373d42c3cc1af0f44767c9887e995a3697285c7ce1a9c
 type: canvas
-description: Decision work order with topology, governance, execution, and verification evidence.
+description: Decision record — lean required core (Goal, Context, Decision, Affected Topology, Verification); optional work-order sections (governance, execution, alternatives, risks) climb in for weightier decisions.
 status: [open, accepted, done, superseded]
 ---
 
@@ -53,7 +53,7 @@ sections:
           type: text
     - name: Compliance Refs
       content_type: table
-      required: true
+      required: false
       purpose: Existing or to-be-created refs that the affected topology must review or comply with
       fill: 'For each governing ref, name the ref, explain why it applies to this ADR, cite the current ref node proving it, and record the action: comply, review, create-ref, update-ref, or N.A with reason.'
       failure: If this is vague or missing, the model will under-mention governing references and the ADR will miss architecture constraints it was supposed to respect.
@@ -68,7 +68,7 @@ sections:
           type: text
     - name: Compliance Rules
       content_type: table
-      required: true
+      required: false
       purpose: Existing or to-be-created rules that the affected topology must review or comply with
       fill: For each governing rule, name the rule, explain why it applies, cite the current rule node proving it, and say whether the work must comply, needs review, or must create/update the rule.
       failure: If this is vague or missing, rule enforcement becomes implicit again and downstream code can violate golden patterns without being called out in the ADR.
@@ -83,7 +83,7 @@ sections:
           type: text
     - name: Work Breakdown
       content_type: table
-      required: true
+      required: false
       purpose: Files, docs, commands, or entities to change and how each maps to the decision
       fill: Name the concrete implementation/doc work items and tie each one back to the decision. Prefer files, commands, entities, or scopes over vague task labels.
       failure: If this is generic, another agent cannot recover execution steps from the ADR alone and work will depend on chat history.
@@ -96,7 +96,7 @@ sections:
           type: text
     - name: Underlay C3 Changes
       content_type: table
-      required: true
+      required: false
       purpose: C3 CLI files, validators, commands, hints, help, schemas, templates, or tests changed by this decision
       fill: 'List exact C3 underlay surfaces changed by this ADR: commands, validators, tests, schema rows, hints, templates, docs, and the proof that each was updated.'
       failure: If this is weak, C3-facing changes ship without their enforcing validator/help/test surface and the documented contract drifts from the actual CLI.
@@ -109,7 +109,7 @@ sections:
           type: text
     - name: Enforcement Surfaces
       content_type: table
-      required: true
+      required: false
       purpose: Commands, validators, tests, docs, or runtime paths that enforce the decision
       fill: 'Name every place that will catch drift: commands, runtime checks, tests, docs, guardrails, or validators.'
       failure: If this is missing, the ADR describes intent but gives no proof path, so regressions become opinion-driven instead of mechanically catchable.
@@ -122,7 +122,7 @@ sections:
           type: text
     - name: Alternatives Considered
       content_type: table
-      required: true
+      required: false
       purpose: Real options rejected and why
       fill: List the real competing approaches and the repo-specific reason each was rejected.
       failure: If this is fake or generic, the ADR gives no decision pressure and future readers will reopen already-rejected paths.
@@ -133,7 +133,7 @@ sections:
           type: text
     - name: Risks
       content_type: table
-      required: true
+      required: false
       purpose: Failure modes, mitigations, and verification
       fill: Name concrete failure modes introduced by the decision, how they are mitigated, and how the mitigation will be verified.
       failure: If this stays soft, the ADR will approve risky work without naming how failure would show up or be contained.
@@ -166,4 +166,5 @@ workorder: |-
     Run c3x schema adr before drafting; do not draft ADR prose first and reconcile later.
     Before the ADR body, make a volatile Discovery Brief from the task goal and targeted c3x reads: owner, governing material, stop condition.
     Treat each 'fill' line as required authoring guidance, not optional commentary.
-    ADR creation is all-or-nothing: thin sections fail at creation, no incremental fill later.
+    Required core: Goal, Context, Decision, Affected Topology, Verification — a small change needs only these.
+    The work-order sections (Compliance Refs/Rules, Work Breakdown, Underlay C3 Changes, Enforcement Surfaces, Alternatives, Risks) are optional — include them for weightier decisions; any you DO include must be substantive (thin included sections fail).

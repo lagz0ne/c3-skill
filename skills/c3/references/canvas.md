@@ -1,88 +1,74 @@
-# canvas — inspect and edit the shape of entities
+# canvas — your architecture's own vocabulary, as a contract
 
-A **canvas definition** is the shape of an entity type: its sections (text or
-table) and each table's typed columns. Every entity type has one — `context`,
-`container`, `component`, `ref`, `rule`, `adr`, and document types (`prd`,
-`user-story`, `atomic-design-change`, `pm-requirement`, plus any project-defined
-type). c3x ships embedded defaults as **seeds**; on onboard they are materialized
-into `.c3/canvases/<type>.md` as sealed markdown, and from then on **the user
-owns them**.
+This is the **model** surface (Act 1, the shaping; Act 3, why you climb). It owns
+what a canvas *is* and why you *raise* one. The climb's steps live in change.md; the
+frozen-fact rule and rung *definition* are the shared contract in SKILL.md — cited
+here, not re-taught.
 
-The point: definitions are not baked into the tool. A team edits its definitions
-to fit how *they* want their architecture docs shaped — c3x facilitates the wiring
-(scaffold / validate / check); it does not dictate the shape.
+## A canvas is the shape of a fact-type
 
-## A canvas is a rung (the ladder)
+A **canvas** is your project's vocabulary made enforceable: for one fact-type
+(`system`, `container`, `component`, `ref`, `rule`, the change-docs, or any
+type you define), it declares the sections each fact carries and each table's typed
+columns. The shape is **data, not code**: `c3 init` seeds lean canvases, materializes
+them to `.c3/canvases/<type>.md`, and from then on **you own them**. `c3 check`
+validates facts against *that file* — so editing a definition changes what is
+enforced, with no second hardcoded copy. Read the live shape, never memory:
+`c3 schema <type>` (rendered, leads with REJECT IF) and `c3 canvas read <type>` (the
+owned source) are the same contract from two angles.
 
-A canvas is a **rung**: a complete contract for one complexity *level*. It starts at
-the complexity that fits the project **now** — `c3 init` seeds **lean** rung-1
-canvases — and is **raised deliberately** as the architecture earns it. Integrity is
-the invariant: a fact is *always* complete to its canvas's current bar, never thin or
-"filled in later." What grows is the level, not the completeness.
+**Membership is part of the shape, and the tool fills it.** A parent fact-type carries
+a membership table, but no author ever writes a row into it: every parentage-changing
+path synthesizes it from the children's `parent:` links (`c3 add`, `change apply`,
+`check --fix`). Set a child's `parent:`, the row appears; the column is a *consequence*
+of the shape, never hand-authored truth. (Mechanics: change.md.)
 
-**Raising a canvas is a climb, and it migrates the facts.** When you make a section
-required (or author a richer canvas with `c3 canvas write`), every existing fact that
-now sits *below* the new bar must be brought up to it — completely. That migration is
-the same change-unit mechanism, now with a name:
+## Define your own fact-type — and wire it
 
-```bash
-c3x change scaffold <unit-id>   # one insert-patch per below-bar fact, each with the
-                                #   missing required sections as EMPTY templates
-# ... fill every templated section with real content ...
-c3x change apply <unit-id>      # lands the climb atomically — REFUSES to apply while
-                                #   any templated section is still empty (canvas gate)
-```
+C3 is a general knowledge-graph tool, not only an architecture one. When the project
+needs a doc kind the builtins don't cover — a `test-case`, a `design-token`, a
+`pm-objective` — **define its canvas** and the type is first-class (authored, frozen,
+checked, graphed like any other): `c3 canvas add <id> < schema.md`, where the schema is
+a `type: canvas` doc with `domain:`, `sections:` (each `name` / `content_type: text|table`
+/ `required` / `purpose`, and for tables `columns:` with a `type:`), and `reject_if:`.
+Copy a builtin for the exact shape — `c3 canvas read user-story`.
 
-Scaffold stages the climb; apply lands it **only once filled** — the empty-section
-gate is what guarantees the climb is a real one, not a rename. Each rung is solid on
-its own and is **not** responsible for future rungs: size to now, climb when the
-architecture warrants it, never pre-author a higher rung's sections.
+**Wiring is a column.** A table column becomes a graph edge when its `type:` is
+`reference` (with `edge: <rel>` + `targets: <type>,…`) or `edge<typeA|typeB>`: put a
+cited fact's id in the cell, and `c3 check` materializes an edge of that relationship
+and verifies the citation resolves — to **any** fact, builtin or your own custom type.
+This is how a `test-case` **verifies** a `requirement`, a `ui-component` **uses** a
+`design-token`, a `story` **serves** an `objective`. Dense wiring turns separate docs
+into one traceable graph; `c3 graph <id> --direction reverse` shows who cites a fact —
+its coverage. A cell that names no resolvable fact reads "ungrounded"; `N.A - <reason>`
+is the explicit "no link, on purpose."
 
-Canvases stay **user-owned and editable** throughout — the ladder is a named mechanism
-over the same `canvas write` + change-unit moves, not a new authority over the shape.
+## A canvas is a rung — why you raise it
 
-## Commands
+A canvas is a **rung**: a complete contract for one complexity *level*, sized to the
+project **now** (rung-1 = the lean `init` default). A fact is always complete to its
+current rung — deeper sections are a higher rung, not a hole to backfill (the rung
+definition is SKILL.md's contract). So growth is never "fill in the thin parts"; it is
+a **climb**: when the work outgrows the model, you *raise the canvas* — make a section
+required, or author a richer one — and then **every fact below the new bar migrates up,
+completely**. That migration is *why* the climb exists: integrity forbids a fact
+straddling two rungs, so raising the bar obligates bringing all facts up to it. The
+climb runs as a change-unit (`change scaffold` → fill → `change apply`, gated so it
+refuses while any required section is still empty) — the steps are change.md's.
 
-```bash
-c3 canvas list                 # every entity-type definition + domain + source
-c3 canvas read <type>          # the canonical definition (user-owned markdown)
-c3 schema <type>               # render the definition: sections, columns, REJECT IF
-c3 canvas write <type> --file  # replace a project's definition (customize the shape)
-c3 canvas add <type> --file    # define a brand-new project-specific entity type
-```
+## Worked outcome
 
-`c3 schema <type>` and `c3 canvas read <type>` are the same contract from two
-angles — `schema` is the rendered view, `canvas read` is the owned source.
-
-## Outcomes this enables
-
-- **"What sections does X require?"** -> `c3 schema <type>`. Answer from the
-  project's definition, never from memory.
-- **"Make our component docs carry a `## Threat Model` section"** -> `c3 canvas
-  read component` > edit > `c3 canvas write component --file ...`, then `c3 check`.
-  The new section is now required; check enforces it.
-- **"Add a `decision-log` doc type"** -> author a definition, `c3 canvas add
-  decision-log --file ...`. Now `c3 add decision-log <slug>` works.
-
-## How it behaves
-
-- **Validation reads the definition.** A user's edit changes what `c3 check`
-  enforces — there is no second, hardcoded copy of the shape. If you edit a
-  definition, re-run `c3 check` to see the new contract applied.
-- **Frozen / user-owned.** A c3x upgrade ships new embedded seeds but **never
-  overwrites** an existing `.c3/canvases/<type>.md` (write-if-absent). New seeds
-  reach a project only on fresh onboard or an explicit re-materialize.
-- **Column primitives (lean, mechanically checkable):** `text`, `date`, `enum`
-  (with values), `cite`, `check`, `entity_id`, `reference`, `evidence`,
-  `edge<a|b|...>`. A definition that uses an unsupported primitive is rejected.
+- **"Make our components carry a `## Threat Model`"** → `c3 canvas read component`,
+  add the section, `c3 canvas write component`, then `c3 check`. The section is now
+  required and check enforces it across every existing component (a rung climb).
+- **"Track test coverage"** → `c3 canvas add test-case` with a `verifies` column
+  (`type: reference, edge: verifies, targets: requirement`); author cases that put the
+  requirement id in that column; `c3 graph <req-id> --direction reverse` then shows every
+  covering case — and an untested requirement shows none (a custom fact-type + wiring).
 
 ## Anti-goals
 
-- Don't enumerate a fixed set of sections or types in prose — read `c3 canvas list`
-  / `c3 schema <type>`. The shape is data, and it is the user's.
-- Don't treat `adr` as special. ADR is the `adr` canvas; its shape is editable like
-  any other.
-- Don't validate an entity against remembered sections — validate against its
-  definition (`c3 check` already does this).
-- Don't hand-edit entity *instances* under `.c3/` — those stay CLI-only. Only
-  *definitions* under `.c3/canvases/` are user-editable.
+- **Don't enumerate a fixed set of sections, types, or columns in prose.** The shape
+  is the user's data — read it (`c3 canvas list`, `c3 schema <type>`), don't recite it.
+- **Don't treat `adr` as special.** ADR is just the `adr` canvas; its shape is editable
+  like any other fact-type's.

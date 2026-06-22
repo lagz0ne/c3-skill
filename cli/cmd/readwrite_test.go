@@ -75,6 +75,9 @@ func TestRunRead_NotFound(t *testing.T) {
 	if err == nil {
 		t.Error("expected error for nonexistent entity")
 	}
+	if !strings.Contains(err.Error(), "hint:") || !strings.Contains(err.Error(), "c3x search") {
+		t.Errorf("not-found read should include actionable hint, got: %v", err)
+	}
 }
 
 func TestRunRead_NoID(t *testing.T) {
@@ -302,24 +305,26 @@ Has goal but no Parent Fit section.
 	}
 }
 
-func TestRunWrite_AdrRejectsMissingDefaultTemplateSection(t *testing.T) {
+func TestRunWrite_AdrRejectsMissingCoreSection(t *testing.T) {
 	s := createRichDBFixture(t)
 	var buf bytes.Buffer
 
-	body := strings.Replace(fullADRBody("Adopt OAuth for third-party auth."), adrEnforcementSurfacesSection(), "", 1)
+	// Removing a lean-CORE section (Verification) must fail. An optional work-order
+	// section (e.g. Enforcement Surfaces) would not — that's the laddered adr canvas.
+	body := strings.Replace(fullADRBody("Adopt OAuth for third-party auth."), adrVerificationSection(), "", 1)
 	err := RunWrite(WriteOptions{Store: s, ID: "adr-20260226-use-go", Content: body}, &buf)
 	if err == nil {
-		t.Fatal("expected ADR write to fail when a default template section is missing")
+		t.Fatal("expected ADR write to fail when the required core section Verification is missing")
 	}
-	if !strings.Contains(err.Error(), "missing required section: Enforcement Surfaces") {
-		t.Fatalf("error should mention Enforcement Surfaces: %v", err)
+	if !strings.Contains(err.Error(), "missing required section: Verification") {
+		t.Fatalf("error should mention Verification: %v", err)
 	}
 }
 
-func adrEnforcementSurfacesSection() string {
-	return "## Enforcement Surfaces\n\n" +
-		"| Surface | Behavior | Evidence |\n|---------|----------|----------|\n" +
-		"| c3x add adr | Creates complete ADR only. | Test fixture. |\n\n"
+func adrVerificationSection() string {
+	return "## Verification\n\n" +
+		"| Check | Result |\n|-------|--------|\n" +
+		"| go test | Pending fixture execution. |\n"
 }
 
 func TestRunWrite_RejectsEmptySection(t *testing.T) {
@@ -359,6 +364,9 @@ func TestRunWrite_NotFound(t *testing.T) {
 	err := RunWrite(WriteOptions{Store: s, ID: "c3-999", Content: "test"}, &buf)
 	if err == nil {
 		t.Error("expected error for nonexistent entity")
+	}
+	if !strings.Contains(err.Error(), "hint:") || !strings.Contains(err.Error(), "c3x search") {
+		t.Errorf("not-found write should include actionable hint, got: %v", err)
 	}
 }
 

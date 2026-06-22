@@ -117,6 +117,32 @@ func TestSupersede_RejectsCycle(t *testing.T) {
 	if !strings.Contains(err.Error(), "cycle") {
 		t.Fatalf("expected error to mention cycle, got %q", err.Error())
 	}
+	if !strings.Contains(err.Error(), "hint:") || !strings.Contains(err.Error(), "c3x graph adr-new --direction forward") {
+		t.Fatalf("cycle error should include actionable hint, got %q", err.Error())
+	}
+}
+
+func TestSupersede_UsageAndMissingIDsIncludeHints(t *testing.T) {
+	s := seedSupersedeFixture(t)
+	var buf bytes.Buffer
+
+	err := RunSupersede(SupersedeOptions{Store: s}, &buf)
+	if err == nil {
+		t.Fatal("expected usage error")
+	}
+	requireAll(t, err.Error(), "usage", "hint:", "c3x list --include-adr")
+
+	err = RunSupersede(SupersedeOptions{Store: s, NewID: "adr-missing", OldID: "adr-old"}, &buf)
+	if err == nil {
+		t.Fatal("expected missing successor error")
+	}
+	requireAll(t, err.Error(), "successor", "not found", "hint:", "c3x search")
+
+	err = RunSupersede(SupersedeOptions{Store: s, NewID: "adr-new", OldID: "adr-missing"}, &buf)
+	if err == nil {
+		t.Fatal("expected missing target error")
+	}
+	requireAll(t, err.Error(), "target", "not found", "hint:", "c3x search")
 }
 
 // T3.2 — the newly-superseded doc is now terminal/immutable per Item 2's edit-proof rule.

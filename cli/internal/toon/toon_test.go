@@ -148,6 +148,86 @@ func TestMarshalObject_NestedMap(t *testing.T) {
 	}
 }
 
+// TestMarshalObject_NestedStructSlice — a struct field that is a slice of
+// structs must render as a nested indented block (each element's inner fields
+// survive), not collapse to a Go %v dump. Regression guard for `schema`, whose
+// Sections[].Columns[] carry the edge/targets metadata an agent reads.
+func TestMarshalObject_NestedStructSlice(t *testing.T) {
+	type col struct {
+		Name    string   `json:"name"`
+		Type    string   `json:"type"`
+		Edge    string   `json:"edge,omitempty"`
+		Targets []string `json:"targets,omitempty"`
+	}
+	type section struct {
+		Name    string `json:"name"`
+		Columns []col  `json:"columns,omitempty"`
+	}
+	type out struct {
+		Type     string    `json:"type"`
+		Sections []section `json:"sections"`
+	}
+	v := out{
+		Type: "component",
+		Sections: []section{{
+			Name: "Governance",
+			Columns: []col{
+				{Name: "Reference", Type: "reference", Edge: "uses", Targets: []string{"ref", "rule"}},
+				{Name: "Type", Type: "enum"},
+			},
+		}},
+	}
+	got, err := MarshalObject(v)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// No Go struct-dump leakage.
+	if contains(got, "{Reference") || contains(got, "[]") {
+		t.Errorf("nested struct slice collapsed to %%v dump:\n%s", got)
+	}
+	for _, want := range []string{
+		"sections[1]:\n",
+		"name: Governance\n",
+		"columns[2]:\n",
+		"name: Reference\n",
+		"edge: uses\n",
+		"targets: ref,rule\n", // scalar string slice stays flat (comma-joined)
+	} {
+		if !contains(got, want) {
+			t.Errorf("missing %q in nested output:\n%s", want, got)
+		}
+	}
+}
+
+// TestMarshalObject_NestedStruct — a struct field that is itself a (non-slice)
+// struct must recurse into an indented block, not collapse to a Go %v dump.
+// Regression guard for `search`, whose result `context` is a nested struct.
+func TestMarshalObject_NestedStruct(t *testing.T) {
+	type ref struct {
+		ID   string `json:"id"`
+		Type string `json:"type"`
+	}
+	type ctx struct {
+		Component ref `json:"component"`
+	}
+	type row struct {
+		Title   string `json:"title"`
+		Context ctx    `json:"context"`
+	}
+	got, err := MarshalObject(row{Title: "auth", Context: ctx{Component: ref{ID: "c3-210", Type: "component"}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if contains(got, "{") || contains(got, "}") {
+		t.Errorf("nested struct collapsed to %%v dump:\n%s", got)
+	}
+	for _, want := range []string{"context:\n", "component:\n", "id: c3-210\n", "type: component\n"} {
+		if !contains(got, want) {
+			t.Errorf("missing %q in nested struct output:\n%s", want, got)
+		}
+	}
+}
+
 func TestMarshalObject_OmitsZeroValues(t *testing.T) {
 	type status struct {
 		Project  string   `json:"project"`

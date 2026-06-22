@@ -11,8 +11,8 @@ func TestOpen_CreatesSchema(t *testing.T) {
 	s := createTestStore(t)
 
 	// Verify core tables exist by querying sqlite_master.
-	tables := []string{"entities", "relationships", "code_map", "code_map_excludes",
-		"nodes", "versions", "changelog", "store_meta"}
+	tables := []string{"entities", "relationships",
+		"nodes", "versions", "store_meta"}
 	for _, table := range tables {
 		var name string
 		err := s.DB().QueryRow(
@@ -68,7 +68,7 @@ func TestOpen_MigratesEntityTypeCheckForCanvasTypes(t *testing.T) {
 	if _, err := raw.Exec(`
 		CREATE TABLE entities (
 			id          TEXT PRIMARY KEY,
-			type        TEXT NOT NULL CHECK(type IN ('system','container','component','ref','adr','rule','recipe')),
+			type        TEXT NOT NULL CHECK(type IN ('system','container','component','ref','adr','rule')),
 			title       TEXT NOT NULL,
 			slug        TEXT NOT NULL,
 			category    TEXT NOT NULL DEFAULT '',

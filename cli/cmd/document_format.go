@@ -51,6 +51,11 @@ func parseMetadataMap(raw string) map[string]any {
 	return metadata
 }
 
+func metadataString(raw, key string) string {
+	value, _ := parseMetadataMap(raw)[key].(string)
+	return value
+}
+
 func marshalMetadataMap(metadata map[string]any) string {
 	if len(metadata) == 0 {
 		return "{}"

@@ -51,6 +51,24 @@ func TestParsePatch_CreateNoBase(t *testing.T) {
 	}
 }
 
+// A canvas-scope patch re-authors a fact-TYPE's shape. Like a create, it may omit
+// the base: Target is the type, the body is the new canvas definition.
+func TestParsePatch_CanvasScopeNoBase(t *testing.T) {
+	raw := "---\ntarget: policy\nscope: canvas\n---\n" +
+		"---\nid: policy\ntype: canvas\ndescription: A policy, reshaped.\n---\n\n" +
+		"domain: compliance\nsections:\n    - name: DataScope\n      content_type: text\n      required: true\n"
+	p, err := ParsePatch("01.policy.canvas.md", raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.Scope != ScopeCanvas || p.Base != "" || p.Target != "policy" {
+		t.Errorf("expected canvas/no-base/policy, got scope=%q base=%q target=%q", p.Scope, p.Base, p.Target)
+	}
+	if !strings.Contains(p.Content, "DataScope") || !strings.Contains(p.Content, "type: canvas") {
+		t.Errorf("canvas patch content should carry the new def, got %q", p.Content)
+	}
+}
+
 // Integrity by construction: an edit to an existing fact must anchor. A non-whole
 // scope with no base is rejected at parse.
 func TestParsePatch_RejectsAnchoredScopeWithoutBase(t *testing.T) {

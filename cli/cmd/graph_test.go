@@ -148,6 +148,28 @@ func TestRunGraph_Mermaid(t *testing.T) {
 	}
 }
 
+func TestRunGraph_ExplicitMermaidWinsOverAgentJSON(t *testing.T) {
+	// Agent mode forces JSON, but an explicit `--format mermaid` is a deliberate
+	// render choice (the skill tells agents to paste per-container mermaid). The
+	// explicit format must win over the agent-JSON default — otherwise agents can
+	// never obtain mermaid.
+	s := createDBFixture(t)
+	var buf bytes.Buffer
+
+	err := RunGraph(GraphOptions{Store: s, EntityID: "c3-1", Depth: 1, Format: "mermaid", JSON: true}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	if !strings.HasPrefix(output, "graph TD\n") {
+		t.Errorf("explicit mermaid should win over agent JSON (expected 'graph TD'), got:\n%s", output)
+	}
+	if strings.Contains(output, "nodes[") {
+		t.Errorf("explicit mermaid must not emit TOON/JSON, got:\n%s", output)
+	}
+}
+
 func TestRunGraph_MermaidRefEdges(t *testing.T) {
 	s := createRichDBFixture(t)
 	var buf bytes.Buffer
@@ -163,22 +185,6 @@ func TestRunGraph_MermaidRefEdges(t *testing.T) {
 	}
 	if !strings.Contains(output, "ref-jwt") {
 		t.Errorf("should contain ref-jwt node, got:\n%s", output)
-	}
-}
-
-func TestRunGraph_WithCodeMap(t *testing.T) {
-	s := createDBFixture(t)
-	s.SetCodeMap("c3-101", []string{"src/auth/**"})
-
-	var buf bytes.Buffer
-	err := RunGraph(GraphOptions{Store: s, EntityID: "c3-101", Depth: 0}, &buf)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	output := buf.String()
-	if !strings.Contains(output, "files: src/auth/**") {
-		t.Errorf("should show files from code-map, got:\n%s", output)
 	}
 }
 

@@ -37,6 +37,10 @@ emit_file() {
   local label="$1"
   local path="$2"
 
+  if [[ -n "${C3_PROMPT_SOURCE_LIST:-}" ]]; then
+    printf '%s\t%s\n' "$label" "$path" >> "$C3_PROMPT_SOURCE_LIST"
+  fi
+
   printf '\n===== BEGIN FILE: %s =====\n' "$label"
   sed -n '1,$p' "$path"
   printf '\n===== END FILE: %s =====\n' "$label"

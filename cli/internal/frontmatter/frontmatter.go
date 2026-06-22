@@ -16,7 +16,6 @@ const (
 	DocComponent
 	DocRef
 	DocADR
-	DocRecipe
 	DocRule
 )
 
@@ -32,8 +31,6 @@ func (d DocType) String() string {
 		return "ref"
 	case DocADR:
 		return "adr"
-	case DocRecipe:
-		return "recipe"
 	case DocRule:
 		return "rule"
 	default:
@@ -188,9 +185,6 @@ func ClassifyDoc(fm *Frontmatter) DocType {
 	}
 	if fm.Type == "adr" || strings.HasPrefix(fm.ID, "adr-") {
 		return DocADR
-	}
-	if fm.Type == "recipe" || strings.HasPrefix(fm.ID, "recipe-") {
-		return DocRecipe
 	}
 	if fm.Type == "rule" || strings.HasPrefix(fm.ID, "rule-") {
 		return DocRule

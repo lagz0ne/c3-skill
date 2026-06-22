@@ -1,0 +1,11 @@
+fact: c3-301
+claim: "npm binary-downloader pins C3X_VERSION to the release VERSION"
+code:
+  - packages/cli/src/**
+pipeline:
+  - gather:
+      each:
+        - { file: skills/c3/bin/VERSION }
+        - { command: "grep -oE '[0-9]+\\.[0-9]+\\.[0-9]+' packages/cli/src/version.ts | head -1" }
+  - transform: { trim: true }
+  - eval: { all_equal: true }

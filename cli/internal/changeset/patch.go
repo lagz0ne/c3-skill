@@ -20,11 +20,12 @@ const (
 	ScopeInsert      Scope = "insert"      // insert a block relative to a neighbor
 	ScopeFrontmatter Scope = "frontmatter" // rename / move / re-edge (metadata + graph)
 	ScopeRetire      Scope = "retire"      // remove the fact (+ edge cleanup)
+	ScopeCanvas      Scope = "canvas"      // morph a fact-TYPE's shape (the canvas is the target)
 )
 
 var validScopes = map[Scope]bool{
 	ScopeWhole: true, ScopeBlock: true, ScopeInsert: true,
-	ScopeFrontmatter: true, ScopeRetire: true,
+	ScopeFrontmatter: true, ScopeRetire: true, ScopeCanvas: true,
 }
 
 // Patch is one change-material unit, parsed from a patch file. base optional is
@@ -40,10 +41,13 @@ type Patch struct {
 	Source   string // originating file name, for diagnostics
 
 	// Metadata payload — used by whole (create) and frontmatter scopes.
-	Type   string   // create: the new fact's canvas type
-	Parent string   // create / frontmatter: parent entity id
-	Title  string   // create / frontmatter: title
-	Uses   []string // frontmatter: re-edge — the new `uses` (ref) target set
+	Type     string   // create: the new fact's canvas type
+	Parent   string   // create / frontmatter: parent entity id
+	Title    string   // create / frontmatter: title
+	Uses     []string // frontmatter: re-edge — the new `uses` (ref) target set
+	Boundary string   // frontmatter: boundary attribute (parity with `set`)
+	Category string   // frontmatter: category attribute (parity with `set`)
+	Date     string   // frontmatter: date attribute (parity with `set`)
 }
 
 type patchMeta struct {
@@ -56,6 +60,9 @@ type patchMeta struct {
 	Parent   string   `yaml:"parent"`
 	Title    string   `yaml:"title"`
 	Uses     []string `yaml:"uses"`
+	Boundary string   `yaml:"boundary"`
+	Category string   `yaml:"category"`
+	Date     string   `yaml:"date"`
 }
 
 // ParsePatch reads one patch file (YAML frontmatter + body) into a Patch.
@@ -82,8 +89,11 @@ func ParsePatch(source, raw string) (Patch, error) {
 	}
 	base := strings.TrimSpace(m.Base)
 	// Integrity by construction: a no-base patch is a create (new target). Any
-	// edit to an existing fact must anchor, so only whole-scope may omit the base.
-	if base == "" && scope != ScopeWhole {
+	// edit to an existing FACT must anchor, so only whole-scope may omit the base.
+	// A canvas-scope patch re-authors a fact-TYPE's shape (not a fact), so it too
+	// may omit the base — the morph gate refuses it unless every instance comes
+	// with it, and the unit's instance-migration patches drift-protect the shape.
+	if base == "" && scope != ScopeWhole && scope != ScopeCanvas {
 		return Patch{}, fmt.Errorf("patch %s: scope %q requires a base anchor", source, scope)
 	}
 
@@ -103,6 +113,9 @@ func ParsePatch(source, raw string) (Patch, error) {
 		Parent:   strings.TrimSpace(m.Parent),
 		Title:    strings.TrimSpace(m.Title),
 		Uses:     m.Uses,
+		Boundary: strings.TrimSpace(m.Boundary),
+		Category: strings.TrimSpace(m.Category),
+		Date:     strings.TrimSpace(m.Date),
 	}, nil
 }
 

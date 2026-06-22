@@ -28,14 +28,12 @@ type ListResult struct {
 
 // compactEntity is a minimal entity representation for compact/TOON output.
 type compactEntity struct {
-	ID          string   `json:"id"`
-	Type        string   `json:"type"`
-	Title       string   `json:"title"`
-	Goal        string   `json:"goal,omitempty"`
-	Parent      string   `json:"parent,omitempty"`
-	Status      string   `json:"status,omitempty"`
-	Description string   `json:"description,omitempty"`
-	Sources     []string `json:"sources,omitempty"`
+	ID     string `json:"id"`
+	Type   string `json:"type"`
+	Title  string `json:"title"`
+	Goal   string `json:"goal,omitempty"`
+	Parent string `json:"parent,omitempty"`
+	Status string `json:"status,omitempty"`
 }
 
 const compactGoalMaxLen = 38
@@ -87,11 +85,6 @@ func listStructured(opts ListOptions, format OutputFormat, w io.Writer) error {
 				ID: e.ID, Type: e.Type, Title: e.Title,
 				Goal: shortGoal(e.Goal), Parent: e.ParentID, Status: e.Status,
 			}
-			if e.Type == "recipe" {
-				row.Description = shortGoal(metadataString(e.Metadata, "description"))
-				row.Sources = relationshipTargets(opts.Store, e.ID, "sources")
-				fields = []string{"id", "type", "title", "goal", "parent", "status", "description", "sources"}
-			}
 			result = append(result, row)
 		}
 
@@ -117,7 +110,6 @@ func listStructured(opts ListOptions, format OutputFormat, w io.Writer) error {
 		Title         string                 `json:"title"`
 		Relationships []string               `json:"relationships"`
 		Frontmatter   map[string]interface{} `json:"frontmatter"`
-		Files         []string               `json:"files,omitempty"`
 	}
 
 	var data []jsonEntity
@@ -151,19 +143,12 @@ func listStructured(opts ListOptions, format OutputFormat, w io.Writer) error {
 			}
 		}
 
-		var files []string
-		if f, _ := opts.Store.CodeMapFor(e.ID); len(f) > 0 {
-			files = append([]string(nil), f...)
-			sort.Strings(files)
-		}
-
 		data = append(data, jsonEntity{
 			ID:            e.ID,
 			Type:          e.Type,
 			Title:         e.Title,
 			Relationships: relationships,
 			Frontmatter:   fm,
-			Files:         files,
 		})
 	}
 
@@ -181,23 +166,6 @@ func shortGoal(goal string) string {
 		return goal
 	}
 	return strings.TrimSpace(string(runes[:compactGoalMaxLen-3])) + "..."
-}
-
-func metadataString(raw, key string) string {
-	value, _ := parseMetadataMap(raw)[key].(string)
-	return value
-}
-
-func relationshipTargets(s *store.Store, fromID, relType string) []string {
-	rels, _ := s.RelationshipsFrom(fromID)
-	var ids []string
-	for _, rel := range rels {
-		if rel.RelType == relType {
-			ids = append(ids, rel.ToID)
-		}
-	}
-	sort.Strings(ids)
-	return ids
 }
 
 func listFlat(s *store.Store, includeADR bool, w io.Writer) error {
@@ -242,7 +210,6 @@ func listTopology(s *store.Store, compact bool, includeADR bool, w io.Writer) er
 	components, _ := s.EntitiesByType("component")
 	refs, _ := s.EntitiesByType("ref")
 	adrs, _ := s.EntitiesByType("adr")
-	recipes, _ := s.EntitiesByType("recipe")
 	rules, _ := s.EntitiesByType("rule")
 
 	// System header from context doc
@@ -264,9 +231,6 @@ func listTopology(s *store.Store, compact bool, includeADR bool, w io.Writer) er
 	}
 	if includeADR {
 		summaryParts = append(summaryParts, plural(len(adrs), "ADR"))
-	}
-	if len(recipes) > 0 {
-		summaryParts = append(summaryParts, plural(len(recipes), "recipe"))
 	}
 	if len(rules) > 0 {
 		summaryParts = append(summaryParts, plural(len(rules), "rule"))
@@ -315,13 +279,6 @@ func listTopology(s *store.Store, compact bool, includeADR bool, w io.Writer) er
 			fmt.Fprintln(w, line)
 
 			if !compact {
-				// Files from codemap
-				if files, _ := s.CodeMapFor(comp.ID); len(files) > 0 {
-					sorted := append([]string(nil), files...)
-					sort.Strings(sorted)
-					fmt.Fprintf(w, "%s  files: %s\n", indent, strings.Join(sorted, ", "))
-				}
-
 				// Refs used
 				refsUsed, _ := s.RefsFor(comp.ID)
 				if len(refsUsed) > 0 {
@@ -366,24 +323,10 @@ func listTopology(s *store.Store, compact bool, includeADR bool, w io.Writer) er
 
 			if len(compCiters) > 0 && !compact {
 				var citerIDs []string
-				fileSet := map[string]bool{}
-				var fileList []string
 				for _, c := range compCiters {
 					citerIDs = append(citerIDs, c.ID)
-					if f, _ := s.CodeMapFor(c.ID); len(f) > 0 {
-						for _, file := range f {
-							if !fileSet[file] {
-								fileSet[file] = true
-								fileList = append(fileList, file)
-							}
-						}
-					}
 				}
-				sort.Strings(fileList)
 				fmt.Fprintf(w, "    via:   %s\n", strings.Join(citerIDs, ", "))
-				if len(fileList) > 0 {
-					fmt.Fprintf(w, "    files: %s\n", strings.Join(fileList, ", "))
-				}
 			}
 		}
 		fmt.Fprintln(w)
@@ -419,31 +362,6 @@ func listTopology(s *store.Store, compact bool, includeADR bool, w io.Writer) er
 					citerIDs = append(citerIDs, c.ID)
 				}
 				fmt.Fprintf(w, "    enforced on: %s\n", strings.Join(citerIDs, ", "))
-			}
-		}
-		fmt.Fprintln(w)
-	}
-
-	// Recipes
-	if len(recipes) > 0 {
-		sort.Slice(recipes, func(i, j int) bool {
-			return recipes[i].ID < recipes[j].ID
-		})
-		fmt.Fprintln(w, "Recipes:")
-		for _, r := range recipes {
-			line := fmt.Sprintf("  %s", r.ID)
-			if r.Goal != "" {
-				line += " — " + r.Goal
-			}
-			fmt.Fprintln(w, line)
-
-			description := metadataString(r.Metadata, "description")
-			if compact && description != "" {
-				fmt.Fprintf(w, "    description: %s\n", description)
-			}
-			sourceIDs := relationshipTargets(s, r.ID, "sources")
-			if len(sourceIDs) > 0 {
-				fmt.Fprintf(w, "    sources: %s\n", strings.Join(sourceIDs, ", "))
 			}
 		}
 		fmt.Fprintln(w)

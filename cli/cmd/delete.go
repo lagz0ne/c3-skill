@@ -5,6 +5,8 @@ import (
 	"io"
 	"strings"
 
+	"github.com/lagz0ne/c3-design/cli/internal/content"
+	"github.com/lagz0ne/c3-design/cli/internal/markdown"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
@@ -20,17 +22,17 @@ type DeleteOptions struct {
 func RunDelete(opts DeleteOptions, w io.Writer) error {
 	id := opts.ID
 	if id == "" {
-		return fmt.Errorf("usage: c3x delete <id> [--dry-run]")
+		return fmt.Errorf("error: usage: c3x delete <id> [--dry-run]\nhint: run c3x delete --help before deleting canonical facts")
 	}
 
 	// Safety: refuse to delete context root
 	if id == "c3-0" {
-		return fmt.Errorf("refusing to delete c3-0 (context root)")
+		return fmt.Errorf("error: refusing to delete c3-0 (context root)\nhint: keep the root system fact and retire narrower facts through a change-unit instead")
 	}
 
 	entity, err := opts.Store.GetEntity(id)
 	if err != nil {
-		return fmt.Errorf("entity %q not found", id)
+		return fmt.Errorf("error: entity %q not found\nhint: run c3x search %q or c3x list --flat to find the current id", id, id)
 	}
 
 	// Safety: refuse to delete containers with children
@@ -40,8 +42,8 @@ func RunDelete(opts DeleteOptions, w io.Writer) error {
 		for _, c := range children {
 			ids = append(ids, c.ID)
 		}
-		return fmt.Errorf("refusing to delete %s: has %d children (%s) — delete them first",
-			id, len(children), strings.Join(ids, ", "))
+		return fmt.Errorf("error: refusing to delete %s: has %d children (%s) — delete them first\nhint: retire, delete, or reparent the children in the same change-unit before deleting %s",
+			id, len(children), strings.Join(ids, ", "), id)
 	}
 
 	prefix := ""
@@ -88,13 +90,7 @@ func RunDelete(opts DeleteOptions, w io.Writer) error {
 		}
 	}
 
-	// Remove code-map entries (cascaded by FK, but log it)
-	codeMapGlobs, _ := opts.Store.CodeMapFor(id)
-	if len(codeMapGlobs) > 0 {
-		fmt.Fprintf(w, "%sRemove %s from code-map\n", prefix, id)
-	}
-
-	// Delete the entity (cascades relationships and code-map via FK)
+	// Delete the entity (cascades relationships via FK)
 	fmt.Fprintf(w, "%sDelete %s (%s)\n", prefix, id, entity.Type)
 	if !opts.DryRun {
 		if err := opts.Store.DeleteEntity(id); err != nil {
@@ -109,4 +105,38 @@ func RunDelete(opts DeleteOptions, w io.Writer) error {
 	}
 
 	return nil
+}
+
+// removeTableRowStore removes rows from a section's table where matchCol==matchVal.
+// Idempotent: a missing section/table is a no-op. Used by delete to strip a
+// removed entity's rows from the bodies that cited it.
+func removeTableRowStore(s *store.Store, entity *store.Entity, sectionName, matchCol, matchVal string) error {
+	body, err := content.ReadEntity(s, entity.ID)
+	if err != nil || body == "" {
+		return nil
+	}
+
+	table, err := markdown.ExtractTableFromSection(body, sectionName)
+	if err != nil || table == nil {
+		return nil // section/table not found — idempotent
+	}
+
+	var filtered []map[string]string
+	for _, r := range table.Rows {
+		if r[matchCol] != matchVal {
+			filtered = append(filtered, r)
+		}
+	}
+
+	if filtered == nil {
+		filtered = []map[string]string{}
+	}
+	table.Rows = filtered
+
+	newBody, err := markdown.SetTableInSection(body, sectionName, table)
+	if err != nil {
+		return err
+	}
+
+	return content.WriteEntity(s, entity.ID, newBody)
 }

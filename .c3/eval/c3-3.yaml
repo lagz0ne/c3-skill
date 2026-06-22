@@ -1,0 +1,8 @@
+fact: c3-3
+claim: "the npm @c3x/cli container's components each have a code binding that resolves (roll-up)"
+pipeline:
+  - loop:
+      over: { facts: "c3-3[0-9][0-9]" }   # every npm component id
+      do:
+        - gather: { code: "$item" }
+        - eval: { exists: true }

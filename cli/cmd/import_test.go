@@ -325,3 +325,17 @@ System goal.
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
+
+func TestRunImport_EmptyTreeIncludesHint(t *testing.T) {
+	dir := t.TempDir()
+	c3Dir := filepath.Join(dir, ".c3")
+	if err := os.MkdirAll(c3Dir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	err := RunImport(ImportOptions{C3Dir: c3Dir}, io.Discard)
+	if err == nil {
+		t.Fatal("expected empty tree error")
+	}
+	requireAll(t, err.Error(), "no documents found", "hint:", "c3x init")
+}

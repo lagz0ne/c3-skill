@@ -18,7 +18,7 @@ func FactIsFrozen(c3Dir, entityType string) bool {
 }
 
 // GuardFactMutation is the CLI-level freeze: a direct fact-mutation command
-// (write/set/wire/delete on an existing fact) refuses here, naming the only legal
+// (write/set/delete on an existing fact) refuses here, naming the only legal
 // path. The internal write machinery is left intact so change apply can reuse it.
 // A missing id (creation, or a not-yet-existing target) is left to the command.
 func GuardFactMutation(s *store.Store, c3Dir, id string) error {
@@ -47,8 +47,8 @@ func GuardFactMutation(s *store.Store, c3Dir, id string) error {
 //   - Empty RootMerkle ALONE is not "never authored": a legacy migration or a
 //     frontmatter-only import can leave RootMerkle empty while frontmatter/edges
 //     were authored. So we additionally require Version 0 and zero body nodes.
-//   - Only `write` (body authoring) opens the window. `set`/`wire`/`delete` stay
-//     frozen even on a bodyless fact — they touch frontmatter / edges / existence,
+//   - Only `write` (body authoring) opens the window. `set`/`delete` stay
+//     frozen even on a bodyless fact — they touch frontmatter / existence,
 //     which may be authored independently of the body.
 //   - Once a body exists (nodes > 0) or the fact has been versioned, the window is
 //     shut; a fact re-emptied by an internal repair path (Version already > 0) does
@@ -71,9 +71,8 @@ func inCreationWindow(s *store.Store, c3Dir, id string) bool {
 	return true
 }
 
-// GuardCanonicalMutation refuses direct edits to frozen facts. Two carve-outs:
-// codemap updates (stored outside the sealed canonical document) and the creation
-// window — the first `write` that authors a never-authored fact's body.
+// GuardCanonicalMutation refuses direct edits to frozen facts. One carve-out: the
+// creation window — the first `write` that authors a never-authored fact's body.
 func GuardCanonicalMutation(s *store.Store, c3Dir string, opts Options) error {
 	switch opts.Command {
 	case "write":
@@ -83,16 +82,12 @@ func GuardCanonicalMutation(s *store.Store, c3Dir string, opts Options) error {
 			}
 			return GuardFactMutation(s, c3Dir, opts.Args[0])
 		}
-	case "wire", "delete":
+	case "delete":
 		if len(opts.Args) >= 1 {
 			return GuardFactMutation(s, c3Dir, opts.Args[0])
 		}
 	case "set":
 		if len(opts.Args) >= 1 {
-			_, field, _ := ResolveSetArgs(opts)
-			if field == "codemap" {
-				return nil
-			}
 			return GuardFactMutation(s, c3Dir, opts.Args[0])
 		}
 	}

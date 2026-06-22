@@ -27,91 +27,88 @@ func changeUnitDir(c3Dir, unitID string) string {
 }
 
 // RunChangeApply applies a change-unit's patch folder to its target facts: it is
-// the switcher. Two gates run before any write — drift (anchors fresh) and canvas
-// (the merged result is valid for its canvas) — and the whole set is atomic:
-// a single failing gate blocks every patch.
+// the switcher. Four gates run before any write — drift (anchors fresh), canvas
+// (the merged result is valid for its canvas), morph (a reshaped fact-type leaves no
+// instance invalid), and retire (no destruction strands a child or citer) — and the
+// whole set is atomic: a single failing gate blocks every patch.
 func RunChangeApply(opts ChangeApplyOptions, w io.Writer) error {
 	dir := changeUnitDir(opts.C3Dir, opts.UnitID)
 	patches, err := changeset.ReadPatchDir(dir)
 	if err != nil {
 		return fmt.Errorf("change apply: %s: %w", opts.UnitID, err)
 	}
-	codemaps, err := changeset.ReadCodemapDir(dir)
-	if err != nil {
-		return fmt.Errorf("change apply: %s: %w", opts.UnitID, err)
-	}
-	if len(patches) == 0 && len(codemaps) == 0 {
+	if len(patches) == 0 {
 		fmt.Fprintf(w, "change apply: %s has no material — nothing to do\n", opts.UnitID)
 		return nil
 	}
 
-	// Preflight: drift + canvas gate over ALL patches before any write.
-	var rejects []string
-	for _, p := range patches {
+	// Split the unit's canvas morphs from its fact patches. A canvas-scope patch
+	// reshapes a fact-TYPE (gated by the morph gate, applied as a sealed file write);
+	// every other patch migrates a fact through changeset.Apply. parseMorphs also
+	// rejects a morph whose new shape is not a valid canvas for the type it targets.
+	morphed, factPatches, rejects := parseMorphs(patches)
+
+	// Preflight: drift + canvas gate over the fact patches. A canvas morph anchors
+	// nothing (no base) and is gated below; an instance migrated up to a reshaped
+	// canvas in this same unit is validated against the morphed shape via `morphed`.
+	for _, p := range factPatches {
 		if err := changeset.CheckDrift(opts.Store, p); err != nil {
 			rejects = append(rejects, err.Error())
 			continue
 		}
-		if err := canvasGate(opts.Store, opts.C3Dir, p); err != nil {
+		if err := canvasGate(opts.Store, opts.C3Dir, p, morphed); err != nil {
 			rejects = append(rejects, err.Error())
 		}
 	}
-	// Preflight: every codemap carrier's target must already exist or be created by
-	// a patch in this same unit (read-your-writes makes the create visible at apply).
-	// Two carriers for one target would full-replace each other (last wins, silently)
-	// — reject that so the unit's external footprint is unambiguous.
-	created := createdTargets(patches)
-	carrierTarget := map[string]string{}
-	for _, c := range codemaps {
-		if prev, dup := carrierTarget[c.Target]; dup {
-			rejects = append(rejects, fmt.Sprintf("codemap %s and %s both target %s — one carrier per target (a carrier full-replaces the code-map)", prev, c.Source, c.Target))
-			continue
-		}
-		carrierTarget[c.Target] = c.Source
-		if _, err := opts.Store.GetEntity(c.Target); err != nil && !created[c.Target] {
-			rejects = append(rejects, fmt.Sprintf("codemap %s: target %s does not exist and is not created by this change-unit", c.Source, c.Target))
-		}
-	}
+	// The morph gate: a canvas reshape lands only if every existing instance of the
+	// type is valid against the new shape once this unit's own migrations are applied
+	// (checked on the preview overlay) — the model moves only if every fact comes too.
+	rejects = append(rejects, morphGate(opts.Store, opts.C3Dir, factPatches, morphed)...)
+	// Preflight: a retire may not strand the graph — refuse a destruction whose
+	// orphaned children or dangling citers this unit does not also resolve. Checked on
+	// the post-apply overlay, so a re-point + retire in the same unit is allowed.
+	rejects = append(rejects, retireGate(opts.Store, opts.C3Dir, factPatches)...)
+
 	if len(rejects) > 0 {
 		for _, r := range rejects {
 			fmt.Fprintf(w, "REJECT %s\n", r)
 		}
-		return fmt.Errorf("change apply: %d gate failure(s); fix and retry", len(rejects))
+		return fmt.Errorf("error: change apply: %d gate failure(s)\nhint: fix the REJECT item(s), then rerun c3x change apply %s", len(rejects), opts.UnitID)
 	}
 
 	if opts.DryRun {
-		for _, p := range patches {
-			fmt.Fprintf(w, "would apply %s → %s (%s)\n", p.Source, p.Target, p.Scope)
+		for _, typ := range morphTypes(morphed) {
+			fmt.Fprintf(w, "would morph canvas %s\n", typ)
 		}
-		for _, c := range codemaps {
-			fmt.Fprintf(w, "would bind %s → %s codemap (%d glob(s))\n", c.Source, c.Target, len(c.Globs))
+		for _, p := range factPatches {
+			fmt.Fprintf(w, "would apply %s → %s (%s)\n", p.Source, p.Target, p.Scope)
 		}
 		return nil
 	}
 
-	if err := changeset.Apply(opts.Store, patches, codemaps); err != nil {
+	// Apply, all-or-nothing across the file/store boundary: write the morphed canvas
+	// files first (reversible — each backed up), then the store-side fact migrations
+	// in one transaction. If the store apply fails, roll the canvas files back so a
+	// reshaped type and its migrated instances land together or not at all.
+	restoreCanvases, err := applyCanvasMorphs(opts.C3Dir, morphed)
+	if err != nil {
 		return fmt.Errorf("change apply: %w", err)
 	}
-	for _, p := range patches {
+	// After a patch changes a body, re-derive that fact's canvas-owned (body
+	// edge-column) relationships from the new body, in the same transaction.
+	if err := changeset.Apply(opts.Store, factPatches, applyHooks(opts.C3Dir)); err != nil {
+		if rerr := restoreCanvases(); rerr != nil {
+			return fmt.Errorf("change apply: %w (canvas rollback also failed: %v — run c3x repair)", err, rerr)
+		}
+		return fmt.Errorf("change apply: %w", err)
+	}
+	for _, typ := range morphTypes(morphed) {
+		fmt.Fprintf(w, "morphed canvas %s\n", typ)
+	}
+	for _, p := range factPatches {
 		fmt.Fprintf(w, "applied %s → %s (%s)\n", p.Source, p.Target, p.Scope)
 	}
-	for _, c := range codemaps {
-		fmt.Fprintf(w, "bound %s → %s codemap (%d glob(s))\n", c.Source, c.Target, len(c.Globs))
-	}
 	return nil
-}
-
-// createdTargets is the set of entity ids a patch set brings into existence (a
-// no-base whole create), so a codemap carrier may legally bind one before it
-// exists on disk.
-func createdTargets(patches []changeset.Patch) map[string]bool {
-	created := make(map[string]bool)
-	for _, p := range patches {
-		if p.Scope == changeset.ScopeWhole && p.Base == "" {
-			created[p.Target] = true
-		}
-	}
-	return created
 }
 
 // RunChangeView is the read-only review surface — the "files changed" panel for
@@ -122,11 +119,7 @@ func RunChangeView(opts ChangeApplyOptions, w io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("change view: %s: %w", opts.UnitID, err)
 	}
-	codemaps, err := changeset.ReadCodemapDir(dir)
-	if err != nil {
-		return fmt.Errorf("change view: %s: %w", opts.UnitID, err)
-	}
-	view := buildChangeUnitView(opts, patches, codemaps)
+	view := buildChangeUnitView(opts, patches)
 	if opts.JSON || isAgentMode() {
 		return writeJSON(w, view)
 	}
@@ -165,11 +158,11 @@ func RunChangeRebase(opts ChangeApplyOptions, w io.Writer) error {
 	for _, p := range patches {
 		if drift := changeset.CheckDrift(opts.Store, p); drift != nil {
 			drifted++
-			fmt.Fprintf(w, "rebase %s → %s\n  expected: %s\n  reason:   %s\n", p.Source, p.Target, p.Base, drift.Error())
+			renderConflict(w, opts.Store, p, drift.Error())
 		}
 	}
 	if drifted == 0 {
-		fmt.Fprintf(w, "change-unit %s: no drift — nothing to rebase\n", opts.UnitID)
+		fmt.Fprintf(w, "change-unit %s: no conflicts — nothing to rebase\n", opts.UnitID)
 	}
 	return nil
 }
@@ -183,11 +176,7 @@ func RunChangeStatus(opts ChangeApplyOptions, w io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("change status: %s: %w", opts.UnitID, err)
 	}
-	codemaps, err := changeset.ReadCodemapDir(dir)
-	if err != nil {
-		return fmt.Errorf("change status: %s: %w", opts.UnitID, err)
-	}
-	view := buildChangeUnitView(opts, patches, codemaps)
+	view := buildChangeUnitView(opts, patches)
 	if opts.JSON || isAgentMode() {
 		return writeJSON(w, view)
 	}
@@ -198,8 +187,11 @@ func RunChangeStatus(opts ChangeApplyOptions, w io.Writer) error {
 // canvasGate validates the body a patch would produce against the target's
 // canvas — the second gate. A patch may not leave a fact canvas-invalid. Block
 // edits validate the merged body; creates validate the new body; frontmatter and
-// retire are graph-shaped and gated elsewhere.
-func canvasGate(s *store.Store, c3Dir string, p changeset.Patch) error {
+// retire are graph-shaped and gated elsewhere. When this unit also MORPHS the
+// target's type (a canvas-scope patch), the new body is validated against the
+// morphed shape, not the stale on-disk canvas — so migrating an instance up to a
+// reshaped canvas in the same unit is allowed, not spuriously rejected.
+func canvasGate(s *store.Store, c3Dir string, p changeset.Patch, morphed map[string]schema.Canvas) error {
 	var entityType, body string
 	switch p.Scope {
 	case changeset.ScopeBlock:
@@ -209,12 +201,25 @@ func canvasGate(s *store.Store, c3Dir string, p changeset.Patch) error {
 		}
 		entity, err := s.GetEntity(p.Target)
 		if err != nil {
-			return fmt.Errorf("patch %s: target %s not found", p.Source, p.Target)
+			return fmt.Errorf("error: patch %s: target %s not found\nhint: run c3x search %s or update the patch target to an existing fact id", p.Source, p.Target, p.Target)
 		}
 		entityType, body = entity.Type, merged
 	case changeset.ScopeInsert:
-		// Insert appends a section: validate the post-append body so a duplicate or
-		// malformed section can't slip a fact below its canvas.
+		entity, err := s.GetEntity(p.Target)
+		if err != nil {
+			return fmt.Errorf("error: patch %s: target %s not found\nhint: run c3x search %s or update the patch target to an existing fact id", p.Source, p.Target, p.Target)
+		}
+		// Block-base insert (a row after a cited neighbor): validate the spliced body.
+		if _, _, _, _, isBlock := changeset.ParseCiteHandle(p.Base); isBlock {
+			merged, err := changeset.MergedBody(s, p)
+			if err != nil {
+				return fmt.Errorf("patch %s: %w", p.Source, err)
+			}
+			entityType, body = entity.Type, merged
+			break
+		}
+		// Entity-base insert appends a section: validate the post-append body so a
+		// duplicate or malformed section can't slip a fact below its canvas.
 		cur, err := content.ReadEntity(s, p.Target)
 		if err != nil {
 			return fmt.Errorf("patch %s: %w", p.Source, err)
@@ -223,10 +228,6 @@ func canvasGate(s *store.Store, c3Dir string, p changeset.Patch) error {
 		// dry-run and review reject it before any write.
 		if err := changeset.ValidateInsertStructure(cur, p.Content); err != nil {
 			return fmt.Errorf("patch %s: %w", p.Source, err)
-		}
-		entity, err := s.GetEntity(p.Target)
-		if err != nil {
-			return fmt.Errorf("patch %s: target %s not found", p.Source, p.Target)
 		}
 		entityType, body = entity.Type, cur+"\n\n"+p.Content
 	case changeset.ScopeWhole:
@@ -237,12 +238,25 @@ func canvasGate(s *store.Store, c3Dir string, p changeset.Patch) error {
 	default:
 		return nil
 	}
-	def, ok := schema.DefinitionForDir(c3Dir, entityType)
+	sections, ok := gateSections(morphed, c3Dir, entityType)
 	if !ok {
 		return nil // no canvas to gate against
 	}
-	if issues := validateBodyContentWithDefinition(body, entityType, def.Sections); len(issues) > 0 {
-		return fmt.Errorf("patch %s: merged %s violates its canvas: %s", p.Source, p.Target, formatValidationError(p.Target, issues))
+	if issues := validateBodyContentWithDefinition(body, entityType, sections); len(issues) > 0 {
+		return fmt.Errorf("error: patch %s: merged %s violates its canvas\nhint: fix the listed validation issue(s), then rerun c3x change apply: %s", p.Source, p.Target, formatValidationError(p.Target, issues))
 	}
 	return nil
+}
+
+// gateSections returns the section set the canvas gate validates a body against:
+// the in-unit morphed shape when this type is being reshaped by a canvas-scope
+// patch in the same unit, else the on-disk (or built-in) canvas.
+func gateSections(morphed map[string]schema.Canvas, c3Dir, entityType string) ([]schema.SectionDef, bool) {
+	if c, ok := morphed[entityType]; ok {
+		return c.Sections, true
+	}
+	if def, ok := schema.DefinitionForDir(c3Dir, entityType); ok {
+		return def.Sections, true
+	}
+	return nil, false
 }

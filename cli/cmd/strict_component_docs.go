@@ -11,9 +11,12 @@ import (
 )
 
 var (
-	placeholderPattern = regexp.MustCompile(`(?i)\b(TBD|TODO|maybe|optional|later|if applicable)\b`)
-	entityRefPattern   = regexp.MustCompile(`\b(c3-[0-9]+|ref-[a-z0-9-]+|rule-[a-z0-9-]+|adr-[0-9]{8}-[a-z0-9-]+|recipe-[a-z0-9-]+)\b`)
-	evidencePattern    = regexp.MustCompile(`(?i)(\b(c3x|go test|bunx|npm|pnpm|yarn|cargo|pytest|make|bash)\b|[./][A-Za-z0-9_./*-]+|\b[A-Za-z0-9_-]+\.(go|md|ts|tsx|js|jsx|py|rs|yaml|yml|json)\b|\b(c3-[0-9]+|ref-[a-z0-9-]+|rule-[a-z0-9-]+|adr-[0-9]{8}-[a-z0-9-]+|recipe-[a-z0-9-]+)\b)`)
+	// Placeholder = a non-answer left in a strict section. Match clear markers only:
+	// bare natural words (later, optional, maybe) and the domain word "TODO" (a TODO
+	// app, a TODO list) are NOT placeholders — only "TODO:" as an explicit marker is.
+	placeholderPattern = regexp.MustCompile(`(?i)\bTBD\b|\bFIXME\b|\bTODO:|\bif applicable\b|\bsee above\b|\bas needed\b`)
+	entityRefPattern   = regexp.MustCompile(`\b(c3-[0-9]+|ref-[a-z0-9-]+|rule-[a-z0-9-]+|adr-[0-9]{8}-[a-z0-9-]+)\b`)
+	evidencePattern    = regexp.MustCompile(`(?i)(\b(c3x|go test|bunx|npm|pnpm|yarn|cargo|pytest|make|bash)\b|[./][A-Za-z0-9_./*-]+|\b[A-Za-z0-9_-]+\.(go|md|ts|tsx|js|jsx|py|rs|yaml|yml|json)\b|\b(c3-[0-9]+|ref-[a-z0-9-]+|rule-[a-z0-9-]+|adr-[0-9]{8}-[a-z0-9-]+)\b)`)
 )
 
 // strictRules is the structural validation contract for an entity type, derived

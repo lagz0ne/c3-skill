@@ -1,209 +1,65 @@
-# Audit Reference
+# Audit
 
-Validate C3 docs: consistency, drift, completeness.
+**Question:** is the sealed truth intact and consistent?
 
-Three tiers: **structural** (CLI) → **inventory** (CLI) → **semantic** (reasoning).
+The facts froze at Act 1 and change only through Act-2 change-units (see SKILL.md). Audit checks that what is frozen still holds together — it never repairs by hand. The one fix loop is to author a change-unit and `c3 change apply` (change.md). Audit reads; the change-unit writes.
 
-## Progress
+Work three layers, outermost first. Stop and report at the first layer that fails — a broken seal makes every deeper finding unreliable.
 
-- [ ] Phase 0: Structural (`c3 check`)
-- [ ] Phase 1: Inventory (`c3 list`)
-- [ ] Phase 2: Inventory vs Code
-- [ ] Phase 3: Component Categorization
-- [ ] Phase 4: Code Map Validation
-- [ ] Phase 5: Diagram Accuracy
-- [ ] Phase 6: ADR Lifecycle
-- [ ] Phase 7: Ref & Rule Validation
-- [ ] Phase 7b: Ref Compliance
-- [ ] Phase 8: Abstraction Boundaries
-- [ ] Phase 9: Content Separation
-- [ ] Phase 10: CLAUDE.md
+## Layer 1 — Seal
 
----
+`.c3/` markdown is the canonical truth; `.c3/c3.db` is a rebuildable cache sealed to match it. A branch switch, selective merge, or conflict resolution can desync the two.
 
-## Phase 0: Structural
-
-```bash
+```
 c3 check
 ```
-Detects: broken links, orphans, dup IDs, missing parents. Overlaps Phases 2,4,7 — skip re-check.
 
-## Phase 1: Inventory
+If `check` reports seal drift or cache divergence:
 
-```bash
-c3 list
 ```
-Source of truth for all subsequent phases. No manual Glob+Read of `.c3/`.
-
-**Topology Graphs:** Per container, run `c3 graph <container-id> --format mermaid` — include as mermaid blocks. Visual baseline for audit; subsequent phases reference these.
-
-## Phase 2: Inventory vs Code
-
-Compare Containers table ↔ actual dirs. Flag drift.
-Per Container: Components inventory ↔ actual modules. Major module missing → FAIL.
-
-## Phase 3: Component Categorization
-
-Foundation (01-09): "Would changing this break many others?"
-Feature (10+): "Specific to what product DOES?"
-Wrong category → WARN.
-
-## Phase 4: Code Map Validation
-
-Per Component: `c3 lookup <file>` per mapped path — verify resolution, load constraint chain.
-- Symbol: grep definition, flag if missing
-- Pattern: glob, flag if zero matches
-- Path: check exists, flag if missing
-- Report: valid / stale / broken
-
-Coverage signal is emitted by `c3 check`. Low coverage → WARN. Formula: `mapped / (total - excluded)` — `_exclude` patterns don't penalize score. Suggest `_exclude` for test/config files, map remaining.
-
-## Phase 5: Diagram Accuracy
-
-All diagram IDs → verify exist in inventory. Stale reference → FAIL.
-
-## Phase 6: ADR Lifecycle (--include-adr only)
-
-ADRs = ephemeral work orders, hidden from default `c3` ops.
-Only audit when explicitly requested or with `c3 check --include-adr`.
-
-`status=accepted` + >30 days without reaching `done` → WARN (a stuck change-unit — its After-cites never resolved at `c3 check --fix`).
-
-## Phase 7: Ref & Rule Validation
-
-Required sections come from each type's **canvas definition** (`c3 schema ref`,
-`c3 schema rule`) — never a fixed list here. `c3 check` already validates each
-entity against its definition; flag entities missing canvas-required sections.
-If a project edited a definition, that edit is the contract. Then add the
-relational checks `check` does not cover:
-
-- Ref / Rule: cited by ≥1 component (orphan → WARN)
-- Citing component: the ref/rule entity exists in store (verify via `c3 list`)
-
-## Phase 7b: Ref Compliance
-
-Per ref with `## How` containing golden patterns:
-1. Find citing components via `c3 list`
-2. Per citing component, spot-check 1-2 mapped files
-3. Compare code against `## How` pattern
-
-| Result | Meaning |
-|--------|---------|
-| COMPLIANT | Matches golden pattern structure |
-| DRIFT | Diverges from pattern (may be intentional) |
-| NOT CHECKED | No code-map mapping or no `## How` |
-
-**Quality check:** Per ref `## How`, can you derive 1-3 YES/NO compliance questions?
-- Yes → pattern actionable
-- No → WARN: `## How` needs rework (too vague)
-
-**Rule Compliance:** Per rule with `## Golden Example`:
-1. Load rule:
-   ```bash
-   c3 read <rule-id>
-   ```
-   Extract `## Rule`, `## Golden Example`, `## Not This`.
-2. Derive 1-3 YES/NO questions from `## Rule` + `## Golden Example` (e.g., "Does error return use CmdError struct?" / "Is slog used with component context?"). Can't derive → WARN: rule too vague.
-3. Find citing components via `c3 list`
-4. Per citing component, spot-check 1-2 mapped files
-5. Apply YES/NO questions to spot-checked code
-
-| Result | Meaning |
-|--------|---------|
-| COMPLIANT | All questions YES |
-| VIOLATION | ≥1 question NO |
-| INCOMPLETE | No Golden Example or can't derive questions |
-| NOT CHECKED | No code-map mapping or no citing components |
-
-Rules = STRICT enforcement (must match golden pattern exactly). Ref = directional alignment. Rule VIOLATION = always FAIL severity — non-negotiable constraints.
-
-## Phase 8: Abstraction Boundaries
-
-| Signal | Check | Violation | Severity |
-|--------|-------|-----------|----------|
-| Cross-container imports | Grep imports from other c3-* | Container bleeding | WARN |
-| Global config definition | Grep exported constants used 3+ files | Context bleeding | WARN |
-| Multi-component orchestration | Orchestrating vs handing off | Container job | FAIL |
-| Pattern redefinition | Compare to cited refs | Ref bypass | FAIL |
-
-## Phase 9: Content Separation
-
-Code-map test:
-- Component WITH code-map → implemented (Foundation/Feature)
-- Component WITHOUT code-map → provisioned or misclassified
-- Ref WITH code-map file patterns → VIOLATION (scaffold stubs OK)
-- Ref with code examples in body → VALID
-- Rule WITH code-map file patterns → VALID (rules govern code)
-- Rule WITHOUT Golden Example → WARN (incomplete)
-
-Missing refs: scan deps for tech used in 3+ components. Does ref explain "how we use it HERE"?
-
-| Signal | Indicates | Action |
-|--------|-----------|--------|
-| "We use X for..." | Tech usage pattern | Extract to ref |
-| "Our convention is..." | Cross-cutting pattern | Extract to ref |
-| Same pattern in 2+ components | Duplicated knowledge | Create ref |
-
-Missing rules: scan for patterns enforced in 3+ components without rule doc. Pattern has single correct form (not just preference)?
-
-| Signal | Indicates | Action |
-|--------|-----------|--------|
-| Identical boilerplate in 3+ components | Enforced pattern without rule | Create rule with Golden Example |
-| PR reviews citing same pattern | Implicit rule | Extract to rule |
-| Linter/CI check without C3 rule doc | External enforcement gap | Create rule linking to tooling |
-
-## Phase 10: CLAUDE.md
-
-1. Extract expected dirs from code-map entries
-2. Check CLAUDE.md exists per directory
-3. Check `<!-- c3-generated: c3-NNN -->` matches expected component
-4. Check orphan blocks referencing deleted components
-
-Expected block:
-```markdown
-<!-- c3-generated: c3-201 -->
-# c3-201: Component Title
-
-Before modifying this code, run: c3 read c3-201
-Patterns: ref-error-handling, ref-logging (run: c3 read ref-error-handling)
-<!-- end-c3-generated -->
+c3 repair
 ```
 
----
+`repair` rebuilds the cache from canonical markdown and re-exports so seals match. It realigns the seal only — it invents no content fixes. If `check` still fails after `repair`, the canonical files themselves are wrong: that is a Layer-2 finding, fixed through a change-unit, not `repair`.
+
+## Layer 2 — Structural
+
+Run `c3 check` and read its output. Do not hand-walk membership tables against directories — the tool already validates:
+
+- broken links, orphans, duplicate ids, missing parents
+- required sections empty or missing, per each entity's canvas (the canvas definition is the contract — a project that edited a definition changed what is enforced; canvas.md)
+- code refs resolve on disk, cited entity ids exist in the graph, cite consistency holds
+- coverage signal `mapped / (total − excluded)` — `_exclude` patterns don't penalize the score; low coverage → WARN; suggest `_exclude` for test/config files and map the rest
+
+Two structural facts the tool guarantees, so audit must never flag them as gaps:
+
+- **Membership is synthesized**, not authored — every parent's membership rows are derived from children's `parent:` links on `add` and `check --fix`. Never report "missing membership row"; a real disconnect is a missing-parent error, which `check` already raises.
+- **The retire gate holds the graph closed** — a retire that would orphan a live child or dangle a live citer is refused unless the same change-unit heals it (change.md). So a clean `check` means no removal left a dangling reference behind.
+
+## Layer 3 — Semantic
+
+What `check` cannot judge — read a sample and assess:
+
+- **Orphan refs/rules:** a ref or rule cited by zero components is dead weight → WARN. Confirm via `c3 graph <id> --direction reverse`.
+- **Actionable rationale:** spot-check a ref's `## How` / a rule's `## Golden Example` — can you derive a YES/NO compliance question from it, and does a cited component's code hold to it? If the guidance is too vague to check, that's the finding (the standard needs rework), not the code. Compliance specifics live in ref.md and rule.md.
+
+## ADR lifecycle (`--include-adr` only)
+
+ADRs are hidden from default `c3` ops; audit them only on request or `c3 check --include-adr`. Canonical status set: `[open, accepted, done, superseded]`. Terminal docs (`done`, `superseded`) are content-frozen and check-exempt by design — leave them. The one signal worth surfacing: a unit stuck at `accepted`, long unapplied — its After-cites never resolved through `apply`. Surface it; do not hand-close it. Closing it is its own change-unit.
 
 ## Output
+
+End in a verdict.
 
 ```
 **C3 Audit Results**
 
-| Phase | Status | Issues |
-|-------|--------|--------|
-| Structural | PASS/WARN/FAIL | [details] |
-| ... | ... | ... |
+| Layer       | Status         | Findings |
+|-------------|----------------|----------|
+| Seal        | PASS/WARN/FAIL | …        |
+| Structural  | PASS/WARN/FAIL | …        |
+| Semantic    | PASS/WARN/FAIL | …        |
 
 **Summary:** N passes, M warnings, K failures
-**Action Items:** [fixes]
+**Fixes:** each requires a change-unit (c3 change apply) — see change.md
 ```
-
----
-
-## Drift Resolution
-
-| Situation | Cause | Action |
-|-----------|-------|--------|
-| Code changed, docs outdated | Undocumented change | Create ADR, update docs |
-| Docs describe removed code | Rot | Remove stale sections |
-| New module not in inventory | Recent addition | Add to inventory |
-| Orphan ADR (accepted, never implemented) | Abandoned | Close with reason |
-
-Intentional arch change → ADR. Doc rot → direct fix.
-
----
-
-## Audit Scope
-
-| Scope | Focus | Phases |
-|-------|-------|--------|
-| Full | All layers | All |
-| Single container | Container + components | 2-9 scoped |
-| ADR-specific | ADR + affected | 6 + affected |

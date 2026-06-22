@@ -107,74 +107,13 @@ func TestRunExport_EntityCount(t *testing.T) {
 	}
 }
 
-func TestRunExport_CodeMap(t *testing.T) {
-	s := createDBFixture(t)
-	// Add a code map entry
-	if err := s.SetCodeMap("c3-101", []string{"src/auth/**"}); err != nil {
-		t.Fatalf("set code map: %v", err)
-	}
-
-	outDir := filepath.Join(t.TempDir(), "exported")
-	var buf bytes.Buffer
-	err := RunExport(ExportOptions{Store: s, OutputDir: outDir}, &buf)
-	if err != nil {
-		t.Fatalf("RunExport: %v", err)
-	}
-
-	cmPath := filepath.Join(outDir, "code-map.yaml")
-	content, err := os.ReadFile(cmPath)
-	if err != nil {
-		t.Fatalf("expected code-map.yaml, got error: %v", err)
-	}
-	if !strings.Contains(string(content), "c3-101") {
-		t.Errorf("code-map.yaml should contain c3-101, got:\n%s", string(content))
-	}
-	if !strings.Contains(string(content), "src/auth/**") {
-		t.Errorf("code-map.yaml should contain pattern, got:\n%s", string(content))
-	}
-}
-
-func TestRunExport_CodeMapExcludes(t *testing.T) {
-	s := createDBFixture(t)
-	if err := s.SetCodeMap("c3-101", []string{"src/auth/**"}); err != nil {
-		t.Fatalf("set code map: %v", err)
-	}
-	if err := s.AddExclude("dist/**"); err != nil {
-		t.Fatalf("add exclude: %v", err)
-	}
-
-	outDir := filepath.Join(t.TempDir(), "exported")
-	var buf bytes.Buffer
-	err := RunExport(ExportOptions{Store: s, OutputDir: outDir}, &buf)
-	if err != nil {
-		t.Fatalf("RunExport: %v", err)
-	}
-
-	cmPath := filepath.Join(outDir, "code-map.yaml")
-	content, err := os.ReadFile(cmPath)
-	if err != nil {
-		t.Fatalf("expected code-map.yaml, got error: %v", err)
-	}
-	if !strings.Contains(string(content), "_exclude:") {
-		t.Fatalf("code-map.yaml should contain _exclude block, got:\n%s", string(content))
-	}
-	if !strings.Contains(string(content), "dist/**") {
-		t.Fatalf("code-map.yaml should contain exclude pattern, got:\n%s", string(content))
-	}
-}
-
 func TestRunExport_AllTypes(t *testing.T) {
 	s := createRichDBFixture(t)
-	// Add recipe and rule entities
-	s.InsertEntity(&store.Entity{
-		ID: "recipe-auth-flow", Type: "recipe", Title: "Auth Flow",
-		Slug: "auth-flow", Goal: "End-to-end auth", Status: "active", Metadata: "{}",
-	})
+	// Add rule entity
 	s.InsertEntity(&store.Entity{
 		ID: "rule-logging", Type: "rule", Title: "Logging",
 		Slug: "logging", Goal: "Structured logging", Status: "active", Metadata: "{}",
 	})
-	s.SetCodeMap("c3-101", []string{"src/auth/**"})
 
 	outDir := filepath.Join(t.TempDir(), "export")
 	var buf bytes.Buffer
@@ -183,10 +122,6 @@ func TestRunExport_AllTypes(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Check recipe file exists
-	if _, err := os.Stat(filepath.Join(outDir, "recipes", "recipe-auth-flow.md")); err != nil {
-		t.Error("recipe file should be exported")
-	}
 	// Check rule file exists
 	if _, err := os.Stat(filepath.Join(outDir, "rules", "rule-logging.md")); err != nil {
 		t.Error("rule file should be exported")
@@ -195,10 +130,6 @@ func TestRunExport_AllTypes(t *testing.T) {
 	adrFiles, _ := filepath.Glob(filepath.Join(outDir, "adr", "adr-*.md"))
 	if len(adrFiles) == 0 {
 		t.Error("ADR file should be exported")
-	}
-	// Check code-map
-	if _, err := os.Stat(filepath.Join(outDir, "code-map.yaml")); err != nil {
-		t.Error("code-map.yaml should be exported")
 	}
 }
 
@@ -307,15 +238,6 @@ func TestEntityExportPath_ADRWithoutDate(t *testing.T) {
 	expected := filepath.Join("/out", "adr", "adr-use-go.md")
 	if path != expected {
 		t.Errorf("adr path without date = %q, want %q", path, expected)
-	}
-}
-
-func TestEntityExportPath_Recipe(t *testing.T) {
-	e := &store.Entity{ID: "recipe-auth", Type: "recipe", Slug: "auth"}
-	path := entityExportPath("/out", e, map[string]string{})
-	expected := filepath.Join("/out", "recipes", "recipe-auth.md")
-	if path != expected {
-		t.Errorf("recipe path = %q, want %q", path, expected)
 	}
 }
 

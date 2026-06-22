@@ -130,6 +130,14 @@ func renderNode(b *strings.Builder, n *store.Node, children map[int64][]*store.N
 		}
 		b.WriteString("\n")
 
+	case "thematic_break":
+		b.WriteString("---\n\n")
+
+	case "html_block":
+		// Raw HTML / embed — emitted verbatim.
+		b.WriteString(n.Content)
+		b.WriteString("\n\n")
+
 	default:
 		if n.Content != "" {
 			b.WriteString(n.Content)

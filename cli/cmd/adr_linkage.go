@@ -23,7 +23,10 @@ type adrCoverage struct {
 	rules map[string][]string
 }
 
-var citationHandleRE = regexp.MustCompile(`^([A-Za-z0-9_.:-]+)#n([0-9]+)@v([0-9]+):sha256:([a-f0-9]{64})\s+"(.*)"$`)
+// The trailing "snippet" is OPTIONAL: the sha256 IS the anchor, so the handle
+// alone proves the cited content. Allowing snippet-less cites lets you cite a
+// table-row block whose snippet would contain `|` and break this very table cell.
+var citationHandleRE = regexp.MustCompile(`^([A-Za-z0-9_.:-]+)#n([0-9]+)@v([0-9]+):sha256:([a-f0-9]{64})(?:\s+"(.*)")?$`)
 
 func validateADRCoverage(s *store.Store, body string, severity string) []Issue {
 	return validateADRCoverageMode(s, body, severity, true)
@@ -362,35 +365,29 @@ func validateADREvidence(s *store.Store, sectionName, targetID, raw string, seve
 			Hint:     fmt.Sprintf("refresh the handle with c3x read %s --cite", targetID),
 		}}
 	}
-	if snippet == "" {
-		return []Issue{{
-			Severity: severity,
-			Message:  fmt.Sprintf("Evidence for %s row %s has empty snippet", sectionName, targetID),
-			Hint:     "paste the exact quoted snippet emitted by c3x read --cite",
-		}}
-	}
 	return []Issue{{
 		Severity: severity,
-		Message:  fmt.Sprintf("Evidence for %s row %s has stale node hash or snippet", sectionName, targetID),
+		Message:  fmt.Sprintf("Evidence for %s row %s has a stale cite (no node of %s seals to that hash)", sectionName, targetID, citedEntity),
 		Hint:     fmt.Sprintf("refresh the handle with c3x read %s --cite", targetID),
 	}}
 }
 
 func evidenceNodeMatches(s *store.Store, entityID string, nodeID int64, hash, snippet string) bool {
-	if snippet == "" {
-		return false
+	// The sha256 is the anchor; a snippet, when present, must also be contained.
+	// Matching by hash across all of the entity's nodes makes a cite resilient to
+	// node-id renumbering (same content, new integer id).
+	matches := func(node *store.Node) bool {
+		return node.Hash == hash && (snippet == "" || strings.Contains(node.Content, snippet))
 	}
-	if node, err := s.GetNode(nodeID); err == nil {
-		if node.EntityID == entityID && node.Hash == hash && strings.Contains(node.Content, snippet) {
-			return true
-		}
+	if node, err := s.GetNode(nodeID); err == nil && node.EntityID == entityID && matches(node) {
+		return true
 	}
 	nodes, err := s.NodesForEntity(entityID)
 	if err != nil {
 		return false
 	}
 	for _, node := range nodes {
-		if node.Hash == hash && strings.Contains(node.Content, snippet) {
+		if matches(node) {
 			return true
 		}
 	}
@@ -481,8 +478,6 @@ func citationType(s *store.Store, id string) string {
 		return "rule"
 	case strings.HasPrefix(id, "adr-"):
 		return "adr"
-	case strings.HasPrefix(id, "recipe-"):
-		return "recipe"
 	default:
 		return ""
 	}

@@ -21,7 +21,7 @@ func writeAgentHints(w io.Writer, hints []HelpHint) {
 func cascadeReviewHints() []HelpHint {
 	return []HelpHint{
 		{Command: "cascade review", Description: "for each changed component, record ADR Parent Delta: updated or no-delta with evidence"},
-		{Command: "c3x diff", Description: "find component-only deltas before declaring docs synced"},
+		{Command: "git diff --name-only -- . ':(exclude).c3/c3.db'", Description: "find changed files before declaring docs synced"},
 		{Command: "c3x check --only <id>", Description: "prove focused docs while unrelated branch docs or ADRs are still in progress"},
 		{Command: "c3x check", Description: "structural pass; still prove Parent Delta evidence"},
 	}
@@ -106,8 +106,8 @@ func cascadeHintsForID(s *store.Store, id string) []HelpHint {
 
 func lookupMissHints(filePath string) []HelpHint {
 	return []HelpHint{
-		{Command: "c3x codemap", Description: "coverage gap: map or explicitly exclude the surfaced path"},
-		{Command: fmt.Sprintf("c3x lookup %q", filePath), Description: "rerun after codemap update"},
+		{Command: "c3x eval", Description: "coverage gap: no eval spec's code globs map this path — add the binding in .c3/eval/<fact>.yaml"},
+		{Command: fmt.Sprintf("c3x lookup %q", filePath), Description: "rerun after updating the eval spec's code globs"},
 		{Command: "ADR Parent Delta", Description: "uncharted files need explicit ownership evidence before done"},
 	}
 }

@@ -1,0 +1,8 @@
+fact: c3-1
+claim: "the Go CLI container's components each have a code binding that resolves (roll-up)"
+pipeline:
+  - loop:
+      over: { facts: "c3-1[0-9][0-9]" }   # every CLI component id
+      do:
+        - gather: { code: "$item" }        # its declared code: globs → files
+        - eval: { exists: true }            # the binding exists and resolves

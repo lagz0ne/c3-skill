@@ -1,0 +1,4 @@
+fact: c3-202
+claim: "c3-202 is implemented at its declared code surface"
+code:
+  - skills/c3/references/**

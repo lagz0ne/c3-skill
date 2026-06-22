@@ -90,14 +90,15 @@ Use c3x canvas list to inspect available entity definitions.`,
 	},
 	{
 		Name:     "check",
-		OneLiner: "Validate docs, schema, code refs, consistency",
+		OneLiner: "Validate docs, schema, citations, consistency",
 		Help: `Usage: c3x check [--json] [--include-adr] [--fix] [--only <id>] [--only-touched [--since <ref>]] [--rule <rule-id>]
 
 Layered validation (ADRs excluded by default; use --include-adr to validate them):
   Canonical seal + cache integrity
   Broken links, orphans, duplicates, missing parents
   Required sections empty/missing per schema
-  Code refs exist on disk, entity IDs in graph, cite consistency
+  Entity IDs in graph, cite consistency
+(Fact-vs-code conformance is not here — that is a separate 'c3x eval' run.)
 
 Options:
   --fix              Auto-fix entity/ref references that match by title (e.g., "API" → c3-1)
@@ -129,7 +130,7 @@ Options:
 	{
 		Name:     "add",
 		Args:     "<type> <slug>",
-		OneLiner: "Create entity (auto-numbering + wiring)",
+		OneLiner: "Create entity (auto-numbering; edges from body)",
 		Help: `Usage: c3x add <type> <slug> [options]
 
 Types come from c3x canvas list, including built-ins and project-defined document types.
@@ -148,20 +149,6 @@ Examples:
   c3x add component auth --container c3-1 --dry-run --file component.md
   c3x schema adr > adr.md
   c3x add adr config-change --file adr.md`,
-	},
-	{
-		Name:     "template",
-		Args:     "<list|read|add|write>",
-		OneLiner: "Retired; use canvas",
-		Hidden:   true,
-		Help: `Usage: c3x canvas <list|read|add|write>
-
-ADR templates have been retired. ADR is the adr canvas definition.
-
-Examples:
-  c3x canvas read adr
-  c3x canvas write adr --file adr-canvas.md
-  c3x schema adr`,
 	},
 	{
 		Name:     "canvas",
@@ -190,49 +177,18 @@ Examples:
 	{
 		Name:     "set",
 		Args:     "<id> <field> <value>",
-		OneLiner: "Update frontmatter field or codemap patterns",
+		OneLiner: "Update a frontmatter field",
 		Help: `Usage: c3x set <id> <field> <value>
-       c3x set <id> codemap "<patterns>" [--append|--remove]
 
 Frontmatter fields: goal, summary, status, boundary, category, title, date, description
 
-Special field "codemap" updates code-map patterns (comma-separated):
-  Replace:  c3x set c3-101 codemap "src/auth/**,src/auth.go"
-  Append:   c3x set c3-101 codemap "src/utils.go" --append
-  Remove:   c3x set c3-101 codemap "src/old/**" --remove
-  Clear:    c3x set c3-101 codemap ""
-
-Note: set does NOT sync relationships. Use wire for relationship changes,
-or write with full frontmatter for bulk updates including relationship sync.
-Use 'c3x write <id> --section <name>' for section body updates.
+Note: set does NOT sync relationships. Citations come from the body — a column
+the canvas marks as an edge (see 'c3x schema <type>'); author it at add, or
+ride a change-unit patch for a frozen fact. Use 'c3x write <id> --section <name>'
+for section body updates.
 
 Examples:
-  c3x set c3-101 goal "Handle JWT auth"
-  c3x set c3-101 codemap "src/auth/**,src/auth.go"
-  c3x set c3-101 codemap "src/new/**" --append`,
-	},
-	{
-		Name:     "wire",
-		Args:     "<src> <tgt> [tgt2 ...]",
-		OneLiner: "Link component to ref(s) (--remove to unlink)",
-		Help: `Usage: c3x wire <source> <target> [target2 ...]
-       c3x wire <source> cite <target> [target2 ...]
-       c3x wire --remove <source> <target> [target2 ...]
-
-Creates or removes cite relationships (updated atomically per target):
-  1. source uses[] += target
-  2. component source "Governance" table += row
-  3. non-component docs use "Compliance Refs" / "Compliance Rules" tables when present
-
-Supports multiple targets in a single call for batch wiring.
-
-"cite" is optional (it's the only supported relation type).
-
-Examples:
-  c3x wire c3-101 ref-jwt                            # single target
-  c3x wire c3-101 ref-jwt ref-error-handling          # multiple targets
-  c3x wire c3-101 cite ref-jwt ref-error-handling     # explicit cite
-  c3x wire --remove c3-101 ref-jwt                    # remove link`,
+  c3x set c3-101 goal "Handle JWT auth"`,
 	},
 	{
 		Name:     "schema",
@@ -241,7 +197,7 @@ Examples:
 		Help: `Usage: c3x schema <type> [--json]
 
 Show known sections for an entity type.
-Types come from c3x canvas list (system, container, component, ref, rule, adr, recipe, and project-defined document types).
+Types come from c3x canvas list (system, container, component, ref, rule, adr, and project-defined document types).
 
 Output includes:
   - REJECT IF: leading rejection contract for adr, ref, rule (read these BEFORE drafting)
@@ -257,34 +213,64 @@ Examples:
   c3x schema adr`,
 	},
 	{
-		Name:     "codemap",
-		OneLiner: "Scaffold code-map entries for all components, refs + rules",
-		Hidden:   true,
-		Help: `Usage: c3x codemap [--json]
-
-Scaffold or update code-map entries in the store for every component, ref,
-and rule in the C3 graph. Existing entries (patterns already set) are preserved.
-New entries are added with empty pattern lists for you to fill in.
-
-Default structured output is TOON and lists added and existing IDs;
-set HUMAN=1 for legacy human-readable text or --json for explicit JSON outside agent mode.
-
-Example: c3x codemap`,
-	},
-	{
 		Name:     "lookup",
 		Args:     "<file-path>",
 		OneLiner: "Map file to component(s) + refs",
 		Help: `Usage: c3x lookup <file-or-glob> [--json]
 
-Map a file path (or glob pattern) to owning component(s) from the code-map.
-Shows component goal, summary, and cited refs with their goals.
-Glob arguments expand against the project and show a file map.
+Map a file path (or glob pattern) to owning fact(s) via the eval-spec code
+bindings (.c3/eval/<fact>.yaml 'code:'). Shows the fact's goal and cited refs
+with their goals. Glob arguments expand against the project and show a file map.
 Bracket paths ([id], [...slug]) for Next.js/SvelteKit routes work automatically.
 
 Examples:
   c3x lookup src/auth/login.ts
   c3x lookup 'src/auth/**/*.ts'`,
+	},
+	{
+		Name:     "eval",
+		Args:     "[fact-id]",
+		OneLiner: "Check a fact's claim against its external (conformance)",
+		Help: `Usage: c3x eval [fact-id] [--json]
+
+Check a frozen fact's claim against the uncontrolled external it governs and
+report a one-off verdict — holds / drift / needs-judgement — stamped with the
+external state measured. A check you run on CI cadence, never an apply gate:
+c3x eval always exits success; the verdict is the signal.
+
+Specs live in .c3/eval/<fact-id>.yaml. The simplest is just a code binding:
+
+  fact: c3-102
+  code: [ cli/internal/store/** ]     # also what 'lookup' resolves a file against
+  # no pipeline => default check: every glob must resolve to >=1 file
+
+A pipeline composes five ops (gather/filter/transform/eval; loop fans them out):
+
+  gather     acquire values — file (raw read) | command (mechanical, sh -c at repo
+             root) | files (glob) | facts (id-glob) | code (a fact's globs) |
+             literal | each (several, concatenated)
+  filter     keep values matching   contains | matches
+  transform  reshape each value     trim | first | lines
+  eval       assert -> verdict      exists | equals | all_equal | contains_all |
+             contains | count "<op> N" | judgement (surfaces; never auto-scored)
+  loop       run a sub-pipeline per item of 'over', binding $item
+
+Loop example — one roll-up verdict over a container's components:
+
+  pipeline:
+    - loop:
+        over: { facts: "c3-1[0-9][0-9]" }   # each CLI component id
+        do:
+          - gather: { code: "$item" }        # its declared globs -> files
+          - eval:   { exists: true }          # all resolve
+
+Options:
+  --json   Structured output for CI (TOON in agent mode)
+
+Examples:
+  c3x eval                 # every spec
+  c3x eval c3-203          # one fact's spec
+  c3x eval --json          # machine output`,
 	},
 	{
 		Name:     "search",
@@ -294,7 +280,7 @@ Examples:
 
 Search entity metadata and indexed markdown content. By default, results fuse
 local semantic similarity, keyword/BM25 matches, and graph relationships, then
-decorate hits with governing refs/rules and code-map paths.
+decorate hits with governing refs/rules.
 
 Search auto-builds or refreshes the local semantic index on first use and reuses
 fresh vectors on repeat runs. If the semantic model is unavailable, search falls
@@ -316,7 +302,11 @@ Examples:
 	{
 		Name:     "index",
 		OneLiner: "Build local semantic embeddings",
+		Hidden:   true,
 		Help: `Usage: c3x index [--json]
+
+Maintenance only — never a correctness step. search self-heals the index on
+demand; you do not need to re-index after a change.
 
 Download the pinned all-MiniLM-L6-v2 ONNX model and matching onnxruntime shared
 library into the user cache if missing, then rebuild SQLite entity embeddings.
@@ -332,8 +322,8 @@ Examples:
 		OneLiner: "Subgraph from entity (LLM-friendly output)",
 		Help: `Usage: c3x graph <entity-id> [--depth N] [--direction forward|reverse] [--format mermaid] [--json]
 
-Emit a subgraph rooted at the given entity. Shows typed neighbors,
-file paths from code-map, and relationship edges.
+Emit a subgraph rooted at the given entity. Shows typed neighbors
+and relationship edges.
 
 Options:
   --depth N              BFS traversal depth (default: 1)
@@ -387,7 +377,6 @@ Cleanup:
   - Removes Governance table rows citing this entity
   - Removes Compliance Refs / Compliance Rules rows citing this entity
   - Removes row from parent container's Components table
-  - Removes code-map.yaml entry
   - Deletes the entity file
 
 Options:
@@ -416,9 +405,9 @@ Examples:
 	},
 	{
 		Name:     "change",
-		Args:     "<new|view|accept|apply|status|rebase> <id>",
+		Args:     "<new|view|accept|apply|status|rebase|scaffold> <id>",
 		OneLiner: "Author, review, and apply a change-unit (the only path that mutates a fact)",
-		Help: `Usage: c3x change <new|view|accept|apply|status|rebase> <change-unit-id>
+		Help: `Usage: c3x change <new|view|accept|apply|status|rebase|scaffold> <change-unit-id>
 
 A change-unit = reasoning (the doc) + change material (patch files in its folder,
 .c3/changes/<id>/*.patch.md). Applying it is the ONLY legal mutation of a fact.
@@ -432,12 +421,14 @@ rename / re-edge / remove. The folder of *.patch.md files is the source of truth
   view    the "files changed" panel: per-patch drift + state
   status  per-patch state derived from seal state (pending/applied/drifted/new)
   accept  record the one stored human judgment (status → accepted)
-  apply   the switcher: two gates (drift + canvas-valid), atomic all-or-nothing
+  apply   the switcher: drift + canvas + morph + retire gates, atomic all-or-nothing
   rebase  emit the drift bundle for re-authoring drifted patches
+  scaffold stage a rung-climb: one empty insert patch per fact below its canvas bar
 
-Apply runs two mechanical gates before any write — the anchor must be fresh
-(no drift) and the merged result must satisfy its canvas — and is atomic: one
-failing gate blocks every patch. --dry-run reports without writing.
+Apply runs four mechanical gates before any write — drift (every anchor fresh),
+canvas (the merged body stays valid), morph (a reshaped fact-type leaves no
+instance invalid), retire (no destruction strands a child or citer) — and is
+atomic: one failing gate blocks every patch. --dry-run reports without writing.
 
 Examples:
   c3x change view adr-20260601-auth
@@ -463,32 +454,6 @@ and coerces nothing. migrate is the only path that may rewrite a terminal status
 
 Examples:
   c3x migrate`,
-	},
-	{
-		Name:     "marketplace",
-		Args:     "<subcommand>",
-		OneLiner: "Manage marketplace rule sources",
-		Hidden:   true,
-		Help: `Usage: c3x marketplace <subcommand> [options]
-
-Subcommands:
-  add <github-url>          Clone marketplace repo, register as source
-  list [--source] [--tag]   List available rules across sources
-  show <rule-id>            Preview a rule's content
-  update [<source-name>]    Pull latest from registered sources
-  remove <source-name>      Unregister source + delete cache
-
-Options:
-  --source <name>   Filter by source name
-  --tag <tag>       Filter rules by tag
-  --json            Explicit JSON compatibility for list only; marketplace show does not support JSON
-
-Examples:
-  c3x marketplace add https://github.com/org/go-patterns
-  c3x marketplace list --tag reliability
-  c3x marketplace show rule-error-handling
-  c3x marketplace update
-  c3x marketplace remove go-patterns`,
 	},
 }
 
@@ -527,7 +492,7 @@ Commands:
 	}
 
 	b.WriteString(`
-Entity Types: container, component, ref, rule, adr, recipe (context created by init)
+Entity Types: container, component, ref, rule, adr (context created by init)
 
 Global Options:
   --json                     Explicit JSON compatibility outside agent mode; agent/default structured output is TOON
@@ -546,9 +511,8 @@ Workflows:
     c3x lookup src/auth.ts  # map code to owning component + refs
 
   Normal change flow:
-    c3x schema component > auth.md
-    c3x add component auth --container c3-1 --file auth.md
-    c3x wire c3-101 cite ref-jwt
+    c3x schema component > auth.md   # author the cite in the edge-marked column (e.g. Governance)
+    c3x add component auth --container c3-1 --file auth.md   # the cite edge wires at import
     c3x check
 
   After branch switch, selective merge, or conflict resolution:
@@ -556,9 +520,8 @@ Workflows:
     c3x repair             # rebuild cache and reseal if check reports seal drift
 
   Add a component to an existing container:
-    c3x schema component > auth.md
+    c3x schema component > auth.md   # cite refs/rules in the edge-marked column
     c3x add component auth --container c3-1 --file auth.md
-    c3x wire c3-101 cite ref-jwt
     c3x check
 
   Add a new domain (container + first component):
@@ -576,7 +539,8 @@ Workflows:
   Document a cross-cutting concern:
     c3x schema ref > rate-limiting.md
     c3x add ref rate-limiting --file rate-limiting.md
-    c3x wire c3-101 cite ref-rate-limiting
+    # cite it from a component: author the row in its edge-marked column —
+    # at add for a new component, or a change-unit patch for a frozen one
     c3x check
 
   Record an architectural decision:

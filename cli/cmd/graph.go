@@ -18,6 +18,7 @@ type GraphOptions struct {
 	Format    string // "" (text) or "mermaid"
 	JSON      bool
 	C3Dir     string
+	Unit      string // when set, preview the graph through this change-unit's staged patches
 }
 
 // graphNode is a single entity in the subgraph output.
@@ -30,32 +31,60 @@ type graphNode struct {
 	Refs     []string `json:"refs,omitempty"`
 	CitedBy  []string `json:"cited_by,omitempty"`
 	Affects  []string `json:"affects,omitempty"`
-	Files    []string `json:"files,omitempty"`
 }
 
 // RunGraph emits a subgraph rooted at the given entity.
 func RunGraph(opts GraphOptions, w io.Writer) error {
+	// Contextual change-unit lens: preview the graph as it would be if the unit's
+	// staged patches were applied. Runs the real apply path in a rolled-back tx and
+	// fails loudly — it never silently falls back to applied state.
+	if opts.Unit != "" {
+		return WithUnitOverlay(opts.Store, opts.C3Dir, opts.Unit, func(ts *store.Store) error {
+			// Mark the preview without corrupting the body. An explicit mermaid render
+			// (which wins over agent JSON below) gets a `%%` comment; machine output
+			// (JSON/TOON) must get NO stdout prefix or it becomes unparseable; plain
+			// human text gets a header line.
+			switch {
+			case opts.Format == "mermaid":
+				fmt.Fprintf(w, "%%%% preview: unit %s — staged, not applied\n", opts.Unit)
+			case opts.JSON:
+				// no prefix — the --unit flag is the explicit signal; a stray prefix
+				// would make the machine output unparseable.
+			default:
+				fmt.Fprintf(w, "context: unit %s (preview — staged, not applied)\n\n", opts.Unit)
+			}
+			previewOpts := opts
+			previewOpts.Store = ts
+			previewOpts.Unit = ""
+			return RunGraph(previewOpts, w)
+		})
+	}
+
 	if _, err := opts.Store.GetEntity(opts.EntityID); err != nil {
-		return fmt.Errorf("entity %q not found", opts.EntityID)
+		return fmt.Errorf("error: entity %q not found\nhint: run c3x search %q or c3x list --flat to find the current id", opts.EntityID, opts.EntityID)
 	}
 
 	if opts.Direction != "" && opts.Direction != "forward" && opts.Direction != "reverse" {
-		return fmt.Errorf("--direction must be 'forward' or 'reverse', got %q", opts.Direction)
+		return fmt.Errorf("error: --direction must be 'forward' or 'reverse', got %q\nhint: use c3x graph %s --direction reverse or --direction forward", opts.Direction, opts.EntityID)
 	}
 
 	entities := collectSubgraphStore(opts.Store, opts.EntityID, opts.Depth, opts.Direction)
 
-	if opts.JSON {
-		if err := graphJSONStore(entities, opts.Store, w); err != nil {
-			return err
-		}
-		return nil
-	}
+	// An explicit `--format mermaid` is a deliberate render choice and WINS over the
+	// agent-mode JSON default (agent mode sets opts.JSON, but the skill tells agents to
+	// paste mermaid per container — they must be able to get it). A bare `graph` in
+	// agent mode still emits TOON.
 	if opts.Format == "mermaid" {
 		if err := graphMermaidStore(entities, opts.Store, w); err != nil {
 			return err
 		}
 		writeAgentHints(w, cascadeHintsForID(opts.Store, opts.EntityID))
+		return nil
+	}
+	if opts.JSON {
+		if err := graphJSONStore(entities, opts.Store, w); err != nil {
+			return err
+		}
 		return nil
 	}
 	if err := graphTextStore(entities, opts.Store, w); err != nil {
@@ -221,13 +250,6 @@ func graphTextStore(entities []*store.Entity, s *store.Store, w io.Writer) error
 			sort.Strings(affectsIDs)
 			fmt.Fprintf(w, "  affects: %s\n", strings.Join(affectsIDs, ", "))
 		}
-
-		// Files from code-map
-		if files, _ := s.CodeMapFor(e.ID); len(files) > 0 {
-			sorted := append([]string(nil), files...)
-			sort.Strings(sorted)
-			fmt.Fprintf(w, "  files: %s\n", strings.Join(sorted, ", "))
-		}
 	}
 	return nil
 }
@@ -278,11 +300,6 @@ func graphJSONStore(entities []*store.Entity, s *store.Store, w io.Writer) error
 					node.CitedBy = append(node.CitedBy, c.ID)
 				}
 			}
-		}
-
-		if files, _ := s.CodeMapFor(e.ID); len(files) > 0 {
-			node.Files = append([]string(nil), files...)
-			sort.Strings(node.Files)
 		}
 
 		nodes = append(nodes, node)

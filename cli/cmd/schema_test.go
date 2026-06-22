@@ -376,15 +376,6 @@ func TestRunSchema_ReadsProjectCanvasOverride(t *testing.T) {
 	)
 }
 
-func TestRunSchema_TemplateFlagRetired(t *testing.T) {
-	var buf bytes.Buffer
-	err := RunSchemaWithOptions(SchemaOptions{EntityType: "adr", Template: "small-change"}, &buf)
-	if err == nil {
-		t.Fatal("expected schema template option to fail")
-	}
-	requireAll(t, err.Error(), "--template has been retired", "c3x canvas read adr")
-}
-
 func TestRunSchema_JSON(t *testing.T) {
 	var buf bytes.Buffer
 	err := RunSchema("component", true, &buf)

@@ -1,197 +1,47 @@
-# Ref Reference
+# Ref
 
-Manage patterns as arch artifacts.
+A **ref** is one of the eight frozen-fact types (SKILL.md §The shared contract). Its identity is **rationale**: a ref exists to record *why this choice over the realistic alternatives*, so `## Why` is the load-bearing section. Strip it and the doc has no reason to be a fact.
 
-Hard rule: can't name concrete file → create ref, not component.
+**Identity test — can't name a concrete file → ref, not component.** A ref captures a pattern that recurs across components; if it lives in one file, it is that component's concern, not a shared fact.
 
-## Mode Selection
+## Ref vs Rule — the Separation Test
 
-| Intent | Mode |
-|--------|------|
-| "add/create/document a pattern" | **Add** |
-| "update/modify ref-X" | **Update** |
-| "list patterns", "what refs exist" | **List** |
-| "who uses ref-X" | **Usage** |
-| "remove/deprecate ref-X" | **change** (needs ADR) |
+A ref carries *rationale*; a rule carries an *enforceable standard*. When a doc could be either, ask:
 
----
+> **Remove the `## Why` section. Is the doc now useless?**
 
-## Add
+| Answer | Type | Where |
+|--------|------|-------|
+| Yes — useless without the rationale | **Ref** | here |
+| No — it still tells you what to do | **Rule** | `references/rule.md` |
+| Both — rationale *and* an enforced standard | **Split** | a ref for the *why* + a rule for the *enforcement*; `references/rule.md` §Migrate |
 
-Flow: `Scaffold → Discover → Fill Content → Discover Usage → Update Citings → ADR`
+A doc that is primarily golden code, anti-patterns, or a coding standard is a **rule**, not a ref — `c3 schema ref` rejects it on exactly this (`Pattern is primarily about enforcement … that's a rule`).
 
-**HARD RULE: First Bash call must be scaffold.**
+## Create a ref
 
-### Step 1: Scaffold
+A ref is created whole — author the full body into a file, then add it. Create is unguarded (the freeze applies only once a fact has a body).
 
 ```bash
-c3 add ref <slug>
+c3 schema ref          # leads with REJECT IF — draft to the contract, don't freehand
+c3 add ref <slug> --file ref.md
 ```
 
-### Step 2: Discover (2-5 Grep calls)
+`c3 schema ref` is the authoring spec: it names every section, its `fill:` guidance, and the `reject_if` bullets that gate the doc (chiefly: `## Why` must give rationale, not restate `## Choice`; `## How`, if present, must cite a real file). There is **no scaffold-then-fill** — the first body freezes the fact, so everything goes in the file. Discover the pattern first: if you can't answer "why this over the alternatives," you don't have a ref yet.
 
-Search codebase for existing implementations.
+## Cite, change, and adopt a ref
 
-| Findings | Mode | Action |
-|----------|------|--------|
-| 0 files | **Describe** | User describes pattern |
-| 1 file | **Extract** (low confidence) | Extract, flag for confirmation |
-| 2+ files | **Extract** (compare top 3) | Structural intersection = pattern |
-| User provides | **Accept** | Use directly |
+These are all change-unit operations — owned by `references/change.md`, not re-taught here:
 
-### Step 2c: Extract Pattern
+- **Cite a ref from a component** (the citation *is* the edge the canvas marks `→ edge: uses`) → change.md §Phase 3.2.
+- **Edit an existing ref** — refused (`<id> is a fact — facts are frozen and change only through a change-unit`); ride the edit as a patch in a change-unit and `c3 change apply` → change.md §Phase 3.2.
+- **Adoption ADR + the `accepted → done` auto-done latch** → change.md §Status. (Never type or `set` a terminal status; the latch actualizes it.)
 
-From discovered code:
-- **Shared structure** → `## How` (golden pattern)
-- **Varies by context** → `## Choice` (decision point)
-- **Clearly wrong** → `## Not This` (anti-pattern)
-
-Annotate: `// REQUIRED` vs `// OPTIONAL` for structural elements.
-
-### Step 2d: Confirm
-
-`AskUserQuestion` — approve pattern (ASSUMPTION_MODE: skip).
-
-### Step 2e: Quality Gate
-
-Write 1-3 YES/NO compliance questions from `## How`. Can't write them → pattern too vague, rework.
-
-### Step 3: Fill Content
-
-**First:** `c3 schema ref` — the output leads with `REJECT IF:` bullets that ARE the rejection contract. Per-section `fill:` and `rejected when:` lines apply the same gate at section level. Draft to the contract, do not freehand.
-
-- `## Goal` — what it standardizes
-- `## Choice` — option chosen (REQUIRED)
-- `## Why` — rationale (REQUIRED)
-- `## How` — golden pattern (code blocks, do/don't pairs, checklists)
-- `## Not This` — rejected alternatives + anti-examples
-- `## Scope`, `## Override` — as needed
-
-### Step 4: Discover Usage (2-3 Grep calls)
-
-Find components using pattern.
-
-### Step 5: Update Citing Components
-
-A component is a frozen fact and its `uses`/cite edges are derived from its own body (`## Related Refs` / frontmatter `refs:`) at import — never created by `c3 wire`. So how you add a citation depends on whether the component already exists:
-
-- **Brand-new citer (being created now):** author `## Related Refs` directly in its body file, then `c3 add component <slug> --file body.md`. The edge appears at import — no `c3 wire`.
-- **Existing citer (frozen):** adding a citation is an edit to its frozen body, so it MUST ride as a change-unit patch on the `## Related Refs` block. Per component using pattern:
-  1. `c3 lookup <file>` per code-map entry — loads constraint chain
-  2. `c3 read <component-id> --section "Related Refs" --cite` — cite the block
-  3. Author `.c3/changes/<adr-id>/<seq>-<slug>.patch.md` adding the row, then `c3 change apply <adr-id>`
-
-The added row looks like:
-
-```markdown
-## Related Refs
-
-| Ref | How It Serves Goal |
-|-----|-------------------|
-| ref-error-handling | Uses error response format |
-```
-
-Only the `## Related Refs` block changes. Other changes → route to change as their own patch.
-
-### Step 6: Adoption ADR
-
-Canonical flow — never type or `set` a terminal status; the latch does it:
+## See a ref's reach
 
 ```bash
-c3 add adr ref-{slug}-adoption < adr-body.md
-# wire the ref / land the deliverable so the ADR's per-row After cites resolve fresh
-c3 change accept adr-YYYYMMDD-ref-{slug}-adoption
-c3 check --fix   # auto-latches accepted → done once every After cite resolves
+c3 graph ref-<slug> --direction reverse              # what cites this ref
+c3 graph ref-<slug> --direction reverse --format mermaid   # as a diagram
 ```
 
-Final state:
-```yaml
----
-id: adr-YYYYMMDD-ref-{slug}-adoption
-title: Adopt {Pattern Title} as standard
-status: done
----
-```
-
-Ref adoption ADRs end in `status: done` — ref doc IS deliverable. `accepted → done` is a one-way auto-done latch: you never type or `set` `done`; `c3 check --fix` actualizes it when the per-row *After* cites all resolve fresh. Once `done`, the ADR is terminal/historical and exempt from `c3 check` validation.
-
----
-
-## Update
-
-Flow: `Clarify → Find Citings → Check Compliance → Surface Impact → Execute`
-
-1. **Clarify:** `AskUserQuestion` — add/modify/remove rule or clarify docs (ASSUMPTION_MODE: skip)
-2. **Find citings:** `c3 list` → ref entity → `relationships`. Depth: `c3 graph ref-{slug} --direction reverse`.
-3. **Check compliance:** `c3 lookup <file>` per code-map entry. Categorize: compliant / needs-update / breaking.
-4. **Surface impact:** `AskUserQuestion` — proceed/narrow/cancel (ASSUMPTION_MODE: skip)
-5. **Execute:** A ref is a frozen fact — `c3 write`/`c3 set`/`c3 wire` on an existing ref is refused ("…is a fact — facts are frozen and change only through a change-unit"). Create the ADR as the change-unit, then route the ref edit through it: `c3 read ref-{slug} --section <name> --cite` → author `.c3/changes/<adr-id>/<seq>-<slug>.patch.md` → `c3 change apply <adr-id>`. Non-compliant → TODO in ADR (no code changes).
-6. Code changes → route to change.
-
----
-
-## List
-
-```bash
-c3 list
-```
-
-Filter `type: "ref"`. Show: id, title, goal, citing components.
-
-```
-**C3 Patterns**
-
-| Ref | Title | Goal |
-|-----|-------|------|
-| ref-error-handling | Error Handling | Consistent errors |
-```
-
----
-
-## Usage
-
-```bash
-c3 list
-```
-
-Find `id: "ref-{slug}"`, read `relationships`. `c3 read <id>` each citing doc.
-
-**Citation Graph:** `c3 graph ref-<slug> --format mermaid` → include as mermaid block.
-
-```
-**ref-{slug} Usage**
-
-**Cited by:**
-- c3-101 (Auth Middleware) - JWT validation
-
-**Citation Graph:**
-(mermaid block from c3 graph)
-
-**Pattern Summary:** {Key rules}
-```
-
----
-
-## Separation Test: Ref vs Rule
-
-Ask: **"Remove Why section. Doc becomes useless?"**
-
-| Answer | Type | Action |
-|--------|------|--------|
-| Yes — useless without Why | **Ref** | Create ref (this flow) |
-| No — still tells what to do | **Rule** | Route to `references/rule.md` Add |
-| Both — rationale AND enforcement | **Dual** | Ref for rationale + rule for enforcement (see `references/rule.md` Migrate) |
-
-Primarily about enforcement (golden examples, coding standards) → rule, not ref.
-
----
-
-## Anti-Patterns
-
-| Anti-Pattern | Correct |
-|--------------|---------|
-| Create ref without user input | Extract specifics from prompt |
-| Update ref without impact check | Always check citings |
-| Duplicate ref content in components | Cite, don't duplicate |
-| Ref for one-off pattern | Refs for repeated patterns only |
-| Ref for enforceable coding standard | Use rule (Separation Test) |
+Reverse graph is the canonical "who uses this" — don't hand-walk citers or read raw `.c3/` files.

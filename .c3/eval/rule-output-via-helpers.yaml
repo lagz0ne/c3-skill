@@ -1,0 +1,9 @@
+fact: rule-output-via-helpers
+claim: "no command prints structured output directly — all routes through the output helpers (fmt.Print* absent from cmd/, save output.go)"
+code:
+  - cli/cmd/output.go
+pipeline:
+  - gather:
+      command: "grep -rln 'fmt.Print' cli/cmd/ | grep -v _test.go | grep -v output.go"
+  - eval:
+      count: "== 0"

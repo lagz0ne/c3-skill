@@ -220,8 +220,6 @@ func TestClassifyDoc(t *testing.T) {
 		{"adr by type", Frontmatter{ID: "adr-20260101-test", Type: "adr"}, DocADR},
 		{"adr by prefix", Frontmatter{ID: "adr-20260101-test"}, DocADR},
 		{"ref by prefix", Frontmatter{ID: "ref-0001"}, DocRef},
-		{"recipe by type", Frontmatter{ID: "my-recipe", Type: "recipe"}, DocRecipe},
-		{"recipe by prefix", Frontmatter{ID: "recipe-auth"}, DocRecipe},
 		{"unknown", Frontmatter{ID: "something-else"}, DocUnknown},
 		{"rule by type field", Frontmatter{ID: "rule-logging", Type: "rule"}, DocRule},
 		{"rule by prefix", Frontmatter{ID: "rule-logging"}, DocRule},
@@ -268,7 +266,7 @@ func TestDeriveRelationships(t *testing.T) {
 		{
 			name: "sources with anchors",
 			fm: Frontmatter{
-				ID:      "recipe-auth",
+				ID:      "ref-auth",
 				Sources: []string{"c3-1#Goal", "ref-jwt#Choice", "c3-0"},
 			},
 			want: []string{"c3-1", "ref-jwt", "c3-0"},
@@ -336,7 +334,6 @@ func TestDocType_String(t *testing.T) {
 		{DocComponent, "component"},
 		{DocRef, "ref"},
 		{DocADR, "adr"},
-		{DocRecipe, "recipe"},
 		{DocRule, "rule"},
 		{DocUnknown, "unknown"},
 		{DocType(99), "unknown"}, // out of range

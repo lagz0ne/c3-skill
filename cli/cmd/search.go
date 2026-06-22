@@ -20,7 +20,6 @@ type SearchOptions struct {
 	Hybrid     bool
 	JSON       bool
 	Limit      int
-	Type       string
 	TypeFilter string
 	Semantic   bool
 	NoSemantic bool
@@ -59,7 +58,7 @@ type EntityRef struct {
 // RunSearch performs semantic, content/entity FTS, and graph-context search.
 func RunSearch(opts SearchOptions, w io.Writer) error {
 	if opts.Store == nil {
-		return fmt.Errorf("error: search store is required")
+		return fmt.Errorf("error: search store is required\nhint: run c3x check to rebuild the local cache, then rerun c3x search")
 	}
 	if strings.TrimSpace(opts.Query) == "" {
 		return fmt.Errorf("error: search requires a <query> argument\nhint: c3x search \"pool wait\"")
@@ -69,9 +68,6 @@ func RunSearch(opts SearchOptions, w io.Writer) error {
 		limit = 20
 	}
 	entityType := opts.TypeFilter
-	if entityType == "" {
-		entityType = opts.Type
-	}
 
 	semanticEnabled := !opts.NoSemantic
 	if semanticEnabled {
@@ -128,7 +124,15 @@ func RunSearch(opts SearchOptions, w io.Writer) error {
 	return WriteObjectOutput(w, SearchOutput{
 		Query:   opts.Query,
 		Results: rows,
-	}, format, nil)
+	}, format, searchHelpHints())
+}
+
+func searchHelpHints() []HelpHint {
+	return []HelpHint{
+		{Command: "c3x read <id>", Description: "inspect a matching fact before relying on the search snippet"},
+		{Command: "c3x graph <id>", Description: "expand a match into parent, child, ref, rule, and affected topology"},
+		{Command: "c3x lookup <file-or-glob>", Description: "map a known file path back to owning facts and governing refs"},
+	}
 }
 
 // candidatePoolLimit sizes the over-fetched candidate pool that feeds fusion. Each
@@ -417,15 +421,6 @@ func enrichFromComponent(s *store.Store, row *SearchResultRow, componentID strin
 		}
 		assignSearchContext(row, rel, target)
 	}
-
-	patterns, err := s.CodeMapFor(componentID)
-	if err != nil {
-		return fmt.Errorf("search code-map %s: %w", componentID, err)
-	}
-	if path := bestCodeMapPath(patterns); path != "" {
-		row.Context.Path = path
-		addMatchSource(row, "code-map:"+path)
-	}
 	return nil
 }
 
@@ -445,18 +440,6 @@ func assignSearchContext(row *SearchResultRow, rel *store.Relationship, target *
 			row.Context.Rule = ref
 		}
 	}
-}
-
-func bestCodeMapPath(patterns []string) string {
-	for _, pattern := range patterns {
-		if !strings.ContainsAny(pattern, "*?[") {
-			return pattern
-		}
-	}
-	if len(patterns) == 0 {
-		return ""
-	}
-	return patterns[0]
 }
 
 func cleanSnippet(snippet string) string {

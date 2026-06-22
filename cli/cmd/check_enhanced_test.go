@@ -91,9 +91,11 @@ func TestRunCheck_IncludeADRUsesDefaultTemplateSections(t *testing.T) {
 		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
 	}
 
+	// Affected Topology is part of the lean ADR core (still required), so a check
+	// against the default canvas reports it missing — proving default sections are used.
 	found := false
 	for _, issue := range result.Issues {
-		if issue.Entity == "adr-20260226-use-go" && strings.Contains(issue.Message, "missing required section: Underlay C3 Changes") {
+		if issue.Entity == "adr-20260226-use-go" && strings.Contains(issue.Message, "missing required section: Affected Topology") {
 			found = true
 			break
 		}
@@ -539,7 +541,6 @@ func TestHintFor(t *testing.T) {
 		{"unknown entity reference: c3-999", "verify the ID with 'c3x list'; check for typos"},
 		{"unknown ref reference: ref-missing", "use a ref-* ID (e.g., ref-jwt); verify with 'c3x list'"},
 		{"file does not exist: src/foo.ts", "create the file or fix the path"},
-		{"code-map parse error: yaml: unmarshal error", "check code-map entries with 'c3x list'"},
 		{"layer disconnect: child component c3-110 has parent c3-1 but is missing from c3-1 Components table", "open a change doc (c3 add adr) that amends the parent table top-down; rebuild only proves storage, not layer integration"},
 		{"something unknown", ""},
 	}
@@ -548,30 +549,6 @@ func TestHintFor(t *testing.T) {
 		if got != tt.expected {
 			t.Errorf("hintFor(%q) = %q, want %q", tt.message, got, tt.expected)
 		}
-	}
-}
-
-func TestRunCheck_RecipeInvalidSources(t *testing.T) {
-	s := createRichDBFixture(t)
-	s.InsertEntity(&store.Entity{
-		ID: "recipe-auth", Type: "recipe", Title: "Auth Flow", Slug: "auth",
-		Status: "active", Metadata: "{}",
-	})
-	content.WriteEntity(s, "recipe-auth", "# Auth Flow\n\n## Goal\n\nTrace auth.\n")
-	// Add valid source
-	s.AddRelationship(&store.Relationship{FromID: "recipe-auth", ToID: "c3-0", RelType: "sources"})
-	// Add invalid source — entity doesn't exist, but relationship can't be created with FK
-	// So we test by checking that existing valid sources don't produce warnings
-
-	var buf bytes.Buffer
-	opts := CheckOptions{Store: s, JSON: false}
-	if err := RunCheckV2(opts, &buf); err != nil {
-		t.Fatal(err)
-	}
-
-	output := buf.String()
-	if strings.Contains(output, "recipe references nonexistent") {
-		t.Errorf("valid sources should not be flagged, got: %s", output)
 	}
 }
 
@@ -819,8 +796,11 @@ func TestRunCheck_RuleFilterNoCiters(t *testing.T) {
 	if !strings.Contains(err.Error(), "no citers") {
 		t.Errorf("expected 'no citers' in error, got: %v", err)
 	}
-	if !strings.Contains(err.Error(), "c3x wire") {
-		t.Errorf("expected actionable hint referencing 'c3x wire', got: %v", err)
+	if strings.Contains(err.Error(), "c3x wire") {
+		t.Errorf("hint must not reference removed wire command, got: %v", err)
+	}
+	if !strings.Contains(err.Error(), "c3x change new") {
+		t.Errorf("expected actionable change-unit hint, got: %v", err)
 	}
 }
 
@@ -912,7 +892,7 @@ func TestValidateADREvidence_RejectsWrongEntityAndStaleHash(t *testing.T) {
 	hashStart := strings.Index(staleHash, ":sha256:") + len(":sha256:")
 	staleHash = staleHash[:hashStart] + strings.Repeat("0", 64) + staleHash[hashStart+64:]
 	issues = validateADREvidence(s, "Affected Topology", "c3-1", staleHash, "warning", false)
-	if len(issues) != 1 || !strings.Contains(issues[0].Message, "stale node hash or snippet") {
+	if len(issues) != 1 || !strings.Contains(issues[0].Message, "stale cite") {
 		t.Fatalf("expected stale-hash issue, got %+v", issues)
 	}
 }
@@ -931,5 +911,25 @@ func TestValidateADREvidence_AllowsMovedNodeIDWhenHashMatches(t *testing.T) {
 	issues := validateADREvidence(s, "Affected Topology", "c3-1", movedNode, "warning", false)
 	if len(issues) != 0 {
 		t.Fatalf("citation with moved node id but matching hash/snippet should pass, got %+v", issues)
+	}
+}
+
+// A handle WITHOUT the trailing "snippet" must validate by hash alone — so a
+// table-row block (whose snippet would contain `|` and break the table cell) can
+// be cited. The sha256 is the anchor; the snippet is optional context.
+func TestValidateADREvidence_AllowsSnippetlessCite(t *testing.T) {
+	s := createRichDBFixture(t)
+	full := testCitationForEntity(t, s, "c3-1")
+	// Drop the trailing ` "snippet"`, keeping just entity#nN@vV:sha256:HASH.
+	handleOnly := full
+	if i := strings.Index(full, ` "`); i >= 0 {
+		handleOnly = full[:i]
+	}
+	if strings.Contains(handleOnly, `"`) {
+		t.Fatalf("handleOnly still has a snippet: %q", handleOnly)
+	}
+	issues := validateADREvidence(s, "Affected Topology", "c3-1", handleOnly, "warning", false)
+	if len(issues) != 0 {
+		t.Fatalf("a snippet-less cite with a matching hash should pass, got %+v", issues)
 	}
 }

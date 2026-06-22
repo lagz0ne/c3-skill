@@ -58,7 +58,7 @@ func runCanvasList(opts CanvasOptions, w io.Writer) error {
 	}
 	format := ResolveFormat(opts.JSON, isAgentMode())
 	if format != FormatHuman {
-		return WriteTableOutput(w, "canvases", rows, []string{"id", "domain", "description", "source"}, format, nil)
+		return WriteTableOutput(w, "canvases", rows, []string{"id", "domain", "description", "source"}, format, canvasListHelpHints())
 	}
 	for _, row := range rows {
 		domain := row.Domain
@@ -68,6 +68,14 @@ func runCanvasList(opts CanvasOptions, w io.Writer) error {
 		fmt.Fprintf(w, "%s [%s] — %s (%s)\n", row.ID, domain, row.Description, row.Source)
 	}
 	return nil
+}
+
+func canvasListHelpHints() []HelpHint {
+	return []HelpHint{
+		{Command: "c3x canvas read <type>", Description: "read the live canvas definition before authoring facts of that type"},
+		{Command: "c3x schema <type>", Description: "render the authoring contract with required sections and reject rules"},
+		{Command: "c3x canvas write <type> --file <canvas.md>", Description: "update a project-owned canvas definition when the model itself must change"},
+	}
 }
 
 func runCanvasRead(opts CanvasOptions, w io.Writer) error {
@@ -111,7 +119,7 @@ func runCanvasWrite(opts CanvasOptions, replace bool, w io.Writer) error {
 		return err
 	}
 	if canvas.ID != opts.ID {
-		return fmt.Errorf("error: canvas id mismatch: arg %q, frontmatter %q", opts.ID, canvas.ID)
+		return fmt.Errorf("error: canvas id mismatch: arg %q, frontmatter %q\nhint: use c3x canvas write %s --file canvas.md, or update the file frontmatter id to %q", opts.ID, canvas.ID, canvas.ID, opts.ID)
 	}
 	path := filepath.Join(opts.C3Dir, schema.CanvasesDir, opts.ID+".md")
 	_, embedded := schema.CanvasFor(opts.ID)

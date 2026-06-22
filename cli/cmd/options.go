@@ -22,12 +22,12 @@ type Options struct {
 	Version       bool
 	IncludeADR    bool
 	Fix           bool
-	StrictCodemap bool
 	Remove        bool
 	DryRun        bool
 	Continue      bool
 	Depth         int
 	Direction     string
+	Unit          string
 	Format        string
 	TypeFilter    string
 	Mark          bool
@@ -37,8 +37,6 @@ type Options struct {
 	Hybrid        bool
 	Semantic      bool
 	NoSemantic    bool
-	Source        string
-	Tag           string
 	Recompute     bool
 	Keep          int
 	Full          bool
@@ -52,7 +50,6 @@ type Options struct {
 	Since         string
 	FromDiff      bool
 	File          string
-	Template      string
 }
 
 // ParseArgs parses command-line arguments into Options.
@@ -98,6 +95,11 @@ func ParseArgs(argv []string) Options {
 				i++
 				opts.Section = argv[i]
 			}
+		case "--unit":
+			if i+1 < len(argv) {
+				i++
+				opts.Unit = argv[i]
+			}
 		case "--append":
 			opts.Append = true
 		case "--include-adr":
@@ -106,8 +108,6 @@ func ParseArgs(argv []string) Options {
 			opts.IncludeCode = true
 		case "--fix":
 			opts.Fix = true
-		case "--strict-codemap":
-			opts.StrictCodemap = true
 		case "--remove":
 			opts.Remove = true
 		case "--dry-run":
@@ -151,16 +151,6 @@ func ParseArgs(argv []string) Options {
 			opts.Semantic = true
 		case "--no-semantic":
 			opts.NoSemantic = true
-		case "--source":
-			if i+1 < len(argv) {
-				i++
-				opts.Source = argv[i]
-			}
-		case "--tag":
-			if i+1 < len(argv) {
-				i++
-				opts.Tag = argv[i]
-			}
 		case "--full":
 			opts.Full = true
 		case "--cite":
@@ -192,11 +182,6 @@ func ParseArgs(argv []string) Options {
 			if i+1 < len(argv) {
 				i++
 				opts.File = argv[i]
-			}
-		case "--template":
-			if i+1 < len(argv) {
-				i++
-				opts.Template = argv[i]
 			}
 		case "--keep":
 			if i+1 < len(argv) {

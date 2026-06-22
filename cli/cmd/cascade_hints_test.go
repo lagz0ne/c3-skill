@@ -15,18 +15,50 @@ func requireAll(t *testing.T, out string, wants ...string) {
 	}
 }
 
+func TestCascadeReviewHintsDoNotNameMissingCommands(t *testing.T) {
+	for _, hint := range cascadeReviewHints() {
+		if strings.Contains(hint.Command, "c3x diff") || strings.Contains(hint.Command, "c3x wire") {
+			t.Fatalf("cascade hint names a missing command: %+v", hint)
+		}
+	}
+}
+
+func TestAgentHintsReferenceRegisteredC3Commands(t *testing.T) {
+	registered := map[string]bool{}
+	for _, c := range Commands {
+		registered[c.Name] = true
+	}
+	hints := append([]HelpHint{}, cascadeReviewHints()...)
+	hints = append(hints, adrHints("adr-20260622-example")...)
+	hints = append(hints, lookupMissHints("src/missing.go")...)
+	hints = append(hints, searchHelpHints()...)
+	hints = append(hints, evalHelpHints()...)
+	hints = append(hints, canvasListHelpHints()...)
+	hints = append(hints, semanticIndexHelpHints()...)
+
+	for _, hint := range hints {
+		fields := strings.Fields(hint.Command)
+		if len(fields) < 2 || fields[0] != "c3x" {
+			continue
+		}
+		if !registered[fields[1]] {
+			t.Fatalf("hint references unregistered c3x command %q: %+v", fields[1], hint)
+		}
+	}
+}
+
 func TestRunLookup_AgentTOONIncludesCascadeHints(t *testing.T) {
-	s, _ := createLookupFixture(t)
-	s.SetCodeMap("c3-101", []string{"src/auth/login.ts"})
+	s, c3Dir := createLookupFixture(t)
+	bindCode(t, c3Dir, "c3-101", "src/auth/login.ts")
 	t.Setenv("C3X_MODE", "agent")
 
 	var buf bytes.Buffer
-	if err := RunLookup(LookupOptions{Store: s, FilePath: "src/auth/login.ts", JSON: true}, &buf); err != nil {
+	if err := RunLookup(LookupOptions{Store: s, FilePath: "src/auth/login.ts", JSON: true, C3Dir: c3Dir}, &buf); err != nil {
 		t.Fatal(err)
 	}
 
 	requireAll(t, buf.String(),
-		"help:",
+		"help[",
 		"c3x read c3-101",
 		"c3x read c3-1",
 		"c3x graph c3-1 --format mermaid",
@@ -44,7 +76,7 @@ func TestRunRead_ComponentAgentTOONIncludesCascadeHints(t *testing.T) {
 	}
 
 	requireAll(t, buf.String(),
-		"help:",
+		"help[",
 		"c3x read c3-1",
 		"Parent Delta",
 	)
@@ -128,7 +160,7 @@ func TestRunCheck_AgentTOONIncludesCascadeReviewHint(t *testing.T) {
 	}
 
 	requireAll(t, buf.String(),
-		"help:",
+		"help[",
 		"cascade review",
 		"c3x check --only <id>",
 		"Parent Delta",

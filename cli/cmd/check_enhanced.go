@@ -43,10 +43,6 @@ type CheckOptions struct {
 	Fix        bool
 	Only       []string
 	Rules      []string
-	// StrictCodemap promotes the change-unit codemap introspection (external binding
-	// verification) from WARN to error. Off by default: an unresolved external
-	// binding is reported, not gated.
-	StrictCodemap bool
 }
 
 // buildTitleMapStore creates a case-insensitive title/slug -> entity ID lookup.
@@ -110,7 +106,7 @@ func resolveRuleCiters(s *store.Store, ruleIDs []string) ([]string, error) {
 			ids = append(ids, r.FromID)
 		}
 		if !found {
-			return nil, fmt.Errorf("rule %s has no citers. Wire one with: c3x wire <component> %s\nOr check a different rule.", ruleID, ruleID)
+			return nil, fmt.Errorf("error: rule %s has no citers\nhint: add a component citation through a change-unit: c3x change new <adr-id>; then author the rule id in an edge-marked component reference column, apply the unit, and rerun c3x check --rule %s", ruleID, ruleID)
 		}
 	}
 	sort.Strings(ids)
@@ -122,7 +118,6 @@ func hintFor(message string) string {
 		substr string
 		hint   string
 	}{
-		{"code-map parse error", "check code-map entries with 'c3x list'"},
 		{"missing required section", ""},
 		{"empty required section", ""},
 		{"empty required table", "add at least one data row below the table headers"},
@@ -180,26 +175,6 @@ func formatCounts(errors, warnings int) string {
 	return strings.Join(parts, ", ")
 }
 
-func checkRecipeSourcesStore(s *store.Store) []Issue {
-	var issues []Issue
-	recipes, _ := s.EntitiesByType("recipe")
-	for _, r := range recipes {
-		rels, _ := s.RelationshipsFrom(r.ID)
-		for _, rel := range rels {
-			if rel.RelType == "sources" {
-				if _, err := s.GetEntity(rel.ToID); err != nil {
-					issues = append(issues, Issue{
-						Severity: "warning",
-						Entity:   r.ID,
-						Message:  fmt.Sprintf("recipe references nonexistent entity: %s", rel.ToID),
-					})
-				}
-			}
-		}
-	}
-	return issues
-}
-
 func checkProjectCanvases(c3Dir string) []Issue {
 	if c3Dir == "" {
 		return nil
@@ -248,6 +223,15 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 	sort.Slice(entities, func(i, j int) bool {
 		return entities[i].ID < entities[j].ID
 	})
+
+	// `check --fix` heals membership by construction: reconcile every parent's table
+	// from its children's parent: edges, so a disconnect left by any path (a direct
+	// `c3 add`, a hand-edit) is repaired, not merely reported below.
+	if opts.Fix {
+		if err := healMembership(opts.Store, opts.C3Dir); err != nil {
+			return err
+		}
+	}
 
 	if len(opts.Rules) > 0 {
 		ruleCiters, err := resolveRuleCiters(opts.Store, opts.Rules)
@@ -299,38 +283,20 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 		// `check --fix` performs the flip. On a committed flip the doc is now
 		// terminal/frozen, so its discharge is not re-validated this pass.
 		if schema.IsChangeDocDir(opts.C3Dir, entity.Type) && entity.Status == "accepted" {
-			// External matching arm (double-V right side): verify the unit's affected
-			// code bindings still resolve. Runs BEFORE the latch so it reports even
-			// when the doc auto-dones this pass.
-			codemapIssues := codemapIntrospection(opts.Store, opts.ProjectDir, body, opts.StrictCodemap)
-			issues = append(issues, codemapIssues...)
-			// Under --strict-codemap an unresolved external binding is a GATE on done:
-			// the doc may not actualize accepted->done while a declared code binding does
-			// not resolve, exactly as an unresolved internal After-cite blocks it. Without
-			// --strict it is WARN-only and the flip proceeds.
-			strictBlocked := opts.StrictCodemap && hasErrorSeverity(codemapIssues)
-			if ready, _ := autoDoneLatch(opts.Store, opts.C3Dir, entity, body, opts.Fix && !strictBlocked); ready {
-				switch {
-				case strictBlocked:
-					issues = append(issues, Issue{
-						Severity: "warning",
-						Entity:   entity.ID,
-						Message:  fmt.Sprintf("%s is ready to auto-done but --strict-codemap blocks it until every declared code binding resolves", entity.ID),
-					})
-				case opts.Fix:
+			if ready, _ := autoDoneLatch(opts.Store, opts.C3Dir, entity, body, opts.Fix); ready {
+				if opts.Fix {
 					issues = append(issues, Issue{
 						Severity: "info",
 						Entity:   entity.ID,
 						Message:  fmt.Sprintf("auto-done: all After cites resolved fresh; %s actualized accepted->done", entity.ID),
 					})
 					continue
-				default:
-					issues = append(issues, Issue{
-						Severity: "info",
-						Entity:   entity.ID,
-						Message:  fmt.Sprintf("%s ready to auto-done: all After cites resolve fresh; run 'c3x check --fix' to actualize accepted->done", entity.ID),
-					})
 				}
+				issues = append(issues, Issue{
+					Severity: "info",
+					Entity:   entity.ID,
+					Message:  fmt.Sprintf("%s ready to auto-done: all After cites resolve fresh; run 'c3x check --fix' to actualize accepted->done", entity.ID),
+				})
 			}
 		}
 
@@ -376,6 +342,9 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 					continue
 				}
 				if len(table.Rows) == 0 {
+					if isToolMaintainedTable(entity.Type, schemaDef.Name) {
+						continue // membership table — the reconciler owns its rows
+					}
 					issues = append(issues, Issue{
 						Severity: "warning",
 						Entity:   entity.ID,
@@ -476,52 +445,12 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 		}
 	}
 
-	// Code-map validation
-	allCodeMap, err := opts.Store.AllCodeMap()
-	if err == nil && len(allCodeMap) > 0 && opts.ProjectDir != "" {
-		for entityID, patterns := range allCodeMap {
-			entity, err := opts.Store.GetEntity(entityID)
-			if err != nil {
-				if len(opts.Only) > 0 {
-					continue
-				}
-				issues = append(issues, Issue{
-					Severity: "warning",
-					Entity:   entityID,
-					Message:  fmt.Sprintf("code-map entity %s not found in store", entityID),
-				})
-				continue
-			}
-			if !targetMatcher.matches(entity) {
-				continue
-			}
-			if entity.Type != "component" && entity.Type != "ref" && entity.Type != "rule" {
-				issues = append(issues, Issue{
-					Severity: "warning",
-					Entity:   entityID,
-					Message:  fmt.Sprintf("code-map: %s is not a component or ref", entityID),
-				})
-			}
-			for _, p := range patterns {
-				if p == "" {
-					issues = append(issues, Issue{
-						Severity: "warning",
-						Entity:   entityID,
-						Message:  "empty path in code-map",
-					})
-				}
-			}
-		}
-	}
-
 	if len(opts.Only) == 0 {
 		issues = append(issues, checkProjectCanvases(opts.C3Dir)...)
-		issues = append(issues, checkRecipeSourcesStore(opts.Store)...)
 		issues = append(issues, checkLayerDisconnectsStore(opts.Store)...)
 		issues = append(issues, checkFactSealsOnDisk(opts.C3Dir)...)
 	} else {
 		issues = append(issues, checkProjectCanvasesForTargets(opts.C3Dir, opts.Only)...)
-		issues = append(issues, filterIssuesByTargets(opts.Store, targetMatcher, checkRecipeSourcesStore(opts.Store))...)
 		issues = append(issues, filterIssuesByTargets(opts.Store, targetMatcher, checkLayerDisconnectsStore(opts.Store))...)
 		issues = append(issues, filterIssuesByTargets(opts.Store, targetMatcher, checkFactSealsOnDisk(opts.C3Dir))...)
 	}
@@ -580,7 +509,7 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 			return err
 		}
 		if errors, _ := countSeverities(result.Issues); errors > 0 {
-			return fmt.Errorf("check failed: %d error(s)", errors)
+			return fmt.Errorf("error: check failed: %d error(s)\nhint: fix the listed issue(s), then rerun c3x check", errors)
 		}
 		return nil
 	}
@@ -614,7 +543,7 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 	writeAgentHints(w, cascadeReviewHints())
 
 	if errors > 0 {
-		return fmt.Errorf("check failed: %d error(s)", errors)
+		return fmt.Errorf("error: check failed: %d error(s)\nhint: fix the listed issue(s), then rerun c3x check", errors)
 	}
 	return nil
 }
@@ -837,7 +766,7 @@ func validateColumn(col schema.ColumnDef, table *markdown.Table, entity *store.E
 	case "entity_id":
 		for _, row := range table.Rows {
 			val := strings.TrimSpace(row[col.Name])
-			if val == "" {
+			if val == "" || isNAReason(val) {
 				continue
 			}
 			if _, err := opts.Store.GetEntity(val); err != nil {
@@ -858,28 +787,38 @@ func validateColumn(col schema.ColumnDef, table *markdown.Table, entity *store.E
 			if val == "" || isNAReason(val) {
 				continue
 			}
-			refs := entityRefPattern.FindAllString(val, -1)
-			if len(refs) == 0 {
+			// Grounded if any token resolves to a real entity — ANY id shape,
+			// builtin or custom-type. An edge column wires by resolution, so a
+			// hardcoded builtin-id pattern would falsely flag a cite to a custom-
+			// canvas fact (a requirement/objective/design-token id) as ungrounded.
+			grounded := false
+			for _, tok := range referenceTokens(val) {
+				if _, err := opts.Store.GetEntity(tok); err == nil {
+					grounded = true
+					break
+				}
+			}
+			// Ground by RESOLUTION, never by an id-SHAPE pattern. The column type
+			// already declares "this cell holds a reference"; the store is the sole
+			// authority on which ids exist — for any id, builtin or custom-canvas. A
+			// shape regex can only hardcode a closed set of prefixes, so it must
+			// false-flag the open set of custom types: a cite it cannot match (a
+			// requirement/design-token id) or one whose tail merely CONTAINS a builtin
+			// prefix (`a11y-rule-foo`). Resolution has neither failure mode.
+			if !grounded {
+				msg := fmt.Sprintf("ungrounded reference in %s: %s", col.Name, val)
+				for _, tok := range referenceTokens(val) {
+					if suggested := suggestByTitle(tok, titleMap); suggested != "" {
+						msg += fmt.Sprintf(" (did you mean %s?)", suggested)
+						break
+					}
+				}
 				issues = append(issues, Issue{
 					Severity: "warning",
 					Entity:   entity.ID,
-					Message:  fmt.Sprintf("ungrounded reference in %s: %s", col.Name, val),
+					Message:  msg,
 					Hint:     "use an entity id or N.A - <reason>",
 				})
-				continue
-			}
-			for _, ref := range refs {
-				if _, err := opts.Store.GetEntity(ref); err != nil {
-					msg := fmt.Sprintf("unknown entity reference: %s", ref)
-					if suggested := suggestByTitle(ref, titleMap); suggested != "" {
-						msg = fmt.Sprintf("unknown entity reference: %s (did you mean %s?)", ref, suggested)
-					}
-					issues = append(issues, Issue{
-						Severity: "warning",
-						Entity:   entity.ID,
-						Message:  msg,
-					})
-				}
 			}
 		}
 	case "evidence":
@@ -1050,4 +989,21 @@ func validateCitationColumnValue(raw string, entity *store.Entity, opts CheckOpt
 		Message:  fmt.Sprintf("citation to %s has stale node hash or snippet", citedEntity),
 		Hint:     fmt.Sprintf("refresh the handle with c3x read %s --cite", citedEntity),
 	}}
+}
+
+// referenceTokens splits a reference-cell value into candidate entity-id tokens —
+// reference columns name ids (one, or comma/space/pipe separated), so each is
+// resolved directly, making grounding work for any id shape (builtin or custom-type).
+func referenceTokens(val string) []string {
+	raw := strings.FieldsFunc(val, func(r rune) bool {
+		return r == ' ' || r == '\t' || r == ',' || r == '|' || r == ';' || r == '\n'
+	})
+	var out []string
+	for _, f := range raw {
+		f = strings.Trim(f, "`\"'()[]")
+		if f != "" {
+			out = append(out, f)
+		}
+	}
+	return out
 }

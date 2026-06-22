@@ -84,11 +84,6 @@ func runWithIO(argv []string, stdin io.Reader, stdinTerminal bool, w io.Writer, 
 		return nil
 	}
 
-	// marketplace is special — uses ~/.c3/marketplace/, no .c3/ needed
-	if opts.Command == "marketplace" {
-		return runMarketplace(opts, w)
-	}
-
 	// All other commands need a .c3/ directory
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -103,10 +98,8 @@ func runWithIO(argv []string, stdin io.Reader, stdinTerminal bool, w io.Writer, 
 		return runGit(opts, config.ProjectDir(c3Dir), c3Dir, w)
 	}
 
-	// Plain `check` (no --fix, no --rules, no --strict-codemap) takes the lightweight
-	// verify path. --strict-codemap must reach RunCheckV2, where the codemap
-	// introspection (and its gate) lives — otherwise the strict flag would be a no-op.
-	if opts.Command == "check" && !opts.Fix && len(opts.Rules) == 0 && !opts.StrictCodemap {
+	// Plain `check` (no --fix, no --rules) takes the lightweight verify path.
+	if opts.Command == "check" && !opts.Fix && len(opts.Rules) == 0 {
 		return cmd.RunVerify(cmd.VerifyOptions{C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: opts.Only}, w)
 	}
 
@@ -265,9 +258,6 @@ func hasCanonicalDocs(c3Dir string) bool {
 	if fileExists(filepath.Join(c3Dir, "README.md")) {
 		return true
 	}
-	if fileExists(filepath.Join(c3Dir, "code-map.yaml")) {
-		return true
-	}
 	matches, err := filepath.Glob(filepath.Join(c3Dir, "adr", "*.md"))
 	if err == nil && len(matches) > 0 {
 		return true
@@ -280,54 +270,8 @@ func hasCanonicalDocs(c3Dir string) bool {
 	if err == nil && len(matches) > 0 {
 		return true
 	}
-	matches, err = filepath.Glob(filepath.Join(c3Dir, "recipes", "*.md"))
-	if err == nil && len(matches) > 0 {
-		return true
-	}
 	matches, err = filepath.Glob(filepath.Join(c3Dir, "c3-*", "README.md"))
 	return err == nil && len(matches) > 0
-}
-
-// runMarketplace handles the marketplace subcommands.
-func runMarketplace(opts cmd.Options, w io.Writer) error {
-	subCmd := ""
-	if len(opts.Args) >= 1 {
-		subCmd = opts.Args[0]
-	}
-	mOpts := cmd.MarketplaceOptions{
-		JSON:         opts.JSON,
-		JSONExplicit: opts.JSONExplicit,
-		Tag:          opts.Tag,
-	}
-	if len(opts.Args) >= 2 {
-		switch subCmd {
-		case "add":
-			mOpts.URL = opts.Args[1]
-		case "show":
-			mOpts.RuleID = opts.Args[1]
-		case "remove", "update":
-			mOpts.SourceName = opts.Args[1]
-		}
-	}
-	if opts.Source != "" {
-		mOpts.SourceName = opts.Source
-	}
-
-	switch subCmd {
-	case "add":
-		return cmd.RunMarketplaceAdd(mOpts, w)
-	case "list":
-		return cmd.RunMarketplaceList(mOpts, w)
-	case "show":
-		return cmd.RunMarketplaceShow(mOpts, w)
-	case "update":
-		return cmd.RunMarketplaceUpdate(mOpts, w)
-	case "remove":
-		return cmd.RunMarketplaceRemove(mOpts, w)
-	default:
-		cmd.ShowHelp("marketplace", w)
-		return nil
-	}
 }
 
 func runThroughCoordinator(argv []string, stdin io.Reader, stdinTerminal bool, c3Dir string, w io.Writer, stderr io.Writer) error {
@@ -349,7 +293,7 @@ func runThroughCoordinator(argv []string, stdin io.Reader, stdinTerminal bool, c
 	if resp, handled, err := coord.TryForward(c3Dir, req); handled {
 		writeCoordinatorResponse(resp, w, stderr)
 		if resp.Error != "" {
-			return fmt.Errorf("%s", resp.Error)
+			return fmt.Errorf("%s\nhint: fix the queued command error above, then rerun the same C3 command", resp.Error)
 		}
 		return err
 	}
@@ -364,20 +308,20 @@ func runThroughCoordinator(argv []string, stdin io.Reader, stdinTerminal bool, c
 			})
 			writeCoordinatorResponse(resp, w, stderr)
 			if resp.Error != "" {
-				return fmt.Errorf("%s", resp.Error)
+				return fmt.Errorf("%s\nhint: fix the queued command error above, then rerun the same C3 command", resp.Error)
 			}
 			return nil
 		}
 		if resp, handled, retryErr := coord.ForwardWithRetry(c3Dir, req, 2*time.Second); handled {
 			writeCoordinatorResponse(resp, w, stderr)
 			if resp.Error != "" {
-				return fmt.Errorf("%s", resp.Error)
+				return fmt.Errorf("%s\nhint: fix the queued command error above, then rerun the same C3 command", resp.Error)
 			}
 			return retryErr
 		}
 		if err == coord.ErrBusy {
 			if time.Now().After(deadline) {
-				return fmt.Errorf("error: write coordinator busy for %s", c3Dir)
+				return fmt.Errorf("error: write coordinator busy for %s\nhint: wait for the active C3 mutation to finish, then rerun the same command", c3Dir)
 			}
 			time.Sleep(25 * time.Millisecond)
 			continue
@@ -452,15 +396,14 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 			return fmt.Errorf("%w\nhint: run c3x check again after resolving", err)
 		}
 		err = cmd.RunCheckV2(cmd.CheckOptions{
-			Store:         s,
-			JSON:          opts.JSON,
-			ProjectDir:    projectDir,
-			C3Dir:         c3Dir,
-			IncludeADR:    opts.IncludeADR,
-			Fix:           opts.Fix,
-			Only:          opts.Only,
-			Rules:         opts.Rules,
-			StrictCodemap: opts.StrictCodemap,
+			Store:      s,
+			JSON:       opts.JSON,
+			ProjectDir: projectDir,
+			C3Dir:      c3Dir,
+			IncludeADR: opts.IncludeADR,
+			Fix:        opts.Fix,
+			Only:       opts.Only,
+			Rules:      opts.Rules,
 		}, w)
 	case "read":
 		entityID := ""
@@ -486,8 +429,6 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 		err = runAdd(opts, s, c3Dir, stdin, stdinTerminal, w)
 	case "set":
 		err = runSet(opts, s, c3Dir, stdin, stdinTerminal, w)
-	case "wire":
-		err = runWire(opts, s, w)
 	case "lookup":
 		if len(opts.Args) < 1 {
 			return fmt.Errorf("error: lookup requires a <file-path> argument\nhint: run 'c3x lookup --help' for usage")
@@ -516,24 +457,24 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 		}, w)
 	case "index":
 		err = cmd.RunSemanticIndex(cmd.SemanticIndexOptions{Store: s, JSON: opts.JSON}, w)
-	case "codemap":
-		err = cmd.RunCodemap(cmd.CodemapOptions{Store: s, JSON: opts.JSON}, w)
+	case "eval":
+		only := ""
+		if len(opts.Args) >= 1 {
+			only = opts.Args[0]
+		}
+		err = cmd.RunEval(cmd.EvalOptions{
+			Store:      s,
+			ProjectDir: projectDir,
+			C3Dir:      c3Dir,
+			JSON:       opts.JSON,
+			Only:       only,
+		}, w)
 	case "schema":
 		entityType := ""
 		if len(opts.Args) >= 1 {
 			entityType = opts.Args[0]
 		}
-		err = cmd.RunSchemaWithOptions(cmd.SchemaOptions{EntityType: entityType, JSON: opts.JSON, C3Dir: c3Dir, Template: opts.Template}, w)
-	case "template":
-		sub := "list"
-		id := ""
-		if len(opts.Args) >= 1 {
-			sub = opts.Args[0]
-		}
-		if len(opts.Args) >= 2 {
-			id = opts.Args[1]
-		}
-		err = cmd.RunTemplate(cmd.TemplateOptions{C3Dir: c3Dir, JSON: opts.JSONExplicit, Sub: sub, ID: id, Body: stdin, StdinTerminal: stdinTerminal}, w)
+		err = cmd.RunSchemaWithOptions(cmd.SchemaOptions{EntityType: entityType, JSON: opts.JSON, C3Dir: c3Dir}, w)
 	case "canvas":
 		sub := "list"
 		id := ""
@@ -555,7 +496,7 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 		err = cmd.RunGraph(cmd.GraphOptions{
 			Store: s, EntityID: entityID, Depth: opts.Depth,
 			Direction: opts.Direction, Format: opts.Format,
-			JSON: opts.JSON, C3Dir: c3Dir,
+			JSON: opts.JSON, C3Dir: c3Dir, Unit: opts.Unit,
 		}, w)
 	case "delete":
 		id := ""
@@ -636,10 +577,7 @@ func commandMutatesCanonical(opts cmd.Options) bool {
 			return true
 		}
 		return false
-	case "write", "add", "set", "wire", "delete", "repair", "template", "canvas":
-		if opts.Command == "template" && !(len(opts.Args) > 0 && (opts.Args[0] == "add" || opts.Args[0] == "write")) {
-			return false
-		}
+	case "write", "add", "set", "delete", "repair", "canvas":
 		if opts.Command == "canvas" && !(len(opts.Args) > 0 && (opts.Args[0] == "add" || opts.Args[0] == "write")) {
 			return false
 		}
@@ -670,14 +608,14 @@ func runAdd(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader, std
 	}
 
 	if opts.DryRun {
-		return cmd.RunAddDryRunWithTemplate(entityType, slug, s, opts.Container, opts.Feature, opts.Template, c3Dir, stdin, w)
+		return cmd.RunAddDryRunInDir(entityType, slug, s, opts.Container, opts.Feature, c3Dir, stdin, w)
 	}
 
 	format := cmd.FormatHuman
 	if opts.JSON {
 		format = cmd.ResolveFormat(opts.JSONExplicit, os.Getenv("C3X_MODE") == "agent")
 	}
-	return cmd.RunAddFormattedWithTemplate(entityType, slug, s, opts.Container, opts.Feature, opts.Template, c3Dir, stdin, w, format)
+	return cmd.RunAddFormattedInDir(entityType, slug, s, opts.Container, opts.Feature, c3Dir, stdin, w, format)
 }
 
 func runSet(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader, stdinTerminal bool, w io.Writer) error {
@@ -697,41 +635,10 @@ func runSet(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader, std
 
 func commandAcceptsFile(cmd string) bool {
 	switch cmd {
-	case "write", "add", "set", "template", "canvas":
+	case "write", "add", "set", "canvas":
 		return true
 	}
 	return false
-}
-
-func runWire(opts cmd.Options, s *store.Store, w io.Writer) error {
-	if len(opts.Args) < 2 {
-		return fmt.Errorf("error: usage: c3x wire <source> <target> [target2 ...]\nhint: c3x wire c3-101 ref-jwt ref-error-handling")
-	}
-
-	source := opts.Args[0]
-	var targets []string
-	relation := ""
-
-	// Check if second arg is a relation type
-	if len(opts.Args) >= 3 && opts.Args[1] == "cite" {
-		relation = opts.Args[1]
-		targets = opts.Args[2:]
-	} else {
-		targets = opts.Args[1:]
-	}
-
-	for _, target := range targets {
-		if opts.Remove {
-			if err := cmd.RunUnwire(s, source, relation, target, w); err != nil {
-				return err
-			}
-		} else {
-			if err := cmd.RunWire(s, source, relation, target, w); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
 }
 
 func runNoArgs(opts cmd.Options, w io.Writer) error {

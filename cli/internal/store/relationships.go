@@ -10,19 +10,14 @@ type Relationship struct {
 }
 
 // AddRelationship inserts a relationship, ignoring duplicates.
-// Only logs when a new row is actually inserted.
 func (s *Store) AddRelationship(r *Relationship) error {
-	res, err := s.exec.Exec(`
+	_, err := s.exec.Exec(`
 		INSERT OR IGNORE INTO relationships (from_id, to_id, rel_type)
 		VALUES (?, ?, ?)`,
 		r.FromID, r.ToID, r.RelType,
 	)
 	if err != nil {
 		return fmt.Errorf("add relationship: %w", err)
-	}
-	n, _ := res.RowsAffected()
-	if n > 0 {
-		s.logChange(r.FromID, "add_rel", "", "", r.ToID+":"+r.RelType)
 	}
 	return nil
 }
@@ -37,7 +32,6 @@ func (s *Store) RemoveRelationship(r *Relationship) error {
 	if err != nil {
 		return fmt.Errorf("remove relationship: %w", err)
 	}
-	s.logChange(r.FromID, "remove_rel", "", r.ToID+":"+r.RelType, "")
 	return nil
 }
 

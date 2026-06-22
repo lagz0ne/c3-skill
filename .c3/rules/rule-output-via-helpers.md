@@ -1,42 +1,27 @@
 ---
 id: rule-output-via-helpers
-c3-version: 4
-c3-seal: 913627f9b1ef2613fc80ecd2e04bac23864e1724d09a139579851c49f4214c26
+c3-seal: eb7b1eff71106e4cb249f548f67e8538c83c35143d140eb942e892a6c0bdc6cf
 title: output-via-helpers
 type: rule
-goal: All command results serialize through one output layer so agent mode always yields TOON and human/JSON formats stay consistent across commands.
-origin:
-    - adr-20260415-agent-mode-toon-only
-    - adr-20260415-force-agent-toon-output
+goal: 'Keep machine output uniform: one place decides TOON vs JSON and honors agent mode, so every command speaks the same serialization.'
 ---
 
 # output-via-helpers
 
 ## Goal
 
-All command results serialize through one output layer so agent mode always yields TOON and human/JSON formats stay consistent across commands.
+Keep machine output uniform: one place decides TOON vs JSON and honors agent mode, so every command speaks the same serialization.
 
 ## Rule
 
-Commands must emit results via `WriteTableOutput`/`WriteObjectOutput` with a format from `ResolveFormat` — never call `json.Marshal` or `fmt.Fprintf` to serialize a result directly.
+A command's structured result serializes through the shared output helpers — `WriteTableOutput` for a tabular dataset, `WriteObjectOutput` for a single object — never a hand-rolled `fmt.Print` of the data. The helpers own the format switch: agent mode and the default both emit TOON, an explicit `--json` outside agent mode emits JSON, and help hints attach only in agent mode. `fmt.Fprint` is for the prose/human path and for emitting the helper's already-formatted output, not for re-implementing serialization at a call site.
 
 ## Golden Example
 
 ```go
-// cli/cmd/output.go - format resolution + the shared table writer
-func ResolveFormat(jsonExplicit bool, agent bool) OutputFormat {
-	if agent {
-		return FormatTOON // REQUIRED: agent mode is always TOON
-	}
-	if jsonExplicit {
-		return FormatJSON // REQUIRED: explicit JSON remains non-agent compatibility
-	}
-	return FormatTOON // REQUIRED: default structured output is TOON
-}
-
-// WriteTableOutput writes a tabular dataset with optional help hints.
+// WriteObjectOutput writes a single object with optional help hints.
 // JSON is explicit compatibility; every other structured format uses TOON.
-func WriteTableOutput(w io.Writer, label string, data any, fields []string, format OutputFormat, hints []HelpHint) error {
+func WriteObjectOutput(w io.Writer, data any, format OutputFormat, hints []HelpHint) error {
 	switch format {
 	case FormatJSON:
 		if err := writeJSON(w, data); err != nil {
@@ -45,7 +30,7 @@ func WriteTableOutput(w io.Writer, label string, data any, fields []string, form
 		writeHints(w, hints)
 		return nil
 	default:
-		out, err := toon.MarshalTable(label, data, fields) // REQUIRED: TOON path goes through the shared marshaller
+		out, err := toon.MarshalObject(data)
 		if err != nil {
 			return err
 		}
@@ -60,18 +45,5 @@ func WriteTableOutput(w io.Writer, label string, data any, fields []string, form
 
 | Anti-Pattern | Correct | Why Wrong Here |
 | --- | --- | --- |
-| json.NewEncoder(w).Encode(result) in a command | WriteObjectOutput(w, result, format, hints) | A command-local encoder bypasses ResolveFormat, so C3X_MODE=agent no longer yields TOON — the exact regression adr-20260415-agent-mode-toon-only exists to prevent. |
-
-## Scope
-
-**Applies to:**
-
-- c3-108 (runtime-support) and every command component that emits results to stdout.
-
-**Does NOT apply to:**
-
-- Diagnostic `fmt.Fprintln(stderr, ...)` warnings, which are not result payloads.
-
-## Override
-
-A command needing a non-TOON/JSON artifact (e.g. mermaid from `graph`) may write its own format, but must still route structured result data through the shared helpers.
+| fmt.Fprintf(w, "%s: %s\n", row.ID, row.Name) to emit a result set | WriteTableOutput(w, "items", rows, fields, format, hints) | A bespoke format ignores the TOON/JSON switch and agent mode, so two commands drift into two machine formats. |
+| json.NewEncoder(w).Encode(data) directly in a handler | Route through WriteObjectOutput / writeJSON, which apply agent-mode TOON | Encoding inline bypasses agent-mode TOON and the help-hint attachment the helpers centralize. |

@@ -21,7 +21,7 @@ func writeAgentHints(w io.Writer, hints []HelpHint) {
 func cascadeReviewHints() []HelpHint {
 	return []HelpHint{
 		{Command: "cascade review", Description: "for each changed component, record ADR Parent Delta: updated or no-delta with evidence"},
-		{Command: "c3x diff", Description: "find component-only deltas before declaring docs synced"},
+		{Command: "git diff --name-only -- . ':(exclude).c3/c3.db'", Description: "find changed files before declaring docs synced"},
 		{Command: "c3x check --only <id>", Description: "prove focused docs while unrelated branch docs or ADRs are still in progress"},
 		{Command: "c3x check", Description: "structural pass; still prove Parent Delta evidence"},
 	}

@@ -31,7 +31,7 @@ func RunSchemaWithOptions(opts SchemaOptions, w io.Writer) error {
 	entityType := opts.EntityType
 	def, ok := schema.DefinitionForDir(opts.C3Dir, entityType)
 	if !ok {
-		return fmt.Errorf("unknown entity type: %q", entityType)
+		return fmt.Errorf("error: unknown entity type: %q\nhint: run c3x canvas list to see available entity types", entityType)
 	}
 	sections := def.Sections
 

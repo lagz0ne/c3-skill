@@ -24,7 +24,7 @@ type SetOptions struct {
 func RunSet(opts SetOptions, w io.Writer) error {
 	entity, err := opts.Store.GetEntity(opts.ID)
 	if err != nil {
-		return fmt.Errorf("entity %q not found", opts.ID)
+		return fmt.Errorf("error: entity %q not found\nhint: run c3x search %q or c3x list --flat to find the current id", opts.ID, opts.ID)
 	}
 	return runSetField(entity, opts, w)
 }
@@ -84,7 +84,7 @@ func runSetField(entity *store.Entity, opts SetOptions, w io.Writer) error {
 	case "date":
 		entity.Date = opts.Value
 	default:
-		return fmt.Errorf("unknown field %q", opts.Field)
+		return fmt.Errorf("error: unknown field %q\nhint: set one of goal, status, boundary, category, title, or date", opts.Field)
 	}
 
 	if err := opts.Store.UpdateEntity(entity); err != nil {

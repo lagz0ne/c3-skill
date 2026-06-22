@@ -21,10 +21,10 @@ import (
 
 // Spec is one fact's eval pipeline, loaded from .c3/eval/<fact>.yaml.
 type Spec struct {
-	Fact  string   `yaml:"fact"`
-	Claim string   `yaml:"claim"`
-	Code  []string `yaml:"code"` // the fact→code binding (lookup + a default resolve check)
-	Pipeline []Step `yaml:"pipeline"`
+	Fact     string   `yaml:"fact"`
+	Claim    string   `yaml:"claim"`
+	Code     []string `yaml:"code"` // the fact→code binding (lookup + a default resolve check)
+	Pipeline []Step   `yaml:"pipeline"`
 }
 
 // Step is exactly one of the five ops (the others nil).
@@ -93,14 +93,26 @@ type Engine struct {
 	FactIDs      []string        // every entity id, for gather: facts
 }
 
-// Run evaluates one spec to a Verdict. A spec with `code:` and no pipeline gets a
-// default per-glob resolve check (every declared glob must resolve to ≥1 file).
+// Run evaluates one spec to a Verdict. The code: binding is a precondition guard:
+// it must resolve before any pipeline is trusted, so a vanished code surface drifts
+// rather than letting a vacuous pipeline (e.g. count == 0 over nothing) read as holds.
 func (e *Engine) Run(spec Spec) Verdict {
-	pipeline := spec.Pipeline
-	if len(pipeline) == 0 && len(spec.Code) > 0 {
-		pipeline = resolvePipeline(spec.Code)
+	// Guard: the declared code surface must resolve. If it does not, the fact has
+	// drifted — and a downstream pipeline must not be trusted to pass vacuously: an
+	// empty gather over a renamed/deleted path would otherwise read as "holds".
+	if len(spec.Code) > 0 {
+		guard := e.run(spec, resolvePipeline(spec.Code), "")
+		if guard.Verdict != "holds" {
+			return guard
+		}
+		if len(spec.Pipeline) == 0 {
+			return guard
+		}
 	}
-	return e.run(spec, pipeline, "")
+	if len(spec.Pipeline) == 0 {
+		return drift(spec, "spec declares neither a code: binding nor a pipeline")
+	}
+	return e.run(spec, spec.Pipeline, "")
 }
 
 func resolvePipeline(globs []string) []Step {
@@ -208,10 +220,19 @@ func (e *Engine) exec(command string) ([]string, error) {
 	c.Dir = e.ProjectDir
 	out, err := c.Output()
 	if err != nil {
-		// A non-zero exit is not a failure — grep/find/jq routinely exit 1 on
-		// "no match", which is a legitimately empty gather. Only a real exec
-		// failure (command can't start) is an error; otherwise use the stdout.
-		if _, isExit := err.(*exec.ExitError); !isExit {
+		// Exit 1 is a common "no match" signal from grep-like tools and is a
+		// legitimately empty gather. Exit 2+ is a command failure; treating it
+		// as empty lets broken paths and bad regexes pass count == 0 checks.
+		if exitErr, isExit := err.(*exec.ExitError); isExit {
+			if exitErr.ExitCode() == 1 {
+				return splitLines(string(out)), nil
+			}
+			stderr := strings.TrimSpace(string(exitErr.Stderr))
+			if stderr != "" {
+				return nil, fmt.Errorf("command %q exited %d: %s", command, exitErr.ExitCode(), stderr)
+			}
+			return nil, fmt.Errorf("command %q exited %d", command, exitErr.ExitCode())
+		} else {
 			return nil, fmt.Errorf("command %q: %w", command, err)
 		}
 	}

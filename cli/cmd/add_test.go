@@ -561,6 +561,9 @@ func TestRunAdd_RefDuplicate(t *testing.T) {
 	if !strings.Contains(err.Error(), "already exists") {
 		t.Errorf("error = %v", err)
 	}
+	if !strings.Contains(err.Error(), "hint:") || !strings.Contains(err.Error(), "c3x read ref-jwt") {
+		t.Errorf("duplicate error should include actionable hint, got: %v", err)
+	}
 }
 
 func TestRunAdd_ComponentMissingContainer(t *testing.T) {
@@ -574,6 +577,23 @@ func TestRunAdd_ComponentMissingContainer(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "--container") {
 		t.Errorf("error = %v", err)
+	}
+}
+
+func TestRunAdd_ComponentUnknownContainerIncludesHint(t *testing.T) {
+	s, _ := createDBFixtureWithC3Dir(t)
+	var buf bytes.Buffer
+
+	body := strictComponentBody("test", "Documents test component behavior before creation.")
+	err := RunAdd("component", "test", s, "c3-99", false, strings.NewReader(body), &buf)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !strings.Contains(err.Error(), "container 'c3-99' not found") {
+		t.Errorf("error = %v", err)
+	}
+	if !strings.Contains(err.Error(), "hint:") || !strings.Contains(err.Error(), "c3x list --flat") {
+		t.Errorf("missing-container error should include actionable hint, got: %v", err)
 	}
 }
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Reverse Tornado OKR"
+  short_description: "Self-correcting OKR loop with guardrails"
+  default_prompt: "Use $reverse-tornado-okr to turn this goal into a measured loop with an anti-goal guardrail."

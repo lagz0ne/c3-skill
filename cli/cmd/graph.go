@@ -61,11 +61,11 @@ func RunGraph(opts GraphOptions, w io.Writer) error {
 	}
 
 	if _, err := opts.Store.GetEntity(opts.EntityID); err != nil {
-		return fmt.Errorf("entity %q not found", opts.EntityID)
+		return fmt.Errorf("error: entity %q not found\nhint: run c3x search %q or c3x list --flat to find the current id", opts.EntityID, opts.EntityID)
 	}
 
 	if opts.Direction != "" && opts.Direction != "forward" && opts.Direction != "reverse" {
-		return fmt.Errorf("--direction must be 'forward' or 'reverse', got %q", opts.Direction)
+		return fmt.Errorf("error: --direction must be 'forward' or 'reverse', got %q\nhint: use c3x graph %s --direction reverse or --direction forward", opts.Direction, opts.EntityID)
 	}
 
 	entities := collectSubgraphStore(opts.Store, opts.EntityID, opts.Depth, opts.Direction)

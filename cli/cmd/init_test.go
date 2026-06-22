@@ -95,6 +95,9 @@ func TestRunInitDB_FailsIfExists(t *testing.T) {
 	if !strings.Contains(err.Error(), "already exists") {
 		t.Errorf("error should mention 'already exists', got: %v", err)
 	}
+	if !strings.Contains(err.Error(), "hint:") || !strings.Contains(err.Error(), "c3x check") {
+		t.Errorf("error should include actionable hint, got: %v", err)
+	}
 }
 
 func TestRunInitDB_Output(t *testing.T) {

@@ -293,7 +293,7 @@ func runThroughCoordinator(argv []string, stdin io.Reader, stdinTerminal bool, c
 	if resp, handled, err := coord.TryForward(c3Dir, req); handled {
 		writeCoordinatorResponse(resp, w, stderr)
 		if resp.Error != "" {
-			return fmt.Errorf("%s", resp.Error)
+			return fmt.Errorf("%s\nhint: fix the queued command error above, then rerun the same C3 command", resp.Error)
 		}
 		return err
 	}
@@ -308,20 +308,20 @@ func runThroughCoordinator(argv []string, stdin io.Reader, stdinTerminal bool, c
 			})
 			writeCoordinatorResponse(resp, w, stderr)
 			if resp.Error != "" {
-				return fmt.Errorf("%s", resp.Error)
+				return fmt.Errorf("%s\nhint: fix the queued command error above, then rerun the same C3 command", resp.Error)
 			}
 			return nil
 		}
 		if resp, handled, retryErr := coord.ForwardWithRetry(c3Dir, req, 2*time.Second); handled {
 			writeCoordinatorResponse(resp, w, stderr)
 			if resp.Error != "" {
-				return fmt.Errorf("%s", resp.Error)
+				return fmt.Errorf("%s\nhint: fix the queued command error above, then rerun the same C3 command", resp.Error)
 			}
 			return retryErr
 		}
 		if err == coord.ErrBusy {
 			if time.Now().After(deadline) {
-				return fmt.Errorf("error: write coordinator busy for %s", c3Dir)
+				return fmt.Errorf("error: write coordinator busy for %s\nhint: wait for the active C3 mutation to finish, then rerun the same command", c3Dir)
 			}
 			time.Sleep(25 * time.Millisecond)
 			continue

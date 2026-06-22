@@ -33,18 +33,18 @@ var supersedeTerminalStatuses = map[string]bool{
 // successor or whether superseding is the right move.
 func RunSupersede(opts SupersedeOptions, w io.Writer) error {
 	if opts.NewID == "" || opts.OldID == "" {
-		return fmt.Errorf("error: usage: c3x supersede <new-id> <old-id>")
+		return fmt.Errorf("error: usage: c3x supersede <new-id> <old-id>\nhint: run c3x list --include-adr to choose the successor and terminal target ids")
 	}
 	if opts.NewID == opts.OldID {
-		return fmt.Errorf("error: cannot supersede %s with itself (cycle)", opts.OldID)
+		return fmt.Errorf("error: cannot supersede %s with itself (cycle)\nhint: pass a distinct successor id and old terminal doc id", opts.OldID)
 	}
 
 	if _, err := opts.Store.GetEntity(opts.NewID); err != nil {
-		return fmt.Errorf("error: successor %q not found", opts.NewID)
+		return fmt.Errorf("error: successor %q not found\nhint: run c3x search %q or c3x list --include-adr to find the successor id", opts.NewID, opts.NewID)
 	}
 	old, err := opts.Store.GetEntity(opts.OldID)
 	if err != nil {
-		return fmt.Errorf("error: target %q not found", opts.OldID)
+		return fmt.Errorf("error: target %q not found\nhint: run c3x search %q or c3x list --include-adr to find the terminal target id", opts.OldID, opts.OldID)
 	}
 
 	if !supersedeTerminalStatuses[old.Status] {
@@ -54,7 +54,7 @@ func RunSupersede(opts SupersedeOptions, w io.Writer) error {
 	// Cycle guard: walk the existing supersede chain reachable from OldID. If
 	// NewID is reachable, adding NewID -> OldID would close a cycle.
 	if supersedeReaches(opts.Store, opts.OldID, opts.NewID) {
-		return fmt.Errorf("error: cannot supersede %s with %s: would form a supersede cycle", opts.OldID, opts.NewID)
+		return fmt.Errorf("error: cannot supersede %s with %s: would form a supersede cycle\nhint: run c3x graph %s --direction forward to inspect the existing supersede chain", opts.OldID, opts.NewID, opts.OldID)
 	}
 
 	// Flip the old doc to superseded via the *->superseded edge; status is

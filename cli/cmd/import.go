@@ -58,7 +58,7 @@ func addRelSafe(s *store.Store, fromID, toID, relType string) error {
 		RelType: relType,
 	})
 	if err != nil {
-		return fmt.Errorf("relationship %s->%s (%s): %v", fromID, toID, relType, err)
+		return fmt.Errorf("error: relationship %s->%s (%s): %w", fromID, toID, relType, err)
 	}
 	return nil
 }
@@ -79,7 +79,7 @@ func RunImport(opts ImportOptions, w io.Writer) error {
 		return fmt.Errorf("error: walking %s: %w", c3Dir, err)
 	}
 	if len(result.Docs) == 0 {
-		return fmt.Errorf("error: no documents found in %s", c3Dir)
+		return fmt.Errorf("error: no documents found in %s\nhint: run c3x init to create .c3/, or pass --c3-dir to the existing C3 directory", c3Dir)
 	}
 	for _, warn := range result.Warnings {
 		fmt.Fprintf(w, "warning: skipping %s (failed to parse frontmatter)\n", warn.Path)

@@ -1,9 +1,9 @@
 fact: rule-dispatcher-error-hint
 claim: "user-facing CLI errors carry an actionable hint"
 code:
-  - cli/main.go
+  - cli/**/*.go
 pipeline:
   - gather:
-      command: "grep -rn 'fmt.Errorf(\"error:' cli/cmd/*.go cli/main.go | grep -v 'hint:' | grep -v _test.go | head -25"
+      command: "tmp=$(mktemp); (cd cli && go test ./cmd -run TestUserFacingErrorHints -count=1) >\"$tmp\" 2>&1; status=$?; if [ \"$status\" -ne 0 ]; then cat \"$tmp\"; rm -f \"$tmp\"; exit 2; fi; rm -f \"$tmp\""
   - eval:
-      judgement: "Each error above is constructed without an inline 'hint:'. Rule the run: are these legitimately exempt (internal/wrapped errors a user never sees), or are user-facing dispatcher errors missing the required hint? List any genuine miss."
+      count: "== 0"

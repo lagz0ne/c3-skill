@@ -145,6 +145,29 @@ func TestBDD_SearchHybridReturnsFTSAndGraphContext(t *testing.T) {
 	requireStringSliceContains(t, out.Results[0].MatchSources, "graph:uses:rule-trace-context")
 }
 
+func TestRunSearch_AgentTOONIncludesHelpHints(t *testing.T) {
+	s := createDBFixture(t)
+	seedHybridSearchFixture(t, s)
+	t.Setenv("C3X_MODE", "agent")
+
+	var buf bytes.Buffer
+	if err := RunSearch(SearchOptions{
+		Store:      s,
+		Query:      "pool wait",
+		NoSemantic: true,
+		JSON:       true,
+		Limit:      3,
+	}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	requireAll(t, buf.String(),
+		"help[",
+		"c3x read <id>",
+		"c3x graph <id>",
+	)
+}
+
 func TestSearch_HyphenatedNaturalLanguageQueryDoesNotReachFTSSyntax(t *testing.T) {
 	s := createDBFixture(t)
 	mustInsertEntity(t, s, &store.Entity{

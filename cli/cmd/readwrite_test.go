@@ -75,6 +75,9 @@ func TestRunRead_NotFound(t *testing.T) {
 	if err == nil {
 		t.Error("expected error for nonexistent entity")
 	}
+	if !strings.Contains(err.Error(), "hint:") || !strings.Contains(err.Error(), "c3x search") {
+		t.Errorf("not-found read should include actionable hint, got: %v", err)
+	}
 }
 
 func TestRunRead_NoID(t *testing.T) {
@@ -361,6 +364,9 @@ func TestRunWrite_NotFound(t *testing.T) {
 	err := RunWrite(WriteOptions{Store: s, ID: "c3-999", Content: "test"}, &buf)
 	if err == nil {
 		t.Error("expected error for nonexistent entity")
+	}
+	if !strings.Contains(err.Error(), "hint:") || !strings.Contains(err.Error(), "c3x search") {
+		t.Errorf("not-found write should include actionable hint, got: %v", err)
 	}
 }
 

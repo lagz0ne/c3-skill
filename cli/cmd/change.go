@@ -73,7 +73,7 @@ func RunChangeApply(opts ChangeApplyOptions, w io.Writer) error {
 		for _, r := range rejects {
 			fmt.Fprintf(w, "REJECT %s\n", r)
 		}
-		return fmt.Errorf("change apply: %d gate failure(s); fix and retry", len(rejects))
+		return fmt.Errorf("error: change apply: %d gate failure(s)\nhint: fix the REJECT item(s), then rerun c3x change apply %s", len(rejects), opts.UnitID)
 	}
 
 	if opts.DryRun {
@@ -201,13 +201,13 @@ func canvasGate(s *store.Store, c3Dir string, p changeset.Patch, morphed map[str
 		}
 		entity, err := s.GetEntity(p.Target)
 		if err != nil {
-			return fmt.Errorf("patch %s: target %s not found", p.Source, p.Target)
+			return fmt.Errorf("error: patch %s: target %s not found\nhint: run c3x search %s or update the patch target to an existing fact id", p.Source, p.Target, p.Target)
 		}
 		entityType, body = entity.Type, merged
 	case changeset.ScopeInsert:
 		entity, err := s.GetEntity(p.Target)
 		if err != nil {
-			return fmt.Errorf("patch %s: target %s not found", p.Source, p.Target)
+			return fmt.Errorf("error: patch %s: target %s not found\nhint: run c3x search %s or update the patch target to an existing fact id", p.Source, p.Target, p.Target)
 		}
 		// Block-base insert (a row after a cited neighbor): validate the spliced body.
 		if _, _, _, _, isBlock := changeset.ParseCiteHandle(p.Base); isBlock {
@@ -243,7 +243,7 @@ func canvasGate(s *store.Store, c3Dir string, p changeset.Patch, morphed map[str
 		return nil // no canvas to gate against
 	}
 	if issues := validateBodyContentWithDefinition(body, entityType, sections); len(issues) > 0 {
-		return fmt.Errorf("patch %s: merged %s violates its canvas: %s", p.Source, p.Target, formatValidationError(p.Target, issues))
+		return fmt.Errorf("error: patch %s: merged %s violates its canvas\nhint: fix the listed validation issue(s), then rerun c3x change apply: %s", p.Source, p.Target, formatValidationError(p.Target, issues))
 	}
 	return nil
 }

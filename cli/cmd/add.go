@@ -291,7 +291,7 @@ func buildEntity(entityType, slug string, s *store.Store, container string, feat
 func buildGenericDocument(entityType, slug string, s *store.Store) (*store.Entity, error) {
 	id := entityType + "-" + slug
 	if _, err := s.GetEntity(id); err == nil {
-		return nil, fmt.Errorf("error: %s already exists", id)
+		return nil, fmt.Errorf("error: %s already exists\nhint: choose a unique slug, or inspect the existing fact with c3x read %s", id, id)
 	}
 	return &store.Entity{
 		ID: id, Type: entityType, Title: slug, Slug: slug, Status: "active", Metadata: "{}",
@@ -319,7 +319,7 @@ func buildComponent(slug string, s *store.Store, containerArg string, feature bo
 	}
 	containerNum, _ := strconv.Atoi(containerMatch[1])
 	if _, err := s.GetEntity(containerArg); err != nil {
-		return nil, fmt.Errorf("error: container '%s' not found", containerArg)
+		return nil, fmt.Errorf("error: container '%s' not found\nhint: run c3x list --flat to choose an existing container", containerArg)
 	}
 	componentID, err := nextComponentID(s, containerNum, feature)
 	if err != nil {
@@ -338,7 +338,7 @@ func buildComponent(slug string, s *store.Store, containerArg string, feature bo
 func buildRef(slug string, s *store.Store) (*store.Entity, error) {
 	id := "ref-" + slug
 	if _, err := s.GetEntity(id); err == nil {
-		return nil, fmt.Errorf("error: %s already exists", id)
+		return nil, fmt.Errorf("error: %s already exists\nhint: choose a unique slug, or inspect the existing ref with c3x read %s", id, id)
 	}
 	return &store.Entity{
 		ID: id, Type: "ref", Title: slug, Slug: slug, Status: "active", Metadata: "{}",
@@ -348,7 +348,7 @@ func buildRef(slug string, s *store.Store) (*store.Entity, error) {
 func buildRule(slug string, s *store.Store) (*store.Entity, error) {
 	id := "rule-" + slug
 	if _, err := s.GetEntity(id); err == nil {
-		return nil, fmt.Errorf("error: %s already exists", id)
+		return nil, fmt.Errorf("error: %s already exists\nhint: choose a unique slug, or inspect the existing rule with c3x read %s", id, id)
 	}
 	return &store.Entity{
 		ID: id, Type: "rule", Title: slug, Slug: slug, Status: "active", Metadata: "{}",
@@ -359,7 +359,7 @@ func buildAdr(slug string, s *store.Store) (*store.Entity, error) {
 	now := time.Now()
 	adrID := fmt.Sprintf("adr-%s-%s", now.Format("20060102"), slug)
 	if _, err := s.GetEntity(adrID); err == nil {
-		return nil, fmt.Errorf("error: %s already exists", adrID)
+		return nil, fmt.Errorf("error: %s already exists\nhint: choose a unique slug, or inspect the existing ADR with c3x read %s", adrID, adrID)
 	}
 	return &store.Entity{
 		ID: adrID, Type: "adr", Title: slug, Slug: slug,
@@ -430,7 +430,7 @@ func nextComponentID(s *store.Store, containerNum int, feature bool) (string, er
 	}
 	next := max + 1
 	if next > 9 {
-		return "", fmt.Errorf("container c3-%d has no more foundation slots (01-09 full)", containerNum)
+		return "", fmt.Errorf("error: container c3-%d has no more foundation slots (01-09 full)\nhint: create a non-foundation component slot or add a new container for this responsibility", containerNum)
 	}
 	return fmt.Sprintf("c3-%d%02d", containerNum, next), nil
 }

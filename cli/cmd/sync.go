@@ -12,16 +12,17 @@ import (
 )
 
 type SyncCheckResult struct {
-	OnlyInActual    []string
-	OnlyInExpected  []string
-	ContentMismatch []string
-	BrokenSeal      []string
+	OK              bool     `json:"ok"`
+	OnlyInActual    []string `json:"only_in_tree,omitempty"`
+	OnlyInExpected  []string `json:"missing_from_tree,omitempty"`
+	ContentMismatch []string `json:"content_mismatch,omitempty"`
+	BrokenSeal      []string `json:"broken_seal,omitempty"`
 }
 
 // RunSyncExport exports the current DB to the canonical markdown tree.
 func RunSyncExport(opts ExportOptions, w io.Writer) error {
 	if opts.OutputDir == "" {
-		return fmt.Errorf("sync export: output dir is required")
+		return fmt.Errorf("error: sync export output dir is required\nhint: pass --c3-dir or run through c3x sync export so the canonical output directory is known")
 	}
 	before, _, err := snapshotCanonicalTree(opts.OutputDir, false)
 	if err != nil && !os.IsNotExist(err) {
@@ -68,7 +69,7 @@ func RunSyncExport(opts ExportOptions, w io.Writer) error {
 // RunSyncCheck verifies the target tree matches canonical export output.
 func RunSyncCheck(opts ExportOptions, w io.Writer) error {
 	if opts.OutputDir == "" {
-		return fmt.Errorf("sync check: output dir is required")
+		return fmt.Errorf("error: sync check output dir is required\nhint: pass --c3-dir or run through c3x check so the canonical output directory is known")
 	}
 
 	tmpDir, err := os.MkdirTemp("", "c3-sync-check-")
@@ -112,6 +113,16 @@ func RunSyncCheck(opts ExportOptions, w io.Writer) error {
 
 	result := diffSnapshots(actual, expected)
 	result.BrokenSeal = broken
+	result.OK = result.empty()
+	if opts.JSON {
+		if err := WriteObjectOutput(w, result, ResolveFormat(opts.JSON, isAgentMode()), syncCheckHelpHints(result)); err != nil {
+			return err
+		}
+		if result.OK {
+			return nil
+		}
+		return fmt.Errorf("error: sync check failed: canonical markdown drift detected\nhint: run c3x repair, then rerun c3x check")
+	}
 	if result.empty() {
 		fmt.Fprintf(w, "OK: canonical markdown is in sync with %s\n", opts.OutputDir)
 		return nil
@@ -129,7 +140,20 @@ func RunSyncCheck(opts ExportOptions, w io.Writer) error {
 	for _, path := range result.ContentMismatch {
 		fmt.Fprintf(w, "DIFFERS %s\n", path)
 	}
-	return fmt.Errorf("sync check failed: canonical markdown drift detected")
+	return fmt.Errorf("error: sync check failed: canonical markdown drift detected\nhint: run c3x repair, then rerun c3x check")
+}
+
+func syncCheckHelpHints(result SyncCheckResult) []HelpHint {
+	if result.OK {
+		return []HelpHint{
+			{Command: "c3x check", Description: "rerun structural and canonical sync validation after further edits"},
+		}
+	}
+	return []HelpHint{
+		{Command: "c3x repair", Description: "rebuild the local cache from canonical .c3/ and reseal generated markdown"},
+		{Command: "c3x check --only <id>", Description: "rerun a focused check for one affected entity or path"},
+		{Command: "c3x check", Description: "rerun the full structural and canonical sync validation"},
+	}
 }
 
 func snapshotCanonicalTree(root string, verifySeals bool) (map[string]string, []string, error) {

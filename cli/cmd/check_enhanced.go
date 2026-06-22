@@ -106,7 +106,7 @@ func resolveRuleCiters(s *store.Store, ruleIDs []string) ([]string, error) {
 			ids = append(ids, r.FromID)
 		}
 		if !found {
-			return nil, fmt.Errorf("rule %s has no citers. Wire one with: c3x wire <component> %s\nOr check a different rule.", ruleID, ruleID)
+			return nil, fmt.Errorf("error: rule %s has no citers\nhint: add a component citation through a change-unit: c3x change new <adr-id>; then author the rule id in an edge-marked component reference column, apply the unit, and rerun c3x check --rule %s", ruleID, ruleID)
 		}
 	}
 	sort.Strings(ids)
@@ -509,7 +509,7 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 			return err
 		}
 		if errors, _ := countSeverities(result.Issues); errors > 0 {
-			return fmt.Errorf("check failed: %d error(s)", errors)
+			return fmt.Errorf("error: check failed: %d error(s)\nhint: fix the listed issue(s), then rerun c3x check", errors)
 		}
 		return nil
 	}
@@ -543,7 +543,7 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 	writeAgentHints(w, cascadeReviewHints())
 
 	if errors > 0 {
-		return fmt.Errorf("check failed: %d error(s)", errors)
+		return fmt.Errorf("error: check failed: %d error(s)\nhint: fix the listed issue(s), then rerun c3x check", errors)
 	}
 	return nil
 }

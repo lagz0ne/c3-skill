@@ -31,6 +31,7 @@ WORD_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_./<>{}-]*")
 DUMP_COVERAGE = 0.7
 PROSE_TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_]{3,}")
 GROUNDED_VOCAB_RATIO = 0.75
+CLAIM_FALSIFIER_POINTS = 5
 
 
 def fixture_vocab() -> set[str]:
@@ -287,6 +288,15 @@ def score(case_id: str, answer_file: Path) -> dict:
     if forbidden_terms:
         found = [term for term in forbidden_terms if term in text]
         add_point(result, not found, f"forbid:{found}")
+
+    for pattern in scorer.get("forbid_claims", []):
+        found = re.search(pattern, content, re.IGNORECASE | re.MULTILINE) is not None
+        add_point(
+            result,
+            not found,
+            f"forbid_claim:{pattern}",
+            max_points=CLAIM_FALSIFIER_POINTS,
+        )
 
     trace_segments = scorer.get("trace_coverage", [])
     if trace_segments:

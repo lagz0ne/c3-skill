@@ -22,8 +22,40 @@ func engineWith(t *testing.T, files map[string]string) *Engine {
 	return &Engine{ProjectDir: dir}
 }
 
-func gatherFile(p string) Step  { return Step{Gather: &Gather{File: p}} }
-func evalStep(e Eval) Step      { return Step{Eval: &e} }
+func gatherFile(p string) Step { return Step{Gather: &Gather{File: p}} }
+func evalStep(e Eval) Step     { return Step{Eval: &e} }
+
+// Regression: a spec whose declared code: surface does not resolve must drift,
+// even when a downstream pipeline would pass vacuously (count == 0 over nothing).
+// Before the guard, a renamed/deleted path read as a silent "holds".
+func TestEval_CodeGuardDriftsOnVanishedSurface(t *testing.T) {
+	e := engineWith(t, map[string]string{"real.go": "package x\n"})
+
+	gone := e.Run(Spec{
+		Fact: "f",
+		Code: []string{"does/not/exist/**"},
+		Pipeline: []Step{
+			{Gather: &Gather{Command: "grep -r forbidden does/not/exist/ || true"}},
+			evalStep(Eval{Count: "== 0"}),
+		},
+	})
+	if gone.Verdict != "drift" {
+		t.Fatalf("vanished code surface must drift, not pass vacuously: got %s (%v)", gone.Verdict, gone.Evidence)
+	}
+
+	// Positive control: when the code surface resolves, a real "found zero" still holds.
+	ok := e.Run(Spec{
+		Fact: "f",
+		Code: []string{"real.go"},
+		Pipeline: []Step{
+			{Gather: &Gather{Command: "grep -l forbidden real.go || true"}},
+			evalStep(Eval{Count: "== 0"}),
+		},
+	})
+	if ok.Verdict != "holds" {
+		t.Fatalf("resolved surface with zero matches should hold: got %s (%v)", ok.Verdict, ok.Evidence)
+	}
+}
 
 func TestEval_EqualsHoldsAndDrifts(t *testing.T) {
 	e := engineWith(t, map[string]string{"VERSION": "1.2.3\n"})
@@ -139,6 +171,19 @@ func TestEval_CommandNonZeroExitIsEmptyNotError(t *testing.T) {
 	}})
 	if v.Verdict != "holds" {
 		t.Fatalf("no-match command should be an empty gather (count 0), got %s (%v)", v.Verdict, v.Evidence)
+	}
+}
+
+func TestEval_CommandFailureDoesNotPassCountZero(t *testing.T) {
+	e := engineWith(t, nil)
+	// grep over a missing target exits 2. That is not "zero matches"; it is a
+	// broken probe and must drift instead of satisfying count == 0.
+	v := e.Run(Spec{Pipeline: []Step{
+		{Gather: &Gather{Command: "grep -r forbidden does/not/exist"}},
+		evalStep(Eval{Count: "== 0"}),
+	}})
+	if v.Verdict != "drift" {
+		t.Fatalf("command failure must drift, not pass count 0: got %s (%v)", v.Verdict, v.Evidence)
 	}
 }
 

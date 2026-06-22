@@ -62,7 +62,7 @@ type MigrationReport struct {
 func RunMigrate(opts MigrateOptions, w io.Writer) (MigrationReport, error) {
 	var report MigrationReport
 	if opts.Store == nil {
-		return report, fmt.Errorf("migrate: no store")
+		return report, fmt.Errorf("error: migrate store is required\nhint: run migration through c3x migrate so the command opens the local C3 cache")
 	}
 
 	entities, err := opts.Store.AllEntities()

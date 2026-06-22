@@ -37,6 +37,22 @@ func TestRunCanvasListRead_BuiltinsCoverTargetUseCases(t *testing.T) {
 	requireAll(t, buf.String(), "type: canvas", "edge<requirement|story>", "cite", "check")
 }
 
+func TestRunCanvasList_AgentTOONIncludesHelpHints(t *testing.T) {
+	_, c3Dir := createDBFixtureWithC3Dir(t)
+	t.Setenv("C3X_MODE", "agent")
+	var buf bytes.Buffer
+
+	if err := RunCanvas(CanvasOptions{C3Dir: c3Dir, Sub: "list", JSON: true}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	requireAll(t, buf.String(),
+		"help[",
+		"c3x canvas read <type>",
+		"c3x schema <type>",
+	)
+}
+
 func TestAllCanvases_AllowsMaterializedBuiltInOverrides(t *testing.T) {
 	_, c3Dir := createDBFixtureWithC3Dir(t)
 	def, ok := mustDefinitionForTest(t, "component")
@@ -90,6 +106,17 @@ func TestRunCanvasAdd_RejectsUnsupportedPrimitive(t *testing.T) {
 		t.Fatal("expected invalid primitive to fail")
 	}
 	requireAll(t, err.Error(), "unsupported type", "script")
+}
+
+func TestRunCanvasAdd_IDMismatchIncludesHint(t *testing.T) {
+	_, c3Dir := createDBFixtureWithC3Dir(t)
+	doc := strings.Replace(researchCanvasDoc(), "id: research-note", "id: different-note", 1)
+
+	err := RunCanvas(CanvasOptions{C3Dir: c3Dir, Sub: "add", ID: "research-note", Body: strings.NewReader(doc)}, &bytes.Buffer{})
+	if err == nil {
+		t.Fatal("expected id mismatch to fail")
+	}
+	requireAll(t, err.Error(), "canvas id mismatch", "hint:", "c3x canvas write different-note --file canvas.md")
 }
 
 func TestRunSyncExport_PreservesCanvases(t *testing.T) {

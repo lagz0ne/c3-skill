@@ -1,6 +1,6 @@
 ---
 id: rule-wrap-error-cause
-c3-seal: ead93f50204476c4b808c40f99cdf87b2a69ef64ee5f83f6db380b53b6f7bcee
+c3-seal: 20b666f882d8ac06aa87aebbbef1b4b3c58c2efa2bbade95145e03afaafeaa0d
 title: wrap-error-cause
 type: rule
 goal: 'Preserve the failure chain: an error that crosses a function boundary should say what this layer was doing and still carry the underlying cause.'
@@ -18,7 +18,7 @@ When a function returns an error it received from a lower layer, it wraps that e
 
 ## Golden Example
 
-```````go
+`````go
 func LoadEvalSpecs(c3Dir string) ([]eval.Spec, error) {
 	entries, err := os.ReadDir(filepath.Join(c3Dir, "eval"))
 	if err != nil {
@@ -50,3 +50,4 @@ func LoadEvalSpecs(c3Dir string) ([]eval.Spec, error) {
 | --- | --- | --- |
 | return fmt.Errorf("read inspect %s: %v", name, err) | return fmt.Errorf("read inspect %s: %w", name, err) | %v flattens the cause to text, so errors.Is/errors.As can no longer reach the underlying error. |
 | return err straight up through several layers | return fmt.Errorf("apply %s: %w", p.Source, err) | An unwrapped bubble loses which stage and which file failed — the saga error becomes an opaque leaf with no context. |
+`````

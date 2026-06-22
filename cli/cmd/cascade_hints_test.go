@@ -15,6 +15,38 @@ func requireAll(t *testing.T, out string, wants ...string) {
 	}
 }
 
+func TestCascadeReviewHintsDoNotNameMissingCommands(t *testing.T) {
+	for _, hint := range cascadeReviewHints() {
+		if strings.Contains(hint.Command, "c3x diff") || strings.Contains(hint.Command, "c3x wire") {
+			t.Fatalf("cascade hint names a missing command: %+v", hint)
+		}
+	}
+}
+
+func TestAgentHintsReferenceRegisteredC3Commands(t *testing.T) {
+	registered := map[string]bool{}
+	for _, c := range Commands {
+		registered[c.Name] = true
+	}
+	hints := append([]HelpHint{}, cascadeReviewHints()...)
+	hints = append(hints, adrHints("adr-20260622-example")...)
+	hints = append(hints, lookupMissHints("src/missing.go")...)
+	hints = append(hints, searchHelpHints()...)
+	hints = append(hints, evalHelpHints()...)
+	hints = append(hints, canvasListHelpHints()...)
+	hints = append(hints, semanticIndexHelpHints()...)
+
+	for _, hint := range hints {
+		fields := strings.Fields(hint.Command)
+		if len(fields) < 2 || fields[0] != "c3x" {
+			continue
+		}
+		if !registered[fields[1]] {
+			t.Fatalf("hint references unregistered c3x command %q: %+v", fields[1], hint)
+		}
+	}
+}
+
 func TestRunLookup_AgentTOONIncludesCascadeHints(t *testing.T) {
 	s, c3Dir := createLookupFixture(t)
 	bindCode(t, c3Dir, "c3-101", "src/auth/login.ts")

@@ -114,5 +114,13 @@ func RunEval(opts EvalOptions, w io.Writer) error {
 			rep.NeedsJudgement++
 		}
 	}
-	return WriteObjectOutput(w, rep, ResolveFormat(opts.JSON, isAgentMode()), nil)
+	return WriteObjectOutput(w, rep, ResolveFormat(opts.JSON, isAgentMode()), evalHelpHints())
+}
+
+func evalHelpHints() []HelpHint {
+	return []HelpHint{
+		{Command: "c3x eval <fact-id>", Description: "rerun a single conformance spec after inspecting a drift or judgement row"},
+		{Command: "c3x lookup <file-or-glob>", Description: "check which fact owns a code path through the same eval-spec bindings"},
+		{Command: "c3x read <fact-id>", Description: "read the frozen claim before changing its mutable eval lens"},
+	}
 }

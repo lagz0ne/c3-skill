@@ -68,7 +68,7 @@ func resolveGitDir(projectDir string) (string, error) {
 	gitPath := filepath.Join(projectDir, ".git")
 	info, err := os.Stat(gitPath)
 	if err != nil {
-		return "", fmt.Errorf("git install: .git not found in %s", projectDir)
+		return "", fmt.Errorf("error: git install: .git not found in %s\nhint: run c3x git install from a Git working tree", projectDir)
 	}
 	if info.IsDir() {
 		return gitPath, nil
@@ -81,7 +81,7 @@ func resolveGitDir(projectDir string) (string, error) {
 	line := strings.TrimSpace(string(data))
 	const prefix = "gitdir: "
 	if !strings.HasPrefix(line, prefix) {
-		return "", fmt.Errorf("git install: unsupported .git file format")
+		return "", fmt.Errorf("error: git install: unsupported .git file format\nhint: run c3x git install from a standard Git working tree")
 	}
 	target := strings.TrimSpace(strings.TrimPrefix(line, prefix))
 	if !filepath.IsAbs(target) {
@@ -120,7 +120,7 @@ func upsertManagedBlockFile(path, startMarker, endMarker, managedBlock string, e
 	if start := strings.Index(content, startMarker); start >= 0 {
 		end := strings.Index(content[start:], endMarker)
 		if end < 0 {
-			return fmt.Errorf("managed block start found without end marker in %s", path)
+			return fmt.Errorf("error: managed block start found without end marker in %s\nhint: restore the managed block end marker or remove the partial block, then rerun c3x git install", path)
 		}
 		end += start + len(endMarker)
 		content = content[:start] + managedBlock + content[end:]

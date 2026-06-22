@@ -353,6 +353,33 @@ func TestRun_CheckJSONIncludesIssues(t *testing.T) {
 	}
 }
 
+func TestRun_AgentModeCheckBrokenSealUsesStructuredOutput(t *testing.T) {
+	t.Setenv("C3X_MODE", "agent")
+	c3Dir := setupRichC3DB(t)
+	seedCanonicalReadme(t, c3Dir)
+
+	c101Path := filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md")
+	broken := "---\nid: c3-101\nc3-seal: deadbeef\ntitle: auth\ntype: component\ncategory: foundation\nparent: c3-1\n---\n\n# auth\n\n## Goal\n\nThin.\n"
+	if err := os.WriteFile(c101Path, []byte(broken), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	err := run([]string{"--c3-dir", c3Dir, "check", "--json"}, &buf)
+	if err == nil {
+		t.Fatal("expected check --json to fail on broken seal")
+	}
+	out := buf.String()
+	for _, raw := range []string{"BROKEN_SEAL ", "Refreshed local C3 cache", "Rebuilt local C3 cache"} {
+		if strings.Contains(out, raw) {
+			t.Fatalf("agent check --json must not emit raw prose %q:\n%s", raw, out)
+		}
+	}
+	if !strings.Contains(out, "broken_seal") {
+		t.Fatalf("agent check --json should emit structured broken seal data:\n%s", out)
+	}
+}
+
 // Mutations must not be gated by canonical preverify failures, per ADR
 // mutation-preverify-repair-bypass — the mutation itself may be the fix.
 func TestRun_MutationBypassesPreverify(t *testing.T) {
@@ -486,12 +513,33 @@ func TestRun_RepairCommandExists(t *testing.T) {
 	}
 }
 
+func TestRun_AgentModeRepairOmitsProse(t *testing.T) {
+	t.Setenv("C3X_MODE", "agent")
+	c3Dir := setupRichC3DB(t)
+	seedCanonicalReadme(t, c3Dir)
+
+	var buf bytes.Buffer
+	_ = run([]string{"--c3-dir", c3Dir, "repair", "--json"}, &buf)
+	out := buf.String()
+	for _, raw := range []string{"Rebuilt local C3 cache", "Resealed canonical", "OK: canonical", "DIFFERS "} {
+		if strings.Contains(out, raw) {
+			t.Fatalf("agent repair --json must not emit raw prose %q:\n%s", raw, out)
+		}
+	}
+}
+
 // repair rewrites canonical files and the cache, so it must classify as mutating
 // (gives it the rollback snapshot + coordinator gate). Otherwise a failed
 // repair can leave .c3/ partially rewritten with no way back.
 func TestCommandMutatesCanonical_RepairIsMutating(t *testing.T) {
 	if !commandMutatesCanonical(cmd.Options{Command: "repair"}) {
 		t.Fatal("repair must be classified as mutating: it rewrites canonical files")
+	}
+}
+
+func TestCommandMutatesCanonical_EvalIsReadOnly(t *testing.T) {
+	if commandMutatesCanonical(cmd.Options{Command: "eval"}) {
+		t.Fatal("eval must remain read-only: eval verdicts are evidence, not apply gates")
 	}
 }
 

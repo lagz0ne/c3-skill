@@ -1,6 +1,6 @@
 ---
 id: c3-0
-c3-seal: 6c834f84d71ab4d179027153a90ed2ad2ffd91193d3e78680d6df2b924e1973f
+c3-seal: 8b34be97c3f1bbbbdc7398ae8f993e32e76324209f2a484b5bd5d13f63635525
 title: c3-design
 goal: 'Build and distribute C3 — a knowledge-graph architecture-docs tool that holds a codebase''s architecture as frozen, verifiable facts — shipped three ways: a Go CLI engine, a Claude skill, and an npm installer.'
 ---
@@ -18,6 +18,7 @@ Build and distribute C3 — a knowledge-graph architecture-docs tool that holds 
 | c3-1 | Go CLI |  | active | Provide every c3x operation as a single cross-compiled Go binary — the engine that reads, writes, validates, and freezes the architecture graph. | Provide every c3x operation as a single cross-compiled Go binary — the engine that reads, writes, validates, and freezes the architecture graph. |
 | c3-2 | Claude Skill |  | active | Teach an agent to operate C3 — route intent to the right operation and run each one through the local CLI binary. | Teach an agent to operate C3 — route intent to the right operation and run each one through the local CLI binary. |
 | c3-3 | npm @c3x/cli |  | active | Install and run the c3x binary from npm — a thin client that downloads the right platform build and forwards arguments. | Install and run the c3x binary from npm — a thin client that downloads the right platform build and forwards arguments. |
+| c3-4 | dev-tooling | service | active | Hold the standalone build/test programs that support the c3x CLI but ship separately from the binary — the search-ranking quality harness and the embedding-asset builder — so they are first-class facts with their own code surfaces rather than undescribed corners of the tree. | Hold the standalone build/test programs that support the c3x CLI but ship separately from the binary — the search-ranking quality harness and the embedding-asset builder — so they are first-class facts with their own code surfaces rather than undescribed corners of the tree. |
 
 ## Abstract Constraints
 

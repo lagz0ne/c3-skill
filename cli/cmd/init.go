@@ -13,7 +13,7 @@ import (
 // RunInitDB scaffolds a new .c3/ directory with a SQLite database.
 func RunInitDB(c3Dir string, projectName string, w io.Writer) error {
 	if info, err := os.Stat(c3Dir); err == nil && info.IsDir() {
-		return fmt.Errorf("error: %s already exists", c3Dir)
+		return fmt.Errorf("error: %s already exists\nhint: run c3x check to validate the existing project, or remove the directory before re-initializing", c3Dir)
 	}
 
 	if err := os.MkdirAll(c3Dir, 0755); err != nil {
@@ -51,11 +51,11 @@ func RunInitDB(c3Dir string, projectName string, w io.Writer) error {
 
 	// Insert adoption ADR entity
 	if err := s.InsertEntity(&store.Entity{
-		ID:       "adr-00000000-c3-adoption",
-		Type:     "adr",
-		Title:    "C3 Architecture Documentation Adoption",
-		Slug:     "c3-adoption",
-		Status:   "proposed",
+		ID:     "adr-00000000-c3-adoption",
+		Type:   "adr",
+		Title:  "C3 Architecture Documentation Adoption",
+		Slug:   "c3-adoption",
+		Status: "proposed",
 		// No Date: the genesis id is the adr-00000000 sentinel, so the exported file
 		// must be adr-00000000-c3-adoption.md (matching the id commands key off), not
 		// a date-stamped name that read/check can't resolve.

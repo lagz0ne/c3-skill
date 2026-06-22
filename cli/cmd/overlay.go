@@ -64,7 +64,7 @@ func membershipReconciler(c3Dir string) func(ts *store.Store, parentID string) e
 			return err
 		}
 		if issues := validateBodyContentWithDefinition(body, e.Type, def.Sections); len(issues) > 0 {
-			return fmt.Errorf("membership table of %s is canvas-invalid after maintenance: %s", parentID, formatValidationError(parentID, issues))
+			return fmt.Errorf("error: membership table of %s is canvas-invalid after maintenance\nhint: fix the listed validation issue(s), then rerun the same C3 command: %s", parentID, formatValidationError(parentID, issues))
 		}
 		return nil
 	}
@@ -123,7 +123,7 @@ func WithUnitOverlay(s *store.Store, c3Dir, unitID string, fn func(*store.Store)
 		return fmt.Errorf("overlay %s: %w", unitID, err)
 	}
 	if len(patches) == 0 {
-		return fmt.Errorf("overlay %s: unit has no staged material", unitID)
+		return fmt.Errorf("error: overlay %s has no staged material\nhint: add patch files under .c3/changes/%s/, then rerun the command", unitID, unitID)
 	}
 	// The store overlay replays only the fact patches: a canvas-scope patch reshapes
 	// a fact-TYPE on the file side and is validated by the morph gate, not here. (It

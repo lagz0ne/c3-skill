@@ -1,6 +1,6 @@
 ---
 id: c3-1
-c3-seal: a21437473f0f23798b47a8115e0cb841639b4fa1ac07062656ae73973aec2696
+c3-seal: 84c37732114f58e98439a7b8a33b4ce7224b306792a9eabd21268aafcd5984e9
 title: Go CLI
 type: container
 parent: c3-0
@@ -28,6 +28,8 @@ Provide every c3x operation as a single cross-compiled Go binary — the engine 
 | c3-111 | author-cmds |  | active | Create and edit facts and canvases before they freeze: scaffold a new project, add an entity from a body, replace content or fields, author canvas definitions, and manage each component's code-map. |
 | c3-112 | change-cmds |  | active | Drive the change-unit lifecycle from the command line: scaffold and view a unit, run the apply gates, preview the result, inspect derivation obligations, supersede a decision, and enforce the freeze that makes a change-unit the only way to mutate a fact. |
 | c3-113 | lifecycle-cmds |  | active | Keep the .c3/ store and its canonical markdown coherent across its lifecycle: import a tree into the database, export and sync it back out, repair drift, run the status migration, delete an entity safely, and install Git guardrails. |
+| c3-108 | eval-engine | foundation | active | Run a fact's conformance pipeline — check a frozen claim against the uncontrolled external it governs — and produce a one-off, stamped verdict (holds / drift / needs-judgement) that is never an apply gate. |
+| c3-109 | cmd-support | foundation | active | Provide the shared command-layer scaffolding for the c3x CLI — the authoritative command registry that drives help text, the global argument parser that turns argv into typed options, and the common output helper every command reuses. |
 
 ## Responsibilities
 

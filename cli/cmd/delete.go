@@ -22,17 +22,17 @@ type DeleteOptions struct {
 func RunDelete(opts DeleteOptions, w io.Writer) error {
 	id := opts.ID
 	if id == "" {
-		return fmt.Errorf("usage: c3x delete <id> [--dry-run]")
+		return fmt.Errorf("error: usage: c3x delete <id> [--dry-run]\nhint: run c3x delete --help before deleting canonical facts")
 	}
 
 	// Safety: refuse to delete context root
 	if id == "c3-0" {
-		return fmt.Errorf("refusing to delete c3-0 (context root)")
+		return fmt.Errorf("error: refusing to delete c3-0 (context root)\nhint: keep the root system fact and retire narrower facts through a change-unit instead")
 	}
 
 	entity, err := opts.Store.GetEntity(id)
 	if err != nil {
-		return fmt.Errorf("entity %q not found", id)
+		return fmt.Errorf("error: entity %q not found\nhint: run c3x search %q or c3x list --flat to find the current id", id, id)
 	}
 
 	// Safety: refuse to delete containers with children
@@ -42,8 +42,8 @@ func RunDelete(opts DeleteOptions, w io.Writer) error {
 		for _, c := range children {
 			ids = append(ids, c.ID)
 		}
-		return fmt.Errorf("refusing to delete %s: has %d children (%s) — delete them first",
-			id, len(children), strings.Join(ids, ", "))
+		return fmt.Errorf("error: refusing to delete %s: has %d children (%s) — delete them first\nhint: retire, delete, or reparent the children in the same change-unit before deleting %s",
+			id, len(children), strings.Join(ids, ", "), id)
 	}
 
 	prefix := ""

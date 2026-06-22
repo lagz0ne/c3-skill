@@ -5,6 +5,52 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [11.3.0] - 2026-06-22
+
+Minor release: **eval becomes the alignment spine.** C3 now treats `.c3/eval/*.yaml` as the
+fact-to-code binding and conformance layer that replaces the old codemap surface, and the repo was
+dogfooded through a fresh C3 re-onboard plus a round-2 skill/binary alignment OKR that reached
+17/17 ratified claims with zero drift and zero unresolved judgement.
+
+### Added
+
+- **C3 eval replaces codemap.** Eval specs now own file/code bindings, `c3x lookup` resolves through
+  those specs, roll-up specs cover container-level code ownership, and the eval engine records
+  deterministic verdicts over gathered external state instead of treating code-map metadata as a
+  frozen fact field.
+- **Fresh c3-design re-onboard.** The repo was re-onboarded from scratch into the current C3 model,
+  adding first-class facts for the eval engine, command-support layer, and developer tooling
+  surfaces (`search-eval` and `semantic-assets`) plus an `eval-determinism` ref that governs
+  conformance checks.
+- **Round-2 skill/binary alignment proof.** The alignment matrix is ratified at 17/17 claim coverage;
+  `c3local check` is green and `c3local eval` reports 26 holds, 0 drift, and 0 unresolved
+  `needs_judgement`.
+- **Blindbox provenance controls.** The skill-eval blindbox runner now records prompt/source,
+  wrapper, VERSION, and selected-binary hashes, removes `/usr/local/bin` from the sandbox path, and
+  fails dry-runs when expected skill or binary hashes do not match.
+- **False-green falsifiers.** The deterministic skill-eval scorer now rejects known wrong-but-term
+  complete answers and fake evidence-command dumps instead of accepting score-only narration.
+
+### Changed
+
+- **Richer eval teaching and repair loops.** The skill and CLI help now route eval questions through
+  the eval reference, teach loop specs and lookup-over-eval-bindings, and keep eval verdicts as
+  one-off evidence rather than apply gates.
+- **Agent-facing command output is more complete.** Structured read/check/eval/search/canvas and
+  semantic-index paths carry actionable `help[]` hints, and check/repair sync output stays TOON in
+  agent mode.
+
+### Fixed
+
+- **`rule-dispatcher-error-hint` is deterministic.** The former `needs_judgement` eval row now runs
+  `TestUserFacingErrorHints`, a Go AST check that fails any non-wrapped command/main `fmt.Errorf`
+  literal without an actionable `hint:`.
+- **Eval false greens from empty or failed gathers.** Declared code bindings are checked as
+  preconditions, vanished code surfaces drift instead of passing vacuously, and command gather
+  failures no longer satisfy `count == 0`.
+- **Stale command guidance.** Help hints no longer point agents at removed commands such as `wire`
+  or `diff`, and user-facing command errors now include next repair steps.
+
 ## [11.2.0] - 2026-06-19
 
 Minor release: **integrity is the tool's, enforced at the change-apply saga.** The change-unit is the in-progress working copy; `change apply` is a deterministic, all-or-nothing merge that the tool keeps integral — the author declares intent and merges, and cross-fact consistency is *synthesized*, not hand-maintained. Plus a switch-gated up-V on the same flip, and a leaner CLI surface.

@@ -11,8 +11,8 @@ Two intended uses:
 It also serves as the test set for a later "agent-with-docs vs agent-without-docs" comparison,
 so every entry is REAL and VERIFIED, not invented. Gaps and the known trust bug stay in, flagged.
 
-**Verification baseline (this session):** full `c3x eval` = 23 verdicts, 22 holds, 0 drift,
-1 needs-judgement (`rule-dispatcher-error-hint`). All version surfaces = 11.2.0.
+**Verification baseline (this session):** full `c3x eval` = 26 verdicts, 26 holds, 0 drift,
+0 needs-judgement. All version surfaces = 11.3.0.
 
 Schema per entry: `question`, `answer`, `doc_trace` (fact ids), `code_trace` (code paths),
 `via` (exact c3x commands), `coverage` (clean | partial | gap).
@@ -110,7 +110,7 @@ Schema per entry: `question`, `answer`, `doc_trace` (fact ids), `code_trace` (co
 - **coverage:** partial (stale/unowned eval bind)
 
 ### qa-13 — Does every component's declared code surface still resolve?
-- **Answer:** Yes. A full eval reports 23 verdicts: 22 holds, 0 drift, 1 needs-judgement (`rule-dispatcher-error-hint`). Every `code:` binding resolves.
+- **Answer:** Yes. A full eval reports 26 verdicts: 26 holds, 0 drift, 0 needs-judgement. Every `code:` binding resolves.
 - **doc_trace:** c3-1, c3-108
 - **code_trace:** `cli/internal/eval/**`
 - **via:** `c3x eval`
@@ -135,7 +135,7 @@ Schema per entry: `question`, `answer`, `doc_trace` (fact ids), `code_trace` (co
 - **coverage:** clean
 
 ### qa-16 — Are all version surfaces in sync?
-- **Answer:** Yes. `eval ref-fat-thin-distribution` and `eval c3-301` both confirm all version files read **11.2.0** (VERSION, plugin.json, marketplace.json, package.json, version.ts, lockfile) — verdicts hold ("all equal: 11.2.0").
+- **Answer:** Yes. `eval ref-fat-thin-distribution` and `eval c3-301` both confirm all version files read **11.3.0** (VERSION, plugin.json, marketplace.json, package.json, version.ts, lockfile) — verdicts hold ("all equal: 11.3.0").
 - **doc_trace:** ref-fat-thin-distribution, c3-301
 - **code_trace:** `skills/c3/bin/VERSION`, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `packages/cli/package.json`, `packages/cli/src/version.ts`
 - **via:** `c3x eval ref-fat-thin-distribution`; `c3x eval c3-301`

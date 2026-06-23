@@ -145,9 +145,7 @@ func RunSyncCheck(opts ExportOptions, w io.Writer) error {
 
 func syncCheckHelpHints(result SyncCheckResult) []HelpHint {
 	if result.OK {
-		return []HelpHint{
-			{Command: "c3x check", Description: "rerun structural and canonical sync validation after further edits"},
-		}
+		return nil
 	}
 	return []HelpHint{
 		{Command: "c3x repair", Description: "rebuild the local cache from canonical .c3/ and reseal generated markdown"},

@@ -233,6 +233,39 @@ CREATE TABLE IF NOT EXISTS store_meta (
 	key   TEXT PRIMARY KEY,
 	value TEXT NOT NULL DEFAULT ''
 );
+
+CREATE TABLE IF NOT EXISTS eval_matches (
+	fact           TEXT PRIMARY KEY,
+	claim          TEXT NOT NULL DEFAULT '',
+	fact_root      TEXT NOT NULL DEFAULT '',
+	eval_spec_hash TEXT NOT NULL DEFAULT '',
+	external_state TEXT NOT NULL DEFAULT '',
+	verdict        TEXT NOT NULL DEFAULT '',
+	evidence       TEXT NOT NULL DEFAULT '[]',
+	updated_at     TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS eval_match_units (
+	fact       TEXT NOT NULL,
+	unit_index INTEGER NOT NULL,
+	kind       TEXT NOT NULL DEFAULT '',
+	key        TEXT NOT NULL DEFAULT '',
+	digest     TEXT NOT NULL DEFAULT '',
+	bytes      INTEGER NOT NULL DEFAULT 0,
+	PRIMARY KEY (fact, unit_index),
+	FOREIGN KEY (fact) REFERENCES eval_matches(fact) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS eval_match_cache_units (
+	fact       TEXT NOT NULL,
+	unit_index INTEGER NOT NULL,
+	kind       TEXT NOT NULL DEFAULT '',
+	key        TEXT NOT NULL DEFAULT '',
+	digest     TEXT NOT NULL DEFAULT '',
+	bytes      INTEGER NOT NULL DEFAULT 0,
+	PRIMARY KEY (fact, unit_index),
+	FOREIGN KEY (fact) REFERENCES eval_matches(fact) ON DELETE CASCADE
+);
 `
 
 func (s *Store) migrateSchema() error {

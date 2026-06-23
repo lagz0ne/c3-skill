@@ -59,7 +59,7 @@ func TestWriteTableOutput_TOONMode(t *testing.T) {
 	if !strings.Contains(out, "help[1]:") {
 		t.Errorf("missing help hints\ngot:\n%s", out)
 	}
-	if !strings.Contains(out, "c3x read <id> -- read entity") {
+	if !strings.Contains(out, "help[1]: c3x read <id>") {
 		t.Errorf("missing hint content\ngot:\n%s", out)
 	}
 }
@@ -173,7 +173,7 @@ func TestFormatHelpHints_Multiple(t *testing.T) {
 	if !strings.Contains(out, "help[2]:") {
 		t.Errorf("wrong count\ngot:\n%s", out)
 	}
-	if !strings.Contains(out, "  c3x list -- topology") {
+	if !strings.Contains(out, "help[2]: c3x list | c3x check") {
 		t.Errorf("missing hint\ngot:\n%s", out)
 	}
 }

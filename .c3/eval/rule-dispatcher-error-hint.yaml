@@ -5,5 +5,7 @@ code:
 pipeline:
   - gather:
       command: "tmp=$(mktemp); (cd cli && go test ./cmd -run TestUserFacingErrorHints -count=1) >\"$tmp\" 2>&1; status=$?; if [ \"$status\" -ne 0 ]; then cat \"$tmp\"; rm -f \"$tmp\"; exit 2; fi; rm -f \"$tmp\""
+      inputs:
+        - cli/**/*.go
   - eval:
       count: "== 0"

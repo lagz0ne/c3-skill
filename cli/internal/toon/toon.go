@@ -274,6 +274,9 @@ func isStructLikeSlice(t reflect.Type) bool {
 	if et.Kind() == reflect.Ptr {
 		et = et.Elem()
 	}
+	if et.Implements(stringerType) || reflect.PointerTo(et).Implements(stringerType) {
+		return false
+	}
 	return et.Kind() == reflect.Struct || et.Kind() == reflect.Map
 }
 
@@ -321,6 +324,15 @@ func marshalFieldValue(fv reflect.Value) string {
 			return "null"
 		}
 		fv = fv.Elem()
+	}
+	if fv.Kind() == reflect.Ptr && fv.IsNil() {
+		return "null"
+	}
+	if fv.CanInterface() && fv.Type().Implements(stringerType) {
+		return MarshalValue(fv.Interface().(fmt.Stringer).String())
+	}
+	if fv.CanAddr() && fv.Addr().CanInterface() && fv.Addr().Type().Implements(stringerType) {
+		return MarshalValue(fv.Addr().Interface().(fmt.Stringer).String())
 	}
 
 	switch fv.Kind() {

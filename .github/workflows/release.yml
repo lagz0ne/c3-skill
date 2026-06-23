@@ -53,14 +53,21 @@ jobs:
 
           VERSION="$(tr -d '[:space:]' < skills/c3/bin/VERSION)"
           PACKAGE_VERSION="$(node -p "require('./packages/cli/package.json').version")"
+          CLAUDE_PLUGIN_VERSION="$(node -p "require('./.claude-plugin/plugin.json').version")"
+          CLAUDE_MARKETPLACE_VERSION="$(node -p "require('./.claude-plugin/marketplace.json').plugins[0].version")"
+          CODEX_PLUGIN_VERSION="$(node -p "require('./.codex-plugin/plugin.json').version")"
           PINNED_VERSION="$(node -e "const fs = require('fs'); const text = fs.readFileSync('packages/cli/src/version.ts', 'utf8'); const match = text.match(/C3X_VERSION\\s*=\\s*['\\\"]([^'\\\"]+)/); if (!match) process.exit(2); process.stdout.write(match[1]);")"
 
           if [ -z "$VERSION" ]; then
             echo "skills/c3/bin/VERSION is empty" >&2
             exit 1
           fi
-          if [ "$VERSION" != "$PACKAGE_VERSION" ] || [ "$VERSION" != "$PINNED_VERSION" ]; then
-            echo "Version mismatch: VERSION=$VERSION package.json=$PACKAGE_VERSION src/version.ts=$PINNED_VERSION" >&2
+          if [ "$VERSION" != "$PACKAGE_VERSION" ] || \
+             [ "$VERSION" != "$CLAUDE_PLUGIN_VERSION" ] || \
+             [ "$VERSION" != "$CLAUDE_MARKETPLACE_VERSION" ] || \
+             [ "$VERSION" != "$CODEX_PLUGIN_VERSION" ] || \
+             [ "$VERSION" != "$PINNED_VERSION" ]; then
+            echo "Version mismatch: VERSION=$VERSION package.json=$PACKAGE_VERSION .claude-plugin/plugin.json=$CLAUDE_PLUGIN_VERSION .claude-plugin/marketplace.json=$CLAUDE_MARKETPLACE_VERSION .codex-plugin/plugin.json=$CODEX_PLUGIN_VERSION src/version.ts=$PINNED_VERSION" >&2
             exit 1
           fi
 
@@ -148,6 +155,12 @@ jobs:
           npm ci
           npm test
 
+      - name: Install Linux packaging test dependencies
+        run: sudo apt-get update && sudo apt-get install -y bubblewrap
+
+      - name: Skill packaging tests
+        run: python3 scripts/test_skill_release_packaging.py
+
   model-assets:
     needs: plan
     if: needs.plan.outputs.should_release == 'true'
@@ -199,11 +212,11 @@ jobs:
           go-version-file: cli/go.mod
           cache-dependency-path: cli/go.sum
 
-      - name: Build thin npm assets and fat skill binaries
+      - name: Build thin npm assets and skill binaries
         run: |
           bash scripts/build.sh \
             --version "${{ needs.plan.outputs.version }}" \
-            --variant both \
+            --variant release \
             --os "${{ matrix.os }}" \
             --arch "${{ matrix.arch }}" \
             --out-dir dist/c3x
@@ -272,32 +285,10 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${{ needs.plan.outputs.version }}"
-          mkdir -p dist/release
-          find dist/artifacts -type f -path '*/thin/c3x-*' -exec cp {} dist/release/ \;
-          find dist/artifacts/semantic-assets -type f -exec cp {} dist/release/ \;
-
-          fat_count=0
-          while IFS= read -r fat; do
-            fat_count=$((fat_count + 1))
-            platform="$(basename "$fat" | sed -E "s/^c3x-${VERSION}-//; s/-fat$//")"
-            work="/tmp/c3-skill-$platform"
-            rm -rf "$work"
-            mkdir -p "$work"
-            cp -R .claude-plugin skills "$work/"
-            rm -f "$work/skills/c3/bin/c3x-"*
-            cp "$fat" "$work/skills/c3/bin/c3x-${VERSION}-${platform}"
-            chmod +x "$work/skills/c3/bin/c3x-${VERSION}-${platform}"
-            (cd "$work" && zip -r "c3-skill-${platform}-v${VERSION}.zip" .claude-plugin/ skills/ -x "*.DS_Store")
-            cp "$work/c3-skill-${platform}-v${VERSION}.zip" dist/release/
-          done < <(find dist/artifacts -type f -path '*/fat/c3x-*-fat' ! -name '*.sha256' | sort)
-
-          if [ "$fat_count" -eq 0 ]; then
-            echo "No fat skill binaries found" >&2
-            exit 1
-          fi
-
-          (cd dist/release && sha256sum * > SHA256SUMS)
-          ls -la dist/release
+          bash scripts/assemble_release_assets.sh \
+            --version "$VERSION" \
+            --artifacts-dir dist/artifacts \
+            --out-dir dist/release
 
       - name: Publish GitHub Release
         env:
@@ -327,7 +318,7 @@ jobs:
             echo ""
             echo "- Version: v${{ needs.plan.outputs.version }}"
             echo "- Tag: ${{ needs.plan.outputs.tag }}"
-            echo "- Assets: thin binaries, semantic assets, per-platform fat skill zips, checksums"
+            echo "- Assets: thin binaries, semantic assets, platform-neutral skill zip, per-platform full-fat and portable fat skill zips, checksums"
           } >> "$GITHUB_STEP_SUMMARY"
 
   publish-npm:

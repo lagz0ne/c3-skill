@@ -29,7 +29,7 @@ type Issue struct {
 // CheckResult holds the validation output.
 type CheckResult struct {
 	Total  int        `json:"total"`
-	Issues []Issue    `json:"issues"`
+	Issues []Issue    `json:"issues,omitempty"`
 	Help   []HelpHint `json:"help,omitempty"`
 }
 
@@ -495,16 +495,15 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 		Total:  len(entities),
 		Issues: issues,
 	}
-	if result.Issues == nil {
-		result.Issues = []Issue{}
-	}
 
 	// Output
 	if opts.JSON {
 		for i := range result.Issues {
 			result.Issues[i].Hint = hintFor(result.Issues[i].Message)
 		}
-		result.Help = agentHints(cascadeReviewHints())
+		if len(result.Issues) > 0 {
+			result.Help = agentHints(cascadeReviewHints())
+		}
 		if err := writeJSON(w, result); err != nil {
 			return err
 		}

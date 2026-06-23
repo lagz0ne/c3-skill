@@ -71,12 +71,6 @@ func listStructured(opts ListOptions, format OutputFormat, w io.Writer) error {
 	// Agent mode defaults to compact (AXI principle: minimal default schema)
 	compact := opts.Compact || (isAgentMode() && !opts.JSONExplicit)
 
-	hints := []HelpHint{
-		{Command: "c3x read <id>", Description: "read entity content"},
-		{Command: "c3x check", Description: "validate consistency"},
-		{Command: "c3x graph <id> --format mermaid", Description: "visualize relationships"},
-	}
-
 	if compact {
 		var result []compactEntity
 		fields := []string{"id", "type", "title", "goal", "parent", "status"}
@@ -93,7 +87,6 @@ func listStructured(opts ListOptions, format OutputFormat, w io.Writer) error {
 			if err := WriteTableOutput(w, "entities", result, fields, format, nil); err != nil {
 				return err
 			}
-			writeHints(w, hints)
 			return nil
 		}
 		if opts.JSONExplicit {

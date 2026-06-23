@@ -149,7 +149,6 @@ func TestRunAdd_AdrAgentHintsUseCLISchema(t *testing.T) {
 		"adr-",
 		"help[5]",
 		"c3x schema adr",
-		"authoritative ADR canvas contract for required sections, tables, and rejection rules",
 		"c3x read adr-",
 		"c3x write adr-",
 		"c3x check --include-adr --only adr-",

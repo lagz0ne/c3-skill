@@ -367,7 +367,7 @@ func TestRunList_TOONOutput(t *testing.T) {
 	}
 }
 
-func TestRunList_HelpHintsInAgentMode(t *testing.T) {
+func TestRunList_OmitsGenericHelpHintsInAgentMode(t *testing.T) {
 	t.Setenv("C3X_MODE", "agent")
 	s := createRichDBFixture(t)
 	var buf bytes.Buffer
@@ -377,8 +377,8 @@ func TestRunList_HelpHintsInAgentMode(t *testing.T) {
 	}
 
 	out := buf.String()
-	if !strings.Contains(out, "help[") {
-		t.Errorf("expected help hints in agent mode, got:\n%s", out)
+	if strings.Contains(out, "help[") {
+		t.Errorf("agent list success output should omit generic help hints, got:\n%s", out)
 	}
 }
 

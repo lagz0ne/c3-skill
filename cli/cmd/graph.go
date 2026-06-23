@@ -307,10 +307,8 @@ func graphJSONStore(entities []*store.Entity, s *store.Store, w io.Writer) error
 	if isAgentMode() {
 		return writeJSON(w, struct {
 			Nodes []graphNode `json:"nodes"`
-			Help  []HelpHint  `json:"help,omitempty"`
 		}{
 			Nodes: nodes,
-			Help:  agentHints(cascadeReviewHints()),
 		})
 	}
 	return writeJSON(w, nodes)

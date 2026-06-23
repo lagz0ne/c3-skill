@@ -1,6 +1,10 @@
 package cmd
 
 import (
+	"crypto/sha256"
+	"database/sql"
+	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -32,6 +36,14 @@ type EvalReport struct {
 	Verdicts       []eval.Verdict `json:"verdicts"`
 }
 
+type compactEvalReport struct {
+	Total          int            `json:"total"`
+	Holds          int            `json:"holds"`
+	Drift          int            `json:"drift"`
+	NeedsJudgement int            `json:"needs_judgement"`
+	Verdicts       []eval.Verdict `json:"verdicts,omitempty"`
+}
+
 // LoadEvalSpecs reads every .c3/eval/<fact>.yaml pipeline. The fact→code binding
 // lives in the specs (the `code:` field), so this is also the lookup index.
 func LoadEvalSpecs(c3Dir string) ([]eval.Spec, error) {
@@ -56,6 +68,7 @@ func LoadEvalSpecs(c3Dir string) ([]eval.Spec, error) {
 		if err := yaml.Unmarshal(b, &sp); err != nil {
 			return nil, fmt.Errorf("parse %s: %w", ent.Name(), err)
 		}
+		sp.SpecHash = shortHash(b)
 		if sp.Fact == "" {
 			sp.Fact = strings.TrimSuffix(ent.Name(), ".yaml")
 		}
@@ -95,14 +108,21 @@ func RunEval(opts EvalOptions, w io.Writer) error {
 	for _, e := range ents {
 		ids = append(ids, e.ID)
 	}
+	roots := factRootsByID(ents)
 	eng := &eval.Engine{ProjectDir: opts.ProjectDir, CodeBindings: EvalBindings(specs), FactIDs: ids}
 
 	rep := EvalReport{Verdicts: []eval.Verdict{}}
+	records := make([]store.EvalMatchRecord, 0, len(specs))
 	for _, sp := range specs {
 		if opts.Only != "" && sp.Fact != opts.Only {
 			continue
 		}
-		v := eng.Run(sp)
+		probe, cacheable := eng.ReusableManifest(sp)
+		v, reused := cachedEvalVerdict(opts.Store, sp, roots[sp.Fact], probe, cacheable)
+		if !reused {
+			v = eng.Run(sp)
+		}
+		records = append(records, evalMatchRecord(sp, v, roots[sp.Fact], probe, cacheable))
 		rep.Verdicts = append(rep.Verdicts, v)
 		rep.Total++
 		switch v.Verdict {
@@ -114,7 +134,123 @@ func RunEval(opts EvalOptions, w io.Writer) error {
 			rep.NeedsJudgement++
 		}
 	}
-	return WriteObjectOutput(w, rep, ResolveFormat(opts.JSON, isAgentMode()), evalHelpHints())
+	if err := saveEvalMatches(opts.Store, records); err != nil {
+		return err
+	}
+	format := ResolveFormat(opts.JSON, isAgentMode())
+	if format == FormatJSON {
+		return WriteObjectOutput(w, rep, format, evalHelpHints())
+	}
+	compact := compactEvalForAgent(rep, opts.Only != "")
+	var hints []HelpHint
+	if compact.Drift > 0 || compact.NeedsJudgement > 0 {
+		hints = evalHelpHints()
+	}
+	return WriteObjectOutput(w, compact, format, hints)
+}
+
+func cachedEvalVerdict(s *store.Store, spec eval.Spec, factRoot string, probe eval.ManifestProbe, cacheable bool) (eval.Verdict, bool) {
+	if !cacheable {
+		return eval.Verdict{}, false
+	}
+	cached, err := s.EvalMatch(spec.Fact)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return eval.Verdict{}, false
+		}
+		return eval.Verdict{}, false
+	}
+	if cached.FactRoot != factRoot || cached.EvalSpecHash != spec.SpecHash || cached.Verdict == "" {
+		return eval.Verdict{}, false
+	}
+	if !sameEvalUnits(cached.CacheUnits, probe.Manifest) {
+		return eval.Verdict{}, false
+	}
+	return eval.Verdict{
+		Fact:          spec.Fact,
+		Claim:         spec.Claim,
+		Verdict:       cached.Verdict,
+		ExternalState: cached.ExternalState,
+		Evidence:      cached.Evidence,
+		Manifest:      probe.Manifest,
+	}, true
+}
+
+func sameEvalUnits(cached []store.EvalMatchUnit, current []eval.Unit) bool {
+	if len(cached) != len(current) {
+		return false
+	}
+	for i := range cached {
+		if cached[i].Kind != current[i].Kind ||
+			cached[i].Key != current[i].Key ||
+			cached[i].Digest != current[i].Digest ||
+			cached[i].Bytes != current[i].Bytes {
+			return false
+		}
+	}
+	return true
+}
+
+func saveEvalMatches(s *store.Store, records []store.EvalMatchRecord) error {
+	if len(records) == 0 {
+		return nil
+	}
+	return s.WithTx(func(ts *store.Store) error {
+		for _, record := range records {
+			if err := ts.SaveEvalMatch(record); err != nil {
+				return fmt.Errorf("save eval match %s: %w", record.Fact, err)
+			}
+		}
+		return nil
+	})
+}
+
+func shortHash(data []byte) string {
+	h := sha256.Sum256(data)
+	return hex.EncodeToString(h[:])[:12]
+}
+
+func factRootsByID(entities []*store.Entity) map[string]string {
+	roots := make(map[string]string, len(entities))
+	for _, entity := range entities {
+		roots[entity.ID] = entity.RootMerkle
+	}
+	return roots
+}
+
+func evalMatchRecord(spec eval.Spec, verdict eval.Verdict, factRoot string, probe eval.ManifestProbe, cacheable bool) store.EvalMatchRecord {
+	units := make([]store.EvalMatchUnit, len(verdict.Manifest))
+	for i, unit := range verdict.Manifest {
+		units[i] = store.EvalMatchUnit{
+			Kind:   unit.Kind,
+			Key:    unit.Key,
+			Digest: unit.Digest,
+			Bytes:  unit.Bytes,
+		}
+	}
+	cacheUnits := units
+	if cacheable {
+		cacheUnits = make([]store.EvalMatchUnit, len(probe.Manifest))
+		for i, unit := range probe.Manifest {
+			cacheUnits[i] = store.EvalMatchUnit{
+				Kind:   unit.Kind,
+				Key:    unit.Key,
+				Digest: unit.Digest,
+				Bytes:  unit.Bytes,
+			}
+		}
+	}
+	return store.EvalMatchRecord{
+		Fact:          verdict.Fact,
+		Claim:         verdict.Claim,
+		FactRoot:      factRoot,
+		EvalSpecHash:  spec.SpecHash,
+		ExternalState: verdict.ExternalState,
+		Verdict:       verdict.Verdict,
+		Evidence:      verdict.Evidence,
+		Units:         units,
+		CacheUnits:    cacheUnits,
+	}
 }
 
 func evalHelpHints() []HelpHint {
@@ -123,4 +259,19 @@ func evalHelpHints() []HelpHint {
 		{Command: "c3x lookup <file-or-glob>", Description: "check which fact owns a code path through the same eval-spec bindings"},
 		{Command: "c3x read <fact-id>", Description: "read the frozen claim before changing its mutable eval lens"},
 	}
+}
+
+func compactEvalForAgent(rep EvalReport, includeHolds bool) compactEvalReport {
+	out := compactEvalReport{
+		Total:          rep.Total,
+		Holds:          rep.Holds,
+		Drift:          rep.Drift,
+		NeedsJudgement: rep.NeedsJudgement,
+	}
+	for _, verdict := range rep.Verdicts {
+		if includeHolds || verdict.Verdict != "holds" {
+			out.Verdicts = append(out.Verdicts, verdict)
+		}
+	}
+	return out
 }

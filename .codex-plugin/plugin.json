@@ -1,0 +1,39 @@
+{
+  "name": "c3-skill",
+  "version": "11.3.0",
+  "description": "C3 architecture design methodology with sealed architecture facts and change-unit workflows.",
+  "author": {
+    "name": "Lagz0ne",
+    "email": "lagz0ne@users.noreply.github.com",
+    "url": "https://github.com/lagz0ne"
+  },
+  "homepage": "https://github.com/lagz0ne/c3-skill",
+  "repository": "https://github.com/lagz0ne/c3-skill",
+  "license": "MIT",
+  "keywords": [
+    "architecture",
+    "documentation",
+    "c3",
+    "codex",
+    "skill"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "C3",
+    "shortDescription": "Operate sealed C3 architecture docs.",
+    "longDescription": "C3 helps agents query and change a repository's architecture model through frozen facts, change-units, and the c3x CLI.",
+    "developerName": "Lagz0ne",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "/c3 onboard this project",
+      "/c3 where is auth?",
+      "/c3 add rate limiting"
+    ],
+    "brandColor": "#2563EB",
+    "websiteURL": "https://github.com/lagz0ne/c3-skill"
+  }
+}

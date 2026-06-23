@@ -49,6 +49,20 @@ type SearchContext struct {
 	Path      string    `json:"path"`
 }
 
+type compactSearchResultRow struct {
+	ID      string `json:"id"`
+	Title   string `json:"title"`
+	Why     string `json:"why"`
+	Ctx     string `json:"ctx"`
+	Snippet string `json:"s"`
+}
+
+const (
+	defaultSearchLimit      = 20
+	defaultAgentSearchLimit = 5
+	compactSearchSnippetMax = 118
+)
+
 // EntityRef is a lightweight entity reference in search context.
 type EntityRef struct {
 	ID    string `json:"id"`
@@ -63,10 +77,7 @@ func RunSearch(opts SearchOptions, w io.Writer) error {
 	if strings.TrimSpace(opts.Query) == "" {
 		return fmt.Errorf("error: search requires a <query> argument\nhint: c3x search \"pool wait\"")
 	}
-	limit := opts.Limit
-	if limit <= 0 {
-		limit = 20
-	}
+	limit := resolveSearchLimit(opts.Limit)
 	entityType := opts.TypeFilter
 
 	semanticEnabled := !opts.NoSemantic
@@ -121,10 +132,14 @@ func RunSearch(opts SearchOptions, w io.Writer) error {
 	}
 
 	format := ResolveFormat(opts.JSON, isAgentMode())
-	return WriteObjectOutput(w, SearchOutput{
+	out := SearchOutput{
 		Query:   opts.Query,
 		Results: rows,
-	}, format, searchHelpHints())
+	}
+	if format == FormatJSON {
+		return WriteObjectOutput(w, out, format, searchHelpHints())
+	}
+	return WriteTableOutput(w, "results", compactSearchRows(rows), []string{"id", "title", "why", "ctx", "s"}, format, nil)
 }
 
 func searchHelpHints() []HelpHint {
@@ -143,7 +158,7 @@ func searchHelpHints() []HelpHint {
 // pool and evict a true hit (search-eval peaks at this ratio; 4x measurably regressed).
 func candidatePoolLimit(limit int) int {
 	if limit <= 0 {
-		limit = 20
+		limit = defaultSearchLimit
 	}
 	n := limit * 2
 	if n < 10 {
@@ -272,7 +287,7 @@ func expandHybridRows(s *store.Store, rows []SearchResultRow, query, entityType 
 
 func fuseSemanticRows(rows []SearchResultRow, semanticHits []store.SearchResult, limit int) []SearchResultRow {
 	if limit <= 0 {
-		limit = 20
+		limit = defaultSearchLimit
 	}
 	if len(semanticHits) == 0 {
 		if len(rows) > limit {
@@ -520,4 +535,99 @@ func hasSource(sources []string, source string) bool {
 		}
 	}
 	return false
+}
+
+func resolveSearchLimit(limit int) int {
+	if limit > 0 {
+		return limit
+	}
+	if isAgentMode() {
+		return defaultAgentSearchLimit
+	}
+	return defaultSearchLimit
+}
+
+func compactSearchRows(rows []SearchResultRow) []compactSearchResultRow {
+	out := make([]compactSearchResultRow, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, compactSearchResultRow{
+			ID:      row.ID,
+			Title:   row.Title,
+			Why:     compactMatchSources(row.MatchSources),
+			Ctx:     compactSearchContext(row.Context),
+			Snippet: compactSearchSnippet(row.Snippet),
+		})
+	}
+	return out
+}
+
+func compactSearchSnippet(snippet string) string {
+	snippet = cleanSnippet(snippet)
+	if snippet == "" {
+		return ""
+	}
+	runes := []rune(snippet)
+	if len(runes) <= compactSearchSnippetMax {
+		return snippet
+	}
+	cut := compactSearchSnippetMax
+	for i := compactSearchSnippetMax; i >= compactSearchSnippetMax/2; i-- {
+		if unicode.IsSpace(runes[i-1]) {
+			cut = i - 1
+			break
+		}
+	}
+	return strings.TrimSpace(string(runes[:cut])) + "..."
+}
+
+func compactMatchSources(sources []string) string {
+	if len(sources) == 0 {
+		return ""
+	}
+	parts := make([]string, 0, len(sources))
+	seen := make(map[string]bool, len(sources))
+	for _, source := range sources {
+		part := compactMatchSource(source)
+		if part == "" || seen[part] {
+			continue
+		}
+		seen[part] = true
+		parts = append(parts, part)
+	}
+	return strings.Join(parts, "+")
+}
+
+func compactMatchSource(source string) string {
+	switch source {
+	case "content_fts":
+		return "content"
+	case "entity_fts":
+		return "entity"
+	case "semantic":
+		return "semantic"
+	}
+	if strings.HasPrefix(source, "graph:") {
+		parts := strings.SplitN(strings.TrimPrefix(source, "graph:"), ":", 2)
+		if len(parts) == 2 && parts[0] != "" && parts[1] != "" {
+			return parts[0] + "/" + parts[1]
+		}
+	}
+	return source
+}
+
+func compactSearchContext(ctx SearchContext) string {
+	parts := make([]string, 0, 4)
+	if ctx.Component.ID != "" {
+		parts = append(parts, "component="+ctx.Component.ID)
+	}
+	if ctx.Ref.ID != "" {
+		parts = append(parts, "ref="+ctx.Ref.ID)
+	}
+	if ctx.Rule.ID != "" {
+		parts = append(parts, "rule="+ctx.Rule.ID)
+	}
+	if ctx.Path != "" {
+		parts = append(parts, "path="+ctx.Path)
+	}
+	return strings.Join(parts, " ")
 }

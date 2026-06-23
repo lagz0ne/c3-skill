@@ -47,7 +47,7 @@ func TestAgentHintsReferenceRegisteredC3Commands(t *testing.T) {
 	}
 }
 
-func TestRunLookup_AgentTOONIncludesCascadeHints(t *testing.T) {
+func TestRunLookup_AgentTOONOmitsCascadeHintsOnMatch(t *testing.T) {
 	s, c3Dir := createLookupFixture(t)
 	bindCode(t, c3Dir, "c3-101", "src/auth/login.ts")
 	t.Setenv("C3X_MODE", "agent")
@@ -57,12 +57,28 @@ func TestRunLookup_AgentTOONIncludesCascadeHints(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	out := buf.String()
+	requireAll(t, out, "c3-101", "ref-jwt")
+	if strings.Contains(out, "help") {
+		t.Fatalf("lookup match output should omit cascade hints:\n%s", out)
+	}
+}
+
+func TestRunLookup_AgentTOONKeepsRepairHintsOnMiss(t *testing.T) {
+	s, c3Dir := createLookupFixture(t)
+	bindCode(t, c3Dir, "c3-101", "src/auth/login.ts")
+	t.Setenv("C3X_MODE", "agent")
+
+	var buf bytes.Buffer
+	if err := RunLookup(LookupOptions{Store: s, FilePath: "src/payments/stripe.go", JSON: true, C3Dir: c3Dir}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
 	requireAll(t, buf.String(),
-		"help[",
-		"c3x read c3-101",
-		"c3x read c3-1",
-		"c3x graph c3-1 --format mermaid",
-		"Parent Delta",
+		"matches[0]",
+		"help[3]:",
+		"c3x eval",
+		`c3x lookup "src/payments/stripe.go"`,
 	)
 }
 
@@ -76,7 +92,7 @@ func TestRunRead_ComponentAgentTOONIncludesCascadeHints(t *testing.T) {
 	}
 
 	requireAll(t, buf.String(),
-		"help[",
+		"help:",
 		"c3x read c3-1",
 		"Parent Delta",
 	)
@@ -160,9 +176,8 @@ func TestRunCheck_AgentTOONIncludesCascadeReviewHint(t *testing.T) {
 	}
 
 	requireAll(t, buf.String(),
-		"help[",
+		"help:",
 		"cascade review",
 		"c3x check --only <id>",
-		"Parent Delta",
 	)
 }

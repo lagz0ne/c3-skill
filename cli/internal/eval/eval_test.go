@@ -3,6 +3,7 @@ package eval
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -103,6 +104,42 @@ func TestEval_ContainsAll(t *testing.T) {
 	}
 }
 
+func TestEval_CodeBlockTransformNarrowsMatchedState(t *testing.T) {
+	e := engineWith(t, map[string]string{"doc.md": "# Note\n\nBefore\n\n```go\nfunc main() {}\n```\n"})
+	spec := Spec{Fact: "f", Pipeline: []Step{
+		gatherFile("doc.md"),
+		{Transform: &Transform{CodeBlocks: true}},
+		evalStep(Eval{Contains: "func main"}),
+	}}
+
+	first := e.Run(spec)
+	if first.Verdict != "holds" {
+		t.Fatalf("code block check should hold: %s (%v)", first.Verdict, first.Evidence)
+	}
+	if len(first.Manifest) != 1 {
+		t.Fatalf("expected one refined code block unit, got %+v", first.Manifest)
+	}
+	if first.Manifest[0].Kind != "code_block" {
+		t.Fatalf("unit kind = %q, want code_block", first.Manifest[0].Kind)
+	}
+
+	if err := os.WriteFile(filepath.Join(e.ProjectDir, "doc.md"), []byte("# Note\n\nChanged prose\n\n```go\nfunc main() {}\n```\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	proseChanged := e.Run(spec)
+	if proseChanged.ExternalState != first.ExternalState {
+		t.Fatalf("prose outside selected code block should not drift matched state: %s != %s", proseChanged.ExternalState, first.ExternalState)
+	}
+
+	if err := os.WriteFile(filepath.Join(e.ProjectDir, "doc.md"), []byte("# Note\n\nChanged prose\n\n```go\nfunc changed() {}\n```\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	codeChanged := e.Run(spec)
+	if codeChanged.ExternalState == first.ExternalState {
+		t.Fatalf("changed selected code block should change matched state: %s", codeChanged.ExternalState)
+	}
+}
+
 func TestEval_ExistsOverCodemapLoop(t *testing.T) {
 	e := engineWith(t, map[string]string{"pkg/a.go": "x", "pkg/b.go": "y"})
 	e.CodeBindings = map[string][]string{"c3-9": {"pkg/**"}}
@@ -121,9 +158,210 @@ func TestEval_ExistsOverCodemapLoop(t *testing.T) {
 		Over: Gather{Facts: "c3-9"},
 		Do:   []Step{{Gather: &Gather{Code: "$item"}}, evalStep(Eval{Exists: true})},
 	}}}})
-	// gone/** globs to nothing → exists sees only pkg files, still holds; assert the resolving case held.
-	if drift.Verdict != "holds" {
-		t.Logf("note: unresolved glob yields no handles; verdict=%s", drift.Verdict)
+	if drift.Verdict != "drift" {
+		t.Fatalf("unmatched code glob inside gather:code should drift, got %s (%v)", drift.Verdict, drift.Evidence)
+	}
+	if drift.ExternalState == hold.ExternalState {
+		t.Fatalf("loop state should change when a child code binding drifts: %q", drift.ExternalState)
+	}
+}
+
+func TestEval_LoopExternalStateIncludesChildExternalState(t *testing.T) {
+	e := engineWith(t, map[string]string{"a": "alpha ok", "b": "beta ok"})
+	spec := Spec{Fact: "f", Pipeline: []Step{{Loop: &Loop{
+		Over: Gather{Literal: []string{"a", "b"}},
+		Do:   []Step{{Gather: &Gather{File: "$item"}}, evalStep(Eval{Contains: "ok"})},
+	}}}}
+
+	first := e.Run(spec)
+	if first.Verdict != "holds" {
+		t.Fatalf("initial loop should hold: %s (%v)", first.Verdict, first.Evidence)
+	}
+
+	if err := os.WriteFile(filepath.Join(e.ProjectDir, "b"), []byte("beta changed ok"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	second := e.Run(spec)
+	if second.Verdict != "holds" {
+		t.Fatalf("changed-but-still-holding child should still hold: %s (%v)", second.Verdict, second.Evidence)
+	}
+	if second.ExternalState == first.ExternalState {
+		t.Fatalf("loop external_state must include child gathered state, still got %q", second.ExternalState)
+	}
+}
+
+func TestEval_ReusableManifestMatchesDeterministicLoopRun(t *testing.T) {
+	e := engineWith(t, map[string]string{"a": "alpha ok", "b": "beta ok"})
+	spec := Spec{Fact: "f", Pipeline: []Step{{Loop: &Loop{
+		Over: Gather{Literal: []string{"a", "b"}},
+		Do:   []Step{{Gather: &Gather{File: "$item"}}, evalStep(Eval{Contains: "ok"})},
+	}}}}
+
+	live := e.Run(spec)
+	probe, ok := e.ReusableManifest(spec)
+	if !ok {
+		t.Fatal("expected deterministic loop to expose reusable manifest")
+	}
+	if probe.ExternalState != live.ExternalState {
+		t.Fatalf("probe state = %q, live state = %q", probe.ExternalState, live.ExternalState)
+	}
+	if len(probe.Manifest) != len(live.Manifest) {
+		t.Fatalf("probe manifest = %+v, live manifest = %+v", probe.Manifest, live.Manifest)
+	}
+}
+
+func TestEval_ReusableManifestRejectsLoopWithCommandChild(t *testing.T) {
+	e := engineWith(t, map[string]string{"a": "alpha ok"})
+	spec := Spec{Fact: "f", Pipeline: []Step{{Loop: &Loop{
+		Over: Gather{Literal: []string{"a"}},
+		Do:   []Step{{Gather: &Gather{Command: "cat $item"}}, evalStep(Eval{Contains: "ok"})},
+	}}}}
+	if _, ok := e.ReusableManifest(spec); ok {
+		t.Fatal("loop with command child must stay live-run")
+	}
+}
+
+func TestEval_ReusePolicyForSpecClassifiesTrustSurface(t *testing.T) {
+	tests := []struct {
+		name   string
+		spec   Spec
+		class  ReuseClass
+		reason string
+	}{
+		{
+			name:  "code only",
+			spec:  Spec{Code: []string{"pkg/**"}},
+			class: ReuseDeterministic,
+		},
+		{
+			name: "file pipeline",
+			spec: Spec{Pipeline: []Step{
+				gatherFile("README.md"),
+				evalStep(Eval{Contains: "ok"}),
+			}},
+			class: ReuseDeterministic,
+		},
+		{
+			name: "deterministic loop",
+			spec: Spec{Pipeline: []Step{{Loop: &Loop{
+				Over: Gather{Literal: []string{"a"}},
+				Do:   []Step{gatherFile("$item"), evalStep(Eval{Contains: "ok"})},
+			}}}},
+			class: ReuseDeterministic,
+		},
+		{
+			name: "command gather",
+			spec: Spec{Pipeline: []Step{
+				{Gather: &Gather{Command: "date"}},
+				evalStep(Eval{Count: "> 0"}),
+			}},
+			class:  ReuseLivePolicy,
+			reason: "command",
+		},
+		{
+			name: "command gather with inputs",
+			spec: Spec{Pipeline: []Step{
+				{Gather: &Gather{Command: "grep token src.txt", Inputs: []string{"src.txt"}}},
+				evalStep(Eval{Count: "> 0"}),
+			}},
+			class: ReuseDeterministic,
+		},
+		{
+			name: "loop command child",
+			spec: Spec{Pipeline: []Step{{Loop: &Loop{
+				Over: Gather{Literal: []string{"a"}},
+				Do:   []Step{{Gather: &Gather{Command: "cat $item"}}, evalStep(Eval{Contains: "ok"})},
+			}}}},
+			class:  ReuseLivePolicy,
+			reason: "command",
+		},
+		{
+			name: "judgement terminal",
+			spec: Spec{Pipeline: []Step{
+				gatherFile("README.md"),
+				evalStep(Eval{Judgement: "is it good?"}),
+			}},
+			class:  ReuseJudgement,
+			reason: "judgement",
+		},
+		{
+			name:  "empty spec",
+			spec:  Spec{},
+			class: ReuseUnsupported,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ReusePolicyForSpec(tt.spec)
+			if got.Class != tt.class {
+				t.Fatalf("class = %q, want %q (%+v)", got.Class, tt.class, got)
+			}
+			if tt.reason != "" && !strings.Contains(got.Reason, tt.reason) {
+				t.Fatalf("reason = %q, want to contain %q", got.Reason, tt.reason)
+			}
+		})
+	}
+}
+
+func TestEval_ReusableManifestForCommandInputsChangesWithInput(t *testing.T) {
+	e := engineWith(t, map[string]string{"src.txt": "token\n"})
+	spec := Spec{Fact: "f", Pipeline: []Step{
+		{Gather: &Gather{Command: "grep token src.txt", Inputs: []string{"src.txt"}}},
+		evalStep(Eval{Count: "> 0"}),
+	}}
+
+	first, ok := e.ReusableManifest(spec)
+	if !ok {
+		t.Fatal("command with declared inputs should expose reusable manifest")
+	}
+	if len(first.Manifest) != 2 || first.Manifest[0].Kind != "command" || first.Manifest[1].Kind != "command_input" {
+		t.Fatalf("unexpected command input manifest: %+v", first.Manifest)
+	}
+
+	if err := os.WriteFile(filepath.Join(e.ProjectDir, "src.txt"), []byte("changed token\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	second, ok := e.ReusableManifest(spec)
+	if !ok {
+		t.Fatal("changed declared input should still be manifestable")
+	}
+	if second.ExternalState == first.ExternalState {
+		t.Fatalf("changed command input should change cache identity: %s", second.ExternalState)
+	}
+}
+
+func TestEval_ReusableManifestRejectsMissingCommandInput(t *testing.T) {
+	e := engineWith(t, nil)
+	spec := Spec{Fact: "f", Pipeline: []Step{
+		{Gather: &Gather{Command: "grep token src.txt", Inputs: []string{"src.txt"}}},
+		evalStep(Eval{Count: "> 0"}),
+	}}
+	if _, ok := e.ReusableManifest(spec); ok {
+		t.Fatal("missing declared command input must force a live run")
+	}
+}
+
+func TestEval_ReusableManifestRejectsUnderdeclaredCommandInput(t *testing.T) {
+	e := engineWith(t, map[string]string{"src.txt": "token\n", "other.txt": "ignored\n"})
+	spec := Spec{Fact: "f", Pipeline: []Step{
+		{Gather: &Gather{Command: "grep token src.txt", Inputs: []string{"other.txt"}}},
+		evalStep(Eval{Count: "> 0"}),
+	}}
+	if _, ok := e.ReusableManifest(spec); ok {
+		t.Fatal("command that mentions an undeclared file path must stay live-run")
+	}
+}
+
+func TestEval_CommandPathTokens(t *testing.T) {
+	got := commandPathTokens(`grep -rn 'fmt.Errorf' cli/ --include='*.go' | grep -v _test.go; cat ./src.txt`)
+	want := []string{"cli", "src.txt"}
+	if len(got) != len(want) {
+		t.Fatalf("tokens = %+v, want %+v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("tokens = %+v, want %+v", got, want)
+		}
 	}
 }
 

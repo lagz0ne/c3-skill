@@ -2,7 +2,11 @@
 
 Thin npm manager for `c3x`, the C3 architecture documentation CLI.
 
-The package does not bundle Go binaries or the ONNX model. On invocation it resolves the pinned C3 version, downloads release assets from GitHub Releases, verifies SHA256 checksums, caches them, and execs the cached Go binary.
+The package does not bundle Go binaries or the ONNX model. For real C3 commands it resolves the project-selected C3 runtime, or the latest GitHub Release when the project has no selection, downloads release assets from GitHub Releases with visible progress, verifies SHA256 checksums, caches them, and execs the cached Go binary.
+
+This is the thin npm distribution only. The platform-neutral skill/plugin artifact carries no binary and delegates through this package, while per-platform C3 skill ZIPs remain fat and bundle a binary so they can run in sandboxed or offline environments without depending on the npm cache. Full fat skill ZIPs include the semantic ONNX runtime; Linux portable fat ZIPs use a pure-Go core binary for broader distro compatibility and run without local semantic ONNX.
+
+Root discovery commands stay local. `c3x`, `c3x --help`, and `c3x --version` do not resolve releases or download runtime assets.
 
 ## Install
 
@@ -12,6 +16,24 @@ c3x list
 ```
 
 `npx @c3x/cli list` works the same way.
+
+## Runtime Manager
+
+The npm entrypoint owns runtime installation and cache management under the `runtime` namespace:
+
+```bash
+c3x runtime versions
+c3x runtime installed
+c3x runtime install latest
+c3x runtime install 11.3.0
+c3x runtime use 11.3.0
+c3x runtime uninstall 11.3.0
+c3x runtime prune
+```
+
+`c3x runtime use <version>` writes operational project metadata at `.c3/runtime.json`. That file stores only the selected runtime version; it is not a frozen C3 fact and it never stores a binary URL or executable path.
+
+`c3x runtime install <version|latest>` prints download and verification progress on stderr. Normal C3 commands also print progress only when they must populate missing runtime assets before execution.
 
 ## Cache
 
@@ -29,14 +51,13 @@ The manager downloads:
 - `c3x-semantic-vocab-all-MiniLM-L6-v2-<revision>.txt`
 - matching `.sha256` files
 
-Old version directories are removed after the pinned version is prepared.
+Old version directories are kept until explicitly removed with `c3x runtime uninstall <version>` or `c3x runtime prune`.
 
 ## Environment
 
 | Variable | Use |
 | --- | --- |
-| `C3X_VERSION` | Override the pinned Go binary version. |
-| `C3X_RELEASE_BASE_URL` | Override the GitHub Release asset base URL. |
+| `C3X_VERSION` | Override the selected Go binary version. Intended for development and tests. |
 | `XDG_CACHE_HOME` | Select the cache root. |
 | `C3X_SKIP_MODEL_DOWNLOAD` | Download only the Go binary; the Go CLI can fetch semantic assets later. |
 

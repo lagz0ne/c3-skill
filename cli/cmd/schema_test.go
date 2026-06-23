@@ -276,6 +276,30 @@ func TestRunSchema_JSON_ComponentNoRejectIf(t *testing.T) {
 	}
 }
 
+func TestRunSchema_AgentTOONUsesCompactSchema(t *testing.T) {
+	t.Setenv("C3X_MODE", "agent")
+	var buf bytes.Buffer
+	if err := RunSchemaWithOptions(SchemaOptions{EntityType: "component", JSON: true}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	out := buf.String()
+	requireAll(t, out,
+		"type: component",
+		"sections[9]",
+		"kind: table",
+		"min: rows>=1",
+		"Reference:reference>uses(ref|rule)",
+		"rules:",
+		"empty cells use N.A - <reason>",
+	)
+	for _, noisy := range []string{"content_type:", "required:", "columns["} {
+		if strings.Contains(out, noisy) {
+			t.Fatalf("agent schema should use compact names, found %q:\n%s", noisy, out)
+		}
+	}
+}
+
 func TestRunSchema_JSON_ADRGuidanceFields(t *testing.T) {
 	var buf bytes.Buffer
 	if err := RunSchema("adr", true, &buf); err != nil {

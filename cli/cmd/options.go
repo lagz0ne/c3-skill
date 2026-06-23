@@ -56,7 +56,6 @@ type Options struct {
 func ParseArgs(argv []string) Options {
 	var opts Options
 	opts.Depth = 1
-	opts.Limit = 20
 	var args []string
 
 	for i := 0; i < len(argv); i++ {

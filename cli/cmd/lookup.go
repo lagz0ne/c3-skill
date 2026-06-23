@@ -37,6 +37,15 @@ type LookupMatch struct {
 	Rules    []RefBrief `json:"rules,omitempty"`
 }
 
+type compactLookupMatch struct {
+	ID     string `json:"id"`
+	Title  string `json:"title"`
+	Goal   string `json:"goal,omitempty"`
+	Parent string `json:"parent,omitempty"`
+	Uses   string `json:"uses,omitempty"`
+	Rules  string `json:"rules,omitempty"`
+}
+
 // LookupResult is the output for a single-file lookup.
 type LookupResult struct {
 	File    string        `json:"file"`
@@ -124,9 +133,15 @@ func runSingleLookup(opts LookupOptions, bindings codemap.CodeMap, w io.Writer) 
 		}
 		result.Matches = append(result.Matches, buildMatchFromStore(entity, opts.Store))
 	}
-	result.Help = agentHints(lookupCascadeHints(opts.Store, result.Matches, opts.FilePath))
+	if len(result.Matches) == 0 {
+		result.Help = agentHints(lookupCascadeHints(opts.Store, result.Matches, opts.FilePath))
+	}
 
 	if opts.JSON {
+		if isAgentMode() {
+			fmt.Fprintf(w, "file: %s\n", result.File)
+			return WriteTableOutput(w, "matches", compactLookupMatches(result.Matches), []string{"id", "title", "goal", "parent", "uses", "rules"}, FormatTOON, result.Help)
+		}
 		return writeJSON(w, result)
 	}
 
@@ -141,6 +156,32 @@ func runSingleLookup(opts LookupOptions, bindings codemap.CodeMap, w io.Writer) 
 	printMatches(w, result.Matches)
 	writeAgentHints(w, result.Help)
 	return nil
+}
+
+func compactLookupMatches(matches []LookupMatch) []compactLookupMatch {
+	out := make([]compactLookupMatch, 0, len(matches))
+	for _, match := range matches {
+		out = append(out, compactLookupMatch{
+			ID:     match.ID,
+			Title:  match.Title,
+			Goal:   shortGoal(match.Goal),
+			Parent: match.ParentID,
+			Uses:   refBriefIDs(match.Refs),
+			Rules:  refBriefIDs(match.Rules),
+		})
+	}
+	return out
+}
+
+func refBriefIDs(refs []RefBrief) string {
+	if len(refs) == 0 {
+		return ""
+	}
+	ids := make([]string, 0, len(refs))
+	for _, ref := range refs {
+		ids = append(ids, ref.ID)
+	}
+	return strings.Join(ids, ",")
 }
 
 func runGlobLookup(opts LookupOptions, bindings codemap.CodeMap, w io.Writer) error {
@@ -173,7 +214,9 @@ func runGlobLookup(opts LookupOptions, bindings codemap.CodeMap, w io.Writer) er
 			result.Components = append(result.Components, buildMatchFromStore(entity, opts.Store))
 		}
 	}
-	result.Help = agentHints(lookupCascadeHints(opts.Store, result.Components, opts.FilePath))
+	if len(result.Components) == 0 {
+		result.Help = agentHints(lookupCascadeHints(opts.Store, result.Components, opts.FilePath))
+	}
 
 	if opts.JSON {
 		return writeJSON(w, result)

@@ -12,7 +12,7 @@ func TestOpen_CreatesSchema(t *testing.T) {
 
 	// Verify core tables exist by querying sqlite_master.
 	tables := []string{"entities", "relationships",
-		"nodes", "versions", "store_meta"}
+		"nodes", "versions", "store_meta", "eval_matches", "eval_match_units", "eval_match_cache_units"}
 	for _, table := range tables {
 		var name string
 		err := s.DB().QueryRow(

@@ -291,7 +291,7 @@ Options:
   --semantic      Compatibility flag; semantic is already enabled by default
   --no-semantic   Force keyword/graph ranking and skip semantic index refresh
   --type <type>   Restrict metadata search by entity type
-  --limit N       Maximum number of results (default 20)
+  --limit N       Maximum number of results (default 5 in agent mode, 20 otherwise)
   --json          Structured output outside agent mode; agent mode stays TOON
 
 Examples:

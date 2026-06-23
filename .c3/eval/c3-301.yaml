@@ -6,6 +6,8 @@ pipeline:
   - gather:
       each:
         - { file: skills/c3/bin/VERSION }
-        - { command: "grep -oE '[0-9]+\\.[0-9]+\\.[0-9]+' packages/cli/src/version.ts | head -1" }
+        - command: "grep -oE '[0-9]+\\.[0-9]+\\.[0-9]+' packages/cli/src/version.ts | head -1"
+          inputs:
+            - packages/cli/src/version.ts
   - transform: { trim: true }
   - eval: { all_equal: true }

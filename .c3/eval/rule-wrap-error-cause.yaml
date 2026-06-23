@@ -5,5 +5,7 @@ code:
 pipeline:
   - gather:
       command: "grep -rn 'fmt.Errorf(.*%v\", err)' cli/ --include='*.go' | grep -v _test.go"
+      inputs:
+        - cli/**/*.go
   - eval:
       count: "== 0"

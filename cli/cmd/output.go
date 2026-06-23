@@ -34,6 +34,10 @@ type HelpHint struct {
 	Description string `json:"description"` // e.g. "read entity content"
 }
 
+func (h HelpHint) String() string {
+	return h.Command
+}
+
 // WriteTableOutput writes a tabular dataset with optional help hints.
 // JSON is explicit compatibility; every other structured format uses TOON.
 func WriteTableOutput(w io.Writer, label string, data any, fields []string, format OutputFormat, hints []HelpHint) error {
@@ -81,12 +85,16 @@ func FormatHelpHints(hints []HelpHint) string {
 	if len(hints) == 0 {
 		return ""
 	}
-	var b strings.Builder
-	fmt.Fprintf(&b, "help[%d]:\n", len(hints))
+	commands := make([]string, 0, len(hints))
 	for _, h := range hints {
-		fmt.Fprintf(&b, "  %s -- %s\n", h.Command, h.Description)
+		if strings.TrimSpace(h.Command) != "" {
+			commands = append(commands, h.Command)
+		}
 	}
-	return b.String()
+	if len(commands) == 0 {
+		return ""
+	}
+	return fmt.Sprintf("help[%d]: %s\n", len(commands), strings.Join(commands, " | "))
 }
 
 func writeHints(w io.Writer, hints []HelpHint) {

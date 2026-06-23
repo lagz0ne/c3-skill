@@ -45,7 +45,7 @@ ARTIFACTS_DIR="$(cd "$ARTIFACTS_DIR" && pwd)"
 mkdir -p "$OUT_DIR"
 OUT_DIR="$(cd "$OUT_DIR" && pwd)"
 
-for required in .gitattributes .claude-plugin .codex-plugin skills; do
+for required in .gitattributes .claude-plugin skills; do
   if [ ! -e "$ROOT/$required" ]; then
     echo "Missing release input: $required" >&2
     exit 1
@@ -68,7 +68,7 @@ copy_skill_tree() {
   rm -rf "$work"
   mkdir -p "$work"
   cp "$ROOT/.gitattributes" "$work/"
-  cp -R "$ROOT/.claude-plugin" "$ROOT/.codex-plugin" "$ROOT/skills" "$work/"
+  cp -R "$ROOT/.claude-plugin" "$ROOT/skills" "$work/"
   rm -f "$work/skills/c3/bin/c3x-"*
 }
 
@@ -84,7 +84,7 @@ from pathlib import Path
 
 work = Path(sys.argv[1])
 archive = Path(sys.argv[2])
-roots = [work / ".gitattributes", work / ".claude-plugin", work / ".codex-plugin", work / "skills"]
+roots = [work / ".gitattributes", work / ".claude-plugin", work / "skills"]
 
 with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zf:
     for root in roots:

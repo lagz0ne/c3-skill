@@ -1,9 +1,9 @@
 ---
 id: adr-20260623-c3x-skill-packaging-split
-c3-seal: 11f2863ae5eaabcd979492ca972dfeea97811f5887bc3da0936bde32144ba411
+c3-seal: 28f50c646fa62d985a202774d0adc469be4d7bab815282d63c59ef6156ab831a
 title: c3x-skill-packaging-split
 type: adr
-goal: Ship C3 skill artifacts in both no-binary installer-friendly and fat self-contained forms, with Claude and Codex plugin metadata present in each archive and `.gitattributes` included so bundled binaries stay binary-safe when unpacked into Git-backed environments.
+goal: Ship C3 skill artifacts in both no-binary installer-friendly and fat self-contained forms, with Claude plugin metadata present in each archive and `.gitattributes` included so bundled binaries stay binary-safe when unpacked into Git-backed environments.
 status: done
 date: "2026-06-23"
 ---
@@ -12,22 +12,22 @@ date: "2026-06-23"
 
 ## Goal
 
-Ship C3 skill artifacts in both no-binary installer-friendly and fat self-contained forms, with Claude and Codex plugin metadata present in each archive and `.gitattributes` included so bundled binaries stay binary-safe when unpacked into Git-backed environments.
+Ship C3 skill artifacts in both no-binary installer-friendly and fat self-contained forms, with Claude plugin metadata present in each archive and `.gitattributes` included so bundled binaries stay binary-safe when unpacked into Git-backed environments.
 
 ## Context
 
-The existing release workflow already produces per-platform fat skill ZIPs for sandboxed or offline use, and the npm runtime manager now owns verified runtime downloads for thin installs. The missing surface is a platform-neutral skill/plugin artifact that can be installed by plugin or skills CLIs without carrying a binary. That artifact still needs a working `bin/c3x.sh`, so the wrapper must fall back to the pinned npm runtime manager when no bundled binary and no local Go source are available. The same release assembly must also include `.gitattributes` and both Claude and Codex plugin manifests so Git servers and both agent plugin systems see the artifact correctly.
+The existing release workflow already produces per-platform fat skill ZIPs for sandboxed or offline use, and the npm runtime manager now owns verified runtime downloads for thin installs. The missing surface is a platform-neutral skill/plugin artifact that can be installed by plugin or skills CLIs without carrying a binary. That artifact still needs a working `bin/c3x.sh`, so the wrapper must fall back to the pinned npm runtime manager when no bundled binary and no local Go source are available. The same release assembly must also include `.gitattributes` and the Claude plugin manifest so Git servers and the supported plugin system see the artifact correctly.
 
 ## Decision
 
-Keep the existing per-platform fat skill ZIPs and add a platform-neutral no-binary skill ZIP named `c3-skill-v{VERSION}.zip`. Assemble all skill archives through one shared script that copies `.gitattributes`, `.claude-plugin/`, `.codex-plugin/`, and `skills/`; removes any stale `skills/c3/bin/c3x-*` before packaging; and adds exactly one platform binary only for each fat ZIP. Add `.codex-plugin/plugin.json` as a first-class release manifest. Teach `skills/c3/bin/c3x.sh` to preserve its current bundled-binary and source-build paths, then delegate to `npm exec --yes --package @c3x/cli@${VERSION} -- c3x` when installed from a no-binary skill artifact.
+Keep the existing per-platform fat skill ZIPs and add a platform-neutral no-binary skill ZIP named `c3-skill-v{VERSION}.zip`. Assemble all skill archives through one shared script that copies `.gitattributes`, `.claude-plugin/`, and `skills/`; removes any stale `skills/c3/bin/c3x-*` before packaging; and adds exactly one platform binary only for each fat ZIP. Keep Codex-specific setup out of release manifests and packaged skill artifacts so it remains a development concern. Teach `skills/c3/bin/c3x.sh` to preserve its current bundled-binary and source-build paths, then delegate to `npm exec --yes --package @c3x/cli@${VERSION} -- c3x` when installed from a no-binary skill artifact.
 
 ## Affected Topology
 
 | Entity | Type | Why affected | Evidence | Governance review |
 | --- | --- | --- | --- | --- |
-| c3-0 | system | The top-level distribution wording must include an agent skill surface that now has both Claude and Codex plugin metadata plus fat and no-binary skill artifacts. | c3-0#n3@v1:sha256:4295e84171aebab432093423315f2571c121a774d6338bf7330dd42644c6dfc2 "Build and distribute C3" | Parent system goal and skill container row need wording updates. |
-| c3-2 | container | The skill distribution now covers Claude and Codex plugin metadata and can run through either a bundled binary or the pinned npm runtime manager. | c3-2#n540@v1:sha256:f0177f46a4bad8f33630a5c2228d6ca7e14117c9787ab7a9b59d45846ffb5866 "Teach an agent to operate C3 through shared skill instructions" | Parent Delta: update goal, c3-203 member contribution, responsibilities, and complexity framing. |
+| c3-0 | system | The top-level distribution wording must include an agent skill surface that has Claude plugin metadata plus fat and no-binary skill artifacts. | c3-0#n3@v1:sha256:4295e84171aebab432093423315f2571c121a774d6338bf7330dd42644c6dfc2 "Build and distribute C3" | Parent system goal and skill container row need wording updates. |
+| c3-2 | container | The skill distribution now covers Claude plugin metadata and can run through either a bundled binary or the pinned npm runtime manager. | c3-2#n540@v1:sha256:f0177f46a4bad8f33630a5c2228d6ca7e14117c9787ab7a9b59d45846ffb5866 "Teach an agent to operate C3 through shared skill instructions" | Parent Delta: update goal, c3-203 member contribution, responsibilities, and complexity framing. |
 | c3-203 | component | The wrapper gains a no-binary artifact fallback through the pinned npm manager after bundled-binary and source-build attempts fail. | c3-203#n603@v1:sha256:54edea1eb796d0b265904816dad70fc6cf7ee1e15430a72c1d27662a9ad038ce "Detect the host platform, select a version-pinned full or Linux portable packaged binary," | Update goal, purpose, contract, and derived-material evidence. |
 | ref-fat-thin-distribution | N.A - governing ref update | The distribution standard changes from two artifact shapes to three: fat skill, no-binary skill/plugin, and thin npm runtime manager. | ref-fat-thin-distribution#n748@v1:sha256:cf8e08bcc48d161ef4120914a8505499068ac512709adeae244258fd1618b031 "Distribute C3 as full-fat skill ZIPs (semantic binaries bundled), Linux portable fat skill" | Update the governing distribution reference before relying on it. |
 
@@ -52,8 +52,8 @@ Keep the existing per-platform fat skill ZIPs and add a platform-neutral no-bina
 
 | Area | Detail | Evidence |
 | --- | --- | --- |
-| Release assembly | Add a shared release assembly script that emits c3-skill-v{VERSION}.zip plus existing per-platform fat skill ZIPs, all with .gitattributes, .claude-plugin/, .codex-plugin/, and skills/. | scripts/assemble_release_assets.sh; workflow calls |
-| Plugin metadata | Add .codex-plugin/plugin.json and include it in skill archives; keep existing .claude-plugin/ metadata in the same artifacts. | .codex-plugin/plugin.json; packaging test zip assertions |
+| Release assembly | Add a shared release assembly script that emits c3-skill-v{VERSION}.zip plus existing per-platform fat skill ZIPs, all with .gitattributes, .claude-plugin/, and skills/. | scripts/assemble_release_assets.sh; workflow calls |
+| Plugin metadata | Keep .claude-plugin/ metadata in release archives; exclude Codex development metadata from installed artifacts. | scripts/assemble_release_assets.sh; packaging test zip assertions |
 | Wrapper fallback | Let skills/c3/bin/c3x.sh delegate no-binary installs to pinned @c3x/cli@${VERSION} while retaining bundled-binary and source-build paths. | scripts/test_skill_release_packaging.py wrapper test |
 | Docs | Explain no-binary plugin installs, fat ZIPs, and npm runtime-manager responsibilities. | README.md; package README; npm CLI spec/plan |
 
@@ -61,9 +61,8 @@ Keep the existing per-platform fat skill ZIPs and add a platform-neutral no-bina
 
 | Surface | Behavior | Evidence |
 | --- | --- | --- |
-| scripts/test_skill_release_packaging.py | Verifies fat and no-binary ZIP contents, .gitattributes, Claude/Codex manifests, no binary leakage in the no-binary archive, SHA256SUMS, and wrapper npm fallback. | python3 scripts/test_skill_release_packaging.py |
+| scripts/test_skill_release_packaging.py | Verifies fat and no-binary ZIP contents, .gitattributes, the Claude manifest, no Codex manifest leakage, no binary leakage in the no-binary archive, SHA256SUMS, and wrapper npm fallback. | python3 scripts/test_skill_release_packaging.py |
 | release workflows | Run the packaging test before release assembly and call the shared assembly helper. | .github/workflows/release.yml; .github/workflows/distribute.yml |
-| Codex plugin validator | Validates .codex-plugin/plugin.json against the local Codex plugin schema. | python3 /home/lagz0ne/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py . |
 
 ## Alternatives Considered
 
@@ -86,7 +85,6 @@ Keep the existing per-platform fat skill ZIPs and add a platform-neutral no-bina
 | Check | Result |
 | --- | --- |
 | python3 scripts/test_skill_release_packaging.py | Required before done. |
-| python3 /home/lagz0ne/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py . | Required before done. |
 | claude plugin validate . --strict | Required before done. |
 | cd packages/cli && npm test | Required before done. |
 | C3X_MODE=agent bash skills/c3/bin/c3x.sh check --include-adr | Required before done. |

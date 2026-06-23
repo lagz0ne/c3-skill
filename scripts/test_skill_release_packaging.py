@@ -59,7 +59,7 @@ class SkillReleasePackagingTest(unittest.TestCase):
                 names = set(archive.namelist())
                 self.assertIn(".gitattributes", names)
                 self.assertIn(".claude-plugin/plugin.json", names)
-                self.assertIn(".codex-plugin/plugin.json", names)
+                self.assertNotIn(".codex-plugin/plugin.json", names)
                 self.assertIn("skills/c3/bin/c3x.sh", names)
                 self.assertIn("skills/c3/bin/VERSION", names)
                 self.assertIn("skills/c3/bin/c3x-1.2.3-linux-amd64", names)
@@ -72,7 +72,7 @@ class SkillReleasePackagingTest(unittest.TestCase):
                 names = set(archive.namelist())
                 self.assertIn(".gitattributes", names)
                 self.assertIn(".claude-plugin/plugin.json", names)
-                self.assertIn(".codex-plugin/plugin.json", names)
+                self.assertNotIn(".codex-plugin/plugin.json", names)
                 self.assertIn("skills/c3/bin/c3x.sh", names)
                 self.assertIn("skills/c3/bin/VERSION", names)
                 self.assertIn("skills/c3/bin/c3x-1.2.3-linux-amd64-portable", names)
@@ -82,7 +82,7 @@ class SkillReleasePackagingTest(unittest.TestCase):
                 names = set(archive.namelist())
                 self.assertIn(".gitattributes", names)
                 self.assertIn(".claude-plugin/plugin.json", names)
-                self.assertIn(".codex-plugin/plugin.json", names)
+                self.assertNotIn(".codex-plugin/plugin.json", names)
                 self.assertIn("skills/c3/bin/c3x.sh", names)
                 binaries = [
                     name

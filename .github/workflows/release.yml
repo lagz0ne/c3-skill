@@ -55,7 +55,6 @@ jobs:
           PACKAGE_VERSION="$(node -p "require('./packages/cli/package.json').version")"
           CLAUDE_PLUGIN_VERSION="$(node -p "require('./.claude-plugin/plugin.json').version")"
           CLAUDE_MARKETPLACE_VERSION="$(node -p "require('./.claude-plugin/marketplace.json').plugins[0].version")"
-          CODEX_PLUGIN_VERSION="$(node -p "require('./.codex-plugin/plugin.json').version")"
           PINNED_VERSION="$(node -e "const fs = require('fs'); const text = fs.readFileSync('packages/cli/src/version.ts', 'utf8'); const match = text.match(/C3X_VERSION\\s*=\\s*['\\\"]([^'\\\"]+)/); if (!match) process.exit(2); process.stdout.write(match[1]);")"
 
           if [ -z "$VERSION" ]; then
@@ -65,9 +64,8 @@ jobs:
           if [ "$VERSION" != "$PACKAGE_VERSION" ] || \
              [ "$VERSION" != "$CLAUDE_PLUGIN_VERSION" ] || \
              [ "$VERSION" != "$CLAUDE_MARKETPLACE_VERSION" ] || \
-             [ "$VERSION" != "$CODEX_PLUGIN_VERSION" ] || \
              [ "$VERSION" != "$PINNED_VERSION" ]; then
-            echo "Version mismatch: VERSION=$VERSION package.json=$PACKAGE_VERSION .claude-plugin/plugin.json=$CLAUDE_PLUGIN_VERSION .claude-plugin/marketplace.json=$CLAUDE_MARKETPLACE_VERSION .codex-plugin/plugin.json=$CODEX_PLUGIN_VERSION src/version.ts=$PINNED_VERSION" >&2
+            echo "Version mismatch: VERSION=$VERSION package.json=$PACKAGE_VERSION .claude-plugin/plugin.json=$CLAUDE_PLUGIN_VERSION .claude-plugin/marketplace.json=$CLAUDE_MARKETPLACE_VERSION src/version.ts=$PINNED_VERSION" >&2
             exit 1
           fi
 

@@ -1,17 +1,17 @@
 ---
 id: c3-2
-c3-seal: dbddc2ca6b61b7d7ad206d6591071ba0973b460c230eec11a3a800c99b801eea
+c3-seal: a86eaf94e3b75eeb2aaa52d76685c7b25200bcd7c09768eece4cc154c56f19d6
 title: Claude Skill
 type: container
 parent: c3-0
-goal: Teach an agent to operate C3 through shared skill instructions, Claude and Codex plugin packaging, and a wrapper that runs the selected C3 runtime.
+goal: Teach an agent to operate C3 through shared skill instructions, Claude plugin packaging, and a wrapper that runs the selected C3 runtime.
 ---
 
 # Claude Skill
 
 ## Goal
 
-Teach an agent to operate C3 through shared skill instructions, Claude and Codex plugin packaging, and a wrapper that runs the selected C3 runtime.
+Teach an agent to operate C3 through shared skill instructions, Claude plugin packaging, and a wrapper that runs the selected C3 runtime.
 
 ## Components
 
@@ -23,7 +23,7 @@ Teach an agent to operate C3 through shared skill instructions, Claude and Codex
 
 ## Responsibilities
 
-Carry the skill definition (SKILL.md: the intent router and the three-act model), the per-operation reference guides, the Claude and Codex plugin manifests, and the platform-detecting wrapper that invokes C3 directly from a full-fat bundled/source-built binary, a Linux portable bundled binary, or indirectly through the pinned npm runtime manager for no-binary installs. Owns no architecture logic — it is the agent-facing teaching and packaging layer over c3-1.
+Carry the skill definition (SKILL.md: the intent router and the three-act model), the per-operation reference guides, the Claude plugin manifest, and the platform-detecting wrapper that invokes C3 directly from a full-fat bundled/source-built binary, a Linux portable bundled binary, or indirectly through the pinned npm runtime manager for no-binary installs. Owns no architecture logic — it is the agent-facing teaching and packaging layer over c3-1.
 
 ## Complexity Assessment
 

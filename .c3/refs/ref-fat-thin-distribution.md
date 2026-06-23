@@ -1,6 +1,6 @@
 ---
 id: ref-fat-thin-distribution
-c3-seal: 950f84010806cd919fe704a52655beebadbde3c876a967273eae859abe2bb930
+c3-seal: a6c095dbe4be7cc3ea638548208bf94dd6c6dde64c861ee6424f9f708fa3fc5e
 title: Fat Skill / Thin Client Distribution
 type: ref
 goal: Distribute C3 as full-fat skill ZIPs (semantic binaries bundled), Linux portable fat skill ZIPs (pure-Go core binaries bundled), a no-binary skill/plugin artifact (runtime delegated), and a thin npm client (binary downloaded on demand).
@@ -14,7 +14,7 @@ Distribute C3 as full-fat skill ZIPs (semantic binaries bundled), Linux portable
 
 ## Choice
 
-The release ships per-platform full-fat skill ZIPs with semantic-capable binaries for sandboxed/offline use, Linux portable fat skill ZIPs with pure-Go core binaries for broader distro/sandbox compatibility, a platform-neutral no-binary skill/plugin ZIP with Claude and Codex manifests for installer flows, and the npm `@c3x/cli` client as the runtime manager that downloads verified release assets on demand.
+The release ships per-platform full-fat skill ZIPs with semantic-capable binaries for sandboxed/offline use, Linux portable fat skill ZIPs with pure-Go core binaries for broader distro/sandbox compatibility, a platform-neutral no-binary skill/plugin ZIP with Claude metadata for installer flows, and the npm `@c3x/cli` client as the runtime manager that downloads verified release assets on demand.
 
 ## Why
 
@@ -22,4 +22,4 @@ Sandboxed and offline skill installs need a self-contained binary, but not every
 
 ## How
 
-CI assembles skill archives from one tree that includes `.gitattributes`, `.claude-plugin/`, `.codex-plugin/`, and `skills/`: the platform-neutral `c3-skill-v{VERSION}.zip` removes all `skills/c3/bin/c3x-*` binaries, each full-fat `c3-skill-{platform}-v{VERSION}.zip` adds exactly the matching semantic-capable fat binary, and each Linux portable `c3-skill-linux-{arch}-portable-v{VERSION}.zip` adds exactly the matching pure-Go portable binary. The npm manager honors C3X_VERSION when externally set for development/tests, otherwise resolves project or latest runtime versions and downloads verified runtime assets from the GitHub Release.
+CI assembles skill archives from one tree that includes `.gitattributes`, `.claude-plugin/`, and `skills/`: the platform-neutral `c3-skill-v{VERSION}.zip` removes all `skills/c3/bin/c3x-*` binaries, each full-fat `c3-skill-{platform}-v{VERSION}.zip` adds exactly the matching semantic-capable fat binary, and each Linux portable `c3-skill-linux-{arch}-portable-v{VERSION}.zip` adds exactly the matching pure-Go portable binary. The npm manager honors C3X_VERSION when externally set for development/tests, otherwise resolves project or latest runtime versions and downloads verified runtime assets from the GitHub Release.

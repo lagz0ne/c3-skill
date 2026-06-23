@@ -23,14 +23,12 @@ dogfooded to reduce agent output without weakening proof quality.
 - **Eval matched-state cache proof.** `c3x eval --policy` reports deterministic cache coverage without
   running verdicts or writing eval cache rows; the current repo dogfoods at 26/26 reusable/cacheable
   specs.
-- **Codex plugin manifest.** The release version contract now validates `.codex-plugin/plugin.json`
-  alongside the Claude plugin metadata, npm package metadata, and pinned runtime version.
-
 ### Changed
 
 - **Release workflow plans from one version.** The main release workflow validates all version
-  surfaces, builds thin/fat/portable runtime assets, assembles skill archives, and publishes npm only
-  when the package version is not already published.
+  surfaces for Claude plugin metadata, npm package metadata, and the pinned runtime version; builds
+  thin/fat/portable runtime assets; assembles skill archives; and publishes npm only when the package
+  version is not already published.
 - **Agent output is smaller on common gather paths.** Clean `c3x eval` remains 48 bytes, policy proof
   is 73 bytes, `c3x search eval` dropped from 702 to 532 bytes, and glob `c3x lookup 'cli/cmd/*.go'`
   dropped from 12,540 to 868 bytes while preserving owners, counts, refs/rules, and repair context.
@@ -42,6 +40,9 @@ dogfooded to reduce agent output without weakening proof quality.
   identity rather than time.
 - **Release asset completeness.** Linux fat skill archives must have matching portable binaries before
   release assembly succeeds, preventing a partial runtime matrix from being published.
+- **Codex development metadata stays out of install archives.** Codex-specific setup is kept out of
+  release manifests and packaged skill artifacts so it remains a development concern, not an installed
+  skill surface.
 
 ## [11.3.0] - 2026-06-22
 

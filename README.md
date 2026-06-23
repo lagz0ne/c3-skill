@@ -17,17 +17,15 @@ The point of the freeze is Act 2: because facts only move through change-units, 
 
 ## Install / Run
 
-**Claude/Codex plugin (no binary, installer-friendly):**
+**Claude plugin (no binary, installer-friendly):**
 
 ```bash
 claude plugin install lagz0ne/c3-skill
-codex plugin marketplace add lagz0ne/c3-skill
-codex plugin add c3-skill@c3-skill-marketplace
 ```
 
 Then: `/c3 onboard this project`
 
-The repository and platform-neutral skill ZIP carry the skill, Claude plugin metadata, Codex plugin metadata, and wrapper only. On first real C3 command the wrapper delegates to the pinned `@c3x/cli` runtime manager, which downloads verified release assets into a local cache.
+The repository and platform-neutral skill ZIP carry the skill, Claude plugin metadata, and wrapper only. On first real C3 command the wrapper delegates to the pinned `@c3x/cli` runtime manager, which downloads verified release assets into a local cache.
 
 **Fat skill ZIPs (self-contained):**
 

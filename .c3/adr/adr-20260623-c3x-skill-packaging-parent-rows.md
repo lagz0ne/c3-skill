@@ -1,6 +1,6 @@
 ---
 id: adr-20260623-c3x-skill-packaging-parent-rows
-c3-seal: b13ff68741513fffbdf26081229a05fed48dc5e088b90faa49e064c0ccdff560
+c3-seal: 6393a9af59767bcaabdf74e22c2f840e2b3ee1aa4b239d5f37d5837d44cdae3d
 title: c3x-skill-packaging-parent-rows
 type: adr
 goal: Align the parent membership rows for the C3 skill container and cli-wrapper component with the just-landed skill packaging split.
@@ -16,7 +16,7 @@ Align the parent membership rows for the C3 skill container and cli-wrapper comp
 
 ## Context
 
-The skill packaging split updated c3-2 and c3-203 goals and responsibilities, but the parent membership rows in c3-0 and c3-2 still show the old local-binary-only summaries. That makes the frozen topology read as if the no-binary npm-manager fallback and Codex plugin packaging do not exist.
+The skill packaging split updated c3-2 and c3-203 goals and responsibilities, but the parent membership rows in c3-0 and c3-2 still show the old local-binary-only summaries. That makes the frozen topology read as if the no-binary npm-manager fallback does not exist.
 
 ## Decision
 
@@ -26,7 +26,7 @@ Patch only the two stale parent rows: c3-0's c3-2 row and c3-2's c3-203 row. No 
 
 | Entity | Type | Why affected | Evidence | Governance review |
 | --- | --- | --- | --- | --- |
-| c3-0 | system | Its c3-2 container row must summarize the updated Claude/Codex skill packaging and runtime-wrapper behavior. | c3-0#n8@v1:sha256:cf977c208b843b43d3bf9e9dc3e264bbfce54da033d44082b71b2f9e919080e0 "Teach an agent to operate C3 through shared skill instructions" | Parent Delta: update one membership row. |
+| c3-0 | system | Its c3-2 container row must summarize the updated Claude skill packaging and runtime-wrapper behavior. | c3-0#n8@v1:sha256:cf977c208b843b43d3bf9e9dc3e264bbfce54da033d44082b71b2f9e919080e0 "Teach an agent to operate C3 through shared skill instructions" | Parent Delta: update one membership row. |
 | c3-2 | container | Its c3-203 component row must summarize the wrapper's bundled/source/npm runtime selection behavior. | c3-2#n546@v1:sha256:37b1322deb3f7fc242a5ab98c0b254bbca9ccd1943aebb3ec23fcaced64906e2 "Detect the host platform, select a version-pinned full" | Parent Delta: update one membership row. |
 
 ## Compliance Refs

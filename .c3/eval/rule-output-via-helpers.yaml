@@ -5,5 +5,7 @@ code:
 pipeline:
   - gather:
       command: "grep -rln 'fmt.Print' cli/cmd/ | grep -v _test.go | grep -v output.go"
+      inputs:
+        - cli/cmd/**/*.go
   - eval:
       count: "== 0"

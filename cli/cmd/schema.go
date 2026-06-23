@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
 	"github.com/lagz0ne/c3-design/cli/internal/schema"
@@ -14,6 +15,26 @@ type SchemaOutput struct {
 	Sections  []schema.SectionDef `json:"sections"`
 	RejectIf  []string            `json:"reject_if,omitempty"`
 	Workorder string              `json:"workorder,omitempty"`
+}
+
+type compactSchemaOutput struct {
+	Type      string                 `json:"type"`
+	Sections  []compactSchemaSection `json:"sections"`
+	RejectIf  []string               `json:"reject_if,omitempty"`
+	Workorder string                 `json:"workorder,omitempty"`
+	Rules     []string               `json:"rules,omitempty"`
+}
+
+type compactSchemaSection struct {
+	Name    string   `json:"name"`
+	Kind    string   `json:"kind"`
+	Req     bool     `json:"req"`
+	Min     string   `json:"min,omitempty"`
+	Purpose string   `json:"purpose,omitempty"`
+	Fill    string   `json:"fill,omitempty"`
+	Fail    string   `json:"fail,omitempty"`
+	Cols    []string `json:"cols,omitempty"`
+	Free    bool     `json:"free,omitempty"`
 }
 
 type SchemaOptions struct {
@@ -36,6 +57,9 @@ func RunSchemaWithOptions(opts SchemaOptions, w io.Writer) error {
 	sections := def.Sections
 
 	if opts.JSON {
+		if isAgentMode() {
+			return WriteObjectOutput(w, compactSchemaForAgent(entityType, def), FormatTOON, nil)
+		}
 		out := SchemaOutput{
 			Type:      entityType,
 			Sections:  sections,
@@ -102,6 +126,71 @@ func RunSchemaWithOptions(opts SchemaOptions, w io.Writer) error {
 	}
 
 	return nil
+}
+
+func compactSchemaForAgent(entityType string, def schema.Canvas) compactSchemaOutput {
+	out := compactSchemaOutput{
+		Type:      entityType,
+		Sections:  make([]compactSchemaSection, 0, len(def.Sections)),
+		RejectIf:  def.Reject.Bullets,
+		Workorder: def.Reject.Workorder,
+	}
+	if entityType == "component" {
+		out.Rules = componentAuthoringRules()
+	}
+	for _, sec := range def.Sections {
+		row := compactSchemaSection{
+			Name:    sec.Name,
+			Kind:    sec.ContentType,
+			Req:     sec.Required,
+			Min:     compactSchemaMin(sec),
+			Purpose: sec.Purpose,
+			Fill:    sec.Fill,
+			Fail:    sec.Failure,
+			Free:    sec.Free,
+		}
+		for _, col := range sec.Columns {
+			row.Cols = append(row.Cols, compactSchemaColumn(col))
+		}
+		out.Sections = append(out.Sections, row)
+	}
+	return out
+}
+
+func compactSchemaMin(sec schema.SectionDef) string {
+	var parts []string
+	if sec.MinWords > 0 {
+		parts = append(parts, "words>="+strconv.Itoa(sec.MinWords))
+	}
+	if sec.MinRows > 0 {
+		parts = append(parts, "rows>="+strconv.Itoa(sec.MinRows))
+	}
+	return strings.Join(parts, ",")
+}
+
+func compactSchemaColumn(col schema.ColumnDef) string {
+	out := col.Name + ":" + col.Type
+	if len(col.Values) > 0 {
+		out += "(" + strings.Join(col.Values, "|") + ")"
+	}
+	if col.Edge != "" {
+		out += ">" + col.Edge
+		if len(col.Targets) > 0 {
+			out += "(" + strings.Join(col.Targets, "|") + ")"
+		}
+	}
+	return out
+}
+
+func componentAuthoringRules() []string {
+	return []string{
+		"sections in schema order",
+		"no placeholders: TBD/FIXME/TODO:/if applicable/see above/as needed",
+		"empty cells use N.A - <reason>",
+		"evidence names a command, file path, or entity id",
+		"references cite an entity id or N.A - <reason>",
+		"edge columns materialize graph edges",
+	}
 }
 
 // writeRejectIfBlock prints the REJECT IF rejection contract from the resolved

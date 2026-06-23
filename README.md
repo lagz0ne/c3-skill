@@ -17,7 +17,7 @@ The point of the freeze is Act 2: because facts only move through change-units, 
 
 ## Install / Run
 
-**Claude Code plugin (fat, self-contained):**
+**Claude plugin (no binary, installer-friendly):**
 
 ```bash
 claude plugin install lagz0ne/c3-skill
@@ -25,7 +25,14 @@ claude plugin install lagz0ne/c3-skill
 
 Then: `/c3 onboard this project`
 
-The plugin carries the `c3x` binary and the embedded semantic model — meaning-based search works offline, no downloads, no toolchain.
+The repository and platform-neutral skill ZIP carry the skill, Claude plugin metadata, and wrapper only. On first real C3 command the wrapper delegates to the pinned `@c3x/cli` runtime manager, which downloads verified release assets into a local cache.
+
+**Fat skill ZIPs (self-contained):**
+
+Use a per-platform release asset when the skill must run in a sandboxed or offline environment:
+
+- `c3-skill-<os>-<arch>-v<version>.zip` is the full fat build. It carries the `c3x` binary and embedded semantic model/native ONNX runtime, and includes `.gitattributes` so Git preserves the bundled binary as binary content.
+- `c3-skill-linux-<arch>-portable-v<version>.zip` is the portable Linux fat build. It carries a bundled pure-Go `c3x` binary for broader distro/sandbox compatibility; semantic ONNX search is unavailable in that build, so search falls back to keyword/graph behavior.
 
 **`npx` CLI (thin, fetched on demand):**
 

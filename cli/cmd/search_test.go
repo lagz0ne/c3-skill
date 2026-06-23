@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -145,7 +146,7 @@ func TestBDD_SearchHybridReturnsFTSAndGraphContext(t *testing.T) {
 	requireStringSliceContains(t, out.Results[0].MatchSources, "graph:uses:rule-trace-context")
 }
 
-func TestRunSearch_AgentTOONIncludesHelpHints(t *testing.T) {
+func TestRunSearch_AgentTOONOmitsGenericHelpHints(t *testing.T) {
 	s := createDBFixture(t)
 	seedHybridSearchFixture(t, s)
 	t.Setenv("C3X_MODE", "agent")
@@ -161,11 +162,112 @@ func TestRunSearch_AgentTOONIncludesHelpHints(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	requireAll(t, buf.String(),
-		"help[",
-		"c3x read <id>",
-		"c3x graph <id>",
+	if strings.Contains(buf.String(), "help[") {
+		t.Fatalf("agent search success output should omit generic help hints:\n%s", buf.String())
+	}
+}
+
+func TestRunSearch_AgentTOONUsesCompactSearchTable(t *testing.T) {
+	s := createDBFixture(t)
+	seedHybridSearchFixture(t, s)
+	t.Setenv("C3X_MODE", "agent")
+
+	var buf bytes.Buffer
+	if err := RunSearch(SearchOptions{
+		Store:      s,
+		Query:      "pool wait p95 latency",
+		NoSemantic: true,
+		Limit:      3,
+	}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	out := buf.String()
+	requireAll(t, out,
+		"results[3]{id,title,why,ctx,s}:",
+		"research-note-20260605-api-latency",
+		"p95",
+		"DB pool",
+		"body",
+		"meta",
+		"comp=c3-101",
+		"ref=ref-latency-budget",
+		"rule=rule-trace-context",
 	)
+	for _, noisy := range []string{"query:", "match_sources:", "context:", "component:\n", "title: Trace Context Propagation", "affects/", "uses/", "semantic", "help["} {
+		if strings.Contains(out, noisy) {
+			t.Fatalf("compact search output should not contain %q:\n%s", noisy, out)
+		}
+	}
+	if len(out) > 1500 {
+		t.Fatalf("compact search output too large: %d bytes\n%s", len(out), out)
+	}
+}
+
+func TestCompactSearchRows_OmitsTitleDuplicateSnippet(t *testing.T) {
+	rows := compactSearchRows([]SearchResultRow{
+		{
+			ID:           "c3-108",
+			Title:        "eval-engine",
+			Snippet:      "# eval-engine",
+			MatchSources: []string{"content_fts", "entity_fts", "semantic"},
+		},
+		{
+			ID:      "ref-eval-determinism",
+			Title:   "eval-determinism",
+			Snippet: "# Eval Determinism",
+		},
+	})
+	if len(rows) != 2 {
+		t.Fatalf("len = %d", len(rows))
+	}
+	for _, row := range rows {
+		if row.Snippet != "" {
+			t.Fatalf("duplicate title snippet should be omitted, got %+v", rows)
+		}
+	}
+	if rows[0].Why != "body+meta+sem" {
+		t.Fatalf("why = %q, want compact source labels", rows[0].Why)
+	}
+}
+
+func TestRunSearch_AgentDefaultLimitIsFive(t *testing.T) {
+	s := createDBFixture(t)
+	for i := 0; i < 8; i++ {
+		id := fmt.Sprintf("ref-agent-limit-%d", i)
+		mustInsertEntity(t, s, &store.Entity{
+			ID: id, Type: "ref", Title: fmt.Sprintf("Agent Limit %d", i), Slug: id,
+			Goal: "zzagentlimit default search limit fixture.", Status: "active", Metadata: "{}",
+		})
+		if err := content.WriteEntity(s, id, "# Agent Limit\n\n## Goal\n\nzzagentlimit default search limit fixture.\n"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	t.Setenv("C3X_MODE", "agent")
+
+	var buf bytes.Buffer
+	if err := RunSearch(SearchOptions{
+		Store:      s,
+		Query:      "zzagentlimit",
+		NoSemantic: true,
+	}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	if !strings.Contains(buf.String(), "results[5]{") {
+		t.Fatalf("agent default limit should be 5 results:\n%s", buf.String())
+	}
+}
+
+func TestCompactSearchSnippetBoundsLongRows(t *testing.T) {
+	long := strings.Repeat("token ", 80)
+	got := compactSearchSnippet(long)
+	if !strings.HasSuffix(got, "...") {
+		t.Fatalf("truncated snippet should end with ellipsis marker: %q", got)
+	}
+	if len([]rune(got)) > compactSearchSnippetMax+3 {
+		t.Fatalf("snippet len = %d, want <= %d: %q", len([]rune(got)), compactSearchSnippetMax+3, got)
+	}
 }
 
 func TestSearch_HyphenatedNaturalLanguageQueryDoesNotReachFTSSyntax(t *testing.T) {

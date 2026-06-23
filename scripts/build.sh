@@ -46,9 +46,18 @@ build_variant() {
   local variant="$1"
   local tags=""
   local suffix=""
+  local build_env=(GOOS="$TARGET_OS" GOARCH="$TARGET_ARCH")
   if [ "$variant" = "fat" ]; then
     tags="-tags embedmodel"
     suffix="-fat"
+  elif [ "$variant" = "portable" ]; then
+    if [ "$TARGET_OS" != "linux" ]; then
+      echo "Portable builds are supported only for linux targets, got: $TARGET_OS/$TARGET_ARCH" >&2
+      exit 1
+    fi
+    tags="-tags netgo,osusergo"
+    suffix="-portable"
+    build_env+=(CGO_ENABLED=0)
   elif [ "$variant" != "thin" ]; then
     echo "Unknown variant: $variant" >&2
     exit 1
@@ -69,7 +78,7 @@ build_variant() {
 
   local build_status=0
   set +e
-  GOOS="$TARGET_OS" GOARCH="$TARGET_ARCH" go build \
+  env "${build_env[@]}" go build \
     -C "$CLI_DIR" \
     $tags \
     -buildvcs=false \
@@ -121,9 +130,17 @@ restore_semantic_model_stubs() {
 case "$VARIANT" in
   thin) build_variant thin ;;
   fat) build_variant fat ;;
+  portable) build_variant portable ;;
   both)
     build_variant thin
     build_variant fat
+    ;;
+  release)
+    build_variant thin
+    build_variant fat
+    if [ "$TARGET_OS" = "linux" ]; then
+      build_variant portable
+    fi
     ;;
   *) echo "Unknown variant: $VARIANT" >&2; exit 1 ;;
 esac

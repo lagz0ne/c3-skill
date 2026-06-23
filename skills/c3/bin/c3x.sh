@@ -29,10 +29,34 @@ esac
 
 asset_name="c3x-${VERSION}-${OS}-${ARCH}"
 bin="$SCRIPT_DIR/$asset_name"
+portable_bin="$SCRIPT_DIR/${asset_name}-portable"
+
+print_wrapper_help() {
+  cat <<EOF
+Usage: c3x <command> [options]
+
+Commands:
+  versions           List available and installed C3 runtime versions
+  install            Install a C3 runtime into the shared cache
+  uninstall          Remove an installed C3 runtime from the shared cache
+  cache              Inspect or prune the shared C3 cache
+  check              Check the current C3 project documents
+  eval               Evaluate the current C3 project documents
+
+This no-binary wrapper runs bundled binaries when present. Without a bundled
+binary, real commands delegate to @c3x/cli@${VERSION}, which resolves the
+project runtime version or latest release before downloading runtime assets.
+EOF
+}
 
 if [ -f "$bin" ]; then
   export C3X_VERSION="$VERSION"
   exec "$bin" "$@"
+fi
+
+if [ "$OS" = "linux" ] && [ -f "$portable_bin" ]; then
+  export C3X_VERSION="$VERSION"
+  exec "$portable_bin" "$@"
 fi
 
 if [ -f "$ROOT_DIR/cli/go.mod" ] && command -v go >/dev/null 2>&1; then
@@ -47,7 +71,21 @@ if [ -f "$ROOT_DIR/cli/go.mod" ] && command -v go >/dev/null 2>&1; then
   exec "$bin" "$@"
 fi
 
-export C3X_VERSION="$VERSION"
+case "${1-}" in
+  ""|-h|--help|help)
+    print_wrapper_help
+    exit 0
+    ;;
+  -V|--version|version)
+    printf 'c3x %s\n' "$VERSION"
+    exit 0
+    ;;
+esac
+
+if command -v npm >/dev/null 2>&1; then
+  exec npm exec --yes --package "@c3x/cli@${VERSION}" -- c3x "$@"
+fi
+
 echo "Error: packaged C3 binary not found: $bin" >&2
-echo "hint: reinstall the fat C3 skill artifact, or run from source with Go installed" >&2
+echo "hint: install npm so the no-binary skill can use @c3x/cli@${VERSION}, reinstall a fat/portable C3 skill artifact, or run from source with Go installed" >&2
 exit 1

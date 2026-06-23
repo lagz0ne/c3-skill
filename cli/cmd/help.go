@@ -231,7 +231,7 @@ Examples:
 		Name:     "eval",
 		Args:     "[fact-id]",
 		OneLiner: "Check a fact's claim against its external (conformance)",
-		Help: `Usage: c3x eval [fact-id] [--json]
+		Help: `Usage: c3x eval [fact-id] [--json] [--policy]
 
 Check a frozen fact's claim against the uncontrolled external it governs and
 report a one-off verdict — holds / drift / needs-judgement — stamped with the
@@ -265,12 +265,14 @@ Loop example — one roll-up verdict over a container's components:
           - eval:   { exists: true }          # all resolve
 
 Options:
-  --json   Structured output for CI (TOON in agent mode)
+  --json     Structured output for CI (TOON in agent mode)
+  --policy   Report cache trust coverage instead of running verdicts
 
 Examples:
   c3x eval                 # every spec
   c3x eval c3-203          # one fact's spec
-  c3x eval --json          # machine output`,
+  c3x eval --json          # machine output
+  c3x eval --policy        # compact cache policy audit`,
 	},
 	{
 		Name:     "search",
@@ -291,7 +293,7 @@ Options:
   --semantic      Compatibility flag; semantic is already enabled by default
   --no-semantic   Force keyword/graph ranking and skip semantic index refresh
   --type <type>   Restrict metadata search by entity type
-  --limit N       Maximum number of results (default 20)
+  --limit N       Maximum number of results (default 5 in agent mode, 20 otherwise)
   --json          Structured output outside agent mode; agent mode stays TOON
 
 Examples:

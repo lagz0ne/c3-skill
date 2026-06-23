@@ -34,6 +34,10 @@ jobs:
         run: |
           npm ci
           npm test
+      - name: Install Linux packaging test dependencies
+        run: sudo apt-get update && sudo apt-get install -y bubblewrap
+      - name: Skill packaging tests
+        run: python3 scripts/test_skill_release_packaging.py
 
   model-assets:
     runs-on: ubuntu-latest
@@ -73,10 +77,10 @@ jobs:
         with:
           go-version-file: cli/go.mod
           cache-dependency-path: cli/go.sum
-      - name: Build thin npm assets and fat skill binaries
+      - name: Build thin npm assets and skill binaries
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          bash scripts/build.sh --version "$VERSION" --variant both --os "${{ matrix.os }}" --arch "${{ matrix.arch }}" --out-dir dist/c3x
+          bash scripts/build.sh --version "$VERSION" --variant release --os "${{ matrix.os }}" --arch "${{ matrix.arch }}" --out-dir dist/c3x
       - uses: actions/upload-artifact@v4
         with:
           name: c3x-${{ matrix.os }}-${{ matrix.arch }}
@@ -93,31 +97,12 @@ jobs:
           path: dist/artifacts
       - name: Assemble release assets
         run: |
+          set -euo pipefail
           VERSION="${GITHUB_REF_NAME#v}"
-          mkdir -p dist/release
-          find dist/artifacts -type f -path '*/thin/c3x-*' -exec cp {} dist/release/ \;
-          find dist/artifacts/semantic-assets -type f -exec cp {} dist/release/ \;
-
-          fat_count=0
-          while IFS= read -r fat; do
-            fat_count=$((fat_count + 1))
-            platform="$(basename "$fat" | sed -E "s/^c3x-${VERSION}-//; s/-fat$//")"
-            work="/tmp/c3-skill-$platform"
-            rm -rf "$work"
-            mkdir -p "$work"
-            cp -R .claude-plugin skills "$work/"
-            rm -f "$work/skills/c3/bin/c3x-"*
-            cp "$fat" "$work/skills/c3/bin/c3x-${VERSION}-${platform}"
-            chmod +x "$work/skills/c3/bin/c3x-${VERSION}-${platform}"
-            (cd "$work" && zip -r "c3-skill-${platform}-v${VERSION}.zip" .claude-plugin/ skills/ -x "*.DS_Store")
-            cp "$work/c3-skill-${platform}-v${VERSION}.zip" dist/release/
-          done < <(find dist/artifacts -type f -path '*/fat/c3x-*-fat' ! -name '*.sha256' | sort)
-          if [ "$fat_count" -eq 0 ]; then
-            echo "No fat skill binaries found" >&2
-            exit 1
-          fi
-
-          (cd dist/release && sha256sum * > SHA256SUMS)
+          bash scripts/assemble_release_assets.sh \
+            --version "$VERSION" \
+            --artifacts-dir dist/artifacts \
+            --out-dir dist/release
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}

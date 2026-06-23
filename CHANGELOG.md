@@ -5,6 +5,45 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [11.4.0] - 2026-06-23
+
+Minor release: **runtime-manager packaging plus token-economical gather/eval output.** The npm
+wrapper now owns versioned runtime installation and release asset selection, the plugin release path
+emits no-binary and per-platform skill archives, and the C3 eval/search/lookup surfaces were
+dogfooded to reduce agent output without weakening proof quality.
+
+### Added
+
+- **Npm runtime manager.** The `@c3x/cli` wrapper can list available runtimes, install a selected
+  version, pin a project runtime in `.c3/runtime.json`, uninstall/prune cached runtimes, and download
+  verified Go binary/model assets from the matching GitHub Release.
+- **No-binary and platform skill archives.** Release assembly now emits a platform-neutral skill zip,
+  full-fat per-platform skill zips, Linux portable fat skill zips, semantic assets, thin binaries, and
+  `SHA256SUMS`, with packaging tests covering archive contents and wrapper fallback behavior.
+- **Eval matched-state cache proof.** `c3x eval --policy` reports deterministic cache coverage without
+  running verdicts or writing eval cache rows; the current repo dogfoods at 26/26 reusable/cacheable
+  specs.
+### Changed
+
+- **Release workflow plans from one version.** The main release workflow validates all version
+  surfaces for Claude plugin metadata, npm package metadata, and the pinned runtime version; builds
+  thin/fat/portable runtime assets; assembles skill archives; and publishes npm only when the package
+  version is not already published.
+- **Agent output is smaller on common gather paths.** Clean `c3x eval` remains 48 bytes, policy proof
+  is 73 bytes, `c3x search eval` dropped from 702 to 532 bytes, and glob `c3x lookup 'cli/cmd/*.go'`
+  dropped from 12,540 to 868 bytes while preserving owners, counts, refs/rules, and repair context.
+
+### Fixed
+
+- **Command-gather cache safety.** Eval command gathers now use declared input manifests, reject
+  missing or obvious underdeclared file inputs, and keep cache trust based on mechanical result
+  identity rather than time.
+- **Release asset completeness.** Linux fat skill archives must have matching portable binaries before
+  release assembly succeeds, preventing a partial runtime matrix from being published.
+- **Codex development metadata stays out of install archives.** Codex-specific setup is kept out of
+  release manifests and packaged skill artifacts so it remains a development concern, not an installed
+  skill surface.
+
 ## [11.3.0] - 2026-06-22
 
 Minor release: **eval becomes the alignment spine.** C3 now treats `.c3/eval/*.yaml` as the

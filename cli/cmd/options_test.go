@@ -278,6 +278,15 @@ func TestParseArgs_Extended(t *testing.T) {
 			},
 		},
 		{
+			name: "eval policy flag",
+			argv: []string{"eval", "--policy"},
+			check: func(t *testing.T, got Options) {
+				if !got.Policy {
+					t.Error("Policy should be true")
+				}
+			},
+		},
+		{
 			name: "short help",
 			argv: []string{"-h"},
 			check: func(t *testing.T, got Options) {

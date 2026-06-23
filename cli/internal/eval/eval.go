@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/lagz0ne/c3-design/cli/internal/codemap"
+	"github.com/lagz0ne/c3-design/cli/internal/content"
 )
 
 // Spec is one fact's eval pipeline, loaded from .c3/eval/<fact>.yaml.
@@ -25,6 +26,7 @@ type Spec struct {
 	Claim    string   `yaml:"claim"`
 	Code     []string `yaml:"code"` // the fact→code binding (lookup + a default resolve check)
 	Pipeline []Step   `yaml:"pipeline"`
+	SpecHash string   `yaml:"-"`
 }
 
 // Step is exactly one of the five ops (the others nil).
@@ -40,6 +42,7 @@ type Step struct {
 type Gather struct {
 	File    string   `yaml:"file"`    // raw: read a file → one value (its content)
 	Command string   `yaml:"command"` // mechanical: exec sh -c at repo root → stdout lines
+	Inputs  []string `yaml:"inputs"`  // command contract: file/glob inputs that fully determine stdout
 	Files   string   `yaml:"files"`   // glob → matching file paths
 	Facts   string   `yaml:"facts"`   // fact-id glob → ids (for loop.over)
 	Code    string   `yaml:"code"`    // a fact-id (or $item) → its declared code globs → files
@@ -55,9 +58,10 @@ type Filter struct {
 
 // Transform reshapes each value.
 type Transform struct {
-	Trim  bool `yaml:"trim"`
-	First bool `yaml:"first"`
-	Lines bool `yaml:"lines"`
+	Trim       bool `yaml:"trim"`
+	First      bool `yaml:"first"`
+	Lines      bool `yaml:"lines"`
+	CodeBlocks bool `yaml:"code_blocks"`
 }
 
 // Eval asserts on the stream and produces the verdict (the terminal op).
@@ -84,6 +88,50 @@ type Verdict struct {
 	Verdict       string   `json:"verdict"` // holds | drift | needs-judgement
 	ExternalState string   `json:"external_state"`
 	Evidence      []string `json:"evidence,omitempty"`
+	Manifest      []Unit   `json:"-"`
+}
+
+// Unit is one refined matched surface after gather/transform. It is intentionally
+// generic: transforms can refine a file to lines, code blocks, table rows, command
+// rows, or any future typed unit without changing the verdict contract.
+type Unit struct {
+	Kind   string
+	Key    string
+	Digest string
+	Bytes  int
+}
+
+// ManifestProbe is the current matched surface for a spec when it can be
+// recomputed without running unsafe terminal work. It supports cache reuse:
+// if this manifest equals the persisted manifest for the same fact root and
+// spec hash, the previous deterministic verdict can be reused.
+type ManifestProbe struct {
+	ExternalState string
+	Manifest      []Unit
+}
+
+// ReuseClass explains the cache trust class for a spec. It is structural: it
+// says whether a result surface can be mechanically recomputed and trusted if
+// the recomputed identity matches the persisted identity.
+type ReuseClass string
+
+const (
+	ReuseDeterministic ReuseClass = "deterministic-reusable"
+	ReuseLivePolicy    ReuseClass = "deterministic-live-by-policy"
+	ReuseJudgement     ReuseClass = "non-deterministic-judgement"
+	ReuseUnsupported   ReuseClass = "unsupported"
+)
+
+// ReusePolicy is the structural cache policy for one spec.
+type ReusePolicy struct {
+	Class  ReuseClass
+	Reason string
+}
+
+type frameItem struct {
+	kind  string
+	key   string
+	value string
 }
 
 // Engine carries the run context shared by every spec.
@@ -115,6 +163,49 @@ func (e *Engine) Run(spec Spec) Verdict {
 	return e.run(spec, spec.Pipeline, "")
 }
 
+// ReusableManifest returns the current manifest only for deterministic specs
+// whose terminal verdict may be reused after fact-root, spec-hash, and manifest
+// identity have all matched. Command gathers and judgement terminals are
+// intentionally excluded: they either have external state that cannot be skipped
+// safely or require human/model judgement rather than a cached deterministic
+// predicate. Loops are reusable only when their over-gather and child pipeline
+// are also deterministic.
+func (e *Engine) ReusableManifest(spec Spec) (ManifestProbe, bool) {
+	if ReusePolicyForSpec(spec).Class != ReuseDeterministic {
+		return ManifestProbe{}, false
+	}
+	if len(spec.Code) > 0 {
+		guard, ok := e.codeGuardManifest(spec.Code)
+		if !ok {
+			return ManifestProbe{}, false
+		}
+		if len(spec.Pipeline) == 0 {
+			return guard, true
+		}
+	}
+	if len(spec.Pipeline) == 0 || !reusablePipeline(spec.Pipeline) {
+		return ManifestProbe{}, false
+	}
+	if pipelineHasCommand(spec.Pipeline) {
+		return e.dependencyManifest(spec.Pipeline, "")
+	}
+	return e.pipelineManifest(spec.Pipeline, "")
+}
+
+// ReusePolicyForSpec classifies the spec without looking at current files or
+// command output. Missing files still force a live run because ReusableManifest
+// cannot compute a matching manifest, but the structural trust class remains
+// deterministic when the source type itself is mechanically bounded.
+func ReusePolicyForSpec(spec Spec) ReusePolicy {
+	if len(spec.Code) == 0 && len(spec.Pipeline) == 0 {
+		return ReusePolicy{Class: ReuseUnsupported, Reason: "spec has no code binding or pipeline"}
+	}
+	if len(spec.Pipeline) == 0 {
+		return ReusePolicy{Class: ReuseDeterministic, Reason: "code binding resolves to a deterministic path manifest"}
+	}
+	return reusePolicyForPipeline(spec.Pipeline)
+}
+
 func resolvePipeline(globs []string) []Step {
 	return []Step{{Loop: &Loop{
 		Over: Gather{Literal: globs},
@@ -122,8 +213,313 @@ func resolvePipeline(globs []string) []Step {
 	}}}
 }
 
+func (e *Engine) codeGuardManifest(globs []string) (ManifestProbe, bool) {
+	var childStates []string
+	childManifest := make([]Unit, 0, len(globs))
+	for _, glob := range globs {
+		files, err := codemap.GlobFiles(os.DirFS(e.ProjectDir), glob)
+		if err != nil || len(files) == 0 {
+			return ManifestProbe{}, false
+		}
+		pathUnits := unitManifest(frameItems("path", glob, files))
+		childState := stampUnits(pathUnits)
+		childStates = append(childStates, glob+"\x00"+childState)
+		childManifest = append(childManifest, Unit{
+			Kind:   "child",
+			Key:    glob,
+			Digest: digestString(childState),
+			Bytes:  len(childState),
+		})
+	}
+	return ManifestProbe{ExternalState: stampStrings(childStates), Manifest: childManifest}, true
+}
+
+func (e *Engine) pipelineManifest(pipeline []Step, item string) (ManifestProbe, bool) {
+	var frame []frameItem
+	for _, st := range pipeline {
+		switch {
+		case st.Gather != nil:
+			vals, err := e.gather(*st.Gather, item)
+			if err != nil {
+				return ManifestProbe{}, false
+			}
+			frame = vals
+		case st.Filter != nil:
+			frame = applyFilter(frame, *st.Filter)
+		case st.Transform != nil:
+			frame = applyTransform(frame, *st.Transform)
+		case st.Eval != nil:
+			manifest := unitManifest(frame)
+			return ManifestProbe{ExternalState: stampUnits(manifest), Manifest: manifest}, true
+		case st.Loop != nil:
+			return e.loopManifest(*st.Loop)
+		}
+	}
+	return ManifestProbe{}, false
+}
+
+func (e *Engine) loopManifest(l Loop) (ManifestProbe, bool) {
+	if !reusableLoop(l) {
+		return ManifestProbe{}, false
+	}
+	items, err := e.gather(l.Over, "")
+	if err != nil || len(items) == 0 {
+		return ManifestProbe{}, false
+	}
+	var childStates []string
+	var childManifest []Unit
+	for _, item := range items {
+		loopItem := item.value
+		probe, ok := e.pipelineManifestForReuse(l.Do, loopItem)
+		if !ok {
+			return ManifestProbe{}, false
+		}
+		childStates = append(childStates, loopItem+"\x00"+probe.ExternalState)
+		childManifest = append(childManifest, Unit{
+			Kind:   "child",
+			Key:    loopItem,
+			Digest: digestString(probe.ExternalState),
+			Bytes:  len(probe.ExternalState),
+		})
+	}
+	return ManifestProbe{ExternalState: stampStrings(childStates), Manifest: childManifest}, true
+}
+
+func (e *Engine) pipelineManifestForReuse(pipeline []Step, item string) (ManifestProbe, bool) {
+	if pipelineHasCommand(pipeline) {
+		return e.dependencyManifest(pipeline, item)
+	}
+	return e.pipelineManifest(pipeline, item)
+}
+
+func (e *Engine) dependencyManifest(pipeline []Step, item string) (ManifestProbe, bool) {
+	var units []Unit
+	for _, st := range pipeline {
+		switch {
+		case st.Gather != nil:
+			gatherUnits, ok := e.gatherDependencyUnits(*st.Gather, item)
+			if !ok {
+				return ManifestProbe{}, false
+			}
+			units = append(units, gatherUnits...)
+		case st.Eval != nil:
+			return ManifestProbe{ExternalState: stampUnits(units), Manifest: units}, true
+		case st.Loop != nil:
+			probe, ok := e.loopManifest(*st.Loop)
+			if !ok {
+				return ManifestProbe{}, false
+			}
+			return probe, true
+		}
+	}
+	return ManifestProbe{}, false
+}
+
+func (e *Engine) gatherDependencyUnits(g Gather, item string) ([]Unit, bool) {
+	if len(g.Each) > 0 {
+		var out []Unit
+		for _, sub := range g.Each {
+			units, ok := e.gatherDependencyUnits(sub, item)
+			if !ok {
+				return nil, false
+			}
+			out = append(out, units...)
+		}
+		return out, true
+	}
+	if g.Command != "" {
+		return e.commandInputUnits(g, item)
+	}
+	frame, err := e.gather(g, item)
+	if err != nil {
+		return nil, false
+	}
+	return unitManifest(frame), true
+}
+
+func (e *Engine) commandInputUnits(g Gather, item string) ([]Unit, bool) {
+	command := subst(g.Command, item)
+	if len(g.Inputs) == 0 {
+		return nil, false
+	}
+	units := []Unit{{
+		Kind:   "command",
+		Key:    command,
+		Digest: digestString(command),
+		Bytes:  len(command),
+	}}
+	covered := map[string]bool{}
+	for _, input := range g.Inputs {
+		glob := subst(input, item)
+		files, err := codemap.GlobFiles(os.DirFS(e.ProjectDir), glob)
+		if err != nil || len(files) == 0 {
+			return nil, false
+		}
+		sort.Strings(files)
+		for _, file := range files {
+			covered[normalizeProjectPath(file)] = true
+			b, err := os.ReadFile(filepath.Join(e.ProjectDir, file))
+			if err != nil {
+				return nil, false
+			}
+			value := strings.TrimRight(string(b), "\n")
+			units = append(units, Unit{
+				Kind:   "command_input",
+				Key:    command + "#input#" + glob + "#" + file,
+				Digest: digestString(value),
+				Bytes:  len([]byte(value)),
+			})
+		}
+	}
+	if !e.commandPathTokensCovered(command, covered) {
+		return nil, false
+	}
+	return units, true
+}
+
+func (e *Engine) commandPathTokensCovered(command string, covered map[string]bool) bool {
+	for _, token := range commandPathTokens(command) {
+		info, err := os.Stat(filepath.Join(e.ProjectDir, token))
+		if err != nil || info.IsDir() {
+			continue
+		}
+		if !covered[normalizeProjectPath(token)] {
+			return false
+		}
+	}
+	return true
+}
+
+func commandPathTokens(command string) []string {
+	var out []string
+	seen := map[string]bool{}
+	fields := strings.Fields(command)
+	for i, field := range fields {
+		if i > 0 && (fields[i-1] == "-v" || fields[i-1] == "--exclude") {
+			continue
+		}
+		if strings.ContainsAny(field, "()") {
+			continue
+		}
+		if strings.HasPrefix(field, "'") || strings.HasPrefix(field, `"`) {
+			if !strings.Contains(field, "/") {
+				continue
+			}
+		}
+		token := strings.Trim(field, `"'(){}[];,|&<>`)
+		token = strings.TrimPrefix(token, "--include=")
+		token = strings.Trim(token, `"'`)
+		if token == "" || strings.HasPrefix(token, "-") || strings.Contains(token, "*") {
+			continue
+		}
+		if !strings.ContainsAny(token, "/.") {
+			continue
+		}
+		token = normalizeProjectPath(token)
+		if token == "." || strings.HasPrefix(token, "..") || seen[token] {
+			continue
+		}
+		seen[token] = true
+		out = append(out, token)
+	}
+	sort.Strings(out)
+	return out
+}
+
+func normalizeProjectPath(path string) string {
+	path = filepath.ToSlash(filepath.Clean(path))
+	return strings.TrimPrefix(path, "./")
+}
+
+func reusablePipeline(pipeline []Step) bool {
+	return reusePolicyForPipeline(pipeline).Class == ReuseDeterministic
+}
+
+func reusePolicyForPipeline(pipeline []Step) ReusePolicy {
+	if len(pipeline) == 0 {
+		return ReusePolicy{Class: ReuseUnsupported, Reason: "empty pipeline"}
+	}
+	for _, st := range pipeline {
+		switch {
+		case st.Gather != nil:
+			if policy := reusePolicyForGather(*st.Gather); policy.Class != ReuseDeterministic {
+				return policy
+			}
+		case st.Eval != nil:
+			if st.Eval.Judgement != "" {
+				return ReusePolicy{Class: ReuseJudgement, Reason: "judgement terminal requires non-mechanical review"}
+			}
+			return ReusePolicy{Class: ReuseDeterministic, Reason: "all gather and terminal steps are mechanically bounded"}
+		case st.Loop != nil:
+			if policy := reusePolicyForLoop(*st.Loop); policy.Class != ReuseDeterministic {
+				return policy
+			}
+			return ReusePolicy{Class: ReuseDeterministic, Reason: "all gather and terminal steps are mechanically bounded"}
+		}
+	}
+	return ReusePolicy{Class: ReuseUnsupported, Reason: "pipeline has no terminal eval or loop"}
+}
+
+func reusableLoop(l Loop) bool {
+	return reusePolicyForLoop(l).Class == ReuseDeterministic
+}
+
+func reusePolicyForLoop(l Loop) ReusePolicy {
+	if policy := reusePolicyForGather(l.Over); policy.Class != ReuseDeterministic {
+		return policy
+	}
+	return reusePolicyForPipeline(l.Do)
+}
+
+func reusableGather(g Gather) bool {
+	return reusePolicyForGather(g).Class == ReuseDeterministic
+}
+
+func reusePolicyForGather(g Gather) ReusePolicy {
+	if g.Command != "" {
+		if len(g.Inputs) == 0 {
+			return ReusePolicy{Class: ReuseLivePolicy, Reason: "command gather output is not mechanically bounded by C3"}
+		}
+		return ReusePolicy{Class: ReuseDeterministic, Reason: "command gather declares deterministic input surfaces"}
+	}
+	for _, sub := range g.Each {
+		if policy := reusePolicyForGather(sub); policy.Class != ReuseDeterministic {
+			return policy
+		}
+	}
+	return ReusePolicy{Class: ReuseDeterministic, Reason: "gather source is mechanically bounded"}
+}
+
+func pipelineHasCommand(pipeline []Step) bool {
+	for _, st := range pipeline {
+		switch {
+		case st.Gather != nil:
+			if gatherHasCommand(*st.Gather) {
+				return true
+			}
+		case st.Loop != nil:
+			if gatherHasCommand(st.Loop.Over) || pipelineHasCommand(st.Loop.Do) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func gatherHasCommand(g Gather) bool {
+	if g.Command != "" {
+		return true
+	}
+	for _, sub := range g.Each {
+		if gatherHasCommand(sub) {
+			return true
+		}
+	}
+	return false
+}
+
 func (e *Engine) run(spec Spec, pipeline []Step, item string) Verdict {
-	var frame []string
+	var frame []frameItem
 	for _, st := range pipeline {
 		switch {
 		case st.Gather != nil:
@@ -151,9 +547,20 @@ func (e *Engine) loop(spec Spec, l Loop) Verdict {
 		return drift(spec, "loop.over: "+err.Error())
 	}
 	verdict, evidence := "holds", []string{}
+	var childStates []string
+	var childManifest []Unit
 	for _, item := range items {
-		v := e.run(spec, l.Do, item)
-		evidence = append(evidence, fmt.Sprintf("%s → %s", item, v.Verdict))
+		loopItem := item.value
+		v := e.run(spec, l.Do, loopItem)
+		evidence = append(evidence, fmt.Sprintf("%s → %s", loopItem, v.Verdict))
+		childState := childMatchedState(v)
+		childStates = append(childStates, loopItem+"\x00"+childState)
+		childManifest = append(childManifest, Unit{
+			Kind:   "child",
+			Key:    loopItem,
+			Digest: digestString(childState),
+			Bytes:  len(childState),
+		})
 		switch v.Verdict {
 		case "drift":
 			verdict = "drift"
@@ -166,13 +573,20 @@ func (e *Engine) loop(spec Spec, l Loop) Verdict {
 	if len(items) == 0 {
 		return drift(spec, "loop.over produced no items")
 	}
-	return Verdict{Fact: spec.Fact, Claim: spec.Claim, Verdict: verdict, ExternalState: stamp(items), Evidence: evidence}
+	return Verdict{Fact: spec.Fact, Claim: spec.Claim, Verdict: verdict, ExternalState: stampStrings(childStates), Evidence: evidence, Manifest: childManifest}
 }
 
-func (e *Engine) gather(g Gather, item string) ([]string, error) {
+func childMatchedState(v Verdict) string {
+	if v.ExternalState != "" {
+		return v.ExternalState
+	}
+	return "error:" + digestString(strings.Join(v.Evidence, "\x00"))
+}
+
+func (e *Engine) gather(g Gather, item string) ([]frameItem, error) {
 	switch {
 	case len(g.Each) > 0:
-		var out []string
+		var out []frameItem
 		for _, sub := range g.Each {
 			vals, err := e.gather(sub, item)
 			if err != nil {
@@ -182,40 +596,66 @@ func (e *Engine) gather(g Gather, item string) ([]string, error) {
 		}
 		return out, nil
 	case g.File != "":
-		b, err := os.ReadFile(filepath.Join(e.ProjectDir, subst(g.File, item)))
+		path := subst(g.File, item)
+		b, err := os.ReadFile(filepath.Join(e.ProjectDir, path))
 		if err != nil {
 			return nil, err
 		}
-		return []string{strings.TrimRight(string(b), "\n")}, nil
+		return []frameItem{{kind: "file", key: path, value: strings.TrimRight(string(b), "\n")}}, nil
 	case g.Command != "":
 		return e.exec(subst(g.Command, item))
 	case g.Files != "":
-		return codemap.GlobFiles(os.DirFS(e.ProjectDir), subst(g.Files, item))
+		glob := subst(g.Files, item)
+		files, err := codemap.GlobFiles(os.DirFS(e.ProjectDir), glob)
+		if err != nil {
+			return nil, err
+		}
+		return frameItems("path", glob, files), nil
 	case g.Facts != "":
-		return matchIDs(e.FactIDs, subst(g.Facts, item)), nil
+		glob := subst(g.Facts, item)
+		return frameItems("fact", glob, matchIDs(e.FactIDs, glob)), nil
 	case len(g.Literal) > 0:
-		out := make([]string, len(g.Literal))
+		out := make([]frameItem, len(g.Literal))
 		for i, v := range g.Literal {
-			out[i] = subst(v, item)
+			out[i] = frameItem{kind: "literal", key: fmt.Sprintf("literal[%d]", i), value: subst(v, item)}
 		}
 		return out, nil
 	case g.Code != "":
 		id := subst(g.Code, item)
+		globs, ok := e.CodeBindings[id]
+		if !ok || len(globs) == 0 {
+			return nil, fmt.Errorf("code %s has no binding", id)
+		}
 		var files []string
-		for _, glob := range e.CodeBindings[id] {
+		var missing []string
+		for _, glob := range globs {
 			fs, err := codemap.GlobFiles(os.DirFS(e.ProjectDir), glob)
 			if err != nil {
 				return nil, err
 			}
-			files = append(files, fs...)
+			if len(fs) == 0 {
+				missing = append(missing, glob)
+				continue
+			}
+			for _, file := range fs {
+				files = append(files, glob+"\x00"+file)
+			}
+		}
+		if len(missing) > 0 {
+			return nil, fmt.Errorf("code %s unmatched glob(s): %s", id, strings.Join(missing, ", "))
 		}
 		sort.Strings(files)
-		return files, nil
+		out := make([]frameItem, 0, len(files))
+		for _, packed := range files {
+			parts := strings.SplitN(packed, "\x00", 2)
+			out = append(out, frameItem{kind: "code_path", key: id + "#" + parts[0] + "#" + parts[1], value: parts[1]})
+		}
+		return out, nil
 	}
 	return nil, fmt.Errorf("empty gather")
 }
 
-func (e *Engine) exec(command string) ([]string, error) {
+func (e *Engine) exec(command string) ([]frameItem, error) {
 	c := exec.Command("sh", "-c", command)
 	c.Dir = e.ProjectDir
 	out, err := c.Output()
@@ -225,7 +665,7 @@ func (e *Engine) exec(command string) ([]string, error) {
 		// as empty lets broken paths and bad regexes pass count == 0 checks.
 		if exitErr, isExit := err.(*exec.ExitError); isExit {
 			if exitErr.ExitCode() == 1 {
-				return splitLines(string(out)), nil
+				return frameItems("command_line", command, splitLines(string(out))), nil
 			}
 			stderr := strings.TrimSpace(string(exitErr.Stderr))
 			if stderr != "" {
@@ -236,19 +676,21 @@ func (e *Engine) exec(command string) ([]string, error) {
 			return nil, fmt.Errorf("command %q: %w", command, err)
 		}
 	}
-	return splitLines(string(out)), nil
+	return frameItems("command_line", command, splitLines(string(out))), nil
 }
 
-func (e *Engine) assert(spec Spec, frame []string, ev Eval, item string) Verdict {
+func (e *Engine) assert(spec Spec, frame []frameItem, ev Eval, item string) Verdict {
 	v := func(verdict string, evidence ...string) Verdict {
-		return Verdict{Fact: spec.Fact, Claim: spec.Claim, Verdict: verdict, ExternalState: stamp(frame), Evidence: evidence}
+		manifest := unitManifest(frame)
+		return Verdict{Fact: spec.Fact, Claim: spec.Claim, Verdict: verdict, ExternalState: stampUnits(manifest), Evidence: evidence, Manifest: manifest}
 	}
+	values := frameValues(frame)
 	switch {
 	case ev.Judgement != "":
 		return v("needs-judgement", "judge: "+subst(ev.Judgement, item), fmt.Sprintf("%d value(s) gathered", len(frame)))
 	case ev.Exists:
 		var missing []string
-		for _, p := range frame {
+		for _, p := range values {
 			if _, err := os.Stat(filepath.Join(e.ProjectDir, p)); err != nil {
 				missing = append(missing, p+" ✗")
 			}
@@ -261,19 +703,19 @@ func (e *Engine) assert(spec Spec, frame []string, ev Eval, item string) Verdict
 		}
 		return v("holds", fmt.Sprintf("%d path(s) exist", len(frame)))
 	case ev.AllEqual:
-		if len(uniq(frame)) <= 1 {
-			return v("holds", "all equal: "+joinShort(frame))
+		if len(uniq(values)) <= 1 {
+			return v("holds", "all equal: "+joinShort(values))
 		}
-		return v("drift", "distinct: "+strings.Join(uniq(frame), " | "))
+		return v("drift", "distinct: "+strings.Join(uniq(values), " | "))
 	case ev.Equals != "":
-		for _, x := range frame {
+		for _, x := range values {
 			if strings.TrimSpace(x) != ev.Equals {
 				return v("drift", fmt.Sprintf("%q ≠ %q", x, ev.Equals))
 			}
 		}
 		return v("holds", "all == "+ev.Equals)
 	case len(ev.ContainsAll) > 0:
-		joined := strings.Join(frame, "\n")
+		joined := strings.Join(values, "\n")
 		var miss []string
 		for _, sub := range ev.ContainsAll {
 			if !strings.Contains(joined, sub) {
@@ -285,7 +727,7 @@ func (e *Engine) assert(spec Spec, frame []string, ev Eval, item string) Verdict
 		}
 		return v("holds", "contains all "+strconv.Itoa(len(ev.ContainsAll)))
 	case ev.Contains != "":
-		if strings.Contains(strings.Join(frame, "\n"), ev.Contains) {
+		if strings.Contains(strings.Join(values, "\n"), ev.Contains) {
 			return v("holds", "contains "+ev.Contains)
 		}
 		return v("drift", "missing "+ev.Contains)
@@ -301,17 +743,17 @@ func (e *Engine) assert(spec Spec, frame []string, ev Eval, item string) Verdict
 
 // --- pure helpers ---
 
-func applyFilter(frame []string, f Filter) []string {
+func applyFilter(frame []frameItem, f Filter) []frameItem {
 	var re *regexp.Regexp
 	if f.Matches != "" {
 		re = regexp.MustCompile(f.Matches)
 	}
 	out := frame[:0:0]
 	for _, x := range frame {
-		if f.Contains != "" && !strings.Contains(x, f.Contains) {
+		if f.Contains != "" && !strings.Contains(x.value, f.Contains) {
 			continue
 		}
-		if re != nil && !re.MatchString(x) {
+		if re != nil && !re.MatchString(x.value) {
 			continue
 		}
 		out = append(out, x)
@@ -319,17 +761,29 @@ func applyFilter(frame []string, f Filter) []string {
 	return out
 }
 
-func applyTransform(frame []string, t Transform) []string {
+func applyTransform(frame []frameItem, t Transform) []frameItem {
 	if t.Lines {
-		var out []string
+		var out []frameItem
 		for _, x := range frame {
-			out = append(out, splitLines(x)...)
+			lines := splitLines(x.value)
+			for i, line := range lines {
+				out = append(out, frameItem{kind: "line", key: fmt.Sprintf("%s#line[%d]", x.key, i), value: line})
+			}
+		}
+		frame = out
+	}
+	if t.CodeBlocks {
+		var out []frameItem
+		for _, x := range frame {
+			for i, block := range codeBlockValues(x.value) {
+				out = append(out, frameItem{kind: "code_block", key: fmt.Sprintf("%s#code_block[%d]", x.key, i), value: block})
+			}
 		}
 		frame = out
 	}
 	if t.Trim {
 		for i := range frame {
-			frame[i] = strings.TrimSpace(frame[i])
+			frame[i].value = strings.TrimSpace(frame[i].value)
 		}
 	}
 	if t.First && len(frame) > 1 {
@@ -412,7 +866,60 @@ func joinShort(frame []string) string {
 	return strings.TrimSpace(frame[0])
 }
 
-func stamp(frame []string) string {
-	h := sha256.Sum256([]byte(strings.Join(frame, "\x00")))
+func frameItems(kind, source string, values []string) []frameItem {
+	out := make([]frameItem, len(values))
+	for i, value := range values {
+		out[i] = frameItem{kind: kind, key: fmt.Sprintf("%s#%s[%d]", source, kind, i), value: value}
+	}
+	return out
+}
+
+func frameValues(frame []frameItem) []string {
+	out := make([]string, len(frame))
+	for i, item := range frame {
+		out[i] = item.value
+	}
+	return out
+}
+
+func unitManifest(frame []frameItem) []Unit {
+	out := make([]Unit, len(frame))
+	for i, item := range frame {
+		out[i] = Unit{
+			Kind:   item.kind,
+			Key:    item.key,
+			Digest: digestString(item.value),
+			Bytes:  len([]byte(item.value)),
+		}
+	}
+	return out
+}
+
+func codeBlockValues(markdown string) []string {
+	tree := content.ParseMarkdown("eval", markdown)
+	var out []string
+	for _, node := range tree.Nodes {
+		if node.Type == "code_block" {
+			out = append(out, node.Content)
+		}
+	}
+	return out
+}
+
+func stampUnits(units []Unit) string {
+	parts := make([]string, len(units))
+	for i, unit := range units {
+		parts[i] = unit.Kind + "\x00" + unit.Key + "\x00" + unit.Digest + "\x00" + strconv.Itoa(unit.Bytes)
+	}
+	return stampStrings(parts)
+}
+
+func stampStrings(parts []string) string {
+	h := sha256.Sum256([]byte(strings.Join(parts, "\x00")))
+	return hex.EncodeToString(h[:])[:12]
+}
+
+func digestString(value string) string {
+	h := sha256.Sum256([]byte(value))
 	return hex.EncodeToString(h[:])[:12]
 }

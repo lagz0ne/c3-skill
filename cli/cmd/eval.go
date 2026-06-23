@@ -25,6 +25,7 @@ type EvalOptions struct {
 	C3Dir      string
 	JSON       bool
 	Only       string // optional: run a single fact's spec
+	Policy     bool   // report cache trust policy instead of running verdicts
 }
 
 // EvalReport is the output of a c3 eval run.
@@ -42,6 +43,25 @@ type compactEvalReport struct {
 	Drift          int            `json:"drift"`
 	NeedsJudgement int            `json:"needs_judgement"`
 	Verdicts       []eval.Verdict `json:"verdicts,omitempty"`
+}
+
+// EvalPolicyReport is an explicit diagnostic for cache trust coverage. Routine
+// eval output must not carry this data; ask for it with c3x eval --policy.
+type EvalPolicyReport struct {
+	Total       int              `json:"total"`
+	Reusable    int              `json:"reusable"`
+	Cacheable   int              `json:"cacheable"`
+	Live        int              `json:"live"`
+	Judgement   int              `json:"judgement"`
+	Unsupported int              `json:"unsupported"`
+	Specs       []EvalPolicySpec `json:"specs,omitempty"`
+}
+
+type EvalPolicySpec struct {
+	Fact      string `json:"fact"`
+	Class     string `json:"class"`
+	Cacheable bool   `json:"cacheable"`
+	Reason    string `json:"reason,omitempty"`
 }
 
 // LoadEvalSpecs reads every .c3/eval/<fact>.yaml pipeline. The fact→code binding
@@ -110,6 +130,9 @@ func RunEval(opts EvalOptions, w io.Writer) error {
 	}
 	roots := factRootsByID(ents)
 	eng := &eval.Engine{ProjectDir: opts.ProjectDir, CodeBindings: EvalBindings(specs), FactIDs: ids}
+	if opts.Policy {
+		return writeEvalPolicy(opts, specs, eng, w)
+	}
 
 	rep := EvalReport{Verdicts: []eval.Verdict{}}
 	records := make([]store.EvalMatchRecord, 0, len(specs))
@@ -147,6 +170,44 @@ func RunEval(opts EvalOptions, w io.Writer) error {
 		hints = evalHelpHints()
 	}
 	return WriteObjectOutput(w, compact, format, hints)
+}
+
+func writeEvalPolicy(opts EvalOptions, specs []eval.Spec, eng *eval.Engine, w io.Writer) error {
+	report := EvalPolicyReport{}
+	focused := opts.Only != ""
+	for _, sp := range specs {
+		if focused && sp.Fact != opts.Only {
+			continue
+		}
+		policy := eval.ReusePolicyForSpec(sp)
+		cacheable := false
+		if policy.Class == eval.ReuseDeterministic {
+			_, cacheable = eng.ReusableManifest(sp)
+		}
+		report.Total++
+		if cacheable {
+			report.Cacheable++
+		}
+		switch policy.Class {
+		case eval.ReuseDeterministic:
+			report.Reusable++
+		case eval.ReuseLivePolicy:
+			report.Live++
+		case eval.ReuseJudgement:
+			report.Judgement++
+		default:
+			report.Unsupported++
+		}
+		if focused {
+			report.Specs = append(report.Specs, EvalPolicySpec{
+				Fact:      sp.Fact,
+				Class:     string(policy.Class),
+				Cacheable: cacheable,
+				Reason:    policy.Reason,
+			})
+		}
+	}
+	return WriteObjectOutput(w, report, ResolveFormat(opts.JSON, isAgentMode()), nil)
 }
 
 func cachedEvalVerdict(s *store.Store, spec eval.Spec, factRoot string, probe eval.ManifestProbe, cacheable bool) (eval.Verdict, bool) {

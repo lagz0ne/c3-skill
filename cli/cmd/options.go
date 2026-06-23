@@ -43,6 +43,7 @@ type Options struct {
 	Cite          bool
 	JSONExplicit  bool
 	Force         bool
+	Policy        bool
 	Only          []string
 	IncludeCode   bool
 	Rules         []string
@@ -158,6 +159,8 @@ func ParseArgs(argv []string) Options {
 			opts.Recompute = true
 		case "--force":
 			opts.Force = true
+		case "--policy":
+			opts.Policy = true
 		case "--only":
 			if i+1 < len(argv) {
 				i++

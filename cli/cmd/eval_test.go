@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"bytes"
+	"database/sql"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -45,6 +47,102 @@ func TestRunEval_AgentTOONOmitsCleanHelpAndVerdicts(t *testing.T) {
 		if strings.Contains(out, noisy) {
 			t.Fatalf("clean full eval should omit %q in agent output:\n%s", noisy, out)
 		}
+	}
+}
+
+func TestRunEvalPolicy_AggregatesWithoutRunningOrPersisting(t *testing.T) {
+	s, c3Dir := createDBFixtureWithC3Dir(t)
+	projectDir := filepath.Dir(c3Dir)
+	if err := os.WriteFile(filepath.Join(projectDir, "value.txt"), []byte("ok\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(c3Dir, "eval"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	spec := []byte(`fact: c3-0
+claim: command input policy is auditable without command execution
+pipeline:
+  - gather:
+      command: exit 99
+      inputs:
+        - value.txt
+  - eval:
+      count: "> 0"
+`)
+	if err := os.WriteFile(filepath.Join(c3Dir, "eval", "c3-0.yaml"), spec, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("C3X_MODE", "agent")
+
+	var buf bytes.Buffer
+	if err := RunEval(EvalOptions{Store: s, ProjectDir: projectDir, C3Dir: c3Dir, JSON: true, Policy: true}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	out := buf.String()
+	requireAll(t, out,
+		"total: 1",
+		"reusable: 1",
+		"cacheable: 1",
+		"live: 0",
+		"judgement: 0",
+		"unsupported: 0",
+	)
+	for _, noisy := range []string{"verdicts[", "specs["} {
+		if strings.Contains(out, noisy) {
+			t.Fatalf("aggregate policy output should omit %q:\n%s", noisy, out)
+		}
+	}
+	if _, err := s.EvalMatch("c3-0"); !errors.Is(err, sql.ErrNoRows) {
+		t.Fatalf("policy audit must not persist eval match, err=%v", err)
+	}
+}
+
+func TestRunEvalPolicy_FocusedFactShowsCompactReason(t *testing.T) {
+	s, c3Dir := createDBFixtureWithC3Dir(t)
+	projectDir := filepath.Dir(c3Dir)
+	if err := os.MkdirAll(filepath.Join(c3Dir, "eval"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(c3Dir, "eval", "c3-0.yaml"), []byte(`fact: c3-0
+pipeline:
+  - gather:
+      literal:
+        - ok
+  - eval:
+      equals: ok
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(c3Dir, "eval", "c3-1.yaml"), []byte(`fact: c3-1
+pipeline:
+  - gather:
+      command: date
+  - eval:
+      count: "> 0"
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("C3X_MODE", "agent")
+
+	var buf bytes.Buffer
+	if err := RunEval(EvalOptions{Store: s, ProjectDir: projectDir, C3Dir: c3Dir, JSON: true, Only: "c3-1", Policy: true}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	out := buf.String()
+	requireAll(t, out,
+		"total: 1",
+		"reusable: 0",
+		"live: 1",
+		"specs[1]:",
+		"fact: c3-1",
+		"class: deterministic-live-by-policy",
+		"cacheable: false",
+		"command gather output is not mechanically bounded by C3",
+	)
+	if strings.Contains(out, "fact: c3-0") {
+		t.Fatalf("focused policy output should include only requested fact:\n%s", out)
 	}
 }
 

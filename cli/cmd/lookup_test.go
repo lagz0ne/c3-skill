@@ -218,6 +218,48 @@ func TestRunLookup_GlobInput_MultipleFiles(t *testing.T) {
 	}
 }
 
+func TestRunLookup_GlobAgentTOONUsesSummary(t *testing.T) {
+	s, c3Dir := createLookupFixture(t)
+	bindCode(t, c3Dir, "c3-101", "src/auth/*.ts")
+	projectDir := filepath.Dir(c3Dir)
+	if err := os.MkdirAll(filepath.Join(projectDir, "src", "auth"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeFile(t, filepath.Join(projectDir, "src", "auth", "jwt.ts"), "// jwt")
+	writeFile(t, filepath.Join(projectDir, "src", "auth", "middleware.ts"), "// middleware")
+	writeFile(t, filepath.Join(projectDir, "src", "auth", "extra.js"), "// extra")
+	t.Setenv("C3X_MODE", "agent")
+
+	var buf bytes.Buffer
+	err := RunLookup(LookupOptions{
+		Store:      s,
+		FilePath:   "src/auth/*",
+		ProjectDir: projectDir,
+		C3Dir:      c3Dir,
+		JSON:       true,
+	}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	out := buf.String()
+	requireAll(t, out,
+		"pattern: src/auth/*",
+		"files: 3",
+		"mapped: 2",
+		"unmapped: 1",
+		"src/auth/extra.js",
+		"components[1]{id,title,goal,parent,uses,rules}:",
+		"c3-101",
+		"ref-jwt",
+	)
+	for _, noisy := range []string{"file_map:", "src/auth/jwt.ts:", "src/auth/middleware.ts:", "Standardize auth tokens"} {
+		if strings.Contains(out, noisy) {
+			t.Fatalf("agent glob lookup should not dump %q:\n%s", noisy, out)
+		}
+	}
+}
+
 func TestRunLookup_JSONNoMatch(t *testing.T) {
 	s, c3Dir := createLookupFixture(t)
 	bindCode(t, c3Dir, "c3-101", "src/auth/*.ts")

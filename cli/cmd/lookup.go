@@ -46,6 +46,14 @@ type compactLookupMatch struct {
 	Rules  string `json:"rules,omitempty"`
 }
 
+type compactGlobLookupSummary struct {
+	Pattern  string   `json:"pattern"`
+	Files    int      `json:"files"`
+	Mapped   int      `json:"mapped"`
+	Unmapped int      `json:"unmapped"`
+	Sample   []string `json:"unmapped_files,omitempty"`
+}
+
 // LookupResult is the output for a single-file lookup.
 type LookupResult struct {
 	File    string        `json:"file"`
@@ -219,6 +227,9 @@ func runGlobLookup(opts LookupOptions, bindings codemap.CodeMap, w io.Writer) er
 	}
 
 	if opts.JSON {
+		if isAgentMode() {
+			return writeCompactGlobLookup(w, result)
+		}
 		return writeJSON(w, result)
 	}
 
@@ -250,6 +261,27 @@ func runGlobLookup(opts LookupOptions, bindings codemap.CodeMap, w io.Writer) er
 	printMatches(w, result.Components)
 	writeAgentHints(w, result.Help)
 	return nil
+}
+
+func writeCompactGlobLookup(w io.Writer, result GlobLookupResult) error {
+	summary := compactGlobLookupSummary{
+		Pattern: result.Pattern,
+		Files:   len(result.Files),
+	}
+	for _, file := range result.Files {
+		if len(result.FileMap[file]) == 0 {
+			summary.Unmapped++
+			if len(summary.Sample) < 10 {
+				summary.Sample = append(summary.Sample, file)
+			}
+			continue
+		}
+		summary.Mapped++
+	}
+	if err := WriteObjectOutput(w, summary, FormatTOON, nil); err != nil {
+		return err
+	}
+	return WriteTableOutput(w, "components", compactLookupMatches(result.Components), []string{"id", "title", "goal", "parent", "uses", "rules"}, FormatTOON, result.Help)
 }
 
 func lookupCascadeHints(s *store.Store, matches []LookupMatch, filePath string) []HelpHint {

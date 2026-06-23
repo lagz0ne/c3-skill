@@ -188,21 +188,46 @@ func TestRunSearch_AgentTOONUsesCompactSearchTable(t *testing.T) {
 		"research-note-20260605-api-latency",
 		"p95",
 		"DB pool",
-		"content",
-		"affects/c3-101",
-		"uses/ref-latency-budget",
-		"uses/rule-trace-context",
-		"component=c3-101",
+		"body",
+		"meta",
+		"comp=c3-101",
 		"ref=ref-latency-budget",
 		"rule=rule-trace-context",
 	)
-	for _, noisy := range []string{"query:", "match_sources:", "context:", "component:\n", "title: Trace Context Propagation", "help["} {
+	for _, noisy := range []string{"query:", "match_sources:", "context:", "component:\n", "title: Trace Context Propagation", "affects/", "uses/", "semantic", "help["} {
 		if strings.Contains(out, noisy) {
 			t.Fatalf("compact search output should not contain %q:\n%s", noisy, out)
 		}
 	}
 	if len(out) > 1500 {
 		t.Fatalf("compact search output too large: %d bytes\n%s", len(out), out)
+	}
+}
+
+func TestCompactSearchRows_OmitsTitleDuplicateSnippet(t *testing.T) {
+	rows := compactSearchRows([]SearchResultRow{
+		{
+			ID:           "c3-108",
+			Title:        "eval-engine",
+			Snippet:      "# eval-engine",
+			MatchSources: []string{"content_fts", "entity_fts", "semantic"},
+		},
+		{
+			ID:      "ref-eval-determinism",
+			Title:   "eval-determinism",
+			Snippet: "# Eval Determinism",
+		},
+	})
+	if len(rows) != 2 {
+		t.Fatalf("len = %d", len(rows))
+	}
+	for _, row := range rows {
+		if row.Snippet != "" {
+			t.Fatalf("duplicate title snippet should be omitted, got %+v", rows)
+		}
+	}
+	if rows[0].Why != "body+meta+sem" {
+		t.Fatalf("why = %q, want compact source labels", rows[0].Why)
 	}
 }
 

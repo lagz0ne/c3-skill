@@ -550,15 +550,32 @@ func resolveSearchLimit(limit int) int {
 func compactSearchRows(rows []SearchResultRow) []compactSearchResultRow {
 	out := make([]compactSearchResultRow, 0, len(rows))
 	for _, row := range rows {
+		snippet := compactSearchSnippet(row.Snippet)
+		if isTitleDuplicateSnippet(row.Title, snippet) {
+			snippet = ""
+		}
 		out = append(out, compactSearchResultRow{
 			ID:      row.ID,
 			Title:   row.Title,
 			Why:     compactMatchSources(row.MatchSources),
 			Ctx:     compactSearchContext(row.Context),
-			Snippet: compactSearchSnippet(row.Snippet),
+			Snippet: snippet,
 		})
 	}
 	return out
+}
+
+func isTitleDuplicateSnippet(title, snippet string) bool {
+	title = normalizeSearchDuplicateText(title)
+	snippet = normalizeSearchDuplicateText(snippet)
+	return title != "" && title == snippet
+}
+
+func normalizeSearchDuplicateText(s string) string {
+	s = strings.TrimSpace(cleanSnippet(s))
+	s = strings.TrimLeft(s, "# ")
+	s = strings.NewReplacer("-", " ", "_", " ").Replace(s)
+	return strings.ToLower(strings.Join(strings.Fields(s), " "))
 }
 
 func compactSearchSnippet(snippet string) string {
@@ -600,17 +617,14 @@ func compactMatchSources(sources []string) string {
 func compactMatchSource(source string) string {
 	switch source {
 	case "content_fts":
-		return "content"
+		return "body"
 	case "entity_fts":
-		return "entity"
+		return "meta"
 	case "semantic":
-		return "semantic"
+		return "sem"
 	}
 	if strings.HasPrefix(source, "graph:") {
-		parts := strings.SplitN(strings.TrimPrefix(source, "graph:"), ":", 2)
-		if len(parts) == 2 && parts[0] != "" && parts[1] != "" {
-			return parts[0] + "/" + parts[1]
-		}
+		return ""
 	}
 	return source
 }
@@ -618,7 +632,7 @@ func compactMatchSource(source string) string {
 func compactSearchContext(ctx SearchContext) string {
 	parts := make([]string, 0, 4)
 	if ctx.Component.ID != "" {
-		parts = append(parts, "component="+ctx.Component.ID)
+		parts = append(parts, "comp="+ctx.Component.ID)
 	}
 	if ctx.Ref.ID != "" {
 		parts = append(parts, "ref="+ctx.Ref.ID)

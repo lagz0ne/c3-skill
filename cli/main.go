@@ -468,6 +468,7 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 			C3Dir:      c3Dir,
 			JSON:       opts.JSON,
 			Only:       only,
+			Policy:     opts.Policy,
 		}, w)
 	case "schema":
 		entityType := ""

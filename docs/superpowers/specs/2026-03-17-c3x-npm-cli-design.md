@@ -48,9 +48,9 @@ Runtime-manager commands are namespaced so they do not collide with Go CLI comma
 c3x runtime versions
 c3x runtime installed
 c3x runtime install latest
-c3x runtime install 11.3.0
-c3x runtime use 11.3.0
-c3x runtime uninstall 11.3.0
+c3x runtime install 11.4.0
+c3x runtime use 11.4.0
+c3x runtime uninstall 11.4.0
 c3x runtime prune
 ```
 
@@ -70,7 +70,7 @@ Project metadata is operational data, not a frozen C3 fact. It may store only:
 
 ```json
 {
-  "version": "11.3.0"
+  "version": "11.4.0"
 }
 ```
 

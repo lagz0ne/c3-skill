@@ -25,9 +25,9 @@ The npm entrypoint owns runtime installation and cache management under the `run
 c3x runtime versions
 c3x runtime installed
 c3x runtime install latest
-c3x runtime install 11.3.0
-c3x runtime use 11.3.0
-c3x runtime uninstall 11.3.0
+c3x runtime install 11.4.0
+c3x runtime use 11.4.0
+c3x runtime uninstall 11.4.0
 c3x runtime prune
 ```
 

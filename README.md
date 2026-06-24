@@ -12,7 +12,7 @@ The point of the freeze is Act 2: because facts only move through change-units, 
 
 - **Membership writes itself.** Set a child's `parent:` and the parent's membership table grows the row — synthesized, never hand-authored, always in sync.
 - **The destruction gate refuses strays.** A retire that would orphan a live child or dangle a live citation is **refused** — unless the same change-unit also reparents or retires it. The graph never strands.
-- **Eval checks claims against reality.** `.c3/eval/*.yaml` binds facts to the code, files, or commands they govern. `c3x eval` produces one-off `holds` / `drift` / `needs_judgement` verdicts without turning a single LLM answer into truth.
+- **Eval checks claims against reality.** `.c3/eval/*.yaml` binds facts to the code, files, commands, or ast-grep structural outlines they govern. `c3x eval` produces one-off `holds` / `drift` / `needs_judgement` verdicts without turning a single LLM answer into truth.
 - **Search and lookup stay small.** `c3x search` finds concepts by semantic, keyword, and graph signal; `c3x lookup` maps files through eval bindings to owners, refs, and rules. Agent-mode output is TOON and tuned to keep the useful proof while dropping noise.
 - **Rebase resolves conflict.** When a staged patch's cited block moves, `c3x change rebase` emits a drift bundle to re-author against the fresh anchor.
 
@@ -32,8 +32,8 @@ The source repository, `main` branch, and platform-neutral skill ZIP carry the s
 
 Use a per-platform release asset when the skill must run in a sandboxed or offline environment:
 
-- `c3-skill-<os>-<arch>-v<version>.zip` is the full fat build. It carries the `c3x` binary and embedded semantic model/native ONNX runtime, and includes `.gitattributes` so Git preserves the bundled binary as binary content.
-- `c3-skill-linux-<arch>-portable-v<version>.zip` is the portable Linux fat build. It carries a bundled pure-Go `c3x` binary for broader distro/sandbox compatibility; semantic ONNX search is unavailable in that build, so search falls back to keyword/graph behavior.
+- `c3-skill-<os>-<arch>-v<version>.zip` is the full fat build. It carries the `c3x` binary, the release-pinned ast-grep binary for structural eval gathers, and embedded semantic model/native ONNX runtime. It includes `.gitattributes` so Git preserves bundled binaries as binary content.
+- `c3-skill-linux-<arch>-portable-v<version>.zip` is the portable Linux fat build. It carries a bundled pure-Go `c3x` binary plus the release-pinned ast-grep binary for that Linux target; semantic ONNX search is unavailable in that build, so search falls back to keyword/graph behavior.
 
 Fat ZIPs are GitHub Release artifacts, not files committed back to `main`.
 
@@ -43,10 +43,10 @@ Fat ZIPs are GitHub Release artifacts, not files committed back to `main`.
 npx @c3x/cli check
 npx @c3x/cli search "how do users sign in and get permissions"
 npx @c3x/cli runtime versions
-npx @c3x/cli runtime use 11.4.0
+npx @c3x/cli runtime use 11.5.0
 ```
 
-The npm package downloads the matching `c3x` binary and semantic model from the GitHub Release into a versioned local cache on first use. `npx @c3x/cli runtime use <version>` writes `.c3/runtime.json` with only the selected runtime version; it never stores a binary path or URL.
+The npm package downloads the matching `c3x` binary, semantic model, and, for outline-capable runtimes, the pinned ast-grep binary from the GitHub Release into a versioned local cache on first use. `npx @c3x/cli runtime use <version>` writes `.c3/runtime.json` with only the selected runtime version; it never stores a binary path or URL.
 
 ## What You Get
 
@@ -81,7 +81,7 @@ The npm entrypoint adds a namespaced runtime manager so cache operations do not 
 npx @c3x/cli runtime versions
 npx @c3x/cli runtime installed
 npx @c3x/cli runtime install latest
-npx @c3x/cli runtime use 11.4.0
+npx @c3x/cli runtime use 11.5.0
 npx @c3x/cli runtime prune
 ```
 

@@ -10,6 +10,11 @@ if [ ! -f "$VERSION_FILE" ]; then
   exit 1
 fi
 VERSION=$(tr -d '[:space:]' < "$VERSION_FILE")
+AST_GREP_VERSION_FILE="$SCRIPT_DIR/AST_GREP_VERSION"
+AST_GREP_VERSION=""
+if [ -f "$AST_GREP_VERSION_FILE" ]; then
+  AST_GREP_VERSION=$(tr -d '[:space:]' < "$AST_GREP_VERSION_FILE")
+fi
 
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 ARCH=$(uname -m)
@@ -30,6 +35,41 @@ esac
 asset_name="c3x-${VERSION}-${OS}-${ARCH}"
 bin="$SCRIPT_DIR/$asset_name"
 portable_bin="$SCRIPT_DIR/${asset_name}-portable"
+ast_grep_bin=""
+if [ -n "$AST_GREP_VERSION" ]; then
+  candidate="$SCRIPT_DIR/ast-grep-${AST_GREP_VERSION}-${OS}-${ARCH}"
+  if [ -f "$candidate" ]; then
+    ast_grep_bin="$candidate"
+  fi
+fi
+
+if [ -z "${C3_AST_GREP:-}" ] && [ -n "$ast_grep_bin" ]; then
+  export C3_AST_GREP="$ast_grep_bin"
+fi
+
+maybe_install_ast_grep() {
+  if [ "${1-}" != "eval" ]; then
+    return 0
+  fi
+  if [ -n "${C3_AST_GREP:-}" ] || [ -z "$AST_GREP_VERSION" ]; then
+    return 0
+  fi
+  if [ ! -x "$ROOT_DIR/scripts/install_ast_grep.sh" ] || ! command -v npm >/dev/null 2>&1; then
+    return 0
+  fi
+  local candidate="$SCRIPT_DIR/ast-grep-${AST_GREP_VERSION}-${OS}-${ARCH}"
+  if [ -f "$candidate" ]; then
+    export C3_AST_GREP="$candidate"
+    return 0
+  fi
+  if bash "$ROOT_DIR/scripts/install_ast_grep.sh" \
+    --version "$AST_GREP_VERSION" \
+    --os "$OS" \
+    --arch "$ARCH" \
+    --out-dir "$SCRIPT_DIR" >/dev/null 2>&1 && [ -f "$candidate" ]; then
+    export C3_AST_GREP="$candidate"
+  fi
+}
 
 print_wrapper_help() {
   cat <<EOF
@@ -51,11 +91,13 @@ EOF
 
 if [ -f "$bin" ]; then
   export C3X_VERSION="$VERSION"
+  maybe_install_ast_grep "${1-}"
   exec "$bin" "$@"
 fi
 
 if [ "$OS" = "linux" ] && [ -f "$portable_bin" ]; then
   export C3X_VERSION="$VERSION"
+  maybe_install_ast_grep "${1-}"
   exec "$portable_bin" "$@"
 fi
 
@@ -68,6 +110,7 @@ if [ -f "$ROOT_DIR/cli/go.mod" ] && command -v go >/dev/null 2>&1; then
     .
   chmod +x "$bin"
   export C3X_VERSION="$VERSION"
+  maybe_install_ast_grep "${1-}"
   exec "$bin" "$@"
 fi
 

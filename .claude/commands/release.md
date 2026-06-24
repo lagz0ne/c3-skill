@@ -80,11 +80,16 @@ These fields cause the plugin to not load properly. Auto-discovery finds compone
 
 ### Step 5: Update Version Files
 
-Read, then update **all three** files with the new version:
+Read, then update all release version surfaces with the new version:
 
 1. `skills/c3/bin/VERSION` - Replace content with just `A.B.C` (no quotes, no newline prefix) — **CI and c3x.sh read this to detect releases and select binaries**
 2. `.claude-plugin/plugin.json` - Update `"version": "X.Y.Z"` (and ensure no explicit paths per Step 4)
 3. `.claude-plugin/marketplace.json` - Update `"version": "X.Y.Z"` in the plugins array
+4. `packages/cli/package.json` - Update npm package version
+5. `packages/cli/package-lock.json` - Update both lockfile version fields
+6. `packages/cli/src/version.ts` - Update `C3X_VERSION`
+
+If the release changes the pinned ast-grep runtime, also update both `skills/c3/bin/AST_GREP_VERSION` and `AST_GREP_VERSION` in `packages/cli/src/version.ts`.
 
 ### Step 6: Update README.md
 
@@ -131,13 +136,13 @@ After updates, show:
 3. Changelog entry preview
 4. Remind user to commit and merge to **main** (CI handles the rest):
    ```bash
-   git add skills/c3/bin/VERSION .claude-plugin/plugin.json .claude-plugin/marketplace.json CHANGELOG.md README.md
+   git add skills/c3/bin/VERSION skills/c3/bin/AST_GREP_VERSION .claude-plugin/plugin.json .claude-plugin/marketplace.json packages/cli/package.json packages/cli/package-lock.json packages/cli/src/version.ts CHANGELOG.md README.md packages/cli/README.md
    git commit -m "chore: release vA.B.C"
    git push origin HEAD
    ```
 
 After the release commit lands on **main**, `.github/workflows/release.yml`:
-- Verifies the version surfaces match (`skills/c3/bin/VERSION`, npm package metadata, and the npm wrapper pin)
+- Verifies the version surfaces match (`skills/c3/bin/VERSION`, Claude plugin metadata, npm package metadata, npm wrapper pin, and the ast-grep pin)
 - Runs Go and npm tests
 - Cross-compiles thin Go CLI assets and per-platform fat skill zips for the supported release matrix
 - Uploads semantic model assets and checksums to the GitHub Release

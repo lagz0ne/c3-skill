@@ -5,6 +5,35 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [11.5.0] - 2026-06-24
+
+Minor release: **structural eval gathers with release-pinned ast-grep.** C3 eval specs can now gather
+code outlines as compact, deterministic source-structure units, and the release pipeline ships the
+pinned ast-grep binary wherever C3 ships an outline-capable runtime.
+
+### Added
+
+- **`gather.outline` for eval specs.** Eval pipelines can call `ast-grep outline --json=stream` to
+  capture top-level items and direct members without stamping whole function bodies into matched
+  state.
+- **Release-pinned ast-grep distribution.** Build and release assembly now fetch ast-grep 0.44.0 for
+  supported C3 targets, include it in per-platform fat skill archives, publish it as a GitHub Release
+  asset, and validate the pinned version across skill and npm metadata.
+
+### Changed
+
+- **Runtime manager exports structural-gather tooling.** `@c3x/cli` downloads and verifies the
+  ast-grep asset for runtimes from 11.5.0 onward, then passes the resolved path to the Go CLI through
+  `C3_AST_GREP`.
+- **Release docs describe the current workflow.** Repo release guidance now points at
+  `.github/workflows/release.yml`, npm trusted publishing, the ast-grep pin, and the full version
+  surface set.
+
+### Fixed
+
+- **Older selected runtimes stay usable.** The npm manager no longer requires an ast-grep asset for
+  pre-11.5.0 runtimes, because those published GitHub Releases did not include one.
+
 ## [11.4.0] - 2026-06-23
 
 Minor release: **runtime-manager packaging plus token-economical gather/eval output.** The npm

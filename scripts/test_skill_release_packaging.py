@@ -9,6 +9,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+AST_GREP_VERSION = (REPO_ROOT / "skills" / "c3" / "bin" / "AST_GREP_VERSION").read_text().strip()
 
 
 class SkillReleasePackagingTest(unittest.TestCase):
@@ -29,8 +30,12 @@ class SkillReleasePackagingTest(unittest.TestCase):
 
             (thin_dir / "c3x-1.2.3-linux-amd64").write_text("thin binary\n")
             (thin_dir / "c3x-1.2.3-linux-amd64.sha256").write_text("thin checksum\n")
+            (thin_dir / f"ast-grep-{AST_GREP_VERSION}-linux-amd64").write_text("ast-grep thin\n")
+            (thin_dir / f"ast-grep-{AST_GREP_VERSION}-linux-amd64.sha256").write_text("ast-grep checksum\n")
             (fat_dir / "c3x-1.2.3-linux-amd64-fat").write_text("fat binary\n")
+            (fat_dir / f"ast-grep-{AST_GREP_VERSION}-linux-amd64").write_text("ast-grep fat\n")
             (portable_dir / "c3x-1.2.3-linux-amd64-portable").write_text("portable binary\n")
+            (portable_dir / f"ast-grep-{AST_GREP_VERSION}-linux-amd64").write_text("ast-grep portable\n")
             (semantic_dir / "model.onnx").write_text("model\n")
 
             subprocess.run(
@@ -63,6 +68,7 @@ class SkillReleasePackagingTest(unittest.TestCase):
                 self.assertIn("skills/c3/bin/c3x.sh", names)
                 self.assertIn("skills/c3/bin/VERSION", names)
                 self.assertIn("skills/c3/bin/c3x-1.2.3-linux-amd64", names)
+                self.assertIn(f"skills/c3/bin/ast-grep-{AST_GREP_VERSION}-linux-amd64", names)
                 self.assertEqual(
                     zipfile.ZIP_DEFLATED,
                     archive.getinfo("skills/c3/bin/c3x.sh").compress_type,
@@ -76,6 +82,7 @@ class SkillReleasePackagingTest(unittest.TestCase):
                 self.assertIn("skills/c3/bin/c3x.sh", names)
                 self.assertIn("skills/c3/bin/VERSION", names)
                 self.assertIn("skills/c3/bin/c3x-1.2.3-linux-amd64-portable", names)
+                self.assertIn(f"skills/c3/bin/ast-grep-{AST_GREP_VERSION}-linux-amd64", names)
                 self.assertNotIn("skills/c3/bin/c3x-1.2.3-linux-amd64", names)
 
             with zipfile.ZipFile(no_binary_zip) as archive:
@@ -92,8 +99,10 @@ class SkillReleasePackagingTest(unittest.TestCase):
                     and Path(name).name != "c3x.sh"
                 ]
                 self.assertEqual([], sorted(binaries))
+                self.assertNotIn(f"skills/c3/bin/ast-grep-{AST_GREP_VERSION}-linux-amd64", names)
 
             checksums = (release / "SHA256SUMS").read_text()
+            self.assertIn(f"ast-grep-{AST_GREP_VERSION}-linux-amd64", checksums)
             self.assertIn("c3-skill-linux-amd64-v1.2.3.zip", checksums)
             self.assertIn("c3-skill-linux-amd64-portable-v1.2.3.zip", checksums)
             self.assertIn("c3-skill-v1.2.3.zip", checksums)
@@ -110,6 +119,9 @@ class SkillReleasePackagingTest(unittest.TestCase):
             (artifacts / "linux-amd64" / "fat" / "c3x-1.2.3-linux-amd64-fat").write_text("fat\n")
             (artifacts / "linux-arm64" / "fat" / "c3x-1.2.3-linux-arm64-fat").write_text("fat\n")
             (artifacts / "linux-amd64" / "portable" / "c3x-1.2.3-linux-amd64-portable").write_text("portable\n")
+            (artifacts / "linux-amd64" / "fat" / f"ast-grep-{AST_GREP_VERSION}-linux-amd64").write_text("ast-grep\n")
+            (artifacts / "linux-arm64" / "fat" / f"ast-grep-{AST_GREP_VERSION}-linux-arm64").write_text("ast-grep\n")
+            (artifacts / "linux-amd64" / "portable" / f"ast-grep-{AST_GREP_VERSION}-linux-amd64").write_text("ast-grep\n")
 
             result = subprocess.run(
                 [
@@ -142,13 +154,17 @@ class SkillReleasePackagingTest(unittest.TestCase):
             skill_bin.mkdir(parents=True)
             shutil.copy2(REPO_ROOT / "skills" / "c3" / "bin" / "c3x.sh", skill_bin / "c3x.sh")
             (skill_bin / "VERSION").write_text("1.2.3\n")
+            (skill_bin / "AST_GREP_VERSION").write_text(f"{AST_GREP_VERSION}\n")
 
             portable = skill_bin / f"c3x-1.2.3-linux-{arch}-portable"
             portable.write_text(
                 "#!/usr/bin/env bash\n"
-                "printf 'portable:%s:%s\\n' \"$C3X_VERSION\" \"$*\"\n"
+                "printf 'portable:%s:%s:%s\\n' \"$C3X_VERSION\" \"$C3_AST_GREP\" \"$*\"\n"
             )
             portable.chmod(0o755)
+            ast_grep = skill_bin / f"ast-grep-{AST_GREP_VERSION}-linux-{arch}"
+            ast_grep.write_text("#!/usr/bin/env bash\nprintf 'ast-grep\\n'\n")
+            ast_grep.chmod(0o755)
 
             fake_bin = tmp_path / "fake-bin"
             fake_bin.mkdir()
@@ -175,7 +191,7 @@ class SkillReleasePackagingTest(unittest.TestCase):
                 check=True,
             )
 
-            self.assertEqual("portable:1.2.3:--help\n", result.stdout)
+            self.assertEqual(f"portable:1.2.3:{ast_grep}:--help\n", result.stdout)
             self.assertFalse(npm_capture.exists(), result.stderr)
 
     def test_no_binary_skill_wrapper_handles_passive_commands_without_npm(self):
@@ -185,6 +201,7 @@ class SkillReleasePackagingTest(unittest.TestCase):
             skill_bin.mkdir(parents=True)
             shutil.copy2(REPO_ROOT / "skills" / "c3" / "bin" / "c3x.sh", skill_bin / "c3x.sh")
             (skill_bin / "VERSION").write_text("1.2.3\n")
+            (skill_bin / "AST_GREP_VERSION").write_text(f"{AST_GREP_VERSION}\n")
 
             fake_bin = tmp_path / "fake-bin"
             fake_bin.mkdir()
@@ -225,6 +242,7 @@ class SkillReleasePackagingTest(unittest.TestCase):
             skill_bin.mkdir(parents=True)
             shutil.copy2(REPO_ROOT / "skills" / "c3" / "bin" / "c3x.sh", skill_bin / "c3x.sh")
             (skill_bin / "VERSION").write_text("1.2.3\n")
+            (skill_bin / "AST_GREP_VERSION").write_text(f"{AST_GREP_VERSION}\n")
 
             fake_bin = tmp_path / "fake-bin"
             fake_bin.mkdir()

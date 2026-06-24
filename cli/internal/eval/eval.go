@@ -5,13 +5,18 @@
 package eval
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -40,14 +45,31 @@ type Step struct {
 
 // Gather acquires data from a source — raw (read) or mechanical (exec).
 type Gather struct {
-	File    string   `yaml:"file"`    // raw: read a file → one value (its content)
-	Command string   `yaml:"command"` // mechanical: exec sh -c at repo root → stdout lines
-	Inputs  []string `yaml:"inputs"`  // command contract: file/glob inputs that fully determine stdout
-	Files   string   `yaml:"files"`   // glob → matching file paths
-	Facts   string   `yaml:"facts"`   // fact-id glob → ids (for loop.over)
-	Code    string   `yaml:"code"`    // a fact-id (or $item) → its declared code globs → files
-	Literal []string `yaml:"literal"` // these exact values as the stream (for loop.over)
-	Each    []Gather `yaml:"each"`    // several sub-gathers, concatenated
+	File    string         `yaml:"file"`    // raw: read a file → one value (its content)
+	Command string         `yaml:"command"` // mechanical: exec sh -c at repo root → stdout lines
+	Inputs  []string       `yaml:"inputs"`  // command contract: file/glob inputs that fully determine stdout
+	Files   string         `yaml:"files"`   // glob → matching file paths
+	Facts   string         `yaml:"facts"`   // fact-id glob → ids (for loop.over)
+	Code    string         `yaml:"code"`    // a fact-id (or $item) → its declared code globs → files
+	Literal []string       `yaml:"literal"` // these exact values as the stream (for loop.over)
+	Each    []Gather       `yaml:"each"`    // several sub-gathers, concatenated
+	Outline *OutlineGather `yaml:"outline"` // ast-grep outline → structural code units
+}
+
+// OutlineGather extracts source structure through ast-grep outline. It is for
+// claim-bearing units such as exported functions, structs, classes, and direct
+// members, not full-body text.
+type OutlineGather struct {
+	Paths                 []string `yaml:"paths"`
+	Lang                  string   `yaml:"lang"`
+	Items                 string   `yaml:"items"`
+	View                  string   `yaml:"view"`
+	SymbolTypes           string   `yaml:"type"`
+	Match                 string   `yaml:"match"`
+	PubMembers            bool     `yaml:"pub_members"`
+	Globs                 []string `yaml:"globs"`
+	OutlineRules          []string `yaml:"outline_rules"`
+	NoDefaultOutlineRules bool     `yaml:"no_default_outline_rules"`
 }
 
 // Filter keeps the values matching a predicate.
@@ -133,6 +155,8 @@ type frameItem struct {
 	key   string
 	value string
 }
+
+const minimumAstGrepVersion = "0.44.0"
 
 // Engine carries the run context shared by every spec.
 type Engine struct {
@@ -620,6 +644,8 @@ func (e *Engine) gather(g Gather, item string) ([]frameItem, error) {
 			out[i] = frameItem{kind: "literal", key: fmt.Sprintf("literal[%d]", i), value: subst(v, item)}
 		}
 		return out, nil
+	case g.Outline != nil:
+		return e.outline(*g.Outline, item)
 	case g.Code != "":
 		id := subst(g.Code, item)
 		globs, ok := e.CodeBindings[id]
@@ -677,6 +703,186 @@ func (e *Engine) exec(command string) ([]frameItem, error) {
 		}
 	}
 	return frameItems("command_line", command, splitLines(string(out))), nil
+}
+
+func (e *Engine) outline(g OutlineGather, item string) ([]frameItem, error) {
+	exe, err := astGrepExecutable()
+	if err != nil {
+		return nil, err
+	}
+	c := exec.Command(exe, outlineArgs(g, item)...)
+	c.Dir = e.ProjectDir
+	var stderr bytes.Buffer
+	c.Stderr = &stderr
+	out, err := c.Output()
+	if err != nil {
+		if exitErr, isExit := err.(*exec.ExitError); isExit {
+			msg := strings.TrimSpace(stderr.String())
+			if msg != "" {
+				return nil, fmt.Errorf("ast-grep outline exited %d: %s", exitErr.ExitCode(), msg)
+			}
+			return nil, fmt.Errorf("ast-grep outline exited %d", exitErr.ExitCode())
+		}
+		return nil, fmt.Errorf("ast-grep outline: %w", err)
+	}
+	return outlineFrameItems(out)
+}
+
+func astGrepExecutable() (string, error) {
+	if configured := strings.TrimSpace(os.Getenv("C3_AST_GREP")); configured != "" {
+		return configured, nil
+	}
+	if bundled := bundledAstGrepExecutable(); bundled != "" {
+		return bundled, nil
+	}
+	path, err := exec.LookPath("ast-grep")
+	if err != nil {
+		return "", fmt.Errorf("ast-grep executable not found; install ast-grep %s+ for gather.outline", minimumAstGrepVersion)
+	}
+	return path, nil
+}
+
+func bundledAstGrepExecutable() string {
+	exe, err := os.Executable()
+	if err != nil {
+		return ""
+	}
+	pattern := filepath.Join(filepath.Dir(exe), fmt.Sprintf("ast-grep-*-%s-%s", runtime.GOOS, runtime.GOARCH))
+	matches, err := filepath.Glob(pattern)
+	if err != nil || len(matches) == 0 {
+		return ""
+	}
+	sort.Strings(matches)
+	for i := len(matches) - 1; i >= 0; i-- {
+		if info, err := os.Stat(matches[i]); err == nil && !info.IsDir() {
+			return matches[i]
+		}
+	}
+	return ""
+}
+
+func outlineArgs(g OutlineGather, item string) []string {
+	view := strings.TrimSpace(subst(g.View, item))
+	if view == "" {
+		view = "digest"
+	}
+	args := []string{"outline", "--json=stream", "--view", view, "--color", "never"}
+	if g.Lang != "" {
+		args = append(args, "--lang", subst(g.Lang, item))
+	}
+	if g.Items != "" {
+		args = append(args, "--items", subst(g.Items, item))
+	}
+	if g.SymbolTypes != "" {
+		args = append(args, "--type", subst(g.SymbolTypes, item))
+	}
+	if g.Match != "" {
+		args = append(args, "--match", subst(g.Match, item))
+	}
+	if g.PubMembers {
+		args = append(args, "--pub-members")
+	}
+	for _, glob := range g.Globs {
+		args = append(args, "--globs", subst(glob, item))
+	}
+	for _, rule := range g.OutlineRules {
+		args = append(args, "--outline-rules", subst(rule, item))
+	}
+	if g.NoDefaultOutlineRules {
+		args = append(args, "--no-default-outline-rules")
+	}
+	paths := g.Paths
+	if len(paths) == 0 {
+		paths = []string{"."}
+	}
+	for _, path := range paths {
+		args = append(args, subst(path, item))
+	}
+	return args
+}
+
+type outlineFile struct {
+	Path     string        `json:"path"`
+	Language string        `json:"language"`
+	Items    []outlineItem `json:"items"`
+}
+
+type outlineItem struct {
+	Role       string          `json:"role"`
+	SymbolType string          `json:"symbolType"`
+	Name       string          `json:"name"`
+	Signature  string          `json:"signature"`
+	ASTKind    string          `json:"astKind"`
+	IsImport   bool            `json:"isImport"`
+	IsExported bool            `json:"isExported"`
+	Members    []outlineMember `json:"members"`
+}
+
+type outlineMember struct {
+	Role       string `json:"role"`
+	SymbolType string `json:"symbolType"`
+	Name       string `json:"name"`
+	Signature  string `json:"signature"`
+	ASTKind    string `json:"astKind"`
+	IsPublic   bool   `json:"isPublic"`
+}
+
+func outlineFrameItems(data []byte) ([]frameItem, error) {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	var files []outlineFile
+	for {
+		var file outlineFile
+		if err := dec.Decode(&file); err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return nil, fmt.Errorf("parse ast-grep outline JSON: %w", err)
+		}
+		files = append(files, file)
+	}
+	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
+	var out []frameItem
+	for _, file := range files {
+		path := normalizeProjectPath(file.Path)
+		for i, item := range file.Items {
+			itemKey := fmt.Sprintf("%s#item[%d]#%s#%s", path, i, item.SymbolType, item.Name)
+			out = append(out, frameItem{kind: "outline", key: itemKey, value: outlineItemValue(file, item)})
+			for j, member := range item.Members {
+				memberKey := fmt.Sprintf("%s#item[%d]#member[%d]#%s#%s", path, i, j, member.SymbolType, member.Name)
+				out = append(out, frameItem{kind: "outline", key: memberKey, value: outlineMemberValue(file, item, member)})
+			}
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].key < out[j].key })
+	return out, nil
+}
+
+func outlineItemValue(file outlineFile, item outlineItem) string {
+	return strings.Join([]string{
+		"language=" + file.Language,
+		"role=" + item.Role,
+		"symbolType=" + item.SymbolType,
+		"name=" + item.Name,
+		"signature=" + item.Signature,
+		"astKind=" + item.ASTKind,
+		"isImport=" + strconv.FormatBool(item.IsImport),
+		"isExported=" + strconv.FormatBool(item.IsExported),
+	}, "\x00")
+}
+
+func outlineMemberValue(file outlineFile, parent outlineItem, member outlineMember) string {
+	return strings.Join([]string{
+		"language=" + file.Language,
+		"parentRole=" + parent.Role,
+		"parentSymbolType=" + parent.SymbolType,
+		"parentName=" + parent.Name,
+		"role=" + member.Role,
+		"symbolType=" + member.SymbolType,
+		"name=" + member.Name,
+		"signature=" + member.Signature,
+		"astKind=" + member.ASTKind,
+		"isPublic=" + strconv.FormatBool(member.IsPublic),
+	}, "\x00")
 }
 
 func (e *Engine) assert(spec Spec, frame []frameItem, ev Eval, item string) Verdict {

@@ -2,7 +2,7 @@
 
 Thin npm manager for `c3x`, the C3 architecture documentation CLI.
 
-The package does not bundle Go binaries or the ONNX model. For real C3 commands it resolves the project-selected C3 runtime, or the latest GitHub Release when the project has no selection, downloads release assets from GitHub Releases with visible progress, verifies SHA256 checksums, caches them, and execs the cached Go binary.
+The package does not bundle Go binaries, ast-grep, or the ONNX model. For real C3 commands it resolves the project-selected C3 runtime, or the latest GitHub Release when the project has no selection, downloads release assets from GitHub Releases with visible progress, verifies SHA256 checksums, caches them, and execs the cached Go binary. Runtime versions from 11.5.0 onward also download the release-pinned ast-grep binary and pass its path in `C3_AST_GREP`; older pinned runtimes continue to run without an ast-grep asset.
 
 This is the thin npm distribution only. The platform-neutral skill/plugin artifact carries no binary and delegates through this package, while per-platform C3 skill ZIPs remain fat and bundle a binary so they can run in sandboxed or offline environments without depending on the npm cache. Full fat skill ZIPs include the semantic ONNX runtime; Linux portable fat ZIPs use a pure-Go core binary for broader distro compatibility and run without local semantic ONNX.
 
@@ -25,9 +25,9 @@ The npm entrypoint owns runtime installation and cache management under the `run
 c3x runtime versions
 c3x runtime installed
 c3x runtime install latest
-c3x runtime install 11.4.0
-c3x runtime use 11.4.0
-c3x runtime uninstall 11.4.0
+c3x runtime install 11.5.0
+c3x runtime use 11.5.0
+c3x runtime uninstall 11.5.0
 c3x runtime prune
 ```
 
@@ -47,6 +47,7 @@ $XDG_CACHE_HOME/c3x/<version>/
 The manager downloads:
 
 - `c3x-<version>-<os>-<arch>`
+- `ast-grep-<ast-grep-version>-<os>-<arch>` for runtimes from 11.5.0 onward
 - `c3x-semantic-model-all-MiniLM-L6-v2-<revision>.onnx`
 - `c3x-semantic-vocab-all-MiniLM-L6-v2-<revision>.txt`
 - matching `.sha256` files
@@ -58,6 +59,7 @@ Old version directories are kept until explicitly removed with `c3x runtime unin
 | Variable | Use |
 | --- | --- |
 | `C3X_VERSION` | Override the selected Go binary version. Intended for development and tests. |
+| `C3_AST_GREP` | Override the ast-grep executable path. Normally set by the runtime manager. |
 | `XDG_CACHE_HOME` | Select the cache root. |
 | `C3X_SKIP_MODEL_DOWNLOAD` | Download only the Go binary; the Go CLI can fetch semantic assets later. |
 

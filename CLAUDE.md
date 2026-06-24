@@ -73,6 +73,7 @@ c3-design/
 │   ├── bin/                           # CLI wrapper + version (binaries built in CI)
 │   │   ├── c3x.sh                    # Platform-detecting wrapper (committed)
 │   │   ├── VERSION                   # Current version, read by c3x.sh (committed)
+│   │   ├── AST_GREP_VERSION          # Pinned ast-grep version for outline gathers (committed)
 │   │   └── c3x-{version}-{os}-{arch} # Cross-compiled binaries (gitignored; local
 │   │                                 #   builds accumulate here, only the matching
 │   │                                 #   platform/version is used)
@@ -92,7 +93,7 @@ c3-design/
 
 ### Build System
 
-**Do NOT run `bash scripts/build.sh` during releases.** CI owns the build — pushing a `v*` tag triggers `distribute.yml`, which tests, cross-compiles the supported platforms, and creates the GitHub Release automatically. Only run `build.sh` locally when debugging a build issue.
+**Do NOT run `bash scripts/build.sh` during normal releases.** CI owns the build. The current release path is `.github/workflows/release.yml` on `main`: it validates version surfaces, runs tests, builds supported platform assets, assembles skill archives, creates or updates the GitHub Release, and publishes `@c3x/cli` through npm trusted publishing when the npm version is not already published. Only run `build.sh` locally when debugging a build issue.
 
 ```bash
 cd cli && go test ./...       # Run Go tests locally
@@ -100,17 +101,18 @@ cd cli && go test ./...       # Run Go tests locally
 
 ### CI/CD
 
-- **Push a `v{VERSION}` tag** -> `distribute.yml` (Build & Distribute): tests, cross-compiles `linux/amd64`, `linux/arm64`, `darwin/arm64` (VERSION is derived from the tag name), assembles the plugin zip + binaries, and cuts the GitHub Release. This is the release trigger.
-- **Push to `main`** (a merge/`distribute dev` commit) -> `release.yml` checks `skills/c3/bin/VERSION` (fallback path).
-- The npm `@c3x/cli` publish (`Publish @c3x/cli` workflow) needs an `NPM_TOKEN` secret — it currently fails `ENEEDAUTH`, independent of the GitHub Release.
+- **Push to `main`** -> `release.yml`: plans from `skills/c3/bin/VERSION`, validates plugin/npm/runtime version surfaces, runs tests, cross-compiles `linux/amd64`, `linux/arm64`, and `darwin/arm64`, assembles release assets, creates or updates the GitHub Release, and publishes `@c3x/cli` when npm does not already have the package version.
+- **Manual `release.yml` dispatch** can force rebuilding/re-uploading release assets or skip npm publishing.
+- **`distribute.yml`** still supports direct `v*` tag artifact builds, but the maintained release path is `release.yml`.
+- **`npm-publish.yml`** is a redirect stub; npm publishing is handled by `release.yml` and does not use `NPM_TOKEN`.
 
 ### Release Process
 
-1. Commit changes to `dev` (merge the work branch onto `dev`).
+1. Commit changes to `dev` (merge the work branch onto `dev`), then merge `dev` to `main` when ready.
 2. Add a `CHANGELOG.md` entry for the version.
 3. Bump the version everywhere it appears: `skills/c3/bin/VERSION`, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, and the npm client `packages/cli/{package.json, package-lock.json, src/version.ts}`.
-4. Push `dev`, then `git tag -a v{VERSION} && git push origin v{VERSION}` — the tag triggers the build + GitHub Release.
-5. Verify with `gh run watch` and `gh release view v{VERSION}`.
+4. Push `main` and let `.github/workflows/release.yml` create or update `v{VERSION}` and publish npm if needed.
+5. Verify with `gh run watch`, `gh release view v{VERSION}`, and `npm view @c3x/cli version`.
 
 ### Versioning
 
@@ -124,5 +126,6 @@ All version files must stay in sync:
 | `packages/cli/package.json` | npm `@c3x/cli` thin-client version |
 | `packages/cli/package-lock.json` | npm lockfile (two `version` fields) |
 | `packages/cli/src/version.ts` | `C3X_VERSION` the npm wrapper pins + downloads |
+| `skills/c3/bin/AST_GREP_VERSION` and `packages/cli/src/version.ts` | pinned ast-grep version used by build/release and npm runtime downloads |
 
-Use the `/release` command to bump versions consistently. The `v{VERSION}` git tag must match `skills/c3/bin/VERSION` (CI derives the build version from the tag name).
+Use the `/release` command to bump versions consistently. The release tag must match `skills/c3/bin/VERSION`; `release.yml` derives `v{VERSION}` from that file.

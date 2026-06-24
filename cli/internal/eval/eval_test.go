@@ -26,6 +26,33 @@ func engineWith(t *testing.T, files map[string]string) *Engine {
 func gatherFile(p string) Step { return Step{Gather: &Gather{File: p}} }
 func evalStep(e Eval) Step     { return Step{Eval: &e} }
 
+func requireAll(t *testing.T, out string, wants ...string) {
+	t.Helper()
+	for _, want := range wants {
+		if !strings.Contains(out, want) {
+			t.Fatalf("output missing %q:\n%s", want, out)
+		}
+	}
+}
+
+func installFakeAstGrep(t *testing.T, output string) string {
+	t.Helper()
+	binDir := t.TempDir()
+	argsFile := filepath.Join(binDir, "args.txt")
+	outputFile := filepath.Join(binDir, "output.jsonl")
+	if err := os.WriteFile(outputFile, []byte(output+"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	script := "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$AST_GREP_ARGS_FILE\"\nwhile IFS= read -r line; do printf '%s\\n' \"$line\"; done < \"$AST_GREP_OUTPUT_FILE\"\n"
+	if err := os.WriteFile(filepath.Join(binDir, "ast-grep"), []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", binDir)
+	t.Setenv("AST_GREP_ARGS_FILE", argsFile)
+	t.Setenv("AST_GREP_OUTPUT_FILE", outputFile)
+	return argsFile
+}
+
 // Regression: a spec whose declared code: surface does not resolve must drift,
 // even when a downstream pipeline would pass vacuously (count == 0 over nothing).
 // Before the guard, a renamed/deleted path read as a silent "holds".
@@ -137,6 +164,63 @@ func TestEval_CodeBlockTransformNarrowsMatchedState(t *testing.T) {
 	codeChanged := e.Run(spec)
 	if codeChanged.ExternalState == first.ExternalState {
 		t.Fatalf("changed selected code block should change matched state: %s", codeChanged.ExternalState)
+	}
+}
+
+func TestEval_OutlineGatherProducesStructuralUnits(t *testing.T) {
+	e := engineWith(t, map[string]string{"src/service.go": "package src\n"})
+	argsFile := installFakeAstGrep(t, `{"path":"src/service.go","language":"Go","items":[{"role":"item","symbolType":"struct","name":"Service","signature":"type Service struct {","astKind":"type_declaration","isImport":false,"isExported":true,"members":[{"role":"member","symbolType":"field","name":"Client","signature":"","astKind":"field_declaration","isPublic":true}]}]}`)
+	spec := Spec{Fact: "f", Pipeline: []Step{
+		{Gather: &Gather{Outline: &OutlineGather{Paths: []string{"src/service.go"}, Lang: "go"}}},
+		evalStep(Eval{ContainsAll: []string{"Service", "Client"}}),
+	}}
+
+	first := e.Run(spec)
+	if first.Verdict != "holds" {
+		t.Fatalf("outline gather should hold: %s (%v)", first.Verdict, first.Evidence)
+	}
+	if len(first.Manifest) != 2 {
+		t.Fatalf("expected item and member outline units, got %+v", first.Manifest)
+	}
+	for _, unit := range first.Manifest {
+		if unit.Kind != "outline" {
+			t.Fatalf("unit kind = %q, want outline in %+v", unit.Kind, first.Manifest)
+		}
+	}
+
+	args, err := os.ReadFile(argsFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireAll(t, string(args), "outline", "--json=stream", "--view", "digest", "--color", "never", "--lang", "go", "src/service.go")
+
+	installFakeAstGrep(t, `{"path":"src/service.go","language":"Go","items":[{"role":"item","symbolType":"struct","name":"Service","signature":"type Service struct {","astKind":"type_declaration","isImport":false,"isExported":true,"members":[{"role":"member","symbolType":"field","name":"Pool","signature":"","astKind":"field_declaration","isPublic":true}]}]}`)
+	second := e.Run(spec)
+	if second.Verdict != "drift" {
+		t.Fatalf("changed outline member should drift contains_all: %s (%v)", second.Verdict, second.Evidence)
+	}
+	if second.ExternalState == first.ExternalState {
+		t.Fatalf("changed outline structure should change external state: %s", second.ExternalState)
+	}
+}
+
+func TestEval_OutlineGatherDoesNotUseLinuxSgFallback(t *testing.T) {
+	e := engineWith(t, map[string]string{"src/service.go": "package src\n"})
+	binDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(binDir, "sg"), []byte("#!/bin/sh\necho should-not-run\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", binDir)
+
+	v := e.Run(Spec{Fact: "f", Pipeline: []Step{
+		{Gather: &Gather{Outline: &OutlineGather{Paths: []string{"src/service.go"}, Lang: "go"}}},
+		evalStep(Eval{Count: "> 0"}),
+	}})
+	if v.Verdict != "drift" {
+		t.Fatalf("missing ast-grep should drift, got %s (%v)", v.Verdict, v.Evidence)
+	}
+	if len(v.Evidence) == 0 || !strings.Contains(v.Evidence[0], "ast-grep executable not found") {
+		t.Fatalf("expected explicit ast-grep missing evidence, got %+v", v.Evidence)
 	}
 }
 

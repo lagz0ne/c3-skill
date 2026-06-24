@@ -14,7 +14,7 @@ An eval-spec is a small composition; most checks need two or three steps:
 
 | Op | Does |
 |----|------|
-| **gather** | acquire data — `raw` (read a file) or `mechanical` (run a `command`); also `files` (glob), `facts` (id-glob), `code` (a fact's declared globs), `each` (several), `literal` |
+| **gather** | acquire data — `raw` (read a file), `mechanical` (run a `command`), or structural (`outline` via ast-grep); also `files` (glob), `facts` (id-glob), `code` (a fact's declared globs), `each` (several), `literal` |
 | **filter** | keep values matching a predicate (`contains`, `matches`) |
 | **transform** | reshape each value (`trim`, `first`, `lines`) |
 | **eval** | assert → verdict: `exists`, `equals`, `all_equal`, `contains_all`, `contains`, `count`, or `judgement` (surfaces, never scores) |
@@ -44,6 +44,35 @@ pipeline:
 The `code:` field is the binding: it is what `c3 lookup <file>` resolves against, and (with no
 pipeline) the default per-glob resolve check. The frozen fact body is the claim; the spec is the
 **mutable lens** — re-aim it freely (code moved dirs), it is never frozen.
+
+For broad code-shape checks, use ast-grep outline instead of shelling out to grep/awk. Outline is a
+syntax-aware gather that emits compact structural units: top-level items and direct members, with
+names, signatures, symbol types, import/export/public flags, and AST kinds. It intentionally does
+not stamp whole function bodies or source ranges, so body-only edits do not churn the matched state.
+```yaml
+fact: c3-108
+claim: "eval exposes deterministic gather types and direct eval helpers"
+pipeline:
+  - gather:
+      outline:
+        paths: [cli/internal/eval]
+        lang: go
+        view: digest          # default; item signatures + compact member names
+        type: struct,function,method
+  - eval:
+      contains_all: ["type Gather struct", "func (e *Engine) gather", "func (e *Engine) assert"]
+```
+`outline` calls `ast-grep outline --json=stream` through C3's resolved ast-grep executable. Fat and
+npm-managed C3 installs use the release-pinned bundled binary; source/dev `eval` runs try to fetch
+that pinned binary when npm is available, and may set `C3_AST_GREP` explicitly otherwise. On Linux,
+C3 deliberately does not fall back to `sg`, because that name may be util-linux `sg`, not ast-grep.
+
+Supported languages follow ast-grep's built-in language list. C3's default outline extractor is most
+useful today for claim-bearing code units in Go, Java, JavaScript/TypeScript/TSX, Kotlin, Python,
+Rust, and Swift. Other ast-grep-supported languages can still be parsed or searched with custom
+outline rules: Bash, C, C++, C#, CSS, Elixir, Haskell, HCL, HTML, JSON, Lua, Nix, PHP, Ruby, Scala,
+Solidity, and YAML. Anything outside ast-grep's built-in list is unsupported by `gather.outline`
+unless the project supplies compatible ast-grep custom language/rule support.
 
 ## Loop — one verdict over many facts
 When a claim spans a group, `loop` fans a sub-pipeline over each item (binding `$item`) and rolls

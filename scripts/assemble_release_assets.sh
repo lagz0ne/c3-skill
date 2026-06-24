@@ -70,6 +70,7 @@ copy_skill_tree() {
   cp "$ROOT/.gitattributes" "$work/"
   cp -R "$ROOT/.claude-plugin" "$ROOT/skills" "$work/"
   rm -f "$work/skills/c3/bin/c3x-"*
+  rm -f "$work/skills/c3/bin/ast-grep-"*
 }
 
 zip_skill_tree() {
@@ -106,14 +107,31 @@ add_skill_binary_archive() {
   local binary="$1"
   local platform="$2"
   local work="$tmp_root/c3-skill-$platform"
+  local ast_platform="${platform%-portable}"
+  local ast_grep
 
   copy_skill_tree "$work"
   cp "$binary" "$work/skills/c3/bin/c3x-${VERSION}-${platform}"
   chmod +x "$work/skills/c3/bin/c3x-${VERSION}-${platform}"
+  ast_grep="$(find_ast_grep_binary "$ast_platform")"
+  cp "$ast_grep" "$work/skills/c3/bin/$(basename "$ast_grep")"
+  chmod +x "$work/skills/c3/bin/$(basename "$ast_grep")"
   zip_skill_tree "$work" "$OUT_DIR/c3-skill-${platform}-v${VERSION}.zip"
 }
 
+find_ast_grep_binary() {
+  local platform="$1"
+  local found
+  found="$(find "$ARTIFACTS_DIR" -type f -name "ast-grep-*-${platform}" ! -name '*.sha256' | sort | head -n1 || true)"
+  if [ -z "$found" ]; then
+    echo "Missing ast-grep binary for $platform" >&2
+    exit 1
+  fi
+  printf '%s\n' "$found"
+}
+
 find "$ARTIFACTS_DIR" -type f -path '*/thin/c3x-*' -exec cp {} "$OUT_DIR"/ \;
+find "$ARTIFACTS_DIR" -type f -name 'ast-grep-*' -exec cp {} "$OUT_DIR"/ \;
 if [ -d "$ARTIFACTS_DIR/semantic-assets" ]; then
   find "$ARTIFACTS_DIR/semantic-assets" -type f -exec cp {} "$OUT_DIR"/ \;
 fi

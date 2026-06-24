@@ -1,6 +1,6 @@
 {
   "name": "c3-skill",
-  "version": "11.4.0",
+  "version": "11.5.0",
   "description": "C3 architecture design methodology with sealed architecture facts and change-unit workflows.",
   "author": {
     "name": "Lagz0ne",

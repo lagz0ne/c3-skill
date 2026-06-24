@@ -12,10 +12,12 @@ OUT_DIR="$DEFAULT_OUT_DIR"
 TARGET_OS=""
 TARGET_ARCH=""
 SEMANTIC_MODEL_BACKUP=""
+AST_GREP_VERSION=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --version) VERSION="$2"; shift 2 ;;
+    --ast-grep-version) AST_GREP_VERSION="$2"; shift 2 ;;
     --variant) VARIANT="$2"; shift 2 ;;
     --out-dir) OUT_DIR="$2"; shift 2 ;;
     --os) TARGET_OS="$2"; shift 2 ;;
@@ -33,6 +35,10 @@ OUT_DIR="$(cd "$OUT_DIR" && pwd)"
 
 if [ "$VERSION" = "dev" ] && [ -f "$ROOT/skills/c3/bin/VERSION" ]; then
   VERSION=$(tr -d '[:space:]' < "$ROOT/skills/c3/bin/VERSION")
+fi
+
+if [ -z "$AST_GREP_VERSION" ] && [ -f "$ROOT/skills/c3/bin/AST_GREP_VERSION" ]; then
+  AST_GREP_VERSION=$(tr -d '[:space:]' < "$ROOT/skills/c3/bin/AST_GREP_VERSION")
 fi
 
 if [ -z "$TARGET_OS" ]; then
@@ -101,6 +107,20 @@ build_variant() {
   else
     shasum -a 256 "$output" > "$output.sha256"
   fi
+  install_ast_grep "$output_dir"
+}
+
+install_ast_grep() {
+  local output_dir="$1"
+  if [ -z "$AST_GREP_VERSION" ]; then
+    echo "AST_GREP_VERSION is empty; set --ast-grep-version or skills/c3/bin/AST_GREP_VERSION" >&2
+    exit 1
+  fi
+  bash "$ROOT/scripts/install_ast_grep.sh" \
+    --version "$AST_GREP_VERSION" \
+    --os "$TARGET_OS" \
+    --arch "$TARGET_ARCH" \
+    --out-dir "$output_dir"
 }
 
 backup_semantic_model_stubs() {

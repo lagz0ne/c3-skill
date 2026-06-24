@@ -66,6 +66,7 @@ test('prepareRuntime downloads binary model and vocab with checksums without pru
 
   assert.equal(runtime.cacheDir, join(root, 'c3x', version))
   assert.ok(existsSync(runtime.binaryPath))
+  assert.equal(runtime.astGrepPath, undefined)
   assert.ok(existsSync(runtime.modelPath))
   assert.ok(existsSync(runtime.vocabPath))
   assert.equal(existsSync(join(root, 'c3x', '1.0.0')), true)
@@ -96,10 +97,11 @@ test('fetchAvailableVersions lists semver releases newest first', async () => {
 test('installRuntime keeps other installed versions and records manifest with progress', async () => {
   const root = testTempDir()
   mkdirSync(join(root, 'c3x', '1.0.0'), { recursive: true })
-  const version = '9.9.1'
+  const version = '11.5.0'
   const names = assetNames(version, { os: 'linux', arch: 'amd64' })
   const assets = new Map([
     [names.binary, Buffer.from('binary')],
+    [names.astGrep, Buffer.from('ast-grep')],
     [names.model, Buffer.from('model')],
     [names.vocab, Buffer.from('vocab')],
   ])
@@ -123,7 +125,12 @@ test('installRuntime keeps other installed versions and records manifest with pr
   const manifest = JSON.parse(readFileSync(join(runtime.cacheDir, 'manifest.json'), 'utf8'))
   assert.equal(manifest.version, version)
   assert.equal(manifest.assets.binary.sha256, sha256(Buffer.from('binary')))
+  assert.equal(manifest.assets.astGrep.sha256, sha256(Buffer.from('ast-grep')))
   assert.deepEqual(progress.map((event) => event.kind), [
+    'asset-start',
+    'asset-progress',
+    'asset-downloaded',
+    'asset-ready',
     'asset-start',
     'asset-progress',
     'asset-downloaded',
@@ -240,22 +247,24 @@ test('runCli uses project runtime metadata before latest release', async () => {
 
   assert.equal(executed.cwd, project)
   assert.equal(executed.env.C3X_VERSION, '8.8.8')
+  assert.equal(executed.env.C3_AST_GREP, undefined)
   assert.deepEqual(executed.args, ['list'])
   assert.match(executed.file, /8\.8\.8/)
 })
 
 test('runCli defaults to latest release when no project runtime is set', async () => {
   const root = testTempDir()
-  const names = assetNames('11.0.0', { os: 'linux', arch: 'amd64' })
+  const names = assetNames('11.5.0', { os: 'linux', arch: 'amd64' })
   const assets = new Map([
     [names.binary, Buffer.from('binary')],
+    [names.astGrep, Buffer.from('ast-grep')],
     [names.model, Buffer.from('model')],
     [names.vocab, Buffer.from('vocab')],
   ])
   const downloader = stubDownloader(assets, {
     releases: [
       { tag_name: 'v10.0.0', draft: false, prerelease: false },
-      { tag_name: 'v11.0.0', draft: false, prerelease: false },
+      { tag_name: 'v11.5.0', draft: false, prerelease: false },
     ],
   })
   let executed
@@ -278,15 +287,17 @@ test('runCli defaults to latest release when no project runtime is set', async (
     },
   })
 
-  assert.equal(executed.env.C3X_VERSION, '11.0.0')
-  assert.match(executed.file, /11\.0\.0/)
+  assert.equal(executed.env.C3X_VERSION, '11.5.0')
+  assert.match(executed.env.C3_AST_GREP, /ast-grep-0\.44\.0-linux-amd64/)
+  assert.match(executed.file, /11\.5\.0/)
 })
 
 test('runCli reports automatic download progress for real commands', async () => {
   const root = testTempDir()
-  const names = assetNames('11.0.0', { os: 'linux', arch: 'amd64' })
+  const names = assetNames('11.5.0', { os: 'linux', arch: 'amd64' })
   const assets = new Map([
     [names.binary, Buffer.from('binary')],
+    [names.astGrep, Buffer.from('ast-grep')],
     [names.model, Buffer.from('model')],
     [names.vocab, Buffer.from('vocab')],
   ])
@@ -303,7 +314,7 @@ test('runCli reports automatic download progress for real commands', async () =>
     platform: 'linux',
     arch: 'x64',
     downloader: stubDownloader(assets, {
-      releases: [{ tag_name: 'v11.0.0', draft: false, prerelease: false }],
+      releases: [{ tag_name: 'v11.5.0', draft: false, prerelease: false }],
     }),
     stderr: (line) => stderr.push(line),
     exec() {
@@ -374,10 +385,11 @@ test('runManagerCommand lists available versions with installed marker', async (
 
 test('runManagerCommand install reports progress on stderr', async () => {
   const root = testTempDir()
-  const version = '9.9.1'
+  const version = '11.5.0'
   const names = assetNames(version, { os: 'linux', arch: 'amd64' })
   const assets = new Map([
     [names.binary, Buffer.from('binary')],
+    [names.astGrep, Buffer.from('ast-grep')],
     [names.model, Buffer.from('model')],
     [names.vocab, Buffer.from('vocab')],
   ])
@@ -398,7 +410,8 @@ test('runManagerCommand install reports progress on stderr', async () => {
   })
 
   assert.deepEqual(stdout, [`installed ${version}`])
-  assert.match(stderr.join('\n'), /preparing c3x-9\.9\.1-linux-amd64/)
+  assert.match(stderr.join('\n'), /preparing c3x-11\.5\.0-linux-amd64/)
+  assert.match(stderr.join('\n'), /preparing ast-grep-0\.44\.0-linux-amd64/)
   assert.match(stderr.join('\n'), /\[####################\] 100%/)
   assert.match(stderr.join('\n'), /runtime ready/)
 })

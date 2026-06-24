@@ -56,6 +56,8 @@ jobs:
           CLAUDE_PLUGIN_VERSION="$(node -p "require('./.claude-plugin/plugin.json').version")"
           CLAUDE_MARKETPLACE_VERSION="$(node -p "require('./.claude-plugin/marketplace.json').plugins[0].version")"
           PINNED_VERSION="$(node -e "const fs = require('fs'); const text = fs.readFileSync('packages/cli/src/version.ts', 'utf8'); const match = text.match(/C3X_VERSION\\s*=\\s*['\\\"]([^'\\\"]+)/); if (!match) process.exit(2); process.stdout.write(match[1]);")"
+          AST_GREP_VERSION="$(tr -d '[:space:]' < skills/c3/bin/AST_GREP_VERSION)"
+          PINNED_AST_GREP_VERSION="$(node -e "const fs = require('fs'); const text = fs.readFileSync('packages/cli/src/version.ts', 'utf8'); const match = text.match(/AST_GREP_VERSION\\s*=\\s*['\\\"]([^'\\\"]+)/); if (!match) process.exit(2); process.stdout.write(match[1]);")"
 
           if [ -z "$VERSION" ]; then
             echo "skills/c3/bin/VERSION is empty" >&2
@@ -66,6 +68,10 @@ jobs:
              [ "$VERSION" != "$CLAUDE_MARKETPLACE_VERSION" ] || \
              [ "$VERSION" != "$PINNED_VERSION" ]; then
             echo "Version mismatch: VERSION=$VERSION package.json=$PACKAGE_VERSION .claude-plugin/plugin.json=$CLAUDE_PLUGIN_VERSION .claude-plugin/marketplace.json=$CLAUDE_MARKETPLACE_VERSION src/version.ts=$PINNED_VERSION" >&2
+            exit 1
+          fi
+          if [ "$AST_GREP_VERSION" != "$PINNED_AST_GREP_VERSION" ]; then
+            echo "ast-grep version mismatch: skills/c3/bin/AST_GREP_VERSION=$AST_GREP_VERSION packages/cli/src/version.ts=$PINNED_AST_GREP_VERSION" >&2
             exit 1
           fi
 
@@ -209,6 +215,11 @@ jobs:
         with:
           go-version-file: cli/go.mod
           cache-dependency-path: cli/go.sum
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
 
       - name: Build thin npm assets and skill binaries
         run: |

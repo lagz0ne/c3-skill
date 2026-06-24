@@ -13,12 +13,13 @@ import {
 import { get as httpsGet } from 'node:https'
 import { homedir, platform as nodePlatform, arch as nodeArch } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
-import { C3X_VERSION, SEMANTIC_MODEL_REVISION } from './version.js'
+import { AST_GREP_VERSION, C3X_VERSION, SEMANTIC_MODEL_REVISION } from './version.js'
 
 const RELEASE_REPO = 'https://github.com/lagz0ne/c3-skill/releases/download'
 const RELEASES_API = 'https://api.github.com/repos/lagz0ne/c3-skill/releases?per_page=100'
 const PROJECT_RUNTIME_FILE = 'runtime.json'
 const VERSION_RE = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/
+const FIRST_AST_GREP_RUNTIME_VERSION = '11.5.0'
 
 export interface PlatformTarget {
   os: string
@@ -59,6 +60,7 @@ export interface PreparedRuntime {
   version: string
   cacheDir: string
   binaryPath: string
+  astGrepPath?: string
   modelPath: string
   vocabPath: string
 }
@@ -77,6 +79,7 @@ export interface RuntimeManifest {
   installedAt: string
   assets: {
     binary: CachedAsset
+    astGrep?: CachedAsset
     model?: CachedAsset
     vocab?: CachedAsset
   }
@@ -137,13 +140,18 @@ export function releasesURL(env: ManagerEnv = process.env): string {
   return RELEASES_API
 }
 
-export function assetNames(version: string, target: PlatformTarget): { binary: string; model: string; vocab: string } {
+export function assetNames(version: string, target: PlatformTarget): { binary: string; astGrep: string; model: string; vocab: string } {
   const normalized = normalizeVersion(version)
   return {
     binary: `c3x-${normalized}-${target.os}-${target.arch}`,
+    astGrep: `ast-grep-${AST_GREP_VERSION}-${target.os}-${target.arch}`,
     model: `c3x-semantic-model-all-MiniLM-L6-v2-${SEMANTIC_MODEL_REVISION}.onnx`,
     vocab: `c3x-semantic-vocab-all-MiniLM-L6-v2-${SEMANTIC_MODEL_REVISION}.txt`,
   }
+}
+
+function runtimeIncludesAstGrep(version: string): boolean {
+  return compareVersionsAsc(normalizeVersion(version), FIRST_AST_GREP_RUNTIME_VERSION) >= 0
 }
 
 export async function fetchAvailableVersions(options: ManagerOptions = {}): Promise<string[]> {
@@ -355,6 +363,9 @@ export async function runCli(argv: string[], options: ManagerOptions = {}): Prom
     ...(options.env || {}),
     C3X_VERSION: runtime.version,
     C3_SEMANTIC_CACHE_DIR: join(runtime.cacheDir, 'semantic'),
+  }
+  if (runtime.astGrepPath) {
+    env.C3_AST_GREP = runtime.astGrepPath
   }
   const exec = options.exec || defaultExec
   return exec(runtime.binaryPath, argv, env, cwd)
@@ -587,6 +598,20 @@ async function prepareRuntimeForVersion(version: string, options: ManagerOptions
     downloader,
     progress: options.progress,
   })
+  let astGrepPath: string | undefined
+  let astGrep: CachedAsset | undefined
+  if (runtimeIncludesAstGrep(normalized)) {
+    astGrepPath = join(cacheDir, names.astGrep)
+    astGrep = await ensureCachedAsset({
+      version: normalized,
+      assetName: names.astGrep,
+      targetPath: astGrepPath,
+      baseURL,
+      executable: true,
+      downloader,
+      progress: options.progress,
+    })
+  }
 
   const modelPath = join(cacheDir, 'semantic', 'models', `all-MiniLM-L6-v2-${SEMANTIC_MODEL_REVISION}`, 'model.onnx')
   const vocabPath = join(cacheDir, 'semantic', 'models', `all-MiniLM-L6-v2-${SEMANTIC_MODEL_REVISION}`, 'vocab.txt')
@@ -602,11 +627,11 @@ async function prepareRuntimeForVersion(version: string, options: ManagerOptions
     target,
     semanticModelRevision: SEMANTIC_MODEL_REVISION,
     installedAt: new Date().toISOString(),
-    assets: { binary, model, vocab },
+    assets: { binary, astGrep, model, vocab },
   })
   options.progress?.({ kind: 'runtime-ready', version: normalized, cacheDir })
 
-  return { version: normalized, cacheDir, binaryPath, modelPath, vocabPath }
+  return { version: normalized, cacheDir, binaryPath, astGrepPath, modelPath, vocabPath }
 }
 
 async function resolveRuntimeVersion(options: ManagerOptions): Promise<string> {

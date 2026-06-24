@@ -5,6 +5,24 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [11.5.1] - 2026-06-24
+
+Patch release: **frozen structured facts stay legally patchable.** C3 now keeps
+check-clean frozen facts reachable through change-unit primitives even when a section is made of
+nested headings, code blocks, tables, or other structured body nodes.
+
+### Fixed
+
+- **Nested section cite handles.** `c3x read <id> --section <name> --cite` now emits anchors for
+  nested headings, table headers, table rows, code blocks, blockquotes, HTML blocks, lists, and
+  sibling-root body nodes inside the requested section span.
+- **Unknown `check --only` targets no longer false-green.** Mistyped fact ids or paths now fail with
+  an actionable hint instead of reporting a clean check for an empty target set.
+- **Whole-fact replacement remains blocked in preflight.** `change apply --dry-run` now rejects
+  whole replacements that carry a live base anchor, matching the real apply guardrail.
+- **Table inserts preserve table shape.** Inserting after a table header now creates a data row
+  rather than a second header row.
+
 ## [11.5.0] - 2026-06-24
 
 Minor release: **structural eval gathers with release-pinned ast-grep.** C3 eval specs can now gather

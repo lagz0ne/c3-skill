@@ -286,6 +286,20 @@ func TestRun_CheckWithDB(t *testing.T) {
 	_ = run([]string{"--c3-dir", c3Dir, "check", "--json"}, &buf)
 }
 
+func TestRun_CheckOnlyUnknownTargetFails(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	seedCanonicalReadme(t, c3Dir)
+	var buf bytes.Buffer
+
+	err := run([]string{"--c3-dir", c3Dir, "check", "--only", "ref-zerobased-dev"}, &buf)
+	if err == nil {
+		t.Fatalf("expected focused check to fail on unknown target, output:\n%s", buf.String())
+	}
+	if !strings.Contains(buf.String(), "unknown --only target: ref-zerobased-dev") {
+		t.Fatalf("unknown target issue missing from check output:\n%s\nerr=%v", buf.String(), err)
+	}
+}
+
 // check must surface the failing entity + message, not just "1 error(s)".
 func TestRun_CheckSurfacesValidatorIssues(t *testing.T) {
 	c3Dir := setupRichC3DB(t)

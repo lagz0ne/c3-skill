@@ -90,6 +90,62 @@ func TestRunChangeApply_S1_BlockEdit(t *testing.T) {
 	}
 }
 
+func TestRunChangeApply_EditsNestedSectionHeadingFromReadCite(t *testing.T) {
+	s, c3Dir := openStoreC3(t)
+	if err := s.InsertEntity(&store.Entity{ID: "ref-structured", Type: "ref", Title: "Structured Ref", Status: "active", Metadata: "{}"}); err != nil {
+		t.Fatal(err)
+	}
+	body := "# Structured Ref\n\n## Goal\n\nKeep structured guidance editable.\n\n## Choice\n\nUse nested examples.\n\n## Why\n\nStructured examples carry the contract.\n\n## How\n\n### Adapter shape\n\n```go\ntype ZeroBased struct {\n\tIndex int\n}\n```\n"
+	if err := content.WriteEntity(s, "ref-structured", body); err != nil {
+		t.Fatal(err)
+	}
+	entity, _ := s.GetEntity("ref-structured")
+	citations, err := sectionCitations(s, entity, "How")
+	if err != nil {
+		t.Fatal(err)
+	}
+	base := ""
+	for _, citation := range citations {
+		if strings.Contains(citation, `"Adapter shape"`) {
+			base, _, _ = strings.Cut(citation, " ")
+			break
+		}
+	}
+	if base == "" {
+		t.Fatalf("nested heading citation not emitted: %+v", citations)
+	}
+
+	writePatch(t, c3Dir, "adr-1", "01-how-heading.patch.md",
+		"---\ntarget: ref-structured\nscope: block\nbase: "+base+"\n---\nAdapter contract\n")
+
+	var buf strings.Builder
+	if err := RunChangeApply(ChangeApplyOptions{Store: s, C3Dir: c3Dir, UnitID: "adr-1"}, &buf); err != nil {
+		t.Fatalf("apply nested heading patch: %v\n%s", err, buf.String())
+	}
+	got, _ := content.ReadEntity(s, "ref-structured")
+	if !strings.Contains(got, "### Adapter contract") || strings.Contains(got, "### Adapter shape") {
+		t.Fatalf("nested heading patch did not land cleanly:\n%s", got)
+	}
+}
+
+func TestRunChangeApply_DryRunRejectsWholeWithBase(t *testing.T) {
+	s, c3Dir := openStoreC3(t)
+	seedRef(t, s, "ref-jwt", "Standardize token verification across components.", "Use RS256 signed JWTs.", "Asymmetric verification keeps signing secrets centralized.")
+	e, _ := s.GetEntity("ref-jwt")
+	base := fmt.Sprintf("ref-jwt@v%d:sha256:%s", e.Version, e.RootMerkle)
+	writePatch(t, c3Dir, "adr-1", "01-whole.patch.md",
+		"---\ntarget: ref-jwt\nscope: whole\nbase: "+base+"\ntype: ref\n---\n# ref-jwt\n\n## Goal\n\nReplacement.\n\n## Choice\n\nReplacement.\n\n## Why\n\nReplacement.\n")
+
+	var buf strings.Builder
+	err := RunChangeApply(ChangeApplyOptions{Store: s, C3Dir: c3Dir, UnitID: "adr-1", DryRun: true}, &buf)
+	if err == nil {
+		t.Fatalf("dry-run must reject whole-with-base full replacement, output:\n%s", buf.String())
+	}
+	if !strings.Contains(buf.String(), "full-replace") {
+		t.Fatalf("dry-run rejection should name full-replace, got:\n%s\nerr=%v", buf.String(), err)
+	}
+}
+
 // S3 — a drifted anchor rejects the whole unit; nothing changes.
 func TestRunChangeApply_S3_DriftRejects(t *testing.T) {
 	s, c3Dir := openStoreC3(t)

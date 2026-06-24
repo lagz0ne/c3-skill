@@ -232,7 +232,7 @@ func canvasGate(s *store.Store, c3Dir string, p changeset.Patch, morphed map[str
 		entityType, body = entity.Type, cur+"\n\n"+p.Content
 	case changeset.ScopeWhole:
 		if p.Base != "" {
-			return nil
+			return fmt.Errorf("error: patch %s: full-replace of an existing fact is not allowed; anchor block edits\nhint: use scope: block with a base from c3x read <id> --section <name> --cite", p.Source)
 		}
 		entityType, body = p.Type, p.Content
 	default:

@@ -175,7 +175,8 @@ func sectionCitations(s *store.Store, entity *store.Entity, sectionName string) 
 		return nil, fmt.Errorf("error: section %q not found in node tree for %s\nhint: run c3x read %s --full to inspect available sections", sectionName, entity.ID, entity.ID)
 	}
 	citations := make([]string, 0)
-	collectSectionCitations(nodes, entity, heading.ID, &citations)
+	collectSectionChildCitations(nodes, entity, heading.ID, heading.Level, &citations)
+	collectSiblingSectionSpanCitations(nodes, entity, heading, &citations)
 	if len(citations) == 0 {
 		return nil, fmt.Errorf("error: section %q in %s has no citable body nodes\nhint: add body content to that section, then rerun c3x repair and c3x read %s --section %q --cite", sectionName, entity.ID, entity.ID, sectionName)
 	}
@@ -184,38 +185,92 @@ func sectionCitations(s *store.Store, entity *store.Entity, sectionName string) 
 
 func sectionHeading(nodes []*store.Node, sectionName string) *store.Node {
 	for _, n := range nodes {
-		if n.Type == "heading" && n.Content == sectionName {
+		if n.Type == "heading" && n.Level == 2 && n.Content == sectionName {
 			return n
 		}
 	}
 	return nil
 }
 
-func collectSectionCitations(nodes []*store.Node, entity *store.Entity, parentID int64, citations *[]string) {
+func collectSiblingSectionSpanCitations(nodes []*store.Node, entity *store.Entity, heading *store.Node, citations *[]string) {
+	roots := rootNodes(nodes)
+	inSection := false
+	for _, n := range roots {
+		if n.ID == heading.ID {
+			inSection = true
+			continue
+		}
+		if !inSection {
+			continue
+		}
+		if n.Type == "heading" && n.Level > 0 && n.Level <= heading.Level {
+			return
+		}
+		collectNodeAndDescendantCitations(nodes, entity, n, heading.Level, citations)
+	}
+}
+
+func rootNodes(nodes []*store.Node) []*store.Node {
+	roots := make([]*store.Node, 0)
+	for _, n := range nodes {
+		if !n.ParentID.Valid {
+			roots = append(roots, n)
+		}
+	}
+	return roots
+}
+
+func collectNodeAndDescendantCitations(nodes []*store.Node, entity *store.Entity, n *store.Node, sectionLevel int, citations *[]string) {
+	if isCitableSectionNode(n, sectionLevel) {
+		if snippet := citationSnippetForNode(n); snippet != "" {
+			*citations = append(*citations, nodeCitation(entity, n, snippet))
+		}
+	}
+	collectSectionChildCitations(nodes, entity, n.ID, sectionLevel, citations)
+}
+
+func collectSectionChildCitations(nodes []*store.Node, entity *store.Entity, parentID int64, sectionLevel int, citations *[]string) {
 	for _, n := range nodes {
 		if !n.ParentID.Valid || n.ParentID.Int64 != parentID {
 			continue
 		}
-		if isCitableNode(n) {
-			if snippet := citationSnippet(n.Content); snippet != "" {
+		if isCitableSectionNode(n, sectionLevel) {
+			if snippet := citationSnippetForNode(n); snippet != "" {
 				*citations = append(*citations, nodeCitation(entity, n, snippet))
 			}
 		}
-		collectSectionCitations(nodes, entity, n.ID, citations)
+		collectSectionChildCitations(nodes, entity, n.ID, sectionLevel, citations)
 	}
 }
 
 func isCitableNode(n *store.Node) bool {
 	switch n.Type {
-	case "paragraph", "list_item", "checklist_item", "table_row", "code_block", "blockquote":
+	case "paragraph", "list_item", "checklist_item", "table_header", "table_row", "code_block", "blockquote", "html_block":
 		return strings.TrimSpace(n.Content) != ""
 	default:
 		return false
 	}
 }
 
+func isCitableSectionNode(n *store.Node, sectionLevel int) bool {
+	if isCitableNode(n) {
+		return true
+	}
+	return n.Type == "heading" && n.Level > sectionLevel && strings.TrimSpace(n.Content) != ""
+}
+
 func nodeCitation(entity *store.Entity, n *store.Node, snippet string) string {
 	return fmt.Sprintf("%s#n%d@v%d:sha256:%s %q", entity.ID, n.ID, entity.Version, n.Hash, snippet)
+}
+
+func citationSnippetForNode(n *store.Node) string {
+	content := n.Content
+	if n.Type == "code_block" {
+		if _, code, ok := strings.Cut(content, "\n"); ok {
+			content = code
+		}
+	}
+	return citationSnippet(content)
 }
 
 func citationSnippet(content string) string {

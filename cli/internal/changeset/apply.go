@@ -250,7 +250,11 @@ func applyInsert(s *store.Store, p Patch) error {
 		if after.Type == "table_row" || after.Type == "table_header" {
 			body = normalizeTableRowContent(body)
 		}
-		n := &store.Node{Type: after.Type, Level: after.Level, Content: body}
+		nodeType := after.Type
+		if after.Type == "table_header" {
+			nodeType = "table_row"
+		}
+		n := &store.Node{Type: nodeType, Level: after.Level, Content: body}
 		n.Hash = store.ComputeNodeHash(body, n.Type)
 		if _, err := s.InsertNodeAfter(after.ID, n); err != nil {
 			return fmt.Errorf("patch %s: %w", p.Source, err)

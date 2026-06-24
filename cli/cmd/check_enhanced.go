@@ -121,6 +121,7 @@ func hintFor(message string) string {
 		{"missing required section", ""},
 		{"empty required section", ""},
 		{"empty required table", "add at least one data row below the table headers"},
+		{"unknown --only target", "run c3x search for the target or c3x list --flat to find the current id"},
 		{"unknown entity reference", "verify the ID with 'c3x list'; check for typos"},
 		{"unknown ref reference", "use a ref-* ID (e.g., ref-jwt); verify with 'c3x list'"},
 		{"file does not exist", "create the file or fix the path"},
@@ -242,6 +243,7 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 	}
 
 	targetMatcher := newCheckTargetMatcher(entities, opts.Only)
+	issues = append(issues, unknownOnlyTargetIssues(opts.C3Dir, entities, opts.Only, targetMatcher)...)
 
 	for _, entity := range entities {
 		if entity.Type == "adr" {
@@ -545,6 +547,48 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 		return fmt.Errorf("error: check failed: %d error(s)\nhint: fix the listed issue(s), then rerun c3x check", errors)
 	}
 	return nil
+}
+
+func unknownOnlyTargetIssues(c3Dir string, entities []*store.Entity, targets []string, matcher checkTargetMatcher) []Issue {
+	var issues []Issue
+	for _, target := range targets {
+		target = strings.TrimSpace(target)
+		if !requiresKnownEntityTarget(c3Dir, target) {
+			continue
+		}
+		matched := false
+		for _, entity := range entities {
+			if verifyTargetMatchesDoc([]string{target}, entity.ID, entityRelativePath(entity, matcher.parentSlug)) {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			issues = append(issues, Issue{
+				Severity: "error",
+				Entity:   target,
+				Message:  fmt.Sprintf("unknown --only target: %s", target),
+			})
+		}
+	}
+	return issues
+}
+
+func requiresKnownEntityTarget(c3Dir, target string) bool {
+	if target == "" || strings.ContainsAny(target, "*?[") {
+		return false
+	}
+	target = filepath.ToSlash(strings.TrimPrefix(target, "./"))
+	if strings.HasPrefix(target, "canvases/") || strings.HasPrefix(target, ".c3/canvases/") {
+		return false
+	}
+	if c3Dir != "" {
+		path := filepath.Join(c3Dir, schema.CanvasesDir, target+".md")
+		if _, err := os.Stat(path); err == nil {
+			return false
+		}
+	}
+	return true
 }
 
 type checkTargetMatcher struct {

@@ -86,7 +86,11 @@ func MergedBody(s *store.Store, p Patch) (string, error) {
 		if after.Type == "table_row" || after.Type == "table_header" {
 			body = normalizeTableRowContent(body)
 		}
-		newNode := &store.Node{EntityID: p.Target, ParentID: after.ParentID, Type: after.Type, Level: after.Level, Content: body}
+		nodeType := after.Type
+		if after.Type == "table_header" {
+			nodeType = "table_row"
+		}
+		newNode := &store.Node{EntityID: p.Target, ParentID: after.ParentID, Type: nodeType, Level: after.Level, Content: body}
 		var merged []*store.Node
 		for _, n := range nodes {
 			cp := *n

@@ -188,6 +188,92 @@ func TestRunRead_SectionCiteJSON(t *testing.T) {
 	}
 }
 
+func TestRunRead_SectionCiteIncludesNestedStructuredBlocks(t *testing.T) {
+	s := createRichDBFixture(t)
+	body := `# Zero-based Development
+
+## Goal
+
+Preserve editability for structured reference guidance.
+
+## Choice
+
+Use a cited structured section.
+
+## Why
+
+It keeps frozen facts patchable.
+
+## How
+
+### Adapter shape
+
+` + "```go" + `
+type ZeroBased struct {
+	Index int
+}
+` + "```" + `
+
+| Handle | Purpose |
+| --- | --- |
+| base | anchor patches |
+`
+	if err := content.WriteEntity(s, "ref-jwt", body); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	if err := RunRead(ReadOptions{Store: s, ID: "ref-jwt", Section: "How", Cite: true}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	output := buf.String()
+	for _, want := range []string{
+		`"Adapter shape"`,
+		`"type ZeroBased struct {`,
+		`"Handle | Purpose"`,
+		`"base | anchor patches"`,
+	} {
+		if !strings.Contains(output, want) {
+			t.Fatalf("nested structured citation %s missing from output:\n%s", want, output)
+		}
+	}
+}
+
+func TestRunRead_SectionCiteIncludesHTMLBlocks(t *testing.T) {
+	s := createRichDBFixture(t)
+	body := `# Embedded Guidance
+
+## Goal
+
+Keep embedded guidance editable.
+
+## Choice
+
+Use a raw HTML embed.
+
+## Why
+
+Some guidance is carried as embeddable markup.
+
+## How
+
+<iframe src="https://example.com/embed"></iframe>
+`
+	if err := content.WriteEntity(s, "ref-jwt", body); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	if err := RunRead(ReadOptions{Store: s, ID: "ref-jwt", Section: "How", Cite: true}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	if output := buf.String(); !strings.Contains(output, `"<iframe src=\"https://example.com/embed\"></iframe>"`) {
+		t.Fatalf("HTML block citation missing from output:\n%s", output)
+	}
+}
+
 func TestRunRead_Section_NotFound(t *testing.T) {
 	s := createRichDBFixture(t)
 	var buf bytes.Buffer

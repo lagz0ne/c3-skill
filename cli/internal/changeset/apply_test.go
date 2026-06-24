@@ -50,6 +50,25 @@ func blockHandle(t *testing.T, s *store.Store, id, snippet string) (handle, hash
 	return "", ""
 }
 
+func nodeHandle(t *testing.T, s *store.Store, id, nodeType, snippet string) string {
+	t.Helper()
+	entity, err := s.GetEntity(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	nodes, err := s.NodesForEntity(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, n := range nodes {
+		if n.Type == nodeType && strings.Contains(n.Content, snippet) {
+			return fmt.Sprintf("%s#n%d@v%d:sha256:%s", entity.ID, n.ID, entity.Version, n.Hash)
+		}
+	}
+	t.Fatalf("no %s containing %q in %s", nodeType, snippet, id)
+	return ""
+}
+
 func nodeHashOf(t *testing.T, s *store.Store, id, snippet string) string {
 	t.Helper()
 	nodes, _ := s.NodesForEntity(id)
@@ -371,6 +390,31 @@ func TestApply_Insert_StaleAnchorRebases(t *testing.T) {
 	if nodeHashOf(t, s, "c3-101", "body.") != "" {
 		t.Error("a rejected insert must not modify the fact")
 	}
+}
+
+func TestApply_InsertAfterTableHeaderCreatesDataRow(t *testing.T) {
+	s := openMem(t)
+	seedFact(t, s, "ref-table", "# table\n\n## Goal\n\nGoal.\n\n## How\n\n| Handle | Purpose |\n| --- | --- |\n")
+	p := Patch{
+		Target:  "ref-table",
+		Scope:   ScopeInsert,
+		Base:    nodeHandle(t, s, "ref-table", "table_header", "Handle | Purpose"),
+		Content: "| base | anchor patches |",
+		Source:  "01.patch.md",
+	}
+	if err := Apply(s, []Patch{p}, nil); err != nil {
+		t.Fatalf("insert after table header: %v", err)
+	}
+	nodes, _ := s.NodesForEntity("ref-table")
+	for _, n := range nodes {
+		if n.Content == "base | anchor patches" {
+			if n.Type != "table_row" {
+				t.Fatalf("insert after table_header must create table_row, got %s", n.Type)
+			}
+			return
+		}
+	}
+	t.Fatal("inserted table row not found")
 }
 
 func TestApply_Insert_RollsBackWithFailedSibling(t *testing.T) {

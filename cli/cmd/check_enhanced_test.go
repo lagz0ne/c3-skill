@@ -132,6 +132,32 @@ func TestRunCheck_UsesProjectComponentCanvas(t *testing.T) {
 	}
 }
 
+func TestRunCheck_OnlyUnknownFactIDFails(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	err := RunCheckV2(CheckOptions{Store: s, JSON: true, Only: []string{"ref-zerobased-dev"}}, &buf)
+	if err == nil {
+		t.Fatalf("expected unknown --only target to fail, output: %s", buf.String())
+	}
+	if !strings.Contains(buf.String(), "unknown --only target: ref-zerobased-dev") {
+		t.Fatalf("unknown target issue missing from output:\n%s\nerr=%v", buf.String(), err)
+	}
+}
+
+func TestRunCheck_OnlyUnknownPathFails(t *testing.T) {
+	s := createRichDBFixture(t)
+	var buf bytes.Buffer
+
+	err := RunCheckV2(CheckOptions{Store: s, JSON: true, Only: []string{"refs/ref-missing.md"}}, &buf)
+	if err == nil {
+		t.Fatalf("expected unknown --only path to fail, output: %s", buf.String())
+	}
+	if !strings.Contains(buf.String(), "unknown --only target: refs/ref-missing.md") {
+		t.Fatalf("unknown path issue missing from output:\n%s\nerr=%v", buf.String(), err)
+	}
+}
+
 func TestRunCheck_IncludeADRUsesProjectCanvas(t *testing.T) {
 	s, c3Dir := createDBFixtureWithC3Dir(t)
 	if err := RunCanvas(CanvasOptions{C3Dir: c3Dir, Sub: "write", ID: "adr", Body: strings.NewReader(projectADRCanvasDoc())}, &bytes.Buffer{}); err != nil {

@@ -80,6 +80,27 @@ func TestRunInitDB_CreatesDatabase(t *testing.T) {
 			t.Fatalf("init should materialize %s: %v", path, err)
 		}
 	}
+
+	ignore, err := os.ReadFile(filepath.Join(c3Dir, ".gitignore"))
+	if err != nil {
+		t.Fatalf("init should create C3-owned .gitignore: %v", err)
+	}
+	ignoreText := string(ignore)
+	for _, want := range []string{
+		c3GitignoreStart,
+		"c3.db",
+		"c3.db-shm",
+		"c3.db-wal",
+		"c3.db.bak",
+		"c3.db.bak-*",
+		".c3.import.tmp.db",
+		".c3.import.tmp.db-*",
+		c3GitignoreEnd,
+	} {
+		if !strings.Contains(ignoreText, want) {
+			t.Fatalf("init .c3/.gitignore missing %q:\n%s", want, ignoreText)
+		}
+	}
 }
 
 func TestRunInitDB_FailsIfExists(t *testing.T) {

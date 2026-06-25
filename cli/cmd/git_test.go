@@ -56,11 +56,19 @@ func TestRunGitInstall_DirectoryGitDir(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(ignore), "c3.db.bak-*") {
-		t.Fatalf("missing backup ignore:\n%s", string(ignore))
-	}
-	if !strings.Contains(string(ignore), "c3.db") {
-		t.Fatalf("missing db ignore:\n%s", string(ignore))
+	ignoreText := string(ignore)
+	for _, want := range []string{
+		"c3.db",
+		"c3.db-shm",
+		"c3.db-wal",
+		"c3.db.bak",
+		"c3.db.bak-*",
+		".c3.import.tmp.db",
+		".c3.import.tmp.db-*",
+	} {
+		if !strings.Contains(ignoreText, want) {
+			t.Fatalf("missing C3 cache ignore %q:\n%s", want, ignoreText)
+		}
 	}
 }
 

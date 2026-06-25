@@ -49,6 +49,8 @@ One atomic, canvas-validated transaction: every fact validates or nothing lands.
 
 **Bind each fact to its code, outside the freeze.** Code churns independently of the design, so the fact→code binding lives in a plain editable file, not a frozen fact. After the flip, author an eval-spec per component/ref/rule at `.c3/eval/<fact>.yaml` — a `code:` glob binding (and an optional pipeline for a behavioural claim) — then run `c3 eval` to verify each claim against its code. `c3 lookup 'src/**'` resolves through those same `code:` bindings (`references/eval.md`).
 
+**Install Git guardrails through the binary.** `c3 init` writes the C3-owned `.c3/.gitignore` for disposable cache files. In a Git-backed project, run `c3 git install` to refresh the pre-commit hook, legacy DB attributes, and that managed ignore block. Do not hand-maintain root `.gitignore` entries for `.c3/c3.db`; the binary owns the cache ignore list.
+
 ### 4. Close the change-unit
 
 The genesis ADR's Affected Topology cites were authored as `N.A` — the facts didn't exist yet. Now they do:
@@ -71,6 +73,7 @@ c3 check --fix                             # latches accepted → done when Afte
 - [ ] Every fact a create-patch in .c3/changes/adr-00000000-c3-adoption/ (parent: set, membership headers only)
 - [ ] Flip applied — facts materialized and frozen (change apply)
 - [ ] Eval-spec authored per component/ref/rule (.c3/eval/<fact>.yaml, code: binding); c3 eval run; c3 lookup 'src/**' resolves
+- [ ] Git guardrails installed/refreshed through `c3 git install`; `.c3/.gitignore` is C3-owned cache-ignore state
 - [ ] c3 check passes; coverage acceptable (or exclusions documented)
 - [ ] Audit passes (audit.md)
 - [ ] Genesis ADR: After-cites refreshed → accepted → latched done (check --fix)

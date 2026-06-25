@@ -18,6 +18,18 @@ const (
 	preCommitHookName = "pre-commit"
 )
 
+var c3CacheIgnorePatterns = []string{
+	"c3.db",
+	"c3.db-shm",
+	"c3.db-wal",
+	"c3.db.bak",
+	"c3.db.bak-*",
+	".c3.import.tmp.db",
+	".c3.import.tmp.db-*",
+	"*.tmp.db",
+	"*.tmp.db-*",
+}
+
 // RunGitInstall installs thin Git guardrails for the canonical C3 workflow.
 func RunGitInstall(projectDir, c3Dir string, w io.Writer) error {
 	gitDir, err := resolveGitDir(projectDir)
@@ -47,21 +59,27 @@ func RunGitInstall(projectDir, c3Dir string, w io.Writer) error {
 	}
 	fmt.Fprintf(w, "Updated %s\n", attrPath)
 
-	ignorePath := filepath.Join(c3Dir, ".gitignore")
-	ignoreBlock := strings.Join([]string{
-		c3GitignoreStart,
-		"c3.db",
-		"c3.db.bak-*",
-		c3GitignoreEnd,
-		"",
-	}, "\n")
-	if err := upsertManagedBlockFile(ignorePath, c3GitignoreStart, c3GitignoreEnd, ignoreBlock, false); err != nil {
+	if err := EnsureC3Gitignore(c3Dir); err != nil {
 		return fmt.Errorf("git install: write .c3/.gitignore: %w", err)
 	}
-	fmt.Fprintf(w, "Updated %s\n", ignorePath)
+	fmt.Fprintf(w, "Updated %s\n", filepath.Join(c3Dir, ".gitignore"))
 
 	fmt.Fprintf(w, "Installed C3 Git guardrails for %s\n", c3Dir)
 	return nil
+}
+
+// EnsureC3Gitignore writes the C3-owned ignore block for disposable local cache files.
+func EnsureC3Gitignore(c3Dir string) error {
+	ignoreBlock := []string{c3GitignoreStart}
+	ignoreBlock = append(ignoreBlock, c3CacheIgnorePatterns...)
+	ignoreBlock = append(ignoreBlock, c3GitignoreEnd, "")
+	return upsertManagedBlockFile(
+		filepath.Join(c3Dir, ".gitignore"),
+		c3GitignoreStart,
+		c3GitignoreEnd,
+		strings.Join(ignoreBlock, "\n"),
+		false,
+	)
 }
 
 func resolveGitDir(projectDir string) (string, error) {

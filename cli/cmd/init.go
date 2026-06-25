@@ -19,6 +19,9 @@ func RunInitDB(c3Dir string, projectName string, w io.Writer) error {
 	if err := os.MkdirAll(c3Dir, 0755); err != nil {
 		return fmt.Errorf("error: creating %s: %w", c3Dir, err)
 	}
+	if err := EnsureC3Gitignore(c3Dir); err != nil {
+		return fmt.Errorf("error: writing .c3/.gitignore: %w", err)
+	}
 	defs, err := schema.AllDefinitions("")
 	if err != nil {
 		return fmt.Errorf("error: loading built-in canvas definitions: %w", err)

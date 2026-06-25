@@ -15,6 +15,7 @@ dist/
 
 # Go CLI compiled binaries (built in CI)
 skills/c3/bin/c3x-*
+skills/c3/bin/ast-grep-*
 cli/skills/
 cli/cli
 

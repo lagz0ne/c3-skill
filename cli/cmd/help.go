@@ -357,7 +357,7 @@ if .c3/ still has unstaged changes. No custom merge driver or DB merge logic is 
 What it installs:
   - pre-commit hook: c3x check
   - .gitattributes: mark legacy tracked .c3/c3.db as binary/generated
-  - .c3/.gitignore: ignore c3.db and backup files within the C3 tree
+  - .c3/.gitignore: ignore c3.db, SQLite sidecars, backups, and temp DB files within the C3 tree
 
 Example:
   c3x git install`,

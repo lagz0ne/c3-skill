@@ -30,7 +30,7 @@ c3 change new <adr-id>                    # → .c3/changes/<adr-id>/
 
 # 4. Preview. The "files changed" panel: per-patch drift + state.
 c3 change view <adr-id>
-c3 graph <id> --unit <adr-id>            # the post-change graph (staged edges), via a rolled-back apply
+c3 graph <id> --unit <adr-id>            # the post-change graph plus route facets (staged edges), via a rolled-back apply
 c3 change status <adr-id>                # per-patch state: pending / applied / drifted / new
 
 # 5. Record human judgment, then flip.
@@ -81,7 +81,7 @@ result: sha256:<hash>      # optional landing check (block) — see below
 
 The switch enforces **one** thing: that the *doc* the patch lands is exactly the doc that was reviewed. That proof is a single down-V — the cited `base` pins the block you're replacing, the optional `result:` hash pins what the edit seals to, and the change-doc's resolving *After*-cite pins that the fact actually landed. The block you author must already be canvas-correct and comply with its refs/rules (the file-context gate above); `apply` validates and seals it, it does not launder it.
 
-**Code-conformance is not on this switch.** Whether the code still matches the doc is a separate question, answered by `c3 eval` against the fact's `code:` binding in `.c3/eval/<fact>.yaml` — a one-off, CI-cadence verdict you run when you want proof, never a gate (`references/eval.md`). The binding file is an ordinary editable file: when work moves or renames a fact's code, re-aim its `code:` globs directly (it is never frozen, so no change-carrier is involved), then re-run `c3 eval`.
+**Code-conformance is not on this switch.** Whether the code still matches the doc is a separate question, answered by `c3 eval` against the fact's `code:` binding in `.c3/eval/<fact>.yaml` — a one-off, CI-cadence verdict you run when you want proof, never a gate (`references/eval.md`). Route-enriched `graph` output can point to first inspection anchors and lanes, but it is also not proof. The binding file is an ordinary editable file: when work moves or renames a fact's code, re-aim its `code:` globs directly (it is never frozen, so no change-carrier is involved), then re-run `c3 eval`.
 
 ## The apply gates
 

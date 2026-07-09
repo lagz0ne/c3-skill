@@ -20,6 +20,12 @@ Reverse = who points *at* the changed fact (live children, citers). Each edge is
 with `c3 read <dependent-id>` before naming it — never mark every neighbor affected by
 default. For ref/rule impact, graph the ref/rule itself to surface all citers.
 
+Read the graph `route:` block at the same time. `route.facts` and `route.graph` show
+the context pack, `route.anchors` names first files/docs/tests to inspect, `route.lanes`
+names the lifecycle or ownership lane, and `route.hash` is only a change signal. The
+route helps you inspect the right path; it does not prove impact, code conformance, or
+safe deletion.
+
 ## Will the destruction gate let it land?
 
 If the change **removes or retires** a fact, the reverse graph *is* the refusal
@@ -46,7 +52,9 @@ c3 graph <id> --unit <adr-id> --direction reverse
 ```
 
 This renders the graph as it *would* be with the unit's staged patches applied —
-confirm the orphans/dangles you predicted are healed before committing.
+confirm the orphans/dangles you predicted are healed before committing. If the preview
+includes route facets, compare the anchors/lanes as first-inspection clues, not as a
+destruction-gate substitute.
 
 ## Deliverable
 

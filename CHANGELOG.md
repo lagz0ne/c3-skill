@@ -5,6 +5,22 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [11.6.1] - 2026-07-09
+
+Patch release: **route-drift guidance stays visible to agents.** The C3 skill now documents the
+`route.drift` facet emitted by route-enriched search/graph output, and eval guards keep that field
+from disappearing from agent-facing guidance again.
+
+### Fixed
+
+- **Documented `route.drift`.** Query, sweep, ref, change, and skill-router guidance now tell agents
+  how to treat `missing_anchor:<glob>` and `anchor_error:<glob>` route labels as stale binding
+  signals, not correctness proof.
+- **Eval guard for route facets.** `c3-201` and `c3-202` eval specs now fail if route facet guidance,
+  including `route.drift`, drops out of the skill entry or query reference.
+- **Route OKRA negative control.** The route-enrichment checker now includes a
+  `missing-route-drift-guidance` falsifier so the replay suite catches incomplete drift guidance.
+
 ## [11.6.0] - 2026-07-09
 
 Minor release: **route-enriched query reasoning over existing C3 surfaces.** Search, graph, and

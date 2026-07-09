@@ -50,7 +50,7 @@ c3() { C3X_MODE=agent bash <skill-dir>/bin/c3x.sh "$@"; }
 2. Load `references/<op>.md`.
 3. Run the CLI (Task tool for parallelism), follow `help[]`.
 
-**Precondition — read-only fast path.** For conceptual discovery ("where is X", paraphrases) start with `c3 search "<question>"`; for known files/globs use `c3 lookup <file>`; for known ids/sections use `c3 read <id> --section <name>`. Reach for `c3 list` / `c3 check` only after a search miss, suspected drift, a topology-wide inventory, or an explicit audit. **Never Read/Glob/Edit `.c3/` instance files** — they are CLI-only; raw access bypasses the seal and goes stale. (Canvas *definitions* at `.c3/canvases/<type>.md` are the exception — user-owned markdown.) Missing `.c3/` → **onboard**.
+**Precondition — read-only fast path.** For conceptual discovery ("where is X", paraphrases) start with `c3 search "<question>"`; for known files/globs use `c3 lookup <file>`; for known ids/sections use `c3 read <id> --section <name>`. After `search` or `lookup` finds a likely owner, use `c3 graph <id> --depth 1` for route-enriched graph context: `route.facts`, `route.graph`, `route.anchors`, `route.lanes`, `route.drift`, and `route.hash`. The route is a first-inspection signal, not correctness proof and not an apply gate. Reach for `c3 list` / `c3 check` only after a search miss, suspected drift, a topology-wide inventory, or an explicit audit. **Never Read/Glob/Edit `.c3/` instance files** — they are CLI-only; raw access bypasses the seal and goes stale. (Canvas *definitions* at `.c3/canvases/<type>.md` are the exception — user-owned markdown.) Missing `.c3/` → **onboard**.
 
 ## The shared contract
 
@@ -76,10 +76,10 @@ The packaged CLI is the catalog — `c3 <cmd> --help` is authoritative. The chan
 | `check` | Validate facts against their canvas + consistency (`--fix`, `--only`, `--include-adr`). Fact-vs-code conformance is **not** here — it is a separate, off-switch `c3 eval` run |
 | `eval` | Check a frozen fact's claim against the uncontrolled external it governs (the `code:` binding in `.c3/eval/<fact>.yaml`). A one-off CI-cadence verdict, **never a gate** (`references/eval.md`) |
 | `repair` | Rebuild the disposable cache from canonical `.c3/` and reseal (after a branch switch / selective merge) |
-| `search <query>` | Concept → entities by semantic + keyword + graph signal |
+| `search <query>` | Concept → entities by semantic + keyword + graph signal, with route clues when available |
 | `lookup <file-or-glob>` | File/glob → component(s) + refs |
 | `read <id>` | Entity content (`--full`; `--section <name> --cite` emits the patch base anchor) |
-| `graph <id>` | Relationship graph (`--depth`, `--direction forward\|reverse`, `--format mermaid`, `--unit <adr-id>` previews staged patches) |
+| `graph <id>` | Relationship graph plus route facets (`facts`, `graph`, `anchors`, `lanes`, `drift`, `hash`); `--depth`, `--direction forward\|reverse`, `--format mermaid`, `--unit <adr-id>` previews staged patches |
 | `add <type> <slug>` | **Create** a fact (body via stdin or `--file`; `--container`, `--feature`). The unguarded create path |
 | `canvas <list\|read\|add\|write>` | Manage canvas definitions (user-owned shape, at `.c3/canvases/`) |
 | `schema <type>` | Render a canvas's sections/columns/REJECT-IF (leads with the rejection contract) |

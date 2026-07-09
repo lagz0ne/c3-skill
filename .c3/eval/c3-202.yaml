@@ -1,4 +1,12 @@
 fact: c3-202
-claim: "c3-202 is implemented at its declared code surface"
+claim: "c3-202 is implemented at its declared code surface and teaches agents how to interpret route drift"
 code:
   - skills/c3/references/**
+pipeline:
+  - gather: { file: skills/c3/references/query.md }
+  - eval:
+      contains_all:
+        - "`drift`"
+        - "missing_anchor:<glob>"
+        - "anchor_error:<glob>"
+        - "not proof"

@@ -1,4 +1,14 @@
 fact: c3-201
-claim: "c3-201 is implemented at its declared code surface"
+claim: "c3-201 is implemented at its declared code surface and documents every route facet emitted by graph/search"
 code:
   - skills/c3/SKILL.md
+pipeline:
+  - gather: { file: skills/c3/SKILL.md }
+  - eval:
+      contains_all:
+        - "route.facts"
+        - "route.graph"
+        - "route.anchors"
+        - "route.lanes"
+        - "route.drift"
+        - "route.hash"

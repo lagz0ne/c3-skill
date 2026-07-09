@@ -358,6 +358,18 @@ def require_hash_basis(spec: str, okra: str) -> None:
             raise CheckError(f"forbidden OKRA table hash-noise term: {line}")
 
 
+def require_route_drift_guidance(spec: str, okra: str) -> None:
+    combined = spec + "\n" + okra
+    required = [
+        "drift labels",
+        "missing/stale anchor signal",
+        "stale/missing-anchor signals",
+    ]
+    missing = [phrase for phrase in required if phrase not in combined]
+    if missing:
+        raise CheckError(f"missing route drift guidance phrase(s): {missing}")
+
+
 def require_signal_not_gate(spec: str, okra: str) -> None:
     required_spec_phrases = [
         "Brainstorming / impact analysis",
@@ -423,6 +435,7 @@ def validate(spec: str, okra: str, paths: list[str]) -> dict[str, int | float]:
 
     require_signal_not_gate(spec, okra)
     require_hash_basis(spec, okra)
+    require_route_drift_guidance(spec, okra)
     require_no_new_primitive(paths)
 
     pilot_count = len(EXPECTED_PILOTS)
@@ -508,6 +521,11 @@ def require_negative_controls_fail(spec: str, okra: str, paths: list[str]) -> li
             "noisy-hash-basis",
             spec.replace("| entity ids |", "| full file content |", 1),
             okra,
+        ),
+        (
+            "missing-route-drift-guidance",
+            spec.replace("drift labels", "route notices").replace("missing/stale anchor signal", "anchor signal"),
+            okra.replace("stale/missing-anchor signals", "anchor signals"),
         ),
         (
             "pilot-row-noisy-hash-basis",

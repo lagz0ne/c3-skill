@@ -20,7 +20,7 @@ Start from the best candidate, then move through Context → Container → Compo
 
 1. `c3 read <id>` (`--full` for the whole body) when the snippet isn't enough.
 2. `c3 lookup <file>` on **every** file path before you open source — it returns the owning component plus the refs/rules governing that file (those are its constraints). Directory-level: `c3 lookup 'src/auth/**'`.
-3. `c3 graph <id> --depth 1` for relationships and route enrichment. Read `route.facts`, `route.graph`, `route.anchors`, `route.lanes`, and `route.hash` before opening broad source search.
+3. `c3 graph <id> --depth 1` for relationships and route enrichment. Read `route.facts`, `route.graph`, `route.anchors`, `route.lanes`, `route.drift`, and `route.hash` before opening broad source search.
 4. `c3 graph <id> --format mermaid` when a relationship diagram helps — include the mermaid as a code block. Root it on the matched container/component, never `c3-0`.
 5. Then explore code: start with the paths/symbols surfaced by `lookup` and graph `route.anchors`.
 
@@ -34,6 +34,7 @@ Start from the best candidate, then move through Context → Container → Compo
 | `graph` | Neighbor ids that explain the path or blast radius. Read a neighbor before calling it affected. |
 | `anchors` | First files, globs, docs, or tests to inspect. These are clues, not proof. |
 | `lanes` | Lifecycle/ownership lanes such as auth, invoice, realtime-cycle, theming, or time. Use them to avoid a one-file answer to a cross-cutting question. |
+| `drift` | Anchor-health labels such as `missing_anchor:<glob>` and `anchor_error:<glob>`. Treat them as a stale binding signal to inspect or re-aim, not proof that code is wrong. |
 | `hash` / `hash_basis` | Change signal for the route shape. It is not a correctness verdict. |
 
 Route enrichment is not a new command, not a code-correction layer, not an eval replacement, and not an apply gate. The answer still cites the C3 facts it read and the code/tests/eval/runtime evidence it used.

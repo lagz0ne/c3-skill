@@ -45,5 +45,5 @@ c3 graph ref-<slug> --direction reverse --format mermaid   # as a diagram
 ```
 
 Reverse graph is the canonical "who uses this" — don't hand-walk citers or read raw `.c3/` files.
-Use any `route:` block in that output to pick first inspection anchors and lanes, but
+Use any `route:` block in that output to pick first inspection anchors, lanes, and drift labels, but
 read each citer before claiming it is affected.

@@ -23,6 +23,8 @@ type SearchOptions struct {
 	TypeFilter string
 	Semantic   bool
 	NoSemantic bool
+	ProjectDir string
+	C3Dir      string
 }
 
 // SearchOutput is the structured search response.
@@ -33,12 +35,13 @@ type SearchOutput struct {
 
 // SearchResultRow is one ranked result with search and graph provenance.
 type SearchResultRow struct {
-	ID           string        `json:"id"`
-	Type         string        `json:"type"`
-	Title        string        `json:"title"`
-	Snippet      string        `json:"snippet"`
-	MatchSources []string      `json:"match_sources"`
-	Context      SearchContext `json:"context"`
+	ID           string          `json:"id"`
+	Type         string          `json:"type"`
+	Title        string          `json:"title"`
+	Snippet      string          `json:"snippet"`
+	MatchSources []string        `json:"match_sources"`
+	Context      SearchContext   `json:"context"`
+	Route        RouteEnrichment `json:"route,omitempty"`
 }
 
 // SearchContext captures the most useful graph/code-map context for a hit.
@@ -54,6 +57,7 @@ type compactSearchResultRow struct {
 	Title   string `json:"title"`
 	Why     string `json:"why"`
 	Ctx     string `json:"ctx"`
+	Route   string `json:"route,omitempty"`
 	Snippet string `json:"s"`
 }
 
@@ -129,6 +133,7 @@ func RunSearch(opts SearchOptions, w io.Writer) error {
 		if err := enrichSearchRow(opts.Store, &rows[i]); err != nil {
 			return err
 		}
+		rows[i].Route = buildSearchRoute(opts.Store, opts.C3Dir, opts.ProjectDir, rows[i], opts.Query)
 	}
 
 	format := ResolveFormat(opts.JSON, isAgentMode())
@@ -139,7 +144,7 @@ func RunSearch(opts SearchOptions, w io.Writer) error {
 	if format == FormatJSON {
 		return WriteObjectOutput(w, out, format, searchHelpHints())
 	}
-	return WriteTableOutput(w, "results", compactSearchRows(rows), []string{"id", "title", "why", "ctx", "s"}, format, nil)
+	return WriteTableOutput(w, "results", compactSearchRows(rows), []string{"id", "title", "why", "ctx", "route", "s"}, format, nil)
 }
 
 func searchHelpHints() []HelpHint {
@@ -439,6 +444,16 @@ func enrichFromComponent(s *store.Store, row *SearchResultRow, componentID strin
 	return nil
 }
 
+func buildSearchRoute(s *store.Store, c3Dir, projectDir string, row SearchResultRow, query string) RouteEnrichment {
+	ids := []string{row.ID}
+	for _, ref := range []EntityRef{row.Context.Component, row.Context.Ref, row.Context.Rule} {
+		if ref.ID != "" {
+			ids = append(ids, ref.ID)
+		}
+	}
+	return buildRouteEnrichmentForIDs(s, c3Dir, projectDir, ids, query)
+}
+
 func assignSearchContext(row *SearchResultRow, rel *store.Relationship, target *store.Entity) {
 	ref := EntityRef{ID: target.ID, Title: target.Title}
 	switch target.Type {
@@ -559,6 +574,7 @@ func compactSearchRows(rows []SearchResultRow) []compactSearchResultRow {
 			Title:   row.Title,
 			Why:     compactMatchSources(row.MatchSources),
 			Ctx:     compactSearchContext(row.Context),
+			Route:   compactRoute(row.Route),
 			Snippet: snippet,
 		})
 	}

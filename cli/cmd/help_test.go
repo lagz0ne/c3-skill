@@ -32,6 +32,20 @@ func TestShowHelp_Global(t *testing.T) {
 	}
 }
 
+func TestRouteEnrichmentDoesNotAddPrimitiveCommands(t *testing.T) {
+	forbidden := map[string]bool{
+		"trace":  true,
+		"route":  true,
+		"spine":  true,
+		"impact": true,
+	}
+	for _, command := range Commands {
+		if forbidden[command.Name] {
+			t.Fatalf("route enrichment must not add a new %q primitive command", command.Name)
+		}
+	}
+}
+
 func TestShowHelp_Commands(t *testing.T) {
 	commands := []string{"list", "check", "add", "set", "wire", "schema"}
 	for _, cmd := range commands {

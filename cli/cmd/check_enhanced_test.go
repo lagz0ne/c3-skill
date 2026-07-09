@@ -3,6 +3,8 @@ package cmd
 import (
 	"bytes"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -74,6 +76,78 @@ func TestRunCheck_IncludeADRValidatesADR(t *testing.T) {
 	}
 	if !hasADRIssue {
 		t.Error("--include-adr should validate ADR entities")
+	}
+}
+
+func TestRunCheck_WarnsOnStaleEvalCodeAnchor(t *testing.T) {
+	s := createRichDBFixture(t)
+	projectDir := t.TempDir()
+	c3Dir := filepath.Join(projectDir, ".c3")
+	if err := os.MkdirAll(filepath.Join(c3Dir, "eval"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	bindCode(t, c3Dir, "c3-101", "src/auth/missing.ts")
+
+	var buf bytes.Buffer
+	if err := RunCheckV2(CheckOptions{
+		Store:      s,
+		ProjectDir: projectDir,
+		C3Dir:      c3Dir,
+		JSON:       true,
+		Only:       []string{"c3-101"},
+	}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	var result CheckResult
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
+	}
+	found := false
+	for _, issue := range result.Issues {
+		if issue.Entity == "c3-101" && strings.Contains(issue.Message, "eval code anchor matched no files: src/auth/missing.ts") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("missing stale anchor warning: %+v", result.Issues)
+	}
+}
+
+func TestRunCheck_WarnsOnStaleEvalCodeAnchorForOnlyPath(t *testing.T) {
+	s := createRichDBFixture(t)
+	projectDir := t.TempDir()
+	c3Dir := filepath.Join(projectDir, ".c3")
+	if err := os.MkdirAll(filepath.Join(c3Dir, "eval"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	bindCode(t, c3Dir, "c3-101", "src/auth/missing.ts")
+
+	var buf bytes.Buffer
+	if err := RunCheckV2(CheckOptions{
+		Store:      s,
+		ProjectDir: projectDir,
+		C3Dir:      c3Dir,
+		JSON:       true,
+		Only:       []string{"c3-1-api/c3-101-auth.md"},
+	}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	var result CheckResult
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
+	}
+	found := false
+	for _, issue := range result.Issues {
+		if issue.Entity == "c3-101" && strings.Contains(issue.Message, "eval code anchor matched no files: src/auth/missing.ts") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("missing stale anchor warning for path target: %+v", result.Issues)
 	}
 }
 

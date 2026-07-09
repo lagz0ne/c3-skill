@@ -3,6 +3,8 @@ package cmd
 import (
 	"bytes"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -124,6 +126,46 @@ func TestRunGraph_JSON(t *testing.T) {
 	}
 	if !found {
 		t.Error("root c3-1 not found in JSON output")
+	}
+}
+
+func TestRunGraph_JSONIncludesRouteFacets(t *testing.T) {
+	s, c3Dir := createLookupFixture(t)
+	projectDir := filepath.Dir(c3Dir)
+	if err := os.MkdirAll(filepath.Join(projectDir, "src", "auth"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(projectDir, "src", "auth", "login.ts"), []byte("export function login() {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	bindCode(t, c3Dir, "c3-101", "src/auth/*.ts")
+	var buf bytes.Buffer
+
+	err := RunGraph(GraphOptions{Store: s, EntityID: "c3-101", Depth: 1, JSON: true, C3Dir: c3Dir, ProjectDir: projectDir}, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var nodes []graphNode
+	if err := json.Unmarshal(buf.Bytes(), &nodes); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
+	}
+
+	var auth *graphNode
+	for i := range nodes {
+		if nodes[i].ID == "c3-101" {
+			auth = &nodes[i]
+			break
+		}
+	}
+	if auth == nil {
+		t.Fatalf("root c3-101 not found: %+v", nodes)
+	}
+	requireStringSliceContains(t, auth.Route.Facts, "c3-101")
+	requireStringSliceContains(t, auth.Route.Facts, "ref-jwt")
+	requireStringSliceContains(t, auth.Route.Anchors, "src/auth/*.ts")
+	if auth.Route.Hash == "" {
+		t.Fatalf("route hash should be populated: %+v", auth.Route)
 	}
 }
 

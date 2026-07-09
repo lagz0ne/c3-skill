@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/lagz0ne/c3-design/cli/internal/codemap"
 	"github.com/lagz0ne/c3-design/cli/internal/content"
 	"github.com/lagz0ne/c3-design/cli/internal/markdown"
 	"github.com/lagz0ne/c3-design/cli/internal/schema"
@@ -125,6 +126,8 @@ func hintFor(message string) string {
 		{"unknown entity reference", "verify the ID with 'c3x list'; check for typos"},
 		{"unknown ref reference", "use a ref-* ID (e.g., ref-jwt); verify with 'c3x list'"},
 		{"file does not exist", "create the file or fix the path"},
+		{"eval code anchor matched no files", "re-aim or remove the stale code glob in .c3/eval/<fact>.yaml"},
+		{"eval code anchor could not be checked", "fix the fact's .c3/eval code binding or the referenced path"},
 		{"layer disconnect", "open a change doc (c3 add adr) that amends the parent table top-down; rebuild only proves storage, not layer integration"},
 	}
 	for _, p := range patterns {
@@ -451,10 +454,12 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 		issues = append(issues, checkProjectCanvases(opts.C3Dir)...)
 		issues = append(issues, checkLayerDisconnectsStore(opts.Store)...)
 		issues = append(issues, checkFactSealsOnDisk(opts.C3Dir)...)
+		issues = append(issues, checkEvalCodeAnchors(opts.Store, opts.ProjectDir, opts.C3Dir, targetMatcher)...)
 	} else {
 		issues = append(issues, checkProjectCanvasesForTargets(opts.C3Dir, opts.Only)...)
 		issues = append(issues, filterIssuesByTargets(opts.Store, targetMatcher, checkLayerDisconnectsStore(opts.Store))...)
 		issues = append(issues, filterIssuesByTargets(opts.Store, targetMatcher, checkFactSealsOnDisk(opts.C3Dir))...)
+		issues = append(issues, filterIssuesByTargets(opts.Store, targetMatcher, checkEvalCodeAnchors(opts.Store, opts.ProjectDir, opts.C3Dir, targetMatcher))...)
 	}
 
 	// Scope cross-check
@@ -547,6 +552,53 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 		return fmt.Errorf("error: check failed: %d error(s)\nhint: fix the listed issue(s), then rerun c3x check", errors)
 	}
 	return nil
+}
+
+func checkEvalCodeAnchors(s *store.Store, projectDir, c3Dir string, matcher checkTargetMatcher) []Issue {
+	if s == nil || projectDir == "" || c3Dir == "" {
+		return nil
+	}
+	specs, err := LoadEvalSpecs(c3Dir)
+	if err != nil {
+		return []Issue{{
+			Severity: "warning",
+			Entity:   "eval",
+			Message:  "eval code anchors could not be loaded: " + err.Error(),
+			Hint:     "inspect .c3/eval/*.yaml and rerun c3x check",
+		}}
+	}
+	var issues []Issue
+	for _, spec := range specs {
+		entity, err := s.GetEntity(spec.Fact)
+		if err != nil || len(spec.Code) == 0 || !matcher.matches(entity) {
+			continue
+		}
+		for _, glob := range spec.Code {
+			glob = filepath.ToSlash(strings.TrimSpace(glob))
+			if glob == "" {
+				continue
+			}
+			matches, err := codemap.GlobFiles(os.DirFS(projectDir), glob)
+			if err != nil {
+				issues = append(issues, Issue{
+					Severity: "warning",
+					Entity:   spec.Fact,
+					Message:  fmt.Sprintf("eval code anchor could not be checked: %s (%v)", glob, err),
+					Hint:     "fix the fact's .c3/eval code binding or the referenced path",
+				})
+				continue
+			}
+			if len(matches) == 0 {
+				issues = append(issues, Issue{
+					Severity: "warning",
+					Entity:   spec.Fact,
+					Message:  fmt.Sprintf("eval code anchor matched no files: %s", glob),
+					Hint:     "re-aim or remove the stale code glob in .c3/eval/" + spec.Fact + ".yaml",
+				})
+			}
+		}
+	}
+	return issues
 }
 
 func unknownOnlyTargetIssues(c3Dir string, entities []*store.Entity, targets []string, matcher checkTargetMatcher) []Issue {

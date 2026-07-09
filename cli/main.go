@@ -454,6 +454,8 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 			TypeFilter: opts.TypeFilter,
 			Semantic:   opts.Semantic,
 			NoSemantic: opts.NoSemantic,
+			ProjectDir: projectDir,
+			C3Dir:      c3Dir,
 		}, w)
 	case "index":
 		err = cmd.RunSemanticIndex(cmd.SemanticIndexOptions{Store: s, JSON: opts.JSON}, w)
@@ -497,7 +499,7 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 		err = cmd.RunGraph(cmd.GraphOptions{
 			Store: s, EntityID: entityID, Depth: opts.Depth,
 			Direction: opts.Direction, Format: opts.Format,
-			JSON: opts.JSON, C3Dir: c3Dir, Unit: opts.Unit,
+			JSON: opts.JSON, C3Dir: c3Dir, ProjectDir: projectDir, Unit: opts.Unit,
 		}, w)
 	case "delete":
 		id := ""

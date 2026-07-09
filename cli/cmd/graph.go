@@ -11,26 +11,28 @@ import (
 
 // GraphOptions holds parameters for the graph command.
 type GraphOptions struct {
-	Store     *store.Store
-	EntityID  string
-	Depth     int
-	Direction string // "forward" or "reverse"
-	Format    string // "" (text) or "mermaid"
-	JSON      bool
-	C3Dir     string
-	Unit      string // when set, preview the graph through this change-unit's staged patches
+	Store      *store.Store
+	EntityID   string
+	Depth      int
+	Direction  string // "forward" or "reverse"
+	Format     string // "" (text) or "mermaid"
+	JSON       bool
+	C3Dir      string
+	ProjectDir string
+	Unit       string // when set, preview the graph through this change-unit's staged patches
 }
 
 // graphNode is a single entity in the subgraph output.
 type graphNode struct {
-	ID       string   `json:"id"`
-	Type     string   `json:"type"`
-	Title    string   `json:"title"`
-	Parent   string   `json:"parent,omitempty"`
-	Children []string `json:"children,omitempty"`
-	Refs     []string `json:"refs,omitempty"`
-	CitedBy  []string `json:"cited_by,omitempty"`
-	Affects  []string `json:"affects,omitempty"`
+	ID       string          `json:"id"`
+	Type     string          `json:"type"`
+	Title    string          `json:"title"`
+	Parent   string          `json:"parent,omitempty"`
+	Children []string        `json:"children,omitempty"`
+	Refs     []string        `json:"refs,omitempty"`
+	CitedBy  []string        `json:"cited_by,omitempty"`
+	Affects  []string        `json:"affects,omitempty"`
+	Route    RouteEnrichment `json:"route,omitempty"`
 }
 
 // RunGraph emits a subgraph rooted at the given entity.
@@ -82,12 +84,12 @@ func RunGraph(opts GraphOptions, w io.Writer) error {
 		return nil
 	}
 	if opts.JSON {
-		if err := graphJSONStore(entities, opts.Store, w); err != nil {
+		if err := graphJSONStore(entities, opts.Store, opts.C3Dir, opts.ProjectDir, w); err != nil {
 			return err
 		}
 		return nil
 	}
-	if err := graphTextStore(entities, opts.Store, w); err != nil {
+	if err := graphTextStore(entities, opts.Store, opts.C3Dir, opts.ProjectDir, w); err != nil {
 		return err
 	}
 	writeAgentHints(w, cascadeHintsForID(opts.Store, opts.EntityID))
@@ -192,7 +194,7 @@ func graphNeighborsStore(s *store.Store, id string, direction string) []*store.E
 }
 
 // graphTextStore emits the adjacency-list text format.
-func graphTextStore(entities []*store.Entity, s *store.Store, w io.Writer) error {
+func graphTextStore(entities []*store.Entity, s *store.Store, c3Dir, projectDir string, w io.Writer) error {
 	for i, e := range entities {
 		if i > 0 {
 			fmt.Fprintln(w)
@@ -250,18 +252,22 @@ func graphTextStore(entities []*store.Entity, s *store.Store, w io.Writer) error
 			sort.Strings(affectsIDs)
 			fmt.Fprintf(w, "  affects: %s\n", strings.Join(affectsIDs, ", "))
 		}
+		if route := compactRoute(buildRouteEnrichment(s, c3Dir, projectDir, e.ID, "")); route != "" {
+			fmt.Fprintf(w, "  route: %s\n", route)
+		}
 	}
 	return nil
 }
 
 // graphJSONStore emits the subgraph as JSON.
-func graphJSONStore(entities []*store.Entity, s *store.Store, w io.Writer) error {
+func graphJSONStore(entities []*store.Entity, s *store.Store, c3Dir, projectDir string, w io.Writer) error {
 	nodes := make([]graphNode, 0, len(entities))
 	for _, e := range entities {
 		node := graphNode{
 			ID:    e.ID,
 			Type:  e.Type,
 			Title: e.Title,
+			Route: buildRouteEnrichment(s, c3Dir, projectDir, e.ID, ""),
 		}
 
 		if e.ParentID != "" {

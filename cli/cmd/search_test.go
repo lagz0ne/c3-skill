@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -146,6 +148,56 @@ func TestBDD_SearchHybridReturnsFTSAndGraphContext(t *testing.T) {
 	requireStringSliceContains(t, out.Results[0].MatchSources, "graph:uses:rule-trace-context")
 }
 
+func TestRunSearch_EnrichesRouteFromGraphAndEvalBindings(t *testing.T) {
+	s, c3Dir := createLookupFixture(t)
+	projectDir := filepath.Dir(c3Dir)
+	if err := os.MkdirAll(filepath.Join(projectDir, "src", "auth"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(projectDir, "src", "auth", "login.ts"), []byte("export function login() {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	bindCode(t, c3Dir, "c3-101", "src/auth/*.ts")
+
+	var buf bytes.Buffer
+	if err := RunSearch(SearchOptions{
+		Store:      s,
+		Query:      "auth lifecycle frontend backend",
+		NoSemantic: true,
+		JSON:       true,
+		Limit:      5,
+		ProjectDir: projectDir,
+		C3Dir:      c3Dir,
+	}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	var out SearchOutput
+	if err := json.Unmarshal(buf.Bytes(), &out); err != nil {
+		t.Fatalf("invalid search JSON: %v\n%s", err, buf.String())
+	}
+	var auth *SearchResultRow
+	for i := range out.Results {
+		if out.Results[i].ID == "c3-101" {
+			auth = &out.Results[i]
+			break
+		}
+	}
+	if auth == nil {
+		t.Fatalf("expected c3-101 search hit, got %+v", out.Results)
+	}
+	requireStringSliceContains(t, auth.Route.Facts, "c3-101")
+	requireStringSliceContains(t, auth.Route.Facts, "ref-jwt")
+	requireStringSliceContains(t, auth.Route.Anchors, "src/auth/*.ts")
+	requireStringSliceContains(t, auth.Route.Lanes, "auth")
+	if auth.Route.Hash == "" {
+		t.Fatalf("route hash should be populated: %+v", auth.Route)
+	}
+	if strings.Contains(auth.Route.HashBasis, "full file") || strings.Contains(auth.Route.HashBasis, "line number") {
+		t.Fatalf("route hash basis should stay stable, got %q", auth.Route.HashBasis)
+	}
+}
+
 func TestRunSearch_AgentTOONOmitsGenericHelpHints(t *testing.T) {
 	s := createDBFixture(t)
 	seedHybridSearchFixture(t, s)
@@ -184,7 +236,7 @@ func TestRunSearch_AgentTOONUsesCompactSearchTable(t *testing.T) {
 
 	out := buf.String()
 	requireAll(t, out,
-		"results[3]{id,title,why,ctx,s}:",
+		"results[3]{id,title,why,ctx,route,s}:",
 		"research-note-20260605-api-latency",
 		"p95",
 		"DB pool",
@@ -193,6 +245,9 @@ func TestRunSearch_AgentTOONUsesCompactSearchTable(t *testing.T) {
 		"comp=c3-101",
 		"ref=ref-latency-budget",
 		"rule=rule-trace-context",
+		"graph=",
+		"lanes=",
+		"hash=",
 	)
 	for _, noisy := range []string{"query:", "match_sources:", "context:", "component:\n", "title: Trace Context Propagation", "affects/", "uses/", "semantic", "help["} {
 		if strings.Contains(out, noisy) {

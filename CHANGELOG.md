@@ -5,6 +5,37 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [11.6.0] - 2026-07-09
+
+Minor release: **route-enriched query reasoning over existing C3 surfaces.** Search, graph, and
+check now expose architecture-to-code route clues that help agents move from impact analysis to
+first files/facts without adding a new public primitive.
+
+### Added
+
+- **Route metadata for search results.** Agent-facing `search` output now carries compact route
+  clues: owning facts, graph neighbors, source anchors, cross-cutting lanes, drift hints, and stable
+  route hashes.
+- **Route-aware graph and check reads.** `graph` and enhanced `check` output include route summaries
+  so agents can see ownership, file anchors, and drift signals before opening code.
+- **Dogfooded uptake eval.** Added v2 route-uptake proof over c3-design and acountee prompts, with
+  answer-key leak guards, runner provenance, target mutation checks, and a deterministic scorer.
+
+### Changed
+
+- **Current primitives are richer, not replaced.** The release keeps query, impact analysis, frozen
+  facts, drift prevention, and graph as the public control surfaces; route enrichment is evidence
+  attached to those surfaces rather than a new `code-spine` command.
+- **Cross-cutting acountee traces are part of the eval target.** The dogfooding matrix now covers
+  frontend/backend lifecycles, auth, invoice, realtime sync, E2E, theming, and ownership-cycle
+  questions against a temporary acountee fixture.
+
+### Removed
+
+- **Vendored reverse-tornado OKR mirror.** The repository no longer carries the local
+  `.agents/.claude` copy of the OKR skill; release work uses the external skill source instead of a
+  stale vendored mirror.
+
 ## [11.5.1] - 2026-06-24
 
 Patch release: **frozen structured facts stay legally patchable.** C3 now keeps

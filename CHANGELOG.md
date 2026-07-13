@@ -5,6 +5,18 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [11.6.2] - 2026-07-13
+
+Patch release: **keep agent-facing C3 invocation on the local wrapper.** The skill no longer teaches
+an unavailable `c3` command and now includes a contract test to prevent bare command drift.
+
+### Fixed
+
+- **Use the skill-local wrapper.** Skill and reference examples invoke `skills/c3/bin/c3x.sh` through
+  `C3X_MODE=agent`, matching the repository's packaged runtime and no-binary source contract.
+- **Guard CLI examples.** A focused contract test rejects bare `c3` command forms and the removed
+  shell-function pattern from the skill entry and references.
+
 ## [11.6.1] - 2026-07-09
 
 Patch release: **route-drift guidance stays visible to agents.** The C3 skill now documents the

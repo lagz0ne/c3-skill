@@ -12,12 +12,12 @@ reverse graph.
 ## The reverse graph is the spine
 
 ```bash
-c3 graph <id> --direction reverse --depth 1
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" graph <id> --direction reverse --depth 1
 ```
 
 Reverse = who points *at* the changed fact (live children, citers). Each edge is a
 **candidate** consequence, not a settled one: confirm a dependent is actually affected
-with `c3 read <dependent-id>` before naming it — never mark every neighbor affected by
+with `C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" read <dependent-id>` before naming it — never mark every neighbor affected by
 default. For ref/rule impact, graph the ref/rule itself to surface all citers.
 
 Read the graph `route:` block at the same time. `route.facts` and `route.graph` show
@@ -48,7 +48,7 @@ The change lands as patches in `.c3/changes/<unit-id>/`, applied all-or-nothing.
 those patches are staged, preview the post-change graph *before* `apply`:
 
 ```bash
-c3 graph <id> --unit <adr-id> --direction reverse
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" graph <id> --unit <adr-id> --direction reverse
 ```
 
 This renders the graph as it *would* be with the unit's staged patches applied —
@@ -66,7 +66,7 @@ destruction-gate substitute.
 ## Affected Entities
 | Entity | Type | Impact | Reason |
 |--------|------|--------|--------|
-| c3-N | container | direct | [why — confirmed via c3 read] |
+| c3-N | container | direct | [why — confirmed via the wrapper's `read` operation] |
 
 ## File Changes Required (patches in .c3/changes/<unit-id>/, land all-or-nothing)
 | File | Change | Component |
@@ -80,7 +80,7 @@ destruction-gate substitute.
 | Check | How |
 |-------|-----|
 | destruction gate: does retire/apply succeed or refuse? | reverse graph clean, or every orphan/dangle healed in the unit |
-| [owner entity/file updated] | [c3 lookup / read to confirm] |
+| [owner entity/file updated] | [wrapper's `lookup` / `read` operation used to confirm] |
 | [runtime value or observable] | [command or observable to confirm] |
 | [failure-mode probe] | [what to break + expected degradation] |
 ```

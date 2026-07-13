@@ -2,31 +2,31 @@
 
 The **read** beat of Act 1. The topology you read here is **frozen shared truth** — onboarded once, changed only through change-units (`change.md`). So a `read` / `lookup` / `search` / `graph` result is **canonical**: answer from it with confidence, no hedging about whether the doc is current. Full context = these facts + the code they bind.
 
-Reads are free and side-effect-free — favor them. Reach for `c3 list` / `c3 check` only on a search miss, suspected drift, or a topology-wide inventory (the Precondition in `SKILL.md`). **Never Read/Glob/Edit `.c3/` instance files** — they are CLI-only and raw access goes stale.
+Reads are free and side-effect-free — favor them. Reach for `C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" list` / `C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" check` only on a search miss, suspected drift, or a topology-wide inventory (the Precondition in `SKILL.md`). **Never Read/Glob/Edit `.c3/` instance files** — they are CLI-only and raw access goes stale.
 
 ## Pick the discovery tool by what you were handed
 
 | You have | Run | You get |
 |----------|-----|---------|
-| A concept, capability, paraphrase ("where is X", "what handles Y") | `c3 search "<question>"` | Ranked entities by semantic + keyword + graph signal, plus route clues when available |
-| A known file or glob | `c3 lookup <file-or-glob>` | Owning component(s) + governing refs/rules |
-| A known id (± section) | `c3 read <id> --section <name>` | Entity body |
+| A concept, capability, paraphrase ("where is X", "what handles Y") | `C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" search "<question>"` | Ranked entities by semantic + keyword + graph signal, plus route clues when available |
+| A known file or glob | `C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" lookup <file-or-glob>` | Owning component(s) + governing refs/rules |
+| A known id (± section) | `C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" read <id> --section <name>` | Entity body |
 
-For natural-language questions reach for `search` **before** `list`-and-title-matching — search ranks by meaning. `match_sources` tells you *why* a hit ranked: `semantic` = meaning matched despite different wording; `content_fts` / `entity_fts` = keyword; `graph:*` = relationship context. Use `c3 list` only for inventory/coverage **after** candidates are known.
+For natural-language questions reach for `search` **before** `list`-and-title-matching — search ranks by meaning. `match_sources` tells you *why* a hit ranked: `semantic` = meaning matched despite different wording; `content_fts` / `entity_fts` = keyword; `graph:*` = relationship context. Use `C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" list` only for inventory/coverage **after** candidates are known.
 
 ## Navigate the layers
 
 Start from the best candidate, then move through Context → Container → Component as the answer demands ownership, boundaries, or implementation:
 
-1. `c3 read <id>` (`--full` for the whole body) when the snippet isn't enough.
-2. `c3 lookup <file>` on **every** file path before you open source — it returns the owning component plus the refs/rules governing that file (those are its constraints). Directory-level: `c3 lookup 'src/auth/**'`.
-3. `c3 graph <id> --depth 1` for relationships and route enrichment. Read `route.facts`, `route.graph`, `route.anchors`, `route.lanes`, `route.drift`, and `route.hash` before opening broad source search.
-4. `c3 graph <id> --format mermaid` when a relationship diagram helps — include the mermaid as a code block. Root it on the matched container/component, never `c3-0`.
+1. `C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" read <id>` (`--full` for the whole body) when the snippet isn't enough.
+2. `C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" lookup <file>` on **every** file path before you open source — it returns the owning component plus the refs/rules governing that file (those are its constraints). Directory-level: `C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" lookup 'src/auth/**'`.
+3. `C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" graph <id> --depth 1` for relationships and route enrichment. Read `route.facts`, `route.graph`, `route.anchors`, `route.lanes`, `route.drift`, and `route.hash` before opening broad source search.
+4. `C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" graph <id> --format mermaid` when a relationship diagram helps — include the mermaid as a code block. Root it on the matched container/component, never `c3-0`.
 5. Then explore code: start with the paths/symbols surfaced by `lookup` and graph `route.anchors`.
 
 ## Use route-enriched graph output
 
-`c3 search` and `c3 graph` can include a `route:` block. Treat it as a context pack:
+The wrapper's `search` and `graph` operations can include a `route:` block. Treat it as a context pack:
 
 | Field | Use |
 |-------|-----|
@@ -50,7 +50,7 @@ owner of the action → owner of the state mutation → the mechanism that propa
   → the dependent/observer → the emergent property → the failure boundary
 ```
 
-Each arrow states *which contract carries the hop* — the ref, subject, permission, or edge that makes the next entity follow. Use graph `route:` fields to choose candidate hops and first code anchors, then confirm each hop with `c3 read`, `lookup`, code, tests, or eval. A reverse-graph neighbor is a candidate, not a conclusion: read it before assigning behavior, and label it **direct** (cites/consumes the thing) or **transitive** (reached through another). Copy concrete names (queues, subjects, channels) verbatim from the docs — don't flatten them to "the notification system". If the docs don't say how the path degrades, report that gap explicitly; never guess. State negatives from evidence too: "no rules apply" means "no `rule-*` found in the output", not an invented `rule-auth`.
+Each arrow states *which contract carries the hop* — the ref, subject, permission, or edge that makes the next entity follow. Use graph `route:` fields to choose candidate hops and first code anchors, then confirm each hop with the wrapper's `read` / `lookup` operations, code, tests, or eval. A reverse-graph neighbor is a candidate, not a conclusion: read it before assigning behavior, and label it **direct** (cites/consumes the thing) or **transitive** (reached through another). Copy concrete names (queues, subjects, channels) verbatim from the docs — don't flatten them to "the notification system". If the docs don't say how the path degrades, report that gap explicitly; never guess. State negatives from evidence too: "no rules apply" means "no `rule-*` found in the output", not an invented `rule-auth`.
 
 ## Boundaries
 

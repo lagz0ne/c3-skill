@@ -2,7 +2,7 @@
 
 Eval answers one question, per fact, on demand: **does this frozen claim still hold against the
 uncontrolled external it governs?** A fact is frozen; the code/doc/artifact it describes is not.
-`c3 eval` checks the two against each other — a **one-off** verdict at the instant it runs, never
+The wrapper's `eval` operation checks the two against each other — a **one-off** verdict at the instant it runs, never
 a gate. You run it when you want proof (CI cadence), the way you'd run a test.
 
 It is **not** a standing guarantee. A verdict is solid only for the exact `(claim, external-state)`
@@ -41,7 +41,7 @@ pipeline:
   - gather: { file: skills/c3/bin/c3x.sh }
   - eval:   { contains_all: ["linux/amd64", "linux/arm64", "darwin/arm64"] }
 ```
-The `code:` field is the binding: it is what `c3 lookup <file>` resolves against, and (with no
+The `code:` field is the binding: it is what the wrapper's `lookup <file>` operation resolves against, and (with no
 pipeline) the default per-glob resolve check. The frozen fact body is the claim; the spec is the
 **mutable lens** — re-aim it freely (code moved dirs), it is never frozen.
 
@@ -95,11 +95,11 @@ single roll-up line.
 
 ## Run it
 ```bash
-c3 eval                 # every spec → verdict array (holds / drift / needs-judgement, stamped)
-c3 eval c3-203          # one fact's spec
-c3 eval --json          # machine output for CI
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" eval                 # every spec → verdict array (holds / drift / needs-judgement, stamped)
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" eval c3-203          # one fact's spec
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" eval --json          # machine output for CI
 ```
-A `drift` row names what moved; a `needs-judgement` row carries the evidence to judge. `c3 eval`
+A `drift` row names what moved; a `needs-judgement` row carries the evidence to judge. The wrapper's `eval` operation
 **exits success regardless** — the verdict is the signal; CI decides what to do with it.
 
 ## When to use
@@ -108,4 +108,4 @@ A `drift` row names what moved; a `needs-judgement` row carries the evidence to 
 - **Cross-lane agreement** — this `.c3/` fact vs a parallel doc set.
 
 Author a spec when a fact makes a claim worth re-checking against something it doesn't control.
-`c3 lookup <file>` reads the same `code:` bindings to map a file back to its owning fact.
+The wrapper's `lookup <file>` operation reads the same `code:` bindings to map a file back to its owning fact.

@@ -20,15 +20,22 @@ C3 is your architecture's own vocabulary, frozen into shared truth, that work ed
 
 Build the model → freeze the facts → change-units drive the work → the canvas grows with the need.
 
-## CLI handle
+## CLI invocation
 
-Packaged with this skill at `<skill-dir>/bin/c3x.sh`. Create a session-local handle once, then use it for every command:
+The packaged runtime is `c3x`, exposed through the skill-local wrapper at `<skill-dir>/bin/c3x.sh`. There is no `c3` executable. Invoke the wrapper explicitly for every command:
 
 ```bash
-c3() { C3X_MODE=agent bash <skill-dir>/bin/c3x.sh "$@"; }
+# Template: resolve <skill-dir> to this skill's directory, then replace the command and args.
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" check
 ```
 
-`C3X_MODE=agent` → TOON output (~40% fewer tokens) and `help[]` hints appended to each result — follow them. The packaged CLI is the single source; this skill is the **router**: classify the intent, load the reference, run `c3`, follow the output. It names every gate and teaches no procedure — procedure lives in the references.
+For several commands in one shell, this helper is allowed, but it is only a shell function and does not install a `c3` command:
+
+```bash
+c3local() { C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" "$@"; }
+```
+
+`C3X_MODE=agent` → TOON output (~40% fewer tokens) and `help[]` hints appended to each result — follow them. The packaged CLI is the single source; this skill is the **router**: classify the intent, load the reference, invoke the wrapper, follow the output. It names every gate and teaches no procedure — procedure lives in the references.
 
 ## Intent Classification
 
@@ -50,30 +57,30 @@ c3() { C3X_MODE=agent bash <skill-dir>/bin/c3x.sh "$@"; }
 2. Load `references/<op>.md`.
 3. Run the CLI (Task tool for parallelism), follow `help[]`.
 
-**Precondition — read-only fast path.** For conceptual discovery ("where is X", paraphrases) start with `c3 search "<question>"`; for known files/globs use `c3 lookup <file>`; for known ids/sections use `c3 read <id> --section <name>`. After `search` or `lookup` finds a likely owner, use `c3 graph <id> --depth 1` for route-enriched graph context: `route.facts`, `route.graph`, `route.anchors`, `route.lanes`, `route.drift`, and `route.hash`. The route is a first-inspection signal, not correctness proof and not an apply gate. Reach for `c3 list` / `c3 check` only after a search miss, suspected drift, a topology-wide inventory, or an explicit audit. **Never Read/Glob/Edit `.c3/` instance files** — they are CLI-only; raw access bypasses the seal and goes stale. (Canvas *definitions* at `.c3/canvases/<type>.md` are the exception — user-owned markdown.) Missing `.c3/` → **onboard**.
+**Precondition — read-only fast path.** For conceptual discovery ("where is X", paraphrases) start with the wrapper's `search "<question>"`; for known files/globs use the wrapper's `lookup <file>`; for known ids/sections use the wrapper's `read <id> --section <name>`. After `search` or `lookup` finds a likely owner, use the wrapper's `graph <id> --depth 1` for route-enriched graph context: `route.facts`, `route.graph`, `route.anchors`, `route.lanes`, `route.drift`, and `route.hash`. The route is a first-inspection signal, not correctness proof and not an apply gate. Reach for the wrapper's `list` / `check` only after a search miss, suspected drift, a topology-wide inventory, or an explicit audit. **Never Read/Glob/Edit `.c3/` instance files** — they are CLI-only; raw access bypasses the seal and goes stale. (Canvas *definitions* at `.c3/canvases/<type>.md` are the exception — user-owned markdown.) Missing `.c3/` → **onboard**.
 
 ## The shared contract
 
 These rules are stated once here; every reference cites them.
 
-**Frozen facts.** A *fact* is any entity whose canvas declares no `status:` set — `system`, `container`, `component`, `ref`, `rule`, `pm-requirement`, `user-story`. The moment a fact carries a body it is frozen: `c3 write`, `c3 set`, and `c3 delete` on it are **refused** (the guard keys on the first arg; an unknown type is treated as frozen). The refusal names the only legal path: *"<id> is a fact — facts are frozen and change only through a change-unit."* A fact changes **only** by authoring patches in a change-unit and running `c3 change apply`.
+**Frozen facts.** A *fact* is any entity whose canvas declares no `status:` set — `system`, `container`, `component`, `ref`, `rule`, `pm-requirement`, `user-story`. The moment a fact carries a body it is frozen: the wrapper's `write`, `set`, and `delete` operations on it are **refused** (the guard keys on the first arg; an unknown type is treated as frozen). The refusal names the only legal path: *"<id> is a fact — facts are frozen and change only through a change-unit."* A fact changes **only** by authoring patches in a change-unit and running the wrapper's `change apply` operation.
 
-*Exempt from the freeze:* `c3 add` (creating a new fact is unguarded), the first `write` that authors a never-bodied fact, editing a **change-doc** (`adr`/`prd`/`atomic-design-change` — they declare `status:`), and editing a **canvas definition** (user-owned). The fact→code binding lives outside the freeze entirely: it sits in `.c3/eval/<fact>.yaml` (a `code:` field) — an ordinary editable file, re-aimed freely as code moves, never a frozen fact, so it needs no exemption (`references/eval.md`).
+*Exempt from the freeze:* the wrapper's `add` operation (creating a new fact is unguarded), the first `write` that authors a never-bodied fact, editing a **change-doc** (`adr`/`prd`/`atomic-design-change` — they declare `status:`), and editing a **canvas definition** (user-owned). The fact→code binding lives outside the freeze entirely: it sits in `.c3/eval/<fact>.yaml` (a `code:` field) — an ordinary editable file, re-aimed freely as code moves, never a frozen fact, so it needs no exemption (`references/eval.md`).
 
-**Membership is by construction.** A parent's membership table is synthesized by the tool from its children's `parent:` links, on every path that changes parentage (`c3 add`, `change apply`, `check --fix`). Leave the row to the tool — never hand-author or hand-edit it. (Set `parent:`; the row appears.) Parentage is **not** a graph edge: `parent:` sets the child's `parent_id` and the synthesized membership row — a separate axis from *wiring* edges (`uses`, citations, `edge<>` columns), which `c3 graph` shows. A reparent updates `parent_id` + both parents' membership; it does not touch wiring.
+**Membership is by construction.** A parent's membership table is synthesized by the tool from its children's `parent:` links, on every path that changes parentage (`add`, `change apply`, or `check --fix` through the wrapper). Leave the row to the tool — never hand-author or hand-edit it. (Set `parent:`; the row appears.) Parentage is **not** a graph edge: `parent:` sets the child's `parent_id` and the synthesized membership row — a separate axis from *wiring* edges (`uses`, citations, `edge<>` columns), which the wrapper's `graph` operation shows. A reparent updates `parent_id` + both parents' membership; it does not touch wiring.
 
 **A fact is always complete to its rung.** A canvas is a **rung** — a complete contract for one complexity *level*, not a target to fill in over time. A fresh init's canvas is deliberately lean (rung-1); the deeper sections a complex project needs are a *higher* rung, not a hole. Completeness is never relaxed. To grow, **climb a rung**: raise the canvas, then migrate every affected fact up to the new contract, completely — integrity forbids a fact straddling two rungs. When the shape itself is wrong — mis-modeled, not merely lean — **morph** it: a non-additive reshape of the canvas (the *evolve-unit*: a `canvas`-scope patch) that migrates every instance to the new shape in one gated, atomic unit, on the same no-straddle rule (`references/change.md` §Morphing the model).
 
-**ADR status set:** `[open, accepted, done, superseded]`. (`c3 add adr` stamps `proposed` — the legacy synonym for `open`; `accepted` auto-latches to `done` when its After-cites resolve fresh.) Terminal change-docs (`done`/`superseded`) are content-frozen historical records, **exempt from `c3 check`**. `list`/`check` exclude ADRs by default; `--include-adr` to include.
+**ADR status set:** `[open, accepted, done, superseded]`. (The wrapper's `add adr` operation stamps `proposed` — the legacy synonym for `open`; `accepted` auto-latches to `done` when its After-cites resolve fresh.) Terminal change-docs (`done`/`superseded`) are content-frozen historical records, **exempt from the wrapper's `check` operation**. `list`/`check` exclude ADRs by default; `--include-adr` to include.
 
 ## Command table
 
-The packaged CLI is the catalog — `c3 <cmd> --help` is authoritative. The change-unit gate stack (the load-bearing flow) lives in `references/change.md`.
+The packaged CLI is the catalog — invoke the local wrapper with `<cmd> --help`; its output is authoritative. The change-unit gate stack (the load-bearing flow) lives in `references/change.md`.
 
 | Command | Purpose |
 |---------|---------|
 | `list` | Topology with counts + coverage (`--flat`, `--compact`) |
-| `check` | Validate facts against their canvas + consistency (`--fix`, `--only`, `--include-adr`). Fact-vs-code conformance is **not** here — it is a separate, off-switch `c3 eval` run |
+| `check` | Validate facts against their canvas + consistency (`--fix`, `--only`, `--include-adr`). Fact-vs-code conformance is **not** here — run the wrapper's separate, off-switch `eval` operation |
 | `eval` | Check a frozen fact's claim against the uncontrolled external it governs (the `code:` binding in `.c3/eval/<fact>.yaml`). A one-off CI-cadence verdict, **never a gate** (`references/eval.md`) |
 | `repair` | Rebuild the disposable cache from canonical `.c3/` and reseal (after a branch switch / selective merge) |
 | `search <query>` | Concept → entities by semantic + keyword + graph signal, with route clues when available |

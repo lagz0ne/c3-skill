@@ -1,6 +1,6 @@
 {
   "name": "@c3x/cli",
-  "version": "11.6.1",
+  "version": "11.6.2",
   "description": "Thin CLI client for c3x — architecture documentation tool",
   "type": "module",
   "repository": {

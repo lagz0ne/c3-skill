@@ -6,40 +6,40 @@ A **change-unit = reasoning + change material**. The reasoning is a change-doc (
 
 - `*.patch.md` — one primitive that mutates one fact.
 
-Code-conformance is **not** carried here. The fact→code binding lives in `.c3/eval/<fact>.yaml` (an ordinary editable file, never a change-carrier), and whether the code still matches the doc is checked by `c3 eval` — a separate, off-the-switch run, never a gate (`references/eval.md`).
+Code-conformance is **not** carried here. The fact→code binding lives in `.c3/eval/<fact>.yaml` (an ordinary editable file, never a change-carrier), and whether the code still matches the doc is checked by the wrapper's `eval` operation — a separate, off-the-switch run, never a gate (`references/eval.md`).
 
-**The ADR *is* the change-unit — same id.** `c3 change apply <adr-id>` lands every patch all-or-nothing. That apply is the only legal mutation of a fact.
+**The ADR *is* the change-unit — same id.** The wrapper's `change apply <adr-id>` operation lands every patch all-or-nothing. That apply is the only legal mutation of a fact.
 
 Spawn parallel subagents (Task tool) for analysis and multi-file authoring; they author into the same `.c3/changes/<adr-id>/` folder.
 
 ## The end-to-end sequence
 
 ```bash
-# 1. Draft the reasoning. `c3 schema adr` LEADS with REJECT-IF; honor it.
-c3 schema adr
-c3 add adr <slug> --file adr-body.md     # slug = intent (add-rate-limiting). Tables/mermaid/code ⇒ --file.
+# 1. Draft the reasoning. `C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" schema adr` LEADS with REJECT-IF; honor it.
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" schema adr
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" add adr <slug> --file adr-body.md     # slug = intent (add-rate-limiting). Tables/mermaid/code ⇒ --file.
 #   Author --file bodies OUTSIDE .c3/ (e.g. /tmp or repo root) — .c3/ is a managed tree that
 #   regenerates and silently drops stray scratch files between commands.
 
 # 2. Anchor each fact-edit: cite the block you will replace.
-c3 read <id> --section <name> --cite     # → one handle per citable block: <id>#nNODE@vVER:sha256:HASH
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" read <id> --section <name> --cite     # → one handle per citable block: <id>#nNODE@vVER:sha256:HASH
 
 # 3. Scaffold the unit folder (same id as the ADR), then author patches into it.
-c3 change new <adr-id>                    # → .c3/changes/<adr-id>/
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" change new <adr-id>                    # → .c3/changes/<adr-id>/
 #    Author <seq>-<slug>.patch.md per fact-edit (see "Patch carriers").
 
 # 4. Preview. The "files changed" panel: per-patch drift + state.
-c3 change view <adr-id>
-c3 graph <id> --unit <adr-id>            # the post-change graph plus route facets (staged edges), via a rolled-back apply
-c3 change status <adr-id>                # per-patch state: pending / applied / drifted / new
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" change view <adr-id>
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" graph <id> --unit <adr-id>            # the post-change graph plus route facets (staged edges), via a rolled-back apply
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" change status <adr-id>                # per-patch state: pending / applied / drifted / new
 
 # 5. Record human judgment, then flip.
-c3 change accept <adr-id>                # status → accepted (the one stored bit)
-c3 change apply <adr-id>                 # the switch: drift → canvas → morph → retire, atomic
-c3 check                                 # close; --fix latches accepted → done when After-cites resolve
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" change accept <adr-id>                # status → accepted (the one stored bit)
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" change apply <adr-id>                 # the switch: drift → canvas → morph → retire, atomic
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" check                                 # close; --fix latches accepted → done when After-cites resolve
 ```
 
-The **file-context gate is MANDATORY before authoring any fact-edit patch**: `c3 lookup <file>`, load every `rule-*` and the parent chain, honor the refs/rules. `apply` will not launder a non-compliant edit — the body you author must already comply. Each parallel subagent runs this gate on its own files.
+The **file-context gate is MANDATORY before authoring any fact-edit patch**: run the wrapper's `lookup <file>` operation, load every `rule-*` and the parent chain, honor the refs/rules. `apply` will not launder a non-compliant edit — the body you author must already comply. Each parallel subagent runs this gate on its own files.
 
 ## Patch carriers
 
@@ -69,7 +69,7 @@ result: sha256:<hash>      # optional landing check (block) — see below
 
 **Table rows.** Cite the specific row (`--cite` lists per-node handles). Edit a row → `block` patch whose body is *just that row* (`| a | b | c |`, normalized to the stored cells — don't re-supply the header). Delete a row → `block` with an empty body. Add a row → `insert` with the row to insert *after* as the base. (Both anchor by the cited block's hash, so they survive node renumbering.)
 
-**Cite handles** (from `c3 read <id> --cite`): a **block** anchor `entity#nNODE@vVER:sha256:HASH` pins one node by its hash (`block` scope); the **entity** anchor `entity@vVER:sha256:ROOTMERKLE` pins the whole fact (`insert` / `frontmatter` / `retire`).
+**Cite handles** (from `C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" read <id> --cite`): a **block** anchor `entity#nNODE@vVER:sha256:HASH` pins one node by its hash (`block` scope); the **entity** anchor `entity@vVER:sha256:ROOTMERKLE` pins the whole fact (`insert` / `frontmatter` / `retire`).
 
 **Membership rows are NOT yours — set `parent:`, the row appears** (SKILL.md §Membership). A parent's `Components`/`Containers` table is synthesized from children's `parent:` links on every parentage path. Never insert, re-cite, or hand-remove a membership row; a reparent/retire heals the parent it leaves. Author a parent patch only when its **Responsibilities** or a member's **Goal Contribution** *framing* changes — that is a second patch, authored together (the parent-delta decision: record `Parent Delta: updated` and name the patch, or `Parent Delta: none` with evidence).
 
@@ -81,11 +81,11 @@ result: sha256:<hash>      # optional landing check (block) — see below
 
 The switch enforces **one** thing: that the *doc* the patch lands is exactly the doc that was reviewed. That proof is a single down-V — the cited `base` pins the block you're replacing, the optional `result:` hash pins what the edit seals to, and the change-doc's resolving *After*-cite pins that the fact actually landed. The block you author must already be canvas-correct and comply with its refs/rules (the file-context gate above); `apply` validates and seals it, it does not launder it.
 
-**Code-conformance is not on this switch.** Whether the code still matches the doc is a separate question, answered by `c3 eval` against the fact's `code:` binding in `.c3/eval/<fact>.yaml` — a one-off, CI-cadence verdict you run when you want proof, never a gate (`references/eval.md`). Route-enriched `graph` output can point to first inspection anchors, lanes, and drift labels, but it is also not proof. The binding file is an ordinary editable file: when work moves or renames a fact's code, re-aim its `code:` globs directly (it is never frozen, so no change-carrier is involved), then re-run `c3 eval`.
+**Code-conformance is not on this switch.** Whether the code still matches the doc is a separate question, answered by the wrapper's `eval` operation against the fact's `code:` binding in `.c3/eval/<fact>.yaml` — a one-off, CI-cadence verdict you run when you want proof, never a gate (`references/eval.md`). Route-enriched `graph` output can point to first inspection anchors, lanes, and drift labels, but it is also not proof. The binding file is an ordinary editable file: when work moves or renames a fact's code, re-aim its `code:` globs directly (it is never frozen, so no change-carrier is involved), then re-run `eval` through the wrapper.
 
 ## The apply gates
 
-`c3 change apply <adr-id>` runs a **preflight over ALL patches before any write**, then writes inside **one transaction** — the unit lands completely or not at all; you never inspect a half-applied state. Four gates, in order:
+`C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" change apply <adr-id>` runs a **preflight over ALL patches before any write**, then writes inside **one transaction** — the unit lands completely or not at all; you never inspect a half-applied state. Four gates, in order:
 
 1. **Drift / conflict** — every cited anchor must be fresh. A `block` patch checks the cited node's **hash** (a sibling block flipping does not stale you); a `frontmatter`/`retire` patch checks the entity's root merkle. A patch whose anchor is **gone** is a *conflict* (the frozen block moved under you) → the rebase loop below.
 2. **Canvas** — the merged body (edit) or new body (create) must stay valid for its canvas. When this unit also morphs the target's type (a `canvas` patch), the body is validated against the **new** shape — migrating an instance up to a reshaped canvas in the same unit is not rejected.
@@ -97,10 +97,10 @@ A landing-hash mismatch on a later patch or two patches editing the same block r
 **Conflict → rebase loop** when apply rejects with drift/conflict. Re-author the patch against the moved frozen state; apply re-runs every gate, so a stale resolution still can't land:
 
 ```bash
-c3 change rebase <adr-id>                 # per conflict: BASE (anchored) + YOURS (your change) + the re-anchor
-c3 read <id> --section <name> --cite      # re-read the moved block → fresh handle (CURRENT)
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" change rebase <adr-id>                 # per conflict: BASE (anchored) + YOURS (your change) + the re-anchor
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" read <id> --section <name> --cite      # re-read the moved block → fresh handle (CURRENT)
 #   re-author the patch's base: (+ body, + result:) onto the live block — your intent, merged
-c3 change apply <adr-id>                   # retry
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" change apply <adr-id>                   # retry
 ```
 
 ## Climbing a rung (Act 3, operational)
@@ -112,22 +112,22 @@ A canvas is a **rung** — a fact is always complete to its current rung; growth
 ```bash
 # 1. Raise the canvas (user-owned) — make an optional section required, or author a richer one,
 #    keeping newly-required sections ordered LAST.
-c3 canvas write <type>
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" canvas write <type>
 
 # 2. The bar moves; every fact below it now fails its canvas.
-c3 check                                   # lights up exactly the facts missing the new section(s)
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" check                                   # lights up exactly the facts missing the new section(s)
 
 # 3. Stage the climb (same id as the ADR for the climb).
-c3 change scaffold <adr-id>                # one EMPTY insert patch per fact below the bar:
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" change scaffold <adr-id>                # one EMPTY insert patch per fact below the bar:
 #    the heading + the table's column headers, no rows. The emptiness IS the gate.
 
 # 4. Fill each template — author the real section content for every staged patch.
 #    This is the migration: each fact climbs to the new contract, completely.
 
 # 5. Land it — gated, atomic.
-c3 change apply <adr-id>                    # REFUSES an empty required section, so an unfilled
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" change apply <adr-id>                    # REFUSES an empty required section, so an unfilled
 #    template blocks the whole unit. The climb cannot land until every fact carries it.
-c3 check
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" check
 ```
 
 `change scaffold` does not author content — it stakes out *where* each fact is short of the raised bar and hands you empty, apply-refusing templates so the climb is impossible to fake.
@@ -147,17 +147,17 @@ The rule that makes a morph safe is the climb's rule made general: **no fact str
 #    old shape: a rule citing a column the morph removed is stranded too — re-author it here.
 
 # 3. Land it — gated, atomic.
-c3 change apply <adr-id>    # the morph gate refuses unless every instance is valid against the new
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" change apply <adr-id>    # the morph gate refuses unless every instance is valid against the new
 #    shape once the unit's migrations apply; the canvas file and the facts flip in one transaction.
-c3 check
+C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" check
 ```
 
-The canvas patch needs no `base`: it re-authors a fact-TYPE, and the instance-migration patches drift-protect the reshape (a concurrent morph would stale their anchors). A reshape with no instances to migrate is a free edit — author it with `c3 canvas write`, not a unit.
+The canvas patch needs no `base`: it re-authors a fact-TYPE, and the instance-migration patches drift-protect the reshape (a concurrent morph would stale their anchors). A reshape with no instances to migrate is a free edit — use the wrapper's `canvas write` operation, not a unit.
 
 ## Anti-goals
 
-- **Don't route creation through a change-unit.** A new fact is not frozen — `c3 add` it (the unguarded create path), or use a no-base `whole` patch only when you deliberately want it sealed in the unit.
-- **A free canvas edit goes through `c3 canvas write`, not a unit** — canvases are user-owned markdown (`canvas.md`). But a **morph that must migrate existing instances** is the evolve-unit: a `canvas`-scope patch + the migrations in one gated, atomic unit (§Morphing the model). The test is whether facts must move *with* the shape.
+- **Don't route creation through a change-unit.** A new fact is not frozen — use the wrapper's `add` operation (the unguarded create path), or use a no-base `whole` patch only when you deliberately want it sealed in the unit.
+- **A free canvas edit goes through the wrapper's `canvas write` operation, not a unit** — canvases are user-owned markdown (`canvas.md`). But a **morph that must migrate existing instances** is the evolve-unit: a `canvas`-scope patch + the migrations in one gated, atomic unit (§Morphing the model). The test is whether facts must move *with* the shape.
 - **Don't author `whole`-with-base patches** (full-replace of a live fact — rejected; a live section is a `block` patch, a new section is an `insert`).
 - **Don't use `insert` to edit an existing section** — `insert` only appends a section the fact lacks.
 - **Don't `write`/`set`/`delete` a fact directly** — refused; author a patch (SKILL.md §The shared contract).

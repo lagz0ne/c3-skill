@@ -17,6 +17,8 @@ Patch release: **make change-unit edge writes truthful and portable receipts ind
 - **Verify frozen repair receipts independently.** The generic repair-step verifier now checks the
   pinned binary and wrapper, complete declared family deltas, canonical identity and change-carrier
   manifests, and cleanup of temporary dependency links.
+- **Keep evaluator tests portable.** Optional protocol checks now skip when their private OKRA
+  evidence is absent, while the release workflow installs bubblewrap before the Go suite.
 
 ### Changed
 

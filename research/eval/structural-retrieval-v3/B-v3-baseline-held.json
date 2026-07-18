@@ -1,0 +1,48 @@
+{
+  "$schema": "structural-retrieval-baseline-held.v3",
+  "status": "prerequisite_held",
+  "purpose": "Record the missing unchanged-controller baseline without inventing metrics.",
+  "fixture_file": "fixtures.v3.json",
+  "fixture_count": 7,
+  "case_ids": [
+    "v2-owner-1",
+    "v2-owner-2",
+    "v2-owner-3",
+    "v2-route",
+    "counter-multi-peer-owner",
+    "counter-no-target",
+    "counter-bound-route"
+  ],
+  "reason": "Historical prerequisite record: at creation the unchanged adapter had no validated v3 capture path. It is superseded by B-v3-baseline.json; no row bytes or effect metrics were fabricated here.",
+  "superseded_by": "B-v3-baseline.json",
+  "required_capture": {
+    "controller": "unchanged",
+    "schema": "structural-retrieval-response.v3",
+    "same_fixture_sha256": "b5afc99c59f9ff9909bfd56c0810840002c6a3b427d04bfe0bcccb3a554cc77f",
+    "same_benchmark_sha256": "76724b21735f0fb0f564e9fe4af71f6f46a012e52cc1ca0b59df8bc7579a04fe",
+    "scorer_sha256": "4b19ec2f95e5c6e5efa31041b352061ea67a2dc8ce058a5dd322b655bf4cf51e",
+    "per_case_canonical_row_bytes": "finite_nonzero_required",
+    "provenance": "fresh_run_only",
+    "independent_acceptance": true
+  },
+  "frozen_v2_binding": {
+    "fixture_sha256": "15f57120c6aa9ae07bf4fdacd6ad783afa5e70ed8ebebaff3a42dcf4249e677e",
+    "benchmark_sha256": "b960525cc42216e6598452946da5fb68735bbf989f311f170cedcfdbe92bf0d5",
+    "evaluator_sha256": "33b6452a0e34d825ef2b895609daa77b91eb129ebdc1e6be8f7f7755fc8b9c6e",
+    "evaluator_test_sha256": "0830a0671aa9eb146902dc6fa56e885126b89a3312ca6c38fd8507fa10481dbf"
+  },
+  "privacy": {
+    "policy_sha256": "7f038b3eef110d2765aa1aa003003fc19e0b390a3623a6978712e813831d7055",
+    "scanner_source_sha256": "33b6452a0e34d825ef2b895609daa77b91eb129ebdc1e6be8f7f7755fc8b9c6e",
+    "detector_definition_sha256": "e9f28b8fe0dafd3effa283acba95e4625b3de38bc1d80615e8d771042edfa8e7",
+    "raw_terms_retained": false
+  },
+  "authorization": {
+    "source_implementation_authorized": false,
+    "capability_creation_authorized": false,
+    "activation_authorized": false,
+    "candidate_execution_authorized": false,
+    "effect_claim": false
+  },
+  "generic_only": true
+}

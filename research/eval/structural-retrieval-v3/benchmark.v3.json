@@ -1,0 +1,86 @@
+{
+  "$schema": "structural-retrieval-benchmark.v3",
+  "fixture_file": "fixtures.v3.json",
+  "baseline_file": "B-v3-baseline.json",
+  "baseline_capture_script": "cli/tools/structural-search-eval-v3/cli.go",
+  "baseline_capture_command": "cd cli && go run ./tools/structural-search-eval-v3 capture --fixtures ../research/eval/structural-retrieval-v3/fixtures.v3.json --benchmark ../research/eval/structural-retrieval-v3/benchmark.v3.json --out ../research/eval/structural-retrieval-v3/B-v3-baseline.json",
+  "baseline_status": "captured_unchanged_controller",
+  "fixture_count": 7,
+  "case_ids": [
+    "v2-owner-1",
+    "v2-owner-2",
+    "v2-owner-3",
+    "v2-route",
+    "counter-multi-peer-owner",
+    "counter-no-target",
+    "counter-bound-route"
+  ],
+  "k": 5,
+  "semantic_mode": "no-semantic",
+  "fresh_baseline_required": true,
+  "v2_freeze": {
+    "fixture_sha256": "15f57120c6aa9ae07bf4fdacd6ad783afa5e70ed8ebebaff3a42dcf4249e677e",
+    "benchmark_sha256": "b960525cc42216e6598452946da5fb68735bbf989f311f170cedcfdbe92bf0d5",
+    "evaluator_sha256": "33b6452a0e34d825ef2b895609daa77b91eb129ebdc1e6be8f7f7755fc8b9c6e",
+    "evaluator_test_sha256": "0830a0671aa9eb146902dc6fa56e885126b89a3312ca6c38fd8507fa10481dbf"
+  },
+  "translation_metadata": {
+    "source_v2_fixture_sha256": "15f57120c6aa9ae07bf4fdacd6ad783afa5e70ed8ebebaff3a42dcf4249e677e",
+    "source_v2_benchmark_sha256": "b960525cc42216e6598452946da5fb68735bbf989f311f170cedcfdbe92bf0d5",
+    "source_v2_evaluator_sha256": "33b6452a0e34d825ef2b895609daa77b91eb129ebdc1e6be8f7f7755fc8b9c6e",
+    "source_v2_evaluator_tests_sha256": "0830a0671aa9eb146902dc6fa56e885126b89a3312ca6c38fd8507fa10481dbf",
+    "translated_cases": {
+      "v2-owner-1": {"v2_shape":"wrong_layer_structural_owner","v2_case_ordinal":1},
+      "v2-owner-2": {"v2_shape":"wrong_layer_structural_owner","v2_case_ordinal":2},
+      "v2-owner-3": {"v2_shape":"wrong_layer_structural_owner","v2_case_ordinal":3},
+      "v2-route": {"v2_shape":"behavioral_route_regression","v2_case_ordinal":4}
+    }
+  },
+  "thresholds": {
+    "owner_recall_at_5_delta": 0.2,
+    "structural_owner_precision": 0.8,
+    "canonical_row_bytes_ratio": 1.05
+  },
+  "v3_thresholds": {
+    "multi_peer_owner_recall_at_5": 1.0,
+    "multi_peer_context_recall_at_5": 1.0,
+    "multi_peer_structural_owner_precision": 1.0,
+    "unsupported_competitor_count": 0,
+    "no_target_context_recall_at_5": 1.0,
+    "no_target_forbidden_exposure": 0,
+    "no_target_policy_compliance": 1.0,
+    "bound_route_recall_at_5": 1.0,
+    "bound_route_mrr": 1.0,
+    "bound_route_field_equality": 1.0,
+    "bound_route_unbound_exposure": 0,
+    "canonical_row_bytes_ratio_per_case": 1.05
+  },
+  "scope": {
+    "top5": "rows[0:5] only; duplicate entity IDs in this scope reject before scoring",
+    "unique_rows": "precision and forbidden/unsupported counts use unique non-neutral entity IDs in top five",
+    "route": "credit only for the one exact bound entity/content/source/graph/direct-FTS-miss witness",
+    "canonical_row_bytes": "compact UTF-8 JSON for every returned row, compared to the same-case fresh B-v3 baseline",
+    "fresh_b_v3_wall": "candidate canonical row bytes / same-case fresh B-v3 canonical row bytes <= 1.05; each baseline must be finite and > 0"
+  },
+  "privacy": {
+    "policy_sha256": "7f038b3eef110d2765aa1aa003003fc19e0b390a3623a6978712e813831d7055",
+    "scanner_source_sha256": "33b6452a0e34d825ef2b895609daa77b91eb129ebdc1e6be8f7f7755fc8b9c6e",
+    "detector_definition_sha256": "e9f28b8fe0dafd3effa283acba95e4625b3de38bc1d80615e8d771042edfa8e7",
+    "scan_scope": [
+      "v3 fixture",
+      "v3 benchmark",
+      "v3 scorer",
+      "fresh B-v3 artifacts",
+      "B-v3-baseline-held prerequisite",
+      "review records",
+      "retained generic output"
+    ],
+    "raw_terms_retained": false
+  },
+  "treatment": {
+    "registered_variable_count": 0,
+    "future_variable": "structural_owner_witness_projection",
+    "candidate_execution_authorized": false,
+    "effect_claim": false
+  }
+}

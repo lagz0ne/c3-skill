@@ -1,0 +1,24 @@
+{
+  "$schema": "structural-retrieval-benchmark.v2",
+  "fixture_sha256": "15f57120c6aa9ae07bf4fdacd6ad783afa5e70ed8ebebaff3a42dcf4249e677e",
+  "fixture_count": 4,
+  "k": 5,
+  "semantic_mode": "no-semantic",
+  "scale": {
+    "seed": 17,
+    "multiplier": 2,
+    "tokens": ["amber", "cobalt", "fern", "harbor"],
+    "max_relationship_degree": 2
+  },
+  "thresholds": {
+    "owner_recall_at_5_delta": 0.2,
+    "structural_owner_precision": 0.8,
+    "canonical_row_bytes_ratio": 1.05
+  },
+  "context_threshold_authority": {
+    "checkin_ref": "checkins.jsonl#seq=5",
+    "checkin_sha256": "2e52b66573dc67b8950420c2e6e232a4899c1aaac3f915608f634bffdcd704e7",
+    "record_hash": "66a927cbe7a5b78bf8641c662e952e3ed250ec7cdacae81749f8c3fde362ecac",
+    "definition_sha256": "cfb85b044b6b4a3d5d694a9fe009ed4d597bc3006c44b02f59ed48a5e12e8429"
+  }
+}

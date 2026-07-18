@@ -1,0 +1,10 @@
+{
+  "protocol": "held-out-paired-c3-v16-external-receipt",
+  "gist_id": "91d253ac77d3d8eea5a88c7485ee7b3d",
+  "gist_url": "https://gist.github.com/lagz0ne/91d253ac77d3d8eea5a88c7485ee7b3d",
+  "public": true,
+  "created_at_utc": "2026-07-16T07:56:22Z",
+  "revision": "07c6321298ce686d6cf7bebfc917af1d50313536",
+  "published_file_sha256": "2a220a879ab280dcacedfb10b98f1271760e5db196afccd8d5c972e022816675",
+  "v16_arm_or_judge_inference_started_before_receipt": false
+}

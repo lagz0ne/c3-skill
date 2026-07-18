@@ -1,0 +1,93 @@
+[
+  {
+    "$schema": "structural-retrieval-fixture.v3",
+    "case_id": "v4-containment-owner-a",
+    "query": "sync one",
+    "entities": [
+      {"id":"v4-owner-a","role":"owner","type":"container","title":"owner-a","metadata":"{}","markdown":"# owner-a\n\nOwner record."},
+      {"id":"v4-child-a","role":"neutral","type":"component","title":"child-a","metadata":"{\"parent_id\":\"v4-owner-a\"}","markdown":"# child-a\n\nsync one\n\nv4-child-a-context"}
+    ],
+    "facts": [
+      {"id":"v4-owner-a-fact","entity_id":"v4-owner-a","role":"owner"},
+      {"id":"v4-child-a-context","entity_id":"v4-child-a","role":"neutral"}
+    ],
+    "oracle": {
+      "required_owner_fact_ids":["v4-owner-a-fact"],
+      "neutral_fact_ids":["v4-child-a-context"],
+      "required_context_entity_ids":["v4-child-a"],
+      "forbidden_fact_ids":[],
+      "unsupported_entity_ids":[],
+      "unsupported_fact_ids":[],
+      "direct_fts_miss_witness":{"probe_entity_hit_ids":[],"probe_content_hit_ids":[],"expected_bound_route_entity_ids":[],"expected_bound_route_entity_miss_ids":[],"expected_bound_route_content_miss_ids":[],"case_miss":false}
+    }
+  },
+  {
+    "$schema": "structural-retrieval-fixture.v3",
+    "case_id": "v4-containment-owner-b",
+    "query": "approval owner two",
+    "entities": [
+      {"id":"v4-owner-b","role":"owner","type":"container","title":"owner-b","metadata":"{}","markdown":"# owner-b\n\nOwner record."},
+      {"id":"v4-child-b","role":"neutral","type":"component","title":"child-b","metadata":"{\"parent_id\":\"v4-owner-b\"}","markdown":"# child-b\n\napproval owner two\n\nv4-child-b-context"}
+    ],
+    "facts": [
+      {"id":"v4-owner-b-fact","entity_id":"v4-owner-b","role":"owner"},
+      {"id":"v4-child-b-context","entity_id":"v4-child-b","role":"neutral"}
+    ],
+    "oracle": {
+      "required_owner_fact_ids":["v4-owner-b-fact"],
+      "neutral_fact_ids":["v4-child-b-context"],
+      "required_context_entity_ids":["v4-child-b"],
+      "forbidden_fact_ids":[],
+      "unsupported_entity_ids":[],
+      "unsupported_fact_ids":[],
+      "direct_fts_miss_witness":{"probe_entity_hit_ids":[],"probe_content_hit_ids":[],"expected_bound_route_entity_ids":[],"expected_bound_route_entity_miss_ids":[],"expected_bound_route_content_miss_ids":[],"case_miss":false}
+    }
+  },
+  {
+    "$schema": "structural-retrieval-fixture.v3",
+    "case_id": "v4-containment-peer",
+    "query": "audit owner peers",
+    "entities": [
+      {"id":"v4-owner-peer","role":"owner","type":"container","title":"owner-peer","metadata":"{}","markdown":"# owner-peer\n\nOwner record."},
+      {"id":"v4-child-peer","role":"neutral","type":"component","title":"child-peer","metadata":"{\"parent_id\":\"v4-owner-peer\"}","markdown":"# child-peer\n\naudit owner peers\n\nv4-child-peer-context"},
+      {"id":"v4-peer","role":"neutral","type":"component","title":"peer","metadata":"{}","markdown":"# peer\n\naudit owner peers\n\nv4-peer-context"}
+    ],
+    "facts": [
+      {"id":"v4-owner-peer-fact","entity_id":"v4-owner-peer","role":"owner"},
+      {"id":"v4-child-peer-context","entity_id":"v4-child-peer","role":"neutral"},
+      {"id":"v4-peer-context","entity_id":"v4-peer","role":"neutral"}
+    ],
+    "oracle": {
+      "required_owner_fact_ids":["v4-owner-peer-fact"],
+      "neutral_fact_ids":["v4-child-peer-context","v4-peer-context"],
+      "required_context_entity_ids":["v4-child-peer","v4-peer"],
+      "forbidden_fact_ids":[],
+      "unsupported_entity_ids":[],
+      "unsupported_fact_ids":[],
+      "direct_fts_miss_witness":{"probe_entity_hit_ids":[],"probe_content_hit_ids":[],"expected_bound_route_entity_ids":[],"expected_bound_route_entity_miss_ids":[],"expected_bound_route_content_miss_ids":[],"case_miss":false}
+    }
+  },
+  {
+    "$schema": "structural-retrieval-fixture.v3",
+    "case_id": "v4-no-target",
+    "query": "neutral context only",
+    "entities": [
+      {"id":"v4-context","role":"neutral","type":"ref","title":"context","metadata":"{}","markdown":"# context\n\nneutral context only\n\nv4-context-fact"},
+      {"id":"v4-forbidden","role":"forbidden","type":"component","title":"forbidden","metadata":"{}","markdown":"# forbidden\n\nneutral context only\n\nv4-forbidden-fact"}
+    ],
+    "facts": [
+      {"id":"v4-context-fact","entity_id":"v4-context","role":"neutral"},
+      {"id":"v4-forbidden-fact","entity_id":"v4-forbidden","role":"forbidden"}
+    ],
+    "oracle": {
+      "required_owner_fact_ids":[],
+      "neutral_fact_ids":["v4-context-fact"],
+      "required_context_entity_ids":["v4-context"],
+      "forbidden_fact_ids":["v4-forbidden-fact"],
+      "unsupported_entity_ids":[],
+      "unsupported_fact_ids":[],
+      "direct_fts_miss_witness":{"probe_entity_hit_ids":[],"probe_content_hit_ids":[],"expected_bound_route_entity_ids":[],"expected_bound_route_entity_miss_ids":[],"expected_bound_route_content_miss_ids":[],"case_miss":false},
+      "no_target_policy":{"owner_witness_count":0,"preserve_neutral_context":true,"v2_action":"omit","v3_actions":["omit","flagged"]}
+    }
+  }
+]

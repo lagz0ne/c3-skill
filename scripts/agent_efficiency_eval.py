@@ -485,10 +485,32 @@ def extract_token_usage(text: str) -> dict[str, int] | None:
             usage["total_tokens"] = usage.get("total_tokens", 0) + total
     if not usage:
         return None
-    if "total_tokens" not in usage:
+    claude_cache_tokens = usage.get("cache_creation_input_tokens", 0) + usage.get(
+        "cache_read_input_tokens", 0
+    )
+    if claude_cache_tokens:
+        usage["input_tokens"] = usage.get("input_tokens", 0) + claude_cache_tokens
+        usage["cached_input_tokens"] = usage.get("cache_read_input_tokens", 0)
+        usage["total_tokens"] = usage["input_tokens"] + usage.get("output_tokens", 0)
+    elif "total_tokens" not in usage:
         usage["total_tokens"] = usage.get("input_tokens", 0) + usage.get("output_tokens", 0)
     usage["effective_tokens"] = max(0, usage.get("input_tokens", 0) - usage.get("cached_input_tokens", 0)) + usage.get("output_tokens", 0)
     return usage
+
+
+def extract_reported_cost_usd(text: str) -> float | None:
+    reported: list[float] = []
+    for line in text.splitlines():
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(obj, dict):
+            continue
+        value = obj.get("total_cost_usd")
+        if isinstance(value, (int, float)) and not isinstance(value, bool) and value >= 0:
+            reported.append(float(value))
+    return max(reported) if reported else None
 
 
 def extract_turn_count(text: str) -> int | None:
@@ -499,10 +521,19 @@ def extract_turn_count(text: str) -> int | None:
         re.compile(r"^\s*(assistant|user)\s*:", re.IGNORECASE),
     ]
     count = 0
+    reported = 0
     for line in text.splitlines():
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError:
+            obj = None
+        if isinstance(obj, dict):
+            num_turns = obj.get("num_turns")
+            if isinstance(num_turns, int) and num_turns > 0:
+                reported = max(reported, num_turns)
         if any(pattern.search(line) for pattern in patterns):
             count += 1
-    return count or None
+    return max(count, reported) or None
 
 
 def extract_trace_metrics(text: str) -> dict[str, Any]:

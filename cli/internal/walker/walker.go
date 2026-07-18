@@ -84,3 +84,30 @@ func SlugFromPath(filePath string) string {
 	}
 	return slugPattern.ReplaceAllString(base, "")
 }
+
+// SlugFromEntityPath derives the slug relative to the entity's declared ID.
+// This keeps cacheless imports idempotent for legacy or custom IDs that the
+// standard numeric-ID pattern cannot recognize.
+func SlugFromEntityPath(filePath, entityID string) string {
+	segment := strings.TrimSuffix(filepath.Base(filePath), ".md")
+	if segment == "README" {
+		dir := filepath.Dir(filePath)
+		if dir == "." || dir == "" || dir == "/" {
+			return ""
+		}
+		segment = filepath.Base(dir)
+	}
+
+	if segment == entityID {
+		// Canonical ADR ids contain their date and slug in the id itself. Keep
+		// the suffix so export does not collapse same-date ADRs to one path.
+		if slug := SlugFromPath(filePath); strings.HasPrefix(entityID, "adr-") && slug != segment {
+			return slug
+		}
+		return ""
+	}
+	if prefix := entityID + "-"; strings.HasPrefix(segment, prefix) {
+		return strings.TrimPrefix(segment, prefix)
+	}
+	return SlugFromPath(filePath)
+}

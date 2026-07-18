@@ -49,9 +49,9 @@ emit_file() {
 cat <<'HEADER'
 # C3 Blindbox Agent Packet
 
-Use only the context in this packet and the mounted isolated project. Do not rely
-on ambient repository files, global skills, plugins, memories, AGENTS.md,
-CLAUDE.md, or any other host instruction files.
+Use the neutral repository quickstart loaded from root AGENTS.md or CLAUDE.md.
+Use only the context in this packet and the mounted isolated project. Do not
+rely on global skills, plugins, memories, or other host instruction files.
 
 The local C3 wrapper is mounted in the sandbox at:
 

@@ -1,0 +1,31 @@
+{
+  "$schema": "structural-retrieval-paired-microburst.v4",
+  "status": "unreviewed_microburst",
+  "generic_only": true,
+  "raw_rows_retained": false,
+  "candidate_source": "explicit-StructuralProjection-CaptureProvenance",
+  "fixture_sha256": "1e9726ed6cc224a3a26b916f319bdc400c63118c69e7e284a6af150ed484991c",
+  "benchmark_sha256": "b2e363ca0d7dd4a5722805bbc1839b07e6f0bd8e063a63b618461933fac74da9",
+  "fresh_b4_sha256": "55608a1c262b38aaa31d148c24c7b81a9ef2fcc7bdb4156f9c937f178729c771",
+  "controller_capture_sha256": "83d91ade2452c49f033b644d5c162d1a1314b4f4258a05cc29c264fa55c4d06c",
+  "scorer_sha256": "4b19ec2f95e5c6e5efa31041b352061ea67a2dc8ce058a5dd322b655bf4cf51e",
+  "paired_command": "cd cli && RUN_V4_MICROBURST=1 go test ./tools/structural-search-eval-v3 -run TestV4PairedMicroburstArtifact -count=1 -v",
+  "cases": [
+    {"case_id":"v4-containment-owner-a","baseline_owner_recall_at_5":0.0,"candidate_owner_recall_at_5":1.0,"baseline_owner_mrr":0.0,"candidate_owner_mrr":1.0,"baseline_structural_owner_precision":null,"candidate_structural_owner_precision":1.0,"baseline_forbidden_structural_retrieval_count":0,"candidate_forbidden_structural_retrieval_count":0,"baseline_canonical_row_bytes":435,"candidate_canonical_row_bytes":417},
+    {"case_id":"v4-containment-owner-b","baseline_owner_recall_at_5":1.0,"candidate_owner_recall_at_5":1.0,"baseline_owner_mrr":0.5,"candidate_owner_mrr":1.0,"baseline_structural_owner_precision":1.0,"candidate_structural_owner_precision":1.0,"baseline_forbidden_structural_retrieval_count":0,"candidate_forbidden_structural_retrieval_count":0,"baseline_canonical_row_bytes":834,"candidate_canonical_row_bytes":413},
+    {"case_id":"v4-containment-peer","baseline_owner_recall_at_5":1.0,"candidate_owner_recall_at_5":1.0,"baseline_owner_mrr":0.3333333333,"candidate_owner_mrr":1.0,"baseline_structural_owner_precision":1.0,"candidate_structural_owner_precision":1.0,"baseline_forbidden_structural_retrieval_count":0,"candidate_forbidden_structural_retrieval_count":0,"baseline_canonical_row_bytes":1263,"candidate_canonical_row_bytes":807},
+    {"case_id":"v4-no-target","baseline_owner_recall_at_5":null,"candidate_owner_recall_at_5":null,"baseline_owner_mrr":null,"candidate_owner_mrr":null,"baseline_structural_owner_precision":null,"candidate_structural_owner_precision":null,"baseline_forbidden_structural_retrieval_count":1,"candidate_forbidden_structural_retrieval_count":0,"baseline_canonical_row_bytes":806,"candidate_canonical_row_bytes":4}
+  ],
+  "aggregate": {
+    "baseline_owner_recall_at_5": 0.6666666667,
+    "candidate_owner_recall_at_5": 1.0,
+    "owner_recall_at_5_delta": 0.3333333333,
+    "baseline_owner_mrr": 0.2777777778,
+    "candidate_owner_mrr": 1.0,
+    "baseline_structural_owner_precision": 0.6666666667,
+    "candidate_structural_owner_precision": 1.0,
+    "baseline_forbidden_structural_retrieval_count": 1,
+    "candidate_forbidden_structural_retrieval_count": 0
+  },
+  "claims": {"candidate_execution": true, "paired_effect_claim": false, "product_effect_claim": false, "independent_review": false}
+}

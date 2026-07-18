@@ -271,6 +271,122 @@ func TestRunChangeApply_S7_ComposedRenameReEdge(t *testing.T) {
 	}
 }
 
+func seedComponentWithBodyOwnedUses(t *testing.T, s *store.Store) {
+	t.Helper()
+	for _, e := range []*store.Entity{
+		{ID: "c3-101", Type: "component", Title: "Approval Flow", Status: "active", Metadata: "{}"},
+		{ID: "ref-old", Type: "ref", Title: "Old Rule", Status: "active", Metadata: "{}"},
+		{ID: "ref-new", Type: "ref", Title: "New Rule", Status: "active", Metadata: "{}"},
+	} {
+		if err := s.InsertEntity(e); err != nil {
+			t.Fatal(err)
+		}
+	}
+	body := `# Approval Flow
+
+## Goal
+
+Coordinate approval work across the service boundary.
+
+## Parent Fit
+
+| Field | Value |
+| --- | --- |
+| Container | c3-1 API |
+| Role | Coordinate approvals |
+| Consumed by | Request handlers |
+| Boundary | Domain logic only |
+
+## Purpose
+
+Own approval sequencing and expose its durable contract without taking responsibility for transport or presentation concerns.
+
+## Governance
+
+| Reference | Type | Governs | Precedence | Notes |
+| --- | --- | --- | --- | --- |
+| ref-old | ref | Approval behavior | required | Existing body-owned edge |
+
+## Contract
+
+| Surface | Direction | Contract | Boundary | Evidence |
+| --- | --- | --- | --- | --- |
+| approve | IN | Validate and apply approval | Domain | flows/approve.ts |
+| result | OUT | Return the committed result | Domain | flows/approve.test.ts |
+
+## Derived Materials
+
+| Material | Must derive from | Allowed variance | Evidence |
+| --- | --- | --- | --- |
+| Approval flow | Goal and Contract sections | Naming only | flows/approve.ts |
+`
+	if err := content.WriteEntity(s, "c3-101", body); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.AddRelationship(&store.Relationship{FromID: "c3-101", ToID: "ref-old", RelType: "uses"}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRunChangeApply_RejectsFrontmatterUsesOwnedByCanvasBody(t *testing.T) {
+	s, c3Dir := openStoreC3(t)
+	seedComponentWithBodyOwnedUses(t, s)
+	e, _ := s.GetEntity("c3-101")
+	base := fmt.Sprintf("c3-101@v%d:sha256:%s", e.Version, e.RootMerkle)
+	writePatch(t, c3Dir, "adr-1", "01-meta.patch.md",
+		"---\ntarget: c3-101\nscope: frontmatter\nbase: "+base+"\ntitle: Renamed Approval Flow\nuses:\n  - ref-new\n---\n")
+
+	var buf strings.Builder
+	err := RunChangeApply(ChangeApplyOptions{Store: s, C3Dir: c3Dir, UnitID: "adr-1"}, &buf)
+	if err == nil {
+		t.Fatalf("frontmatter uses must be rejected when the canvas body owns uses; output:\n%s", buf.String())
+	}
+	for _, want := range []string{"body-owned", "Governance", "block/insert patch"} {
+		if !strings.Contains(err.Error()+buf.String(), want) {
+			t.Errorf("rejection should explain %q; error=%v output=%s", want, err, buf.String())
+		}
+	}
+	after, _ := s.GetEntity("c3-101")
+	if after.Title != "Approval Flow" {
+		t.Errorf("preflight rejection must not rename the fact, got %q", after.Title)
+	}
+	rels, _ := s.RelationshipsFrom("c3-101")
+	if len(rels) != 1 || rels[0].ToID != "ref-old" || rels[0].RelType != "uses" {
+		t.Errorf("preflight rejection must preserve the old edge, got %+v", rels)
+	}
+}
+
+func TestRunChangeApply_MixedBodyAndFrontmatterUsesRejectsAtomically(t *testing.T) {
+	s, c3Dir := openStoreC3(t)
+	seedComponentWithBodyOwnedUses(t, s)
+	blockBase := citeFor(t, s, "c3-101", "Own approval sequencing")
+	e, _ := s.GetEntity("c3-101")
+	entityBase := fmt.Sprintf("c3-101@v%d:sha256:%s", e.Version, e.RootMerkle)
+	writePatch(t, c3Dir, "adr-1", "01-purpose.patch.md",
+		"---\ntarget: c3-101\nscope: block\nbase: "+blockBase+"\n---\nOwn approval sequencing and its observable latency contract while leaving transport and presentation to their dedicated components.\n")
+	writePatch(t, c3Dir, "adr-1", "02-edge.patch.md",
+		"---\ntarget: c3-101\nscope: frontmatter\nbase: "+entityBase+"\nuses:\n  - ref-new\n---\n")
+
+	var buf strings.Builder
+	err := RunChangeApply(ChangeApplyOptions{Store: s, C3Dir: c3Dir, UnitID: "adr-1"}, &buf)
+	if err == nil {
+		t.Fatalf("mixed unit must reject before a body-owned frontmatter edge can be discarded; output:\n%s", buf.String())
+	}
+	for _, want := range []string{"body-owned", "Governance", "block/insert patch"} {
+		if !strings.Contains(err.Error()+buf.String(), want) {
+			t.Errorf("mixed-unit rejection should explain %q; error=%v output=%s", want, err, buf.String())
+		}
+	}
+	body, _ := content.ReadEntity(s, "c3-101")
+	if !strings.Contains(body, "Own approval sequencing and expose its durable contract") {
+		t.Errorf("preflight rejection must roll back the earlier body patch:\n%s", body)
+	}
+	rels, _ := s.RelationshipsFrom("c3-101")
+	if len(rels) != 1 || rels[0].ToID != "ref-old" {
+		t.Errorf("preflight rejection must preserve body-owned edges, got %+v", rels)
+	}
+}
+
 // Seal-state status: pending before apply, applied after (derived from hashes).
 func TestRunChangeStatus_PendingThenApplied(t *testing.T) {
 	s, c3Dir := openStoreC3(t)

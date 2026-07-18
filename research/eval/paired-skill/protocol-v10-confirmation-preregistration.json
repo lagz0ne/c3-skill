@@ -1,0 +1,44 @@
+{
+  "protocol": "paired-skill-high-quality-confirmation-v10",
+  "registered_at_utc": "2026-07-16",
+  "status": "registered_before_v10_judge_calls",
+  "purpose": "Final condition-blind reliability confirmation after preserving the failed uncalibrated and cheap-calibration rounds.",
+  "immutable_inputs": {
+    "valid_pair_count": 9,
+    "valid_arm_count": 18,
+    "judge_1_packet_sha256": "fac5c77feead823cea9b2fe97f4b2172da6bcaec6dfe85d2d13fba88ccb25a6c",
+    "judge_2_packet_sha256": "766dca1b8f09c313ebc58c9432e4e51cc933c0be38842af96d401a4e0ad73d71",
+    "answers_changed_since_v8": false,
+    "mappings_changed_since_v8": false,
+    "condition_labels_visible": false
+  },
+  "decision_rule": [
+    "Silently verify each rubric gold marker and forbidden claim against source for each answer.",
+    "Treat source-verified factual coverage as correctness; do not reward prose style, length, tool names, or citation count.",
+    "Prefer no blocking source contradiction, then higher correctness, then higher change usefulness.",
+    "Return tie only when all comparisons are equal."
+  ],
+  "judges": [
+    {
+      "provider": "Anthropic",
+      "requested_model": "opus",
+      "effort": "medium",
+      "hard_call_cap_usd": 1.35
+    },
+    {
+      "provider": "OpenAI",
+      "requested_model": "gpt-5.6-luna",
+      "effort": "high",
+      "planning_reserve_usd": 1.0,
+      "accounting": "reported token usage under the conservative study price schedule"
+    }
+  ],
+  "gates": {
+    "raw_pair_preference_agreement_required": 0.8,
+    "adjudicate_every_disagreement": true,
+    "maximum_disagreements_within_remaining_adjudication_reserve": 1,
+    "total_study_spend_ceiling_usd": 10.0,
+    "zero_public_project_specific_content": true
+  },
+  "stopping_rule": "If raw agreement is below 80 percent or more than one pair requires new adjudication, preserve the failure and stop; do not add another judge round."
+}

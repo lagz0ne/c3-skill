@@ -1,0 +1,38 @@
+{
+  "protocol": "held-out-paired-c3-v24-result",
+  "status": "stopped on first invalid arm before Opus judging",
+  "arms": {
+    "planned": 6,
+    "attempted": 1,
+    "valid": 0,
+    "invalid": 1,
+    "exposed_case_count": 1,
+    "failure": {
+      "condition": "standardized neutral baseline",
+      "reason": "The supervisor observed six tool events while the registered runtime ceiling was five.",
+      "runtime_status": "budget_killed",
+      "usage_receipt_available": false,
+      "reported_cost_usd": 0.0,
+      "conservative_accounted_cost_usd": 0.05
+    }
+  },
+  "judges": {
+    "run": false,
+    "minimum_model": "Claude Opus",
+    "minimum_effort": "medium"
+  },
+  "effect": {
+    "confirmatory_effect_estimated": false
+  },
+  "budget": {
+    "prior_conservative_confirmatory_cost_usd": 3.462763,
+    "v24_conservative_cost_usd": 0.05,
+    "cumulative_confirmatory_cost_usd": 3.512763,
+    "ceiling_usd": 4.0,
+    "remaining_usd": 0.487237
+  },
+  "product_learning": "Discovery-call authority and supervisor event accounting must be separate. The successor keeps five authorized discovery calls but allows six observed tool events as guard margin.",
+  "post_failure_rule": "Do not rerun the exposed case. Freeze the clarified prompt and use a fresh replacement case.",
+  "public_project_specific_field_count": 0,
+  "anti_goal_bypass_or_dishonesty_count": 0
+}

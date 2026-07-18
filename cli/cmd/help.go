@@ -278,7 +278,7 @@ Examples:
 		Name:     "search",
 		Args:     "<query>",
 		OneLiner: "Search content with semantic, keyword, and graph context",
-		Help: `Usage: c3x search <query> [--hybrid] [--semantic] [--no-semantic] [--type <type>] [--limit N] [--json]
+		Help: `Usage: c3x search <query> [--pack] [--hybrid] [--semantic] [--no-semantic] [--type <type>] [--limit N] [--json]
 
 Search entity metadata and indexed markdown content. By default, results fuse
 local semantic similarity, keyword/BM25 matches, and graph relationships, then
@@ -292,6 +292,7 @@ Options:
   --hybrid        Compatibility flag; graph context is already included by default
   --semantic      Compatibility flag; semantic is already enabled by default
   --no-semantic   Force keyword/graph ranking and skip semantic index refresh
+  --pack          Return distinct compact evidence with citations and source anchors
   --type <type>   Restrict metadata search by entity type
   --limit N       Maximum number of results (default 5 in agent mode, 20 otherwise)
   --json          Structured output outside agent mode; agent mode stays TOON
@@ -299,6 +300,7 @@ Options:
 Examples:
   c3x search "pool wait p95 latency"
   c3x search "owns a source path"
+  c3x search "auth lifecycle" --pack --limit 3
   c3x search traceparent --json --limit 3`,
 	},
 	{

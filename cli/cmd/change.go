@@ -51,15 +51,7 @@ func RunChangeApply(opts ChangeApplyOptions, w io.Writer) error {
 	// Preflight: drift + canvas gate over the fact patches. A canvas morph anchors
 	// nothing (no base) and is gated below; an instance migrated up to a reshaped
 	// canvas in this same unit is validated against the morphed shape via `morphed`.
-	for _, p := range factPatches {
-		if err := changeset.CheckDrift(opts.Store, p); err != nil {
-			rejects = append(rejects, err.Error())
-			continue
-		}
-		if err := canvasGate(opts.Store, opts.C3Dir, p, morphed); err != nil {
-			rejects = append(rejects, err.Error())
-		}
-	}
+	rejects = append(rejects, factPatchGate(opts.Store, opts.C3Dir, factPatches, morphed)...)
 	// The morph gate: a canvas reshape lands only if every existing instance of the
 	// type is valid against the new shape once this unit's own migrations are applied
 	// (checked on the preview overlay) — the model moves only if every fact comes too.
@@ -109,6 +101,20 @@ func RunChangeApply(opts ChangeApplyOptions, w io.Writer) error {
 		fmt.Fprintf(w, "applied %s → %s (%s)\n", p.Source, p.Target, p.Scope)
 	}
 	return nil
+}
+
+func factPatchGate(s *store.Store, c3Dir string, patches []changeset.Patch, morphed map[string]schema.Canvas) []string {
+	var rejects []string
+	for _, p := range patches {
+		if err := changeset.CheckDrift(s, p); err != nil {
+			rejects = append(rejects, err.Error())
+			continue
+		}
+		if err := canvasGate(s, c3Dir, p, morphed); err != nil {
+			rejects = append(rejects, err.Error())
+		}
+	}
+	return rejects
 }
 
 // RunChangeView is the read-only review surface — the "files changed" panel for
@@ -186,8 +192,11 @@ func RunChangeStatus(opts ChangeApplyOptions, w io.Writer) error {
 
 // canvasGate validates the body a patch would produce against the target's
 // canvas — the second gate. A patch may not leave a fact canvas-invalid. Block
-// edits validate the merged body; creates validate the new body; frontmatter and
-// retire are graph-shaped and gated elsewhere. When this unit also MORPHS the
+// edits validate the merged body; creates validate the new body. A frontmatter
+// re-edge is rejected when the active canvas owns that relationship in a body
+// edge-column: accepting it would let the post-apply body sync silently erase the
+// requested edge. Other frontmatter metadata and retire are graph-shaped and
+// gated elsewhere. When this unit also MORPHS the
 // target's type (a canvas-scope patch), the new body is validated against the
 // morphed shape, not the stale on-disk canvas — so migrating an instance up to a
 // reshaped canvas in the same unit is allowed, not spuriously rejected.
@@ -235,6 +244,22 @@ func canvasGate(s *store.Store, c3Dir string, p changeset.Patch, morphed map[str
 			return fmt.Errorf("error: patch %s: full-replace of an existing fact is not allowed; anchor block edits\nhint: use scope: block with a base from c3x read <id> --section <name> --cite", p.Source)
 		}
 		entityType, body = p.Type, p.Content
+	case changeset.ScopeFrontmatter:
+		if p.Uses == nil {
+			return nil
+		}
+		entity, err := s.GetEntity(p.Target)
+		if err != nil {
+			return fmt.Errorf("error: patch %s: target %s not found\nhint: run c3x search %s or update the patch target to an existing fact id", p.Source, p.Target, p.Target)
+		}
+		def, ok := activeGateCanvas(morphed, c3Dir, entity.Type)
+		if !ok {
+			return nil
+		}
+		if section, column, owned := canvasRelationshipOwner(def, "uses"); owned {
+			return fmt.Errorf("error: patch %s: frontmatter uses cannot re-edge %s because uses is body-owned by the %s canvas at %s.%s\nhint: edit %s.%s with a block/insert patch; run c3x read %s --section %q --cite", p.Source, p.Target, entity.Type, section, column, section, column, p.Target, section)
+		}
+		return nil
 	default:
 		return nil
 	}
@@ -246,6 +271,24 @@ func canvasGate(s *store.Store, c3Dir string, p changeset.Patch, morphed map[str
 		return fmt.Errorf("error: patch %s: merged %s violates its canvas\nhint: fix the listed validation issue(s), then rerun c3x change apply: %s", p.Source, p.Target, formatValidationError(p.Target, issues))
 	}
 	return nil
+}
+
+func activeGateCanvas(morphed map[string]schema.Canvas, c3Dir, entityType string) (schema.Canvas, bool) {
+	if c, ok := morphed[entityType]; ok {
+		return c, true
+	}
+	return schema.DefinitionForDir(c3Dir, entityType)
+}
+
+func canvasRelationshipOwner(def schema.Canvas, relType string) (section, column string, ok bool) {
+	for _, sec := range def.Sections {
+		for _, col := range sec.Columns {
+			if col.Edge == relType {
+				return sec.Name, col.Name, true
+			}
+		}
+	}
+	return "", "", false
 }
 
 // gateSections returns the section set the canvas gate validates a body against:

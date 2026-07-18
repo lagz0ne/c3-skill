@@ -37,6 +37,7 @@ type Options struct {
 	Hybrid        bool
 	Semantic      bool
 	NoSemantic    bool
+	Pack          bool
 	Recompute     bool
 	Keep          int
 	Full          bool
@@ -151,6 +152,8 @@ func ParseArgs(argv []string) Options {
 			opts.Semantic = true
 		case "--no-semantic":
 			opts.NoSemantic = true
+		case "--pack":
+			opts.Pack = true
 		case "--full":
 			opts.Full = true
 		case "--cite":

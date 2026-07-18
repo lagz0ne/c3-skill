@@ -1,0 +1,66 @@
+{
+  "protocol": "paired-skill-objective-completion-audit-v11",
+  "audited_at_utc": "2026-07-16",
+  "objective_status": "not_achieved",
+  "requirements": [
+    {
+      "requirement": "three case families",
+      "status": "proved",
+      "evidence": "protocol-v8-paper-loop.json records three families"
+    },
+    {
+      "requirement": "three randomized repeats per condition and 18 valid Sol-low arms",
+      "status": "proved",
+      "evidence": "protocol-v8-paper-loop.json records nine pairs, 18 valid arms, opposite randomized judge aliases, and Sol-low execution"
+    },
+    {
+      "requirement": "one standardized baseline generation",
+      "status": "proved",
+      "evidence": "one baseline instruction SHA-256 is shared by all valid arms"
+    },
+    {
+      "requirement": "frozen C3 runtime",
+      "status": "proved",
+      "evidence": "one frozen portable-runtime SHA-256 is shared by treatment arms"
+    },
+    {
+      "requirement": "two provider-confirmed condition-blind judges",
+      "status": "proved_for_v9",
+      "evidence": "Anthropic response metadata and OpenAI session metadata identify the two v9 models; packets hide condition and use opposite aliases"
+    },
+    {
+      "requirement": "adjudication for every disagreement",
+      "status": "contradicted",
+      "evidence": "v9 has four disagreements but only one v9-rule-compliant adjudication; three older outcomes used a different rule"
+    },
+    {
+      "requirement": "at least 80 percent judge agreement",
+      "status": "contradicted",
+      "evidence": "raw pair-preference agreement was 4/9 in v8 and 5/9 in v9"
+    },
+    {
+      "requirement": "confidence intervals for quality, correctness, time, token, and cost effects",
+      "status": "proved",
+      "evidence": "protocol-v8-paper-loop.json records fixed-seed paired-bootstrap intervals and an input commitment"
+    },
+    {
+      "requirement": "zero protocol deviations",
+      "status": "contradicted",
+      "evidence": "v9 records one missing-adjudication deviation; v10 records a call-cap overrun and an unplanned no-output failure"
+    },
+    {
+      "requirement": "zero public project-data leakage",
+      "status": "proved_by_scoped_scan",
+      "evidence": "public receipts retain generic aggregates and commitments; the project-term/path leak scan returns zero matches"
+    },
+    {
+      "requirement": "total spend at or below 10 USD",
+      "status": "proved_for_accounted_cost_only",
+      "evidence": "accounted total is 8.7374338 USD; actual Codex billing is unavailable"
+    }
+  ],
+  "remaining_accounted_budget_usd": 1.2625662,
+  "why_same-answer_rerun_is_not_completion": "Judge instructions were calibrated after observing disagreements on these answers. Selecting another judge pair on the same answers would be post-outcome model selection, not held-out confirmation.",
+  "why_fresh_confirmation_cannot_fit_current_frame": "The remaining accounted budget cannot safely fund a new 18-arm held-out evaluation plus two judges and required adjudication.",
+  "required_external_change": "Start a new budgeted study frame with held-out cases and immutable external preregistration, or explicitly increase the current 10 USD ceiling. Existing failed rounds must remain reported."
+}

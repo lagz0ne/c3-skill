@@ -1,0 +1,25 @@
+{
+  "protocol":"held-out-paired-c3-v26-result",
+  "status":"stopped on first invalid arm before Opus judging",
+  "arms":{
+    "planned":6,
+    "attempted":1,
+    "valid":0,
+    "invalid":1,
+    "failure":{
+      "condition":"standardized neutral baseline",
+      "reason":"The completed Haiku arm exceeded both the registered token and cost ceilings.",
+      "total_tokens":108665,
+      "registered_token_ceiling":70000,
+      "actual_cost_usd":0.0540933,
+      "registered_cost_ceiling_usd":0.052
+    }
+  },
+  "judges":{"run":false,"minimum_model":"Claude Opus","minimum_effort":"medium"},
+  "effect":{"confirmatory_effect_estimated":false},
+  "budget":{"prior_conservative_confirmatory_cost_usd":3.561763,"v26_actual_cost_usd":0.0540933,"cumulative_confirmatory_cost_usd":3.6158563,"ceiling_usd":4.0,"remaining_usd":0.3841437},
+  "product_learning":"The first complete cheap-model receipt shows ambient Claude Code context dominates the compact answer cost. The next development candidate replaces the default system prompt with a minimal identical isolation prompt in both arms.",
+  "post_failure_rule":"Do not rerun the exposed case. Any successor must freeze the system-prompt optimization and use a fresh replacement case.",
+  "public_project_specific_field_count":0,
+  "anti_goal_bypass_or_dishonesty_count":0
+}

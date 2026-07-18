@@ -85,6 +85,35 @@ func TestSearch_BasicMatch(t *testing.T) {
 	}
 }
 
+func TestProbeDirectFTS_StableNodeIDsAndExplicitMisses(t *testing.T) {
+	s := createTestStore(t)
+	seedFixture(t, s)
+	node := &Node{EntityID: "auth-handler", Type: "paragraph", Seq: 1, Content: "authenticate with a token", Hash: "h"}
+	if _, err := s.InsertNode(node); err != nil {
+		t.Fatal(err)
+	}
+	probe, err := s.ProbeDirectFTS("authenticate", "", 20)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if probe.QueryToken == "" || len(probe.ContentHitIDs) != 1 || probe.ContentHitIDs[0] != "1" {
+		t.Fatalf("unexpected direct probe: %+v", probe)
+	}
+	if !probe.HasEntityHit("auth-handler") || !probe.HasContentHit("1") {
+		t.Fatalf("expected entity and content hits: %+v", probe)
+	}
+	probe.RecordEntityMiss("user-service")
+	probe.RecordContentMiss("2")
+	if len(probe.EntityMissIDs) != 1 || len(probe.ContentMissIDs) != 1 {
+		t.Fatalf("expected explicit misses: %+v", probe)
+	}
+	probe.RecordEntityMiss("auth-handler")
+	probe.RecordContentMiss("1")
+	if len(probe.EntityMissIDs) != 1 || len(probe.ContentMissIDs) != 1 {
+		t.Fatalf("a direct hit must not become a miss: %+v", probe)
+	}
+}
+
 func TestSearch_WithTypeFilter(t *testing.T) {
 	s := createTestStore(t)
 	seedFixture(t, s)

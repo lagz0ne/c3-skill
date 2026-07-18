@@ -1,0 +1,44 @@
+{
+  "$schema": "structural-retrieval-candidate.v1",
+  "candidate_id": "baseline-lexical-v1",
+  "parent_candidate_id": "",
+  "approach_family": "structural_field_projection",
+  "baseline_manifest_sha256": "",
+  "fixture_sha256": "f4390ab9f5d31dec43e9301153aa6d2fa3613c9117ae18fcb8d3fc20a02cb9ae",
+  "scorer_sha256": "bde12e200037d5bb76783e3b42fb3735175dbbd5a01b92f8ea87f1301c422909",
+  "implementation_commit": "0000000000000000000000000000000000000000",
+  "invariant_config_sha256": "7749d24fe6ea607a97b0ada3f9bd0c4ce48d6752c191d41e71dbb51ea5bc0902",
+  "changed_variable": null,
+  "ranking": {
+    "mode": "lexical",
+    "tie_break": "fixture_order"
+  },
+  "asserted_fact_ids": [],
+  "asserted_triples": [],
+  "frozen_baseline": {
+    "owner_recall_at_1": 0,
+    "owner_recall_at_3": 0,
+    "owner_recall_at_5": 0.6666666666666666,
+    "mrr": 0.5,
+    "wrong_layer_mrr": 0.25,
+    "structural_owner_precision": 0.6666666666666666,
+    "false_structural_claim_count": 0,
+    "behavioral_route_recall_at_5": 1,
+    "behavioral_route_mrr": 1,
+    "context_bytes_at_5": 2048,
+    "retrieved_context_bytes_per_case": {
+      "wl-ledger-sync": 177,
+      "wl-profile-refresh": 177,
+      "wl-task-completion": 177,
+      "wl-message-delivery": 177,
+      "wl-batch-review": 177,
+      "wl-audit-export": 177,
+      "wl-search-index": 177,
+      "wl-session-expiry": 177,
+      "route-command-dispatch": 158,
+      "route-upload-pipeline": 158,
+      "route-report-export": 158,
+      "route-session-renew": 158
+    }
+  }
+}

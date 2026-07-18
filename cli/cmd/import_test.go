@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/lagz0ne/c3-design/cli/internal/content"
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
@@ -158,6 +159,49 @@ Need fast CLI.
 	}
 }
 
+func TestRunImport_PreservesSameDateADRIdentities(t *testing.T) {
+	s := createRichDBFixture(t)
+	const secondID = "adr-20260226-use-rust"
+	if err := s.InsertEntity(&store.Entity{
+		ID: secondID, Type: "adr", Title: "Use Rust for helper", Slug: "use-rust",
+		Status: "proposed", Date: "20260226", Metadata: "{}",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	content.WriteEntity(s, secondID, fullADRBody("Use Rust for a narrow helper implementation."))
+
+	c3Dir := filepath.Join(t.TempDir(), ".c3")
+	if err := RunExport(ExportOptions{Store: s, OutputDir: c3Dir}, &bytes.Buffer{}); err != nil {
+		t.Fatal(err)
+	}
+	if err := RunImport(ImportOptions{C3Dir: c3Dir, SkipBackup: true}, &bytes.Buffer{}); err != nil {
+		t.Fatal(err)
+	}
+
+	imported, err := store.Open(filepath.Join(c3Dir, "c3.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer imported.Close()
+	outDir := filepath.Join(t.TempDir(), ".c3")
+	if err := RunExport(ExportOptions{Store: imported, OutputDir: outDir}, &bytes.Buffer{}); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, name := range []string{"adr-20260226-use-go.md", "adr-20260226-use-rust.md"} {
+		if _, err := os.Stat(filepath.Join(outDir, "adr", name)); err != nil {
+			t.Errorf("same-date ADR identity was not preserved at %s: %v", name, err)
+		}
+	}
+	files, err := filepath.Glob(filepath.Join(outDir, "adr", "adr-20260226-*.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(files) != 2 {
+		t.Fatalf("same-date ADRs collapsed: got %d exported files, want 2", len(files))
+	}
+}
+
 func TestRunImport_SurfacesLayerDisconnectAfterRebuild(t *testing.T) {
 	dir := t.TempDir()
 	c3Dir := filepath.Join(dir, ".c3")
@@ -265,6 +309,32 @@ System goal.
 	}
 	if !strings.Contains(err.Error(), "broken C3 seal") {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestRunImport_IgnoresUserOwnedCanvasSealWhenCacheIsMissing(t *testing.T) {
+	c3Dir := exportFixtureToDisk(t)
+	canvasDir := filepath.Join(c3Dir, "canvases")
+	if err := os.MkdirAll(canvasDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeFile(t, filepath.Join(canvasDir, "ui-screen.md"), `---
+id: ui-screen
+c3-seal: broken
+title: UI Screen
+type: canvas
+---
+
+# UI Screen
+
+## Sections
+
+User-owned canvas definition.
+`)
+
+	var out bytes.Buffer
+	if err := RunImport(ImportOptions{C3Dir: c3Dir, SkipBackup: true}, &out); err != nil {
+		t.Fatalf("cache rebuild must ignore user-owned canvas seals: %v\n%s", err, out.String())
 	}
 }
 

@@ -1,0 +1,29 @@
+{
+  "protocol": "paired-skill-judge-calibration-v9-amendment-1",
+  "registered_at_utc": "2026-07-16",
+  "applies_to": "protocol-v9-judge-calibration-preregistration.json",
+  "timing": "after runner rejection and before any successful v9 judge inference",
+  "rejected_call": {
+    "provider": "Anthropic",
+    "requested_model": "faber",
+    "api_status": 404,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "cost_usd": 0,
+    "judgment_produced": false
+  },
+  "replacement": {
+    "provider": "Anthropic",
+    "requested_model": "haiku",
+    "effort": "low",
+    "hard_call_cap_usd": 0.35
+  },
+  "unchanged": [
+    "packets and alias mappings",
+    "condition blindness",
+    "decision rule and generic calibration examples",
+    "OpenAI judge",
+    "agreement, adjudication, privacy, and budget gates"
+  ],
+  "classification": "pre-inference availability amendment, not an admitted protocol deviation"
+}

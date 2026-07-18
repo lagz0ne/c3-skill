@@ -1,0 +1,29 @@
+{
+  "protocol": "paired-skill-high-quality-confirmation-v10-result",
+  "status": "terminated_without_judgments",
+  "anthropic_call": {
+    "requested_model": "opus",
+    "actual_model": "claude-opus-4-8",
+    "identity_evidence": "provider response metadata",
+    "condition_blind": true,
+    "requested_max_budget_usd": 1.35,
+    "provider_reported_cost_usd": 1.5018735,
+    "terminal_reason": "budget_exhausted",
+    "judgment_produced": false
+  },
+  "openai_call": {
+    "requested_model": "gpt-5.6-luna",
+    "executed": false,
+    "reason": "The first judge produced no result; the paired confirmation round could not proceed."
+  },
+  "agreement_measured": false,
+  "adjudication_required": false,
+  "protocol_deviation_count": 2,
+  "protocol_deviation_codes": [
+    "HARD_CALL_CAP_OVERRUN_0.1518735_USD",
+    "UNPLANNED_NO_OUTPUT_JUDGE_FAILURE"
+  ],
+  "public_project_specific_content_count": 0,
+  "preregistered_stopping_rule_applied": false,
+  "operational_stop_after_unplanned_failure": true
+}

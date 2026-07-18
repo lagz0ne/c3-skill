@@ -1,0 +1,32 @@
+{
+  "protocol":"held-out-paired-c3-v25-result",
+  "status":"stopped on first invalid treatment arm before Opus judging",
+  "arms":{
+    "planned":6,
+    "attempted":1,
+    "valid":0,
+    "invalid":1,
+    "failure":{
+      "condition":"C3 treatment",
+      "runtime_status":"budget_killed",
+      "provider_tool_events_observed":1,
+      "c3_internal_commands_succeeded":4,
+      "reason":"The 49,152-byte supervisor output ceiling killed the bootstrap evidence stream before an answer completed.",
+      "usage_receipt_available":false,
+      "conservative_accounted_cost_usd":0.049
+    }
+  },
+  "judges":{"run":false,"minimum_model":"Claude Opus","minimum_effort":"medium"},
+  "effect":{"confirmatory_effect_estimated":false},
+  "budget":{
+    "prior_conservative_confirmatory_cost_usd":3.512763,
+    "v25_conservative_cost_usd":0.049,
+    "cumulative_confirmatory_cost_usd":3.561763,
+    "ceiling_usd":4.0,
+    "remaining_usd":0.438237
+  },
+  "product_learning":"The improved bootstrap completed route, forward and reverse impact, and evidence reads. The eval output-byte wall, not C3 uptake, stopped the arm.",
+  "post_failure_rule":"Do not rerun the exposed case. A successor may raise only the transport output-byte ceiling; discovery authority remains five calls.",
+  "public_project_specific_field_count":0,
+  "anti_goal_bypass_or_dishonesty_count":0
+}

@@ -1,0 +1,10 @@
+{
+  "protocol":"held-out-paired-c3-v30-external-receipt",
+  "gist_url":"https://gist.github.com/lagz0ne/765aa2af0611939d456b042c99fbecf3",
+  "gist_id":"765aa2af0611939d456b042c99fbecf3",
+  "revision":"45b126e0a8a453b6470370e720d0b24f5f7b8fe8",
+  "committed_at_utc":"2026-07-16T12:01:19Z",
+  "registered_file":"protocol-v30-fresh-confirmatory-preregistration.json",
+  "arm_or_judge_inference_started_before_receipt":false,
+  "public_project_specific_field_count":0
+}

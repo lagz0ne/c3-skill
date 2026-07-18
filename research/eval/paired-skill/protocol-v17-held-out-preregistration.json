@@ -1,0 +1,76 @@
+{
+  "protocol": "held-out-paired-c3-v17",
+  "registered_at_utc": "2026-07-16T08:00:35Z",
+  "status": "registered after case-loader and screening-scorer preflight and before any v17 inference",
+  "supersedes": {
+    "protocols": ["held-out-paired-c3-v12", "held-out-paired-c3-v13", "held-out-paired-c3-v14", "held-out-paired-c3-v15", "held-out-paired-c3-v16"],
+    "reason": "V12 and v13 stopped on schema checks. V14 and v15 stopped on execution ceilings without retained answers. V16 stopped after the legacy screening scorer rejected new rubric dimensions. V17 fixes only the non-primary scorer and retains the same held-out cases, rubric commitments, arm ceilings, conditions, judge rule, analysis, and seeds.",
+    "cumulative_prior_cost_or_reserve_usd": 1.06912
+  },
+  "objective": {
+    "conceptual_case_family_count": 3,
+    "randomized_repeats_per_condition": 3,
+    "valid_pair_count": 9,
+    "valid_arm_count": 18,
+    "agent_model": "gpt-5.6-sol",
+    "agent_effort": "low",
+    "raw_pair_preference_agreement_target": 0.8
+  },
+  "held_out_design": {
+    "families": [
+      "authorization policy change impact",
+      "attachment lifecycle change impact",
+      "shared UI contract change impact"
+    ],
+    "private_case_commitments_sha256": [
+      "fa9f19dab5d58b36bcd6590bbd285a23ccbf06797e4d6a9c559425833505b6fa",
+      "278a88ae3696a860aac22d87e0d56606ee1b4579d468ee36dd5ee217cb9b6c7a",
+      "c604a7f6c4636157f325fce9a3295a1bddae8112975ec3028caac2affe6f5dc8"
+    ],
+    "private_protocol_commitment_sha256": "87a55dfc9e06975b879e437bc1831e96b175e8d58f4e6b43a39fa336051e0afe",
+    "project_specific_public_field_count": 0
+  },
+  "controls": {
+    "standardized_baseline_generation_count": 1,
+    "standardized_baseline_instruction_sha256": "c67682acb11535517ba2c70c08eb2de907c506dabc3e2f2a5c69e0f3fafd7ac9",
+    "treatment_instruction_sha256": "86dafd2a6d2c1766276aa5b05ea285cce7218bf9719564be8b6a6a1c2d99ec8b",
+    "frozen_runtime_sha256": "e346474c62fa093daac590734c6adcb28e1dbf7164500952003db48502a6901b",
+    "condition_order_seed_commitment": "seeds 2101 through 2109",
+    "max_tool_calls_per_arm": 10,
+    "max_total_tokens_per_arm": 500000,
+    "max_cost_usd_per_arm": 0.35,
+    "timeout_seconds_per_arm": 600,
+    "screening_scorer_sha256": "0573dc69ffe3e5b70984dbf3fe5766c881f35c2dd38803439b9399851d2e89c9",
+    "screening_scorer_preflight_case_count": 3,
+    "screening_scores_are_primary_semantic_outcomes": false
+  },
+  "judging": {
+    "judge_count": 2,
+    "distinct_provider_count": 2,
+    "condition_blind": true,
+    "opposite_alias_randomization": true,
+    "claim_labels": ["supported", "missing", "contradicted"],
+    "score_formula": "2 * supported gold claims - 3 * contradicted gold claims - 4 * supported forbidden claims",
+    "pick_rule": "higher score, then fewer supported forbidden claims, then higher change-usefulness score, otherwise tie",
+    "agreement_metric": "same condition-level pair preference after private alias remapping",
+    "agreement_target": 0.8,
+    "adjudication": "Every preference, claim-label, or material usefulness disagreement receives condition-blind rule-consistent adjudication.",
+    "reserved_cost_usd": 2.63088
+  },
+  "analysis": {
+    "direction": "with skill minus without skill",
+    "bootstrap_seed": 20260717,
+    "bootstrap_resamples": 100000,
+    "confidence_level": 0.95,
+    "metrics": ["quality", "correctness", "elapsed time", "tokens", "cost"]
+  },
+  "anti_goals": {
+    "successor_study_cumulative_cost_usd_max": 10.0,
+    "v17_valid_arm_protocol_deviation_count_max": 0,
+    "v17_study_protocol_deviation_count_max": 0,
+    "public_project_specific_field_count_max": 0,
+    "anti_goal_bypass_or_dishonesty_count_max": 0,
+    "worst_case_admitted_total_usd": 10.0
+  },
+  "stopping_rule": "No paper-grade claim unless every v17 objective item and anti-goal passes from replayable evidence. Failed or invalid v17 inference attempts remain in the cumulative successor-study ledger."
+}

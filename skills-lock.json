@@ -1,4 +1,11 @@
 {
   "version": 1,
-  "skills": {}
+  "skills": {
+    "reverse-tornado-okr": {
+      "source": "lagz0ne/okra",
+      "sourceType": "github",
+      "skillPath": "skills/reverse-tornado-okr/SKILL.md",
+      "computedHash": "b2b8017dfa72886beb28c54812c7d2ccf79fd213cd8987e7b28e9a44872fde6f"
+    }
+  }
 }

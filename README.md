@@ -15,6 +15,7 @@ The point of the freeze is Act 2: because facts only move through change-units, 
 - **Eval checks claims against reality.** `.c3/eval/*.yaml` binds facts to the code, files, commands, or ast-grep structural outlines they govern. `c3x eval` produces one-off `holds` / `drift` / `needs_judgement` verdicts without turning a single LLM answer into truth.
 - **Search and lookup stay small.** `c3x search` finds concepts by semantic, keyword, and graph signal; `c3x lookup` maps files through eval bindings to owners, refs, and rules. Agent-mode output is TOON and tuned to keep the useful proof while dropping noise.
 - **Rebase resolves conflict.** When a staged patch's cited block moves, `c3x change rebase` emits a drift bundle to re-author against the fresh anchor.
+- **One edge has one source.** When a canvas derives `uses` from a body table, change apply rejects a competing frontmatter re-edge before any write and points to the exact body section to patch.
 
 ## Install / Run
 
@@ -88,6 +89,57 @@ npx @c3x/cli runtime prune
 The full command catalog, flags, and gate details live in the skill: read `skills/c3/SKILL.md`, or run `c3x --help` (the packaged CLI is authoritative).
 
 > **For agents:** the `/c3` skill invokes the CLI for you via `bash <skill-dir>/bin/c3x.sh`. Never run bare `c3x` — go through `/c3`.
+
+## Evaluation status
+
+The repository includes a generic, isolated retrieval evaluation for the
+structural-owner use case: before changing a record, project a direct hit to
+its immediate owner while preserving legitimate peer context.
+
+The candidate path is deliberately opt-in. `RunSearch` is byte-compatible by
+default; `StructuralProjection` and `CaptureProvenance` are internal evaluator
+options, not public CLI flags. Missing provenance fails closed instead of
+guessing an owner or route.
+
+The accepted preliminary v4 containment result is:
+
+| Metric | Unchanged C3 | Explicit candidate |
+|---|---:|---:|
+| Owner recall @5 | 0.667 | 1.000 |
+| Owner MRR | 0.278 | 1.000 |
+| Structural-owner precision | 0.667 | 1.000 |
+| Forbidden rows in no-target case | 1 | 0 |
+
+The owner-recall delta is **+0.333** across five repeatable replays. This is
+controller-level benchmark evidence only. Agent turns, token spend, money,
+and product impact are not measured by this microbenchmark. Route cases remain
+held out because their direct-FTS miss witness is not reproducible from the
+current generic loader.
+
+Generic retained artifacts:
+
+- [v4 paired microburst](research/eval/structural-retrieval-v4/paired-microburst.v4.json)
+- [v4 repeatability](research/eval/structural-retrieval-v4/repeatability.v4.json)
+- [v4 fixtures](research/eval/structural-retrieval-v4/fixtures.v4.json)
+- [v4 benchmark](research/eval/structural-retrieval-v4/benchmark.v4.json)
+
+## Release verification
+
+Run the normal suite and the explicit evaluator checks before releasing:
+
+```bash
+C3X_MODE=agent bash skills/c3/bin/c3x.sh check
+cd cli && go test ./...
+cd cli && go test ./tools/structural-search-eval-v3 -count=1
+cd cli && go vet ./...
+cd cli && RUN_V4_MICROBURST=1 go test ./tools/structural-search-eval-v3 \
+  -run TestV4PairedMicroburstArtifact -count=1 -v
+```
+
+The v3 baseline and benchmark are frozen inputs. If you replay a capture, use
+the canonical output basename (`B-v3-baseline.json` or `B-v4-baseline.json`)
+so the artifact self-reference remains correct. Do not treat the v4
+microbenchmark as proof of product effectiveness.
 
 ## Contributing
 

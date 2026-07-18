@@ -35,6 +35,28 @@ class SkillCLIContractTest(unittest.TestCase):
         self.assertIn('C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh"', skill)
         self.assertNotIn("c3() {", skill)
 
+    def test_sweep_requires_auditable_impact_closure(self) -> None:
+        sweep = (SKILL_ROOT / "references" / "sweep.md").read_text(encoding="utf-8")
+        for required in (
+            "Reverse dependency route",
+            "Code propagation route",
+            "Contract and failure route",
+            "affected / unaffected / unknown",
+            "Evidence",
+            "Isolation Boundaries",
+            "Unknowns",
+            "Code Changes Proposed",
+            "C3 Fact Patches Required",
+            "## Impact Classification",
+            "| Route | Lane | Evidence checked | Status | Next check |",
+        ):
+            self.assertIn(required, sweep)
+        self.assertNotIn("## Affected Entities", sweep)
+        self.assertNotIn("File Changes Required (patches in .c3/changes", sweep)
+        self.assertIn("N/A for a change that does not remove or retire a fact", sweep)
+        self.assertIn("one row for every surfaced lane", sweep)
+        self.assertIn("Unknown rows require evidence checked and a next check", sweep)
+
 
 if __name__ == "__main__":
     unittest.main()

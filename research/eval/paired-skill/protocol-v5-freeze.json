@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "protocol": "v5-edge-source-truth-portable-freeze",
+  "decision": "ready_for_incremental_paired_runs",
+  "causal_advantage_established": false,
+  "route_probe_count": 4,
+  "route_probe_target_hit_count": 4,
+  "source_assertion_count": 57,
+  "source_assertion_hold_count": 57,
+  "structural_issue_count": 0,
+  "generic_python_test_count": 150,
+  "generic_python_test_failure_count": 0,
+  "npm_test_count": 26,
+  "npm_test_failure_count": 0,
+  "go_suite_failure_count": 0,
+  "paid_cell_count": 2,
+  "paid_cell_limit": 2,
+  "cost_usd": 4.0766305,
+  "cost_limit_usd": 5.0,
+  "portable_runtime": {
+    "version": "11.6.3",
+    "os": "linux",
+    "arch": "amd64",
+    "sha256": "e346474c62fa093daac590734c6adcb28e1dbf7164500952003db48502a6901b"
+  },
+  "retention": {
+    "project_identifiers": false,
+    "project_paths": false,
+    "question_text": false,
+    "answer_text": false,
+    "raw_model_output": false
+  },
+  "known_limitations": [
+    "Route probes establish readiness, not a paired causal effect.",
+    "One host filesystem stalled during a fresh SQLite fsync; a tmpfs canonical import passed.",
+    "A provider-confirmed independent model judgement is still required before final study claims."
+  ]
+}

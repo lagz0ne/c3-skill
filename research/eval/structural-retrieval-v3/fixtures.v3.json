@@ -1,0 +1,89 @@
+[
+  {
+    "$schema": "structural-retrieval-fixture.v3",
+    "case_id": "v2-owner-1",
+    "query": "owner evidence one",
+    "entities": [{"id":"owner-1","role":"owner"},{"id":"context-1","role":"neutral"}],
+    "facts": [{"id":"owner-1-fact","entity_id":"owner-1","role":"owner"},{"id":"context-1-fact","entity_id":"context-1","role":"neutral"}],
+    "oracle": {
+      "required_owner_fact_ids": ["owner-1-fact"], "neutral_fact_ids": ["context-1-fact"], "required_context_entity_ids": ["context-1"],
+      "direct_fts_miss_witness": {"probe_entity_hit_ids":[],"probe_content_hit_ids":[],"expected_bound_route_entity_ids":[],"expected_bound_route_entity_miss_ids":[],"expected_bound_route_content_miss_ids":[],"case_miss":false}
+    }
+  },
+  {
+    "$schema": "structural-retrieval-fixture.v3",
+    "case_id": "v2-owner-2",
+    "query": "owner evidence two",
+    "entities": [{"id":"owner-2","role":"owner"},{"id":"context-2","role":"neutral"}],
+    "facts": [{"id":"owner-2-fact","entity_id":"owner-2","role":"owner"},{"id":"context-2-fact","entity_id":"context-2","role":"neutral"}],
+    "oracle": {
+      "required_owner_fact_ids": ["owner-2-fact"], "neutral_fact_ids": ["context-2-fact"], "required_context_entity_ids": ["context-2"],
+      "direct_fts_miss_witness": {"probe_entity_hit_ids":[],"probe_content_hit_ids":[],"expected_bound_route_entity_ids":[],"expected_bound_route_entity_miss_ids":[],"expected_bound_route_content_miss_ids":[],"case_miss":false}
+    }
+  },
+  {
+    "$schema": "structural-retrieval-fixture.v3",
+    "case_id": "v2-owner-3",
+    "query": "owner evidence three",
+    "entities": [{"id":"owner-3","role":"owner"},{"id":"context-3","role":"neutral"}],
+    "facts": [{"id":"owner-3-fact","entity_id":"owner-3","role":"owner"},{"id":"context-3-fact","entity_id":"context-3","role":"neutral"}],
+    "oracle": {
+      "required_owner_fact_ids": ["owner-3-fact"], "neutral_fact_ids": ["context-3-fact"], "required_context_entity_ids": ["context-3"],
+      "direct_fts_miss_witness": {"probe_entity_hit_ids":[],"probe_content_hit_ids":[],"expected_bound_route_entity_ids":[],"expected_bound_route_entity_miss_ids":[],"expected_bound_route_content_miss_ids":[],"case_miss":false}
+    }
+  },
+  {
+    "$schema": "structural-retrieval-fixture.v3",
+    "case_id": "v2-route",
+    "query": "behavior route evidence",
+    "entities": [{"id":"route-owner-v2","role":"owner"},{"id":"route-anchor-v2","role":"neutral"}],
+    "relationships": [{"from_id":"route-owner-v2","to_id":"route-anchor-v2","rel_type":"uses"}],
+    "facts": [{"id":"route-owner-v2-fact","entity_id":"route-owner-v2","role":"owner"},{"id":"route-anchor-v2-fact","entity_id":"route-anchor-v2","role":"neutral"}],
+    "oracle": {
+      "required_owner_fact_ids": ["route-owner-v2-fact"], "neutral_fact_ids": ["route-anchor-v2-fact"], "required_context_entity_ids": ["route-anchor-v2"],
+      "bound_route_entity_ids": ["route-owner-v2"],
+      "bound_route_witnesses": [{"entity_id":"route-owner-v2","entity_content_id":"content:route-owner-v2","match_source":"graph:uses:route-anchor-v2","graph_from_id":"route-owner-v2","graph_rel_type":"uses","graph_to_id":"route-anchor-v2","direct_fts_entity_miss_id":"route-owner-v2","direct_fts_content_miss_id":"content:route-owner-v2","expected_route_field_values":{"facts":["route-owner-v2-fact"],"graph":["graph:uses:route-anchor-v2"],"lanes":["behavioral-route"],"hash":"route:route-owner-v2:route-anchor-v2"}}],
+      "direct_fts_miss_witness": {"probe_entity_hit_ids":[],"probe_content_hit_ids":[],"expected_bound_route_entity_ids":["route-owner-v2"],"expected_bound_route_entity_miss_ids":["route-owner-v2"],"expected_bound_route_content_miss_ids":["content:route-owner-v2"],"case_miss":true},
+      "required_route_fields": ["facts","graph","lanes","hash"]
+    }
+  },
+  {
+    "$schema": "structural-retrieval-fixture.v3",
+    "case_id": "counter-multi-peer-owner",
+    "query": "owner with legitimate peers",
+    "entities": [{"id":"mp-child","role":"forbidden"},{"id":"mp-owner","role":"owner"},{"id":"mp-peer-a","role":"neutral"},{"id":"mp-peer-b","role":"neutral"}],
+    "facts": [{"id":"mp-child-fact","entity_id":"mp-child","role":"forbidden"},{"id":"mp-owner-fact","entity_id":"mp-owner","role":"owner"},{"id":"mp-peer-a-fact","entity_id":"mp-peer-a","role":"neutral"},{"id":"mp-peer-b-fact","entity_id":"mp-peer-b","role":"neutral"}],
+    "oracle": {
+      "required_owner_fact_ids": ["mp-owner-fact"], "neutral_fact_ids": ["mp-peer-a-fact","mp-peer-b-fact"], "required_context_entity_ids": ["mp-peer-a","mp-peer-b"], "forbidden_fact_ids": ["mp-child-fact"],
+      "direct_fts_miss_witness": {"probe_entity_hit_ids":[],"probe_content_hit_ids":[],"expected_bound_route_entity_ids":[],"expected_bound_route_entity_miss_ids":[],"expected_bound_route_content_miss_ids":[],"case_miss":false}
+    }
+  },
+  {
+    "$schema": "structural-retrieval-fixture.v3",
+    "case_id": "counter-no-target",
+    "query": "neutral context without owner target",
+    "entities": [{"id":"nt-context-a","role":"neutral"},{"id":"nt-context-b","role":"neutral"},{"id":"nt-forbidden","role":"forbidden"}],
+    "facts": [{"id":"nt-context-a-fact","entity_id":"nt-context-a","role":"neutral"},{"id":"nt-context-b-fact","entity_id":"nt-context-b","role":"neutral"},{"id":"nt-forbidden-fact","entity_id":"nt-forbidden","role":"forbidden"}],
+    "oracle": {
+      "neutral_fact_ids": ["nt-context-a-fact","nt-context-b-fact"], "required_context_entity_ids": ["nt-context-a","nt-context-b"], "forbidden_fact_ids": ["nt-forbidden-fact"],
+      "no_target_policy": {"owner_witness_count":0,"preserve_neutral_context":true,"v2_action":"omit","v3_actions":["omit","flagged"]},
+      "direct_fts_miss_witness": {"probe_entity_hit_ids":[],"probe_content_hit_ids":[],"expected_bound_route_entity_ids":[],"expected_bound_route_entity_miss_ids":[],"expected_bound_route_content_miss_ids":[],"case_miss":false}
+    }
+  },
+  {
+    "$schema": "structural-retrieval-fixture.v3",
+    "case_id": "counter-bound-route",
+    "query": "bound route with unbound decoy",
+    "entities": [{"id":"br-owner","role":"owner"},{"id":"br-anchor","role":"neutral"},{"id":"br-unbound","role":"unsupported"},{"id":"br-unbound-anchor","role":"unsupported"},{"id":"br-unknown","role":"unknown"}],
+    "relationships": [{"from_id":"br-owner","to_id":"br-anchor","rel_type":"uses"},{"from_id":"br-unbound","to_id":"br-unbound-anchor","rel_type":"uses"}],
+    "facts": [{"id":"br-owner-fact","entity_id":"br-owner","role":"owner"},{"id":"br-anchor-fact","entity_id":"br-anchor","role":"neutral"},{"id":"br-unbound-fact","entity_id":"br-unbound","role":"unsupported"},{"id":"br-unbound-anchor-fact","entity_id":"br-unbound-anchor","role":"unsupported"},{"id":"br-unknown-fact","entity_id":"br-unknown","role":"unknown"}],
+    "oracle": {
+      "required_owner_fact_ids": ["br-owner-fact"], "neutral_fact_ids": ["br-anchor-fact"], "required_context_entity_ids": ["br-anchor"], "unsupported_entity_ids": ["br-unbound","br-unbound-anchor"], "unsupported_fact_ids": ["br-unbound-fact","br-unbound-anchor-fact"], "unknown_entity_ids": ["br-unknown"], "unknown_fact_ids": ["br-unknown-fact"],
+      "bound_route_entity_ids": ["br-owner"],
+      "bound_route_witnesses": [{"entity_id":"br-owner","entity_content_id":"content:br-owner","match_source":"graph:uses:br-anchor","graph_from_id":"br-owner","graph_rel_type":"uses","graph_to_id":"br-anchor","direct_fts_entity_miss_id":"br-owner","direct_fts_content_miss_id":"content:br-owner","expected_route_field_values":{"facts":["br-owner-fact"],"graph":["graph:uses:br-anchor"],"lanes":["behavioral-route"],"hash":"route:br-owner:br-anchor"}}],
+      "direct_fts_miss_witness": {"probe_entity_hit_ids":[],"probe_content_hit_ids":[],"expected_bound_route_entity_ids":["br-owner"],"expected_bound_route_entity_miss_ids":["br-owner"],"expected_bound_route_content_miss_ids":["content:br-owner"],"case_miss":true},
+      "relationship_witness": {"expected_entity_id":"br-owner","from_id":"br-owner","to_id":"br-anchor","rel_type":"uses","expected_match_source":"graph:uses:br-anchor"},
+      "required_route_fields": ["facts","graph","lanes","hash"]
+    }
+  }
+]

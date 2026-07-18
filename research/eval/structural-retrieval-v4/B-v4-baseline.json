@@ -1,0 +1,75 @@
+{
+  "$schema": "structural-retrieval-baseline.v3",
+  "status": "fresh",
+  "controller": "unchanged-c3-cmd.RunSearch",
+  "fixture_sha256": "1e9726ed6cc224a3a26b916f319bdc400c63118c69e7e284a6af150ed484991c",
+  "benchmark_sha256": "b2e363ca0d7dd4a5722805bbc1839b07e6f0bd8e063a63b618461933fac74da9",
+  "scorer_sha256": "4b19ec2f95e5c6e5efa31041b352061ea67a2dc8ce058a5dd322b655bf4cf51e",
+  "benchmark_baseline_file": "B-v4-baseline.json",
+  "fixture_count": 4,
+  "cases": [
+    {
+      "case_id": "v4-containment-owner-a",
+      "row_ids": [
+        "v4-child-a"
+      ],
+      "canonical_row_bytes": 435,
+      "result_sha256": "116f148281138b7103682ab19ae3521b3bec267eea24db2067484f3e7d3a66f1",
+      "content_fts_ids": [
+        "v4-child-a"
+      ]
+    },
+    {
+      "case_id": "v4-containment-owner-b",
+      "row_ids": [
+        "v4-child-b",
+        "v4-owner-b"
+      ],
+      "canonical_row_bytes": 834,
+      "result_sha256": "a6f876d2e16ad0780cbece60127ab9d85af6870fa584fd76e8af435e17fac6f0",
+      "content_fts_ids": [
+        "v4-child-b"
+      ]
+    },
+    {
+      "case_id": "v4-containment-peer",
+      "row_ids": [
+        "v4-child-peer",
+        "v4-peer",
+        "v4-owner-peer"
+      ],
+      "canonical_row_bytes": 1263,
+      "result_sha256": "857e5203bb28042acb30d9bc7fa9d0ef1b64d224511eaa7f9124d25d7f23a7c6",
+      "content_fts_ids": [
+        "v4-child-peer",
+        "v4-peer"
+      ]
+    },
+    {
+      "case_id": "v4-no-target",
+      "row_ids": [
+        "v4-context",
+        "v4-forbidden"
+      ],
+      "canonical_row_bytes": 806,
+      "result_sha256": "809aa40442c83601ec9500f0a9cbefd0ff849e5aff152eb8c908d81017ccc4c0",
+      "content_fts_ids": [
+        "v4-context",
+        "v4-forbidden"
+      ]
+    }
+  ],
+  "privacy": {
+    "policy_sha256": "7f038b3eef110d2765aa1aa003003fc19e0b390a3623a6978712e813831d7055",
+    "scanner_source_sha256": "33b6452a0e34d825ef2b895609daa77b91eb129ebdc1e6be8f7f7755fc8b9c6e",
+    "detector_definition_sha256": "e9f28b8fe0dafd3effa283acba95e4625b3de38bc1d80615e8d771042edfa8e7",
+    "scan_scope": [
+      "v4 fixtures",
+      "v4 benchmark",
+      "retained generic output"
+    ]
+  },
+  "generic_only": true,
+  "raw_rows_retained": false,
+  "candidate_source": false
+}

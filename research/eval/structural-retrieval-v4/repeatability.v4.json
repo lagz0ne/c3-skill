@@ -1,0 +1,15 @@
+{
+  "$schema": "structural-retrieval-repeatability.v4",
+  "status": "unreviewed_microburst",
+  "generic_only": true,
+  "fixture_sha256": "1e9726ed6cc224a3a26b916f319bdc400c63118c69e7e284a6af150ed484991c",
+  "paired_artifact_sha256": "2ff17b35cd8780647d4146d436380ca822641a57915582e3f9b0dd011d152453",
+  "command": "cd cli && RUN_V4_MICROBURST=1 go test ./tools/structural-search-eval-v3 -run TestV4PairedMicroburstArtifact -count=1",
+  "runs": 5,
+  "wall_ms": [2311, 1060, 943, 1066, 983],
+  "metrics_identical": true,
+  "owner_recall_delta": 0.3333333333,
+  "effect_claim": false,
+  "agent_turn_or_token_cost": "not measured by local controller burst",
+  "sol_high_review": "no_review"
+}

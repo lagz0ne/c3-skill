@@ -1,0 +1,12 @@
+{
+  "protocol": "held-out-paired-c3-v31-retained-context-accounting",
+  "external_registration": {
+    "provider": "GitHub secret gist",
+    "gist_id": "5d95c90842cf95a8639c8dbf9c280eba",
+    "url": "https://gist.github.com/lagz0ne/5d95c90842cf95a8639c8dbf9c280eba",
+    "created_at": "2026-07-16T12:07:54Z",
+    "history_version": "5f897187b871b516632bddca909ed0adcb4ccf1c",
+    "raw_url": "https://gist.githubusercontent.com/lagz0ne/5d95c90842cf95a8639c8dbf9c280eba/raw/33e230fa9ee165a5b988be1b699c4c0ef0ab9918/protocol-v31-fresh-confirmatory-preregistration.json"
+  },
+  "inference_started_after_registration": true
+}

@@ -1,0 +1,27 @@
+{
+  "protocol": "held-out-paired-c3-v19-result",
+  "status": "stopped_on_registered_invalid_arm_rule",
+  "external_revision": "abb86fac2a3da160e81380d28252e50a693f3f2c",
+  "completed_arm_count": 2,
+  "valid_arm_count": 1,
+  "valid_pair_count": 0,
+  "accounted_cost_usd": 0.272794,
+  "failure": {
+    "case_family": "historical period semantics",
+    "control_status": "scored",
+    "treatment_status": "invalid",
+    "deviation_code": "C3_UPTAKE_MISSING",
+    "treatment_c3_invocation_count": 2,
+    "treatment_c3_route_success_count": 1,
+    "treatment_c3_impact_success_count": 0,
+    "treatment_c3_evidence_success_count": 0,
+    "generic_cause": "The task-level treatment text offered manual skill and wrapper entrypoints while the forced repository instruction required the bounded bootstrap. The agent partially routed and stopped before the required graph and evidence sequence."
+  },
+  "post_failure_actions": {
+    "judges_run": false,
+    "answers_used_for_effect_estimation": false,
+    "registered_pair_rerun": false,
+    "repair": "Use one unambiguous bootstrap entrypoint in the task-level treatment prompt and freeze its runner hash before a successor protocol."
+  },
+  "paper_grade_claim_supported": false
+}

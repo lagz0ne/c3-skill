@@ -1,0 +1,38 @@
+{
+  "protocol": "paired-c3-v21-treatment-freeze",
+  "frozen_at_utc": "2026-07-16T10:13:17Z",
+  "estimand": "C3 treatment package: frozen skill and binary, forced direct bootstrap, and transcript-proved uptake",
+  "artifacts": {
+    "paired_runner_sha256": "43d09cbd7856a7a639aa2ef3abbc87e55b82980223fbcdfb321c0fc7d973ae0e",
+    "bootstrap_sha256": "63830048ed2f6db8b0c454df91a026b5f1f3695f51ef8136b67daef372ca4a54",
+    "usage_proxy_sha256": "527b9c055eb188947b493060bf1e512a838bcb867ff2042602113727fae5497a",
+    "treatment_instruction_sha256": "7e978f0bac415e2d8312d255a1f92b8843b714692fcb64974cde2fd495c56d50",
+    "paired_orchestrator_sha256": "3453f356841acf46c5c9a42d24cbc8abec2a7d9931fb03641e41a6d81db3ce94",
+    "skill_sha256": "1ef31875f82d25b722951238517fc225ba15414a0d6acf599a2bb30107b6c614",
+    "sweep_sha256": "ab68bf44f04d9a2609f0eb79b73c9e2c802510c99c25579d42450c44934833ec",
+    "binary_sha256": "73aa6df4572327bedf1ff87c0fa2558c0111ca7558856358b6eac43fc0f443d0"
+  },
+  "uptake_contract": {
+    "first_supervisor_observed_command": "bash /opt/c3/bin/c3-impact-bootstrap <inert domain words>",
+    "required_exit_code": 0,
+    "shell_control_or_substitution_allowed": false,
+    "writable_counters_are_acceptance_truth": false,
+    "bootstrap_internal_c3_calls": {
+      "minimum": 3,
+      "search_miss_fallback": 4
+    }
+  },
+  "verification": {
+    "focused_test_count": 49,
+    "full_script_test_count": 155,
+    "harness_test_count": 33,
+    "local_c3_check_total": 41,
+    "local_c3_check_ok": true,
+    "independent_challenger_exact_first_command": "intact",
+    "independent_challenger_manifest_honesty": "intact",
+    "live_sol_low_smoke_exact_first_command": true,
+    "live_sol_low_smoke_c3_success_count": 3
+  },
+  "development_cost_note": "Development diagnostics, including the live uptake smoke, are reported separately and are not confirmatory study spend.",
+  "public_project_specific_field_count": 0
+}

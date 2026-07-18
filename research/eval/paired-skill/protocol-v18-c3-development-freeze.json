@@ -1,0 +1,74 @@
+{
+  "protocol": "paired-c3-v18-development-freeze",
+  "status": "development_candidate_frozen_not_outcome_proven",
+  "source_learning": {
+    "v17_use": "exploratory_aggregate_only",
+    "paired_answer_count": 18,
+    "pair_count": 9,
+    "semantic_effect_claim_allowed": false,
+    "generic_findings": [
+      "C3 treatment routing was reliable and used fewer tokens and lower estimated cost than control.",
+      "Required-surface coverage showed a ceiling effect in both conditions, so no treatment lift was established.",
+      "The justified improvement target is visible impact closure, evidence provenance, and unresolved uncertainty rather than domain knowledge."
+    ]
+  },
+  "development_changes": [
+    {
+      "surface": "reverse_graph",
+      "change": "Reverse traversal includes parent-owned children as destruction-impact adjacency and excludes the containment parent unless an inbound wiring edge exists.",
+      "source_sha256": "8ecc0c8e81b0e771d36ce0663bf9e977874a7aeb9cb69c8ba40cee24b8e93cf3",
+      "test_sha256": "b0077e9ef131d1c69a6af157d3468f434974ad26e04b54725ba33b92fff0852d"
+    },
+    {
+      "surface": "sweep_contract",
+      "change": "Impact assessment uses three bounded routes, one closure row per surfaced lane, exact evidence, affected/unaffected/unknown status, isolation boundaries, and explicit next checks.",
+      "source_sha256": "ab68bf44f04d9a2609f0eb79b73c9e2c802510c99c25579d42450c44934833ec",
+      "test_sha256": "cfe07ead9b6853aa5c2aa51cabb0737142397de88729fadc2b9ee6e323235187"
+    }
+  ],
+  "frozen_runtime": {
+    "version": "11.6.3",
+    "local_wrapper_sha256": "c8ae68e798c01cb3320720fb8459f53fa659b9b77b90d37816e8d8b659ca38ba",
+    "fat_binary_sha256": "73aa6df4572327bedf1ff87c0fa2558c0111ca7558856358b6eac43fc0f443d0",
+    "skill_sha256": "1ef31875f82d25b722951238517fc225ba15414a0d6acf599a2bb30107b6c614",
+    "query_reference_sha256": "e642bc406a94663097c7d78665c17ec3d149a00e4382bde823e77e608518f300",
+    "sweep_reference_sha256": "ab68bf44f04d9a2609f0eb79b73c9e2c802510c99c25579d42450c44934833ec"
+  },
+  "verification": {
+    "go_test_all_cli": "pass",
+    "python_focused_test_count": 21,
+    "local_c3_check_total": 41,
+    "local_c3_check_ok": true,
+    "plain_wording_violation_count": 0,
+    "git_diff_check": "pass",
+    "sol_challenger_final_verdict": {
+      "intact": 2,
+      "drifted": 0,
+      "dead": 0,
+      "note": "The initial lane-closure drift finding was repaired before freeze."
+    },
+    "claude_fable_review": {
+      "status": "no_review_output",
+      "attempt_count": 2,
+      "provider_reported_cost_usd": 1.180625,
+      "terminal_reason": "budget_exhausted",
+      "used_as_acceptance_evidence": false
+    }
+  },
+  "anti_goals": {
+    "case_specific_public_c3_fact_count": 0,
+    "observed_answer_reuse_as_confirmatory_count": 0,
+    "public_project_specific_field_count": 0,
+    "anti_goal_bypass_or_dishonesty_count": 0
+  },
+  "next_confirmatory_boundary": {
+    "required": true,
+    "conditions": [
+      "Use entirely new held-out cases.",
+      "Externally preregister cases, metrics, judges, per-call budgets, and stopping rules before inference.",
+      "Keep the standardized baseline unchanged.",
+      "Measure required-surface lift and blocking false claims from independent semantic judgments.",
+      "Do not count this development freeze as evidence that the 20 percent objective was reached."
+    ]
+  }
+}

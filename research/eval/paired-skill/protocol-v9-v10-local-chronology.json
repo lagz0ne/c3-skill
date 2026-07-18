@@ -1,0 +1,32 @@
+{
+  "protocol": "paired-skill-local-chronology-v1",
+  "evidence_strength": "local filesystem birth-time evidence; not an external or immutable preregistration receipt",
+  "events": [
+    {
+      "name": "v9 preregistration file created",
+      "timestamp_utc": "2026-07-16T05:51:59.162120259Z",
+      "then_observed_sha256": "60e85df4472d8f2827413827c56d5b2fa33dc2c4529c36b43576eef27edb0800"
+    },
+    {
+      "name": "v9 availability amendment file created",
+      "timestamp_utc": "2026-07-16T05:52:36.954819103Z",
+      "then_observed_sha256": "228ac7a06934b357a4aceb4af439a21c6c2a695feca23c848bab1951a86a9900"
+    },
+    {
+      "name": "first successful v9 judge output created",
+      "timestamp_utc": "2026-07-16T05:53:42.260029268Z",
+      "artifact_retention": "private"
+    },
+    {
+      "name": "v10 preregistration file created",
+      "timestamp_utc": "2026-07-16T06:00:26.491573146Z",
+      "then_observed_sha256": "66337ed9d4f4c5ac0f347c5ced59f7bc1a863e0053ba04a4c83a1e1324765110"
+    },
+    {
+      "name": "v10 failed judge output created",
+      "timestamp_utc": "2026-07-16T06:04:06.527704365Z",
+      "artifact_retention": "private"
+    }
+  ],
+  "paper_use": "Supports local event ordering only. Do not describe v9 or v10 as externally preregistered."
+}

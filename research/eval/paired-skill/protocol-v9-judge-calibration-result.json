@@ -1,0 +1,49 @@
+{
+  "protocol": "paired-skill-judge-calibration-v9-result",
+  "status": "completed_with_reliability_gate_failed",
+  "valid_pair_count": 9,
+  "valid_arm_count": 18,
+  "immutable_packet_hashes": [
+    "fac5c77feead823cea9b2fe97f4b2172da6bcaec6dfe85d2d13fba88ccb25a6c",
+    "766dca1b8f09c313ebc58c9432e4e51cc933c0be38842af96d401a4e0ad73d71"
+  ],
+  "judges": [
+    {
+      "provider": "Anthropic",
+      "actual_model": "claude-haiku-4-5-20251001",
+      "identity_evidence": "provider response metadata",
+      "condition_blind": true,
+      "reported_cost_usd": 0.1521983
+    },
+    {
+      "provider": "OpenAI",
+      "actual_model": "gpt-5.6-sol",
+      "identity_evidence": "provider session metadata bound to the returned thread id",
+      "condition_blind": true,
+      "estimated_cost_usd": 0.256058
+    }
+  ],
+  "raw_pair_preference_agreement": {
+    "count": 5,
+    "total": 9,
+    "rate": 0.5556,
+    "required_rate": 0.8,
+    "gate_passed": false
+  },
+  "disagreement_count": 4,
+  "adjudication": {
+    "v9_rule_compliant_completed_count": 1,
+    "legacy_blind_secondary_outcome_count": 3,
+    "legacy_outcomes_followed_v9_rule": false,
+    "required_count": 4,
+    "new_reported_cost_usd": 0.0461965,
+    "all_disagreements_v9_rule_adjudicated": false
+  },
+  "protocol_deviation_count": 1,
+  "protocol_deviation_codes": [
+    "THREE_DISAGREEMENTS_LACK_V9_RULE_ADJUDICATION"
+  ],
+  "availability_amendment_count": 1,
+  "public_project_specific_content_count": 0,
+  "interpretation": "The explicit decision rule raised agreement by 11.1 percentage points but did not satisfy the registered reliability gate. Only one of four disagreements received an adjudication under the v9 rule; three older blind outcomes remain secondary evidence."
+}

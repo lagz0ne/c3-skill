@@ -61,13 +61,15 @@ result: sha256:<hash>      # optional landing check (block) — see below
 | `block` | replace **one** cited block (EDIT an existing section); **empty body deletes it** | block cite handle | the new block content |
 | `insert` | **add** a section the fact lacks, or a new table **row** | section → entity handle; row → the block cite of the row to insert *after* | the new `## Section` (no duplicate) or the new row |
 | `whole` (no base) | **create** a new fact, born sealed | absent | full body; `type:` required |
-| `frontmatter` | rename (`title`) / move (`parent`) / re-edge (`uses`) / set `boundary`, `category`, `date` | entity handle | frontmatter deltas |
+| `frontmatter` | rename (`title`) / move (`parent`) / re-edge (`uses`) when the canvas does not own `uses` in a body edge-column / set `boundary`, `category`, `date` | entity handle | frontmatter deltas |
 | `retire` | remove the fact + its edges | entity handle | — |
 | `canvas` | **morph** a fact-TYPE's shape (target = the type, not a fact) — the evolve-unit, §Morphing the model | absent | the full new canvas definition |
 
 **`block` EDITS; `insert` ADDS.** Change a section that exists → `block`. Give a fact a section it lacks (the rung-climb move, §Climbing a rung) → `insert`: it appends additively, every existing section stays frozen. The `insert` body must start with a `## heading` and may not duplicate a section the fact already has.
 
 **Table rows.** Cite the specific row (`--cite` lists per-node handles). Edit a row → `block` patch whose body is *just that row* (`| a | b | c |`, normalized to the stored cells — don't re-supply the header). Delete a row → `block` with an empty body. Add a row → `insert` with the row to insert *after* as the base. (Both anchor by the cited block's hash, so they survive node renumbering.)
+
+**Body-owned edges.** When `schema <type>` marks a table column with `edge: uses`, that body column is the canonical edge source. A `frontmatter` patch carrying `uses:` is rejected before any write; edit or insert the cited table row instead. The rejection names the owning section and column and prints the exact `read --section ... --cite` repair command. Frontmatter `uses:` remains legal for legacy or custom canvases without a body-owned `uses` column.
 
 **Cite handles** (from `C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" read <id> --cite`): a **block** anchor `entity#nNODE@vVER:sha256:HASH` pins one node by its hash (`block` scope); the **entity** anchor `entity@vVER:sha256:ROOTMERKLE` pins the whole fact (`insert` / `frontmatter` / `retire`).
 

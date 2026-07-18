@@ -309,6 +309,39 @@ func TestRunCheck_IncludeADRSkipsProvisioned(t *testing.T) {
 	}
 }
 
+func TestRunCheck_IncludeADRSkipsCanonicalTerminalStatuses(t *testing.T) {
+	for _, status := range []string{"done", "superseded"} {
+		t.Run(status, func(t *testing.T) {
+			s := createRichDBFixture(t)
+			if err := s.SetEntityStatus("adr-20260226-use-go", status); err != nil {
+				t.Fatal(err)
+			}
+
+			var defaultBuf bytes.Buffer
+			if err := RunCheckV2(CheckOptions{Store: s, JSON: true, IncludeADR: true}, &defaultBuf); err != nil {
+				t.Fatal(err)
+			}
+			if hasIssueForEntity(t, &defaultBuf, "adr-20260226-use-go") {
+				t.Fatalf("--include-adr should skip canonical terminal status %q", status)
+			}
+
+			var onlyBuf bytes.Buffer
+			opts := CheckOptions{
+				Store:      s,
+				JSON:       true,
+				IncludeADR: true,
+				Only:       []string{"adr-20260226-use-go"},
+			}
+			if err := RunCheckV2(opts, &onlyBuf); err != nil {
+				t.Fatal(err)
+			}
+			if !hasIssueForEntity(t, &onlyBuf, "adr-20260226-use-go") {
+				t.Fatalf("--only should still inspect canonical terminal status %q", status)
+			}
+		})
+	}
+}
+
 func TestRunCheck_OnlyOverridesTerminalSkip(t *testing.T) {
 	s := createRichDBFixture(t)
 	// Status is edit-proof (Item 2): seed terminal status via the dedicated writer.

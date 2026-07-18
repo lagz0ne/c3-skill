@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -25,6 +26,102 @@ type RouteEnrichment struct {
 	Drift     []string `json:"drift,omitempty"`
 	Hash      string   `json:"hash,omitempty"`
 	HashBasis string   `json:"hash_basis,omitempty"`
+}
+
+// RouteEnrichmentSnapshot captures the expected route fields before route
+// enrichment is attached to a public row. It is internal provenance used to
+// detect a later mismatch; the snapshot itself is never serialized.
+type RouteEnrichmentSnapshot struct {
+	EntityID string
+	InputIDs []string
+	Expected RouteEnrichment
+}
+
+func snapshotRouteBeforeEnrichment(s *store.Store, c3Dir, projectDir string, row SearchResultRow, query string) RouteEnrichmentSnapshot {
+	// Build the expected route from a private copy so the public row remains
+	// untouched. Using the same read-only enrichment inputs avoids inventing a
+	// second route-selection policy (context precedence is part of the existing
+	// controller behavior).
+	prepared := row
+	prepared.MatchSources = append([]string(nil), row.MatchSources...)
+	prepared.Context = row.Context
+	_ = enrichSearchRow(s, &prepared)
+	ids := []string{prepared.ID}
+	for _, ref := range []EntityRef{prepared.Context.Component, prepared.Context.Ref, prepared.Context.Rule} {
+		if ref.ID != "" {
+			ids = append(ids, ref.ID)
+		}
+	}
+	return RouteEnrichmentSnapshot{
+		EntityID: row.ID,
+		InputIDs: append([]string(nil), ids...),
+		Expected: buildRouteEnrichmentForIDs(s, c3Dir, projectDir, ids, query),
+	}
+}
+
+// routeInputIDsBeforeEnrichment mirrors the read-only relationship inputs used
+// by enrichSearchRow. It lets the snapshot be taken before the row is mutated
+// while still binding the same owner/component/ref/rule route fields.
+func routeInputIDsBeforeEnrichment(s *store.Store, entityID string) []string {
+	ids := []string{entityID}
+	seen := map[string]bool{entityID: true}
+	appendID := func(id string) {
+		if id != "" && !seen[id] {
+			seen[id] = true
+			ids = append(ids, id)
+		}
+	}
+	if s == nil {
+		return ids
+	}
+	rels, err := s.RelationshipsFrom(entityID)
+	if err != nil {
+		return ids
+	}
+	var components []string
+	for _, rel := range rels {
+		if rel == nil {
+			continue
+		}
+		target, err := s.GetEntity(rel.ToID)
+		if err != nil {
+			continue
+		}
+		appendID(target.ID)
+		if target.Type == "component" {
+			components = append(components, target.ID)
+		}
+	}
+	for _, componentID := range components {
+		componentRels, err := s.RelationshipsFrom(componentID)
+		if err != nil {
+			continue
+		}
+		for _, rel := range componentRels {
+			if rel != nil {
+				appendID(rel.ToID)
+			}
+		}
+	}
+	return ids
+}
+
+func validateRouteSnapshot(snapshot RouteEnrichmentSnapshot, actual RouteEnrichment) error {
+	if snapshot.EntityID == "" {
+		return fmt.Errorf("route snapshot entity id is empty; hint: rerun search with a stored entity id")
+	}
+	expected, err := json.Marshal(snapshot.Expected)
+	if err != nil {
+		return fmt.Errorf("marshal expected route: %w", err)
+	}
+	got, err := json.Marshal(actual)
+	if err != nil {
+		return fmt.Errorf("marshal actual route: %w", err)
+	}
+	if string(expected) != string(got) {
+		return fmt.Errorf("route fields differ from pre-enrichment snapshot (expected=%s got=%s); hint: discard the unbound route claim", expected, got)
+	}
+	return nil
 }
 
 func buildRouteEnrichment(s *store.Store, c3Dir, projectDir, entityID, query string) RouteEnrichment {

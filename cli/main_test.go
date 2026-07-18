@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -524,6 +525,41 @@ func TestRun_RepairCommandExists(t *testing.T) {
 	err := run([]string{"--c3-dir", c3Dir, "repair"}, &buf)
 	if err != nil && strings.Contains(err.Error(), "unknown command") {
 		t.Fatalf("c3x repair must be wired up, got: %v", err)
+	}
+}
+
+func TestRun_RepairBypassesBrokenSealPreverifyWithoutCache(t *testing.T) {
+	c3Dir := setupRichC3DB(t)
+	seedCanonicalReadme(t, c3Dir)
+
+	c101Path := filepath.Join(c3Dir, "c3-1-api", "c3-101-auth.md")
+	body, err := os.ReadFile(c101Path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sealPattern := regexp.MustCompile(`(?m)^c3-seal: .+$`)
+	broken := sealPattern.ReplaceAll(body, []byte("c3-seal: deadbeef"))
+	if bytes.Equal(body, broken) {
+		t.Fatal("fixture has no c3-seal to break")
+	}
+	if err := os.WriteFile(c101Path, broken, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(filepath.Join(c3Dir, "c3.db")); err != nil {
+		t.Fatal(err)
+	}
+
+	var repairOut bytes.Buffer
+	if err := run([]string{"--c3-dir", c3Dir, "repair"}, &repairOut); err != nil {
+		t.Fatalf("repair must rebuild a missing cache from broken-seal canonical input: %v\n%s", err, repairOut.String())
+	}
+	if _, err := os.Stat(filepath.Join(c3Dir, "c3.db")); err != nil {
+		t.Fatalf("repair did not rebuild cache: %v", err)
+	}
+
+	var checkOut bytes.Buffer
+	if err := run([]string{"--c3-dir", c3Dir, "check"}, &checkOut); err != nil {
+		t.Fatalf("repaired tree must pass check: %v\n%s", err, checkOut.String())
 	}
 }
 

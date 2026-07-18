@@ -1,0 +1,2 @@
+{"case_id":"BR-001","family":"blast_radius","prompt":"What is affected if the shared event namespace changes? Give the causal path, direct and indirect dependents, failure boundaries, and verification."}
+{"case_id":"PI-001","family":"pre_initiative_change_unit","prompt":"Before adding per-team notification rules, propose the smallest safe change unit. Name owners, affected surfaces, governing constraints, unknowns, risks, alternatives, and executable checks."}

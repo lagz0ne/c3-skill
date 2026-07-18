@@ -1,0 +1,64 @@
+{
+  "protocol": "held-out-paired-c3-v23-micro",
+  "registered_content_at_utc": "2026-07-16T11:02:43Z",
+  "status": "prepared before any V23 arm or judge inference",
+  "estimand": "compact C3 treatment package versus compact standardized neutral baseline",
+  "objective": {
+    "valid_pair_count": 3,
+    "valid_arm_count": 6,
+    "required_surface_coverage_lift_target": 0.2,
+    "blocking_false_claim_lift_max": 0
+  },
+  "held_out_design": {
+    "private_cases_sha256": "285ebf41ec1b92d59233c828f4e13a6470ac50f1d8e07731c0c3877f1ec23e87",
+    "private_protocol_sha256": "ec160ffbbf0a43561f1b84a9bacb604bc3b9fb62dd63f93fb17ba3dd2c048867",
+    "all_historical_semantic_case_reuse_count": 0,
+    "independent_source_review_completed": true,
+    "project_specific_public_field_count": 0
+  },
+  "arms": {
+    "agent": "claude-haiku-4-5 low",
+    "condition_order_seed": 4231,
+    "defer_scoring": true,
+    "max_tool_calls_per_arm": 4,
+    "max_total_tokens_per_arm": 120000,
+    "max_output_bytes_per_arm": 65536,
+    "max_cost_usd_per_arm": 0.075,
+    "timeout_seconds_per_arm": 300,
+    "reserve_usd": 0.45,
+    "compact_answer_limit_words": 500,
+    "paired_orchestrator_sha256": "fb783031b6ce768855c4f3c0d720f5b542702f1e004733ded5133aa1ab53bb1d",
+    "paired_runner_sha256": "43d09cbd7856a7a639aa2ef3abbc87e55b82980223fbcdfb321c0fc7d973ae0e",
+    "bootstrap_sha256": "016f13ed3cd0a071fbce79600a239cfef40dc2dfd0738a085d0034e7bb125568",
+    "frozen_c3_binary_sha256": "73aa6df4572327bedf1ff87c0fa2558c0111ca7558856358b6eac43fc0f443d0"
+  },
+  "judging": {
+    "condition_blind": true,
+    "packet_scope": "three anonymous compact claim-only pairs; no repository or tools",
+    "judge_1": "claude-haiku-4-5 low, hard cap 0.045 USD",
+    "judge_2": "gpt-5.6-sol low, validity ceiling 0.105 USD",
+    "packet_builder_sha256": "d8908f2523d30828a213dcd092d910df175c799c7f5618640682e495a6cf535f",
+    "scorer_sha256": "2acbdf79ac6849cf8c7667bf2c9468a0548f7b79167bb557a7a345d54c667d99",
+    "resolution": "agreement is accepted; gold disagreement becomes not_supported; forbidden disagreement becomes supported",
+    "primary_score": "supported gold claims divided by registered gold claim count",
+    "blocking_false_claim_count": "contradicted gold claims plus supported forbidden claims",
+    "reserve_usd": 0.15
+  },
+  "analysis": {
+    "direction": "C3 treatment package minus neutral baseline",
+    "primary_metric": "mean paired required-surface coverage lift",
+    "secondary_metric": "mean paired blocking-false-claim lift",
+    "small_sample_rule": "Report point estimate and all three pair effects. Do not claim population certainty."
+  },
+  "anti_goals": {
+    "prior_confirmatory_spend_usd": 3.387763,
+    "cumulative_confirmatory_cost_usd_max": 4.0,
+    "cumulative_worst_case_reserved_usd": 3.987763,
+    "unallocated_headroom_usd": 0.012237,
+    "protocol_deviation_count_max": 0,
+    "public_project_specific_field_count_max": 0,
+    "historical_case_reuse_count_max": 0,
+    "anti_goal_bypass_or_dishonesty_count_max": 0
+  },
+  "stopping_rule": "Stop on an invalid arm, cumulative admission failure, missing judge output, judge ceiling breach, privacy breach, or protocol deviation. Do not rerun or substitute. Pass only when all three pairs are valid, both judges complete, lift is at least 0.20, false-claim lift is at most 0, and all walls hold."
+}

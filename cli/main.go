@@ -111,6 +111,26 @@ func runWithIO(argv []string, stdin io.Reader, stdinTerminal bool, w io.Writer, 
 		return runThroughCoordinator(argv, stdin, stdinTerminal, c3Dir, w, stderr)
 	}
 
+	// Repair is the recovery path for a missing cache or broken canonical seal.
+	// It rebuilds and opens its own store, so requiring EnsureLocalCache or opening
+	// c3.db before dispatch would make the printed check -> repair loop impossible.
+	if opts.Command == "repair" {
+		rollback, err := newMutationSnapshot(c3Dir)
+		if err != nil {
+			return fmt.Errorf("error: create mutation rollback snapshot: %w", err)
+		}
+		defer rollback.cleanup()
+		if err := cmd.RunRepair(cmd.RepairOptions{
+			C3Dir: c3Dir, JSON: opts.JSON, IncludeADR: opts.IncludeADR, Only: opts.Only,
+		}, w); err != nil {
+			if restoreErr := rollback.restore(); restoreErr != nil {
+				return fmt.Errorf("%w\nrollback failed: %v", err, restoreErr)
+			}
+			return err
+		}
+		return nil
+	}
+
 	// Mutations bypass preverify (ADR mutation-preverify-repair-bypass): the
 	// mutation itself may be the fix.
 	if hasCanonical {
@@ -454,6 +474,7 @@ func runCommand(opts cmd.Options, s *store.Store, c3Dir string, stdin io.Reader,
 			TypeFilter: opts.TypeFilter,
 			Semantic:   opts.Semantic,
 			NoSemantic: opts.NoSemantic,
+			Pack:       opts.Pack,
 			ProjectDir: projectDir,
 			C3Dir:      c3Dir,
 		}, w)

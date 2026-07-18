@@ -1,0 +1,34 @@
+{
+  "protocol": "held-out-paired-c3-v20-result",
+  "status": "stopped_on_registered_invalid_arm_rule",
+  "external_revision": "09177a3a1009c18d72f176dbe4b0e5ff0a671f40",
+  "completed_arm_count": 2,
+  "valid_arm_count": 1,
+  "valid_pair_count": 0,
+  "accounted_cost_usd": 0.287824,
+  "cumulative_v19_v20_cost_usd": 0.560618,
+  "failure": {
+    "control_case_family": "retry-safe multi-step reconciliation",
+    "treatment_case_family": "archival with copied-value isolation",
+    "deviation_code": "C3_UPTAKE_MISSING",
+    "generic_root_causes": [
+      "The nested agent sandbox treated the home cache as read-only even though the outer isolation directory existed.",
+      "A successful empty search was not treated as a fallback condition.",
+      "The repository-inspection gate intercepted bootstrap parser utilities before impact.",
+      "The gate intercepted a direct-trigger read of the mounted C3 skill before routing."
+    ]
+  },
+  "repair_evidence": {
+    "persistent_diagnostic_c3_invocation_count": 4,
+    "persistent_diagnostic_route_success_count": 1,
+    "persistent_diagnostic_impact_success_count": 1,
+    "persistent_diagnostic_evidence_success_count": 2,
+    "persistent_diagnostic_answer_produced": true
+  },
+  "post_failure_actions": {
+    "judges_run": false,
+    "answers_used_for_effect_estimation": false,
+    "v20_cases_with_any_model_exposure_excluded_from_successor": true
+  },
+  "paper_grade_claim_supported": false
+}

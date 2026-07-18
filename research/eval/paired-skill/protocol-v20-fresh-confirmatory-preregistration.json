@@ -1,0 +1,74 @@
+{
+  "protocol": "held-out-paired-c3-v20",
+  "registered_at_utc": "2026-07-16T09:24:16Z",
+  "status": "prepared before any v20 inference",
+  "supersedes": {
+    "protocol": "held-out-paired-c3-v19",
+    "reason": "V19 stopped on its first invalid treatment arm. The task-level treatment text had competing manual and bootstrap entrypoints. V20 freezes a single bootstrap entrypoint.",
+    "v19_valid_pair_count": 0,
+    "v19_judge_count": 0,
+    "v19_accounted_cost_usd": 0.272794
+  },
+  "objective": {
+    "fresh_case_family_count": 3,
+    "valid_pair_count": 3,
+    "valid_arm_count": 6,
+    "required_surface_coverage_lift_target": 0.2,
+    "blocking_false_claim_lift_max": 0
+  },
+  "held_out_design": {
+    "families": [
+      "retry-safe multi-step reconciliation",
+      "failure-safe relationship reassignment",
+      "archival with copied-value isolation"
+    ],
+    "private_cases_sha256": "58fef453d57d08d7eb4303123631327b2b70bee1af61339c4e09cb6cc7d232fe",
+    "private_protocol_sha256": "38a3ccf3a8ac9a85ef328d7f3fae83245004f917431a36ded1cf3a638659d199",
+    "v19_inferred_case_reuse_count": 0,
+    "project_specific_public_field_count": 0
+  },
+  "controls": {
+    "agent": "gpt-5.6-sol low",
+    "standardized_baseline_instruction_sha256": "c67682acb11535517ba2c70c08eb2de907c506dabc3e2f2a5c69e0f3fafd7ac9",
+    "forced_treatment_instruction_sha256": "86dafd2a6d2c1766276aa5b05ea285cce7218bf9719564be8b6a6a1c2d99ec8b",
+    "paired_runner_sha256": "f59e0aa2e7a4a15ae61ad7ae81f39a161ff012f659ab47f5a88210f8d31b3465",
+    "frozen_c3_binary_sha256": "73aa6df4572327bedf1ff87c0fa2558c0111ca7558856358b6eac43fc0f443d0",
+    "condition_order_seed": 4201,
+    "max_tool_calls_per_arm": 10,
+    "max_total_tokens_per_arm": 500000,
+    "max_cost_usd_per_arm": 0.27,
+    "timeout_seconds_per_arm": 600,
+    "arm_reserve_usd": 1.62
+  },
+  "judging": {
+    "judge_count": 2,
+    "distinct_provider_count": 2,
+    "condition_blind": true,
+    "packet_scope": "claim-only; no source repository or tools",
+    "judge_1": "claude-fable-5 low, hard cap 0.70 USD",
+    "judge_2": "gpt-5.6-sol high, reserve 0.45 USD",
+    "conditional_adjudicator": "gpt-5.6-luna high, reserve 0.65 USD",
+    "primary_score": "supported gold claims divided by gold claim count",
+    "blocking_false_claim_count": "contradicted gold claims plus supported forbidden claims",
+    "preference_rule": "fewer blocking false claims wins; if equal, higher required-surface coverage wins; otherwise tie",
+    "raw_preference_agreement_target": 0.6666666667,
+    "adjudication": "Every preference disagreement or blocking-false-count disagreement is adjudicated from a blind packet containing anonymous judgments.",
+    "reserve_usd": 1.8
+  },
+  "analysis": {
+    "direction": "with skill minus without skill",
+    "bootstrap_seed": 20260720,
+    "bootstrap_resamples": 100000,
+    "confidence_level": 0.95,
+    "small_sample_rule": "Report the three-pair point estimate and interval; do not claim population-level certainty if the interval crosses zero."
+  },
+  "anti_goals": {
+    "cumulative_v19_v20_cost_usd_max": 4.0,
+    "cumulative_worst_case_reserved_usd": 3.692794,
+    "v20_protocol_deviation_count_max": 0,
+    "public_project_specific_field_count_max": 0,
+    "v19_inferred_case_reuse_count_max": 0,
+    "anti_goal_bypass_or_dishonesty_count_max": 0
+  },
+  "stopping_rule": "Stop on any invalid arm, missing registered judge output, budget admission failure, privacy breach, or protocol deviation. Do not substitute or rerun a failed registered judge. The objective passes only when lift >= 0.20, false-claim lift <= 0, two judges exist, raw agreement >= 2/3, every required disagreement is adjudicated, and all walls hold."
+}

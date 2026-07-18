@@ -1,0 +1,22 @@
+{
+  "protocol": "paired-skill-study-cost-ledger-v10",
+  "currency": "USD",
+  "price_schedule": "conservative-2026-07-16-v1",
+  "reported_or_arm_estimated_cost_usd": 7.6768618,
+  "codex_reported_token_usage_estimated_cost_usd": 1.060572,
+  "total_accounted_cost_usd": 8.7374338,
+  "study_ceiling_usd": 10.0,
+  "remaining_accounted_budget_usd": 1.2625662,
+  "accounted_ceiling_passed": true,
+  "actual_billing_ceiling_status": "unknown",
+  "codex_price_formula": "uncached_input*2.0e-6 + cached_input*0.5e-6 + output*8.0e-6",
+  "included": [
+    "18 valid arms",
+    "one invalid arm attempt",
+    "provider probes",
+    "v8 judges and adjudication",
+    "v9 judges and new adjudication",
+    "v10 exhausted no-result judge call"
+  ],
+  "note": "Anthropic amounts are provider-reported. Codex amounts use reported tokens and the study price schedule; they are cost estimates rather than billing records. The accounted total is below the ceiling, but actual Codex billing is unavailable."
+}

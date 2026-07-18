@@ -216,3 +216,52 @@ func TestSlugFromPath(t *testing.T) {
 		})
 	}
 }
+
+func TestSlugFromEntityPath(t *testing.T) {
+	tests := []struct {
+		name string
+		path string
+		id   string
+		want string
+	}{
+		{
+			name: "numeric component",
+			path: "c3-1-api/c3-101-auth.md",
+			id:   "c3-101",
+			want: "auth",
+		},
+		{
+			name: "custom component ID with no slug suffix",
+			path: "c3-4-nats-server-external/component-nats-core-broker-.md",
+			id:   "component-nats-core-broker-",
+			want: "",
+		},
+		{
+			name: "custom component ID with slug suffix",
+			path: "c3-4-nats-server-external/component-nats-core-broker--adapter.md",
+			id:   "component-nats-core-broker-",
+			want: "adapter",
+		},
+		{
+			name: "container README",
+			path: "c3-4-nats-server-external/README.md",
+			id:   "c3-4",
+			want: "nats-server-external",
+		},
+		{
+			name: "canonical ADR filename",
+			path: "adr/adr-20260626-retire-legacy-behavior-source.md",
+			id:   "adr-20260626-retire-legacy-behavior-source",
+			want: "retire-legacy-behavior-source",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := SlugFromEntityPath(tt.path, tt.id)
+			if got != tt.want {
+				t.Errorf("SlugFromEntityPath(%q, %q) = %q, want %q", tt.path, tt.id, got, tt.want)
+			}
+		})
+	}
+}

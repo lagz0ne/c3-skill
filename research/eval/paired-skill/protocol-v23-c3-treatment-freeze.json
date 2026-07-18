@@ -1,0 +1,24 @@
+{
+  "protocol": "held-out-paired-c3-v23-treatment-freeze",
+  "frozen_at_utc": "2026-07-16T11:02:43Z",
+  "status": "frozen before V23 inference",
+  "estimand": "compact C3 treatment package versus compact standardized neutral baseline",
+  "candidate": {
+    "bootstrap_sha256": "016f13ed3cd0a071fbce79600a239cfef40dc2dfd0738a085d0034e7bb125568",
+    "treatment_instruction_sha256": "c1c879443a6c1abe4c92e23488fe2504fb2efb3639c6e381a5dddf69b4df660c",
+    "baseline_instruction_sha256": "c67682acb11535517ba2c70c08eb2de907c506dabc3e2f2a5c69e0f3fafd7ac9",
+    "paired_orchestrator_sha256": "fb783031b6ce768855c4f3c0d720f5b542702f1e004733ded5133aa1ab53bb1d",
+    "paired_runner_sha256": "43d09cbd7856a7a639aa2ef3abbc87e55b82980223fbcdfb321c0fc7d973ae0e",
+    "frozen_c3_binary_sha256": "73aa6df4572327bedf1ff87c0fa2558c0111ca7558856358b6eac43fc0f443d0"
+  },
+  "behavior_change": [
+    "load the registered impact-sweep procedure during bootstrap",
+    "inspect forward and reverse relationship context",
+    "emit a generic five-lane closure queue",
+    "spend remaining calls on the two highest-risk unknown lanes"
+  ],
+  "provider_tool_call_ceiling_changed": false,
+  "false_claim_guard_weakened": false,
+  "public_project_specific_field_count": 0,
+  "anti_goal_bypass_or_dishonesty_count": 0
+}

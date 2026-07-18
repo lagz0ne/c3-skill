@@ -1,0 +1,20 @@
+{
+  "$schema": "structural-retrieval-benchmark.v3",
+  "fixture_file": "fixtures.v4.json",
+  "baseline_file": "B-v4-baseline.json",
+  "baseline_capture_script": "cli/tools/structural-search-eval-v3/cli.go",
+  "fixture_count": 4,
+  "k": 5,
+  "semantic_mode": "no-semantic",
+  "thresholds": {
+    "owner_recall_at_5_delta": 0.2,
+    "structural_owner_precision": 0.8,
+    "canonical_row_bytes_ratio": 1.05
+  },
+  "privacy": {
+    "policy_sha256": "7f038b3eef110d2765aa1aa003003fc19e0b390a3623a6978712e813831d7055",
+    "scanner_source_sha256": "33b6452a0e34d825ef2b895609daa77b91eb129ebdc1e6be8f7f7755fc8b9c6e",
+    "detector_definition_sha256": "e9f28b8fe0dafd3effa283acba95e4625b3de38bc1d80615e8d771042edfa8e7",
+    "scan_scope": ["v4 fixtures", "v4 benchmark", "retained generic output"]
+  }
+}

@@ -71,6 +71,19 @@ maybe_install_ast_grep() {
   fi
 }
 
+# Development and migration tooling can build the current checkout into a private
+# binary, then still route every operation through this repository-local wrapper.
+# The override is explicit and session-scoped; installed/global C3 remains unused.
+if [ -n "${C3X_LOCAL_BINARY:-}" ]; then
+  if [ ! -x "$C3X_LOCAL_BINARY" ]; then
+    echo "Error: C3X_LOCAL_BINARY is not executable: $C3X_LOCAL_BINARY" >&2
+    exit 1
+  fi
+  export C3X_VERSION="${C3X_LOCAL_VERSION:-$VERSION}"
+  maybe_install_ast_grep "${1-}"
+  exec "$C3X_LOCAL_BINARY" "$@"
+fi
+
 print_wrapper_help() {
   cat <<EOF
 Usage: c3x <command> [options]

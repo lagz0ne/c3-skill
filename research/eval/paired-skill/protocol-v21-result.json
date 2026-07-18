@@ -1,0 +1,34 @@
+{
+  "protocol": "held-out-paired-c3-v21-result",
+  "status": "stopped before judging",
+  "planned_arm_count": 6,
+  "completed_arm_count": 5,
+  "valid_collected_arm_count": 4,
+  "invalid_arm_count": 1,
+  "valid_pair_count": 1,
+  "v21_arm_cost_usd": 0.90666,
+  "cumulative_v19_v20_v21_confirmatory_cost_usd": 1.467278,
+  "stop": {
+    "code": "PER_RUN_COST_BUDGET_BREACH",
+    "registered_limit_usd": 0.27,
+    "observed_invalid_arm_cost_usd": 0.27136,
+    "excess_usd": 0.00136
+  },
+  "uptake": {
+    "completed_treatment_arm_count": 2,
+    "valid_treatment_uptake_count": 2,
+    "c3_uptake_failure_count": 0
+  },
+  "judging": {
+    "judges_run": false,
+    "adjudication_run": false,
+    "effect_estimated": false
+  },
+  "successor_rule": {
+    "all_cases_with_any_v21_model_exposure_excluded": true,
+    "remaining_cumulative_confirmatory_budget_usd": 2.532722,
+    "required_change": "Use entirely fresh cases and preregister lower-cost arms and claim-only judges before inference."
+  },
+  "public_project_specific_field_count": 0,
+  "anti_goal_bypass_or_dishonesty_count": 0
+}

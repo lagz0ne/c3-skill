@@ -1,0 +1,24 @@
+{
+  "protocol":"held-out-paired-c3-v28-result",
+  "status":"stopped on first invalid arm before Opus judging",
+  "arms":{
+    "planned":6,
+    "attempted":1,
+    "valid":0,
+    "invalid":1,
+    "failure":{
+      "condition":"compact standardized neutral baseline",
+      "reason":"The runtime supervisor stopped the arm after its first provider tool call before an answer or usage receipt. V28 did not retain the guard reason in the generic result, so the failure is conservatively charged at the registered arm ceiling.",
+      "observed_tool_events":1,
+      "answer_present":false,
+      "usage_present":false
+    }
+  },
+  "judges":{"run":false,"minimum_model":"Claude Opus","minimum_effort":"medium"},
+  "effect":{"confirmatory_effect_estimated":false},
+  "budget":{"prior_actual_and_conservative_confirmatory_cost_usd":3.6589343,"v28_conservative_cost_usd":0.034,"cumulative_confirmatory_cost_usd":3.6929343,"ceiling_usd":4.0,"remaining_usd":0.3070657},
+  "product_learning":"Replacing default Codex model instructions made startup admission plausible, but one unrestricted source command can still cross the cumulative tool-result breaker. The next runtime records the guard reason and tool-result bytes, lowers the result ceiling, and requires bounded source commands.",
+  "post_failure_rule":"Do not rerun the exposed case. Any successor must use a fresh replacement case and freeze the tighter tool-result and output envelopes before inference.",
+  "public_project_specific_field_count":0,
+  "anti_goal_bypass_or_dishonesty_count":0
+}

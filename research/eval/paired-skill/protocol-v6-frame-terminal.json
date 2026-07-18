@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "protocol": "v6-incremental-frame-terminal",
+  "model": "gpt-5.6-sol",
+  "reasoning_effort": "low",
+  "decision": "stop_before_expensive_models",
+  "hypothesis_status": "supported_for_blast_radius_not_generalized",
+  "valid_pair_count": 3,
+  "valid_unique_case_count": 2,
+  "invalid_pair_count": 2,
+  "driver_accounted_continuation_cost_usd": 1.370148,
+  "driver_accounted_frame_cost_usd": 1.695824,
+  "frame_cost_limit_usd": 2.0,
+  "accepted_observations": [
+    {
+      "study_id": "STUDY-105",
+      "case_id": "BR-101",
+      "case_family": "blast_radius",
+      "c3_passed": true,
+      "control_passed": true,
+      "quality_delta": 0.119,
+      "correctness_delta": 0.4,
+      "effective_token_delta": -11656,
+      "elapsed_ms_delta": -28973,
+      "cost_usd_delta": -0.06102,
+      "protocol_deviation_count": 0
+    },
+    {
+      "study_id": "STUDY-106",
+      "case_id": "BR-101",
+      "case_family": "blast_radius",
+      "c3_passed": true,
+      "control_passed": true,
+      "quality_delta": 0.267,
+      "correctness_delta": 0.4,
+      "effective_token_delta": -5463,
+      "elapsed_ms_delta": -21360,
+      "cost_usd_delta": -0.044414,
+      "protocol_deviation_count": 0
+    },
+    {
+      "study_id": "STUDY-109",
+      "case_id": "PI-202",
+      "case_family": "pre_initiative_change_unit",
+      "c3_passed": false,
+      "control_passed": false,
+      "quality_delta": 0.233,
+      "correctness_delta": 0.4,
+      "effective_token_delta": -5587,
+      "elapsed_ms_delta": 2712,
+      "cost_usd_delta": -0.044764,
+      "protocol_deviation_count": 0
+    }
+  ],
+  "invalid_observations": [
+    {
+      "study_id": "STUDY-107",
+      "case_id": "PI-201",
+      "reason": "scorer_contract_mismatch_found_by_post_run_audit",
+      "cost_usd": 0.375058
+    },
+    {
+      "study_id": "STUDY-108",
+      "case_id": "PI-201",
+      "reason": "control_total_token_budget_breach",
+      "cost_usd": 0.37308
+    }
+  ],
+  "valid_observation_means": {
+    "quality_delta": 0.206333,
+    "correctness_delta": 0.4,
+    "effective_token_delta": -7568.666667,
+    "elapsed_ms_delta": -15873.666667,
+    "cost_usd_delta": -0.050066
+  },
+  "expensive_model_gate": {
+    "required": "three_clean_case_pairs_with_at_least_two_quality_or_correctness_improvements",
+    "met": false,
+    "reason": "only_two_unique_cases_produced_valid_pairs_and_the_audit_case_missed_the_correctness_floor"
+  },
+  "limitations": [
+    "Two accepted observations repeat the same blast-radius case.",
+    "The audit pair improved under C3 but neither arm passed semantic correctness.",
+    "The synchronization case produced no valid pair.",
+    "The reviews are condition-blind deterministic rubrics, not provider-confirmed independent model reviews.",
+    "No confidence interval or paper-level causal claim is supported by this pilot."
+  ],
+  "retention": {
+    "project_identifiers": false,
+    "project_paths": false,
+    "question_text": false,
+    "answer_text": false,
+    "gold_markers": false,
+    "raw_model_output": false
+  },
+  "standing_walls": [
+    "generic_only_retention",
+    "source_immutability",
+    "frozen_treatment_binary",
+    "arm_parity",
+    "budget_ceiling",
+    "no_single_model_truth_claim"
+  ]
+}

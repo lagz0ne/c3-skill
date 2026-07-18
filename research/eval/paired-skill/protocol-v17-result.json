@@ -1,0 +1,51 @@
+{
+  "protocol": "held-out-paired-c3-v17-result",
+  "status": "confirmatory_study_failed_at_primary_judging",
+  "externally_registered_revision": "8773dda65c4ff64dc5eb314615239fbf8841855a",
+  "arms": {
+    "valid_pair_count": 9,
+    "valid_arm_count": 18,
+    "conceptual_case_family_count": 3,
+    "repeats_per_condition_per_family": 3,
+    "agent_model": "gpt-5.6-sol",
+    "agent_effort": "low",
+    "valid_arm_protocol_deviation_count": 0,
+    "standardized_baseline_instruction_sha256": "c67682acb11535517ba2c70c08eb2de907c506dabc3e2f2a5c69e0f3fafd7ac9",
+    "treatment_instruction_sha256": "86dafd2a6d2c1766276aa5b05ea285cce7218bf9719564be8b6a6a1c2d99ec8b",
+    "frozen_runtime_sha256": "e346474c62fa093daac590734c6adcb28e1dbf7164500952003db48502a6901b"
+  },
+  "blind_packets": {
+    "judge_1_sha256": "d035334b2556ea0cb5b26129976a2c8f8e4c597685f901002740c14fad40fd9a",
+    "judge_2_sha256": "1c604f889cb8864e870f50a4ba1680700a820d582a448c9bf4851001d7b3d94b",
+    "private_mapping_commitment_sha256": "f1a67f80b68716e44e5efc3b4947599aaa9aab63a8f304925f264c90bdc56b99",
+    "condition_identifying_token_scan_match_count": 0
+  },
+  "primary_judging": {
+    "judge_1_provider": "Anthropic",
+    "judge_1_actual_model": "claude-opus-4-8",
+    "identity_evidence": "provider response metadata",
+    "registered_aggregate_judging_reserve_usd": 2.63088,
+    "unregistered_runner_judge_1_budget_cap_usd": 1.8,
+    "provider_reported_cost_usd": 1.9155995,
+    "terminal_reason": "budget_exhausted",
+    "failure_cause": "The runner introduced an unregistered 1.80 USD per-judge cap inside the registered aggregate judging reserve. Judge 1 exhausted that cap without producing a judgment.",
+    "judgment_produced": false,
+    "judge_2_executed": false,
+    "agreement_measured": false,
+    "adjudication_executed": false
+  },
+  "gates": {
+    "two_provider_confirmed_judges": false,
+    "raw_pair_preference_agreement_at_least_0_8": false,
+    "every_disagreement_adjudicated": false,
+    "confidence_intervals_from_primary_semantic_judgments": false,
+    "v17_study_protocol_deviation_count": 1,
+    "zero_public_project_data_leakage": true,
+    "successor_study_accounted_cost_at_or_below_10_usd": true
+  },
+  "protocol_deviation_codes": [
+    "UNREGISTERED_PER_JUDGE_BUDGET_CAP_CAUSED_NO_OUTPUT"
+  ],
+  "paper_grade_claim_supported": false,
+  "post_failure_rule": "Do not substitute models, rerun the fixed judge, or use the already observed answers as a new confirmatory study under this budget. The valid arms may be retained only as explicitly exploratory evidence."
+}

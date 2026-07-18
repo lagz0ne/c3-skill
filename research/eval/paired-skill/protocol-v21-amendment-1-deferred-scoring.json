@@ -1,0 +1,23 @@
+{
+  "protocol": "held-out-paired-c3-v21-amendment-1",
+  "applies_to": "protocol-v21-fresh-confirmatory-preregistration.json",
+  "prepared_at_utc": "2026-07-16T10:15:00Z",
+  "timing": "after external preregistration and before any V21 arm or judge inference",
+  "reason": "The arm runner admission check found that its legacy interface required immediate per-arm scoring. V21 preregisters paired claim-only judging only after all six valid arms. Immediate scoring would contradict the registered design.",
+  "change": {
+    "paired_orchestrator_sha256_before": "3453f356841acf46c5c9a42d24cbc8abec2a7d9931fb03641e41a6d81db3ce94",
+    "paired_orchestrator_sha256_after": "5a782e7c2d4ed62e1daca0a5df2e6951045b1671f86d050a4432e86e5fc965eb",
+    "new_flag": "--defer-scoring",
+    "valid_arm_state_before_judging": "collected",
+    "per_arm_score_command_required": false
+  },
+  "unchanged": [
+    "cases and private case hash",
+    "model, effort, seed, arm budgets, and arm stopping rule",
+    "C3 skill, binary, bootstrap, runner, and treatment instruction hashes",
+    "two blind judge identities and budgets",
+    "claim-only packet, metrics, adjudication, analysis, and anti-goals"
+  ],
+  "inference_started_before_amendment": false,
+  "public_project_specific_field_count": 0
+}

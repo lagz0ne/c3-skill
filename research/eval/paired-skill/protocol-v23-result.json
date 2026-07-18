@@ -1,0 +1,37 @@
+{
+  "protocol": "held-out-paired-c3-v23-result",
+  "status": "stopped on first invalid arm before judging",
+  "arms": {
+    "planned": 6,
+    "attempted": 1,
+    "valid": 0,
+    "invalid": 1,
+    "exposed_case_count": 1,
+    "failure": {
+      "condition": "standardized neutral baseline",
+      "reason": "The registered four-tool-call ceiling conflicted with the unchanged baseline instruction allowance of five discovery calls.",
+      "runtime_status": "budget_killed",
+      "usage_receipt_available": false,
+      "reported_cost_usd": 0.0,
+      "conservative_accounted_cost_usd": 0.075
+    }
+  },
+  "judges": {
+    "run": false,
+    "reason": "The preregistered stop rule fired before any valid pair existed."
+  },
+  "effect": {
+    "confirmatory_effect_estimated": false
+  },
+  "budget": {
+    "prior_confirmatory_cost_usd": 3.387763,
+    "v23_conservative_cost_usd": 0.075,
+    "cumulative_confirmatory_cost_usd": 3.462763,
+    "ceiling_usd": 4.0,
+    "remaining_usd": 0.537237
+  },
+  "post_failure_rule": "Do not rerun the exposed case. A successor must keep the standardized five-call baseline allowance and use fresh replacement material.",
+  "human_successor_constraint": "Every semantic judge must be Claude Opus medium or stronger.",
+  "public_project_specific_field_count": 0,
+  "anti_goal_bypass_or_dishonesty_count": 0
+}

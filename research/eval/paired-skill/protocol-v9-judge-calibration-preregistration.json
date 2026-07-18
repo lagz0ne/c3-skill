@@ -1,0 +1,43 @@
+{
+  "protocol": "paired-skill-judge-calibration-v9",
+  "registered_at_utc": "2026-07-16",
+  "status": "registered_before_judge_calls",
+  "purpose": "Measure whether an explicit source-claim decision rule raises condition-blind inter-judge reliability without changing arms, answers, mappings, or prior outcomes.",
+  "immutable_inputs": {
+    "valid_pair_count": 9,
+    "valid_arm_count": 18,
+    "judge_1_packet_sha256": "fac5c77feead823cea9b2fe97f4b2172da6bcaec6dfe85d2d13fba88ccb25a6c",
+    "judge_2_packet_sha256": "766dca1b8f09c313ebc58c9432e4e51cc933c0be38842af96d401a4e0ad73d71",
+    "opposite_alias_order": true,
+    "condition_labels_visible": false
+  },
+  "decision_rule": [
+    "Prefer an answer with no blocking source-contradicted claim over an answer with any such claim.",
+    "When blocking-claim status is equal, prefer higher correctness.",
+    "When correctness is equal, prefer higher change usefulness.",
+    "Return tie only when all three comparisons are equal."
+  ],
+  "generic_calibration_example_count": 2,
+  "judges": [
+    {
+      "provider": "Anthropic",
+      "requested_model": "faber",
+      "effort": "low",
+      "hard_call_cap_usd": 0.35
+    },
+    {
+      "provider": "OpenAI",
+      "requested_model": "gpt-5.6-sol",
+      "effort": "low",
+      "cost_accounting": "conservative token-price estimate"
+    }
+  ],
+  "gates": {
+    "provider_confirmed_actual_model_count_required": 2,
+    "raw_pair_preference_agreement_required": 0.8,
+    "adjudicate_every_disagreement": true,
+    "public_project_specific_content_required": 0,
+    "total_study_spend_ceiling_usd": 10.0
+  },
+  "reporting": "Preserve protocol-v8 as the uncalibrated round. Report v9 separately and do not replace, rescore, or hide the prior disagreement."
+}

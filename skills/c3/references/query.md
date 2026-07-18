@@ -1,6 +1,6 @@
 # Query — reading the frozen facts
 
-The **read** beat of Act 1. The topology you read here is **frozen shared truth** — onboarded once, changed only through change-units (`change.md`). So a `read` / `lookup` / `search` / `graph` result is **canonical**: answer from it with confidence, no hedging about whether the doc is current. Full context = these facts + the code they bind.
+The **read** beat of Act 1. The topology you read here is **frozen shared truth** — onboarded once, changed only through change-units (`change.md`). A `read` / `lookup` / `search` / `graph` result is canonical for what C3 records. It is not automatic proof that uncontrolled runtime code still implements every recorded claim. For current-behavior questions, use returned source anchors or `lookup` bindings for narrow source proof. Keep stored decisions, planned changes, inference, and implemented behavior separate.
 
 Reads are free and side-effect-free — favor them. Reach for `C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" list` / `C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" check` only on a search miss, suspected drift, or a topology-wide inventory (the Precondition in `SKILL.md`). **Never Read/Glob/Edit `.c3/` instance files** — they are CLI-only and raw access goes stale.
 
@@ -8,11 +8,13 @@ Reads are free and side-effect-free — favor them. Reach for `C3X_MODE=agent ba
 
 | You have | Run | You get |
 |----------|-----|---------|
-| A concept, capability, paraphrase ("where is X", "what handles Y") | `C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" search "<question>"` | Ranked entities by semantic + keyword + graph signal, plus route clues when available |
+| A concept, capability, paraphrase ("where is X", "what handles Y") | `C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" search "<question>" --pack --limit 3` | Distinct ranked evidence with citations, stored-record class/state, matching `Current Behavior` rows, route lanes, and source anchors |
 | A known file or glob | `C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" lookup <file-or-glob>` | Owning component(s) + governing refs/rules |
 | A known id (± section) | `C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" read <id> --section <name>` | Entity body |
 
-For natural-language questions reach for `search` **before** `list`-and-title-matching — search ranks by meaning. `match_sources` tells you *why* a hit ranked: `semantic` = meaning matched despite different wording; `content_fts` / `entity_fts` = keyword; `graph:*` = relationship context. Use `C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" list` only for inventory/coverage **after** candidates are known.
+For natural-language questions reach for `search --pack --limit 3` **before** `list`-and-title-matching — search ranks by meaning and the pack preserves distinct evidence routes instead of betting on one result. `match_sources` tells you *why* a hit ranked: `semantic` = meaning matched despite different wording; `content_fts` / `entity_fts` = keyword; `graph:*` = relationship context. Use `C3X_MODE=agent bash "<skill-dir>/bin/c3x.sh" list` only for inventory/coverage **after** candidates are known.
+
+When a fact has a `Current Behavior` table, the pack returns up to two query-matching rows as `record_claims`. Each row should name the mechanism, behavior class, exact current claim, source anchor, and bounded failure or absence. These rows are compact routing evidence, not a freshness verdict: verify their cited source before presenting them as current runtime truth.
 
 ## Navigate the layers
 

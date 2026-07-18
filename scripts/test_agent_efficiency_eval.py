@@ -112,6 +112,33 @@ class AgentEfficiencyEvalTests(unittest.TestCase):
 
         self.assertEqual(ev.extract_turn_count(text), 1)
 
+    def test_extract_claude_json_usage_and_num_turns(self):
+        text = json.dumps(
+            {
+                "type": "result",
+                "num_turns": 3,
+                "usage": {
+                    "input_tokens": 120,
+                    "cache_read_input_tokens": 20,
+                    "output_tokens": 30,
+                },
+            }
+        )
+
+        usage = ev.extract_token_usage(text)
+
+        self.assertEqual(usage["input_tokens"], 140)
+        self.assertEqual(usage["cached_input_tokens"], 20)
+        self.assertEqual(usage["output_tokens"], 30)
+        self.assertEqual(usage["total_tokens"], 170)
+        self.assertEqual(usage["effective_tokens"], 150)
+        self.assertEqual(ev.extract_turn_count(text), 3)
+
+    def test_extract_claude_reported_cost(self):
+        text = json.dumps({"total_cost_usd": 0.5291655, "usage": {"input_tokens": 1}})
+
+        self.assertEqual(ev.extract_reported_cost_usd(text), 0.5291655)
+
     def test_extract_trace_metrics_finds_c3_commands(self):
         text = 'C3X_MODE=agent bash skills/c3/bin/c3x.sh canvas read prd\n{"type":"turn.completed"}\n'
 

@@ -44,7 +44,7 @@ type Patch struct {
 	Type     string   // create: the new fact's canvas type
 	Parent   string   // create / frontmatter: parent entity id
 	Title    string   // create / frontmatter: title
-	Uses     []string // frontmatter: re-edge — the new `uses` (ref) target set
+	Uses     []string // frontmatter: re-edge when the target canvas does not body-own `uses`
 	Boundary string   // frontmatter: boundary attribute (parity with `set`)
 	Category string   // frontmatter: category attribute (parity with `set`)
 	Date     string   // frontmatter: date attribute (parity with `set`)

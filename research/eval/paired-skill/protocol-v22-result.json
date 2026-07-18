@@ -1,0 +1,43 @@
+{
+  "protocol": "held-out-paired-c3-v22-result",
+  "status": "stopped on missing registered primary judge output",
+  "arms": {
+    "planned": 6,
+    "valid": 6,
+    "invalid": 0,
+    "valid_pairs": 3,
+    "cost_usd": 0.95561,
+    "treatment_uptake_success_count": 3,
+    "treatment_uptake_failure_count": 0
+  },
+  "judges": {
+    "fable_low": {
+      "completed": false,
+      "registered_hard_cap_usd": 0.25,
+      "reported_cost_usd": 0.881185,
+      "terminal_subtype": "error_max_budget_usd",
+      "output_available": false,
+      "receipt_sha256": "5013f2c51fc8ef0699c15d98eec101c19913eb8794cb94daf596d39735773100"
+    },
+    "sol_high": {
+      "completed": true,
+      "calculated_cost_usd": 0.08369,
+      "registered_validity_ceiling_usd": 0.25,
+      "output_available": true,
+      "receipt_sha256": "69626631a6c252b1a1221f9cd327764ccbb6473e55863cac68fbc1ccb81e2680"
+    },
+    "luna_adjudication_run": false
+  },
+  "effect": {
+    "confirmatory_effect_estimated": false,
+    "reason": "The registered two-provider judge requirement was not met. Sol output alone is insufficient."
+  },
+  "budget": {
+    "cumulative_v19_v20_v21_v22_confirmatory_cost_usd": 3.387763,
+    "ceiling_usd": 4.0,
+    "remaining_usd": 0.612237
+  },
+  "post_failure_rule": "Do not rerun Fable, substitute another primary judge, or treat Sol-only labels as a confirmatory verdict. V22 answers may be retained only as exploratory evidence.",
+  "public_project_specific_field_count": 0,
+  "anti_goal_bypass_or_dishonesty_count": 0
+}

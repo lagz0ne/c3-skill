@@ -1,0 +1,68 @@
+{
+  "protocol": "held-out-paired-c3-v12",
+  "registered_at_utc": "2026-07-16T07:34:45Z",
+  "status": "registered_before_arm_or_judge_inference",
+  "relationship_to_prior_rounds": "Fresh confirmatory frame. Protocols v8 through v11 remain exploratory negative evidence and are not pooled into the confirmatory result.",
+  "objective": {
+    "case_family_count": 3,
+    "randomized_repeats_per_condition": 3,
+    "valid_pair_count": 9,
+    "valid_arm_count": 18,
+    "agent_model": "gpt-5.6-sol",
+    "agent_effort": "low",
+    "raw_pair_preference_agreement_target": 0.8
+  },
+  "held_out_design": {
+    "families": [
+      "authorization policy change impact",
+      "attachment lifecycle change impact",
+      "shared UI contract change impact"
+    ],
+    "excluded_observed_family_count": 3,
+    "private_case_commitments_sha256": [
+      "673a19ccb4be775f6faf2af7bead398e89f2f8a1a8e2d48f3dfd1c8e41f97218",
+      "ca49d600052963f890fe29f30295e1afb6eb88bc735d0926d6d9afa23d02b78a",
+      "f023fb25477ad3c6d6d8fc983caa044c69c0dd78a8908f182c98beff075e7758"
+    ],
+    "private_protocol_commitment_sha256": "91e35fbdce88e03d30a5e233e113843cee0570745c2e1d14470750235ab4ee75",
+    "project_specific_public_field_count": 0
+  },
+  "controls": {
+    "standardized_baseline_generation_count": 1,
+    "standardized_baseline_instruction_sha256": "c67682acb11535517ba2c70c08eb2de907c506dabc3e2f2a5c69e0f3fafd7ac9",
+    "treatment_instruction_sha256": "86dafd2a6d2c1766276aa5b05ea285cce7218bf9719564be8b6a6a1c2d99ec8b",
+    "frozen_runtime_sha256": "e346474c62fa093daac590734c6adcb28e1dbf7164500952003db48502a6901b",
+    "condition_order_seed_commitment": "seeds 2101 through 2109",
+    "max_tool_calls_per_arm": 6,
+    "max_total_tokens_per_arm": 250000,
+    "max_cost_usd_per_arm": 0.4,
+    "timeout_seconds_per_arm": 600
+  },
+  "judging": {
+    "judge_count": 2,
+    "distinct_provider_count": 2,
+    "condition_blind": true,
+    "opposite_alias_randomization": true,
+    "claim_labels": ["supported", "missing", "contradicted"],
+    "score_formula": "2 * supported gold claims - 3 * contradicted gold claims - 4 * supported forbidden claims",
+    "pick_rule": "higher score, then fewer supported forbidden claims, then higher change-usefulness score, otherwise tie",
+    "agreement_metric": "same condition-level pair preference after private alias remapping",
+    "agreement_target": 0.8,
+    "adjudication": "Every preference, claim-label, or material usefulness disagreement receives condition-blind rule-consistent adjudication."
+  },
+  "analysis": {
+    "direction": "with skill minus without skill",
+    "bootstrap_seed": 20260717,
+    "bootstrap_resamples": 100000,
+    "confidence_level": 0.95,
+    "metrics": ["quality", "correctness", "elapsed time", "tokens", "cost"]
+  },
+  "anti_goals": {
+    "new_frame_total_cost_usd_max": 10.0,
+    "valid_arm_protocol_deviation_count_max": 0,
+    "study_protocol_deviation_count_max": 0,
+    "public_project_specific_field_count_max": 0,
+    "anti_goal_bypass_or_dishonesty_count_max": 0
+  },
+  "stopping_rule": "No paper-grade claim unless every objective item and anti-goal passes from replayable evidence. Failed or invalid attempts remain in the cost and protocol ledger."
+}

@@ -1,0 +1,56 @@
+{
+  "protocol": "held-out-paired-c3-v22-postrun-development-learning",
+  "status": "development candidate; confirmatory evidence unchanged",
+  "source_result": "protocol-v22-result.json",
+  "observed_development_signal": {
+    "supported_surface_coverage_c3": 0.566667,
+    "supported_surface_coverage_baseline": 0.755556,
+    "difference": -0.188889,
+    "blocking_false_claim_count_c3": 0,
+    "blocking_false_claim_count_baseline": 0,
+    "use": "exploratory diagnosis only"
+  },
+  "independent_challenger_verdict": {
+    "primary_cause": "The treatment bootstrap loaded the C3 router but omitted the required impact-sweep procedure, then constrained follow-up source inspection too tightly.",
+    "secondary_cause": "The first routed entity anchored the answer without an explicit queue for closing cross-cutting lanes.",
+    "preserve": [
+      "affected, unaffected, and unknown classification",
+      "evidence requirement for affected claims",
+      "no-guess rule"
+    ]
+  },
+  "development_change": {
+    "bootstrap_loads_impact_sweep": true,
+    "bootstrap_reads_forward_and_reverse_relationships": true,
+    "closure_lanes": [
+      "owner/mutation",
+      "consumers/state",
+      "persistence/event/retry",
+      "failure/isolation",
+      "tests"
+    ],
+    "follow_up_rule": "Use the remaining provider calls on the two highest-risk unknown lanes; one bounded command may inspect multiple explicit anchors.",
+    "provider_tool_call_ceiling_changed": false,
+    "bootstrap_internal_c3_calls": {
+      "minimum": 4,
+      "search_miss_fallback": 5
+    }
+  },
+  "candidate_hashes": {
+    "bootstrap_sha256": "016f13ed3cd0a071fbce79600a239cfef40dc2dfd0738a085d0034e7bb125568",
+    "treatment_instruction_sha256": "c1c879443a6c1abe4c92e23488fe2504fb2efb3639c6e381a5dddf69b4df660c",
+    "sweep_reference_sha256": "ab68bf44f04d9a2609f0eb79b73c9e2c802510c99c25579d42450c44934833ec",
+    "skill_sha256": "1ef31875f82d25b722951238517fc225ba15414a0d6acf599a2bb30107b6c614"
+  },
+  "verification": {
+    "focused_tests_passed": 51,
+    "full_python_tests_passed": 190,
+    "local_c3_check_total": 41,
+    "local_c3_check_ok": true,
+    "plain_wording_violation_count": 0
+  },
+  "next_evidence_rule": "Freeze this candidate before any new paired run. Treat replay on exposed cases as development evidence only. Use fresh held-out cases for a confirmatory claim.",
+  "confirmatory_budget_spent_usd": 0,
+  "public_project_specific_field_count": 0,
+  "anti_goal_bypass_or_dishonesty_count": 0
+}

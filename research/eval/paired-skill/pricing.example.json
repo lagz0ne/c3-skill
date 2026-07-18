@@ -1,0 +1,16 @@
+{
+  "version": "replace-with-dated-price-version",
+  "currency": "USD",
+  "observed_at": "2026-07-14T00:00:00Z",
+  "models": [
+    {
+      "id": "replace-with-cheap-model-id",
+      "provider": "codex",
+      "input_per_million_usd": 0.0,
+      "cached_input_per_million_usd": 0.0,
+      "output_per_million_usd": 0.0,
+      "eligible": true,
+      "live_allowed": false
+    }
+  ]
+}

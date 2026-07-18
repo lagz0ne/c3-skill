@@ -55,6 +55,40 @@ func TestGetEntity_NotFound(t *testing.T) {
 	}
 }
 
+func TestLookupImmediateParent_DefaultAndFilteredModes(t *testing.T) {
+	s := createTestStore(t)
+	seedFixture(t, s)
+
+	defaultWitness, err := s.LookupImmediateParent("auth-handler", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if defaultWitness.FilterMode != ParentFilterDefault || defaultWitness.ParentID != "api-gateway" || defaultWitness.ParentType != "container" || !defaultWitness.Immediate || !defaultWitness.CycleChecked {
+		t.Fatalf("unexpected default witness: %+v", defaultWitness)
+	}
+	filteredWitness, err := s.LookupImmediateParent("auth-handler", "component")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if filteredWitness.FilterMode != ParentFilterFiltered || filteredWitness.ParentType != "container" || filteredWitness.RequestedTypeFilter != "component" {
+		t.Fatalf("unexpected filtered witness: %+v", filteredWitness)
+	}
+}
+
+func TestLookupImmediateParent_MissingDoesNotWiden(t *testing.T) {
+	s := createTestStore(t)
+	if err := s.InsertEntity(&Entity{ID: "orphan", Type: "component", Title: "Orphan", Status: "active", Metadata: "{}"}); err != nil {
+		t.Fatal(err)
+	}
+	witness, err := s.LookupImmediateParent("orphan", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if witness.ParentRead != "missing" || witness.ParentID != "" || witness.Immediate {
+		t.Fatalf("missing parent must remain an explicit non-target: %+v", witness)
+	}
+}
+
 func TestUpdateEntity(t *testing.T) {
 	s := createTestStore(t)
 	seedFixture(t, s)

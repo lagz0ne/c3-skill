@@ -1,0 +1,12 @@
+{
+  "protocol": "held-out-paired-c3-v32-cost-observational",
+  "external_registration": {
+    "provider": "GitHub secret gist",
+    "gist_id": "69e33b0b8c97a9b1f43e69fd88a9618b",
+    "url": "https://gist.github.com/lagz0ne/69e33b0b8c97a9b1f43e69fd88a9618b",
+    "created_at": "2026-07-16T12:39:25Z",
+    "history_version": "9e7828563ba66a3b66472d761c2a123ec745f675",
+    "raw_url": "https://gist.githubusercontent.com/lagz0ne/69e33b0b8c97a9b1f43e69fd88a9618b/raw/a7ae7de91d2c6eba2f2172a4627b10f2d7aeacac/protocol-v32-cost-observational-preregistration.json"
+  },
+  "inference_started_after_registration": true
+}

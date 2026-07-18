@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "protocol": "v7-three-case-dkr-loop",
+  "objective": {
+    "valid_pair_target": 3,
+    "valid_pair_count": 3,
+    "c3_positive_case_target": 2,
+    "c3_positive_case_count": 2,
+    "target_met": true
+  },
+  "hypothesis_status": "preliminarily_supported_with_mixed_evidence",
+  "paper_grade_causal_claim_ready": false,
+  "model": "gpt-5.6-sol",
+  "reasoning_effort": "low",
+  "valid_pairs": [
+    {
+      "study_id": "STUDY-105",
+      "case_id": "BR-101",
+      "case_family": "blast_radius",
+      "baseline_generation": "v6",
+      "direction": "c3_positive",
+      "direction_source": "deterministic_screen_only",
+      "with_c3": {
+        "quality_score": 4.504,
+        "correctness_score": 4.2,
+        "effective_tokens": 33417,
+        "elapsed_ms": 92812,
+        "cost_usd": 0.132328
+      },
+      "without_c3": {
+        "quality_score": 4.385,
+        "correctness_score": 3.8,
+        "effective_tokens": 45073,
+        "elapsed_ms": 121785,
+        "cost_usd": 0.193348
+      }
+    },
+    {
+      "study_id": "STUDY-113",
+      "case_id": "PI-201",
+      "case_family": "pre_initiative_change_unit",
+      "baseline_generation": "v7-bounded-discovery",
+      "direction": "control_positive",
+      "direction_source": "two_independent_agent_reviews",
+      "independent_preference": {
+        "with_c3": 0,
+        "without_c3": 2
+      },
+      "with_c3": {
+        "quality_score": 4.389,
+        "correctness_score": 4.556,
+        "effective_tokens": 23932,
+        "elapsed_ms": 82579,
+        "cost_usd": 0.122454
+      },
+      "without_c3": {
+        "quality_score": 4.222,
+        "correctness_score": 4.556,
+        "effective_tokens": 36864,
+        "elapsed_ms": 94405,
+        "cost_usd": 0.153646
+      }
+    },
+    {
+      "study_id": "STUDY-111",
+      "case_id": "PI-202",
+      "case_family": "pre_initiative_change_unit",
+      "baseline_generation": "v7-bounded-discovery",
+      "direction": "c3_positive",
+      "direction_source": "two_independent_agent_reviews",
+      "independent_preference": {
+        "with_c3": 2,
+        "without_c3": 0
+      },
+      "with_c3": {
+        "quality_score": 4.3,
+        "correctness_score": 3.8,
+        "effective_tokens": 20668,
+        "elapsed_ms": 108731,
+        "cost_usd": 0.112968
+      },
+      "without_c3": {
+        "quality_score": 4.5,
+        "correctness_score": 4.6,
+        "effective_tokens": 30947,
+        "elapsed_ms": 82771,
+        "cost_usd": 0.156692
+      }
+    }
+  ],
+  "efficiency_summary": {
+    "c3_lower_effective_tokens_case_count": 3,
+    "c3_lower_cost_case_count": 3,
+    "c3_lower_elapsed_time_case_count": 2,
+    "valid_pair_cost_usd": 0.871436,
+    "loop_driver_accounted_cost_usd": 1.70555,
+    "loop_cost_ceiling_usd": 2.0
+  },
+  "scoring_finding": {
+    "deterministic_and_independent_direction_disagreement_count": 2,
+    "independently_reviewed_new_case_count": 2,
+    "independent_reviewer_agreement_count": 2,
+    "independent_reviewer_disagreement_count": 0,
+    "private_review_receipt_sha256": [
+      "497dad58a06b21ad6e504ee55b93c0aae7e272f6edaca17e895ffc2e5023755b",
+      "3d773087b8500f85ba98b2fc798b73f5ae37aa95d28d3a9f6bdc28fd5896425b"
+    ],
+    "conclusion": "deterministic lexical scoring is a screening aid, not a primary correctness judge"
+  },
+  "walls": {
+    "valid_row_protocol_deviation_count": 0,
+    "per_arm_cost_breach_count": 0,
+    "per_arm_token_breach_count": 0,
+    "public_project_identifier_count": 0,
+    "public_project_path_count": 0,
+    "public_question_or_answer_count": 0,
+    "anti_goal_bypass_or_dishonesty_count": 0
+  },
+  "portable_runtime": {
+    "version": "11.6.3",
+    "sha256": "e346474c62fa093daac590734c6adcb28e1dbf7164500952003db48502a6901b"
+  },
+  "limitations": [
+    "The blast-radius answer was deleted before independent review was added, so its direction remains deterministic-screen evidence only.",
+    "Independent agent model identities were not provider-confirmed.",
+    "The blast-radius pair and the two later pairs used different standardized baseline generations, so raw effect sizes must not be pooled.",
+    "Three cases establish a preliminary direction, not statistical significance or a paper-grade causal effect."
+  ],
+  "retention": {
+    "project_identifiers": false,
+    "project_paths": false,
+    "question_text": false,
+    "answer_text": false,
+    "gold_markers": false,
+    "raw_model_output": false
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "protocol": "held-out-paired-c3-v32-cost-observational",
+  "status": "complete_objective_not_reached",
+  "valid_pairs": 3,
+  "valid_arms": 6,
+  "judge_count": 2,
+  "judge_minimum_met": true,
+  "quality": {
+    "required_surface_lift": -0.0833333333,
+    "target": 0.2,
+    "blocking_false_claim_lift": 0.0,
+    "maximum_allowed": 0.0,
+    "claim_label_agreement": 0.8717948718,
+    "pair_coverage_lifts": [
+      -0.25,
+      0.0,
+      0.0
+    ]
+  },
+  "efficiency": {
+    "with_c3": {
+      "mean_cost_usd": 0.051854,
+      "mean_total_tokens": 53674.0,
+      "mean_input_tokens": 52683.0,
+      "mean_cached_input_tokens": 40960.0,
+      "mean_output_tokens": 991.0,
+      "mean_reasoning_tokens": 155.6666667,
+      "mean_elapsed_ms": 34549.0,
+      "mean_tool_calls": 3.0,
+      "mean_model_turns": 1.0
+    },
+    "without_c3": {
+      "mean_cost_usd": 0.0409293333,
+      "mean_total_tokens": 41561.6666667,
+      "mean_input_tokens": 40487.3333333,
+      "mean_cached_input_tokens": 32426.6666667,
+      "mean_output_tokens": 1074.3333333,
+      "mean_reasoning_tokens": 218.6666667,
+      "mean_elapsed_ms": 43492.6666667,
+      "mean_tool_calls": 3.0,
+      "mean_model_turns": 1.0
+    },
+    "c3_relative_change": {
+      "cost_percent": 26.6915334,
+      "total_tokens_percent": 29.1430405,
+      "elapsed_time_percent": -20.5636199
+    },
+    "answer_arm_cost_usd": 0.27835,
+    "opus_judge_cost_usd": 0.581015,
+    "total_study_cost_usd": 0.859365
+  },
+  "integrity": {
+    "protocol_deviation_count": 0,
+    "public_project_specific_field_count": 0,
+    "historical_or_externally_registered_case_reuse_count": 0,
+    "anti_goal_bypass_or_dishonesty_count": 0,
+    "all_treatment_arms_used_frozen_c3": true,
+    "all_treatment_arms_completed_required_c3_operations": true
+  },
+  "claim": "In this three-pair fresh study, the compact C3 treatment did not improve required-surface coverage. It cost 26.7 percent more and used 29.1 percent more tokens, while completing 20.6 percent faster. The sample is too small for a population claim."
+}

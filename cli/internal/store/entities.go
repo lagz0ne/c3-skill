@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 )
 
@@ -21,6 +22,99 @@ type Entity struct {
 	Version    int
 	CreatedAt  string
 	UpdatedAt  string
+}
+
+// ParentFilterMode records whether an immediate-parent lookup used the
+// unfiltered/default mode or an exact requested type filter.
+type ParentFilterMode string
+
+const (
+	ParentFilterDefault  ParentFilterMode = "default"
+	ParentFilterFiltered ParentFilterMode = "filtered"
+)
+
+// ImmediateParentWitness is a read-only proof of one parent lookup. It is
+// deliberately separate from Entity so callers cannot accidentally treat a
+// missing or mismatched parent as a replacement target.
+type ImmediateParentWitness struct {
+	ChildID               string
+	ParentID              string
+	ParentType            string
+	RequestedTypeFilter   string
+	FilterMode            ParentFilterMode
+	ChildDirectEntityHit  bool
+	ChildDirectContentHit bool
+	ParentRead            string // found, missing, or error
+	Immediate             bool
+	CycleChecked          bool
+}
+
+// LookupImmediateParent returns a one-hop parent witness. A missing parent is
+// represented as ParentRead=missing; database failures are returned as errors
+// and never widened into a guessed target. Default mode accepts any parent
+// type, while filtered mode records the exact requested type for the caller to
+// enforce.
+func (s *Store) LookupImmediateParent(childID, requestedType string) (ImmediateParentWitness, error) {
+	w := ImmediateParentWitness{
+		ChildID:             childID,
+		RequestedTypeFilter: requestedType,
+		FilterMode:          ParentFilterDefault,
+	}
+	if requestedType != "" {
+		w.FilterMode = ParentFilterFiltered
+	}
+	child, err := s.GetEntity(childID)
+	if err != nil {
+		w.ParentRead = "error"
+		return w, fmt.Errorf("lookup immediate parent child %s: %w", childID, err)
+	}
+	if child.ParentID == "" {
+		w.ParentRead = "missing"
+		w.CycleChecked = true
+		return w, nil
+	}
+	w.ParentID = child.ParentID
+	parent, err := s.GetEntity(child.ParentID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			w.ParentRead = "missing"
+			w.CycleChecked = true
+			return w, nil
+		}
+		w.ParentRead = "error"
+		return w, fmt.Errorf("lookup immediate parent %s: %w", child.ParentID, err)
+	}
+	w.ParentRead = "found"
+	w.ParentType = parent.Type
+	w.Immediate = parent.ID == child.ParentID
+	// An immediate parent pointing back at the child is a cycle and cannot be
+	// used as a replacement. The lookup remains auditable for the caller.
+	w.CycleChecked = parent.ParentID != child.ID
+	if !w.CycleChecked {
+		w.Immediate = false
+	}
+	return w, nil
+}
+
+// LookupImmediateParentWithProbe binds the direct-probe observations to the
+// same one-hop witness without changing lookup semantics.
+func (s *Store) LookupImmediateParentWithProbe(childID, requestedType string, probe DirectFTSProbe) (ImmediateParentWitness, error) {
+	w, err := s.LookupImmediateParent(childID, requestedType)
+	if err != nil {
+		return w, err
+	}
+	w.ChildDirectEntityHit = probe.HasEntityHit(childID)
+	contentIDs, contentErr := s.ContentIDsForEntity(childID)
+	if contentErr != nil {
+		return w, contentErr
+	}
+	for _, id := range contentIDs {
+		if probe.HasContentHit(id) {
+			w.ChildDirectContentHit = true
+			break
+		}
+	}
+	return w, nil
 }
 
 const entityColumns = `id, type, title, slug, category, parent_id, goal,

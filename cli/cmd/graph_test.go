@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 
@@ -71,6 +72,77 @@ func TestRunGraph_TextReverse(t *testing.T) {
 	if !strings.Contains(output, "ref-jwt") {
 		t.Errorf("reverse should include ref-jwt, got:\n%s", output)
 	}
+}
+
+func TestRunGraph_ReverseIncludesChildrenAndExcludesParent(t *testing.T) {
+	s := createDBFixture(t)
+
+	children := graphNeighborsStore(s, "c3-1", "reverse")
+	if !entityIDs(children)["c3-101"] || !entityIDs(children)["c3-110"] {
+		t.Fatalf("reverse container neighbors = %v, want both parent-owned children", sortedEntityIDs(children))
+	}
+
+	componentNeighbors := graphNeighborsStore(s, "c3-101", "reverse")
+	if entityIDs(componentNeighbors)["c3-1"] {
+		t.Fatalf("reverse component neighbors = %v, parent is not an inbound dependent", sortedEntityIDs(componentNeighbors))
+	}
+}
+
+func TestRunGraph_JSONReverseIncludesChildren(t *testing.T) {
+	s := createDBFixture(t)
+	var buf bytes.Buffer
+
+	if err := RunGraph(GraphOptions{
+		Store: s, EntityID: "c3-1", Depth: 1, Direction: "reverse", JSON: true,
+	}, &buf); err != nil {
+		t.Fatal(err)
+	}
+
+	var nodes []graphNode
+	if err := json.Unmarshal(buf.Bytes(), &nodes); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, buf.String())
+	}
+	found := map[string]bool{}
+	for _, node := range nodes {
+		found[node.ID] = true
+	}
+	if !found["c3-101"] || !found["c3-110"] {
+		t.Fatalf("reverse JSON node ids = %v, want both parent-owned children", found)
+	}
+	if found["c3-0"] {
+		t.Fatalf("reverse JSON node ids = %v, containment parent is not an inbound dependent", found)
+	}
+}
+
+func TestRunGraph_DirectionPreservesForwardAndDefaultContainment(t *testing.T) {
+	s := createDBFixture(t)
+
+	forward := entityIDs(graphNeighborsStore(s, "c3-101", "forward"))
+	if forward["c3-1"] {
+		t.Fatalf("forward component neighbors = %v, did not previously include the parent", forward)
+	}
+
+	all := entityIDs(graphNeighborsStore(s, "c3-101", ""))
+	if !all["c3-1"] {
+		t.Fatalf("default component neighbors = %v, want containment parent preserved", all)
+	}
+}
+
+func entityIDs(entities []*store.Entity) map[string]bool {
+	ids := make(map[string]bool, len(entities))
+	for _, entity := range entities {
+		ids[entity.ID] = true
+	}
+	return ids
+}
+
+func sortedEntityIDs(entities []*store.Entity) []string {
+	ids := make([]string, 0, len(entities))
+	for _, entity := range entities {
+		ids = append(ids, entity.ID)
+	}
+	sort.Strings(ids)
+	return ids
 }
 
 func TestRunGraph_RefForward(t *testing.T) {

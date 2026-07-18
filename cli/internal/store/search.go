@@ -1,10 +1,163 @@
 package store
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"sort"
+	"strconv"
 	"strings"
 	"unicode"
 )
+
+// DirectFTSProbe is controller-owned, internal search provenance. It records
+// the exact identities observed by the direct entity/content FTS probes. The
+// values are deliberately kept out of SearchResult so the public row contract
+// and serialized bytes remain unchanged.
+//
+// ContentHitIDs are stable node identities (the nodes.id value rendered as a
+// decimal string), while ContentEntityHitIDs are the corresponding entity
+// identities. Miss sets are populated only when the caller names the owner
+// identities it is checking; an empty result is never treated as a miss by
+// inference.
+type DirectFTSProbe struct {
+	QueryToken          string
+	EntityHitIDs        []string
+	ContentHitIDs       []string
+	ContentEntityHitIDs []string
+	EntityMissIDs       []string
+	ContentMissIDs      []string
+}
+
+// ProbeDirectFTS captures direct entity and content FTS observations without
+// semantic search, graph expansion, enrichment, or fallback inference.
+func (s *Store) ProbeDirectFTS(query, entityType string, limit int) (DirectFTSProbe, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+	probe := DirectFTSProbe{QueryToken: queryToken(query)}
+	entityHits, err := s.SearchWithLimit(query, entityType, limit)
+	if err != nil {
+		return DirectFTSProbe{}, err
+	}
+	for _, hit := range entityHits {
+		probe.EntityHitIDs = append(probe.EntityHitIDs, hit.ID)
+	}
+
+	safe := sanitizeFTS5(query)
+	if safe == "" {
+		return normalizeDirectFTSProbe(probe), nil
+	}
+	q := `SELECT n.id, e.id
+		FROM content_fts
+		JOIN nodes n ON content_fts.rowid = n.rowid
+		JOIN entities e ON n.entity_id = e.id
+		WHERE content_fts MATCH ?`
+	args := []any{safe}
+	if entityType != "" {
+		q += " AND e.type = ?"
+		args = append(args, entityType)
+	}
+	q += fmt.Sprintf(" ORDER BY content_fts.rank LIMIT %d", limit*3)
+	rows, err := s.db.Query(q, args...)
+	if err != nil {
+		return DirectFTSProbe{}, fmt.Errorf("probe content fts: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var nodeID int64
+		var entityID string
+		if err := rows.Scan(&nodeID, &entityID); err != nil {
+			return DirectFTSProbe{}, fmt.Errorf("probe content fts scan: %w", err)
+		}
+		probe.ContentHitIDs = append(probe.ContentHitIDs, strconv.FormatInt(nodeID, 10))
+		probe.ContentEntityHitIDs = append(probe.ContentEntityHitIDs, entityID)
+	}
+	if err := rows.Err(); err != nil {
+		return DirectFTSProbe{}, fmt.Errorf("probe content fts rows: %w", err)
+	}
+	return normalizeDirectFTSProbe(probe), nil
+}
+
+// ContentIDsForEntity returns stable opaque node identities for an entity.
+// This is a read-only helper used to name explicit content misses; callers
+// must not turn absence of these IDs into a guessed safety classification.
+func (s *Store) ContentIDsForEntity(entityID string) ([]string, error) {
+	rows, err := s.db.Query(`SELECT id FROM nodes WHERE entity_id = ? ORDER BY id`, entityID)
+	if err != nil {
+		return nil, fmt.Errorf("content ids for entity %s: %w", entityID, err)
+	}
+	defer rows.Close()
+	var ids []string
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("content ids scan: %w", err)
+		}
+		ids = append(ids, strconv.FormatInt(id, 10))
+	}
+	return ids, rows.Err()
+}
+
+// RecordEntityMiss and RecordContentMiss name explicit controller checks.
+// They intentionally do not infer misses from an empty response.
+func (p *DirectFTSProbe) RecordEntityMiss(id string) {
+	if p == nil || id == "" || containsString(p.EntityHitIDs, id) || containsString(p.EntityMissIDs, id) {
+		return
+	}
+	p.EntityMissIDs = append(p.EntityMissIDs, id)
+	sort.Strings(p.EntityMissIDs)
+}
+
+func (p *DirectFTSProbe) RecordContentMiss(id string) {
+	if p == nil || id == "" || containsString(p.ContentHitIDs, id) || containsString(p.ContentMissIDs, id) {
+		return
+	}
+	p.ContentMissIDs = append(p.ContentMissIDs, id)
+	sort.Strings(p.ContentMissIDs)
+}
+
+func (p DirectFTSProbe) HasEntityHit(id string) bool  { return containsString(p.EntityHitIDs, id) }
+func (p DirectFTSProbe) HasContentHit(id string) bool { return containsString(p.ContentHitIDs, id) }
+
+func queryToken(query string) string {
+	sum := sha256.Sum256([]byte(query))
+	return hex.EncodeToString(sum[:])
+}
+
+func normalizeDirectFTSProbe(p DirectFTSProbe) DirectFTSProbe {
+	p.EntityHitIDs = sortedUnique(p.EntityHitIDs)
+	p.ContentHitIDs = sortedUnique(p.ContentHitIDs)
+	p.ContentEntityHitIDs = sortedUnique(p.ContentEntityHitIDs)
+	p.EntityMissIDs = sortedUnique(p.EntityMissIDs)
+	p.ContentMissIDs = sortedUnique(p.ContentMissIDs)
+	return p
+}
+
+func sortedUnique(values []string) []string {
+	if len(values) == 0 {
+		return nil
+	}
+	out := append([]string(nil), values...)
+	sort.Strings(out)
+	result := out[:0]
+	for _, value := range out {
+		if value == "" || (len(result) > 0 && result[len(result)-1] == value) {
+			continue
+		}
+		result = append(result, value)
+	}
+	return result
+}
+
+func containsString(values []string, needle string) bool {
+	for _, value := range values {
+		if value == needle {
+			return true
+		}
+	}
+	return false
+}
 
 // sanitizeFTS5 converts user input into a safe FTS5 query.
 // Preserves AND/OR/NOT as boolean operators when between search terms.

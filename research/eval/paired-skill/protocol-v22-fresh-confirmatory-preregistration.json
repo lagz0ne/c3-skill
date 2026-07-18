@@ -1,0 +1,63 @@
+{
+  "protocol": "held-out-paired-c3-v22",
+  "registered_content_at_utc": "2026-07-16T10:25:00Z",
+  "status": "prepared before any V22 inference",
+  "estimand": "C3 treatment package versus standardized neutral baseline",
+  "objective": {
+    "valid_pair_count": 3,
+    "valid_arm_count": 6,
+    "required_surface_coverage_lift_target": 0.2,
+    "blocking_false_claim_lift_max": 0
+  },
+  "held_out_design": {
+    "private_cases_sha256": "dbeff088899debb06f017ffcc5c26180601eaf95519570c2363700f580472714",
+    "private_protocol_sha256": "9b30133d2e819241962c3d8283cae98915a113f3adf904c81f19e02f4ede339b",
+    "all_historical_semantic_case_reuse_count": 0,
+    "project_specific_public_field_count": 0
+  },
+  "arms": {
+    "agent": "gpt-5.6-sol low",
+    "condition_order_seed": 4221,
+    "defer_scoring": true,
+    "max_tool_calls_per_arm": 6,
+    "max_total_tokens_per_arm": 500000,
+    "max_cost_usd_per_arm": 0.26,
+    "timeout_seconds_per_arm": 600,
+    "reserve_usd": 1.56,
+    "paired_orchestrator_sha256": "5a782e7c2d4ed62e1daca0a5df2e6951045b1671f86d050a4432e86e5fc965eb",
+    "paired_runner_sha256": "43d09cbd7856a7a639aa2ef3abbc87e55b82980223fbcdfb321c0fc7d973ae0e",
+    "bootstrap_sha256": "63830048ed2f6db8b0c454df91a026b5f1f3695f51ef8136b67daef372ca4a54",
+    "frozen_c3_binary_sha256": "73aa6df4572327bedf1ff87c0fa2558c0111ca7558856358b6eac43fc0f443d0"
+  },
+  "judging": {
+    "condition_blind": true,
+    "packet_scope": "three anonymous claim-only pairs; no repository or tools",
+    "judge_1": "claude-fable-5 low, hard cap 0.25 USD",
+    "judge_2": "gpt-5.6-sol high, validity ceiling 0.25 USD",
+    "conditional_adjudicator": "gpt-5.6-luna high, validity ceiling 0.45 USD",
+    "primary_score": "supported gold claims divided by gold claim count",
+    "blocking_false_claim_count": "contradicted gold claims plus supported forbidden claims",
+    "preference_rule": "fewer blocking false claims wins; if equal, higher primary score wins; otherwise tie",
+    "raw_preference_agreement_target": 0.6666666667,
+    "adjudication_trigger": "preference disagreement or blocking-false-count disagreement",
+    "reserve_usd": 0.95
+  },
+  "analysis": {
+    "direction": "C3 treatment package minus neutral baseline",
+    "bootstrap_seed": 20260722,
+    "bootstrap_resamples": 100000,
+    "confidence_level": 0.95,
+    "small_sample_rule": "Report point estimate and interval; do not claim population certainty if the interval crosses zero."
+  },
+  "anti_goals": {
+    "prior_confirmatory_spend_usd": 1.467278,
+    "cumulative_confirmatory_cost_usd_max": 4.0,
+    "cumulative_worst_case_reserved_usd": 3.977278,
+    "development_costs_reported_separately": true,
+    "protocol_deviation_count_max": 0,
+    "public_project_specific_field_count_max": 0,
+    "historical_case_reuse_count_max": 0,
+    "anti_goal_bypass_or_dishonesty_count_max": 0
+  },
+  "stopping_rule": "Stop on any invalid arm, missing registered judge output, judge validity-ceiling breach, privacy breach, or protocol deviation. Do not rerun or substitute. Pass only when lift is at least 0.20, false-claim lift is at most 0, two judges exist, raw agreement is at least 2/3, every required disagreement is adjudicated, and all walls hold."
+}

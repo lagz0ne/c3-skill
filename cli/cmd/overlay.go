@@ -128,7 +128,11 @@ func WithUnitOverlay(s *store.Store, c3Dir, unitID string, fn func(*store.Store)
 	// The store overlay replays only the fact patches: a canvas-scope patch reshapes
 	// a fact-TYPE on the file side and is validated by the morph gate, not here. (It
 	// has no applyOne case, so feeding it to changeset.Apply would error.)
-	_, factPatches, _ := parseMorphs(patches)
+	morphed, factPatches, rejects := parseMorphs(patches)
+	rejects = append(rejects, factPatchGate(s, c3Dir, factPatches, morphed)...)
+	if len(rejects) > 0 {
+		return fmt.Errorf("error: overlay %s: %d gate failure(s): %s\nhint: fix the rejected patch material, then rerun the preview", unitID, len(rejects), rejects[0])
+	}
 	return s.WithPreviewTx(func(ts *store.Store) error {
 		if err := changeset.Apply(ts, factPatches, applyHooks(c3Dir)); err != nil {
 			return fmt.Errorf("overlay %s: %w", unitID, err)

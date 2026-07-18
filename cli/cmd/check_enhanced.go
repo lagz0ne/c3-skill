@@ -253,7 +253,7 @@ func RunCheckV2(opts CheckOptions, w io.Writer) error {
 			if !opts.IncludeADR {
 				continue
 			}
-			if isADRTerminal(entity.Status) && !slices.Contains(opts.Only, entity.ID) {
+			if isChangeDocTerminal(entity) && !slices.Contains(opts.Only, entity.ID) {
 				continue
 			}
 		}

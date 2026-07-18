@@ -163,6 +163,12 @@ func graphNeighborsStore(s *store.Store, id string, direction string) []*store.E
 	}
 
 	if direction == "reverse" || direction == "" {
+		// Parentage points from each live child to this entity. Reverse impact
+		// therefore includes children: they would be orphaned by a retirement.
+		children, _ := s.Children(id)
+		for _, child := range children {
+			add(child)
+		}
 		// Inbound relationships
 		inbound, _ := s.RelationshipsTo(id)
 		for _, r := range inbound {
@@ -170,16 +176,17 @@ func graphNeighborsStore(s *store.Store, id string, direction string) []*store.E
 				add(e)
 			}
 		}
-		// Parent
+	}
+
+	if direction == "" {
+		// The undirected/default neighborhood includes the containment parent.
+		// Reverse-only mode excludes it because a parent is not a dependent.
 		entity, err := s.GetEntity(id)
 		if err == nil && entity.ParentID != "" {
 			if p, err := s.GetEntity(entity.ParentID); err == nil {
 				add(p)
 			}
 		}
-	}
-
-	if direction == "" {
 		rels, _ := s.RelationshipsFrom(id)
 		for _, r := range rels {
 			if r.RelType == "uses" || r.RelType == "scope" {

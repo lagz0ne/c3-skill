@@ -242,6 +242,15 @@ func TestParseArgs_Extended(t *testing.T) {
 			},
 		},
 		{
+			name: "pack flag",
+			argv: []string{"search", "auth", "--pack"},
+			check: func(t *testing.T, got Options) {
+				if !got.Pack {
+					t.Error("Pack should be true")
+				}
+			},
+		},
+		{
 			name: "compact flag",
 			argv: []string{"list", "--compact"},
 			check: func(t *testing.T, got Options) {

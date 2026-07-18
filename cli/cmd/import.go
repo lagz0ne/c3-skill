@@ -85,6 +85,12 @@ func RunImport(opts ImportOptions, w io.Writer) error {
 		fmt.Fprintf(w, "warning: skipping %s (failed to parse frontmatter)\n", warn.Path)
 	}
 	for _, doc := range result.Docs {
+		// Canvas definitions are user-owned shape, not sealed canonical facts.
+		// Sync/check already exclude them; cache rebuild must use the same rule or
+		// a cacheless checkout can fail even though an existing-cache check passes.
+		if isCanvasCanonicalPath(doc.Path) {
+			continue
+		}
 		actual, expected := verifyParsedDocSeal(doc)
 		if actual == expected && actual != "" {
 			continue
@@ -220,7 +226,7 @@ func importDocsToStore(s *store.Store, c3Dir string, result *walker.WalkResult) 
 			ID:       fm.ID,
 			Type:     storeType,
 			Title:    title,
-			Slug:     walker.SlugFromPath(doc.Path),
+			Slug:     walker.SlugFromEntityPath(doc.Path, fm.ID),
 			Category: fm.Category,
 			ParentID: fm.Parent,
 			Goal:     fm.Goal,

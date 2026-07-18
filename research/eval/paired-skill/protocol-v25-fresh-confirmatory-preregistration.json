@@ -1,0 +1,63 @@
+{
+  "protocol":"held-out-paired-c3-v25-final-budget",
+  "registered_content_at_utc":"2026-07-16T11:16:53Z",
+  "status":"prepared before any V25 inference",
+  "estimand":"compact C3 treatment package versus compact standardized neutral baseline",
+  "objective":{"valid_pair_count":3,"valid_arm_count":6,"required_surface_coverage_lift_target":0.2,"blocking_false_claim_lift_max":0},
+  "held_out_design":{
+    "private_cases_sha256":"ee64d899503e787e38915dcd7ad99499d1bd99a27eafa3952970231b84918297",
+    "private_protocol_sha256":"e7577d43e6da014fb13f8774024c4e88052c62aa6050a81c9695154ef01e6443",
+    "historical_or_exposed_case_reuse_count":0,
+    "independent_source_review_completed":true,
+    "public_project_specific_field_count":0
+  },
+  "arms":{
+    "agent":"claude-haiku-4-5 low",
+    "condition_order_seed":4251,
+    "authorized_discovery_calls":5,
+    "supervisor_observed_tool_event_ceiling":6,
+    "max_total_tokens_per_arm":70000,
+    "max_output_bytes_per_arm":49152,
+    "max_cost_usd_per_arm":0.049,
+    "timeout_seconds_per_arm":240,
+    "reserve_usd":0.294,
+    "compact_answer_limit_words":350,
+    "paired_orchestrator_sha256":"8f81cf006edbe2070f0a3eff5fc9c810ecad87152bc99410eb341aa34248c85c",
+    "paired_runner_sha256":"43d09cbd7856a7a639aa2ef3abbc87e55b82980223fbcdfb321c0fc7d973ae0e",
+    "bootstrap_sha256":"016f13ed3cd0a071fbce79600a239cfef40dc2dfd0738a085d0034e7bb125568",
+    "frozen_c3_binary_sha256":"73aa6df4572327bedf1ff87c0fa2558c0111ca7558856358b6eac43fc0f443d0"
+  },
+  "judging":{
+    "condition_blind":true,
+    "minimum_model":"Claude Opus",
+    "minimum_effort":"medium",
+    "judge_count":2,
+    "independent_fresh_sessions":true,
+    "independent_alias_randomization":true,
+    "tools_available":false,
+    "cli_cap_usd_each":0.075,
+    "registered_validity_ceiling_usd_each":0.09,
+    "packet_max_bytes":30000,
+    "packet_builder_sha256":"8972656335016eed50767bdb6fcd285244016a02e095c6997a8e486d9d46adbb",
+    "scorer_sha256":"3c3350b2255e0e679abfe0f875d04b328c6aa259d4cd8333d301a02c3bbfebd7",
+    "resolution":"agreement accepted; gold disagreement becomes not_supported; forbidden disagreement becomes supported",
+    "reserve_usd":0.18
+  },
+  "analysis":{
+    "primary_metric":"mean paired required-surface coverage lift",
+    "secondary_metric":"mean paired blocking-false-claim lift",
+    "raw_preference_agreement_target":0.6666666667,
+    "small_sample_rule":"Report point estimate and all three pair effects. Do not claim population certainty."
+  },
+  "anti_goals":{
+    "prior_conservative_confirmatory_cost_usd":3.512763,
+    "cumulative_confirmatory_cost_usd_max":4.0,
+    "cumulative_worst_case_reserved_usd":3.986763,
+    "locked_headroom_usd":0.013237,
+    "protocol_deviation_count_max":0,
+    "public_project_specific_field_count_max":0,
+    "historical_or_exposed_case_reuse_count_max":0,
+    "anti_goal_bypass_or_dishonesty_count_max":0
+  },
+  "stopping_rule":"Stop on any invalid arm, admission failure, missing Opus output, model or effort mismatch, judge ceiling breach, privacy breach, or protocol deviation. Do not rerun or substitute. Pass only when all three pairs are valid, both Opus-medium judgments complete, lift is at least 0.20, false-claim lift is at most 0, preference agreement is at least 2/3, and all walls hold."
+}

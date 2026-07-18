@@ -1,0 +1,36 @@
+{
+  "protocol": "held-out-paired-c3-v31-retained-context-accounting",
+  "status": "invalid_stopped",
+  "completed_valid_pairs": 0,
+  "completed_arms": 1,
+  "invalid_arms": 1,
+  "judges_run": 0,
+  "stop_reason": "The first arm exceeded both the registered token and cost ceilings. The preregistered stopping rule prohibited rerun, substitution, remaining arms, and judging.",
+  "observed_first_arm": {
+    "condition": "without_c3",
+    "model": "gpt-5.6-sol",
+    "reasoning_effort": "low",
+    "tool_calls": 3,
+    "input_tokens": 40722,
+    "cached_input_tokens": 29696,
+    "output_tokens": 1152,
+    "total_tokens": 41874,
+    "cost_usd": 0.046116,
+    "registered_cost_ceiling_usd": 0.027,
+    "registered_token_ceiling": 32000,
+    "runtime_guard_reason": "none"
+  },
+  "learning": "Native per-tool output retention limits reduced tool payload size but did not prevent the model-visible base context from recurring across tool turns. The arm cost estimator treated the base prompt as one-time input and therefore undercounted repeated and cached input. A successor must price every model turn or use a preregistered one-inference design.",
+  "privacy": {
+    "public_project_specific_field_count": 0,
+    "private_answers_retained": false
+  },
+  "budget": {
+    "prior_cumulative_usd": 3.7479343,
+    "v31_actual_usd": 0.046116,
+    "cumulative_usd": 3.7940503,
+    "ceiling_usd": 4.0,
+    "remaining_usd": 0.2059497
+  },
+  "claim": "V31 provides no comparative evidence and does not support or refute the C3 lift hypothesis."
+}

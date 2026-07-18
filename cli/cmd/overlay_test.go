@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/lagz0ne/c3-design/cli/internal/store"
@@ -34,6 +35,26 @@ func TestWithUnitOverlay_PreviewsStagedThenRollsBack(t *testing.T) {
 	}
 	if _, err := s.GetEntity("ref-new"); err == nil {
 		t.Error("overlay must roll back — ref-new leaked into the committed store")
+	}
+}
+
+func TestWithUnitOverlay_RejectsBodyOwnedFrontmatterUses(t *testing.T) {
+	s, c3Dir := openStoreC3(t)
+	seedComponentWithBodyOwnedUses(t, s)
+	e, _ := s.GetEntity("c3-101")
+	writePatch(t, c3Dir, "adr-edge", "01-edge.patch.md",
+		"---\ntarget: c3-101\nscope: frontmatter\nbase: c3-101@v1:sha256:"+e.RootMerkle+"\nuses:\n  - ref-new\n---\n")
+
+	err := WithUnitOverlay(s, c3Dir, "adr-edge", func(*store.Store) error {
+		t.Fatal("forbidden overlay must not invoke its callback")
+		return nil
+	})
+	if err == nil || !strings.Contains(err.Error(), "body-owned") || !strings.Contains(err.Error(), "Governance") {
+		t.Fatalf("overlay must share the apply edge-source gate, got %v", err)
+	}
+	rels, _ := s.RelationshipsFrom("c3-101")
+	if len(rels) != 1 || rels[0].ToID != "ref-old" {
+		t.Fatalf("rejected overlay changed committed edges: %+v", rels)
 	}
 }
 

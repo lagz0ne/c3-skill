@@ -5,6 +5,13 @@ This directory is the **memory** of the improvement loop. The eval harness
 (`scripts/eval_gate.py`) decides whether a change moved the needle; this
 directory remembers the answer so progress is measurable run-over-run.
 
+For a paired `with_c3` / `without_c3` study on an external repository, use
+`scripts/paired_skill_eval.py`. It selects the cheapest eligible model from a
+private dated price file, enforces hard run/cost/token/time ceilings, runs both
+arms through disposable snapshots, and retains only generic numeric rows. See
+`docs/specs/2026-07-14-paired-c3-skill-evaluation.md` and the public input
+templates under `research/eval/paired-skill/`.
+
 ## Target metric
 
 **Quality pass-rate across the whole eval matrix.** A record passes when:
@@ -56,6 +63,36 @@ The workflow researches improvement ideas, proposes one minimal change at a
 time, evals, gates, and keeps or reverts — recording every verdict here. See
 `.claude/workflows/c3-research-eval.js`. It only spends tokens when you launch
 it. Stops after 3 consecutive discards (per the autoresearch discipline).
+
+## Structural-owner microbenchmark
+
+The frozen v3 set is the unchanged-controller baseline. It includes containment,
+peer-preservation, no-target, and route-witness cases. The route cases are
+currently held out from candidate scoring because the generic loader cannot
+reproduce their required direct-FTS misses.
+
+The v4 set is a separate containment-only repair. It carries an optional
+opaque `parent_id` in entity metadata and puts query terms in child/context
+records, so the candidate can be tested without fixture-role logic or a safety
+oracle. The candidate remains opt-in through the internal
+`StructuralProjection` and `CaptureProvenance` options.
+
+The accepted preliminary v4 replay reports an owner-recall delta of `+0.333`
+(`0.667 → 1.000`) with identical metrics across five replays. It is generic
+controller evidence, not a product-effect or agent-cost result. See:
+
+- `structural-retrieval-v4/paired-microburst.v4.json`
+- `structural-retrieval-v4/repeatability.v4.json`
+- `structural-retrieval-v4/fixtures.v4.json`
+- `structural-retrieval-v4/benchmark.v4.json`
+
+Replay the opt-in pair with:
+
+```bash
+cd cli
+RUN_V4_MICROBURST=1 go test ./tools/structural-search-eval-v3 \
+  -run TestV4PairedMicroburstArtifact -count=1 -v
+```
 
 ## Discipline (from the `autoresearch` skill)
 

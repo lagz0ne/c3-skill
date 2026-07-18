@@ -1,0 +1,26 @@
+{
+  "protocol":"held-out-paired-c3-v29-result",
+  "status":"stopped on first invalid arm before Opus judging",
+  "arms":{
+    "planned":6,
+    "attempted":1,
+    "valid":0,
+    "invalid":1,
+    "failure":{
+      "condition":"compact standardized neutral baseline",
+      "reason":"The second provider tool result raised cumulative model-visible tool output to 6070 bytes, above the registered 6000-byte ceiling.",
+      "runtime_guard_reason":"max_tool_result_bytes",
+      "observed_tool_events":2,
+      "observed_tool_result_bytes":6070,
+      "answer_present":false,
+      "usage_present":false
+    }
+  },
+  "judges":{"run":false,"minimum_model":"Claude Opus","minimum_effort":"medium"},
+  "effect":{"confirmatory_effect_estimated":false},
+  "budget":{"prior_actual_and_conservative_confirmatory_cost_usd":3.6929343,"v29_conservative_cost_usd":0.03,"cumulative_confirmatory_cost_usd":3.7229343,"ceiling_usd":4.0,"remaining_usd":0.2770657},
+  "product_learning":"Prompt-level output guidance is insufficient even when the miss is only 70 bytes. The successor uses the supported Codex tool_output_token_limit to truncate each built-in tool result before it is retained in context, while keeping the cumulative supervisor breaker.",
+  "post_failure_rule":"Do not rerun the exposed case. Any successor must use a fresh replacement case and freeze tool_output_token_limit before inference.",
+  "public_project_specific_field_count":0,
+  "anti_goal_bypass_or_dishonesty_count":0
+}

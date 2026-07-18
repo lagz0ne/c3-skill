@@ -5,6 +5,27 @@ All notable changes to the C3 Skill plugin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [11.6.3] - 2026-07-15
+
+Patch release: **make change-unit edge writes truthful and portable receipts independently verifiable.**
+
+### Fixed
+
+- **Reject competing edge sources before apply.** When a canvas derives `uses` from a body table,
+  a frontmatter re-edge now fails atomically instead of reporting success and then being silently
+  removed by body-to-graph synchronization. The error names the owning section and repair command.
+- **Verify frozen repair receipts independently.** The generic repair-step verifier now checks the
+  pinned binary and wrapper, complete declared family deltas, canonical identity and change-carrier
+  manifests, and cleanup of temporary dependency links.
+
+### Changed
+
+- **Document body-owned relationship edits.** Change guidance now directs agents to patch the cited
+  body row when the active canvas owns an edge there; legacy canvases without that ownership keep
+  frontmatter re-edge support.
+- **Bound read-only exploration.** The skill now caps ownership/query proof at four C3 calls, stops
+  after owner and governing-rule evidence, and redirects duplicate open-ended routes to save tokens.
+
 ## [11.6.2] - 2026-07-13
 
 Patch release: **keep agent-facing C3 invocation on the local wrapper.** The skill no longer teaches

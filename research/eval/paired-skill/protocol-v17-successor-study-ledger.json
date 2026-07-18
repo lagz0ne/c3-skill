@@ -1,0 +1,13 @@
+{
+  "protocol": "held-out-paired-c3-successor-study-ledger-v17",
+  "currency": "USD",
+  "study_ceiling_usd": 10.0,
+  "prior_failed_call_reserve_or_measured_usd": 1.06912,
+  "v17_valid_arm_cost_usd": 3.628314,
+  "v17_failed_primary_judge_reported_cost_usd": 1.9155995,
+  "total_accounted_cost_usd": 6.6130335,
+  "remaining_accounted_budget_usd": 3.3869665,
+  "accounted_ceiling_passed": true,
+  "actual_billing_status": "mixed provider-reported and conservative arm estimates",
+  "why_remaining_budget_is_not_spent": "A replacement model or rerun would violate the externally committed judge protocol after inference failure and cannot restore the zero-deviation gate."
+}

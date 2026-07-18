@@ -1,0 +1,134 @@
+{
+  "protocol": "paired-skill-paper-loop-v8",
+  "status": "completed_with_reliability_and_identity_gates_failed",
+  "executed_at_utc": "2026-07-16",
+  "scope": {
+    "case_family_count": 3,
+    "repeats_per_family": 3,
+    "valid_pair_count": 9,
+    "valid_arm_count": 18,
+    "agent_model": "gpt-5.6-sol",
+    "reasoning_effort": "low",
+    "max_tool_calls_per_arm": 6,
+    "max_total_tokens_per_arm": 250000,
+    "max_cost_usd_per_arm": 0.4
+  },
+  "controls": {
+    "paired_conditions": true,
+    "condition_order_randomized": true,
+    "standardized_baseline_sha256": "c67682acb11535517ba2c70c08eb2de907c506dabc3e2f2a5c69e0f3fafd7ac9",
+    "frozen_runtime_sha256": "e346474c62fa093daac590734c6adcb28e1dbf7164500952003db48502a6901b",
+    "treatment_instruction_sha256": "86dafd2a6d2c1766276aa5b05ea285cce7218bf9719564be8b6a6a1c2d99ec8b",
+    "valid_arm_protocol_deviation_count": 0,
+    "condition_blind_packets": true,
+    "opposite_alias_order_between_judges": true,
+    "private_answer_retention_by_sha256": true,
+    "public_project_specific_content_count": 0
+  },
+  "judging": {
+    "cross_provider_judges": [
+      {
+        "provider": "Anthropic",
+        "model": "claude-opus-4-8",
+        "effort": "medium",
+        "identity_evidence": "provider response metadata",
+        "provider_confirmed_actual_model": true,
+        "packet_sha256": "fac5c77feead823cea9b2fe97f4b2172da6bcaec6dfe85d2d13fba88ccb25a6c"
+      },
+      {
+        "provider": "OpenAI",
+        "model": "gpt-5.6-luna",
+        "effort": "high",
+        "identity_evidence": "live provider catalog plus accepted requested model; response omitted actual-model metadata",
+        "provider_confirmed_actual_model": false,
+        "packet_sha256": "766dca1b8f09c313ebc58c9432e4e51cc933c0be38842af96d401a4e0ad73d71"
+      }
+    ],
+    "two_provider_confirmed_actual_models_required": true,
+    "model_identity_gate_passed": false,
+    "raw_pair_preference_agreement": {
+      "count": 4,
+      "total": 9,
+      "rate": 0.4444,
+      "required_rate": 0.8,
+      "gate_passed": false
+    },
+    "adjudication": {
+      "trigger_rule": "different pick, corresponding score difference above one, or conflicting blocking-false-claim assessment",
+      "pair_count": 5,
+      "model": "claude-opus-4-8",
+      "condition_blind": true
+    },
+    "final_preference_counts": {
+      "with_skill": 3,
+      "without_skill": 6,
+      "tie": 0
+    },
+    "legacy_deterministic_independent_review_claim_invalidated": true
+  },
+  "paired_effects": {
+    "direction": "with_skill_minus_without_skill",
+    "confidence_interval": "fixed-seed nonparametric paired bootstrap, 100000 resamples, percentile 95%",
+    "bootstrap_seed": 20260716,
+    "canonical_pair_delta_input_sha256": "18b4b99179688106dbf5216a038b656cf1e2939e69fffed376e01a5c09611873",
+    "correctness_1_to_5": {
+      "mean_delta": 0.3889,
+      "bootstrap_95_ci": [-0.5, 1.3889]
+    },
+    "change_usefulness_1_to_5": {
+      "mean_delta": -0.8333,
+      "bootstrap_95_ci": [-1.1111, -0.5]
+    },
+    "semantic_quality_mean_of_correctness_and_usefulness": {
+      "mean_delta": -0.2222,
+      "bootstrap_95_ci": [-0.8056, 0.4167]
+    },
+    "elapsed_ms": {
+      "mean_delta": -7421.6667,
+      "bootstrap_95_ci": [-18872.0, 2065.6667]
+    },
+    "total_tokens": {
+      "mean_delta": -73864.8889,
+      "bootstrap_95_ci": [-81105.1111, -66720.4444]
+    },
+    "estimated_arm_cost_usd": {
+      "mean_delta": -0.0738,
+      "bootstrap_95_ci": [-0.0874, -0.0605]
+    },
+    "model_turns": {
+      "mean_delta": 0.0,
+      "bootstrap_95_ci": [0.0, 0.0]
+    },
+    "tool_calls": {
+      "mean_delta": 0.0,
+      "bootstrap_95_ci": [0.0, 0.0]
+    }
+  },
+  "budget": {
+    "ceiling_usd": 10.0,
+    "valid_arm_estimate_usd": 2.887474,
+    "invalid_arm_attempt_estimate_usd": 0.226392,
+    "anthropic_probe_and_judges_reported_usd": 2.8627275,
+    "openai_luna_calls_conservative_reserve_usd": 3.0,
+    "planning_reserve_total_usd": 8.9765935,
+    "planning_reserve_below_ceiling": true,
+    "actual_total_billing_status": "unknown",
+    "measured_ceiling_passed": null,
+    "note": "The OpenAI runner reported tokens but no dollar charge. The 3 USD entry is a planning reserve, not a proven price bound or measured charge."
+  },
+  "interpretation": {
+    "supported": [
+      "Under these nine pairs, the skill condition used substantially fewer tokens and had lower estimated arm cost.",
+      "The adjudicated score shows higher mean correctness but lower change usefulness; the correctness and combined-quality intervals include zero.",
+      "The change-usefulness interval is below zero under the adjudicated scoring rule."
+    ],
+    "not_supported": [
+      "A paper-grade causal quality claim, because the predeclared 80% inter-judge agreement gate failed.",
+      "A two-provider-confirmed-model claim, because the OpenAI response omitted actual-model identity metadata.",
+      "Generalization beyond the sampled case families, repository snapshot, agent model, and frozen skill runtime.",
+      "Treating adjudication as if it increased raw inter-judge agreement.",
+      "A measured total-spend claim, because the OpenAI runner did not report dollar billing."
+    ],
+    "next_dkr": "Calibrate the rubric on generic training pairs, require source-claim labels and an explicit pick rule, then rerun a held-out blind packet without changing these outcomes."
+  }
+}

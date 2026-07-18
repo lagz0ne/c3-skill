@@ -146,6 +146,9 @@ jobs:
           cache: npm
           cache-dependency-path: packages/cli/package-lock.json
 
+      - name: Install Linux packaging test dependencies
+        run: sudo apt-get update && sudo apt-get install -y bubblewrap
+
       - name: Go tests
         working-directory: cli
         run: |
@@ -158,9 +161,6 @@ jobs:
         run: |
           npm ci
           npm test
-
-      - name: Install Linux packaging test dependencies
-        run: sudo apt-get update && sudo apt-get install -y bubblewrap
 
       - name: Skill packaging tests
         run: python3 scripts/test_skill_release_packaging.py

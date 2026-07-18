@@ -23,6 +23,22 @@ import (
 	"github.com/lagz0ne/c3-design/cli/internal/store"
 )
 
+func skipUnlessReleaseFixtures(t *testing.T, paths ...string) {
+	t.Helper()
+	for _, path := range paths {
+		if _, err := os.Stat(path); err != nil {
+			t.Skipf("optional release fixture unavailable: %s", path)
+		}
+	}
+}
+
+func skipUnlessBubblewrap(t *testing.T) {
+	t.Helper()
+	if _, err := exec.LookPath("bwrap"); err != nil {
+		t.Skip("bubblewrap unavailable")
+	}
+}
+
 func TestStrictRuntimeOutputAcceptsOneObjectAndEOFOnly(t *testing.T) {
 	want := armResponse{Schema: armResponseSchema, Cases: []armCaseResult{{CaseID: "one"}}}
 	data, err := json.Marshal(want)
@@ -363,6 +379,7 @@ func TestCanonicalRowBytesIncludeSparseRowsAndParentSnippet(t *testing.T) {
 }
 
 func TestContextThresholdBlocksAdmissionButNotAdapterImplementation(t *testing.T) {
+	skipUnlessReleaseFixtures(t, filepath.Join(repoRoot(t), ".okra/runs/c3-rag-autoresearch-v1/checkins.jsonl"))
 	bench := sampleBenchmark()
 	bench.ContextThresholdAuthority = nil
 	if err := validateAdapterImplementationConfig(bench); err != nil {
@@ -760,12 +777,14 @@ func TestControllerTimeoutDerivesFromAggregateArmWallAndOverhead(t *testing.T) {
 }
 
 func TestRuntimeCannotReadFixtureOracleReportHistoryRepoOrNetwork(t *testing.T) {
+	skipUnlessBubblewrap(t)
 	if err := proveConfinementBackend(context.Background(), t.TempDir(), testControllerBudgetLimits()); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestConfinedRealArmBinaryExecutesRunSearchWithControllerOwnedInspection(t *testing.T) {
+	skipUnlessBubblewrap(t)
 	runtimePath := buildV2Runtime(t)
 	fixture := sampleRouteFixture()
 	req, err := buildArmRequest([]fixtureCase{fixture}, corpusIsolated, semanticDisabled, sampleBenchmark())
@@ -1063,6 +1082,7 @@ func TestInspectableControllerOutputDirCanRetainAtExclusiveExternalRoot(t *testi
 }
 
 func TestMaliciousConfinedArmCannotReadControllerFilesOrNetworkAndCannotForgeOutput(t *testing.T) {
+	skipUnlessBubblewrap(t)
 	root := t.TempDir()
 	secret := filepath.Join(root, "oracle.json")
 	report := filepath.Join(root, "report.json")
@@ -1628,6 +1648,7 @@ func TestProtocolV6ControllerSelectsDualRootsBeforeAnyOutput(t *testing.T) {
 }
 
 func TestProtocolV6AuthorityAcceptsFrozenBControllerAndDistinctCRuntime(t *testing.T) {
+	skipUnlessReleaseFixtures(t, filepath.Join(repoRoot(t), ".okra/runs/c3-rag-autoresearch-v1/checkins.jsonl"))
 	root := repoRoot(t)
 	base := filepath.Join(t.TempDir(), "B")
 	paths, err := discoverRepositoryBuildInputs(root)
@@ -2378,6 +2399,7 @@ func TestProtocolV7ShortStdoutWriteRollsBackPublishedTree(t *testing.T) {
 }
 
 func TestProtocolV7RealBaselineControllerPublishesOnePrivacyCleanTransaction(t *testing.T) {
+	skipUnlessReleaseFixtures(t, filepath.Join(repoRoot(t), ".okra/runs/c3-rag-autoresearch-v1/checkins.jsonl"))
 	root := repoRoot(t)
 	base := filepath.Join(t.TempDir(), "B")
 	paths, err := discoverRepositoryBuildInputs(root)
@@ -3069,6 +3091,7 @@ func TestCompletionMarkerPublishIsAtomicAndStaleMarkersAreRejected(t *testing.T)
 }
 
 func TestConfinedRuntimeCannotDiscoverOrCreateCompletionMarker(t *testing.T) {
+	skipUnlessBubblewrap(t)
 	parent := t.TempDir()
 	armRoot := filepath.Join(parent, "arm")
 	if err := os.Mkdir(armRoot, 0o700); err != nil {
@@ -3249,6 +3272,7 @@ func TestPostMarkerRetentionCannotChangeAccountedCPUOrPIDs(t *testing.T) {
 }
 
 func TestCompletionProtocolPreservesExactlyOne250msRetention(t *testing.T) {
+	skipUnlessBubblewrap(t)
 	parent := t.TempDir()
 	armRoot := filepath.Join(parent, "arm")
 	if err := os.Mkdir(armRoot, 0o700); err != nil {
@@ -3367,6 +3391,10 @@ func TestNoDirectReadFailureCanReresolveOrUsePeriodicOrSystemdFallback(t *testin
 
 func TestReconstructedBaselineHashesAreExactly1e45AndBaf439(t *testing.T) {
 	root := repoRoot(t)
+	skipUnlessReleaseFixtures(t,
+		filepath.Join(root, ".okra/content/sha256/1e45eb75c0bbdf8bfe427957565b92bb6036ec1346da42d210874a5bbe2f366a"),
+		filepath.Join(root, ".okra/content/sha256/baf439870b25a09becd2ec3e9093f6745eb72f7c036ee666ae468b60ed818082"),
+	)
 	for hash, rel := range map[string]string{
 		"1e45eb75c0bbdf8bfe427957565b92bb6036ec1346da42d210874a5bbe2f366a": ".okra/content/sha256/1e45eb75c0bbdf8bfe427957565b92bb6036ec1346da42d210874a5bbe2f366a",
 		"baf439870b25a09becd2ec3e9093f6745eb72f7c036ee666ae468b60ed818082": ".okra/content/sha256/baf439870b25a09becd2ec3e9093f6745eb72f7c036ee666ae468b60ed818082",

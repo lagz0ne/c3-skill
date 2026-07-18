@@ -39,6 +39,14 @@ func skipUnlessBubblewrap(t *testing.T) {
 	}
 }
 
+func skipUnlessConfinement(t *testing.T) {
+	t.Helper()
+	skipUnlessBubblewrap(t)
+	if err := proveConfinementBackend(context.Background(), t.TempDir(), testControllerBudgetLimits()); err != nil {
+		t.Skipf("confinement capability unavailable: %v", err)
+	}
+}
+
 func TestStrictRuntimeOutputAcceptsOneObjectAndEOFOnly(t *testing.T) {
 	want := armResponse{Schema: armResponseSchema, Cases: []armCaseResult{{CaseID: "one"}}}
 	data, err := json.Marshal(want)
@@ -777,14 +785,14 @@ func TestControllerTimeoutDerivesFromAggregateArmWallAndOverhead(t *testing.T) {
 }
 
 func TestRuntimeCannotReadFixtureOracleReportHistoryRepoOrNetwork(t *testing.T) {
-	skipUnlessBubblewrap(t)
+	skipUnlessConfinement(t)
 	if err := proveConfinementBackend(context.Background(), t.TempDir(), testControllerBudgetLimits()); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestConfinedRealArmBinaryExecutesRunSearchWithControllerOwnedInspection(t *testing.T) {
-	skipUnlessBubblewrap(t)
+	skipUnlessConfinement(t)
 	runtimePath := buildV2Runtime(t)
 	fixture := sampleRouteFixture()
 	req, err := buildArmRequest([]fixtureCase{fixture}, corpusIsolated, semanticDisabled, sampleBenchmark())
@@ -1082,7 +1090,7 @@ func TestInspectableControllerOutputDirCanRetainAtExclusiveExternalRoot(t *testi
 }
 
 func TestMaliciousConfinedArmCannotReadControllerFilesOrNetworkAndCannotForgeOutput(t *testing.T) {
-	skipUnlessBubblewrap(t)
+	skipUnlessConfinement(t)
 	root := t.TempDir()
 	secret := filepath.Join(root, "oracle.json")
 	report := filepath.Join(root, "report.json")
